@@ -1,0 +1,4 @@
+release/
+logs/
+.vscode/
+.env
