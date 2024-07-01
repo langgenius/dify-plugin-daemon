@@ -3,7 +3,7 @@
     "author": "Yeuoly",
     "name": "basic_math",
     "datetime": 1719812022,
-    "exec": ".venv/bin/python -m main",
+    "exec": "conda activate basic_math && python -m main",
     "resource": {
         "memory": 1048576,
         "storage": 1048576,

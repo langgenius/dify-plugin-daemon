@@ -29,5 +29,5 @@ func Init(configuration *app.Config) {
 	// TODO: init plugin manager
 	log.Info("start plugin manager daemon...")
 
-	startWatcher(configuration.StoragePath)
+	startWatcher(configuration.StoragePath, configuration.Platform)
 }

@@ -4,19 +4,36 @@ import (
 	"os"
 	"path"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
-func startWatcher(path string) {
+func startWatcher(path string, platform string) {
 	// load local plugins firstly
 	for plugin := range loadNewPlugins(path) {
+		var plugin_interface entities.PluginRuntimeInterface
+
+		if platform == app.PLATFORM_AWS_LAMBDA {
+			plugin_interface = &aws_manager.AWSPluginRuntime{
+				PluginRuntime: plugin,
+			}
+		} else if platform == app.PLATFORM_LOCAL {
+			plugin_interface = &local_manager.LocalPluginRuntime{
+				PluginRuntime: plugin,
+			}
+		} else {
+			log.Error("unsupported platform: %s for plugin: %s", platform, plugin.Config.Name)
+			continue
+		}
 
 		log.Info("loaded plugin: %s:%s", plugin.Config.Name, plugin.Config.Version)
-		m.Store(plugin.Info.ID, &plugin)
+		m.Store(plugin.Config.Name, plugin_interface)
 
-		lifetime(&plugin)
+		lifetime(plugin_interface)
 	}
 }
 

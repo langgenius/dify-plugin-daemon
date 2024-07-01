@@ -1,0 +1,122 @@
+package local_manager
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+)
+
+func (r *LocalPluginRuntime) InitEnvironment() error {
+	if _, err := os.Stat(path.Join(r.State.RelativePath, ".installed")); err == nil {
+		return nil
+	}
+
+	// execute init command
+	handle := exec.Command("bash", "install.sh")
+	handle.Dir = r.State.RelativePath
+
+	// get stdout and stderr
+	stdout, err := handle.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	defer stdout.Close()
+
+	stderr, err := handle.StderrPipe()
+	if err != nil {
+		return err
+	}
+	defer stderr.Close()
+
+	// start command
+	if err := handle.Start(); err != nil {
+		return err
+	}
+	defer func() {
+		if handle.Process != nil {
+			handle.Process.Kill()
+		}
+	}()
+
+	var err_msg strings.Builder
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	last_active_at := time.Now()
+
+	go func() {
+		defer wg.Done()
+		// read stdout
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdout.Read(buf)
+			if err != nil {
+				break
+			}
+			log.Info("installing %s:%s - %s", r.Config.Name, r.Config.Name, string(buf[:n]))
+			last_active_at = time.Now()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		// read stderr
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderr.Read(buf)
+			if err != nil && err != os.ErrClosed {
+				last_active_at = time.Now()
+				err_msg.WriteString(string(buf[:n]))
+				break
+			} else if err == os.ErrClosed {
+				break
+			}
+
+			if n > 0 {
+				err_msg.WriteString(string(buf[:n]))
+				last_active_at = time.Now()
+			}
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			if handle.ProcessState != nil && handle.ProcessState.Exited() {
+				break
+			}
+
+			if time.Since(last_active_at) > 60*time.Second {
+				handle.Process.Kill()
+				err_msg.WriteString("init process exited due to long time no activity")
+				break
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	if err_msg.Len() > 0 {
+		return fmt.Errorf("install failed: %s", err_msg.String())
+	}
+
+	if err := handle.Wait(); err != nil {
+		return err
+	}
+
+	// create .installed file
+	f, err := os.Create(path.Join(r.State.RelativePath, ".installed"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return nil
+}
