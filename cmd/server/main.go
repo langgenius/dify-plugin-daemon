@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/langgenius/dify-plugin-daemon/internal/daemon"
+	"github.com/langgenius/dify-plugin-daemon/internal/server"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -21,5 +21,5 @@ func main() {
 		log.Panic("Error processing environment variables")
 	}
 
-	daemon.Run(&config)
+	server.Run(&config)
 }
