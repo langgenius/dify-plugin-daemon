@@ -1,13 +1,19 @@
 package entities
 
+import "fmt"
+
 type PluginConfiguration struct {
 	Version  string                      `json:"version"`
 	Author   string                      `json:"author"`
 	Name     string                      `json:"name"`
 	Datetime int64                       `json:"datetime"`
-	Exec     string                      `json:"exec"`
+	Module   string                      `json:"module"`
 	Resource PluginConfigurationResource `json:"resource"`
 	Meta     PluginConfigurationMeta     `json:"meta"`
+}
+
+func (p *PluginConfiguration) Identity() string {
+	return fmt.Sprintf("%s:%s", p.Name, p.Version)
 }
 
 type PluginConfigurationResource struct {

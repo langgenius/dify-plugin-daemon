@@ -16,9 +16,8 @@ func lifetime(r entities.PluginRuntimeInterface) {
 			time.Sleep(30 * time.Second)
 			if start_failed_times == 3 {
 				log.Error(
-					"init environment failed 3 times, plugin %s:%s has been stopped",
-					r.Configuration().Name,
-					r.Configuration().Version,
+					"init environment failed 3 times, plugin %s has been stopped",
+					r.Configuration().Identity(),
 				)
 				r.Stop()
 			}
@@ -33,9 +32,8 @@ func lifetime(r entities.PluginRuntimeInterface) {
 			time.Sleep(30 * time.Second)
 			if start_failed_times == 3 {
 				log.Error(
-					"start plugin failed 3 times, plugin %s:%s has been stopped",
-					r.Configuration().Name,
-					r.Configuration().Version,
+					"start plugin failed 3 times, plugin %s has been stopped",
+					r.Configuration().Identity(),
 				)
 				r.Stop()
 			}

@@ -3,6 +3,7 @@ package plugin_manager
 import (
 	"os"
 	"path"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
@@ -10,9 +11,20 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 func startWatcher(path string, platform string) {
+	go func() {
+		log.Info("start to handle new plugins in path: %s", path)
+		handleNewPlugins(path, platform)
+		for range time.NewTicker(time.Second * 30).C {
+			handleNewPlugins(path, platform)
+		}
+	}()
+}
+
+func handleNewPlugins(path string, platform string) {
 	// load local plugins firstly
 	for plugin := range loadNewPlugins(path) {
 		var plugin_interface entities.PluginRuntimeInterface
@@ -30,10 +42,13 @@ func startWatcher(path string, platform string) {
 			continue
 		}
 
-		log.Info("loaded plugin: %s:%s", plugin.Config.Name, plugin.Config.Version)
-		m.Store(plugin.Config.Name, plugin_interface)
+		log.Info("loaded plugin: %s", plugin.Config.Identity())
 
-		lifetime(plugin_interface)
+		m.Store(plugin.Config.Identity(), &plugin)
+
+		routine.Submit(func() {
+			lifetime(plugin_interface)
+		})
 	}
 }
 
@@ -48,11 +63,9 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 		return ch
 	}
 
-	go func() {
+	routine.Submit(func() {
 		for _, plugin := range plugins {
 			if plugin.IsDir() {
-				log.Info("found new plugin path: %s", plugin.Name())
-
 				configuration_path := path.Join(root_path, plugin.Name(), "manifest.json")
 				configuration, err := parsePluginConfig(configuration_path)
 				if err != nil {
@@ -60,22 +73,23 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 					continue
 				}
 
-				status := verifyPluginStatus(configuration)
-				if status.exist && status.alive {
+				if err := configuration.Validate(); err != nil {
+					log.Error("plugin %s config validate error: %v", configuration.Name, err)
 					continue
-				} else if status.exist && !status.alive {
-					log.Warn("plugin %s is not alive")
+				}
+
+				status := verifyPluginStatus(configuration)
+				if status.exist {
 					continue
 				}
 
 				ch <- entities.PluginRuntime{
 					Config: *configuration,
 					State: entities.PluginRuntimeState{
+						Status:       entities.PLUGIN_RUNTIME_STATUS_PENDING,
 						Restarts:     0,
-						Active:       false,
 						RelativePath: path.Join(root_path, plugin.Name()),
 						ActiveAt:     nil,
-						DeadAt:       nil,
 						Verified:     false,
 					},
 				}
@@ -83,7 +97,7 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 		}
 
 		close(ch)
-	}()
+	})
 
 	return ch
 }
@@ -104,20 +118,17 @@ func parsePluginConfig(configuration_path string) (*entities.PluginConfiguration
 
 type pluginStatusResult struct {
 	exist bool
-	alive bool
 }
 
 func verifyPluginStatus(config *entities.PluginConfiguration) pluginStatusResult {
-	r, exist := checkPluginExist(config.Name)
+	_, exist := checkPluginExist(config.Identity())
 	if exist {
 		return pluginStatusResult{
 			exist: true,
-			alive: r.State.Active,
 		}
 	}
 
 	return pluginStatusResult{
 		exist: false,
-		alive: false,
 	}
 }

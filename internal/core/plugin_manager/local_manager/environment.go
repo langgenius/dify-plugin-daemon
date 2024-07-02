@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 func (r *LocalPluginRuntime) InitEnvironment() error {
@@ -50,7 +51,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 
 	last_active_at := time.Now()
 
-	go func() {
+	routine.Submit(func() {
 		defer wg.Done()
 		// read stdout
 		buf := make([]byte, 1024)
@@ -59,12 +60,12 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 			if err != nil {
 				break
 			}
-			log.Info("installing %s:%s - %s", r.Config.Name, r.Config.Name, string(buf[:n]))
+			log.Info("installing %s - %s", r.Config.Identity(), string(buf[:n]))
 			last_active_at = time.Now()
 		}
-	}()
+	})
 
-	go func() {
+	routine.Submit(func() {
 		defer wg.Done()
 		// read stderr
 		buf := make([]byte, 1024)
@@ -83,9 +84,9 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 				last_active_at = time.Now()
 			}
 		}
-	}()
+	})
 
-	go func() {
+	routine.Submit(func() {
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
@@ -99,7 +100,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 				break
 			}
 		}
-	}()
+	})
 
 	wg.Wait()
 

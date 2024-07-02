@@ -1,12 +1,18 @@
 package app
 
 type Config struct {
-	DifyPluginHost string `envconfig:"DIFY_PLUGIN_HOST"`
-	DifyPluginPort int16  `envconfig:"DIFY_PLUGIN_PORT"`
-	DifyPluginKey  string `envconfig:"DIFY_PLUGIN_KEY"`
-	StoragePath    string `envconfig:"STORAGE_PATH"`
+	DifyURL         string `envconfig:"DIFY_URL"`
+	DifyCallingKey  string `envconfig:"DIFY_CALLING_KEY"`
+	DifyCallingPort int16  `envconfig:"DIFY_CALLING_PORT"`
+
+	PluginHost string `envconfig:"PLUGIN_HOST"`
+	PluginPort int16  `envconfig:"PLUGIN_PORT"`
+
+	StoragePath string `envconfig:"STORAGE_PATH"`
 
 	Platform string `envconfig:"PLATFORM"`
+
+	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE"`
 }
 
 const (
