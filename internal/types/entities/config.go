@@ -1,6 +1,8 @@
 package entities
 
-import "fmt"
+import (
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+)
 
 type PluginConfiguration struct {
 	Version  string                      `json:"version"`
@@ -13,7 +15,7 @@ type PluginConfiguration struct {
 }
 
 func (p *PluginConfiguration) Identity() string {
-	return fmt.Sprintf("%s:%s", p.Name, p.Version)
+	return parser.MarshalPluginIdentity(p.Name, p.Version)
 }
 
 type PluginConfigurationResource struct {

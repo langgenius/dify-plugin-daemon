@@ -44,7 +44,7 @@ func handleNewPlugins(path string, platform string) {
 
 		log.Info("loaded plugin: %s", plugin.Config.Identity())
 
-		m.Store(plugin.Config.Identity(), &plugin)
+		m.Store(plugin.Config.Identity(), plugin_interface)
 
 		routine.Submit(func() {
 			lifetime(plugin_interface)

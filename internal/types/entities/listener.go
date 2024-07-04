@@ -1,45 +1,39 @@
 package entities
 
-import "sync/atomic"
+import "sync"
 
 type IOListener[T any] struct {
-	msg        chan T
-	closed     *int32
-	close_hook []func()
+	l        *sync.RWMutex
+	onClose  func()
+	listener []func(T)
 }
 
 type BytesIOListener = IOListener[[]byte]
 
 func NewIOListener[T any]() *IOListener[T] {
 	return &IOListener[T]{
-		msg:        make(chan T),
-		closed:     new(int32),
-		close_hook: []func(){},
+		l: &sync.RWMutex{},
 	}
 }
 
-func (r *IOListener[T]) Listen() <-chan T {
-	return r.msg
+func (r *IOListener[T]) AddListener(f func(T)) {
+	r.l.Lock()
+	defer r.l.Unlock()
+	r.listener = append(r.listener, f)
+}
+
+func (r *IOListener[T]) OnClose(f func()) {
+	r.onClose = f
 }
 
 func (r *IOListener[T]) Close() {
-	if !atomic.CompareAndSwapInt32(r.closed, 0, 1) {
-		return
-	}
-	atomic.StoreInt32(r.closed, 1)
-	for _, hook := range r.close_hook {
-		hook()
-	}
-	close(r.msg)
+	r.onClose()
 }
 
-func (r *IOListener[T]) Write(data T) {
-	if atomic.LoadInt32(r.closed) == 1 {
-		return
+func (r *IOListener[T]) Emit(data T) {
+	r.l.RLock()
+	defer r.l.RUnlock()
+	for _, listener := range r.listener {
+		listener(data)
 	}
-	r.msg <- data
-}
-
-func (r *IOListener[T]) OnClose(hook func()) {
-	r.close_hook = append(r.close_hook, hook)
 }

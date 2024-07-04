@@ -1,11 +1,15 @@
 package stdio_holder
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 var (
@@ -15,14 +19,15 @@ var (
 )
 
 type stdioHolder struct {
-	id        string
-	writer    io.WriteCloser
-	reader    io.ReadCloser
-	errReader io.ReadCloser
-	l         *sync.Mutex
-	listener  map[string]func([]byte)
-	started   bool
-	alive     bool
+	id             string
+	pluginIdentity string
+	writer         io.WriteCloser
+	reader         io.ReadCloser
+	errReader      io.ReadCloser
+	l              *sync.Mutex
+	listener       map[string]func([]byte)
+	started        bool
+	alive          bool
 }
 
 func (s *stdioHolder) Stop() {
@@ -30,29 +35,57 @@ func (s *stdioHolder) Stop() {
 	s.writer.Close()
 	s.reader.Close()
 	s.errReader.Close()
+
+	stdio_holder.Delete(s.id)
 }
 
 func (s *stdioHolder) StartStdout() {
 	s.started = true
 	s.alive = true
+
+	scanner := bufio.NewScanner(s.reader)
 	for s.alive {
-		buf := make([]byte, 1024)
-		n, err := s.reader.Read(buf)
-		if err != nil {
-			s.Stop()
-			break
-		}
+		for scanner.Scan() {
+			data := scanner.Bytes()
+			event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
+			if err != nil {
+				log.Error("unmarshal json failed: %s", err.Error())
+				continue
+			}
 
-		for _, listener := range listeners {
-			listener(s.id, buf[:n])
-		}
+			session_id := event.SessionId
 
-		for _, listener := range s.listener {
-			listener(buf[:n])
+			switch event.Event {
+			case plugin_entities.PLUGIN_EVENT_LOG:
+				if event.Event == plugin_entities.PLUGIN_EVENT_LOG {
+					logEvent, err := parser.UnmarshalJsonBytes[plugin_entities.PluginLogEvent](event.Data)
+					if err != nil {
+						log.Error("unmarshal json failed: %s", err.Error())
+						continue
+					}
+
+					log.Info("plugin %s: %s", s.pluginIdentity, logEvent.Message)
+				}
+			case plugin_entities.PLUGIN_EVENT_RESPONSE:
+				for _, listener := range listeners {
+					listener(s.id, event.Data)
+				}
+
+				for listener_session_id, listener := range s.listener {
+					if listener_session_id == session_id {
+						listener(event.Data)
+					}
+				}
+			case plugin_entities.PLUGIN_EVENT_ERROR:
+				log.Error("plugin %s: %s", s.pluginIdentity, event.Data)
+			}
 		}
 	}
 }
 
+/*
+ * @return error
+ */
 func (s *stdioHolder) StartStderr() error {
 	s.started = true
 	s.alive = true
@@ -74,19 +107,31 @@ func (s *stdioHolder) StartStderr() error {
 	return nil
 }
 
+func (s *stdioHolder) GetID() string {
+	return s.id
+}
+
 /*
+ * @param plugin_identity: string
  * @param writer: io.WriteCloser
  * @param reader: io.ReadCloser
+ * @param errReader: io.ReadCloser
  */
-func PutStdio(writer io.WriteCloser, reader io.ReadCloser, errReader io.ReadCloser) *stdioHolder {
+func Put(
+	plugin_identity string,
+	writer io.WriteCloser,
+	reader io.ReadCloser,
+	errReader io.ReadCloser,
+) *stdioHolder {
 	id := uuid.New().String()
 
 	holder := &stdioHolder{
-		writer:    writer,
-		reader:    reader,
-		errReader: errReader,
-		id:        id,
-		l:         &sync.Mutex{},
+		pluginIdentity: plugin_identity,
+		writer:         writer,
+		reader:         reader,
+		errReader:      errReader,
+		id:             id,
+		l:              &sync.Mutex{},
 	}
 
 	stdio_holder.Store(id, holder)
@@ -96,7 +141,7 @@ func PutStdio(writer io.WriteCloser, reader io.ReadCloser, errReader io.ReadClos
 /*
  * @param id: string
  */
-func GetStdio(id string) *stdioHolder {
+func Get(id string) *stdioHolder {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			return holder
@@ -109,16 +154,17 @@ func GetStdio(id string) *stdioHolder {
 /*
  * @param id: string
  */
-func RemoveStdio(id string) {
+func Remove(id string) {
 	stdio_holder.Delete(id)
 }
 
 /*
  * @param id: string
+ * @param session_id: string
  * @param listener: func(data []byte)
  * @return string - listener identity
  */
-func OnStdioEvent(id string, listener func([]byte)) string {
+func OnEvent(id string, session_id string, listener func([]byte)) {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
@@ -127,20 +173,16 @@ func OnStdioEvent(id string, listener func([]byte)) string {
 				holder.listener = map[string]func([]byte){}
 			}
 
-			identity := uuid.New().String()
-			holder.listener[identity] = listener
-			return identity
+			holder.listener[session_id] = listener
 		}
 	}
-
-	return ""
 }
 
 /*
  * @param id: string
  * @param listener: string
  */
-func RemoveStdioListener(id string, listener string) {
+func RemoveListener(id string, listener string) {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
@@ -153,7 +195,7 @@ func RemoveStdioListener(id string, listener string) {
 /*
  * @param listener: func(id string, data []byte)
  */
-func OnStdioEventGlobal(listener func(string, []byte)) {
+func OnGlobalEvent(listener func(string, []byte)) {
 	l.Lock()
 	defer l.Unlock()
 	listeners[uuid.New().String()] = listener
@@ -167,6 +209,7 @@ func Write(id string, data []byte) error {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			_, err := holder.writer.Write(data)
+
 			return err
 		}
 	}

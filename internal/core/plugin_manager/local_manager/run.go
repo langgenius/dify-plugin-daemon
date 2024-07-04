@@ -49,9 +49,21 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		return err
 	}
 
+	defer func() {
+		// wait for plugin to exit
+		err = e.Wait()
+		if err != nil {
+			r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
+			log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
+		}
+	}()
+
 	log.Info("plugin %s started", r.Config.Identity())
 
-	stdio := stdio_holder.PutStdio(stdin, stdout, stderr)
+	stdio := stdio_holder.Put(r.Config.Identity(), stdin, stdout, stderr)
+
+	// set io identity
+	r.io_identity = stdio.GetID()
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -66,13 +78,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	if err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		e.Process.Kill()
-		return err
-	}
-
-	// wait for plugin to exit
-	err = e.Wait()
-	if err != nil {
-		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		return err
 	}
 

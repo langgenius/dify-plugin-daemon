@@ -20,7 +20,7 @@ class Add(Tool):
     
     def _invoke(self, user_id: str, tool_parameter: dict) -> Generator[ToolInvokeMessage, None, None]:
         result = tool_parameter['a'] + tool_parameter['b']
-        yield ToolInvokeTextMessage(message={'result': str(result)})
+        yield self.create_text_message(f'The result is {result}')
 
 if __name__ == '__main__':
     plugin.run()

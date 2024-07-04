@@ -8,9 +8,9 @@ import (
 
 var m sync.Map
 
-func checkPluginExist(identity string) (*entities.PluginRuntime, bool) {
+func checkPluginExist(identity string) (entities.PluginRuntimeInterface, bool) {
 	if v, ok := m.Load(identity); ok {
-		return v.(*entities.PluginRuntime), true
+		return v.(entities.PluginRuntimeInterface), true
 	}
 
 	return nil, false

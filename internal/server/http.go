@@ -11,7 +11,7 @@ func server(config *app.Config) {
 	engine := gin.Default()
 
 	engine.GET("/health/check", HealthCheck)
-	engine.POST("/plugin/invoke", CheckingKey(config.DifyCallingKey), InvokePlugin)
+	engine.POST("/plugin/tool/invoke", CheckingKey(config.DifyCallingKey), InvokeTool)
 
 	engine.Run(fmt.Sprintf(":%d", config.DifyCallingPort))
 }
