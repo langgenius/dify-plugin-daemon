@@ -5,23 +5,23 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
 type ToolResponseChunk = plugin_entities.InvokeToolResponseChunk
 
 func InvokeTool(session *session_manager.Session, provider_name string, tool_name string, tool_parameters map[string]any) (
-	*entities.InvocationResponse[ToolResponseChunk], error,
+	*stream.StreamResponse[ToolResponseChunk], error,
 ) {
 	runtime := plugin_manager.Get(session.PluginIdentity())
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}
 
-	response := entities.NewInvocationResponse[ToolResponseChunk](512)
+	response := stream.NewStreamResponse[ToolResponseChunk](512)
 
 	listener := runtime.Listen(session.ID())
 	listener.AddListener(func(message []byte) {

@@ -1,4 +1,4 @@
-package entities
+package stream
 
 import (
 	"errors"
@@ -7,12 +7,7 @@ import (
 	"github.com/gammazero/deque"
 )
 
-type InvocationSession struct {
-	ID             string
-	PluginIdentity string
-}
-
-type InvocationResponse[T any] struct {
+type StreamResponse[T any] struct {
 	q         deque.Deque[T]
 	l         *sync.Mutex
 	sig       chan bool
@@ -22,19 +17,19 @@ type InvocationResponse[T any] struct {
 	onClose   func()
 }
 
-func NewInvocationResponse[T any](max int) *InvocationResponse[T] {
-	return &InvocationResponse[T]{
+func NewStreamResponse[T any](max int) *StreamResponse[T] {
+	return &StreamResponse[T]{
 		l:   &sync.Mutex{},
 		sig: make(chan bool),
 		max: max,
 	}
 }
 
-func (r *InvocationResponse[T]) OnClose(f func()) {
+func (r *StreamResponse[T]) OnClose(f func()) {
 	r.onClose = f
 }
 
-func (r *InvocationResponse[T]) Next() bool {
+func (r *StreamResponse[T]) Next() bool {
 	r.l.Lock()
 	if r.closed {
 		r.l.Unlock()
@@ -55,7 +50,7 @@ func (r *InvocationResponse[T]) Next() bool {
 	return <-r.sig
 }
 
-func (r *InvocationResponse[T]) Read() (T, error) {
+func (r *StreamResponse[T]) Read() (T, error) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
@@ -68,7 +63,7 @@ func (r *InvocationResponse[T]) Read() (T, error) {
 	}
 }
 
-func (r *InvocationResponse[T]) Write(data T) error {
+func (r *StreamResponse[T]) Write(data T) error {
 	r.l.Lock()
 	if r.closed {
 		r.l.Unlock()
@@ -90,7 +85,7 @@ func (r *InvocationResponse[T]) Write(data T) error {
 	return nil
 }
 
-func (r *InvocationResponse[T]) Close() {
+func (r *StreamResponse[T]) Close() {
 	r.l.Lock()
 	if r.closed {
 		r.l.Unlock()
@@ -109,14 +104,14 @@ func (r *InvocationResponse[T]) Close() {
 	}
 }
 
-func (r *InvocationResponse[T]) IsClosed() bool {
+func (r *StreamResponse[T]) IsClosed() bool {
 	r.l.Lock()
 	defer r.l.Unlock()
 
 	return r.closed
 }
 
-func (r *InvocationResponse[T]) Size() int {
+func (r *StreamResponse[T]) Size() int {
 	r.l.Lock()
 	defer r.l.Unlock()
 

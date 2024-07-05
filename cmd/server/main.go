@@ -33,6 +33,7 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
 	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
 	setDefaultInt(&config.LifetimeStateGCInterval, 300)
+	setDefaultInt(&config.DifyInvocationConnectionIdleTimeout, 120)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {

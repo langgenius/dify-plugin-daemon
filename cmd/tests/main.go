@@ -6,11 +6,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
 func main() {
-	response := entities.NewInvocationResponse[string](1024)
+	response := stream.NewStreamResponse[string](1024)
 
 	random_string := func() string {
 		return fmt.Sprintf("%d", rand.Intn(100000))
