@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -12,17 +13,17 @@ import (
 
 type ToolResponseChunk = plugin_entities.InvokeToolResponseChunk
 
-func InvokeTool(session *entities.InvocationSession, provider_name string, tool_name string, tool_parameters map[string]any) (
+func InvokeTool(session *session_manager.Session, provider_name string, tool_name string, tool_parameters map[string]any) (
 	*entities.InvocationResponse[ToolResponseChunk], error,
 ) {
-	runtime := plugin_manager.Get(session.PluginIdentity)
+	runtime := plugin_manager.Get(session.PluginIdentity())
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}
 
 	response := entities.NewInvocationResponse[ToolResponseChunk](512)
 
-	listener := runtime.Listen(session.ID)
+	listener := runtime.Listen(session.ID())
 	listener.AddListener(func(message []byte) {
 		chunk, err := parser.UnmarshalJsonBytes[plugin_entities.StreamMessage](message)
 		if err != nil {
@@ -50,7 +51,7 @@ func InvokeTool(session *entities.InvocationSession, provider_name string, tool_
 		listener.Close()
 	})
 
-	runtime.Write(session.ID, []byte(parser.MarshalJson(
+	runtime.Write(session.ID(), []byte(parser.MarshalJson(
 		map[string]any{
 			"provider":   provider_name,
 			"tool":       tool_name,

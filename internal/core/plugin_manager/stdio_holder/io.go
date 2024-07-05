@@ -78,6 +78,8 @@ func (s *stdioHolder) StartStdout() {
 				}
 			case plugin_entities.PLUGIN_EVENT_ERROR:
 				log.Error("plugin %s: %s", s.pluginIdentity, event.Data)
+			case plugin_entities.PLUGIN_EVENT_INVOKE:
+				// invoke dify
 			}
 		}
 	}

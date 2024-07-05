@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -12,11 +12,8 @@ import (
 
 func InvokeTool(r *plugin_entities.InvokePluginRequest[plugin_entities.InvokeToolRequest], ctx *gin.Context) {
 	// create session
-	session_id := uuid.New().String()
-	session := &entities.InvocationSession{
-		ID:             session_id,
-		PluginIdentity: parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion),
-	}
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
 
 	writer := ctx.Writer
 	writer.WriteHeader(200)
