@@ -14,31 +14,31 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func startWatcher(path string, platform string) {
+func startWatcher(config *app.Config) {
 	go func() {
-		log.Info("start to handle new plugins in path: %s", path)
-		handleNewPlugins(path, platform)
+		log.Info("start to handle new plugins in path: %s", config.StoragePath)
+		handleNewPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
-			handleNewPlugins(path, platform)
+			handleNewPlugins(config)
 		}
 	}()
 }
 
-func handleNewPlugins(path string, platform string) {
+func handleNewPlugins(config *app.Config) {
 	// load local plugins firstly
-	for plugin := range loadNewPlugins(path) {
+	for plugin := range loadNewPlugins(config.StoragePath) {
 		var plugin_interface entities.PluginRuntimeInterface
 
-		if platform == app.PLATFORM_AWS_LAMBDA {
+		if config.Platform == app.PLATFORM_AWS_LAMBDA {
 			plugin_interface = &aws_manager.AWSPluginRuntime{
 				PluginRuntime: plugin,
 			}
-		} else if platform == app.PLATFORM_LOCAL {
+		} else if config.Platform == app.PLATFORM_LOCAL {
 			plugin_interface = &local_manager.LocalPluginRuntime{
 				PluginRuntime: plugin,
 			}
 		} else {
-			log.Error("unsupported platform: %s for plugin: %s", platform, plugin.Config.Name)
+			log.Error("unsupported platform: %s for plugin: %s", config.Platform, plugin.Config.Name)
 			continue
 		}
 
@@ -47,7 +47,7 @@ func handleNewPlugins(path string, platform string) {
 		m.Store(plugin.Config.Identity(), plugin_interface)
 
 		routine.Submit(func() {
-			lifetime(plugin_interface)
+			lifetime(config, plugin_interface)
 		})
 	}
 }

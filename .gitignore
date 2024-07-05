@@ -2,3 +2,4 @@ release/
 logs/
 .vscode/
 .env
+cmd/**/__debug_bin*

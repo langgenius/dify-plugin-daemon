@@ -1,8 +1,11 @@
 package plugin_manager
 
 import (
+	"fmt"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
@@ -38,5 +41,17 @@ func Init(configuration *app.Config) {
 	// TODO: init plugin manager
 	log.Info("start plugin manager daemon...")
 
-	startWatcher(configuration.StoragePath, configuration.Platform)
+	// init redis client
+	if err := cache.InitRedisClient(
+		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
+		configuration.RedisPass,
+	); err != nil {
+		log.Panic("init redis client failed: %s", err.Error())
+	}
+
+	// start plugin watcher
+	startWatcher(configuration)
+
+	// start plugin lifetime manager
+	startLifeTimeManager(configuration)
 }

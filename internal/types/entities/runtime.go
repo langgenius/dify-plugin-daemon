@@ -22,6 +22,7 @@ type (
 		Stopped() bool
 		Stop()
 		Configuration() *PluginConfiguration
+		RuntimeState() *PluginRuntimeState
 	}
 
 	PluginRuntimeSessionIOInterface interface {
@@ -41,6 +42,10 @@ func (r *PluginRuntime) Stop() {
 
 func (r *PluginRuntime) Configuration() *PluginConfiguration {
 	return &r.Config
+}
+
+func (r *PluginRuntime) RuntimeState() *PluginRuntimeState {
+	return &r.State
 }
 
 type PluginRuntimeState struct {

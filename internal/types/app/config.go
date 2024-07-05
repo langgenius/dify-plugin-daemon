@@ -13,6 +13,14 @@ type Config struct {
 	Platform string `envconfig:"PLATFORM"`
 
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE"`
+
+	RedisHost string `envconfig:"REDIS_HOST"`
+	RedisPort int16  `envconfig:"REDIS_PORT"`
+	RedisPass string `envconfig:"REDIS_PASS"`
+
+	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"`
+	LifetimeCollectionGCInterval        int `envconfig:"LIFETIME_COLLECTION_GC_INTERVAL"`
+	LifetimeStateGCInterval             int `envconfig:"LIFETIME_STATE_GC_INTERVAL"`
 }
 
 const (

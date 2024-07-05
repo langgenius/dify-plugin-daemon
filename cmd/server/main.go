@@ -30,6 +30,9 @@ func main() {
 func setDefault(config *app.Config) {
 	setDefaultInt(&config.RoutinePoolSize, 1000)
 	setDefaultInt(&config.DifyCallingPort, 5002)
+	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
+	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
+	setDefaultInt(&config.LifetimeStateGCInterval, 300)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
