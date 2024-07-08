@@ -28,8 +28,8 @@ func main() {
 }
 
 func setDefault(config *app.Config) {
+	setDefaultInt(&config.SERVER_PORT, 5002)
 	setDefaultInt(&config.RoutinePoolSize, 1000)
-	setDefaultInt(&config.DifyCallingPort, 5002)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
 	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
 	setDefaultInt(&config.LifetimeStateGCInterval, 300)

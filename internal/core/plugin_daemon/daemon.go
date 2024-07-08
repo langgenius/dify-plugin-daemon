@@ -39,6 +39,8 @@ func InvokeTool(session *session_manager.Session, provider_name string, tool_nam
 				return
 			}
 			response.Write(chunk)
+		case plugin_entities.STREAM_MESSAGE_TYPE_INVOKE:
+			// TODO: invoke dify
 		case plugin_entities.STREAM_MESSAGE_TYPE_END:
 			response.Close()
 		default:
@@ -56,7 +58,7 @@ func InvokeTool(session *session_manager.Session, provider_name string, tool_nam
 			"provider":   provider_name,
 			"tool":       tool_name,
 			"parameters": tool_parameters,
-			"session_id": session.ID,
+			"session_id": session.ID(),
 		},
 	)))
 

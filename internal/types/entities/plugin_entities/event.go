@@ -9,10 +9,9 @@ type PluginUniversalEvent struct {
 }
 
 const (
-	PLUGIN_EVENT_LOG      = "log"
-	PLUGIN_EVENT_RESPONSE = "response"
-	PLUGIN_EVENT_ERROR    = "error"
-	PLUGIN_EVENT_INVOKE   = "invoke"
+	PLUGIN_EVENT_LOG     = "log"
+	PLUGIN_EVENT_SESSION = "session"
+	PLUGIN_EVENT_ERROR   = "error"
 )
 
 type PluginLogEvent struct {
@@ -29,11 +28,12 @@ type StreamMessage struct {
 const (
 	STREAM_MESSAGE_TYPE_STREAM = "stream"
 	STREAM_MESSAGE_TYPE_END    = "end"
+	STREAM_MESSAGE_TYPE_INVOKE = "invoke"
 )
 
 type InvokeToolResponseChunk struct {
-	Type    string          `json:"type" binding:"required"`
-	Message json.RawMessage `json:"message" binding:"required"`
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
 }
 
 type InvokeModelResponseChunk struct {

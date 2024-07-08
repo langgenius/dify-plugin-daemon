@@ -3,6 +3,7 @@ package plugin_manager
 import (
 	"fmt"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -47,6 +48,12 @@ func Init(configuration *app.Config) {
 		configuration.RedisPass,
 	); err != nil {
 		log.Panic("init redis client failed: %s", err.Error())
+	}
+
+	if err := dify_invocation.InitDifyInvocationDaemon(
+		configuration.PluginInnerApiURL, configuration.PluginInnerApiKey,
+	); err != nil {
+		log.Panic("init dify invocation daemon failed: %s", err.Error())
 	}
 
 	// start plugin watcher

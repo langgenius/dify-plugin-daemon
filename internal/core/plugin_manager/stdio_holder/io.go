@@ -66,7 +66,7 @@ func (s *stdioHolder) StartStdout() {
 
 					log.Info("plugin %s: %s", s.pluginIdentity, logEvent.Message)
 				}
-			case plugin_entities.PLUGIN_EVENT_RESPONSE:
+			case plugin_entities.PLUGIN_EVENT_SESSION:
 				for _, listener := range listeners {
 					listener(s.id, event.Data)
 				}
@@ -78,8 +78,6 @@ func (s *stdioHolder) StartStdout() {
 				}
 			case plugin_entities.PLUGIN_EVENT_ERROR:
 				log.Error("plugin %s: %s", s.pluginIdentity, event.Data)
-			case plugin_entities.PLUGIN_EVENT_INVOKE:
-				// invoke dify
 			}
 		}
 	}

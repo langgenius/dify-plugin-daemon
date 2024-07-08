@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	baseurl *url.URL
-	client  *http.Client
+	PLUGIN_INNER_API_KEY string
+	baseurl              *url.URL
+	client               *http.Client
 )
 
-func InitDifyInvocationDaemon(base string) error {
+func InitDifyInvocationDaemon(base string, calling_key string) error {
 	var err error
 	baseurl, err = url.Parse(base)
 	if err != nil {
@@ -28,6 +29,8 @@ func InitDifyInvocationDaemon(base string) error {
 			IdleConnTimeout: 120 * time.Second,
 		},
 	}
+
+	PLUGIN_INNER_API_KEY = calling_key
 
 	return nil
 }

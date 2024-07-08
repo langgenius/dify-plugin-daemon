@@ -1,12 +1,13 @@
 package app
 
 type Config struct {
-	DifyURL         string `envconfig:"DIFY_URL"`
-	DifyCallingKey  string `envconfig:"DIFY_CALLING_KEY"`
-	DifyCallingPort int16  `envconfig:"DIFY_CALLING_PORT"`
+	SERVER_PORT int16 `envconfig:"SERVER_PORT"`
 
-	PluginHost string `envconfig:"PLUGIN_HOST"`
-	PluginPort int16  `envconfig:"PLUGIN_PORT"`
+	PluginInnerApiKey string `envconfig:"PLUGIN_INNER_API_KEY"`
+	PluginInnerApiURL string `envconfig:"PLUGIN_INNER_API_URL"`
+
+	PluginRemoteInstallingHost string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
+	PluginRemoteInstallingPort int16  `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
 
 	StoragePath string `envconfig:"STORAGE_PATH"`
 
