@@ -21,14 +21,14 @@ func StreamResponse[T any](method string, path string, options ...requests.HttpO
 	return requests.RequestAndParseStream[T](client, difyPath(path), method, options...)
 }
 
-func InvokeModel(payload InvokeModelRequest) (*stream.StreamResponse[InvokeModelResponseChunk], error) {
+func InvokeModel(payload *InvokeModelRequest) (*stream.StreamResponse[InvokeModelResponseChunk], error) {
 	return StreamResponse[InvokeModelResponseChunk]("POST", "invoke/model", requests.HttpPayloadJson(payload))
 }
 
-func InvokeTool(payload InvokeToolRequest) (*stream.StreamResponse[InvokeToolResponseChunk], error) {
+func InvokeTool(payload *InvokeToolRequest) (*stream.StreamResponse[InvokeToolResponseChunk], error) {
 	return StreamResponse[InvokeToolResponseChunk]("POST", "invoke/tool", requests.HttpPayloadJson(payload))
 }
 
-func InvokeNode[T WorkflowNodeData](payload InvokeNodeRequest[T]) (*InvokeNodeResponse, error) {
+func InvokeNode[T WorkflowNodeData](payload *InvokeNodeRequest[T]) (*InvokeNodeResponse, error) {
 	return Request[InvokeNodeResponse]("POST", "invoke/node", requests.HttpPayloadJson(payload))
 }

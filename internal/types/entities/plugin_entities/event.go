@@ -20,15 +20,15 @@ type PluginLogEvent struct {
 	Timestamp float64 `json:"timestamp"`
 }
 
-type StreamMessage struct {
+type SessionMessage struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
 
 const (
-	STREAM_MESSAGE_TYPE_STREAM = "stream"
-	STREAM_MESSAGE_TYPE_END    = "end"
-	STREAM_MESSAGE_TYPE_INVOKE = "invoke"
+	SESSION_MESSAGE_TYPE_STREAM = "stream"
+	SESSION_MESSAGE_TYPE_END    = "end"
+	SESSION_MESSAGE_TYPE_INVOKE = "invoke"
 )
 
 type InvokeToolResponseChunk struct {

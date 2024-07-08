@@ -1,52 +1,42 @@
 package main
 
-import (
-	"fmt"
-	"math/rand"
-	"sync/atomic"
-	"time"
+import "fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
-)
+type Inf interface {
+	Set(int)
+}
+
+type A struct {
+	num int
+}
+
+func (a *A) Set(data int) {
+	a.num = data
+}
+
+type B struct {
+	num int
+}
+
+func (b *B) Set(data int) {
+	b.num = data
+}
+
+type C interface {
+	*A | *B
+
+	Inf
+}
+
+type D[T C] struct {
+	data T
+}
 
 func main() {
-	response := stream.NewStreamResponse[string](1024)
-
-	random_string := func() string {
-		return fmt.Sprintf("%d", rand.Intn(100000))
+	d := D[*B]{
+		data: &B{},
 	}
+	d.data.Set(10)
 
-	traffic := new(int64)
-
-	go func() {
-		for {
-			response.Write(random_string())
-		}
-	}()
-
-	go func() {
-		for {
-			response.Write(random_string())
-		}
-	}()
-
-	go func() {
-		for response.Next() {
-			atomic.AddInt64(traffic, 1)
-			_, err := response.Read()
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
-		}
-	}()
-
-	go func() {
-		for range time.NewTicker(time.Second).C {
-			fmt.Printf("Traffic: %d, Unsolved: %d\n", atomic.LoadInt64(traffic), response.Size())
-			atomic.StoreInt64(traffic, 0)
-		}
-	}()
-
-	select {}
+	fmt.Println(d.data.num)
 }

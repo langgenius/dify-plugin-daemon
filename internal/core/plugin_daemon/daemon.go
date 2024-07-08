@@ -25,23 +25,23 @@ func InvokeTool(session *session_manager.Session, provider_name string, tool_nam
 
 	listener := runtime.Listen(session.ID())
 	listener.AddListener(func(message []byte) {
-		chunk, err := parser.UnmarshalJsonBytes[plugin_entities.StreamMessage](message)
+		chunk, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](message)
 		if err != nil {
 			log.Error("unmarshal json failed: %s", err.Error())
 			return
 		}
 
 		switch chunk.Type {
-		case plugin_entities.STREAM_MESSAGE_TYPE_STREAM:
+		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
 			chunk, err := parser.UnmarshalJsonBytes[ToolResponseChunk](chunk.Data)
 			if err != nil {
 				log.Error("unmarshal json failed: %s", err.Error())
 				return
 			}
 			response.Write(chunk)
-		case plugin_entities.STREAM_MESSAGE_TYPE_INVOKE:
-			// TODO: invoke dify
-		case plugin_entities.STREAM_MESSAGE_TYPE_END:
+		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
+			invokeDify(runtime, session, chunk.Data)
+		case plugin_entities.SESSION_MESSAGE_TYPE_END:
 			response.Close()
 		default:
 			log.Error("unknown stream message type: %s", chunk.Type)

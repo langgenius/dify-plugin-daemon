@@ -41,12 +41,15 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 			req.Body = io.NopCloser(strings.NewReader(q.Encode()))
 		case "payloadText":
 			req.Body = io.NopCloser(strings.NewReader(option.Value.(string)))
+			req.Header.Set("Content-Type", "text/plain")
 		case "payloadJson":
 			jsonStr, err := json.Marshal(option.Value)
 			if err != nil {
 				return nil, err
 			}
 			req.Body = io.NopCloser(bytes.NewBuffer(jsonStr))
+			// set application/json content type
+			req.Header.Set("Content-Type", "application/json")
 		case "directReferer":
 			req.Header.Set("Referer", url)
 		}
