@@ -6,17 +6,25 @@ import (
 )
 
 func Request[T any](method string, path string, options ...requests.HttpOptions) (*T, error) {
-	options = append(options, requests.HttpHeader(map[string]string{
-		"X-Inner-Api-Key": PLUGIN_INNER_API_KEY,
-	}))
+	options = append(options,
+		requests.HttpHeader(map[string]string{
+			"X-Inner-Api-Key": PLUGIN_INNER_API_KEY,
+		}),
+		requests.HttpWriteTimeout(5000),
+		requests.HttpReadTimeout(60000),
+	)
 
 	return requests.RequestAndParse[T](client, difyPath(path), method, options...)
 }
 
 func StreamResponse[T any](method string, path string, options ...requests.HttpOptions) (*stream.StreamResponse[T], error) {
-	options = append(options, requests.HttpHeader(map[string]string{
-		"X-Inner-Api-Key": PLUGIN_INNER_API_KEY,
-	}))
+	options = append(
+		options, requests.HttpHeader(map[string]string{
+			"X-Inner-Api-Key": PLUGIN_INNER_API_KEY,
+		}),
+		requests.HttpWriteTimeout(5000),
+		requests.HttpReadTimeout(60000),
+	)
 
 	return requests.RequestAndParseStream[T](client, difyPath(path), method, options...)
 }

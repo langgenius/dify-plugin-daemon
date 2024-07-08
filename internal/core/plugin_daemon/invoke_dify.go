@@ -125,6 +125,7 @@ func submitModelTask(
 			log.Error("invoke model failed: %s", err.Error())
 			return
 		}
+		defer response.Close()
 
 		for response.Next() {
 			chunk, _ := response.Read()
@@ -146,6 +147,7 @@ func submitToolTask(
 			log.Error("invoke tool failed: %s", err.Error())
 			return
 		}
+		defer response.Close()
 
 		for response.Next() {
 			chunk, _ := response.Read()

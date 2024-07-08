@@ -6,8 +6,13 @@ type HttpOptions struct {
 }
 
 // milliseconds
-func HttpTimeout(timeout int64) HttpOptions {
-	return HttpOptions{"timeout", timeout}
+func HttpWriteTimeout(timeout int64) HttpOptions {
+	return HttpOptions{"write_timeout", timeout}
+}
+
+// milliseconds
+func HttpReadTimeout(timeout int64) HttpOptions {
+	return HttpOptions{"read_timeout", timeout}
 }
 
 func HttpHeader(header map[string]string) HttpOptions {

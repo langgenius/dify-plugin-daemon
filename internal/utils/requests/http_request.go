@@ -18,7 +18,7 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 
 	for _, option := range options {
 		switch option.Type {
-		case "timeout":
+		case "write_timeout":
 			timeout := time.Second * time.Duration(option.Value.(int64))
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -24,6 +25,19 @@ func RequestAndParse[T any](client *http.Client, url string, method string, opti
 	if err != nil {
 		return nil, err
 	}
+
+	// get read timeout
+	read_timeout := int64(60000)
+	for _, option := range options {
+		if option.Type == "read_timeout" {
+			read_timeout = option.Value.(int64)
+			break
+		}
+	}
+	time.AfterFunc(time.Millisecond*time.Duration(read_timeout), func() {
+		// close the response body if timeout
+		resp.Body.Close()
+	})
 
 	err = parseJsonBody(resp, &ret)
 	if err != nil {
@@ -60,6 +74,19 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	}
 
 	ch := stream.NewStreamResponse[T](1024)
+
+	// get read timeout
+	read_timeout := int64(60000)
+	for _, option := range options {
+		if option.Type == "read_timeout" {
+			read_timeout = option.Value.(int64)
+			break
+		}
+	}
+	time.AfterFunc(time.Millisecond*time.Duration(read_timeout), func() {
+		// close the response body if timeout
+		resp.Body.Close()
+	})
 
 	routine.Submit(func() {
 		scanner := bufio.NewScanner(resp.Body)
