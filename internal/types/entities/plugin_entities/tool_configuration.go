@@ -73,7 +73,7 @@ type ToolParameter struct {
 	Form             ToolParameterForm     `json:"form" validate:"required,tool_parameter_form"`
 	LLMDescription   string                `json:"llm_description" validate:"omitempty"`
 	Required         bool                  `json:"required" validate:"required"`
-	Default          any                   `json:"default" validate:"omitempty"`
+	Default          any                   `json:"default" validate:"omitempty,is_basic_type"`
 	Min              *float64              `json:"min" validate:"omitempty"`
 	Max              *float64              `json:"max" validate:"omitempty"`
 	Options          []ToolParameterOption `json:"options" validate:"omitempty,dive"`
@@ -120,7 +120,7 @@ type ToolProviderCredential struct {
 	Name        string                  `json:"name" validate:"required,gt=0,lt=1024"`
 	Type        CredentialType          `json:"type" validate:"required,credential_type"`
 	Required    bool                    `json:"required"`
-	Default     any                     `json:"default" validate:"omitempty"`
+	Default     any                     `json:"default" validate:"omitempty,is_basic_type"`
 	Options     []ToolCredentialsOption `json:"options" validate:"omitempty,dive"`
 	Label       I18nObject              `json:"label" validate:"required"`
 	Helper      *I18nObject             `json:"helper" validate:"omitempty"`
@@ -251,6 +251,8 @@ func init() {
 			return t
 		},
 	)
+
+	global_tool_provider_validator.RegisterValidation("is_basic_type", isGenericType)
 }
 
 func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderConfiguration, error) {
