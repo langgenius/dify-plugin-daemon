@@ -52,7 +52,7 @@ func invokeDify(runtime entities.PluginRuntimeInterface,
 		}
 		submitModelTask(runtime, session, request_id, &r)
 	case "node":
-		node_type, ok := detailed_request["node_type"].(string)
+		node_type, ok := detailed_request["node_type"].(dify_invocation.NodeType)
 		if !ok {
 			return fmt.Errorf("invoke request missing node_type: %s", data)
 		}
@@ -61,36 +61,36 @@ func invokeDify(runtime entities.PluginRuntimeInterface,
 			return fmt.Errorf("invoke request missing data: %s", data)
 		}
 		switch node_type {
-		case dify_invocation.NODE_TYPE_QUESTION_CLASSIFIER:
+		case dify_invocation.QUESTION_CLASSIFIER:
 			d := dify_invocation.InvokeNodeRequest[*dify_invocation.QuestionClassifierNodeData]{
-				NodeType: dify_invocation.NODE_TYPE_QUESTION_CLASSIFIER,
+				NodeType: dify_invocation.QUESTION_CLASSIFIER,
 				NodeData: &dify_invocation.QuestionClassifierNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {
 				return fmt.Errorf("unmarshal question classifier node data failed: %s", err.Error())
 			}
 			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
-		case dify_invocation.NODE_TYPE_KNOWLEDGE_RETRIEVAL:
+		case dify_invocation.KNOWLEDGE_RETRIEVAL:
 			d := dify_invocation.InvokeNodeRequest[*dify_invocation.KnowledgeRetrievalNodeData]{
-				NodeType: dify_invocation.NODE_TYPE_KNOWLEDGE_RETRIEVAL,
+				NodeType: dify_invocation.KNOWLEDGE_RETRIEVAL,
 				NodeData: &dify_invocation.KnowledgeRetrievalNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {
 				return fmt.Errorf("unmarshal knowledge retrieval node data failed: %s", err.Error())
 			}
 			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
-		case dify_invocation.NODE_TYPE_PARAMETER_EXTRACTOR:
+		case dify_invocation.PARAMETER_EXTRACTOR:
 			d := dify_invocation.InvokeNodeRequest[*dify_invocation.ParameterExtractorNodeData]{
-				NodeType: dify_invocation.NODE_TYPE_PARAMETER_EXTRACTOR,
+				NodeType: dify_invocation.PARAMETER_EXTRACTOR,
 				NodeData: &dify_invocation.ParameterExtractorNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {
 				return fmt.Errorf("unmarshal parameter extractor node data failed: %s", err.Error())
 			}
 			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
-		case dify_invocation.NODE_TYPE_CODE:
+		case dify_invocation.CODE:
 			d := dify_invocation.InvokeNodeRequest[*dify_invocation.CodeNodeData]{
-				NodeType: dify_invocation.NODE_TYPE_CODE,
+				NodeType: dify_invocation.CODE,
 				NodeData: &dify_invocation.CodeNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {

@@ -1,1 +1,0 @@
-activate basic_math && python -m main

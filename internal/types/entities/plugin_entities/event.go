@@ -3,15 +3,17 @@ package plugin_entities
 import "encoding/json"
 
 type PluginUniversalEvent struct {
-	Event     string          `json:"event"`
+	Event     PluginEventType `json:"event"`
 	SessionId string          `json:"session_id"`
 	Data      json.RawMessage `json:"data"`
 }
 
+type PluginEventType string
+
 const (
-	PLUGIN_EVENT_LOG     = "log"
-	PLUGIN_EVENT_SESSION = "session"
-	PLUGIN_EVENT_ERROR   = "error"
+	PLUGIN_EVENT_LOG     PluginEventType = "log"
+	PLUGIN_EVENT_SESSION PluginEventType = "session"
+	PLUGIN_EVENT_ERROR   PluginEventType = "error"
 )
 
 type PluginLogEvent struct {
@@ -21,14 +23,16 @@ type PluginLogEvent struct {
 }
 
 type SessionMessage struct {
-	Type string          `json:"type"`
-	Data json.RawMessage `json:"data"`
+	Type SESSION_MESSAGE_TYPE `json:"type"`
+	Data json.RawMessage      `json:"data"`
 }
 
+type SESSION_MESSAGE_TYPE string
+
 const (
-	SESSION_MESSAGE_TYPE_STREAM = "stream"
-	SESSION_MESSAGE_TYPE_END    = "end"
-	SESSION_MESSAGE_TYPE_INVOKE = "invoke"
+	SESSION_MESSAGE_TYPE_STREAM SESSION_MESSAGE_TYPE = "stream"
+	SESSION_MESSAGE_TYPE_END    SESSION_MESSAGE_TYPE = "end"
+	SESSION_MESSAGE_TYPE_INVOKE SESSION_MESSAGE_TYPE = "invoke"
 )
 
 type InvokeToolResponseChunk struct {

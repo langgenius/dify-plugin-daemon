@@ -3,12 +3,14 @@ package dify_invocation
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 )
 
 type BaseInvokeDifyRequest struct {
-	TenantId string `json:"tenant_id"`
-	UserId   string `json:"user_id"`
-	Type     string `json:"type"`
+	TenantId string     `json:"tenant_id"`
+	UserId   string     `json:"user_id"`
+	Type     InvokeType `json:"type"`
 }
 
 func (r *BaseInvokeDifyRequest) FromMap(data map[string]any) error {
@@ -21,24 +23,27 @@ func (r *BaseInvokeDifyRequest) FromMap(data map[string]any) error {
 		return fmt.Errorf("user_id is not a string")
 	}
 
-	if r.Type, ok = data["type"].(string); !ok {
+	if r.Type, ok = data["type"].(InvokeType); !ok {
 		return fmt.Errorf("type is not a string")
 	}
 
 	return nil
 }
 
+type InvokeType string
+
 const (
-	INVOKE_TYPE_MODEL = "model"
-	INVOKE_TYPE_TOOL  = "tool"
-	INVOKE_TYPE_NODE  = "node"
+	INVOKE_TYPE_MODEL InvokeType = "model"
+	INVOKE_TYPE_TOOL  InvokeType = "tool"
+	INVOKE_TYPE_NODE  InvokeType = "node"
 )
 
 type InvokeModelRequest struct {
 	BaseInvokeDifyRequest
-	Provider   string         `json:"provider"`
-	Model      string         `json:"model"`
-	Parameters map[string]any `json:"parameters"`
+	Provider   string                   `json:"provider"`
+	Model      string                   `json:"model"`
+	ModelType  model_entities.ModelType `json:"model_type"`
+	Parameters map[string]any           `json:"parameters"`
 }
 
 func (r *InvokeModelRequest) FromMap(base map[string]any, data map[string]any) error {
@@ -49,6 +54,10 @@ func (r *InvokeModelRequest) FromMap(base map[string]any, data map[string]any) e
 
 	if r.Model, ok = data["model"].(string); !ok {
 		return fmt.Errorf("model is not a string")
+	}
+
+	if r.ModelType, ok = data["model_type"].(model_entities.ModelType); !ok {
+		return fmt.Errorf("model_type is not a string")
 	}
 
 	if r.Parameters, ok = data["parameters"].(map[string]any); !ok {
@@ -110,13 +119,13 @@ type InvokeToolResponseChunk struct {
 
 type InvokeNodeRequest[T WorkflowNodeData] struct {
 	BaseInvokeDifyRequest
-	NodeType string `json:"node_type"`
-	NodeData T      `json:"node_data"`
+	NodeType NodeType `json:"node_type"`
+	NodeData T        `json:"node_data"`
 }
 
 func (r *InvokeNodeRequest[T]) FromMap(data map[string]any) error {
 	var ok bool
-	if r.NodeType, ok = data["node_type"].(string); !ok {
+	if r.NodeType, ok = data["node_type"].(NodeType); !ok {
 		return fmt.Errorf("node_type is not a string")
 	}
 

@@ -11,7 +11,7 @@ type Config struct {
 
 	StoragePath string `envconfig:"STORAGE_PATH"`
 
-	Platform string `envconfig:"PLATFORM"`
+	Platform PlatformType `envconfig:"PLATFORM"`
 
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE"`
 
@@ -26,7 +26,9 @@ type Config struct {
 	DifyInvocationConnectionIdleTimeout int `envconfig:"DIFY_INVOCATION_CONNECTION_IDLE_TIMEOUT"`
 }
 
+type PlatformType string
+
 const (
-	PLATFORM_LOCAL      = "local"
-	PLATFORM_AWS_LAMBDA = "aws_lambda"
+	PLATFORM_LOCAL      PlatformType = "local"
+	PLATFORM_AWS_LAMBDA PlatformType = "aws_lambda"
 )

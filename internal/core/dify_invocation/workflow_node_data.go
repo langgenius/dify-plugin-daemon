@@ -6,11 +6,13 @@ type WorkflowNodeData interface {
 	*KnowledgeRetrievalNodeData | *QuestionClassifierNodeData | *ParameterExtractorNodeData | *CodeNodeData
 }
 
+type NodeType string
+
 const (
-	NODE_TYPE_KNOWLEDGE_RETRIEVAL = "knowledge_retrieval"
-	NODE_TYPE_QUESTION_CLASSIFIER = "question_classifier"
-	NODE_TYPE_PARAMETER_EXTRACTOR = "parameter_extractor"
-	NODE_TYPE_CODE                = "code"
+	KNOWLEDGE_RETRIEVAL NodeType = "knowledge_retrieval"
+	QUESTION_CLASSIFIER NodeType = "question_classifier"
+	PARAMETER_EXTRACTOR NodeType = "parameter_extractor"
+	CODE                NodeType = "code"
 )
 
 type KnowledgeRetrievalNodeData struct {

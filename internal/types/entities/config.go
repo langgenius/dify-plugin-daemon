@@ -1,17 +1,20 @@
 package entities
 
 import (
+	"time"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 type PluginConfiguration struct {
-	Version  string                      `json:"version"`
-	Author   string                      `json:"author"`
-	Name     string                      `json:"name"`
-	Datetime int64                       `json:"datetime"`
-	Module   string                      `json:"module"`
-	Resource PluginConfigurationResource `json:"resource"`
-	Meta     PluginConfigurationMeta     `json:"meta"`
+	Version   string                      `json:"version"`
+	Author    string                      `json:"author"`
+	Name      string                      `json:"name"`
+	CreatedAt time.Time                   `json:"createdAt"`
+	Module    string                      `json:"module"`
+	Resource  PluginConfigurationResource `json:"resource"`
+	Meta      PluginConfigurationMeta     `json:"meta"`
+	Plugins   []string                    `json:"plugins"`
 }
 
 func (p *PluginConfiguration) Identity() string {
