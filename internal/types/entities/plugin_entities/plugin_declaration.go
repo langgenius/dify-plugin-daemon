@@ -74,7 +74,7 @@ type PluginDeclaration struct {
 	Name      string                    `json:"name" yaml:"name" validate:"required" enum:"plugin"`
 	CreatedAt time.Time                 `json:"created_at" yaml:"created_at" validate:"required"`
 	Resource  PluginResourceRequirement `json:"resource" yaml:"resource" validate:"required"`
-	Plugin    []string                  `json:"plugins" yaml:"plugin" validate:"required"`
+	Plugins   []string                  `json:"plugins" yaml:"plugins" validate:"required"`
 }
 
 func (p *PluginDeclaration) Identity() string {

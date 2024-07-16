@@ -96,9 +96,9 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 		}
 	}
 
-	comments := parser.MarshalJson(map[string]string{
+	comments := parser.MarshalJson(map[string]any{
 		"signature": base64.StdEncoding.EncodeToString(signature),
-		"time":      time_string,
+		"time":      ct,
 	})
 
 	// write signature

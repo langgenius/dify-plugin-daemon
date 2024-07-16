@@ -103,7 +103,6 @@ func parsePluginConfig(configuration_path string) (*plugin_entities.PluginDeclar
 		return nil, err
 	}
 
-	// TODO: validate
 	result, err := plugin_entities.UnmarshalPluginDeclarationFromYaml(text)
 	if err != nil {
 		return nil, err
