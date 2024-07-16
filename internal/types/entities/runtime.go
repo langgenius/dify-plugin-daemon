@@ -2,13 +2,15 @@ package entities
 
 import (
 	"time"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 type (
 	PluginRuntime struct {
-		State     PluginRuntimeState  `json:"state"`
-		Config    PluginConfiguration `json:"config"`
-		Connector PluginConnector     `json:"-"`
+		State     PluginRuntimeState                `json:"state"`
+		Config    plugin_entities.PluginDeclaration `json:"config"`
+		Connector PluginConnector                   `json:"-"`
 	}
 
 	PluginRuntimeInterface interface {
@@ -21,7 +23,7 @@ type (
 		StartPlugin() error
 		Stopped() bool
 		Stop()
-		Configuration() *PluginConfiguration
+		Configuration() *plugin_entities.PluginDeclaration
 		RuntimeState() *PluginRuntimeState
 	}
 
@@ -40,7 +42,7 @@ func (r *PluginRuntime) Stop() {
 	r.State.Status = PLUGIN_RUNTIME_STATUS_STOPPED
 }
 
-func (r *PluginRuntime) Configuration() *PluginConfiguration {
+func (r *PluginRuntime) Configuration() *plugin_entities.PluginDeclaration {
 	return &r.Config
 }
 

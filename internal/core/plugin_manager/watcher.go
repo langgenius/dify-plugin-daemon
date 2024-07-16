@@ -9,8 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
@@ -73,11 +73,6 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 					continue
 				}
 
-				if err := configuration.Validate(); err != nil {
-					log.Error("plugin %s config validate error: %v", configuration.Name, err)
-					continue
-				}
-
 				status := verifyPluginStatus(configuration)
 				if status.exist {
 					continue
@@ -102,25 +97,26 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 	return ch
 }
 
-func parsePluginConfig(configuration_path string) (*entities.PluginConfiguration, error) {
+func parsePluginConfig(configuration_path string) (*plugin_entities.PluginDeclaration, error) {
 	text, err := os.ReadFile(configuration_path)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := parser.UnmarshalJson[entities.PluginConfiguration](string(text))
+	// TODO: validate
+	result, err := plugin_entities.UnmarshalPluginDeclarationFromYaml(text)
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 type pluginStatusResult struct {
 	exist bool
 }
 
-func verifyPluginStatus(config *entities.PluginConfiguration) pluginStatusResult {
+func verifyPluginStatus(config *plugin_entities.PluginDeclaration) pluginStatusResult {
 	_, exist := checkPluginExist(config.Identity())
 	if exist {
 		return pluginStatusResult{

@@ -21,3 +21,7 @@ func MarshalJsonBytes[T any](data T) []byte {
 	b, _ := json.Marshal(data)
 	return b
 }
+
+func UnmarshalJson2Map(json []byte) (map[string]any, error) {
+	return UnmarshalJsonBytes[map[string]any](json)
+}

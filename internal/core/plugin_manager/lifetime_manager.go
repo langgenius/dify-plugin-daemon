@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -18,10 +19,10 @@ const (
 )
 
 type PluginLifeTime struct {
-	Identity string                       `json:"identity"`
-	Restarts int                          `json:"restarts"`
-	Status   string                       `json:"status"`
-	Config   entities.PluginConfiguration `json:"configuration"`
+	Identity string                            `json:"identity"`
+	Restarts int                               `json:"restarts"`
+	Status   string                            `json:"status"`
+	Config   plugin_entities.PluginDeclaration `json:"configuration"`
 }
 
 type pluginLifeCollection struct {
