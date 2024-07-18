@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"path"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 type ZipPluginDecoder struct {
@@ -11,6 +13,9 @@ type ZipPluginDecoder struct {
 
 	reader *zip.Reader
 	err    error
+
+	sig         string
+	create_time int64
 }
 
 func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
@@ -75,4 +80,62 @@ func (z *ZipPluginDecoder) ReadFile(filename string) ([]byte, error) {
 	}
 
 	return data.Bytes(), nil
+}
+
+func (z *ZipPluginDecoder) decode() error {
+	if z.reader == nil {
+		return z.err
+	}
+
+	type signatureData struct {
+		Signature string `json:"signature"`
+		Time      int64  `json:"time"`
+	}
+
+	signature_data, err := parser.UnmarshalJson[signatureData](z.reader.Comment)
+	if err != nil {
+		return err
+	}
+
+	plugin_sig := signature_data.Signature
+	plugin_time := signature_data.Time
+
+	z.sig = plugin_sig
+	z.create_time = plugin_time
+
+	return nil
+}
+
+func (z *ZipPluginDecoder) Signature() (string, error) {
+	if z.sig != "" {
+		return z.sig, nil
+	}
+
+	if z.reader == nil {
+		return "", z.err
+	}
+
+	err := z.decode()
+	if err != nil {
+		return "", err
+	}
+
+	return z.sig, nil
+}
+
+func (z *ZipPluginDecoder) CreateTime() (int64, error) {
+	if z.create_time != 0 {
+		return z.create_time, nil
+	}
+
+	if z.reader == nil {
+		return 0, z.err
+	}
+
+	err := z.decode()
+	if err != nil {
+		return 0, err
+	}
+
+	return z.create_time, nil
 }

@@ -5,4 +5,6 @@ type PluginDecoder interface {
 	Walk(fn func(filename string, dir string) error) error
 	ReadFile(filename string) ([]byte, error)
 	Close() error
+	Signature() (string, error)
+	CreateTime() (int64, error)
 }

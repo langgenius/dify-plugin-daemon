@@ -70,3 +70,11 @@ func (d *FSPluginDecoder) Close() error {
 func (d *FSPluginDecoder) ReadFile(filename string) ([]byte, error) {
 	return os.ReadFile(path.Join(d.root, filename))
 }
+
+func (d *FSPluginDecoder) Signature() (string, error) {
+	return "", nil
+}
+
+func (d *FSPluginDecoder) CreateTime() (int64, error) {
+	return 0, nil
+}
