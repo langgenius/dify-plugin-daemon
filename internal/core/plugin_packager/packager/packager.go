@@ -3,48 +3,38 @@ package packager
 import (
 	"archive/zip"
 	"bytes"
-	"io/fs"
-	"os"
-	"path"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 )
 
 type Packager struct {
-	wp string // working path
-
+	decoder  decoder.PluginDecoder
 	manifest string // manifest file path
 }
 
-func NewPackager(plugin_path string) *Packager {
+func NewPackager(decoder decoder.PluginDecoder) *Packager {
 	return &Packager{
-		wp:       plugin_path,
+		decoder:  decoder,
 		manifest: "manifest.yaml",
 	}
 }
 
 func (p *Packager) Pack() ([]byte, error) {
-	// read manifest
-	_, err := p.fetchManifest()
+	err := p.Validate()
 	if err != nil {
 		return nil, err
 	}
 
 	zip_buffer := new(bytes.Buffer)
 	zip_writer := zip.NewWriter(zip_buffer)
-	err = fs.WalkDir(os.DirFS(p.wp), ".", func(root_path string, d fs.DirEntry, err error) error {
+
+	p.decoder.Walk(func(filename, dir string) error {
+		file, err := p.decoder.ReadFile(filename)
 		if err != nil {
 			return err
 		}
 
-		if d.IsDir() {
-			return nil
-		}
-
-		file, err := os.ReadFile(path.Join(p.wp, root_path))
-		if err != nil {
-			return err
-		}
-
-		zip_file, err := zip_writer.Create(root_path)
+		zip_file, err := zip_writer.Create(filename)
 		if err != nil {
 			return err
 		}

@@ -6,10 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"io"
+	"path"
 	"strconv"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/license/private_key"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
@@ -29,35 +31,49 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// construct zip
-	zip_reader, err := zip.NewReader(bytes.NewReader(plugin), int64(len(plugin)))
+	decoder, err := decoder.NewZipPluginDecoder(plugin)
 	if err != nil {
 		return nil, err
 	}
 
+	// create a new zip writer
+	zip_buffer := new(bytes.Buffer)
+	zip_writer := zip.NewWriter(zip_buffer)
+
+	defer zip_writer.Close()
+	// store temporary hash
 	data := new(bytes.Buffer)
 	// read one by one
-	for _, file := range zip_reader.File {
-		// read file bytes
-		file_reader, err := file.Open()
+	err = decoder.Walk(func(filename, dir string) error {
+		file, err := decoder.ReadFile(path.Join(dir, filename))
 		if err != nil {
-			return nil, err
-		}
-		defer file_reader.Close()
-
-		temp_data := new(bytes.Buffer)
-		_, err = temp_data.ReadFrom(file_reader)
-		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// calculate sha256 hash of the file
 		hash := sha256.New()
-		hash.Write(temp_data.Bytes())
+		hash.Write(file)
 		hashed := hash.Sum(nil)
 
 		// write the hash into data
 		data.Write(hashed)
+
+		// create a new file in the zip writer
+		file_writer, err := zip_writer.Create(path.Join(dir, filename))
+		if err != nil {
+			return err
+		}
+
+		_, err = io.Copy(file_writer, bytes.NewReader(file))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	// get current time
@@ -76,26 +92,6 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 	}
 
 	// write the signature into the comment field of the zip file
-	zip_buffer := new(bytes.Buffer)
-	zip_writer := zip.NewWriter(zip_buffer)
-	for _, file := range zip_reader.File {
-		file_writer, err := zip_writer.Create(file.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		file_reader, err := file.Open()
-		if err != nil {
-			return nil, err
-		}
-		defer file_reader.Close()
-
-		_, err = io.Copy(file_writer, file_reader)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	comments := parser.MarshalJson(map[string]any{
 		"signature": base64.StdEncoding.EncodeToString(signature),
 		"time":      ct,

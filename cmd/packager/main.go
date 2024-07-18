@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -25,7 +26,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	packager := packager.NewPackager(in_path)
+	decoder, err := decoder.NewFSPluginDecoder(in_path)
+	if err != nil {
+		log.Panic("failed to create plugin decoder , plugin path: %s, error: %v", in_path, err)
+	}
+
+	packager := packager.NewPackager(decoder)
 	zip_file, err := packager.Pack()
 
 	if err != nil {

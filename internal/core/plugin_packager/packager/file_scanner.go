@@ -1,7 +1,6 @@
 package packager
 
 import (
-	"os"
 	"path"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -12,9 +11,7 @@ func (p *Packager) ScanProvider() error {
 }
 
 func (p *Packager) fetchManifest() (*plugin_entities.PluginDeclaration, error) {
-
-	file_path := path.Join(p.wp, p.manifest)
-	file, err := os.ReadFile(file_path)
+	file, err := p.decoder.ReadFile(path.Clean(p.manifest))
 	if err != nil {
 		return nil, err
 	}
