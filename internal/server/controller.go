@@ -32,3 +32,58 @@ func InvokeLLM(c *gin.Context) {
 		},
 	)
 }
+
+func InvokeTextEmbedding(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeTextEmbedding]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.InvokeTextEmbedding(&itr, c)
+		},
+	)
+}
+
+func InvokeRerank(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeRerank]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.InvokeRerank(&itr, c)
+		},
+	)
+}
+
+func InvokeTTS(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeTTS]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.InvokeTTS(&itr, c)
+		},
+	)
+}
+
+func InvokeSpeech2Text(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeSpeech2Text]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.InvokeSpeech2Text(&itr, c)
+		},
+	)
+}
+
+func InvokeModeration(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeModeration]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.InvokeModeration(&itr, c)
+		},
+	)
+}

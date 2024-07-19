@@ -30,3 +30,53 @@ func InvokeLLM(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM]
 		return plugin_daemon.InvokeLLM(session, &r.Data)
 	}, ctx)
 }
+
+func InvokeTextEmbedding(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTextEmbedding], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.TextEmbeddingResult], error) {
+		return plugin_daemon.InvokeTextEmbedding(session, &r.Data)
+	}, ctx)
+}
+
+func InvokeRerank(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeRerank], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.RerankResult], error) {
+		return plugin_daemon.InvokeRerank(session, &r.Data)
+	}, ctx)
+}
+
+func InvokeTTS(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTTS], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.TTSResult], error) {
+		return plugin_daemon.InvokeTTS(session, &r.Data)
+	}, ctx)
+}
+
+func InvokeSpeech2Text(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeSpeech2Text], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.Speech2TextResult], error) {
+		return plugin_daemon.InvokeSpeech2Text(session, &r.Data)
+	}, ctx)
+}
+
+func InvokeModeration(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeModeration], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ModerationResult], error) {
+		return plugin_daemon.InvokeModeration(session, &r.Data)
+	}, ctx)
+}

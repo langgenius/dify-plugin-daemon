@@ -143,9 +143,9 @@ func InvokeTTS(
 	session *session_manager.Session,
 	request *requests.RequestInvokeTTS,
 ) (
-	*stream.StreamResponse[string], error,
+	*stream.StreamResponse[model_entities.TTSResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeTTS, string](
+	return genericInvokePlugin[requests.RequestInvokeTTS, model_entities.TTSResult](
 		session,
 		request,
 		1,
@@ -158,9 +158,9 @@ func InvokeSpeech2Text(
 	session *session_manager.Session,
 	request *requests.RequestInvokeSpeech2Text,
 ) (
-	*stream.StreamResponse[string], error,
+	*stream.StreamResponse[model_entities.Speech2TextResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeSpeech2Text, string](
+	return genericInvokePlugin[requests.RequestInvokeSpeech2Text, model_entities.Speech2TextResult](
 		session,
 		request,
 		1,
@@ -173,9 +173,9 @@ func InvokeModeration(
 	session *session_manager.Session,
 	request *requests.RequestInvokeModeration,
 ) (
-	*stream.StreamResponse[bool], error,
+	*stream.StreamResponse[model_entities.ModerationResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeModeration, bool](
+	return genericInvokePlugin[requests.RequestInvokeModeration, model_entities.ModerationResult](
 		session,
 		request,
 		1,
