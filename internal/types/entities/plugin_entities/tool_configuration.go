@@ -1,7 +1,6 @@
 package plugin_entities
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/go-playground/locales/en"
@@ -251,24 +250,6 @@ func init() {
 	)
 
 	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isGenericType)
-}
-
-func (t *ToolProviderConfiguration) UnmarshalJSON(data []byte) error {
-	type Alias ToolProviderConfiguration
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(t),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if err := validators.GlobalEntitiesValidator.Struct(t); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderConfiguration, error) {

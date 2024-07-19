@@ -3,7 +3,7 @@ package dify_invocation
 type WorkflowNodeData interface {
 	FromMap(map[string]any) error
 
-	*KnowledgeRetrievalNodeData | *QuestionClassifierNodeData | *ParameterExtractorNodeData | *CodeNodeData
+	*KnowledgeRetrievalNodeData | *QuestionClassifierNodeData | *ParameterExtractorNodeData
 }
 
 type NodeType string
@@ -33,12 +33,5 @@ type ParameterExtractorNodeData struct {
 }
 
 func (r *ParameterExtractorNodeData) FromMap(data map[string]any) error {
-	return nil
-}
-
-type CodeNodeData struct {
-}
-
-func (r *CodeNodeData) FromMap(data map[string]any) error {
 	return nil
 }

@@ -1,6 +1,10 @@
 package parser
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+)
 
 func UnmarshalJson[T any](text string) (T, error) {
 	return UnmarshalJsonBytes[T]([]byte(text))
@@ -9,6 +13,14 @@ func UnmarshalJson[T any](text string) (T, error) {
 func UnmarshalJsonBytes[T any](data []byte) (T, error) {
 	var result T
 	err := json.Unmarshal(data, &result)
+	if err != nil {
+		return result, err
+	}
+
+	if err := validators.GlobalEntitiesValidator.Struct(&result); err != nil {
+		return result, err
+	}
+
 	return result, err
 }
 

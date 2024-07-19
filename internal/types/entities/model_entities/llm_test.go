@@ -1,8 +1,9 @@
 package model_entities
 
 import (
-	"encoding/json"
 	"testing"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 func TestFullFunctionPromptMessage(t *testing.T) {
@@ -42,9 +43,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		`
 	)
 
-	var prompt_message PromptMessage
-
-	err := json.Unmarshal([]byte(system_message), &prompt_message)
+	prompt_message, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(system_message))
 	if err != nil {
 		t.Error(err)
 	}
@@ -52,7 +51,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		t.Error("role is not system")
 	}
 
-	err = json.Unmarshal([]byte(user_message), &prompt_message)
+	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(user_message))
 	if err != nil {
 		t.Error(err)
 	}
@@ -60,7 +59,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		t.Error("role is not user")
 	}
 
-	err = json.Unmarshal([]byte(assistant_message), &prompt_message)
+	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(assistant_message))
 	if err != nil {
 		t.Error(err)
 	}
@@ -68,7 +67,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		t.Error("role is not assistant")
 	}
 
-	err = json.Unmarshal([]byte(image_message), &prompt_message)
+	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(image_message))
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,7 +78,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		t.Error("type is not image")
 	}
 
-	err = json.Unmarshal([]byte(tool_message), &prompt_message)
+	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(tool_message))
 	if err != nil {
 		t.Error(err)
 	}
@@ -101,9 +100,7 @@ func TestWrongRole(t *testing.T) {
 		`
 	)
 
-	var prompt_message PromptMessage
-
-	err := json.Unmarshal([]byte(wrong_role), &prompt_message)
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_role))
 	if err == nil {
 		t.Error("error is nil")
 	}
@@ -119,9 +116,7 @@ func TestWrongContent(t *testing.T) {
 		`
 	)
 
-	var prompt_message PromptMessage
-
-	err := json.Unmarshal([]byte(wrong_content), &prompt_message)
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_content))
 	if err == nil {
 		t.Error("error is nil")
 	}
@@ -142,9 +137,7 @@ func TestWrongContentArray(t *testing.T) {
 		`
 	)
 
-	var prompt_message PromptMessage
-
-	err := json.Unmarshal([]byte(wrong_content_array), &prompt_message)
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_content_array))
 	if err == nil {
 		t.Error("error is nil")
 	}
@@ -164,9 +157,7 @@ func TestWrongContentArray2(t *testing.T) {
 		`
 	)
 
-	var prompt_message PromptMessage
-
-	err := json.Unmarshal([]byte(wrong_content_array2), &prompt_message)
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_content_array2))
 	if err == nil {
 		t.Error("error is nil")
 	}
@@ -191,9 +182,7 @@ func TestWrongContentArray3(t *testing.T) {
 		`
 	)
 
-	var prompt_message PromptMessage
-
-	err := json.Unmarshal([]byte(wrong_content_array3), &prompt_message)
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_content_array3))
 	if err == nil {
 		t.Error("error is nil")
 	}
@@ -241,9 +230,7 @@ func TestFullFunctionLLMResultChunk(t *testing.T) {
 		`
 	)
 
-	var c LLMResultChunk
-
-	err := json.Unmarshal([]byte(llm_result_chunk), &c)
+	_, err := parser.UnmarshalJsonBytes[LLMResultChunk]([]byte(llm_result_chunk))
 	if err != nil {
 		t.Error(err)
 	}
@@ -269,9 +256,7 @@ func TestZeroLLMUsage(t *testing.T) {
 		`
 	)
 
-	var u LLMUsage
-
-	err := json.Unmarshal([]byte(llm_usage), &u)
+	_, err := parser.UnmarshalJsonBytes[LLMUsage]([]byte(llm_usage))
 	if err != nil {
 		t.Error(err)
 	}

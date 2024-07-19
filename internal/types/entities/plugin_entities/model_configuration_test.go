@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"gopkg.in/yaml.v3"
 )
 
@@ -156,7 +157,7 @@ func TestFullFunctionModelProvider_Validate(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = UnmarshalModelProviderConfiguration(json_data)
+	_, err = parser.UnmarshalJsonBytes[ModelProviderConfiguration](json_data)
 	if err != nil {
 		t.Errorf("UnmarshalModelProviderConfiguration() error = %v", err)
 	}

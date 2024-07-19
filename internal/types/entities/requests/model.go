@@ -1,10 +1,7 @@
 package requests
 
 import (
-	"encoding/json"
-
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
 
 type RequestInvokeLLM struct {
@@ -17,22 +14,4 @@ type RequestInvokeLLM struct {
 	Stop            []string                           `json:"stop" validate:"omitempty"`
 	Stream          bool                               `json:"stream"`
 	Credentials     map[string]any                     `json:"credentials" validate:"omitempty,dive,is_basic_type"`
-}
-
-func (r *RequestInvokeLLM) UnmarshalJSON(data []byte) error {
-	type Alias RequestInvokeLLM
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(r),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if err := validators.GlobalEntitiesValidator.Struct(r); err != nil {
-		return err
-	}
-
-	return nil
 }

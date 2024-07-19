@@ -156,11 +156,6 @@ func (p *PromptMessage) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	// Validate the struct
-	if err := validators.GlobalEntitiesValidator.Struct(p); err != nil {
-		return err
-	}
-
 	// validate tool call id
 	if p.Role == PROMPT_MESSAGE_ROLE_TOOL && p.ToolCallId == "" {
 		return errors.New("tool call id is required")
@@ -175,47 +170,11 @@ type PromptMessageTool struct {
 	Parameters  map[string]any `json:"parameters"`
 }
 
-func (p *PromptMessageTool) UnmarshalJSON(data []byte) error {
-	type Alias PromptMessageTool
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(p),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if err := validators.GlobalEntitiesValidator.Struct(p); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 type LLMResultChunk struct {
 	Model             LLMModel            `json:"model" validate:"required"`
 	PromptMessages    []PromptMessage     `json:"prompt_messages" validate:"required,dive"`
 	SystemFingerprint string              `json:"system_fingerprint" validate:"omitempty"`
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
-}
-
-func (l *LLMResultChunk) UnmarshalJSON(data []byte) error {
-	type Alias LLMResultChunk
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(l),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if err := validators.GlobalEntitiesValidator.Struct(l); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type LLMUsage struct {
@@ -231,24 +190,6 @@ type LLMUsage struct {
 	TotalPrice          decimal.Decimal `json:"total_price" validate:"required"`
 	Currency            *string         `json:"currency" validate:"required"`
 	Latency             *float64        `json:"latency" validate:"required"`
-}
-
-func (l *LLMUsage) UnmarshalJSON(data []byte) error {
-	type Alias LLMUsage
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(l),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if err := validators.GlobalEntitiesValidator.Struct(l); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type LLMResultChunkDelta struct {

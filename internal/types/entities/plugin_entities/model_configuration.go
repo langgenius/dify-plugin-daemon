@@ -1,8 +1,6 @@
 package plugin_entities
 
 import (
-	"encoding/json"
-
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -277,19 +275,4 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("parameter_rule", isParameterRule)
 
 	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isGenericType)
-}
-
-func UnmarshalModelProviderConfiguration(data []byte) (*ModelProviderConfiguration, error) {
-	var modelProviderConfiguration ModelProviderConfiguration
-	err := json.Unmarshal(data, &modelProviderConfiguration)
-	if err != nil {
-		return nil, err
-	}
-
-	err = validators.GlobalEntitiesValidator.Struct(modelProviderConfiguration)
-	if err != nil {
-		return nil, err
-	}
-
-	return &modelProviderConfiguration, nil
 }

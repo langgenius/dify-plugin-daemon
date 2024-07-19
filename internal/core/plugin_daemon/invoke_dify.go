@@ -89,15 +89,6 @@ func invokeDify(
 				return fmt.Errorf("unmarshal parameter extractor node data failed: %s", err.Error())
 			}
 			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
-		case dify_invocation.CODE:
-			d := dify_invocation.InvokeNodeRequest[*dify_invocation.CodeNodeData]{
-				NodeType: dify_invocation.CODE,
-				NodeData: &dify_invocation.CodeNodeData{},
-			}
-			if err := d.FromMap(node_data); err != nil {
-				return fmt.Errorf("unmarshal code node data failed: %s", err.Error())
-			}
-			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
 		default:
 			return fmt.Errorf("unknown node type: %s", node_type)
 		}
