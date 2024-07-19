@@ -66,7 +66,7 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 	routine.Submit(func() {
 		for _, plugin := range plugins {
 			if plugin.IsDir() {
-				configuration_path := path.Join(root_path, plugin.Name(), "manifest.json")
+				configuration_path := path.Join(root_path, plugin.Name(), "manifest.yaml")
 				configuration, err := parsePluginConfig(configuration_path)
 				if err != nil {
 					log.Error("parse plugin config error: %v", err)
@@ -78,6 +78,10 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 					continue
 				}
 
+				// check if .verified file exists
+				verified_path := path.Join(root_path, plugin.Name(), ".verified")
+				_, err = os.Stat(verified_path)
+
 				ch <- entities.PluginRuntime{
 					Config: *configuration,
 					State: entities.PluginRuntimeState{
@@ -85,7 +89,7 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 						Restarts:     0,
 						RelativePath: path.Join(root_path, plugin.Name()),
 						ActiveAt:     nil,
-						Verified:     false,
+						Verified:     err == nil,
 					},
 				}
 			}

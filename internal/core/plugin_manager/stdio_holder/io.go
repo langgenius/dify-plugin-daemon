@@ -2,11 +2,12 @@ package stdio_holder
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -19,88 +20,154 @@ var (
 )
 
 type stdioHolder struct {
-	id             string
-	pluginIdentity string
-	writer         io.WriteCloser
-	reader         io.ReadCloser
-	errReader      io.ReadCloser
-	l              *sync.Mutex
-	listener       map[string]func([]byte)
-	started        bool
-	alive          bool
+	id              string
+	plugin_identity string
+	writer          io.WriteCloser
+	reader          io.ReadCloser
+	err_reader      io.ReadCloser
+	l               *sync.Mutex
+	listener        map[string]func([]byte)
+	error_listener  map[string]func([]byte)
+	started         bool
+
+	err_message                 string
+	last_err_message_updated_at time.Time
+
+	health_chan        chan bool
+	health_chan_closed bool
+	health_chan_lock   *sync.Mutex
+	last_active_at     time.Time
+}
+
+func (s *stdioHolder) Error() error {
+	if time.Since(s.last_err_message_updated_at) < 60*time.Second {
+		if s.err_message != "" {
+			return errors.New(s.err_message)
+		}
+	}
+
+	return nil
 }
 
 func (s *stdioHolder) Stop() {
-	s.alive = false
 	s.writer.Close()
 	s.reader.Close()
-	s.errReader.Close()
+	s.err_reader.Close()
+
+	s.health_chan_lock.Lock()
+	if !s.health_chan_closed {
+		close(s.health_chan)
+		s.health_chan_closed = true
+	}
+	s.health_chan_lock.Unlock()
 
 	stdio_holder.Delete(s.id)
 }
 
 func (s *stdioHolder) StartStdout() {
 	s.started = true
-	s.alive = true
+	defer s.Stop()
 
 	scanner := bufio.NewScanner(s.reader)
-	for s.alive {
-		for scanner.Scan() {
-			data := scanner.Bytes()
-			event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
-			if err != nil {
-				log.Error("unmarshal json failed: %s", err.Error())
-				continue
+	for scanner.Scan() {
+		data := scanner.Bytes()
+		event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
+		if err != nil {
+			// log.Error("unmarshal json failed: %s", err.Error())
+			continue
+		}
+
+		session_id := event.SessionId
+
+		switch event.Event {
+		case plugin_entities.PLUGIN_EVENT_LOG:
+			if event.Event == plugin_entities.PLUGIN_EVENT_LOG {
+				logEvent, err := parser.UnmarshalJsonBytes[plugin_entities.PluginLogEvent](event.Data)
+				if err != nil {
+					log.Error("unmarshal json failed: %s", err.Error())
+					continue
+				}
+
+				log.Info("plugin %s: %s", s.plugin_identity, logEvent.Message)
+			}
+		case plugin_entities.PLUGIN_EVENT_SESSION:
+			for _, listener := range listeners {
+				listener(s.id, event.Data)
 			}
 
-			session_id := event.SessionId
-
-			switch event.Event {
-			case plugin_entities.PLUGIN_EVENT_LOG:
-				if event.Event == plugin_entities.PLUGIN_EVENT_LOG {
-					logEvent, err := parser.UnmarshalJsonBytes[plugin_entities.PluginLogEvent](event.Data)
-					if err != nil {
-						log.Error("unmarshal json failed: %s", err.Error())
-						continue
-					}
-
-					log.Info("plugin %s: %s", s.pluginIdentity, logEvent.Message)
+			for listener_session_id, listener := range s.listener {
+				if listener_session_id == session_id {
+					listener(event.Data)
 				}
-			case plugin_entities.PLUGIN_EVENT_SESSION:
-				for _, listener := range listeners {
-					listener(s.id, event.Data)
-				}
-
-				for listener_session_id, listener := range s.listener {
-					if listener_session_id == session_id {
-						listener(event.Data)
-					}
-				}
-			case plugin_entities.PLUGIN_EVENT_ERROR:
-				log.Error("plugin %s: %s", s.pluginIdentity, event.Data)
 			}
+		case plugin_entities.PLUGIN_EVENT_ERROR:
+			for listener_session_id, listener := range s.error_listener {
+				if listener_session_id == session_id {
+					listener(event.Data)
+				}
+			}
+		case plugin_entities.PLUGIN_EVENT_HEARTBEAT:
+			s.last_active_at = time.Now()
 		}
 	}
 }
 
-/*
- * @return error
- */
-func (s *stdioHolder) StartStderr() error {
-	s.started = true
-	s.alive = true
-	defer s.Stop()
-	for s.alive {
+func (s *stdioHolder) WriteError(msg string) {
+	const MAX_ERR_MSG_LEN = 1024
+	reduce := len(msg) + len(s.err_message) - MAX_ERR_MSG_LEN
+	if reduce > 0 {
+		s.err_message = s.err_message[reduce:]
+	}
+
+	s.err_message += msg
+	s.last_err_message_updated_at = time.Now()
+}
+
+func (s *stdioHolder) StartStderr() {
+	for {
 		buf := make([]byte, 1024)
-		n, err := s.errReader.Read(buf)
+		n, err := s.err_reader.Read(buf)
 		if err != nil && err != io.EOF {
-			return err
+			break
 		} else if err != nil {
-			return nil
+			s.WriteError(fmt.Sprintf("%s\n", buf[:n]))
+			break
 		}
 
 		if n > 0 {
-			return fmt.Errorf("stderr: %s", buf[:n])
+			s.WriteError(fmt.Sprintf("%s\n", buf[:n]))
+		}
+	}
+}
+
+func (s *stdioHolder) Wait() error {
+	s.health_chan_lock.Lock()
+	if s.health_chan_closed {
+		s.health_chan_lock.Unlock()
+		return errors.New("you need to start the health check before waiting")
+	}
+	s.health_chan_lock.Unlock()
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	// check status of plugin every 5 seconds
+	for {
+		s.health_chan_lock.Lock()
+		if s.health_chan_closed {
+			s.health_chan_lock.Unlock()
+			break
+		}
+		s.health_chan_lock.Unlock()
+		select {
+		case <-ticker.C:
+			// check heartbeat
+			if time.Since(s.last_active_at) > 20*time.Second {
+				return errors.New("plugin is not active")
+			}
+		case <-s.health_chan:
+			// closed
+			return s.Error()
 		}
 	}
 
@@ -109,110 +176,4 @@ func (s *stdioHolder) StartStderr() error {
 
 func (s *stdioHolder) GetID() string {
 	return s.id
-}
-
-/*
- * @param plugin_identity: string
- * @param writer: io.WriteCloser
- * @param reader: io.ReadCloser
- * @param errReader: io.ReadCloser
- */
-func Put(
-	plugin_identity string,
-	writer io.WriteCloser,
-	reader io.ReadCloser,
-	errReader io.ReadCloser,
-) *stdioHolder {
-	id := uuid.New().String()
-
-	holder := &stdioHolder{
-		pluginIdentity: plugin_identity,
-		writer:         writer,
-		reader:         reader,
-		errReader:      errReader,
-		id:             id,
-		l:              &sync.Mutex{},
-	}
-
-	stdio_holder.Store(id, holder)
-	return holder
-}
-
-/*
- * @param id: string
- */
-func Get(id string) *stdioHolder {
-	if v, ok := stdio_holder.Load(id); ok {
-		if holder, ok := v.(*stdioHolder); ok {
-			return holder
-		}
-	}
-
-	return nil
-}
-
-/*
- * @param id: string
- */
-func Remove(id string) {
-	stdio_holder.Delete(id)
-}
-
-/*
- * @param id: string
- * @param session_id: string
- * @param listener: func(data []byte)
- * @return string - listener identity
- */
-func OnEvent(id string, session_id string, listener func([]byte)) {
-	if v, ok := stdio_holder.Load(id); ok {
-		if holder, ok := v.(*stdioHolder); ok {
-			holder.l.Lock()
-			defer holder.l.Unlock()
-			if holder.listener == nil {
-				holder.listener = map[string]func([]byte){}
-			}
-
-			holder.listener[session_id] = listener
-		}
-	}
-}
-
-/*
- * @param id: string
- * @param listener: string
- */
-func RemoveListener(id string, listener string) {
-	if v, ok := stdio_holder.Load(id); ok {
-		if holder, ok := v.(*stdioHolder); ok {
-			holder.l.Lock()
-			defer holder.l.Unlock()
-			delete(holder.listener, listener)
-		}
-	}
-}
-
-/*
- * @param listener: func(id string, data []byte)
- */
-func OnGlobalEvent(listener func(string, []byte)) {
-	l.Lock()
-	defer l.Unlock()
-	listeners[uuid.New().String()] = listener
-}
-
-/*
- * @param id: string
- * @param data: []byte
- */
-func Write(id string, data []byte) error {
-	if v, ok := stdio_holder.Load(id); ok {
-		if holder, ok := v.(*stdioHolder); ok {
-			_, err := holder.writer.Write(data)
-
-			return err
-		}
-	}
-
-	return nil
 }

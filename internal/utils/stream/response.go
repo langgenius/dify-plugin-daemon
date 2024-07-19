@@ -15,6 +15,7 @@ type StreamResponse[T any] struct {
 	max       int
 	listening bool
 	onClose   func()
+	err       error
 }
 
 func NewStreamResponse[T any](max int) *StreamResponse[T] {
@@ -31,12 +32,12 @@ func (r *StreamResponse[T]) OnClose(f func()) {
 
 func (r *StreamResponse[T]) Next() bool {
 	r.l.Lock()
-	if r.closed {
+	if r.closed && r.q.Len() == 0 && r.err == nil {
 		r.l.Unlock()
 		return false
 	}
 
-	if r.q.Len() > 0 {
+	if r.q.Len() > 0 || r.err != nil {
 		r.l.Unlock()
 		return true
 	}
@@ -59,7 +60,13 @@ func (r *StreamResponse[T]) Read() (T, error) {
 		return data, nil
 	} else {
 		var data T
-		return data, errors.New("no data available, please call Next() to wait for data")
+		if r.err != nil {
+			err := r.err
+			r.err = nil
+			return data, err
+		}
+
+		return data, errors.New("no data available")
 	}
 }
 
@@ -116,4 +123,17 @@ func (r *StreamResponse[T]) Size() int {
 	defer r.l.Unlock()
 
 	return r.q.Len()
+}
+
+func (r *StreamResponse[T]) WriteError(err error) {
+	r.l.Lock()
+	defer r.l.Unlock()
+
+	r.err = err
+
+	if r.q.Len() == 0 {
+		if r.listening {
+			r.sig <- true
+		}
+	}
 }

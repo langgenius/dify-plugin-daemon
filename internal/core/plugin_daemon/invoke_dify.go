@@ -11,7 +11,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func invokeDify(runtime entities.PluginRuntimeInterface,
+func invokeDify(
+	runtime entities.PluginRuntimeInterface,
 	session *session_manager.Session, data []byte,
 ) error {
 	// unmarshal invoke data

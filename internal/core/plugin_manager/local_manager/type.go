@@ -6,4 +6,5 @@ type LocalPluginRuntime struct {
 	entities.PluginRuntime
 
 	io_identity string
+	w           chan bool
 }

@@ -25,6 +25,7 @@ type (
 		Stop()
 		Configuration() *plugin_entities.PluginDeclaration
 		RuntimeState() *PluginRuntimeState
+		Wait() (<-chan bool, error)
 	}
 
 	PluginRuntimeSessionIOInterface interface {

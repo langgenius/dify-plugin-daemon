@@ -1,6 +1,10 @@
 package plugin_entities
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
+)
 
 type PluginUniversalEvent struct {
 	Event     PluginEventType `json:"event"`
@@ -11,9 +15,10 @@ type PluginUniversalEvent struct {
 type PluginEventType string
 
 const (
-	PLUGIN_EVENT_LOG     PluginEventType = "log"
-	PLUGIN_EVENT_SESSION PluginEventType = "session"
-	PLUGIN_EVENT_ERROR   PluginEventType = "error"
+	PLUGIN_EVENT_LOG       PluginEventType = "log"
+	PLUGIN_EVENT_SESSION   PluginEventType = "session"
+	PLUGIN_EVENT_ERROR     PluginEventType = "error"
+	PLUGIN_EVENT_HEARTBEAT PluginEventType = "heartbeat"
 )
 
 type PluginLogEvent struct {
@@ -32,13 +37,22 @@ type SESSION_MESSAGE_TYPE string
 const (
 	SESSION_MESSAGE_TYPE_STREAM SESSION_MESSAGE_TYPE = "stream"
 	SESSION_MESSAGE_TYPE_END    SESSION_MESSAGE_TYPE = "end"
+	SESSION_MESSAGE_TYPE_ERROR  SESSION_MESSAGE_TYPE = "error"
 	SESSION_MESSAGE_TYPE_INVOKE SESSION_MESSAGE_TYPE = "invoke"
 )
 
-type InvokeToolResponseChunk struct {
+type ToolResponseChunk struct {
+	Type    string         `json:"type"`
+	Message map[string]any `json:"message"`
+}
+
+type PluginResponseChunk struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
 
-type InvokeModelResponseChunk struct {
+type InvokeModelResponseChunk = model_entities.LLMResultChunk
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }

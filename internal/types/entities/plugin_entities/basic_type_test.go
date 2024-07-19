@@ -1,6 +1,10 @@
 package plugin_entities
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+)
 
 func TestGenericType_Validate(t *testing.T) {
 	type F struct {
@@ -13,7 +17,7 @@ func TestGenericType_Validate(t *testing.T) {
 		},
 	}
 
-	if err := global_tool_provider_validator.Struct(f); err != nil {
+	if err := validators.GlobalEntitiesValidator.Struct(f); err != nil {
 		t.Errorf("GenericType_Validate() error = %v", err)
 	}
 }
@@ -29,7 +33,7 @@ func TestWrongGenericType_Validate(t *testing.T) {
 		},
 	}
 
-	if err := global_tool_provider_validator.Struct(f); err == nil {
+	if err := validators.GlobalEntitiesValidator.Struct(f); err == nil {
 		t.Error("WrongGenericType_Validate() error = nil; want error")
 	}
 }

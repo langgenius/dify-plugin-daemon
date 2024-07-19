@@ -1,6 +1,7 @@
 package local_manager
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"sync"
@@ -11,36 +12,46 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func (r *LocalPluginRuntime) StartPlugin() error {
+func (r *LocalPluginRuntime) gc() {
+	if r.io_identity != "" {
+		stdio_holder.Remove(r.io_identity)
+	}
+
+	if r.w != nil {
+		close(r.w)
+		r.w = nil
+	}
+}
+
+func (r *LocalPluginRuntime) init() {
+	r.w = make(chan bool)
 	r.State.Status = entities.PLUGIN_RUNTIME_STATUS_LAUNCHING
-	defer func() {
-		r.io_identity = ""
-	}()
+}
+
+func (r *LocalPluginRuntime) StartPlugin() error {
 	defer log.Info("plugin %s stopped", r.Config.Identity())
 
+	r.init()
 	// start plugin
-	e := exec.Command("bash", "launch.sh")
+	e := exec.Command("bash", r.Config.Execution.Launch)
 	e.Dir = r.State.RelativePath
 
 	// get writer
 	stdin, err := e.StdinPipe()
 	if err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
-		e.Process.Kill()
 		return fmt.Errorf("get stdin pipe failed: %s", err.Error())
 	}
 
 	stdout, err := e.StdoutPipe()
 	if err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
-		e.Process.Kill()
 		return fmt.Errorf("get stdout pipe failed: %s", err.Error())
 	}
 
 	stderr, err := e.StderrPipe()
 	if err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
-		e.Process.Kill()
 		return fmt.Errorf("get stderr pipe failed: %s", err.Error())
 	}
 
@@ -56,17 +67,19 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 			r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 			log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
 		}
+
+		r.gc()
 	}()
 
 	log.Info("plugin %s started", r.Config.Identity())
 
+	// setup stdio
 	stdio := stdio_holder.Put(r.Config.Identity(), stdin, stdout, stderr)
-
-	// set io identity
 	r.io_identity = stdio.GetID()
+	defer stdio.Stop()
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
+	wg.Add(2)
 
 	// listen to plugin stdout
 	routine.Submit(func() {
@@ -74,16 +87,30 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		stdio.StartStdout()
 	})
 
-	err = stdio.StartStderr()
+	// listen to plugin stderr
+	routine.Submit(func() {
+		defer wg.Done()
+		stdio.StartStderr()
+	})
+
+	// wait for plugin to exit
+	err = stdio.Wait()
 	if err != nil {
-		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
-		e.Process.Kill()
 		return err
 	}
+
+	e.Process.Kill()
 
 	wg.Wait()
 
 	// plugin has exited
 	r.State.Status = entities.PLUGIN_RUNTIME_STATUS_PENDING
 	return nil
+}
+
+func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
+	if r.w == nil {
+		return nil, errors.New("plugin not started")
+	}
+	return r.w, nil
 }

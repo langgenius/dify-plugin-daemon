@@ -1,4 +1,4 @@
-package requests
+package http_requests
 
 import (
 	"bufio"

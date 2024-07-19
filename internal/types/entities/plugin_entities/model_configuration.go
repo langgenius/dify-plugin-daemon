@@ -7,6 +7,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/shopspring/decimal"
 )
 
@@ -213,20 +214,16 @@ type ModelProviderConfiguration struct {
 	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" validate:"omitempty"`
 }
 
-var (
-	global_model_provider_validator = validator.New()
-)
-
 func init() {
 	// init validator
 	en := en.New()
 	uni := ut.New(en, en)
 	translator, _ := uni.GetTranslator("en")
 	// register translations for default validators
-	en_translations.RegisterDefaultTranslations(global_model_provider_validator, translator)
+	en_translations.RegisterDefaultTranslations(validators.GlobalEntitiesValidator, translator)
 
-	global_model_provider_validator.RegisterValidation("model_type", isModelType)
-	global_model_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("model_type", isModelType)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"model_type",
 		translator,
 		func(ut ut.Translator) error {
@@ -238,8 +235,8 @@ func init() {
 		},
 	)
 
-	global_model_provider_validator.RegisterValidation("model_provider_configurate_method", isModelProviderConfigurateMethod)
-	global_model_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("model_provider_configurate_method", isModelProviderConfigurateMethod)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"model_provider_configurate_method",
 		translator,
 		func(ut ut.Translator) error {
@@ -251,8 +248,8 @@ func init() {
 		},
 	)
 
-	global_model_provider_validator.RegisterValidation("model_provider_form_type", isModelProviderFormType)
-	global_model_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("model_provider_form_type", isModelProviderFormType)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"model_provider_form_type",
 		translator,
 		func(ut ut.Translator) error {
@@ -264,8 +261,8 @@ func init() {
 		},
 	)
 
-	global_model_provider_validator.RegisterValidation("model_parameter_type", isModelParameterType)
-	global_model_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("model_parameter_type", isModelParameterType)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"model_parameter_type",
 		translator,
 		func(ut ut.Translator) error {
@@ -277,9 +274,9 @@ func init() {
 		},
 	)
 
-	global_model_provider_validator.RegisterValidation("parameter_rule", isParameterRule)
+	validators.GlobalEntitiesValidator.RegisterValidation("parameter_rule", isParameterRule)
 
-	global_model_provider_validator.RegisterValidation("is_basic_type", isGenericType)
+	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isGenericType)
 }
 
 func UnmarshalModelProviderConfiguration(data []byte) (*ModelProviderConfiguration, error) {
@@ -289,7 +286,7 @@ func UnmarshalModelProviderConfiguration(data []byte) (*ModelProviderConfigurati
 		return nil, err
 	}
 
-	err = global_model_provider_validator.Struct(modelProviderConfiguration)
+	err = validators.GlobalEntitiesValidator.Struct(modelProviderConfiguration)
 	if err != nil {
 		return nil, err
 	}

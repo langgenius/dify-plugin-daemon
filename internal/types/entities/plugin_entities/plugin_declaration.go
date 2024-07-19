@@ -67,14 +67,20 @@ type PluginDeclarationMeta struct {
 	Arch    []string `json:"arch" yaml:"arch" validate:"required,dive,plugin_declaration_platform_arch"`
 }
 
+type PluginDeclarationExecution struct {
+	Install string `json:"install" yaml:"install" validate:"omitempty"`
+	Launch  string `json:"launch" yaml:"launch" validate:"omitempty"`
+}
+
 type PluginDeclaration struct {
-	Version   string                    `json:"version" yaml:"version" validate:"required"`
-	Type      DifyManifestType          `json:"type" yaml:"type" validate:"required,eq=plugin"`
-	Author    string                    `json:"author" yaml:"author" validate:"required"`
-	Name      string                    `json:"name" yaml:"name" validate:"required" enum:"plugin"`
-	CreatedAt time.Time                 `json:"created_at" yaml:"created_at" validate:"required"`
-	Resource  PluginResourceRequirement `json:"resource" yaml:"resource" validate:"required"`
-	Plugins   []string                  `json:"plugins" yaml:"plugins" validate:"required"`
+	Version   string                     `json:"version" yaml:"version" validate:"required"`
+	Type      DifyManifestType           `json:"type" yaml:"type" validate:"required,eq=plugin"`
+	Author    string                     `json:"author" yaml:"author" validate:"required"`
+	Name      string                     `json:"name" yaml:"name" validate:"required" enum:"plugin"`
+	CreatedAt time.Time                  `json:"created_at" yaml:"created_at" validate:"required"`
+	Resource  PluginResourceRequirement  `json:"resource" yaml:"resource" validate:"required"`
+	Plugins   []string                   `json:"plugins" yaml:"plugins" validate:"required"`
+	Execution PluginDeclarationExecution `json:"execution" yaml:"execution" validate:"required"`
 }
 
 func (p *PluginDeclaration) Identity() string {

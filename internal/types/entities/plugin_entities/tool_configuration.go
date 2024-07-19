@@ -1,12 +1,14 @@
 package plugin_entities
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -188,20 +190,16 @@ type ToolProviderConfiguration struct {
 	Tools             []ToolConfiguration               `json:"tools" validate:"required,dive"`
 }
 
-var (
-	global_tool_provider_validator = validator.New()
-)
-
 func init() {
 	// init validator
 	en := en.New()
 	uni := ut.New(en, en)
 	translator, _ := uni.GetTranslator("en")
 	// register translations for default validators
-	en_translations.RegisterDefaultTranslations(global_tool_provider_validator, translator)
+	en_translations.RegisterDefaultTranslations(validators.GlobalEntitiesValidator, translator)
 
-	global_tool_provider_validator.RegisterValidation("tool_parameter_type", isToolParameterType)
-	global_tool_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("tool_parameter_type", isToolParameterType)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"tool_parameter_type",
 		translator,
 		func(ut ut.Translator) error {
@@ -213,8 +211,8 @@ func init() {
 		},
 	)
 
-	global_tool_provider_validator.RegisterValidation("tool_parameter_form", isToolParameterForm)
-	global_tool_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("tool_parameter_form", isToolParameterForm)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"tool_parameter_form",
 		translator,
 		func(ut ut.Translator) error {
@@ -226,8 +224,8 @@ func init() {
 		},
 	)
 
-	global_tool_provider_validator.RegisterValidation("credential_type", isCredentialType)
-	global_tool_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("credential_type", isCredentialType)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"credential_type",
 		translator,
 		func(ut ut.Translator) error {
@@ -239,8 +237,8 @@ func init() {
 		},
 	)
 
-	global_tool_provider_validator.RegisterValidation("tool_label", isToolLabel)
-	global_tool_provider_validator.RegisterTranslation(
+	validators.GlobalEntitiesValidator.RegisterValidation("tool_label", isToolLabel)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
 		"tool_label",
 		translator,
 		func(ut ut.Translator) error {
@@ -252,7 +250,25 @@ func init() {
 		},
 	)
 
-	global_tool_provider_validator.RegisterValidation("is_basic_type", isGenericType)
+	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isGenericType)
+}
+
+func (t *ToolProviderConfiguration) UnmarshalJSON(data []byte) error {
+	type Alias ToolProviderConfiguration
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if err := validators.GlobalEntitiesValidator.Struct(t); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderConfiguration, error) {
@@ -261,7 +277,7 @@ func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderConfiguration
 		return nil, fmt.Errorf("failed to unmarshal tool provider configuration: %w", err)
 	}
 
-	if err := global_tool_provider_validator.Struct(obj); err != nil {
+	if err := validators.GlobalEntitiesValidator.Struct(obj); err != nil {
 		return nil, fmt.Errorf("failed to validate tool provider configuration: %w", err)
 	}
 

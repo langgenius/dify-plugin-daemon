@@ -151,7 +151,7 @@ func GetMap[V any](key string) (map[string]V, error) {
 	for k, v := range val {
 		value, err := parser.UnmarshalJson[V](v)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		result[k] = value

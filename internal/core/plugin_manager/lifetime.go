@@ -53,5 +53,14 @@ func lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
 			start_failed_times++
 			continue
 		}
+
+		// wait for plugin to stop
+		c, err := r.Wait()
+		if err == nil {
+			<-c
+		}
+
+		// restart plugin in 5s
+		time.Sleep(5 * time.Second)
 	}
 }

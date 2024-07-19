@@ -19,7 +19,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	}
 
 	// execute init command
-	handle := exec.Command("bash", "install.sh")
+	handle := exec.Command("bash", r.Config.Execution.Install)
 	handle.Dir = r.State.RelativePath
 
 	// get stdout and stderr
