@@ -2,8 +2,6 @@ package plugin_entities
 
 import (
 	"encoding/json"
-
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 )
 
 type PluginUniversalEvent struct {
@@ -50,8 +48,6 @@ type PluginResponseChunk struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
-
-type InvokeModelResponseChunk = model_entities.LLMResultChunk
 
 type ErrorResponse struct {
 	Error string `json:"error"`

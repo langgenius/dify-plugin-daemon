@@ -71,6 +71,10 @@ func (s *stdioHolder) StartStdout() {
 	scanner := bufio.NewScanner(s.reader)
 	for scanner.Scan() {
 		data := scanner.Bytes()
+		if len(data) == 0 {
+			continue
+		}
+
 		event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
 		if err != nil {
 			// log.Error("unmarshal json failed: %s", err.Error())
@@ -101,11 +105,7 @@ func (s *stdioHolder) StartStdout() {
 				}
 			}
 		case plugin_entities.PLUGIN_EVENT_ERROR:
-			for listener_session_id, listener := range s.error_listener {
-				if listener_session_id == session_id {
-					listener(event.Data)
-				}
-			}
+			log.Error("plugin %s: %s", s.plugin_identity, event.Data)
 		case plugin_entities.PLUGIN_EVENT_HEARTBEAT:
 			s.last_active_at = time.Now()
 		}
