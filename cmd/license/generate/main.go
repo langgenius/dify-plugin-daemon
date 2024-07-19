@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"os"
 )
 
 func main() {
@@ -29,6 +30,6 @@ func main() {
 		Bytes: new_public_key,
 	})
 
-	println(string(private_key_pem))
-	println(string(public_key_pem))
+	os.WriteFile("internal/core/license/private_key/PRIVATE_KEY.pem", private_key_pem, 0644)
+	os.WriteFile("internal/core/license/public_key/PUBLIC_KEY.pem", public_key_pem, 0644)
 }
