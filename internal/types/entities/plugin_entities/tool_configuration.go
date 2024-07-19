@@ -249,7 +249,7 @@ func init() {
 		},
 	)
 
-	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isGenericType)
+	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isBasicType)
 }
 
 func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderConfiguration, error) {

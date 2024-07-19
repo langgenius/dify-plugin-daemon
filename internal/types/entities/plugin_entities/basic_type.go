@@ -12,7 +12,7 @@ type I18nObject struct {
 	PtBr   string `json:"pt_BR" validate:"lt=1024"`
 }
 
-func isGenericType(fl validator.FieldLevel) bool {
+func isBasicType(fl validator.FieldLevel) bool {
 	// allowed int, string, bool, float64
 	switch fl.Field().Kind() {
 	case reflect.Int, reflect.String, reflect.Bool, reflect.Float64:

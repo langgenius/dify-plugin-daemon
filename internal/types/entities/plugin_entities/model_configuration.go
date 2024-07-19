@@ -274,5 +274,5 @@ func init() {
 
 	validators.GlobalEntitiesValidator.RegisterValidation("parameter_rule", isParameterRule)
 
-	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isGenericType)
+	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isBasicType)
 }
