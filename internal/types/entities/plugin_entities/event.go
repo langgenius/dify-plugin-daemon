@@ -39,11 +39,6 @@ const (
 	SESSION_MESSAGE_TYPE_INVOKE SESSION_MESSAGE_TYPE = "invoke"
 )
 
-type ToolResponseChunk struct {
-	Type    string         `json:"type"`
-	Message map[string]any `json:"message"`
-}
-
 type PluginResponseChunk struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`

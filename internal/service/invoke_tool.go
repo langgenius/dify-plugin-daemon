@@ -11,16 +11,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func InvokeTool(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTool], ctx *gin.Context) {
-	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
-	defer session.Close()
-
-	baseSSEService(r, func() (*stream.StreamResponse[plugin_entities.ToolResponseChunk], error) {
-		return plugin_daemon.InvokeTool(session, &r.Data)
-	}, ctx)
-}
-
 func InvokeLLM(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM], ctx *gin.Context) {
 	// create session
 	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
@@ -78,5 +68,25 @@ func InvokeModeration(r *plugin_entities.InvokePluginRequest[requests.RequestInv
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ModerationResult], error) {
 		return plugin_daemon.InvokeModeration(session, &r.Data)
+	}, ctx)
+}
+
+func ValidateProviderCredentials(r *plugin_entities.InvokePluginRequest[requests.RequestValidateProviderCredentials], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ValidateCredentialsResult], error) {
+		return plugin_daemon.ValidateProviderCredentials(session, &r.Data)
+	}, ctx)
+}
+
+func ValidateModelCredentials(r *plugin_entities.InvokePluginRequest[requests.RequestValidateModelCredentials], ctx *gin.Context) {
+	// create session
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	defer session.Close()
+
+	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ValidateCredentialsResult], error) {
+		return plugin_daemon.ValidateModelCredentials(session, &r.Data)
 	}, ctx)
 }

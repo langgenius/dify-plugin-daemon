@@ -59,3 +59,15 @@ type RequestInvokeModeration struct {
 	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type,eq=moderation"`
 	Text      string                   `json:"text" validate:"required"`
 }
+
+type RequestValidateProviderCredentials struct {
+	Provider    string         `json:"provider" validate:"required"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+}
+
+type RequestValidateModelCredentials struct {
+	Provider    string                   `json:"provider" validate:"required"`
+	ModelType   model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
+	Model       string                   `json:"model" validate:"required"`
+	Credentials map[string]any           `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+}

@@ -183,3 +183,33 @@ func InvokeModeration(
 		PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
 	)
 }
+
+func ValidateProviderCredentials(
+	session *session_manager.Session,
+	request *requests.RequestValidateProviderCredentials,
+) (
+	*stream.StreamResponse[model_entities.ValidateCredentialsResult], error,
+) {
+	return genericInvokePlugin[requests.RequestValidateProviderCredentials, model_entities.ValidateCredentialsResult](
+		session,
+		request,
+		1,
+		PLUGIN_ACCESS_TYPE_MODEL,
+		PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
+	)
+}
+
+func ValidateModelCredentials(
+	session *session_manager.Session,
+	request *requests.RequestValidateModelCredentials,
+) (
+	*stream.StreamResponse[model_entities.ValidateCredentialsResult], error,
+) {
+	return genericInvokePlugin[requests.RequestValidateModelCredentials, model_entities.ValidateCredentialsResult](
+		session,
+		request,
+		1,
+		PLUGIN_ACCESS_TYPE_MODEL,
+		PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
+	)
+}

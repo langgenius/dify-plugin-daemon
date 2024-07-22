@@ -22,6 +22,17 @@ func InvokeTool(c *gin.Context) {
 	)
 }
 
+func ValidateToolCredentials(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestValidateToolCredentials]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.ValidateToolCredentials(&itr, c)
+		},
+	)
+}
+
 func InvokeLLM(c *gin.Context) {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM]
 
@@ -84,6 +95,28 @@ func InvokeModeration(c *gin.Context) {
 		c,
 		func(itr request) {
 			service.InvokeModeration(&itr, c)
+		},
+	)
+}
+
+func ValidateProviderCredentials(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestValidateProviderCredentials]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.ValidateProviderCredentials(&itr, c)
+		},
+	)
+}
+
+func ValidateModelCredentials(c *gin.Context) {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestValidateModelCredentials]
+
+	BindRequest[request](
+		c,
+		func(itr request) {
+			service.ValidateModelCredentials(&itr, c)
 		},
 	)
 }

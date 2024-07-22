@@ -6,3 +6,8 @@ type RequestInvokeTool struct {
 	ToolParameters map[string]any `json:"tool_parameters" validate:"omitempty,dive,is_basic_type"`
 	Credentials    map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
 }
+
+type RequestValidateToolCredentials struct {
+	Provider    string         `json:"provider" validate:"required"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+}
