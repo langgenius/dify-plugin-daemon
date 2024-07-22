@@ -13,7 +13,7 @@ type ModelType string
 
 const (
 	MODEL_TYPE_LLM            ModelType = "llm"
-	MODEL_TYPE_TEXT_EMBEDDING ModelType = "text_embedding"
+	MODEL_TYPE_TEXT_EMBEDDING ModelType = "text-embedding"
 	MODEL_TYPE_RERANKING      ModelType = "rerank"
 	MODEL_TYPE_SPEECH2TEXT    ModelType = "speech2text"
 	MODEL_TYPE_TTS            ModelType = "tts"

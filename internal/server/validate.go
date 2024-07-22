@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
 
 func BindRequest[T any](r *gin.Context, success func(T)) {
@@ -14,6 +15,13 @@ func BindRequest[T any](r *gin.Context, success func(T)) {
 		err = r.ShouldBindJSON(&request)
 	} else {
 		err = r.ShouldBind(&request)
+	}
+
+	// validate
+	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
+		resp := entities.NewErrorResponse(-400, "Invalid request")
+		r.JSON(400, resp)
+		return
 	}
 
 	if err != nil {
