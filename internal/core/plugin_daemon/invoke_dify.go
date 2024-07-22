@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -13,6 +14,7 @@ import (
 
 func invokeDify(
 	runtime entities.PluginRuntimeInterface,
+	invoke_from PluginAccessType,
 	session *session_manager.Session, data []byte,
 ) error {
 	// unmarshal invoke data
@@ -22,37 +24,67 @@ func invokeDify(
 		return fmt.Errorf("unmarshal invoke request failed: %s", err.Error())
 	}
 
+	// prepare invocation arguments
+	request_handle, err := prepareDifyInvocationArguments(session, request)
+	if err != nil {
+		return err
+	}
+	defer request_handle.End()
+
+	if invoke_from == PLUGIN_ACCESS_TYPE_MODEL {
+		request_handle.WriteError(fmt.Errorf("you can not invoke dify from %s", invoke_from))
+		return nil
+	}
+
+	// dispatch invocation task
+	dispatchDifyInvocationTask(request_handle)
+
+	return nil
+}
+
+func prepareDifyInvocationArguments(session *session_manager.Session, request map[string]any) (*backwards_invocation.BackwardsInvocation, error) {
 	typ, ok := request["type"].(string)
 	if !ok {
-		return fmt.Errorf("invoke request missing type: %s", data)
+		return nil, fmt.Errorf("invoke request missing type: %s", request)
 	}
 
 	// get request id
-	request_id, ok := request["request_id"].(string)
+	backwards_request_id, ok := request["backwards_request_id"].(string)
 	if !ok {
-		return fmt.Errorf("invoke request missing request_id: %s", data)
+		return nil, fmt.Errorf("invoke request missing request_id: %s", request)
 	}
 
 	// get request
 	detailed_request, ok := request["request"].(map[string]any)
 	if !ok {
-		return fmt.Errorf("invoke request missing request: %s", data)
+		return nil, fmt.Errorf("invoke request missing request: %s", request)
 	}
 
-	switch typ {
-	case "tool":
-		r := dify_invocation.InvokeToolRequest{}
-		if err := r.FromMap(request, detailed_request); err != nil {
-			return fmt.Errorf("unmarshal tool invoke request failed: %s", err.Error())
+	return backwards_invocation.NewBackwardsInvocation(
+		backwards_invocation.BackwardsInvocationType(typ),
+		backwards_request_id, session, detailed_request,
+	), nil
+}
+
+func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation) {
+	switch handle.Type() {
+	case dify_invocation.INVOKE_TYPE_TOOL:
+		r, err := parser.MapToStruct[dify_invocation.InvokeToolRequest](handle.RequestData())
+		if err != nil {
+			handle.WriteError(fmt.Errorf("unmarshal invoke tool request failed: %s", err.Error()))
+			return
 		}
-		submitToolTask(runtime, session, request_id, &r)
-	case "model":
-		r := dify_invocation.InvokeModelRequest{}
-		if err := r.FromMap(request, detailed_request); err != nil {
-			return fmt.Errorf("unmarshal model invoke request failed: %s", err.Error())
+
+		submitToolTask(runtime, session, backwards_request_id, &r)
+	case dify_invocation.INVOKE_TYPE_MODEL:
+		r, err := parser.MapToStruct[dify_invocation.InvokeModelRequest](handle.RequestData())
+		if err != nil {
+			handle.WriteError(fmt.Errorf("unmarshal invoke model request failed: %s", err.Error()))
+			return
 		}
-		submitModelTask(runtime, session, request_id, &r)
-	case "node":
+
+		submitModelTask(runtime, session, backwards_request_id, &r)
+	case dify_invocation.INVOKE_TYPE_NODE:
 		node_type, ok := detailed_request["node_type"].(dify_invocation.NodeType)
 		if !ok {
 			return fmt.Errorf("invoke request missing node_type: %s", data)
@@ -63,40 +95,35 @@ func invokeDify(
 		}
 		switch node_type {
 		case dify_invocation.QUESTION_CLASSIFIER:
-			d := dify_invocation.InvokeNodeRequest[*dify_invocation.QuestionClassifierNodeData]{
+			d := dify_invocation.InvokeNodeRequest[dify_invocation.QuestionClassifierNodeData]{
 				NodeType: dify_invocation.QUESTION_CLASSIFIER,
-				NodeData: &dify_invocation.QuestionClassifierNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {
 				return fmt.Errorf("unmarshal question classifier node data failed: %s", err.Error())
 			}
-			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
+			submitNodeInvocationRequestTask(runtime, session, backwards_request_id, &d)
 		case dify_invocation.KNOWLEDGE_RETRIEVAL:
-			d := dify_invocation.InvokeNodeRequest[*dify_invocation.KnowledgeRetrievalNodeData]{
+			d := dify_invocation.InvokeNodeRequest[dify_invocation.KnowledgeRetrievalNodeData]{
 				NodeType: dify_invocation.KNOWLEDGE_RETRIEVAL,
-				NodeData: &dify_invocation.KnowledgeRetrievalNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {
 				return fmt.Errorf("unmarshal knowledge retrieval node data failed: %s", err.Error())
 			}
-			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
+			submitNodeInvocationRequestTask(runtime, session, backwards_request_id, &d)
 		case dify_invocation.PARAMETER_EXTRACTOR:
-			d := dify_invocation.InvokeNodeRequest[*dify_invocation.ParameterExtractorNodeData]{
+			d := dify_invocation.InvokeNodeRequest[dify_invocation.ParameterExtractorNodeData]{
 				NodeType: dify_invocation.PARAMETER_EXTRACTOR,
-				NodeData: &dify_invocation.ParameterExtractorNodeData{},
 			}
 			if err := d.FromMap(node_data); err != nil {
 				return fmt.Errorf("unmarshal parameter extractor node data failed: %s", err.Error())
 			}
-			submitNodeInvocationRequestTask(runtime, session, request_id, &d)
+			submitNodeInvocationRequestTask(runtime, session, backwards_request_id, &d)
 		default:
 			return fmt.Errorf("unknown node type: %s", node_type)
 		}
 	default:
 		return fmt.Errorf("unknown invoke type: %s", typ)
 	}
-
-	return nil
 }
 
 func setTaskContext(session *session_manager.Session, r *dify_invocation.BaseInvokeDifyRequest) {

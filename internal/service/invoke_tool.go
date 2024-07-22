@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -11,9 +12,16 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
+func createSession[T any](r *plugin_entities.InvokePluginRequest[T]) *session_manager.Session {
+	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	runtime := plugin_manager.Get(session.PluginIdentity())
+	session.BindRuntime(runtime)
+	return session
+}
+
 func InvokeLLM(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.LLMResultChunk], error) {
@@ -23,7 +31,7 @@ func InvokeLLM(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM]
 
 func InvokeTextEmbedding(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTextEmbedding], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.TextEmbeddingResult], error) {
@@ -33,7 +41,7 @@ func InvokeTextEmbedding(r *plugin_entities.InvokePluginRequest[requests.Request
 
 func InvokeRerank(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeRerank], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.RerankResult], error) {
@@ -43,7 +51,7 @@ func InvokeRerank(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeR
 
 func InvokeTTS(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTTS], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.TTSResult], error) {
@@ -53,7 +61,7 @@ func InvokeTTS(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTTS]
 
 func InvokeSpeech2Text(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeSpeech2Text], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.Speech2TextResult], error) {
@@ -63,7 +71,7 @@ func InvokeSpeech2Text(r *plugin_entities.InvokePluginRequest[requests.RequestIn
 
 func InvokeModeration(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeModeration], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ModerationResult], error) {
@@ -73,7 +81,7 @@ func InvokeModeration(r *plugin_entities.InvokePluginRequest[requests.RequestInv
 
 func ValidateProviderCredentials(r *plugin_entities.InvokePluginRequest[requests.RequestValidateProviderCredentials], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ValidateCredentialsResult], error) {
@@ -83,7 +91,7 @@ func ValidateProviderCredentials(r *plugin_entities.InvokePluginRequest[requests
 
 func ValidateModelCredentials(r *plugin_entities.InvokePluginRequest[requests.RequestValidateModelCredentials], ctx *gin.Context) {
 	// create session
-	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
+	session := createSession(r)
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[model_entities.ValidateCredentialsResult], error) {

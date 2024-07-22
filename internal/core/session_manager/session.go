@@ -1,9 +1,11 @@
 package session_manager
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 )
 
 var (
@@ -12,7 +14,8 @@ var (
 )
 
 type Session struct {
-	id string
+	id      string
+	runtime entities.PluginRuntimeSessionIOInterface
 
 	tenant_id       string
 	user_id         string
@@ -70,4 +73,16 @@ func (s *Session) UserID() string {
 
 func (s *Session) PluginIdentity() string {
 	return s.plugin_identity
+}
+
+func (s *Session) BindRuntime(runtime entities.PluginRuntimeSessionIOInterface) {
+	s.runtime = runtime
+}
+
+func (s *Session) Write(data []byte) error {
+	if s.runtime == nil {
+		return errors.New("runtime not bound")
+	}
+	s.runtime.Write(s.id, data)
+	return nil
 }

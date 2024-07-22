@@ -46,7 +46,7 @@ func genericInvokePlugin[Req any, Rsp any](
 			}
 			response.Write(chunk)
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
-			invokeDify(runtime, session, chunk.Data)
+			invokeDify(runtime, typ, session, chunk.Data)
 		case plugin_entities.SESSION_MESSAGE_TYPE_END:
 			response.Close()
 		case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
