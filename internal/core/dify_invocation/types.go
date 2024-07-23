@@ -1,9 +1,7 @@
 package dify_invocation
 
 import (
-	"encoding/json"
-
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 )
 
 type BaseInvokeDifyRequest struct {
@@ -15,66 +13,74 @@ type BaseInvokeDifyRequest struct {
 type InvokeType string
 
 const (
-	INVOKE_TYPE_MODEL InvokeType = "model"
-	INVOKE_TYPE_TOOL  InvokeType = "tool"
-	INVOKE_TYPE_NODE  InvokeType = "node"
+	INVOKE_TYPE_LLM            InvokeType = "LLM"
+	INVOKE_TYPE_TEXT_EMBEDDING InvokeType = "text_embedding"
+	INVOKE_TYPE_RERANK         InvokeType = "rerank"
+	INVOKE_TYPE_TTS            InvokeType = "tts"
+	INVOKE_TYPE_SPEECH2TEXT    InvokeType = "speech2text"
+	INVOKE_TYPE_MODERATION     InvokeType = "moderation"
+	INVOKE_TYPE_TOOL           InvokeType = "tool"
+	INVOKE_TYPE_NODE           InvokeType = "node"
 )
 
-type InvokeModelRequest struct {
+type InvokeLLMRequest struct {
 	BaseInvokeDifyRequest
-	Provider   string                   `json:"provider"`
-	Model      string                   `json:"model"`
-	ModelType  model_entities.ModelType `json:"model_type"`
-	Parameters map[string]any           `json:"parameters"`
+	Data struct {
+		requests.BaseRequestInvokeModel
+		requests.InvokeLLMSchema
+	} `json:"data" validate:"required"`
 }
 
-func (r InvokeModelRequest) MarshalJSON() ([]byte, error) {
-	flattened := make(map[string]any)
-	flattened["tenant_id"] = r.TenantId
-	flattened["user_id"] = r.UserId
-	flattened["provider"] = r.Provider
-	flattened["model"] = r.Model
-	flattened["parameters"] = r.Parameters
-	return json.Marshal(flattened)
+type InvokeTextEmbeddingRequest struct {
+	BaseInvokeDifyRequest
+	Data struct {
+		requests.BaseRequestInvokeModel
+		requests.InvokeTextEmbeddingSchema
+	} `json:"data" validate:"required"`
 }
 
-type InvokeModelResponseChunk struct {
+type InvokeRerankRequest struct {
+	BaseInvokeDifyRequest
+	Data struct {
+		requests.BaseRequestInvokeModel
+		requests.InvokeRerankSchema
+	} `json:"data" validate:"required"`
+}
+
+type InvokeTTSRequest struct {
+	BaseInvokeDifyRequest
+	Data struct {
+		requests.BaseRequestInvokeModel
+		requests.InvokeTTSSchema
+	} `json:"data" validate:"required"`
+}
+
+type InvokeSpeech2TextRequest struct {
+	BaseInvokeDifyRequest
+	Data struct {
+		requests.BaseRequestInvokeModel
+		requests.InvokeSpeech2TextSchema
+	} `json:"data" validate:"required"`
+}
+
+type InvokeModerationRequest struct {
+	BaseInvokeDifyRequest
+	Data struct {
+		requests.BaseRequestInvokeModel
+		requests.InvokeModerationSchema
+	} `json:"data" validate:"required"`
 }
 
 type InvokeToolRequest struct {
 	BaseInvokeDifyRequest
-	Provider   string         `json:"provider"`
-	Tool       string         `json:"tool"`
-	Parameters map[string]any `json:"parameters"`
-}
-
-func (r InvokeToolRequest) MarshalJSON() ([]byte, error) {
-	flattened := make(map[string]any)
-	flattened["tenant_id"] = r.TenantId
-	flattened["user_id"] = r.UserId
-	flattened["provider"] = r.Provider
-	flattened["tool"] = r.Tool
-	flattened["parameters"] = r.Parameters
-	return json.Marshal(flattened)
-}
-
-type InvokeToolResponseChunk struct {
-}
-
-type InvokeNodeRequest[T WorkflowNodeData] struct {
-	BaseInvokeDifyRequest
-	NodeType NodeType `json:"node_type"`
-	NodeData T        `json:"node_data"`
-}
-
-func (r InvokeNodeRequest[T]) MarshalJSON() ([]byte, error) {
-	flattened := make(map[string]any)
-	flattened["tenant_id"] = r.TenantId
-	flattened["user_id"] = r.UserId
-	flattened["node_type"] = r.NodeType
-	flattened["node_data"] = r.NodeData
-	return json.Marshal(flattened)
+	Data struct {
+		requests.RequestInvokeTool
+	} `json:"data" validate:"required"`
 }
 
 type InvokeNodeResponse struct {
+	ProcessData      map[string]any `json:"process_data"`
+	Output           map[string]any `json:"output"`
+	Input            map[string]any `json:"input"`
+	EdgeSourceHandle []string       `json:"edge_source_handle"`
 }

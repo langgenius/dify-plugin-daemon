@@ -1,4 +1,4 @@
-package dify_invocation
+package requests
 
 type WorkflowNodeData interface {
 	KnowledgeRetrievalNodeData | QuestionClassifierNodeData | ParameterExtractorNodeData
@@ -10,7 +10,6 @@ const (
 	KNOWLEDGE_RETRIEVAL NodeType = "knowledge_retrieval"
 	QUESTION_CLASSIFIER NodeType = "question_classifier"
 	PARAMETER_EXTRACTOR NodeType = "parameter_extractor"
-	CODE                NodeType = "code"
 )
 
 type KnowledgeRetrievalNodeData struct {
@@ -20,4 +19,9 @@ type QuestionClassifierNodeData struct {
 }
 
 type ParameterExtractorNodeData struct {
+}
+
+type InvokeNodeRequest[T WorkflowNodeData] struct {
+	NodeType NodeType `json:"node_type"`
+	NodeData T        `json:"node_data"`
 }
