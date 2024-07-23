@@ -116,7 +116,11 @@ func (s *stdioHolder) WriteError(msg string) {
 	const MAX_ERR_MSG_LEN = 1024
 	reduce := len(msg) + len(s.err_message) - MAX_ERR_MSG_LEN
 	if reduce > 0 {
-		s.err_message = s.err_message[reduce:]
+		if reduce > len(s.err_message) {
+			s.err_message = ""
+		} else {
+			s.err_message = s.err_message[reduce:]
+		}
 	}
 
 	s.err_message += msg
@@ -163,7 +167,7 @@ func (s *stdioHolder) Wait() error {
 		case <-ticker.C:
 			// check heartbeat
 			if time.Since(s.last_active_at) > 20*time.Second {
-				return errors.New("plugin is not active")
+				return errors.New("plugin is not active, does not respond to heartbeat in 20 seconds")
 			}
 		case <-s.health_chan:
 			// closed

@@ -3,9 +3,9 @@ package backwards_invocation
 type RequestEvent string
 
 const (
-	REQUEST_EVENT_RESPONSE RequestEvent = "response"
-	REQUEST_EVENT_ERROR    RequestEvent = "error"
-	REQUEST_EVENT_END      RequestEvent = "end"
+	REQUEST_EVENT_RESPONSE RequestEvent = "backward_invocation_response"
+	REQUEST_EVENT_ERROR    RequestEvent = "backward_invocation_error"
+	REQUEST_EVENT_END      RequestEvent = "backward_invocation_end"
 )
 
 type BaseRequestEvent struct {

@@ -4,8 +4,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func StructToMap(data interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func StructToMap(data any) map[string]any {
+	result := make(map[string]any)
 
 	decoder := &mapstructure.DecoderConfig{
 		Metadata: nil,

@@ -59,7 +59,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		return err
 	}
-
 	defer func() {
 		// wait for plugin to exit
 		err = e.Wait()
@@ -70,6 +69,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 		r.gc()
 	}()
+	defer e.Process.Kill()
 
 	log.Info("plugin %s started", r.Config.Identity())
 
@@ -98,8 +98,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	if err != nil {
 		return err
 	}
-
-	e.Process.Kill()
 
 	wg.Wait()
 

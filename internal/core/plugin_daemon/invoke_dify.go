@@ -7,7 +7,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 func invokeDify(
@@ -17,9 +19,12 @@ func invokeDify(
 ) error {
 	// unmarshal invoke data
 	request, err := parser.UnmarshalJsonBytes[map[string]any](data)
-
 	if err != nil {
 		return fmt.Errorf("unmarshal invoke request failed: %s", err.Error())
+	}
+
+	if request == nil {
+		return fmt.Errorf("invoke request is empty")
 	}
 
 	// prepare invocation arguments
@@ -35,7 +40,9 @@ func invokeDify(
 	}
 
 	// dispatch invocation task
-	dispatchDifyInvocationTask(request_handle)
+	routine.Submit(func() {
+		dispatchDifyInvocationTask(request_handle)
+	})
 
 	return nil
 }
@@ -65,20 +72,39 @@ func prepareDifyInvocationArguments(session *session_manager.Session, request ma
 }
 
 func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation) {
+	request_data := handle.RequestData()
+	tenant_id, err := handle.TenantID()
+	if err != nil {
+		handle.WriteError(fmt.Errorf("get tenant id failed: %s", err.Error()))
+		return
+	}
+	request_data["tenant_id"] = tenant_id
+	user_id, err := handle.UserID()
+	if err != nil {
+		handle.WriteError(fmt.Errorf("get user id failed: %s", err.Error()))
+		return
+	}
+	request_data["user_id"] = user_id
+
 	switch handle.Type() {
 	case dify_invocation.INVOKE_TYPE_TOOL:
-		_, err := parser.MapToStruct[dify_invocation.InvokeToolRequest](handle.RequestData())
+		r, err := parser.MapToStruct[dify_invocation.InvokeToolRequest](handle.RequestData())
 		if err != nil {
 			handle.WriteError(fmt.Errorf("unmarshal invoke tool request failed: %s", err.Error()))
 			return
 		}
-
+		executeDifyInvocationToolTask(handle, r)
 	default:
 		handle.WriteError(fmt.Errorf("unsupported invoke type: %s", handle.Type()))
 	}
 }
 
-func setTaskContext(session *session_manager.Session, r *dify_invocation.BaseInvokeDifyRequest) {
-	r.TenantId = session.TenantID()
-	r.UserId = session.UserID()
+func executeDifyInvocationToolTask(handle *backwards_invocation.BackwardsInvocation, request *dify_invocation.InvokeToolRequest) {
+	handle.Write("stream", tool_entities.ToolResponseChunk{
+		Type: "text",
+		Message: map[string]any{
+			"text": "hello world",
+		},
+	})
+	handle.End()
 }
