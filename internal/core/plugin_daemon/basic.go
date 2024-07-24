@@ -22,18 +22,10 @@ const (
 	PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS    PluginAccessAction = "validate_model_credentials"
 )
 
-const (
-	PLUGIN_IN_STREAM_EVENT = "request"
-)
-
-func getBasicPluginAccessMap(session_id string, user_id string, access_type PluginAccessType, action PluginAccessAction) map[string]any {
+func getBasicPluginAccessMap(user_id string, access_type PluginAccessType, action PluginAccessAction) map[string]any {
 	return map[string]any{
-		"session_id": session_id,
-		"event":      PLUGIN_IN_STREAM_EVENT,
-		"data": map[string]any{
-			"user_id": user_id,
-			"type":    access_type,
-			"action":  action,
-		},
+		"user_id": user_id,
+		"type":    access_type,
+		"action":  action,
 	}
 }

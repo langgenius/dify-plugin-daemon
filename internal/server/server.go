@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/process"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -9,6 +10,9 @@ import (
 func Run(config *app.Config) {
 	// init routine pool
 	routine.InitPool(config.RoutinePoolSize)
+
+	// init process lifetime
+	process.Init()
 
 	// init plugin daemon
 	plugin_manager.Init(config)

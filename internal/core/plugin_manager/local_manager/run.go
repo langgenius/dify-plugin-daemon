@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/stdio_holder"
+	"github.com/langgenius/dify-plugin-daemon/internal/process"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -35,6 +36,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// start plugin
 	e := exec.Command("bash", r.Config.Execution.Launch)
 	e.Dir = r.State.RelativePath
+	process.WrapProcess(e)
 
 	// get writer
 	stdin, err := e.StdinPipe()
@@ -42,23 +44,31 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		return fmt.Errorf("get stdin pipe failed: %s", err.Error())
 	}
+	defer stdin.Close()
 
 	stdout, err := e.StdoutPipe()
 	if err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		return fmt.Errorf("get stdout pipe failed: %s", err.Error())
 	}
+	defer stdout.Close()
 
 	stderr, err := e.StderrPipe()
 	if err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		return fmt.Errorf("get stderr pipe failed: %s", err.Error())
 	}
+	defer stderr.Close()
 
 	if err := e.Start(); err != nil {
 		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
 		return err
 	}
+
+	// add to subprocess manager
+	process.NewProcess(e)
+	defer process.RemoveProcess(e)
+
 	defer func() {
 		// wait for plugin to exit
 		err = e.Wait()

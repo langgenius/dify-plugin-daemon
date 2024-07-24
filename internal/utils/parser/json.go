@@ -34,6 +34,12 @@ func MarshalJsonBytes[T any](data T) []byte {
 	return b
 }
 
-func UnmarshalJson2Map(json []byte) (map[string]any, error) {
-	return UnmarshalJsonBytes[map[string]any](json)
+func UnmarshalJsonBytes2Map(data []byte) (map[string]any, error) {
+	result := map[string]any{}
+	err := json.Unmarshal(data, &result)
+	return result, err
+}
+
+func UnmarshalJson2Map(json string) (map[string]any, error) {
+	return UnmarshalJsonBytes2Map([]byte(json))
 }

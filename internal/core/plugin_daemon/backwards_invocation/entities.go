@@ -3,20 +3,20 @@ package backwards_invocation
 type RequestEvent string
 
 const (
-	REQUEST_EVENT_RESPONSE RequestEvent = "backward_invocation_response"
-	REQUEST_EVENT_ERROR    RequestEvent = "backward_invocation_error"
-	REQUEST_EVENT_END      RequestEvent = "backward_invocation_end"
+	REQUEST_EVENT_RESPONSE RequestEvent = "response"
+	REQUEST_EVENT_ERROR    RequestEvent = "error"
+	REQUEST_EVENT_END      RequestEvent = "end"
 )
 
-type BaseRequestEvent struct {
+type BackwardsInvocationResponseEvent struct {
 	BackwardsRequestId string         `json:"backwards_request_id"`
 	Event              RequestEvent   `json:"event"`
 	Message            string         `json:"message"`
 	Data               map[string]any `json:"data"`
 }
 
-func NewResponseEvent(request_id string, message string, data map[string]any) *BaseRequestEvent {
-	return &BaseRequestEvent{
+func NewResponseEvent(request_id string, message string, data map[string]any) *BackwardsInvocationResponseEvent {
+	return &BackwardsInvocationResponseEvent{
 		BackwardsRequestId: request_id,
 		Event:              REQUEST_EVENT_RESPONSE,
 		Message:            message,
@@ -24,8 +24,8 @@ func NewResponseEvent(request_id string, message string, data map[string]any) *B
 	}
 }
 
-func NewErrorEvent(request_id string, message string) *BaseRequestEvent {
-	return &BaseRequestEvent{
+func NewErrorEvent(request_id string, message string) *BackwardsInvocationResponseEvent {
+	return &BackwardsInvocationResponseEvent{
 		BackwardsRequestId: request_id,
 		Event:              REQUEST_EVENT_ERROR,
 		Message:            message,
@@ -33,8 +33,8 @@ func NewErrorEvent(request_id string, message string) *BaseRequestEvent {
 	}
 }
 
-func NewEndEvent(request_id string) *BaseRequestEvent {
-	return &BaseRequestEvent{
+func NewEndEvent(request_id string) *BackwardsInvocationResponseEvent {
+	return &BackwardsInvocationResponseEvent{
 		BackwardsRequestId: request_id,
 		Event:              REQUEST_EVENT_END,
 		Message:            "",

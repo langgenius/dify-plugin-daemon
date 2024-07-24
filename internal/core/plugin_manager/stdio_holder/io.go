@@ -66,6 +66,7 @@ func (s *stdioHolder) Stop() {
 
 func (s *stdioHolder) StartStdout() {
 	s.started = true
+	s.last_active_at = time.Now()
 	defer s.Stop()
 
 	scanner := bufio.NewScanner(s.reader)

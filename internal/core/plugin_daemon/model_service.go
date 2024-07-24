@@ -66,14 +66,15 @@ func genericInvokePlugin[Req any, Rsp any](
 		listener.Close()
 	})
 
-	runtime.Write(session.ID(), []byte(parser.MarshalJson(
+	session.Write(
+		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
 		getInvokeModelMap(
 			session,
 			typ,
 			action,
 			request,
 		),
-	)))
+	)
 
 	return response, nil
 }
@@ -84,13 +85,10 @@ func getInvokeModelMap(
 	action PluginAccessAction,
 	request any,
 ) map[string]any {
-	req := getBasicPluginAccessMap(session.ID(), session.UserID(), typ, action)
-	data := req["data"].(map[string]any)
-
+	req := getBasicPluginAccessMap(session.UserID(), typ, action)
 	for k, v := range parser.StructToMap(request) {
-		data[k] = v
+		req[k] = v
 	}
-
 	return req
 }
 

@@ -34,15 +34,24 @@ func (bi *BackwardsInvocation) GetID() string {
 }
 
 func (bi *BackwardsInvocation) WriteError(err error) {
-	bi.session.Write(parser.MarshalJsonBytes(NewErrorEvent(bi.id, err.Error())))
+	bi.session.Write(
+		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
+		NewErrorEvent(bi.id, err.Error()),
+	)
 }
 
 func (bi *BackwardsInvocation) Write(message string, data any) {
-	bi.session.Write(parser.MarshalJsonBytes(NewResponseEvent(bi.id, message, parser.StructToMap(data))))
+	bi.session.Write(
+		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
+		NewResponseEvent(bi.id, message, parser.StructToMap(data)),
+	)
 }
 
 func (bi *BackwardsInvocation) End() {
-	bi.session.Write(parser.MarshalJsonBytes(NewEndEvent(bi.id)))
+	bi.session.Write(
+		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
+		NewEndEvent(bi.id),
+	)
 }
 
 func (bi *BackwardsInvocation) Type() BackwardsInvocationType {

@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -21,6 +22,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	// execute init command
 	handle := exec.Command("bash", r.Config.Execution.Install)
 	handle.Dir = r.State.RelativePath
+	handle.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	// get stdout and stderr
 	stdout, err := handle.StdoutPipe()

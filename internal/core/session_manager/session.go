@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 var (
@@ -79,10 +80,21 @@ func (s *Session) BindRuntime(runtime entities.PluginRuntimeSessionIOInterface) 
 	s.runtime = runtime
 }
 
-func (s *Session) Write(data []byte) error {
+type PLUGIN_IN_STREAM_EVENT string
+
+const (
+	PLUGIN_IN_STREAM_EVENT_REQUEST  PLUGIN_IN_STREAM_EVENT = "request"
+	PLUGIN_IN_STREAM_EVENT_RESPONSE PLUGIN_IN_STREAM_EVENT = "backwards_response"
+)
+
+func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, data any) error {
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.id, data)
+	s.runtime.Write(s.id, parser.MarshalJsonBytes(map[string]any{
+		"session_id": s.id,
+		"event":      event,
+		"data":       data,
+	}))
 	return nil
 }

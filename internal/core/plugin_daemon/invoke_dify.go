@@ -18,7 +18,7 @@ func invokeDify(
 	session *session_manager.Session, data []byte,
 ) error {
 	// unmarshal invoke data
-	request, err := parser.UnmarshalJsonBytes[map[string]any](data)
+	request, err := parser.UnmarshalJsonBytes2Map(data)
 	if err != nil {
 		return fmt.Errorf("unmarshal invoke request failed: %s", err.Error())
 	}
