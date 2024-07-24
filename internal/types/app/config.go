@@ -9,7 +9,8 @@ type Config struct {
 	PluginRemoteInstallingHost string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort int16  `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
 
-	StoragePath string `envconfig:"STORAGE_PATH"`
+	StoragePath        string `envconfig:"STORAGE_PATH"`
+	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"`
 
 	Platform PlatformType `envconfig:"PLATFORM"`
 

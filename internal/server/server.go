@@ -12,7 +12,7 @@ func Run(config *app.Config) {
 	routine.InitPool(config.RoutinePoolSize)
 
 	// init process lifetime
-	process.Init()
+	process.Init(config)
 
 	// init plugin daemon
 	plugin_manager.Init(config)
