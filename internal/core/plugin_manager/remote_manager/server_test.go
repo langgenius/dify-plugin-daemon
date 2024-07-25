@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -153,6 +154,131 @@ func TestAcceptConnection(t *testing.T) {
 		}
 		if connection_err != nil {
 			t.Errorf("failed to accept connection: %s", connection_err.Error())
+			return
+		}
+		return
+	}
+}
+
+func TestNoHandleShakeIn10Seconds(t *testing.T) {
+	server, port := preparePluginServer(t)
+	if server == nil {
+		return
+	}
+	defer server.Stop()
+	go func() {
+		server.Launch()
+	}()
+
+	go func() {
+		for server.Next() {
+			runtime, err := server.Read()
+			if err != nil {
+				t.Errorf("failed to read plugin runtime: %s", err.Error())
+				return
+			}
+
+			runtime.Stop()
+		}
+	}()
+
+	// wait for the server to start
+	time.Sleep(time.Second * 2)
+
+	conn, err := net.Dial("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+
+	if err != nil {
+		t.Errorf("failed to connect to plugin server: %s", err.Error())
+		return
+	}
+
+	closed_chan := make(chan bool)
+
+	go func() {
+		// block here to accept messages until the connection is closed
+		buffer := make([]byte, 1024)
+		for {
+			_, err := conn.Read(buffer)
+			if err != nil {
+				break
+			}
+		}
+		close(closed_chan)
+	}()
+
+	select {
+	case <-time.After(time.Second * 15):
+		// connection not closed due to no handshake
+		t.Errorf("connection not closed normally")
+		return
+	case <-closed_chan:
+		// success
+		return
+	}
+}
+
+func TestIncorrectHandshake(t *testing.T) {
+	server, port := preparePluginServer(t)
+	if server == nil {
+		return
+	}
+	defer server.Stop()
+	go func() {
+		server.Launch()
+	}()
+
+	go func() {
+		for server.Next() {
+			runtime, err := server.Read()
+			if err != nil {
+				t.Errorf("failed to read plugin runtime: %s", err.Error())
+				return
+			}
+
+			runtime.Stop()
+		}
+	}()
+
+	// wait for the server to start
+	time.Sleep(time.Second * 2)
+
+	conn, err := net.Dial("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+	if err != nil {
+		t.Errorf("failed to connect to plugin server: %s", err.Error())
+		return
+	}
+
+	// send incorrect handshake
+	conn.Write([]byte("hello world\n"))
+
+	closed_chan := make(chan bool)
+	hand_shake_failed := false
+
+	go func() {
+		// block here to accept messages until the connection is closed
+		buffer := make([]byte, 1024)
+		for {
+			_, err := conn.Read(buffer)
+			if err != nil {
+				break
+			} else {
+				if strings.Contains(string(buffer), "handshake failed") {
+					hand_shake_failed = true
+				}
+			}
+		}
+
+		close(closed_chan)
+	}()
+
+	select {
+	case <-time.After(time.Second * 10):
+		// connection not closed
+		t.Errorf("connection not closed normally")
+		return
+	case <-closed_chan:
+		if !hand_shake_failed {
+			t.Errorf("failed to detect incorrect handshake")
 			return
 		}
 		return
