@@ -1,4 +1,4 @@
-package stdio_holder
+package local_manager
 
 import (
 	"io"
@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func Put(
+func PutStdioIo(
 	plugin_identity string, writer io.WriteCloser,
 	reader io.ReadCloser, err_reader io.ReadCloser,
 ) *stdioHolder {
@@ -39,11 +39,11 @@ func Get(id string) *stdioHolder {
 	return nil
 }
 
-func Remove(id string) {
+func RemoveStdio(id string) {
 	stdio_holder.Delete(id)
 }
 
-func OnEvent(id string, session_id string, listener func([]byte)) {
+func OnStdioEvent(id string, session_id string, listener func([]byte)) {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
@@ -72,7 +72,7 @@ func OnError(id string, session_id string, listener func([]byte)) {
 
 }
 
-func RemoveListener(id string, listener string) {
+func RemoveStdioListener(id string, listener string) {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
@@ -89,7 +89,7 @@ func OnGlobalEvent(listener func(string, []byte)) {
 	listeners[uuid.New().String()] = listener
 }
 
-func Write(id string, data []byte) error {
+func WriteToStdio(id string, data []byte) error {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			_, err := holder.writer.Write(data)

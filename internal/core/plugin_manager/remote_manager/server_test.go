@@ -1,12 +1,15 @@
 package remote_manager
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
@@ -73,6 +76,7 @@ func TestAcceptConnection(t *testing.T) {
 	}()
 
 	got_connection := false
+	var connection_err error
 
 	go func() {
 		for server.Next() {
@@ -82,9 +86,11 @@ func TestAcceptConnection(t *testing.T) {
 				return
 			}
 
-			got_connection = true
+			if runtime.Config.Name != "ci_test" {
+				connection_err = errors.New("plugin name not matched")
+			}
 
-			time.Sleep(time.Second * 2)
+			got_connection = true
 			runtime.Stop()
 		}
 	}()
@@ -98,6 +104,28 @@ func TestAcceptConnection(t *testing.T) {
 		return
 	}
 
+	// send handshake
+	handle_shake_message := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
+		Version:   "1.0.0",
+		Type:      plugin_entities.PluginType,
+		Author:    "Yeuoly",
+		Name:      "ci_test",
+		CreatedAt: time.Now(),
+		Resource: plugin_entities.PluginResourceRequirement{
+			Memory:     1,
+			Storage:    1,
+			Permission: nil,
+		},
+		Plugins: []string{
+			"test",
+		},
+		Execution: plugin_entities.PluginDeclarationExecution{
+			Install: "echo 'hello'",
+			Launch:  "echo 'hello'",
+		},
+	})
+	conn.Write(handle_shake_message)
+	conn.Write([]byte("\n"))
 	closed_chan := make(chan bool)
 
 	go func() {
@@ -121,6 +149,10 @@ func TestAcceptConnection(t *testing.T) {
 		// success
 		if !got_connection {
 			t.Errorf("failed to accept connection")
+			return
+		}
+		if connection_err != nil {
+			t.Errorf("failed to accept connection: %s", connection_err.Error())
 			return
 		}
 		return

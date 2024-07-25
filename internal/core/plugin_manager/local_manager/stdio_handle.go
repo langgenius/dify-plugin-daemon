@@ -1,4 +1,4 @@
-package stdio_holder
+package local_manager
 
 import (
 	"bufio"

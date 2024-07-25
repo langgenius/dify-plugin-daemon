@@ -2,7 +2,10 @@ package remote_manager
 
 import (
 	"sync"
+	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
 )
@@ -54,7 +57,13 @@ func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	s.plugins[c.Fd()] = runtime
 	s.plugins_lock.Unlock()
 
-	s.response.Write(runtime)
+	// start a timer to check if handshake is completed in 10 seconds
+	time.AfterFunc(time.Second*10, func() {
+		if !runtime.handshake {
+			// close connection
+			c.Close()
+		}
+	})
 
 	// verified
 	verified := true
@@ -99,8 +108,33 @@ func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 
 	// handle messages
 	for _, message := range messages {
-		runtime.response.Write(message)
+		s.onMessage(runtime, message)
 	}
 
 	return gnet.None
+}
+
+func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
+	// handle message
+	if !runtime.handshake {
+		// process handle shake if not completed
+		declaration, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](message)
+		if err != nil {
+			// close connection if handshake failed
+			runtime.conn.Write([]byte("handshake failed\n"))
+			runtime.conn.Close()
+			return
+		}
+
+		runtime.Config = declaration
+
+		// handshake completed
+		runtime.handshake = true
+
+		// publish runtime to watcher
+		s.response.Write(runtime)
+	} else {
+		// continue handle messages if handshake completed
+		runtime.response.Write(message)
+	}
 }

@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager/stdio_holder"
 	"github.com/langgenius/dify-plugin-daemon/internal/process"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -15,7 +14,7 @@ import (
 
 func (r *LocalPluginRuntime) gc() {
 	if r.io_identity != "" {
-		stdio_holder.Remove(r.io_identity)
+		RemoveStdio(r.io_identity)
 	}
 
 	if r.w != nil {
@@ -84,7 +83,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	log.Info("plugin %s started", r.Config.Identity())
 
 	// setup stdio
-	stdio := stdio_holder.Put(r.Config.Identity(), stdin, stdout, stderr)
+	stdio := PutStdioIo(r.Config.Identity(), stdin, stdout, stderr)
 	r.io_identity = stdio.GetID()
 	defer stdio.Stop()
 

@@ -28,6 +28,9 @@ type RemotePluginRuntime struct {
 	// heartbeat
 	last_active_at time.Time
 
+	// hand shake process completed
+	handshake bool
+
 	alive bool
 }
 
