@@ -30,6 +30,10 @@ func (r *StreamResponse[T]) OnClose(f func()) {
 	r.onClose = f
 }
 
+// Next returns true if there are more data to be read
+// and waits for the next data to be available
+// returns false if the stream is closed
+// NOTE: even if the stream is closed, it will return true if there is data available
 func (r *StreamResponse[T]) Next() bool {
 	r.l.Lock()
 	if r.closed && r.q.Len() == 0 && r.err == nil {
@@ -51,6 +55,8 @@ func (r *StreamResponse[T]) Next() bool {
 	return <-r.sig
 }
 
+// Read reads buffered data from the stream and
+// it returns error only if the buffer is empty or an error is written to the stream
 func (r *StreamResponse[T]) Read() (T, error) {
 	r.l.Lock()
 	defer r.l.Unlock()
@@ -70,6 +76,8 @@ func (r *StreamResponse[T]) Read() (T, error) {
 	}
 }
 
+// Write writes data to the stream
+// returns error if the buffer is full
 func (r *StreamResponse[T]) Write(data T) error {
 	r.l.Lock()
 	if r.closed {
@@ -92,6 +100,7 @@ func (r *StreamResponse[T]) Write(data T) error {
 	return nil
 }
 
+// Close closes the stream
 func (r *StreamResponse[T]) Close() {
 	r.l.Lock()
 	if r.closed {
@@ -125,6 +134,7 @@ func (r *StreamResponse[T]) Size() int {
 	return r.q.Len()
 }
 
+// WriteError writes an error to the stream
 func (r *StreamResponse[T]) WriteError(err error) {
 	r.l.Lock()
 	defer r.l.Unlock()

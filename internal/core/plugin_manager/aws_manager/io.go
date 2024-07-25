@@ -10,7 +10,3 @@ func (r *AWSPluginRuntime) Listen(session_id string) *entities.BytesIOListener {
 func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 
 }
-
-func (r *AWSPluginRuntime) Request(session_id string, data []byte) ([]byte, error) {
-	return nil, nil
-}

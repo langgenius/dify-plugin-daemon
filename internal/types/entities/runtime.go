@@ -31,7 +31,6 @@ type (
 	PluginRuntimeSessionIOInterface interface {
 		Listen(session_id string) *BytesIOListener
 		Write(session_id string, data []byte)
-		Request(session_id string, data []byte) ([]byte, error)
 	}
 )
 

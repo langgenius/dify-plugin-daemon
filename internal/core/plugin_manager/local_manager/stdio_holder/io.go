@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -168,7 +169,7 @@ func (s *stdioHolder) Wait() error {
 		case <-ticker.C:
 			// check heartbeat
 			if time.Since(s.last_active_at) > 20*time.Second {
-				return errors.New("plugin is not active, does not respond to heartbeat in 20 seconds")
+				return plugin_errors.ErrPluginNotActive
 			}
 		case <-s.health_chan:
 			// closed

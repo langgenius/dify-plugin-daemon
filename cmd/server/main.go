@@ -34,6 +34,7 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
 	setDefaultInt(&config.LifetimeStateGCInterval, 300)
 	setDefaultInt(&config.DifyInvocationConnectionIdleTimeout, 120)
+	setDefaultInt(&config.PluginRemoteInstallServerEventLoopNums, 8)
 
 	setDebugString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
 }

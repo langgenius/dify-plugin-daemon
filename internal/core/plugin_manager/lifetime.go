@@ -12,15 +12,15 @@ func lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
 	start_failed_times := 0
 	configuration := r.Configuration()
 
+	// store plugin runtime
+	m.Store(configuration.Identity(), r)
+	defer m.Delete(configuration.Identity())
+
+	// update lifetime state for this pod
 	addLifetimeState(r)
-	defer func() {
-		// remove lifetime state after plugin if it has been stopped for $LIFETIME_STATE_GC_INTERVAL and not started again
-		time.AfterFunc(time.Duration(config.LifetimeStateGCInterval)*time.Second, func() {
-			if r.Stopped() {
-				deleteLifetimeState(r)
-			}
-		})
-	}()
+
+	// remove lifetime state after plugin if it has been stopped
+	defer deleteLifetimeState(r)
 
 	for !r.Stopped() {
 		if err := r.InitEnvironment(); err != nil {

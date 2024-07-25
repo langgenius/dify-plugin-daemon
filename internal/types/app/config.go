@@ -6,8 +6,11 @@ type Config struct {
 	PluginInnerApiKey string `envconfig:"PLUGIN_INNER_API_KEY"`
 	PluginInnerApiURL string `envconfig:"PLUGIN_INNER_API_URL"`
 
-	PluginRemoteInstallingHost string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
-	PluginRemoteInstallingPort int16  `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
+	PluginRemoteInstallingHost             string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
+	PluginRemoteInstallingPort             uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
+	PluginRemoteInstallingEnabled          bool   `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
+	PluginRemoteInstallingMaxConn          int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_CONN"`
+	PluginRemoteInstallServerEventLoopNums int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
 	StoragePath        string `envconfig:"STORAGE_PATH"`
 	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"`

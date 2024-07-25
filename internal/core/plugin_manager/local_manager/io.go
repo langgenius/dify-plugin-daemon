@@ -1,7 +1,7 @@
 package local_manager
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/stdio_holder"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager/stdio_holder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 )
 
@@ -19,8 +19,4 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.BytesIOListener
 
 func (r *LocalPluginRuntime) Write(session_id string, data []byte) {
 	stdio_holder.Write(r.io_identity, append(data, '\n'))
-}
-
-func (r *LocalPluginRuntime) Request(session_id string, data []byte) ([]byte, error) {
-	return nil, nil
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -22,6 +23,31 @@ func startWatcher(config *app.Config) {
 			handleNewPlugins(config)
 		}
 	}()
+
+	startRemoteWatcher(config)
+}
+
+func startRemoteWatcher(config *app.Config) {
+	// launch TCP debugging server if enabled
+	if config.PluginRemoteInstallingEnabled {
+		server := remote_manager.NewRemotePluginServer(config)
+		go func() {
+			err := server.Launch()
+			if err != nil {
+				log.Error("start remote plugin server failed: %s", err.Error())
+			}
+		}()
+		go func() {
+			for server.Next() {
+				plugin, err := server.Read()
+				if err != nil {
+					log.Error("encounter error: %s", err.Error())
+					continue
+				}
+				lifetime(config, plugin)
+			}
+		}()
+	}
 }
 
 func handleNewPlugins(config *app.Config) {
@@ -43,9 +69,6 @@ func handleNewPlugins(config *app.Config) {
 		}
 
 		log.Info("loaded plugin: %s", plugin.Config.Identity())
-
-		m.Store(plugin.Config.Identity(), plugin_interface)
-
 		routine.Submit(func() {
 			lifetime(config, plugin_interface)
 		})
