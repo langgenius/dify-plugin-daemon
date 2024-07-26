@@ -29,7 +29,8 @@ type RemotePluginRuntime struct {
 	last_active_at time.Time
 
 	// hand shake process completed
-	handshake bool
+	handshake        bool
+	handshake_failed bool
 
 	// registration transferred
 	registration_transferred bool
@@ -55,7 +56,7 @@ func (r *RemotePluginRuntime) removeCallback(session_id string) {
 	r.callbacks_lock.Unlock()
 }
 
-func (r *RemotePluginRuntime) close() {
+func (r *RemotePluginRuntime) onDisconnected() {
 	// close shutdown channel to notify all waiting routines
 	close(r.shutdown_chan)
 

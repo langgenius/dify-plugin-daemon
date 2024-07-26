@@ -83,7 +83,7 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	s.plugins_lock.Unlock()
 
 	// close plugin
-	plugin.close()
+	plugin.onDisconnected()
 
 	return gnet.None
 }
@@ -117,14 +117,20 @@ func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 
 func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	// handle message
+	if runtime.handshake_failed {
+		// do nothing if handshake has failed
+		return
+	}
+
 	if !runtime.handshake {
 		key := string(message)
 
 		info, err := GetConnectionInfo(key)
 		if err == cache.ErrNotFound {
 			// close connection if handshake failed
-			runtime.conn.Write([]byte("handshake failed\n"))
+			runtime.conn.Write([]byte("handshake failed, invalid key\n"))
 			runtime.conn.Close()
+			runtime.handshake_failed = true
 			return
 		} else if err != nil {
 			// close connection if handshake failed

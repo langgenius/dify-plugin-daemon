@@ -68,7 +68,6 @@ func handleNewPlugins(config *app.Config) {
 			continue
 		}
 
-		log.Info("loaded plugin: %s", plugin.Config.Identity())
 		routine.Submit(func() {
 			lifetime(config, plugin_interface)
 		})

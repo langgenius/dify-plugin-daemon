@@ -12,6 +12,8 @@ func lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
 	start_failed_times := 0
 	configuration := r.Configuration()
 
+	log.Info("new plugin logged in: %s", configuration.Identity())
+
 	// store plugin runtime
 	m.Store(configuration.Identity(), r)
 	defer m.Delete(configuration.Identity())
