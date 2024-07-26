@@ -22,7 +22,7 @@ jobs:
         image: redis
         ports:
           - 6379:6379
-        options: --requirepass difyai123456
+        options: -e REDIS_PASSWORD=difyai123456
 
     steps:
       - uses: actions/checkout@v2
