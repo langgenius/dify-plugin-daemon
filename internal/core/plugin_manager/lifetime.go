@@ -13,6 +13,7 @@ func lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
+	defer log.Info("plugin %s has exited", configuration.Identity())
 
 	// store plugin runtime
 	m.Store(configuration.Identity(), r)
@@ -42,6 +43,9 @@ func lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
 		start_failed_times = 0
 		// start plugin
 		if err := r.StartPlugin(); err != nil {
+			if r.Stopped() {
+				break
+			}
 			log.Error("start plugin failed: %s, retry in 30s", err.Error())
 			time.Sleep(30 * time.Second)
 			if start_failed_times == 3 {

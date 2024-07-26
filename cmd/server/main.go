@@ -35,8 +35,10 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.LifetimeStateGCInterval, 300)
 	setDefaultInt(&config.DifyInvocationConnectionIdleTimeout, 120)
 	setDefaultInt(&config.PluginRemoteInstallServerEventLoopNums, 8)
+	setDefaultInt(&config.PluginRemoteInstallingMaxConn, 128)
+	settDefaultBool(&config.PluginRemoteInstallingEnabled, true)
 
-	setDebugString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
+	settDefaultString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
@@ -45,8 +47,14 @@ func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
 	}
 }
 
-func setDebugString(value *string, defaultValue string) {
+func settDefaultString(value *string, defaultValue string) {
 	if *value == "" {
+		*value = defaultValue
+	}
+}
+
+func settDefaultBool(value *bool, defaultValue bool) {
+	if !*value {
 		*value = defaultValue
 	}
 }

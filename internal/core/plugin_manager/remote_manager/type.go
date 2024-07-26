@@ -62,4 +62,6 @@ func (r *RemotePluginRuntime) onDisconnected() {
 
 	// close response to stop current plugin
 	r.response.Close()
+
+	r.alive = false
 }
