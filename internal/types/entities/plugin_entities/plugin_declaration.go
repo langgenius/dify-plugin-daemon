@@ -1,9 +1,11 @@
 package plugin_entities
 
 import (
+	"regexp"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -73,7 +75,7 @@ type PluginDeclarationExecution struct {
 }
 
 type PluginDeclaration struct {
-	Version   string                     `json:"version" yaml:"version" validate:"required"`
+	Version   string                     `json:"version" yaml:"version" validate:"required,version"`
 	Type      DifyManifestType           `json:"type" yaml:"type" validate:"required,eq=plugin"`
 	Author    string                     `json:"author" yaml:"author" validate:"required"`
 	Name      string                     `json:"name" yaml:"name" validate:"required" enum:"plugin"`
@@ -83,21 +85,24 @@ type PluginDeclaration struct {
 	Execution PluginDeclarationExecution `json:"execution" yaml:"execution" validate:"required"`
 }
 
+var (
+	plugin_declaration_version_regex = regexp.MustCompile(`^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$`)
+)
+
+func isVersion(fl validator.FieldLevel) bool {
+	// version format must be like x.x.x, at least 2 digits and most 5 digits, can be ends with a letter
+	value := fl.Field().String()
+	return plugin_declaration_version_regex.MatchString(value)
+}
+
 func (p *PluginDeclaration) Identity() string {
 	return parser.MarshalPluginIdentity(p.Name, p.Version)
 }
 
-var (
-	plugin_declaration_validator = validator.New()
-)
-
 func init() {
 	// init validator
-	plugin_declaration_validator.RegisterValidation("plugin_declaration_platform_arch", isPluginDeclarationPlatformArch)
-}
-
-func (p *PluginDeclaration) Validate() error {
-	return plugin_declaration_validator.Struct(p)
+	validators.GlobalEntitiesValidator.RegisterValidation("plugin_declaration_platform_arch", isPluginDeclarationPlatformArch)
+	validators.GlobalEntitiesValidator.RegisterValidation("version", isVersion)
 }
 
 func UnmarshalPluginDeclarationFromYaml(data []byte) (*PluginDeclaration, error) {
@@ -106,7 +111,7 @@ func UnmarshalPluginDeclarationFromYaml(data []byte) (*PluginDeclaration, error)
 		return nil, err
 	}
 
-	if err := obj.Validate(); err != nil {
+	if err := validators.GlobalEntitiesValidator.Struct(obj); err != nil {
 		return nil, err
 	}
 
@@ -119,7 +124,7 @@ func UnmarshalPluginDeclarationFromJSON(data []byte) (*PluginDeclaration, error)
 		return nil, err
 	}
 
-	if err := obj.Validate(); err != nil {
+	if err := validators.GlobalEntitiesValidator.Struct(obj); err != nil {
 		return nil, err
 	}
 
