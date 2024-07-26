@@ -28,6 +28,10 @@ func (r *LocalPluginRuntime) init() {
 	r.State.Status = entities.PLUGIN_RUNTIME_STATUS_LAUNCHING
 }
 
+func (r *LocalPluginRuntime) Type() entities.PluginRuntimeType {
+	return entities.PLUGIN_RUNTIME_TYPE_LOCAL
+}
+
 func (r *LocalPluginRuntime) StartPlugin() error {
 	defer log.Info("plugin %s stopped", r.Config.Identity())
 

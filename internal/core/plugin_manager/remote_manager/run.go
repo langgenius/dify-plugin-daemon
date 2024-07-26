@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -24,6 +25,10 @@ func (r *RemotePluginRuntime) Stop() {
 		return
 	}
 	r.conn.Close()
+}
+
+func (r *RemotePluginRuntime) Type() entities.PluginRuntimeType {
+	return entities.PLUGIN_RUNTIME_TYPE_REMOTE
 }
 
 func (r *RemotePluginRuntime) StartPlugin() error {

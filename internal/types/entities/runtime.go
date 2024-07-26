@@ -26,6 +26,7 @@ type (
 		Configuration() *plugin_entities.PluginDeclaration
 		RuntimeState() *PluginRuntimeState
 		Wait() (<-chan bool, error)
+		Type() PluginRuntimeType
 	}
 
 	PluginRuntimeSessionIOInterface interface {
@@ -50,6 +51,14 @@ func (r *PluginRuntime) RuntimeState() *PluginRuntimeState {
 	return &r.State
 }
 
+type PluginRuntimeType string
+
+const (
+	PLUGIN_RUNTIME_TYPE_LOCAL  PluginRuntimeType = "local"
+	PLUGIN_RUNTIME_TYPE_REMOTE PluginRuntimeType = "remote"
+	PLUGIN_RUNTIME_TYPE_AWS    PluginRuntimeType = "aws"
+)
+
 type PluginRuntimeState struct {
 	Restarts     int        `json:"restarts"`
 	Status       string     `json:"status"`
@@ -57,6 +66,7 @@ type PluginRuntimeState struct {
 	ActiveAt     *time.Time `json:"active_at"`
 	StoppedAt    *time.Time `json:"stopped_at"`
 	Verified     bool       `json:"verified"`
+	TenantID     string     `json:"tenant_id"`
 }
 
 const (

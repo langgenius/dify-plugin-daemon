@@ -15,7 +15,7 @@ import (
  * Therefore, we need to a key-value pair to connect a random string to a tenant.
  *
  * $random_key => $tenant_id, $user_id
- * $tenant_id => $random_id
+ * $tenant_id => $random_key
  *
  * It's a double mapping for each key, therefore a transaction is needed.
  * */
