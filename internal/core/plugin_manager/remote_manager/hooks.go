@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
@@ -117,6 +118,26 @@ func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	// handle message
 	if !runtime.handshake {
+		key := string(message)
+
+		info, err := GetConnectionInfo(key)
+		if err == cache.ErrNotFound {
+			// close connection if handshake failed
+			runtime.conn.Write([]byte("handshake failed\n"))
+			runtime.conn.Close()
+			return
+		} else if err != nil {
+			// close connection if handshake failed
+			runtime.conn.Write([]byte("internal error\n"))
+			runtime.conn.Close()
+			return
+		}
+
+		runtime.State.TenantID = info.TenantId
+
+		// handshake completed
+		runtime.handshake = true
+	} else if !runtime.registration_transferred {
 		// process handle shake if not completed
 		declaration, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](message)
 		if err != nil {
@@ -128,8 +149,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 		runtime.Config = declaration
 
-		// handshake completed
-		runtime.handshake = true
+		// registration transferred
+		runtime.registration_transferred = true
 
 		// publish runtime to watcher
 		s.response.Write(runtime)

@@ -31,6 +31,9 @@ type RemotePluginRuntime struct {
 	// hand shake process completed
 	handshake bool
 
+	// registration transferred
+	registration_transferred bool
+
 	alive bool
 }
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -67,6 +68,21 @@ func TestLaunchAndClosePluginServer(t *testing.T) {
 
 // TestAcceptConnection tests the acceptance of the connection
 func TestAcceptConnection(t *testing.T) {
+	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456") != nil {
+		t.Errorf("failed to init redis client")
+		return
+	}
+
+	defer cache.Close()
+	key, err := GetConnectionKey(ConnectionInfo{
+		TenantId: "test",
+	})
+	if err != nil {
+		t.Errorf("failed to get connection key: %s", err.Error())
+		return
+	}
+	defer ClearConnectionKey("test")
+
 	server, port := preparePluginServer(t)
 	if server == nil {
 		return
@@ -89,6 +105,10 @@ func TestAcceptConnection(t *testing.T) {
 
 			if runtime.Config.Name != "ci_test" {
 				connection_err = errors.New("plugin name not matched")
+			}
+
+			if runtime.State.TenantID != "test" {
+				connection_err = errors.New("tenant id not matched")
 			}
 
 			got_connection = true
@@ -125,6 +145,8 @@ func TestAcceptConnection(t *testing.T) {
 			Launch:  "echo 'hello'",
 		},
 	})
+	conn.Write([]byte(key))
+	conn.Write([]byte("\n"))
 	conn.Write(handle_shake_message)
 	conn.Write([]byte("\n"))
 	closed_chan := make(chan bool)
@@ -218,6 +240,13 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 }
 
 func TestIncorrectHandshake(t *testing.T) {
+	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456") != nil {
+		t.Errorf("failed to init redis client")
+		return
+	}
+
+	defer cache.Close()
+
 	server, port := preparePluginServer(t)
 	if server == nil {
 		return
