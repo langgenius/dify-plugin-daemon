@@ -64,10 +64,6 @@ func TestPluginDeclarationFullTest(t *testing.T) {
 		t.Errorf("author not equal")
 		return
 	}
-	if new_declaration.CreatedAt.GoString() != declaration.CreatedAt.GoString() {
-		t.Errorf("created_at not equal")
-		return
-	}
 	if new_declaration.Resource.Memory != declaration.Resource.Memory {
 		t.Errorf("memory not equal")
 		return

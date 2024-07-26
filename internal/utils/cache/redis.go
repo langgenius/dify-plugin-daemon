@@ -15,6 +15,7 @@ var (
 	ctx    = context.Background()
 
 	ErrDBNotInit = errors.New("redis client not init")
+	ErrNotFound  = errors.New("key not found")
 )
 
 func InitRedisClient(addr, password string) error {
@@ -30,6 +31,22 @@ func InitRedisClient(addr, password string) error {
 	return nil
 }
 
+func Close() error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	return client.Close()
+}
+
+func getCmdable(context ...redis.Cmdable) redis.Cmdable {
+	if len(context) > 0 {
+		return context[0]
+	}
+
+	return client
+}
+
 func serialKey(keys ...string) string {
 	return strings.Join(append(
 		[]string{"plugin_daemon"},
@@ -37,21 +54,129 @@ func serialKey(keys ...string) string {
 	), ":")
 }
 
-func Store(key string, value any, time time.Duration) error {
-	if client == nil {
-		return ErrDBNotInit
-	}
-
-	return client.Set(ctx, serialKey(key), value, time).Err()
+func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
+	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
 }
 
-func Get[T any](key string) (*T, error) {
+func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
-	val, err := client.Get(ctx, serialKey(key)).Result()
+	val, err := getCmdable(context...).Get(ctx, serialKey(key)).Result()
 	if err != nil {
+		if err == redis.Nil {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	if val == "" {
+		return nil, ErrNotFound
+	}
+
+	result, err := parser.UnmarshalJson[T](val)
+	return &result, err
+}
+
+func GetString(key string, context ...redis.Cmdable) (string, error) {
+	if client == nil {
+		return "", ErrDBNotInit
+	}
+
+	v, err := getCmdable(context...).Get(ctx, serialKey(key)).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", ErrNotFound
+		}
+	}
+
+	return v, err
+}
+
+func Del(key string, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	_, err := getCmdable(context...).Del(ctx, serialKey(key)).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func Exist(key string, context ...redis.Cmdable) (int64, error) {
+	if client == nil {
+		return 0, ErrDBNotInit
+	}
+
+	return getCmdable(context...).Exists(ctx, serialKey(key)).Result()
+}
+
+func Increase(key string, context ...redis.Cmdable) (int64, error) {
+	if client == nil {
+		return 0, ErrDBNotInit
+	}
+
+	num, err := getCmdable(context...).Incr(ctx, serialKey(key)).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return 0, ErrNotFound
+		}
+		return 0, err
+	}
+
+	return num, nil
+}
+
+func Decrease(key string, context ...redis.Cmdable) (int64, error) {
+	if client == nil {
+		return 0, ErrDBNotInit
+	}
+
+	return getCmdable(context...).Decr(ctx, serialKey(key)).Result()
+}
+
+func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	return getCmdable(context...).Expire(ctx, serialKey(key), time).Err()
+}
+
+func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	return getCmdable(context...).HMSet(ctx, serialKey(key), v).Err()
+}
+
+func SetMapOneField(key string, field string, value any, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	return getCmdable(context...).HSet(ctx, serialKey(key), field, value).Err()
+}
+
+func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T, error) {
+	if client == nil {
+		return nil, ErrDBNotInit
+	}
+
+	val, err := getCmdable(context...).HGet(ctx, serialKey(key), field).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 
@@ -59,91 +184,24 @@ func Get[T any](key string) (*T, error) {
 	return &result, err
 }
 
-func Del(key string) error {
+func DelMapField(key string, field string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
-	return client.Del(ctx, serialKey(key)).Err()
+	return getCmdable(context...).HDel(ctx, serialKey(key), field).Err()
 }
 
-func Exist(key string) (int64, error) {
-	if client == nil {
-		return 0, ErrDBNotInit
-	}
-
-	return client.Exists(ctx, serialKey(key)).Result()
-}
-
-func Increase(key string) (int64, error) {
-	if client == nil {
-		return 0, ErrDBNotInit
-	}
-
-	return client.Incr(ctx, serialKey(key)).Result()
-}
-
-func Decrease(key string) (int64, error) {
-	if client == nil {
-		return 0, ErrDBNotInit
-	}
-
-	return client.Decr(ctx, serialKey(key)).Result()
-}
-
-func SetExpire(key string, time time.Duration) error {
-	if client == nil {
-		return ErrDBNotInit
-	}
-
-	return client.Expire(ctx, serialKey(key), time).Err()
-}
-
-func SetMapField(key string, v map[string]any) error {
-	if client == nil {
-		return ErrDBNotInit
-	}
-
-	return client.HMSet(ctx, serialKey(key), v).Err()
-}
-
-func SetMapOneField(key string, field string, value any) error {
-	if client == nil {
-		return ErrDBNotInit
-	}
-
-	return client.HSet(ctx, serialKey(key), field, value).Err()
-}
-
-func GetMapField[T any](key string, field string) (*T, error) {
+func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
-	val, err := client.HGet(ctx, serialKey(key), field).Result()
+	val, err := getCmdable(context...).HGetAll(ctx, serialKey(key)).Result()
 	if err != nil {
-		return nil, err
-	}
-
-	result, err := parser.UnmarshalJson[T](val)
-	return &result, err
-}
-
-func DelMapField(key string, field string) error {
-	if client == nil {
-		return ErrDBNotInit
-	}
-
-	return client.HDel(ctx, serialKey(key), field).Err()
-}
-
-func GetMap[V any](key string) (map[string]V, error) {
-	if client == nil {
-		return nil, ErrDBNotInit
-	}
-
-	val, err := client.HGetAll(ctx, serialKey(key)).Result()
-	if err != nil {
+		if err == redis.Nil {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 
@@ -160,13 +218,21 @@ func GetMap[V any](key string) (map[string]V, error) {
 	return result, nil
 }
 
+func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cmdable) (bool, error) {
+	if client == nil {
+		return false, ErrDBNotInit
+	}
+
+	return getCmdable(context...).SetNX(ctx, serialKey(key), value, expire).Result()
+}
+
 var (
 	ErrLockTimeout = errors.New("lock timeout")
 )
 
 // Lock key, expire time takes responsibility for expiration time
 // try_lock_timeout takes responsibility for the timeout of trying to lock
-func Lock(key string, expire time.Duration, try_lock_timeout time.Duration) error {
+func Lock(key string, expire time.Duration, try_lock_timeout time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
@@ -177,7 +243,7 @@ func Lock(key string, expire time.Duration, try_lock_timeout time.Duration) erro
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if _, err := client.SetNX(ctx, serialKey(key), "1", expire).Result(); err == nil {
+		if _, err := getCmdable(context...).SetNX(ctx, serialKey(key), "1", expire).Result(); err == nil {
 			return nil
 		}
 
@@ -190,10 +256,26 @@ func Lock(key string, expire time.Duration, try_lock_timeout time.Duration) erro
 	return nil
 }
 
-func Unlock(key string) error {
+func Unlock(key string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
-	return client.Del(ctx, serialKey(key)).Err()
+	return getCmdable(context...).Del(ctx, serialKey(key)).Err()
+}
+
+func Transaction(fn func(redis.Pipeliner) error) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	return client.Watch(ctx, func(tx *redis.Tx) error {
+		_, err := tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
+			return fn(p)
+		})
+		if err == redis.Nil {
+			return nil
+		}
+		return err
+	})
 }
