@@ -55,16 +55,11 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		}
 	})
 
-	for r.response.Next() {
-		data, err := r.response.Read()
-		if err != nil {
-			return err
-		}
-
+	r.response.Wrap(func(data []byte) {
 		// handle event
 		event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
 		if err != nil {
-			continue
+			return
 		}
 
 		session_id := event.SessionId
@@ -77,7 +72,7 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 				)
 				if err != nil {
 					log.Error("unmarshal json failed: %s", err.Error())
-					continue
+					return
 				}
 
 				log.Info("plugin %s: %s", r.Configuration().Identity(), log_event.Message)
@@ -96,7 +91,7 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		case plugin_entities.PLUGIN_EVENT_HEARTBEAT:
 			r.last_active_at = time.Now()
 		}
-	}
+	})
 
 	return exit_error
 }

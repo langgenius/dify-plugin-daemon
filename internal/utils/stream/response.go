@@ -76,6 +76,26 @@ func (r *StreamResponse[T]) Read() (T, error) {
 	}
 }
 
+// Wrap wraps the stream with a new stream, and allows customized operations
+func (r *StreamResponse[T]) Wrap(fn func(T)) error {
+	r.l.Lock()
+	if r.closed {
+		r.l.Unlock()
+		return errors.New("stream is closed")
+	}
+	r.l.Unlock()
+
+	for r.Next() {
+		data, err := r.Read()
+		if err != nil {
+			return err
+		}
+		fn(data)
+	}
+
+	return nil
+}
+
 // Write writes data to the stream
 // returns error if the buffer is full
 func (r *StreamResponse[T]) Write(data T) error {

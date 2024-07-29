@@ -53,3 +53,25 @@ func TestStreamGeneratorErrorMessage(t *testing.T) {
 		}
 	}
 }
+
+func TestStreamGeneratorWrapper(t *testing.T) {
+	response := NewStreamResponse[int](512)
+
+	nums := 0
+
+	go func() {
+		for i := 0; i < 10000; i++ {
+			response.Write(i)
+			time.Sleep(time.Microsecond)
+		}
+		response.Close()
+	}()
+
+	response.Wrap(func(t int) {
+		nums += 1
+	})
+
+	if nums != 10000 {
+		t.Errorf("Expected 10000 messages, got %d", nums)
+	}
+}

@@ -38,14 +38,9 @@ func startRemoteWatcher(config *app.Config) {
 			}
 		}()
 		go func() {
-			for server.Next() {
-				plugin, err := server.Read()
-				if err != nil {
-					log.Error("encounter error: %s", err.Error())
-					continue
-				}
-				lifetime(config, plugin)
-			}
+			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
+				lifetime(config, rpr)
+			})
 		}()
 	}
 }
