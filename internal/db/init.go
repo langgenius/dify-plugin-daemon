@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func InitDifyEnterpriseDB(host string, port int, dbname string, user string, pass string, sslmode string) error {
+func initDifyPluginDB(host string, port int, db_name string, user string, pass string, sslmode string) error {
 	// create db if not exists
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, dbname, sslmode)
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, "postgres", sslmode)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
@@ -22,14 +24,14 @@ func InitDifyEnterpriseDB(host string, port int, dbname string, user string, pas
 	}
 
 	// check if the db exists
-	rows, err := pgsqlDB.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s'", dbname))
+	rows, err := pgsqlDB.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s'", db_name))
 	if err != nil {
 		return err
 	}
 
 	if !rows.Next() {
 		// create database
-		_, err = pgsqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", dbname))
+		_, err = pgsqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", db_name))
 		if err != nil {
 			return err
 		}
@@ -42,7 +44,7 @@ func InitDifyEnterpriseDB(host string, port int, dbname string, user string, pas
 	}
 
 	// connect to the new db
-	dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, dbname, sslmode)
+	dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, db_name, sslmode)
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
@@ -73,6 +75,26 @@ func InitDifyEnterpriseDB(host string, port int, dbname string, user string, pas
 	return nil
 }
 
-func AutoMigrate() error {
+func autoMigrate() error {
 	return DifyPluginDB.AutoMigrate()
+}
+
+func Init(config *app.Config) {
+	err := initDifyPluginDB(
+		config.DBHost,
+		int(config.DBPort),
+		config.DBDatabase,
+		config.DBUsername, config.DBPassword, config.DBSslMode,
+	)
+
+	if err != nil {
+		log.Panic("failed to init dify plugin db: %v", err)
+	}
+
+	err = autoMigrate()
+	if err != nil {
+		log.Panic("failed to auto migrate: %v", err)
+	}
+
+	log.Info("dify plugin db initialized")
 }

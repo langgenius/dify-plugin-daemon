@@ -34,6 +34,7 @@ type Config struct {
 	DBHost     string `envconfig:"DB_HOST" validate:"required"`
 	DBPort     int16  `envconfig:"DB_PORT" validate:"required"`
 	DBDatabase string `envconfig:"DB_DATABASE" validate:"required"`
+	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
 	LifetimeCollectionGCInterval        int `envconfig:"LIFETIME_COLLECTION_GC_INTERVAL" validate:"required"`

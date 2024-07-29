@@ -41,7 +41,7 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.PluginRemoteInstallServerEventLoopNums, 8)
 	setDefaultInt(&config.PluginRemoteInstallingMaxConn, 128)
 	settDefaultBool(&config.PluginRemoteInstallingEnabled, true)
-
+	settDefaultString(&config.DBSslMode, "disable")
 	settDefaultString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
 }
 
