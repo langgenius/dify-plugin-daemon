@@ -264,6 +264,14 @@ func Unlock(key string, context ...redis.Cmdable) error {
 	return getCmdable(context...).Del(ctx, serialKey(key)).Err()
 }
 
+func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, error) {
+	if client == nil {
+		return false, ErrDBNotInit
+	}
+
+	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
+}
+
 func Transaction(fn func(redis.Pipeliner) error) error {
 	if client == nil {
 		return ErrDBNotInit

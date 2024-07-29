@@ -40,14 +40,14 @@ func (bi *BackwardsInvocation) WriteError(err error) {
 	)
 }
 
-func (bi *BackwardsInvocation) Write(message string, data any) {
+func (bi *BackwardsInvocation) WriteResponse(message string, data any) {
 	bi.session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewResponseEvent(bi.id, message, parser.StructToMap(data)),
 	)
 }
 
-func (bi *BackwardsInvocation) End() {
+func (bi *BackwardsInvocation) EndResponse() {
 	bi.session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewEndEvent(bi.id),

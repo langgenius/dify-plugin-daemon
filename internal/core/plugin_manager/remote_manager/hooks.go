@@ -18,6 +18,7 @@ type DifyServer struct {
 
 	// listening address
 	addr string
+	port uint16
 
 	// enabled multicore
 	multicore bool

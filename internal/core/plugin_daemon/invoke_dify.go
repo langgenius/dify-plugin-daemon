@@ -32,10 +32,10 @@ func invokeDify(
 	if err != nil {
 		return err
 	}
-	defer request_handle.End()
 
 	if invoke_from == PLUGIN_ACCESS_TYPE_MODEL {
 		request_handle.WriteError(fmt.Errorf("you can not invoke dify from %s", invoke_from))
+		request_handle.EndResponse()
 		return nil
 	}
 
@@ -100,11 +100,11 @@ func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation
 }
 
 func executeDifyInvocationToolTask(handle *backwards_invocation.BackwardsInvocation, request *dify_invocation.InvokeToolRequest) {
-	handle.Write("stream", tool_entities.ToolResponseChunk{
+	handle.WriteResponse("stream", tool_entities.ToolResponseChunk{
 		Type: "text",
 		Message: map[string]any{
 			"text": "hello world",
 		},
 	})
-	handle.End()
+	handle.EndResponse()
 }
