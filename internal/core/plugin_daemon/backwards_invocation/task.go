@@ -58,49 +58,49 @@ func InvokeDify(
 var (
 	permissionMapping = map[dify_invocation.InvokeType]map[string]any{
 		dify_invocation.INVOKE_TYPE_TOOL: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeTool()
 			},
 			"error": "permission denied, you need to enable tool access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_LLM: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeLLM()
 			},
 			"error": "permission denied, you need to enable llm access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeTextEmbedding()
 			},
 			"error": "permission denied, you need to enable text-embedding access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_RERANK: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeRerank()
 			},
 			"error": "permission denied, you need to enable rerank access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_TTS: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeTTS()
 			},
 			"error": "permission denied, you need to enable tts access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_SPEECH2TEXT: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeSpeech2Text()
 			},
 			"error": "permission denied, you need to enable speech2text access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_MODERATION: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeModeration()
 			},
 			"error": "permission denied, you need to enable moderation access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_NODE: {
-			"func": func(runtime entities.PluginRuntimeInterface) bool {
+			"func": func(runtime entities.PluginRuntimeTimeLifeInterface) bool {
 				return runtime.Configuration().Resource.Permission.AllowInvokeNode()
 			},
 			"error": "permission denied, you need to enable node access in plugin manifest",
@@ -108,13 +108,13 @@ var (
 	}
 )
 
-func checkPermission(runtime entities.PluginRuntimeInterface, request_handle *BackwardsInvocation) error {
+func checkPermission(runtime entities.PluginRuntimeTimeLifeInterface, request_handle *BackwardsInvocation) error {
 	permission, ok := permissionMapping[request_handle.Type()]
 	if !ok {
 		return fmt.Errorf("unsupported invoke type: %s", request_handle.Type())
 	}
 
-	permission_func, ok := permission["func"].(func(runtime entities.PluginRuntimeInterface) bool)
+	permission_func, ok := permission["func"].(func(runtime entities.PluginRuntimeTimeLifeInterface) bool)
 	if !ok {
 		return fmt.Errorf("permission function not found: %s", request_handle.Type())
 	}
