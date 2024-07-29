@@ -14,11 +14,12 @@ type BaseRequestInvokeModel struct {
 }
 
 type InvokeLLMSchema struct {
+	Mode            string                             `json:"mode" validate:"required"`
 	ModelParameters map[string]any                     `json:"model_parameters"  validate:"omitempty,dive,is_basic_type"`
 	PromptMessages  []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty,dive"`
 	Tools           []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
 	Stop            []string                           `json:"stop" validate:"omitempty"`
-	Stream          bool                               `json:"stream" `
+	Stream          bool                               `json:"stream"`
 }
 
 type RequestInvokeLLM struct {

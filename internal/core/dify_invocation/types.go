@@ -13,7 +13,7 @@ type BaseInvokeDifyRequest struct {
 type InvokeType string
 
 const (
-	INVOKE_TYPE_LLM            InvokeType = "LLM"
+	INVOKE_TYPE_LLM            InvokeType = "llm"
 	INVOKE_TYPE_TEXT_EMBEDDING InvokeType = "text_embedding"
 	INVOKE_TYPE_RERANK         InvokeType = "rerank"
 	INVOKE_TYPE_TTS            InvokeType = "tts"
@@ -25,58 +25,44 @@ const (
 
 type InvokeLLMRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		requests.BaseRequestInvokeModel
-		requests.InvokeLLMSchema
-	} `json:"data" validate:"required"`
+	requests.BaseRequestInvokeModel
+	requests.InvokeLLMSchema
 }
 
 type InvokeTextEmbeddingRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		requests.BaseRequestInvokeModel
-		requests.InvokeTextEmbeddingSchema
-	} `json:"data" validate:"required"`
+	requests.BaseRequestInvokeModel
+	requests.InvokeTextEmbeddingSchema
 }
 
 type InvokeRerankRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		requests.BaseRequestInvokeModel
-		requests.InvokeRerankSchema
-	} `json:"data" validate:"required"`
+	requests.BaseRequestInvokeModel
+	requests.InvokeRerankSchema
 }
 
 type InvokeTTSRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		requests.BaseRequestInvokeModel
-		requests.InvokeTTSSchema
-	} `json:"data" validate:"required"`
+	requests.BaseRequestInvokeModel
+	requests.InvokeTTSSchema
 }
 
 type InvokeSpeech2TextRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		requests.BaseRequestInvokeModel
-		requests.InvokeSpeech2TextSchema
-	} `json:"data" validate:"required"`
+	requests.BaseRequestInvokeModel
+	requests.InvokeSpeech2TextSchema
 }
 
 type InvokeModerationRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		requests.BaseRequestInvokeModel
-		requests.InvokeModerationSchema
-	} `json:"data" validate:"required"`
+	requests.BaseRequestInvokeModel
+	requests.InvokeModerationSchema
 }
 
 type InvokeToolRequest struct {
 	BaseInvokeDifyRequest
-	Data struct {
-		ToolType requests.ToolType `json:"tool_type" validate:"required,tool_type"`
-		requests.InvokeToolSchema
-	} `json:"data" validate:"required"`
+	ToolType requests.ToolType `json:"tool_type" validate:"required,tool_type"`
+	requests.InvokeToolSchema
 }
 
 type InvokeNodeResponse struct {

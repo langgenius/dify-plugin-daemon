@@ -1,6 +1,8 @@
 package parser
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestStruct2Map(t *testing.T) {
 	type Base struct {

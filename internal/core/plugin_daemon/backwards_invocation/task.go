@@ -1,18 +1,18 @@
-package plugin_daemon
+package backwards_invocation
 
 import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func invokeDify(
+func InvokeDify(
 	runtime entities.PluginRuntimeInterface,
 	invoke_from PluginAccessType,
 	session *session_manager.Session, data []byte,
@@ -48,7 +48,7 @@ func invokeDify(
 	return nil
 }
 
-func prepareDifyInvocationArguments(session *session_manager.Session, request map[string]any) (*backwards_invocation.BackwardsInvocation, error) {
+func prepareDifyInvocationArguments(session *session_manager.Session, request map[string]any) (*BackwardsInvocation, error) {
 	typ, ok := request["type"].(string)
 	if !ok {
 		return nil, fmt.Errorf("invoke request missing type: %s", request)
@@ -66,42 +66,42 @@ func prepareDifyInvocationArguments(session *session_manager.Session, request ma
 		return nil, fmt.Errorf("invoke request missing request: %s", request)
 	}
 
-	return backwards_invocation.NewBackwardsInvocation(
-		backwards_invocation.BackwardsInvocationType(typ),
+	return NewBackwardsInvocation(
+		BackwardsInvocationType(typ),
 		backwards_request_id, session, detailed_request,
 	), nil
 }
 
 var (
-	dispatchMapping = map[dify_invocation.InvokeType]func(handle *backwards_invocation.BackwardsInvocation){
-		dify_invocation.INVOKE_TYPE_TOOL: func(handle *backwards_invocation.BackwardsInvocation) {
+	dispatchMapping = map[dify_invocation.InvokeType]func(handle *BackwardsInvocation){
+		dify_invocation.INVOKE_TYPE_TOOL: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeToolRequest](handle, executeDifyInvocationToolTask)
 		},
-		dify_invocation.INVOKE_TYPE_LLM: func(handle *backwards_invocation.BackwardsInvocation) {
+		dify_invocation.INVOKE_TYPE_LLM: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeLLMRequest](handle, executeDifyInvocationLLMTask)
 		},
-		dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING: func(handle *backwards_invocation.BackwardsInvocation) {
+		dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeTextEmbeddingRequest](handle, executeDifyInvocationTextEmbeddingTask)
 		},
-		dify_invocation.INVOKE_TYPE_RERANK: func(handle *backwards_invocation.BackwardsInvocation) {
+		dify_invocation.INVOKE_TYPE_RERANK: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeRerankRequest](handle, executeDifyInvocationRerankTask)
 		},
-		dify_invocation.INVOKE_TYPE_TTS: func(handle *backwards_invocation.BackwardsInvocation) {
+		dify_invocation.INVOKE_TYPE_TTS: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeTTSRequest](handle, executeDifyInvocationTTSTask)
 		},
-		dify_invocation.INVOKE_TYPE_SPEECH2TEXT: func(handle *backwards_invocation.BackwardsInvocation) {
+		dify_invocation.INVOKE_TYPE_SPEECH2TEXT: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeSpeech2TextRequest](handle, executeDifyInvocationSpeech2TextTask)
 		},
-		dify_invocation.INVOKE_TYPE_MODERATION: func(handle *backwards_invocation.BackwardsInvocation) {
+		dify_invocation.INVOKE_TYPE_MODERATION: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeModerationRequest](handle, executeDifyInvocationModerationTask)
 		},
 	}
 )
 
 func genericDispatchTask[T any](
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	dispatch func(
-		handle *backwards_invocation.BackwardsInvocation,
+		handle *BackwardsInvocation,
 		request *T,
 	),
 ) {
@@ -113,7 +113,7 @@ func genericDispatchTask[T any](
 	dispatch(handle, r)
 }
 
-func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation) {
+func dispatchDifyInvocationTask(handle *BackwardsInvocation) {
 	request_data := handle.RequestData()
 	tenant_id, err := handle.TenantID()
 	if err != nil {
@@ -127,6 +127,8 @@ func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation
 		return
 	}
 	request_data["user_id"] = user_id
+	typ := handle.Type()
+	request_data["type"] = typ
 
 	for t, v := range dispatchMapping {
 		if t == handle.Type() {
@@ -139,7 +141,7 @@ func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation
 }
 
 func executeDifyInvocationToolTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeToolRequest,
 ) {
 	response, err := dify_invocation.InvokeTool(request)
@@ -154,43 +156,83 @@ func executeDifyInvocationToolTask(
 }
 
 func executeDifyInvocationLLMTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeLLMRequest,
 ) {
+	response, err := dify_invocation.InvokeLLM(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke llm model failed: %s", err.Error()))
+		return
+	}
 
+	response.Wrap(func(t model_entities.LLMResultChunk) {
+		handle.WriteResponse("stream", t)
+	})
 }
 
 func executeDifyInvocationTextEmbeddingTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeTextEmbeddingRequest,
 ) {
+	response, err := dify_invocation.InvokeTextEmbedding(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke text-embedding model failed: %s", err.Error()))
+		return
+	}
 
+	handle.WriteResponse("struct", response)
 }
 
 func executeDifyInvocationRerankTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeRerankRequest,
 ) {
+	response, err := dify_invocation.InvokeRerank(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke rerank model failed: %s", err.Error()))
+		return
+	}
 
+	handle.WriteResponse("struct", response)
 }
 
 func executeDifyInvocationTTSTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeTTSRequest,
 ) {
+	response, err := dify_invocation.InvokeTTS(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke tts model failed: %s", err.Error()))
+		return
+	}
 
+	response.Wrap(func(t model_entities.TTSResult) {
+		handle.WriteResponse("struct", t)
+	})
 }
 
 func executeDifyInvocationSpeech2TextTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeSpeech2TextRequest,
 ) {
+	response, err := dify_invocation.InvokeSpeech2Text(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke speech2text model failed: %s", err.Error()))
+		return
+	}
 
+	handle.WriteResponse("struct", response)
 }
 
 func executeDifyInvocationModerationTask(
-	handle *backwards_invocation.BackwardsInvocation,
+	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeModerationRequest,
 ) {
+	response, err := dify_invocation.InvokeModeration(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke moderation model failed: %s", err.Error()))
+		return
+	}
 
+	handle.WriteResponse("struct", response)
 }

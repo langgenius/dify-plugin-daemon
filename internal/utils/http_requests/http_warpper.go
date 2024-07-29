@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -71,6 +73,12 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	resp, err := Request(client, url, method, options...)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		error_text, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, error_text)
 	}
 
 	ch := stream.NewStreamResponse[T](1024)

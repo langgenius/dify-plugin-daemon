@@ -23,8 +23,12 @@ func baseSSEService[T any, R any](
 
 	done := make(chan bool)
 	done_closed := new(int32)
+	closed := new(int32)
 
 	write_data := func(data interface{}) {
+		if atomic.LoadInt32(closed) == 1 {
+			return
+		}
 		writer.Write([]byte("data: "))
 		writer.Write(parser.MarshalJsonBytes(data))
 		writer.Write([]byte("\n\n"))
@@ -59,6 +63,10 @@ func baseSSEService[T any, R any](
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
+	defer func() {
+		atomic.StoreInt32(closed, 1)
+	}()
+
 	for {
 		select {
 		case <-writer.CloseNotify():
@@ -75,6 +83,6 @@ func baseSSEService[T any, R any](
 				return
 			}
 		}
-
 	}
+
 }

@@ -3,6 +3,7 @@ package plugin_daemon
 import (
 	"errors"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
@@ -17,8 +18,8 @@ func genericInvokePlugin[Req any, Rsp any](
 	session *session_manager.Session,
 	request *Req,
 	response_buffer_size int,
-	typ PluginAccessType,
-	action PluginAccessAction,
+	typ backwards_invocation.PluginAccessType,
+	action backwards_invocation.PluginAccessAction,
 ) (
 	*stream.StreamResponse[Rsp], error,
 ) {
@@ -46,7 +47,7 @@ func genericInvokePlugin[Req any, Rsp any](
 			}
 			response.Write(chunk)
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
-			if err := invokeDify(runtime, typ, session, chunk.Data); err != nil {
+			if err := backwards_invocation.InvokeDify(runtime, typ, session, chunk.Data); err != nil {
 				log.Error("invoke dify failed: %s", err.Error())
 				return
 			}
@@ -84,8 +85,8 @@ func genericInvokePlugin[Req any, Rsp any](
 
 func getInvokeModelMap(
 	session *session_manager.Session,
-	typ PluginAccessType,
-	action PluginAccessAction,
+	typ backwards_invocation.PluginAccessType,
+	action backwards_invocation.PluginAccessAction,
 	request any,
 ) map[string]any {
 	req := getBasicPluginAccessMap(session.UserID(), typ, action)
@@ -105,8 +106,8 @@ func InvokeLLM(
 		session,
 		request,
 		512,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_INVOKE_LLM,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
 	)
 }
 
@@ -120,8 +121,8 @@ func InvokeTextEmbedding(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
 	)
 }
 
@@ -135,8 +136,8 @@ func InvokeRerank(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
 	)
 }
 
@@ -150,8 +151,8 @@ func InvokeTTS(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_INVOKE_TTS,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_TTS,
 	)
 }
 
@@ -165,8 +166,8 @@ func InvokeSpeech2Text(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_INVOKE_SPEECH2TEXT,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_SPEECH2TEXT,
 	)
 }
 
@@ -180,8 +181,8 @@ func InvokeModeration(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
 	)
 }
 
@@ -195,8 +196,8 @@ func ValidateProviderCredentials(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
 	)
 }
 
@@ -210,7 +211,7 @@ func ValidateModelCredentials(
 		session,
 		request,
 		1,
-		PLUGIN_ACCESS_TYPE_MODEL,
-		PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
+		backwards_invocation.PLUGIN_ACCESS_TYPE_MODEL,
+		backwards_invocation.PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
 	)
 }

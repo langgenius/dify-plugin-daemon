@@ -9,13 +9,13 @@ const (
 )
 
 type BackwardsInvocationResponseEvent struct {
-	BackwardsRequestId string         `json:"backwards_request_id"`
-	Event              RequestEvent   `json:"event"`
-	Message            string         `json:"message"`
-	Data               map[string]any `json:"data"`
+	BackwardsRequestId string       `json:"backwards_request_id"`
+	Event              RequestEvent `json:"event"`
+	Message            string       `json:"message"`
+	Data               any          `json:"data"`
 }
 
-func NewResponseEvent(request_id string, message string, data map[string]any) *BackwardsInvocationResponseEvent {
+func NewResponseEvent(request_id string, message string, data any) *BackwardsInvocationResponseEvent {
 	return &BackwardsInvocationResponseEvent{
 		BackwardsRequestId: request_id,
 		Event:              REQUEST_EVENT_RESPONSE,

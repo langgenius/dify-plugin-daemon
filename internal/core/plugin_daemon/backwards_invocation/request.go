@@ -5,7 +5,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 type BackwardsInvocationType = dify_invocation.InvokeType
@@ -43,7 +42,7 @@ func (bi *BackwardsInvocation) WriteError(err error) {
 func (bi *BackwardsInvocation) WriteResponse(message string, data any) {
 	bi.session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
-		NewResponseEvent(bi.id, message, parser.StructToMap(data)),
+		NewResponseEvent(bi.id, message, data),
 	)
 }
 
