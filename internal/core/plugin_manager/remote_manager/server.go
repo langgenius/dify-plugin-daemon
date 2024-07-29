@@ -1,18 +1,14 @@
 package remote_manager
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"os"
 	"os/exec"
-	"strings"
 	"sync"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
 
@@ -64,22 +60,12 @@ func (r *RemotePluginServer) Stop() error {
 // Launch starts the server
 func (r *RemotePluginServer) Launch() error {
 	// kill the process if port is already in use
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", r.server.port))
-	if err != nil && strings.Contains(err.Error(), "address already in use") {
-		scanner := bufio.NewScanner(os.Stdin)
-		log.Info("Port is already in use, do you want to kill the process using the port? (y/n)")
-		for scanner.Scan() {
-			if scanner.Text() == "y" {
-				exec.Command("fuser", "-k", "tcp", fmt.Sprintf("%d", r.server.port)).Run()
-			} else if scanner.Text() == "n" {
-				return errors.New("port is already in use")
-			}
-		}
-	} else {
-		listener.Close()
-	}
+	// TODO: switch to optional
+	exec.Command("fuser", "-k", "tcp", fmt.Sprintf("%d", r.server.port)).Run()
 
-	err = gnet.Run(
+	time.Sleep(time.Millisecond * 100)
+
+	err := gnet.Run(
 		r.server, r.server.addr, gnet.WithMulticore(r.server.multicore),
 		gnet.WithNumEventLoop(r.server.num_loops),
 	)

@@ -92,17 +92,22 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {
 			data := scanner.Bytes()
+			if len(data) == 0 {
+				continue
+			}
+
 			if bytes.HasPrefix(data, []byte("data: ")) {
 				// split
 				data = data[6:]
-				// unmarshal
-				t, err := parser.UnmarshalJsonBytes[T](data)
-				if err != nil {
-					continue
-				}
-
-				ch.Write(t)
 			}
+
+			// unmarshal
+			t, err := parser.UnmarshalJsonBytes[T](data)
+			if err != nil {
+				continue
+			}
+
+			ch.Write(t)
 		}
 
 		ch.Close()

@@ -21,7 +21,7 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 		case "write_timeout":
 			timeout := time.Second * time.Duration(option.Value.(int64))
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
+			time.AfterFunc(timeout, cancel) // release resources associated with context asynchronously
 			req = req.WithContext(ctx)
 		case "header":
 			for k, v := range option.Value.(map[string]string) {
