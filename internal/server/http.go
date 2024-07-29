@@ -28,5 +28,5 @@ func server(config *app.Config) {
 		engine.POST("/plugin/debugging/key", CheckingKey(config.PluginInnerApiKey), controllers.GetRemoteDebuggingKey)
 	}
 
-	engine.Run(fmt.Sprintf(":%d", config.SERVER_PORT))
+	engine.Run(fmt.Sprintf(":%d", config.ServerPort))
 }

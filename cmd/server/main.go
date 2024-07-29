@@ -24,11 +24,15 @@ func main() {
 
 	setDefault(&config)
 
+	if err := config.Validate(); err != nil {
+		log.Panic("Invalid configuration: %s", err.Error())
+	}
+
 	server.Run(&config)
 }
 
 func setDefault(config *app.Config) {
-	setDefaultInt(&config.SERVER_PORT, 5002)
+	setDefaultInt(&config.ServerPort, 5002)
 	setDefaultInt(&config.RoutinePoolSize, 1000)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
 	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
