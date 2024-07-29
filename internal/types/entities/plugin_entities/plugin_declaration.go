@@ -21,6 +21,38 @@ type PluginPermissionRequirement struct {
 	Node  *PluginPermissionNodeRequirement  `json:"node" yaml:"node" validate:"omitempty"`
 }
 
+func (p *PluginPermissionRequirement) AllowInvokeTool() bool {
+	return p != nil && p.Tool != nil && p.Tool.Enabled
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeLLM() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.LLM
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeTextEmbedding() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.TextEmbedding
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeRerank() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.Rerank
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeTTS() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.TTS
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeSpeech2Text() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.Speech2text
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeModeration() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.Moderation
+}
+
+func (p *PluginPermissionRequirement) AllowInvokeNode() bool {
+	return p != nil && p.Node != nil && p.Node.Enabled
+}
+
 type PluginPermissionToolRequirement struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
@@ -32,6 +64,7 @@ type PluginPermissionModelRequirement struct {
 	Rerank        bool `json:"rerank" yaml:"rerank"`
 	TTS           bool `json:"tts" yaml:"tts"`
 	Speech2text   bool `json:"speech2text" yaml:"speech2text"`
+	Moderation    bool `json:"moderation" yaml:"moderation"`
 }
 
 type PluginPermissionNodeRequirement struct {
