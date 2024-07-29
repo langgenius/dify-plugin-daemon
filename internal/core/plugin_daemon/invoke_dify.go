@@ -7,7 +7,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -42,6 +41,7 @@ func invokeDify(
 	// dispatch invocation task
 	routine.Submit(func() {
 		dispatchDifyInvocationTask(request_handle)
+		defer request_handle.EndResponse()
 	})
 
 	return nil
@@ -99,12 +99,22 @@ func dispatchDifyInvocationTask(handle *backwards_invocation.BackwardsInvocation
 	}
 }
 
-func executeDifyInvocationToolTask(handle *backwards_invocation.BackwardsInvocation, request *dify_invocation.InvokeToolRequest) {
-	handle.WriteResponse("stream", tool_entities.ToolResponseChunk{
-		Type: "text",
-		Message: map[string]any{
-			"text": "hello world",
-		},
-	})
-	handle.EndResponse()
+func executeDifyInvocationToolTask(
+	handle *backwards_invocation.BackwardsInvocation,
+	request *dify_invocation.InvokeToolRequest,
+) {
+	response, err := dify_invocation.InvokeTool(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke tool failed: %s", err.Error()))
+		return
+	}
+
+	for response.Next() {
+		data, err := response.Read()
+		if err != nil {
+			return
+		}
+
+		handle.WriteResponse("stream", data)
+	}
 }

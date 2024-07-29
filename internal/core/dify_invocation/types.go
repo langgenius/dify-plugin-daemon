@@ -75,7 +75,7 @@ type InvokeToolRequest struct {
 	BaseInvokeDifyRequest
 	Data struct {
 		ToolType requests.ToolType `json:"tool_type" validate:"required,tool_type"`
-		requests.RequestInvokeTool
+		requests.InvokeToolSchema
 	} `json:"data" validate:"required"`
 }
 

@@ -36,7 +36,7 @@ func InvokeLLM(payload *InvokeLLMRequest) (*stream.StreamResponse[model_entities
 }
 
 func InvokeTextEmbedding(payload *InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error) {
-	return Request[model_entities.TextEmbeddingResult]("POST", "invoke/text_embedding", http_requests.HttpPayloadJson(payload))
+	return Request[model_entities.TextEmbeddingResult]("POST", "invoke/text-embedding", http_requests.HttpPayloadJson(payload))
 }
 
 func InvokeRerank(payload *InvokeRerankRequest) (*model_entities.RerankResult, error) {
