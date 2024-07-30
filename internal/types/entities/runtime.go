@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/gob"
 	"encoding/hex"
+	"hash/fnv"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -91,12 +93,29 @@ const (
 )
 
 type PluginRuntimeState struct {
+	Identity     string     `json:"identity"`
 	Restarts     int        `json:"restarts"`
 	Status       string     `json:"status"`
 	RelativePath string     `json:"relative_path"`
 	ActiveAt     *time.Time `json:"active_at"`
 	StoppedAt    *time.Time `json:"stopped_at"`
 	Verified     bool       `json:"verified"`
+}
+
+func (s *PluginRuntimeState) Hash() (uint64, error) {
+	buf := bytes.Buffer{}
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(s)
+	if err != nil {
+		return 0, err
+	}
+	j := fnv.New64a()
+	_, err = j.Write(buf.Bytes())
+	if err != nil {
+		return 0, err
+	}
+
+	return j.Sum64(), nil
 }
 
 const (
