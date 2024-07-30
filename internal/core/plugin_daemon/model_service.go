@@ -20,10 +20,8 @@ func genericInvokePlugin[Req any, Rsp any](
 	response_buffer_size int,
 	typ backwards_invocation.PluginAccessType,
 	action backwards_invocation.PluginAccessAction,
-) (
-	*stream.StreamResponse[Rsp], error,
-) {
-	runtime := plugin_manager.Get(session.PluginIdentity())
+) (*stream.StreamResponse[Rsp], error) {
+	runtime := plugin_manager.GetGlobalPluginManager().Get(session.PluginIdentity())
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}

@@ -1,25 +1,25 @@
 package cluster
 
-import "github.com/langgenius/dify-plugin-daemon/internal/types/app"
+import (
+	"sync"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+)
 
 type Cluster struct {
 	port uint16
+
+	plugins     map[string]*PluginLifeTime
+	plugin_lock sync.Mutex
 }
 
-var (
-	cluster *Cluster
-)
-
-func Launch(config *app.Config) {
-	cluster = &Cluster{
-		port: uint16(config.ServerPort),
+func NewCluster(config *app.Config) *Cluster {
+	return &Cluster{
+		port:    uint16(config.ServerPort),
+		plugins: make(map[string]*PluginLifeTime),
 	}
-
-	go func() {
-		cluster.clusterLifetime()
-	}()
 }
 
-func GetCluster() *Cluster {
-	return cluster
+func (c *Cluster) Launch(config *app.Config) {
+	go c.clusterLifetime()
 }

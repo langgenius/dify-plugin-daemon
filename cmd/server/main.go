@@ -28,7 +28,7 @@ func main() {
 		log.Panic("Invalid configuration: %s", err.Error())
 	}
 
-	server.Run(&config)
+	(&server.App{}).Run(&config)
 }
 
 func setDefault(config *app.Config) {

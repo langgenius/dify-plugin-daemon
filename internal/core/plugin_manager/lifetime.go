@@ -8,22 +8,22 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
-func lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
+func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
 	start_failed_times := 0
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
 	defer log.Info("plugin %s has exited", configuration.Identity())
 
-	// store plugin runtime
-	m.Store(configuration.Identity(), r)
-	defer m.Delete(configuration.Identity())
-
-	// update lifetime state for this pod
-	addLifetimeState(r)
+	// add plugin to cluster
+	err := p.cluster.RegisterPlugin(r)
+	if err != nil {
+		log.Error("add plugin to cluster failed: %s", err.Error())
+		return
+	}
 
 	// remove lifetime state after plugin if it has been stopped
-	defer deleteLifetimeState(r)
+	defer r.TriggerStop()
 
 	for !r.Stopped() {
 		if err := r.InitEnvironment(); err != nil {

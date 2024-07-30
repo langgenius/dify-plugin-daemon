@@ -15,19 +15,19 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func startWatcher(config *app.Config) {
+func (p *PluginManager) startWatcher(config *app.Config) {
 	go func() {
 		log.Info("start to handle new plugins in path: %s", config.StoragePath)
-		handleNewPlugins(config)
+		p.handleNewPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
-			handleNewPlugins(config)
+			p.handleNewPlugins(config)
 		}
 	}()
 
-	startRemoteWatcher(config)
+	p.startRemoteWatcher(config)
 }
 
-func startRemoteWatcher(config *app.Config) {
+func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	// launch TCP debugging server if enabled
 	if config.PluginRemoteInstallingEnabled {
 		server := remote_manager.NewRemotePluginServer(config)
@@ -39,13 +39,13 @@ func startRemoteWatcher(config *app.Config) {
 		}()
 		go func() {
 			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
-				lifetime(config, rpr)
+				p.lifetime(config, rpr)
 			})
 		}()
 	}
 }
 
-func handleNewPlugins(config *app.Config) {
+func (p *PluginManager) handleNewPlugins(config *app.Config) {
 	// load local plugins firstly
 	for plugin := range loadNewPlugins(config.StoragePath) {
 		var plugin_interface entities.PluginRuntimeInterface
@@ -64,7 +64,7 @@ func handleNewPlugins(config *app.Config) {
 		}
 
 		routine.Submit(func() {
-			lifetime(config, plugin_interface)
+			p.lifetime(config, plugin_interface)
 		})
 	}
 }

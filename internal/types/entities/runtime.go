@@ -10,7 +10,7 @@ type (
 	PluginRuntime struct {
 		State     PluginRuntimeState                `json:"state"`
 		Config    plugin_entities.PluginDeclaration `json:"config"`
-		Connector PluginConnector                   `json:"-"`
+		onStopped []func()                          `json:"-"`
 	}
 
 	PluginRuntimeInterface interface {
@@ -25,6 +25,8 @@ type (
 		StartPlugin() error
 		Stopped() bool
 		Stop()
+		OnStop(func())
+		TriggerStop()
 		RuntimeState() *PluginRuntimeState
 		Wait() (<-chan bool, error)
 		Type() PluginRuntimeType
@@ -56,6 +58,16 @@ func (r *PluginRuntime) RuntimeState() *PluginRuntimeState {
 	return &r.State
 }
 
+func (r *PluginRuntime) OnStop(f func()) {
+	r.onStopped = append(r.onStopped, f)
+}
+
+func (r *PluginRuntime) TriggerStop() {
+	for _, f := range r.onStopped {
+		f()
+	}
+}
+
 type PluginRuntimeType string
 
 const (
@@ -80,9 +92,3 @@ const (
 	PLUGIN_RUNTIME_STATUS_RESTARTING = "restarting"
 	PLUGIN_RUNTIME_STATUS_PENDING    = "pending"
 )
-
-type PluginConnector interface {
-	OnMessage(func([]byte))
-	Read([]byte) int
-	Write([]byte) int
-}

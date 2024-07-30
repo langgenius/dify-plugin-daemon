@@ -14,7 +14,7 @@ import (
 
 func createSession[T any](r *plugin_entities.InvokePluginRequest[T]) *session_manager.Session {
 	session := session_manager.NewSession(r.TenantId, r.UserId, parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion))
-	runtime := plugin_manager.Get(session.PluginIdentity())
+	runtime := plugin_manager.GetGlobalPluginManager().Get(session.PluginIdentity())
 	session.BindRuntime(runtime)
 	return session
 }
