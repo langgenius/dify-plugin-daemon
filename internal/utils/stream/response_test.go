@@ -2,6 +2,7 @@ package stream
 
 import (
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
@@ -9,11 +10,27 @@ import (
 func TestStreamGenerator(t *testing.T) {
 	response := NewStreamResponse[int](512)
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
 	go func() {
 		for i := 0; i < 10000; i++ {
 			response.Write(i)
 			time.Sleep(time.Microsecond)
 		}
+		wg.Done()
+	}()
+
+	go func() {
+		for i := 0; i < 10000; i++ {
+			response.Write(i)
+			time.Sleep(time.Microsecond)
+		}
+		wg.Done()
+	}()
+
+	go func() {
+		wg.Wait()
 		response.Close()
 	}()
 
@@ -27,7 +44,7 @@ func TestStreamGenerator(t *testing.T) {
 		msg += 1
 	}
 
-	if msg != 10000 {
+	if msg != 20000 {
 		t.Errorf("Expected 10000 messages, got %d", msg)
 	}
 }
@@ -56,7 +73,6 @@ func TestStreamGeneratorErrorMessage(t *testing.T) {
 
 func TestStreamGeneratorWrapper(t *testing.T) {
 	response := NewStreamResponse[int](512)
-
 	nums := 0
 
 	go func() {
