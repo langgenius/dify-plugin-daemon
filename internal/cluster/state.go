@@ -31,7 +31,7 @@ func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterfac
 
 	c.plugin_lock.Lock()
 	if !lifetime.Stopped() {
-		c.plugins[identity] = &PluginLifeTime{
+		c.plugins[identity] = &pluginLifeTime{
 			lifetime: lifetime,
 		}
 	} else {
@@ -46,10 +46,22 @@ func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterfac
 
 // SchedulePlugin schedules a plugin to the cluster
 func (c *Cluster) schedulePlugins() error {
-	return nil
+	c.plugin_lock.Lock()
+	defer c.plugin_lock.Unlock()
+
+	for i, v := range c.plugins {
+		if v.lifetime.Stopped() {
+			delete(c.plugins, i)
+			continue
+		}
+
+		if err := c.doPluginStateUpdate(v); err != nil {
+
+		}
+	}
 }
 
 // doPluginUpdate updates the plugin state and schedule the plugin
-func (c *Cluster) doPluginStateUpdate(lifetime entities.PluginRuntimeTimeLifeInterface) error {
+func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 	return nil
 }

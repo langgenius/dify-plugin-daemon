@@ -9,7 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 )
 
-type PluginLifeTime struct {
+type pluginLifeTime struct {
 	lifetime          entities.PluginRuntimeTimeLifeInterface
 	last_scheduled_at time.Time
 }
@@ -19,7 +19,7 @@ type Cluster struct {
 
 	port uint16
 
-	plugins     map[string]*PluginLifeTime
+	plugins     map[string]*pluginLifeTime
 	plugin_lock sync.Mutex
 
 	stop_chan chan bool
@@ -29,7 +29,7 @@ type Cluster struct {
 func NewCluster(config *app.Config) *Cluster {
 	return &Cluster{
 		port:      uint16(config.ServerPort),
-		plugins:   make(map[string]*PluginLifeTime),
+		plugins:   make(map[string]*pluginLifeTime),
 		stop_chan: make(chan bool),
 		stopped:   new(int32),
 	}

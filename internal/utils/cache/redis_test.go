@@ -113,3 +113,83 @@ func TestRedisTransaction(t *testing.T) {
 		return
 	}
 }
+
+func TestRedisScanMap(t *testing.T) {
+	// get redis connection
+	if err := getRedisConnection(t); err != nil {
+		t.Errorf("get redis connection failed: %v", err)
+		return
+	}
+	defer Close()
+
+	type s struct {
+		Field string `json:"field"`
+	}
+
+	err := SetMapOneField(strings.Join([]string{TEST_PREFIX, "map"}, ":"), "key1", s{Field: "value1"})
+	if err != nil {
+		t.Errorf("set map failed: %v", err)
+		return
+	}
+	defer Del(strings.Join([]string{TEST_PREFIX, "map"}, ":"))
+	err = SetMapOneField(strings.Join([]string{TEST_PREFIX, "map"}, ":"), "key2", s{Field: "value2"})
+	if err != nil {
+		t.Errorf("set map failed: %v", err)
+		return
+	}
+	err = SetMapOneField(strings.Join([]string{TEST_PREFIX, "map"}, ":"), "key3", s{Field: "value3"})
+	if err != nil {
+		t.Errorf("set map failed: %v", err)
+		return
+	}
+	err = SetMapOneField(strings.Join([]string{TEST_PREFIX, "map"}, ":"), "4", s{Field: "value4"})
+	if err != nil {
+		t.Errorf("set map failed: %v", err)
+		return
+	}
+
+	data, err := ScanMap[s](strings.Join([]string{TEST_PREFIX, "map"}, ":"), "key")
+	if err != nil {
+		t.Errorf("scan map failed: %v", err)
+		return
+	}
+
+	if len(data) != 3 {
+		t.Errorf("scan map should return 3")
+		return
+	}
+
+	if data["key1"].Field != "value1" {
+		t.Errorf("scan map should return value1")
+		return
+	}
+
+	if data["key2"].Field != "value2" {
+		t.Errorf("scan map should return value2")
+		return
+	}
+
+	if data["key3"].Field != "value3" {
+		t.Errorf("scan map should return value3")
+		return
+	}
+
+	err = ScanMapAsync[s](strings.Join([]string{TEST_PREFIX, "map"}, ":"), "4", func(m map[string]s) error {
+		if len(m) != 1 {
+			t.Errorf("scan map async should return 1")
+			return errors.New("scan map async should return 1")
+		}
+
+		if m["4"].Field != "value4" {
+			t.Errorf("scan map async should return value4")
+			return errors.New("scan map async should return value4")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		t.Errorf("scan map async failed: %v", err)
+		return
+	}
+}

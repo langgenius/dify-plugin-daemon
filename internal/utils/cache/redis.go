@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -228,6 +229,64 @@ func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	}
 
 	return result, nil
+}
+
+func ScanMap[V any](key string, prefix string, context ...redis.Cmdable) (map[string]V, error) {
+	if client == nil {
+		return nil, ErrDBNotInit
+	}
+
+	result := make(map[string]V)
+
+	ScanMapAsync[V](key, prefix, func(m map[string]V) error {
+		for k, v := range m {
+			result[k] = v
+		}
+
+		return nil
+	})
+
+	return result, nil
+}
+
+func ScanMapAsync[V any](key string, prefix string, fn func(map[string]V) error, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	cursor := uint64(0)
+
+	for {
+		kvs, new_cursor, err := getCmdable(context...).
+			HScan(ctx, serialKey(key), cursor, fmt.Sprintf("%s*", prefix), 32).
+			Result()
+
+		if err != nil {
+			return err
+		}
+
+		result := make(map[string]V)
+		for i := 0; i < len(kvs); i += 2 {
+			value, err := parser.UnmarshalJson[V](kvs[i+1])
+			if err != nil {
+				continue
+			}
+
+			result[kvs[i]] = value
+		}
+
+		if err := fn(result); err != nil {
+			return err
+		}
+
+		if new_cursor == 0 {
+			break
+		}
+
+		cursor = new_cursor
+	}
+
+	return nil
 }
 
 func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cmdable) (bool, error) {
