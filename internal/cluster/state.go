@@ -46,19 +46,7 @@ func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterfac
 
 // SchedulePlugin schedules a plugin to the cluster
 func (c *Cluster) schedulePlugins() error {
-	c.plugin_lock.Lock()
-	defer c.plugin_lock.Unlock()
-
-	for i, v := range c.plugins {
-		if v.lifetime.Stopped() {
-			delete(c.plugins, i)
-			continue
-		}
-
-		if err := c.doPluginStateUpdate(v); err != nil {
-
-		}
-	}
+	return nil
 }
 
 // doPluginUpdate updates the plugin state and schedule the plugin
