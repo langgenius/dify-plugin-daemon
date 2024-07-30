@@ -1,13 +1,11 @@
 package cluster
 
 import (
+	"sync/atomic"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
-
-type PluginLifeTime struct {
-	lifetime entities.PluginRuntimeTimeLifeInterface
-}
 
 // RegisterPlugin registers a plugin to the cluster, and start to be scheduled
 func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterface) error {
@@ -16,10 +14,19 @@ func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterfac
 		return err
 	}
 
+	done := make(chan bool)
+	closed := new(int32)
+	close := func() {
+		if atomic.CompareAndSwapInt32(closed, 0, 1) {
+			close(done)
+		}
+	}
+
 	lifetime.OnStop(func() {
 		c.plugin_lock.Lock()
 		delete(c.plugins, identity)
 		c.plugin_lock.Unlock()
+		close()
 	})
 
 	c.plugin_lock.Lock()
@@ -27,6 +34,8 @@ func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterfac
 		c.plugins[identity] = &PluginLifeTime{
 			lifetime: lifetime,
 		}
+	} else {
+		close()
 	}
 	c.plugin_lock.Unlock()
 
@@ -35,6 +44,12 @@ func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterfac
 	return nil
 }
 
-func (c *Cluster) SchedulePlugin(lifetime entities.PluginRuntimeTimeLifeInterface) error {
+// SchedulePlugin schedules a plugin to the cluster
+func (c *Cluster) schedulePlugins() error {
+	return nil
+}
+
+// doPluginUpdate updates the plugin state and schedule the plugin
+func (c *Cluster) doPluginStateUpdate(lifetime entities.PluginRuntimeTimeLifeInterface) error {
 	return nil
 }

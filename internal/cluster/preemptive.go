@@ -7,7 +7,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster/cluster_id"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
@@ -32,79 +31,10 @@ import (
 //
 // A node will be removed from the cluster if it is no longer active
 
-var (
-	i_am_master = false
-)
-
 const (
 	CLUSTER_STATUS_HASH_MAP_KEY = "cluster-status-hash-map"
 	PREEMPTION_LOCK_KEY         = "cluster-master-preemption-lock"
 )
-
-const (
-	MASTER_LOCKING_INTERVAL     = time.Millisecond * 500 // interval to try to lock the slot to be the master
-	MASTER_LOCK_EXPIRED_TIME    = time.Second * 5        // expired time of master key
-	MASTER_GC_INTERVAL          = time.Second * 10       // interval to do garbage collection of nodes has already deactivated
-	NODE_VOTE_INTERVAL          = time.Second * 30       // interval to vote the ips of the nodes
-	UPDATE_NODE_STATUS_INTERVAL = time.Second * 5        // interval to update the status of the node
-	NODE_DISCONNECTED_TIMEOUT   = time.Second * 10       // once a node is no longer active, it will be removed from the cluster
-)
-
-// lifetime of the cluster
-func (c *Cluster) clusterLifetime() {
-	ticker_lock_master := time.NewTicker(MASTER_LOCKING_INTERVAL)
-	defer ticker_lock_master.Stop()
-
-	ticker_update_node_status := time.NewTicker(UPDATE_NODE_STATUS_INTERVAL)
-	defer ticker_update_node_status.Stop()
-
-	master_gc_ticker := time.NewTicker(MASTER_GC_INTERVAL)
-	defer master_gc_ticker.Stop()
-
-	node_vote_ticker := time.NewTicker(NODE_VOTE_INTERVAL)
-	defer node_vote_ticker.Stop()
-
-	if err := c.voteIps(); err != nil {
-		log.Error("failed to vote the ips of the nodes: %s", err.Error())
-	}
-
-	for {
-		select {
-		case <-ticker_lock_master.C:
-			if !i_am_master {
-				// try lock the slot
-				if success, err := c.lockMaster(); err != nil {
-					log.Error("failed to lock the slot to be the master of the cluster: %s", err.Error())
-				} else if success {
-					i_am_master = true
-					log.Info("current node has become the master of the cluster")
-				} else {
-					i_am_master = false
-					log.Info("current node lost the master slot")
-				}
-			} else {
-				// update the master
-				if err := c.updateMaster(); err != nil {
-					log.Error("failed to update the master: %s", err.Error())
-				}
-			}
-		case <-ticker_update_node_status.C:
-			if err := c.updateNodeStatus(); err != nil {
-				log.Error("failed to update the status of the node: %s", err.Error())
-			}
-		case <-master_gc_ticker.C:
-			if i_am_master {
-				if err := c.gcNodes(); err != nil {
-					log.Error("failed to gc the nodes has already deactivated: %s", err.Error())
-				}
-			}
-		case <-node_vote_ticker.C:
-			if err := c.voteIps(); err != nil {
-				log.Error("failed to vote the ips of the nodes: %s", err.Error())
-			}
-		}
-	}
-}
 
 // try lock the slot to be the master of the cluster
 // returns:
@@ -203,7 +133,7 @@ func (c *Cluster) updateNodeStatus() error {
 }
 
 func (c *Cluster) IsMaster() bool {
-	return i_am_master
+	return c.i_am_master
 }
 
 func (c *Cluster) IsNodeAlive(node_id string) bool {

@@ -1,9 +1,14 @@
 package entities
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 type (
@@ -28,6 +33,7 @@ type (
 		OnStop(func())
 		TriggerStop()
 		RuntimeState() *PluginRuntimeState
+		Checksum() string
 		Wait() (<-chan bool, error)
 		Type() PluginRuntimeType
 	}
@@ -56,6 +62,14 @@ func (r *PluginRuntime) Identity() (string, error) {
 
 func (r *PluginRuntime) RuntimeState() *PluginRuntimeState {
 	return &r.State
+}
+
+func (r *PluginRuntime) Checksum() string {
+	buf := bytes.Buffer{}
+	binary.Write(&buf, binary.BigEndian, parser.MarshalJsonBytes(r.Config))
+	hash := sha256.New()
+	hash.Write(buf.Bytes())
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func (r *PluginRuntime) OnStop(f func()) {
