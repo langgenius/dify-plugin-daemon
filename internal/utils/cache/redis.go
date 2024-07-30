@@ -55,6 +55,14 @@ func serialKey(keys ...string) string {
 }
 
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	if _, ok := value.(string); !ok {
+		value = parser.MarshalJson(value)
+	}
+
 	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
 }
 
@@ -162,6 +170,10 @@ func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
 func SetMapOneField(key string, field string, value any, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
+	}
+
+	if _, ok := value.(string); !ok {
+		value = parser.MarshalJson(value)
 	}
 
 	return getCmdable(context...).HSet(ctx, serialKey(key), field, value).Err()

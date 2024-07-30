@@ -1,6 +1,7 @@
 package remote_manager
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -35,7 +36,14 @@ type RemotePluginRuntime struct {
 	// registration transferred
 	registration_transferred bool
 
+	// tenant id
+	tenant_id string
+
 	alive bool
+}
+
+func (r *RemotePluginRuntime) Identity() (string, error) {
+	return strings.Join([]string{r.Configuration().Identity(), r.tenant_id}, ":"), nil
 }
 
 // Listen creates a new listener for the given session_id

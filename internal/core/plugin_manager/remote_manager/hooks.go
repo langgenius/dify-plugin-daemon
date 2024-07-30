@@ -140,7 +140,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			return
 		}
 
-		runtime.State.TenantID = info.TenantId
+		runtime.tenant_id = info.TenantId
 
 		// handshake completed
 		runtime.handshake = true

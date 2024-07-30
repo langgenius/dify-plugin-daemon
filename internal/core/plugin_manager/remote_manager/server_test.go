@@ -107,7 +107,7 @@ func TestAcceptConnection(t *testing.T) {
 				connection_err = errors.New("plugin name not matched")
 			}
 
-			if runtime.State.TenantID != "test" {
+			if runtime.tenant_id != "test" {
 				connection_err = errors.New("tenant id not matched")
 			}
 

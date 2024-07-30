@@ -19,11 +19,12 @@ type (
 	}
 
 	PluginRuntimeTimeLifeInterface interface {
+		Configuration() *plugin_entities.PluginDeclaration
+		Identity() (string, error)
 		InitEnvironment() error
 		StartPlugin() error
 		Stopped() bool
 		Stop()
-		Configuration() *plugin_entities.PluginDeclaration
 		RuntimeState() *PluginRuntimeState
 		Wait() (<-chan bool, error)
 		Type() PluginRuntimeType
@@ -47,6 +48,10 @@ func (r *PluginRuntime) Configuration() *plugin_entities.PluginDeclaration {
 	return &r.Config
 }
 
+func (r *PluginRuntime) Identity() (string, error) {
+	return r.Config.Identity(), nil
+}
+
 func (r *PluginRuntime) RuntimeState() *PluginRuntimeState {
 	return &r.State
 }
@@ -66,7 +71,6 @@ type PluginRuntimeState struct {
 	ActiveAt     *time.Time `json:"active_at"`
 	StoppedAt    *time.Time `json:"stopped_at"`
 	Verified     bool       `json:"verified"`
-	TenantID     string     `json:"tenant_id"`
 }
 
 const (

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/process"
@@ -20,6 +21,9 @@ func Run(config *app.Config) {
 
 	// init plugin daemon
 	plugin_manager.Init(config)
+
+	// init cluster
+	cluster.Launch(config)
 
 	// start http server
 	server(config)

@@ -16,6 +16,10 @@ func (r *TPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
+func (r *TPluginRuntime) Identity() (string, error) {
+	return "", nil
+}
+
 func (r *TPluginRuntime) StartPlugin() error {
 	return nil
 }
