@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -76,7 +77,10 @@ func initDifyPluginDB(host string, port int, db_name string, user string, pass s
 }
 
 func autoMigrate() error {
-	return DifyPluginDB.AutoMigrate()
+	return DifyPluginDB.AutoMigrate(
+		models.Plugin{},
+		models.PluginInstallation{},
+	)
 }
 
 func Init(config *app.Config) {

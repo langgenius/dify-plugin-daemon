@@ -148,7 +148,7 @@ func TestRedisScanMap(t *testing.T) {
 		return
 	}
 
-	data, err := ScanMap[s](strings.Join([]string{TEST_PREFIX, "map"}, ":"), "key")
+	data, err := ScanMap[s](strings.Join([]string{TEST_PREFIX, "map"}, ":"), "key*")
 	if err != nil {
 		t.Errorf("scan map failed: %v", err)
 		return

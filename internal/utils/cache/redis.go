@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -32,6 +31,7 @@ func InitRedisClient(addr, password string) error {
 	return nil
 }
 
+// Close the redis client
 func Close() error {
 	if client == nil {
 		return ErrDBNotInit
@@ -55,6 +55,7 @@ func serialKey(keys ...string) string {
 	), ":")
 }
 
+// Store the key-value pair
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
@@ -67,6 +68,7 @@ func Store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
 }
 
+// Get the value with key
 func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
@@ -88,6 +90,7 @@ func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	return &result, err
 }
 
+// GetString get the string with key
 func GetString(key string, context ...redis.Cmdable) (string, error) {
 	if client == nil {
 		return "", ErrDBNotInit
@@ -103,6 +106,7 @@ func GetString(key string, context ...redis.Cmdable) (string, error) {
 	return v, err
 }
 
+// Del the key
 func Del(key string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
@@ -120,6 +124,7 @@ func Del(key string, context ...redis.Cmdable) error {
 	return nil
 }
 
+// Exist check the key exist or not
 func Exist(key string, context ...redis.Cmdable) (int64, error) {
 	if client == nil {
 		return 0, ErrDBNotInit
@@ -128,6 +133,7 @@ func Exist(key string, context ...redis.Cmdable) (int64, error) {
 	return getCmdable(context...).Exists(ctx, serialKey(key)).Result()
 }
 
+// Increase the key
 func Increase(key string, context ...redis.Cmdable) (int64, error) {
 	if client == nil {
 		return 0, ErrDBNotInit
@@ -144,6 +150,7 @@ func Increase(key string, context ...redis.Cmdable) (int64, error) {
 	return num, nil
 }
 
+// Decrease the key
 func Decrease(key string, context ...redis.Cmdable) (int64, error) {
 	if client == nil {
 		return 0, ErrDBNotInit
@@ -152,6 +159,7 @@ func Decrease(key string, context ...redis.Cmdable) (int64, error) {
 	return getCmdable(context...).Decr(ctx, serialKey(key)).Result()
 }
 
+// SetExpire set the expire time for the key
 func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
@@ -160,6 +168,7 @@ func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Err()
 }
 
+// SetMapField set the map field with key
 func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
@@ -168,6 +177,7 @@ func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
 	return getCmdable(context...).HMSet(ctx, serialKey(key), v).Err()
 }
 
+// SetMapOneField set the map field with key
 func SetMapOneField(key string, field string, value any, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
@@ -180,6 +190,7 @@ func SetMapOneField(key string, field string, value any, context ...redis.Cmdabl
 	return getCmdable(context...).HSet(ctx, serialKey(key), field, value).Err()
 }
 
+// GetMapField get the map field with key
 func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
@@ -197,6 +208,7 @@ func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T,
 	return &result, err
 }
 
+// DelMapField delete the map field with key
 func DelMapField(key string, field string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
@@ -205,6 +217,7 @@ func DelMapField(key string, field string, context ...redis.Cmdable) error {
 	return getCmdable(context...).HDel(ctx, serialKey(key), field).Err()
 }
 
+// GetMap get the map with key
 func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
@@ -231,14 +244,15 @@ func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	return result, nil
 }
 
-func ScanMap[V any](key string, prefix string, context ...redis.Cmdable) (map[string]V, error) {
+// ScanMap scan the map with match pattern, format like "key*"
+func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[string]V, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
 	result := make(map[string]V)
 
-	ScanMapAsync[V](key, prefix, func(m map[string]V) error {
+	ScanMapAsync[V](key, match, func(m map[string]V) error {
 		for k, v := range m {
 			result[k] = v
 		}
@@ -249,7 +263,8 @@ func ScanMap[V any](key string, prefix string, context ...redis.Cmdable) (map[st
 	return result, nil
 }
 
-func ScanMapAsync[V any](key string, prefix string, fn func(map[string]V) error, context ...redis.Cmdable) error {
+// ScanMapAsync scan the map with match pattern, format like "key*"
+func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
@@ -258,7 +273,7 @@ func ScanMapAsync[V any](key string, prefix string, fn func(map[string]V) error,
 
 	for {
 		kvs, new_cursor, err := getCmdable(context...).
-			HScan(ctx, serialKey(key), cursor, fmt.Sprintf("%s*", prefix), 32).
+			HScan(ctx, serialKey(key), cursor, match, 32).
 			Result()
 
 		if err != nil {
@@ -289,6 +304,7 @@ func ScanMapAsync[V any](key string, prefix string, fn func(map[string]V) error,
 	return nil
 }
 
+// SetNX set the key-value pair with expire time
 func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cmdable) (bool, error) {
 	if client == nil {
 		return false, ErrDBNotInit

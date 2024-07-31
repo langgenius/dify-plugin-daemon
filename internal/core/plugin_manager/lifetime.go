@@ -70,6 +70,8 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 		time.Sleep(5 * time.Second)
 
 		// add restart times
-		r.RuntimeState().Restarts++
+		state := r.RuntimeState()
+		state.Restarts++
+		r.UpdateState(state)
 	}
 }

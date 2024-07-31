@@ -8,7 +8,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/cluster/cluster_id"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
 )
@@ -32,7 +31,7 @@ func (c *Cluster) voteIps() error {
 	}
 
 	for node_id, node_status := range nodes {
-		if node_id == cluster_id.GetInstanceID() {
+		if node_id == c.id {
 			continue
 		}
 
@@ -41,7 +40,7 @@ func (c *Cluster) voteIps() error {
 		for _, ip := range node_status.Ips {
 			// skip ips which have already been voted by current node in the last 5 minutes
 			for _, vote := range ip.Votes {
-				if vote.NodeID == cluster_id.GetInstanceID() {
+				if vote.NodeID == c.id {
 					if time.Since(time.Unix(vote.VotedAt, 0)) < time.Minute*5 && !vote.Failed {
 						continue
 					} else if time.Since(time.Unix(vote.VotedAt, 0)) < time.Minute*30 && vote.Failed {
@@ -75,7 +74,7 @@ func (c *Cluster) voteIps() error {
 				// check if the ip has already voted
 				already_voted := false
 				for j, vote := range ip.Votes {
-					if vote.NodeID == cluster_id.GetInstanceID() {
+					if vote.NodeID == c.id {
 						node_status.Ips[i].Votes[j].VotedAt = time.Now().Unix()
 						node_status.Ips[i].Votes[j].Failed = !success
 						already_voted = true
@@ -85,7 +84,7 @@ func (c *Cluster) voteIps() error {
 				// add a new vote
 				if !already_voted {
 					node_status.Ips[i].Votes = append(node_status.Ips[i].Votes, vote{
-						NodeID:  cluster_id.GetInstanceID(),
+						NodeID:  c.id,
 						VotedAt: time.Now().Unix(),
 						Failed:  !success,
 					})

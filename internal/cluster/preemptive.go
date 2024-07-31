@@ -5,7 +5,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/cluster/cluster_id"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -44,7 +43,7 @@ func (c *Cluster) lockMaster() (bool, error) {
 	var final_error error
 
 	for i := 0; i < 3; i++ {
-		if success, err := cache.SetNX(PREEMPTION_LOCK_KEY, cluster_id.GetInstanceID(), MASTER_LOCK_EXPIRED_TIME); err != nil {
+		if success, err := cache.SetNX(PREEMPTION_LOCK_KEY, c.id, MASTER_LOCK_EXPIRED_TIME); err != nil {
 			// try again
 			if final_error == nil {
 				final_error = err
@@ -73,13 +72,13 @@ func (c *Cluster) updateMaster() error {
 
 // update the status of the node
 func (c *Cluster) updateNodeStatus() error {
-	if err := c.LockNodeStatus(cluster_id.GetInstanceID()); err != nil {
+	if err := c.LockNodeStatus(c.id); err != nil {
 		return err
 	}
-	defer c.UnlockNodeStatus(cluster_id.GetInstanceID())
+	defer c.UnlockNodeStatus(c.id)
 
 	// update the status of the node
-	node_status, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster_id.GetInstanceID())
+	node_status, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, c.id)
 	if err != nil {
 		if err == cache.ErrNotFound {
 			// try to get ips configs
@@ -125,7 +124,7 @@ func (c *Cluster) updateNodeStatus() error {
 	node_status.LastPingAt = time.Now().Unix()
 
 	// update the status of the node
-	if err := cache.SetMapOneField(CLUSTER_STATUS_HASH_MAP_KEY, cluster_id.GetInstanceID(), node_status); err != nil {
+	if err := cache.SetMapOneField(CLUSTER_STATUS_HASH_MAP_KEY, c.id, node_status); err != nil {
 		return err
 	}
 

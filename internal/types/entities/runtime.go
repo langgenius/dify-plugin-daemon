@@ -26,17 +26,33 @@ type (
 	}
 
 	PluginRuntimeTimeLifeInterface interface {
+		// returns the plugin configuration
 		Configuration() *plugin_entities.PluginDeclaration
+		// unique identity of the plugin
 		Identity() (string, error)
+		// hashed identity of the plugin
+		HashedIdentity() (string, error)
+		// before the plugin starts, it will call this method to initialize the environment
 		InitEnvironment() error
+		// start the plugin, returns errors if the plugin fails to start and hangs until the plugin stops
 		StartPlugin() error
+		// returns true if the plugin is stopped
 		Stopped() bool
+		// stop the plugin
 		Stop()
+		// add a function to be called when the plugin stops
 		OnStop(func())
+		// trigger the stop event
 		TriggerStop()
-		RuntimeState() *PluginRuntimeState
+		// returns the runtime state of the plugin
+		RuntimeState() PluginRuntimeState
+		// Update the runtime state of the plugin
+		UpdateState(state PluginRuntimeState)
+		// returns the checksum of the plugin
 		Checksum() string
+		// wait for the plugin to stop
 		Wait() (<-chan bool, error)
+		// returns the runtime type of the plugin
 		Type() PluginRuntimeType
 	}
 
@@ -62,8 +78,22 @@ func (r *PluginRuntime) Identity() (string, error) {
 	return r.Config.Identity(), nil
 }
 
-func (r *PluginRuntime) RuntimeState() *PluginRuntimeState {
-	return &r.State
+func HashedIdentity(identity string) string {
+	hash := sha256.New()
+	hash.Write([]byte(identity))
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func (r *PluginRuntime) HashedIdentity() (string, error) {
+	return HashedIdentity(r.Config.Identity()), nil
+}
+
+func (r *PluginRuntime) RuntimeState() PluginRuntimeState {
+	return r.State
+}
+
+func (r *PluginRuntime) UpdateState(state PluginRuntimeState) {
+	r.State = state
 }
 
 func (r *PluginRuntime) Checksum() string {
@@ -100,6 +130,8 @@ type PluginRuntimeState struct {
 	ActiveAt     *time.Time `json:"active_at"`
 	StoppedAt    *time.Time `json:"stopped_at"`
 	Verified     bool       `json:"verified"`
+	ScheduledAt  *time.Time `json:"scheduled_at"`
+	Logs         []string   `json:"logs"`
 }
 
 func (s *PluginRuntimeState) Hash() (uint64, error) {
