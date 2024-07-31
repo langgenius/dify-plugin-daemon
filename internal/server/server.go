@@ -12,6 +12,7 @@ import (
 func (a *App) Run(config *app.Config) {
 	a.cluster = cluster.NewCluster(config)
 	plugin_manager.InitGlobalPluginManager(a.cluster)
+	a.plugin_manager = plugin_manager.GetGlobalPluginManager()
 
 	// init routine pool
 	routine.InitPool(config.RoutinePoolSize)

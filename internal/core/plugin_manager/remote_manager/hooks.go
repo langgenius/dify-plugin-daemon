@@ -159,6 +159,9 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// registration transferred
 		runtime.registration_transferred = true
 
+		runtime.InitState()
+		runtime.SetActiveAt(time.Now())
+
 		// publish runtime to watcher
 		s.response.Write(runtime)
 	} else {

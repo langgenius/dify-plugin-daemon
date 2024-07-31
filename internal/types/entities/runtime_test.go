@@ -7,7 +7,6 @@ import (
 
 func TestRuntimeStateHash(t *testing.T) {
 	state := PluginRuntimeState{
-		Identity:     "test",
 		Restarts:     0,
 		Status:       PLUGIN_RUNTIME_STATUS_PENDING,
 		RelativePath: "aaa",

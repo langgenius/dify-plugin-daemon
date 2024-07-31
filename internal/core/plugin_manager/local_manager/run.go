@@ -25,7 +25,7 @@ func (r *LocalPluginRuntime) gc() {
 
 func (r *LocalPluginRuntime) init() {
 	r.w = make(chan bool)
-	r.State.Status = entities.PLUGIN_RUNTIME_STATUS_LAUNCHING
+	r.SetLaunching()
 }
 
 func (r *LocalPluginRuntime) Type() entities.PluginRuntimeType {
@@ -44,27 +44,27 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// get writer
 	stdin, err := e.StdinPipe()
 	if err != nil {
-		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
+		r.SetRestarting()
 		return fmt.Errorf("get stdin pipe failed: %s", err.Error())
 	}
 	defer stdin.Close()
 
 	stdout, err := e.StdoutPipe()
 	if err != nil {
-		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
+		r.SetRestarting()
 		return fmt.Errorf("get stdout pipe failed: %s", err.Error())
 	}
 	defer stdout.Close()
 
 	stderr, err := e.StderrPipe()
 	if err != nil {
-		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
+		r.SetRestarting()
 		return fmt.Errorf("get stderr pipe failed: %s", err.Error())
 	}
 	defer stderr.Close()
 
 	if err := e.Start(); err != nil {
-		r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
+		r.SetRestarting()
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		// wait for plugin to exit
 		err = e.Wait()
 		if err != nil {
-			r.State.Status = entities.PLUGIN_RUNTIME_STATUS_RESTARTING
+			r.SetRestarting()
 			log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
 		}
 
@@ -115,7 +115,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	wg.Wait()
 
 	// plugin has exited
-	r.State.Status = entities.PLUGIN_RUNTIME_STATUS_PENDING
+	r.SetPending()
 	return nil
 }
 

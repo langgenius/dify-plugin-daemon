@@ -107,7 +107,6 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 						RelativePath: path.Join(root_path, plugin.Name()),
 						ActiveAt:     nil,
 						Verified:     err == nil,
-						Identity:     configuration.Identity(),
 					},
 				}
 			}

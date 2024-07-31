@@ -9,11 +9,13 @@ import (
 )
 
 func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
-	start_failed_times := 0
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
 	defer log.Info("plugin %s has exited", configuration.Identity())
+
+	// stop plugin when the plugin reaches the end of its lifetime
+	defer r.Stop()
 
 	// add plugin to cluster
 	err := p.cluster.RegisterPlugin(r)
@@ -21,6 +23,8 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 		log.Error("add plugin to cluster failed: %s", err.Error())
 		return
 	}
+
+	start_failed_times := 0
 
 	// remove lifetime state after plugin if it has been stopped
 	defer r.TriggerStop()
@@ -34,7 +38,7 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 					"init environment failed 3 times, plugin %s has been stopped",
 					configuration.Identity(),
 				)
-				r.Stop()
+				break
 			}
 			start_failed_times++
 			continue
@@ -53,7 +57,7 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 					"start plugin failed 3 times, plugin %s has been stopped",
 					configuration.Identity(),
 				)
-				r.Stop()
+				break
 			}
 
 			start_failed_times++
@@ -70,8 +74,6 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 		time.Sleep(5 * time.Second)
 
 		// add restart times
-		state := r.RuntimeState()
-		state.Restarts++
-		r.UpdateState(state)
+		r.AddRestarts()
 	}
 }

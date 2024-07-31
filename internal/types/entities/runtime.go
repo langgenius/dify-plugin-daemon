@@ -47,13 +47,28 @@ type (
 		// returns the runtime state of the plugin
 		RuntimeState() PluginRuntimeState
 		// Update the runtime state of the plugin
-		UpdateState(state PluginRuntimeState)
+		UpdateScheduledAt(t time.Time)
 		// returns the checksum of the plugin
 		Checksum() string
 		// wait for the plugin to stop
 		Wait() (<-chan bool, error)
 		// returns the runtime type of the plugin
 		Type() PluginRuntimeType
+
+		// set the plugin to active
+		SetActive()
+		// set the plugin to launching
+		SetLaunching()
+		// set the plugin to restarting
+		SetRestarting()
+		// set the plugin to pending
+		SetPending()
+		// set the active time of the plugin
+		SetActiveAt(t time.Time)
+		// set the scheduled time of the plugin
+		SetScheduledAt(t time.Time)
+		// add restarts to the plugin
+		AddRestarts()
 	}
 
 	PluginRuntimeSessionIOInterface interface {
@@ -92,8 +107,48 @@ func (r *PluginRuntime) RuntimeState() PluginRuntimeState {
 	return r.State
 }
 
-func (r *PluginRuntime) UpdateState(state PluginRuntimeState) {
-	r.State = state
+func (r *PluginRuntime) UpdateScheduledAt(t time.Time) {
+	r.State.ScheduledAt = &t
+}
+
+func (r *PluginRuntime) InitState() {
+	r.State = PluginRuntimeState{
+		Restarts:    0,
+		Status:      PLUGIN_RUNTIME_STATUS_PENDING,
+		ActiveAt:    nil,
+		StoppedAt:   nil,
+		Verified:    false,
+		ScheduledAt: nil,
+		Logs:        []string{},
+	}
+}
+
+func (r *PluginRuntime) SetActive() {
+	r.State.Status = PLUGIN_RUNTIME_STATUS_ACTIVE
+}
+
+func (r *PluginRuntime) SetLaunching() {
+	r.State.Status = PLUGIN_RUNTIME_STATUS_LAUNCHING
+}
+
+func (r *PluginRuntime) SetRestarting() {
+	r.State.Status = PLUGIN_RUNTIME_STATUS_RESTARTING
+}
+
+func (r *PluginRuntime) SetPending() {
+	r.State.Status = PLUGIN_RUNTIME_STATUS_PENDING
+}
+
+func (r *PluginRuntime) SetActiveAt(t time.Time) {
+	r.State.ActiveAt = &t
+}
+
+func (r *PluginRuntime) SetScheduledAt(t time.Time) {
+	r.State.ScheduledAt = &t
+}
+
+func (r *PluginRuntime) AddRestarts() {
+	r.State.Restarts++
 }
 
 func (r *PluginRuntime) Checksum() string {
@@ -123,7 +178,6 @@ const (
 )
 
 type PluginRuntimeState struct {
-	Identity     string     `json:"identity"`
 	Restarts     int        `json:"restarts"`
 	Status       string     `json:"status"`
 	RelativePath string     `json:"relative_path"`
