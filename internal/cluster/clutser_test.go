@@ -35,24 +35,34 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 	return result, nil
 }
 
+func launchSimulationCluster(clusters []*Cluster, t *testing.T) {
+	for _, cluster := range clusters {
+		cluster.Launch()
+	}
+}
+
+func closeSimulationCluster(clusters []*Cluster, t *testing.T) {
+	for _, cluster := range clusters {
+		cluster.Close()
+		// wait for the cluster to close
+		time.Sleep(time.Second * 1)
+		// check if the cluster is closed
+		_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
+		if err == nil {
+			t.Errorf("cluster is not closed")
+			return
+		}
+	}
+}
+
 func TestSingleClusterLifetime(t *testing.T) {
 	clusters, err := createSimulationCluster(1)
 	if err != nil {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-	clusters[0].Launch()
-	defer func() {
-		clusters[0].Close()
-		// wait for the cluster to close
-		time.Sleep(time.Second * 1)
-		// check if the cluster is closed
-		_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, clusters[0].id)
-		if err == nil {
-			t.Errorf("cluster is not closed")
-			return
-		}
-	}()
+	launchSimulationCluster(clusters, t)
+	defer closeSimulationCluster(clusters, t)
 
 	time.Sleep(time.Second * 1)
 
@@ -69,24 +79,10 @@ func TestMultipleClusterLifetime(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-
-	for _, cluster := range clusters {
-		cluster.Launch()
-		defer func(cluster *Cluster) {
-			cluster.Close()
-			// wait for the cluster to close
-			time.Sleep(time.Second * 1)
-			// check if the cluster is closed
-			_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
-			if err == nil {
-				t.Errorf("cluster is not closed")
-				return
-			}
-		}(cluster)
-	}
+	launchSimulationCluster(clusters, t)
+	defer closeSimulationCluster(clusters, t)
 
 	time.Sleep(time.Second * 1)
-
 	has_master := false
 
 	for _, cluster := range clusters {
@@ -117,21 +113,8 @@ func TestClusterSubstituteMaster(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-
-	for _, cluster := range clusters {
-		cluster.Launch()
-		defer func(cluster *Cluster) {
-			cluster.Close()
-			// wait for the cluster to close
-			time.Sleep(time.Second * 1)
-			// check if the cluster is closed
-			_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
-			if err == nil {
-				t.Errorf("cluster is not closed")
-				return
-			}
-		}(cluster)
-	}
+	launchSimulationCluster(clusters, t)
+	defer closeSimulationCluster(clusters, t)
 
 	time.Sleep(time.Second * 1)
 
@@ -184,21 +167,8 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-
-	for _, cluster := range clusters {
-		cluster.Launch()
-		defer func(cluster *Cluster) {
-			cluster.Close()
-			// wait for the cluster to close
-			time.Sleep(time.Second * 1)
-			// check if the cluster is closed
-			_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
-			if err == nil {
-				t.Errorf("cluster is not closed")
-				return
-			}
-		}(cluster)
-	}
+	launchSimulationCluster(clusters, t)
+	defer closeSimulationCluster(clusters, t)
 
 	time.Sleep(time.Second * 1)
 

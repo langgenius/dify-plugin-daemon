@@ -20,12 +20,3 @@ func getRandomPluginRuntime() entities.PluginRuntime {
 		},
 	}
 }
-
-// func TestPluginScheduleLifetime(t *testing.T) {
-// 	plugin := getRandomPluginRuntime()
-// 	cluster, err := createSimulationCluster(1)
-// 	if err != nil {
-// 		t.Errorf("create simulation cluster failed: %v", err)
-// 		return
-// 	}
-// }
