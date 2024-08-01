@@ -43,6 +43,9 @@ func TestSingleClusterLifetime(t *testing.T) {
 	}
 	clusters[0].Launch()
 	defer func() {
+		clusters[0].Close()
+		// wait for the cluster to close
+		time.Sleep(time.Second * 1)
 		// check if the cluster is closed
 		_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, clusters[0].id)
 		if err == nil {
@@ -50,7 +53,6 @@ func TestSingleClusterLifetime(t *testing.T) {
 			return
 		}
 	}()
-	defer clusters[0].Close()
 
 	time.Sleep(time.Second * 1)
 
