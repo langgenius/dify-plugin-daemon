@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 	// once a node is selected as the master, it is locked in that role.
 	// If the master node becomes inactive, the master slot is released, allowing other nodes to attempt to take over the role.
 	MASTER_LOCKING_INTERVAL  = time.Millisecond * 500 // interval to try to lock the slot to be the master
-	MASTER_LOCK_EXPIRED_TIME = time.Second * 5        // expired time of master key
+	MASTER_LOCK_EXPIRED_TIME = time.Second * 2        // expired time of master key
 	MASTER_GC_INTERVAL       = time.Second * 10       // interval to do garbage collection of nodes has already deactivated
 
 	// node
@@ -39,6 +40,12 @@ const (
 
 // lifetime of the cluster
 func (c *Cluster) clusterLifetime() {
+	defer func() {
+		if err := c.removeSelfNode(); err != nil {
+			log.Error("failed to remove the self node from the cluster: %s", err.Error())
+		}
+	}()
+
 	ticker_lock_master := time.NewTicker(MASTER_LOCKING_INTERVAL)
 	defer ticker_lock_master.Stop()
 
@@ -55,14 +62,18 @@ func (c *Cluster) clusterLifetime() {
 	defer plugin_scheduler_ticker.Stop()
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling
-	if err := c.voteIps(); err != nil {
-		log.Error("failed to vote the ips of the nodes: %s", err.Error())
-	}
+	routine.Submit(func() {
+		if err := c.voteIps(); err != nil {
+			log.Error("failed to vote the ips of the nodes: %s", err.Error())
+		}
+	})
 
 	// fetch all possible nodes
-	if err := c.updateNodeStatus(); err != nil {
-		log.Error("failed to update the status of the node: %s", err.Error())
-	}
+	routine.Submit(func() {
+		if err := c.updateNodeStatus(); err != nil {
+			log.Error("failed to update the status of the node: %s", err.Error())
+		}
+	})
 
 	for {
 		select {

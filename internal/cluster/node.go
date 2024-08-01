@@ -207,6 +207,11 @@ func (c *Cluster) gcNode(node_id string) error {
 	return nil
 }
 
+// remove self node from the cluster
+func (c *Cluster) removeSelfNode() error {
+	return c.gcNode(c.id)
+}
+
 const (
 	CLUSTER_UPDATE_NODE_STATUS_LOCK_PREFIX = "cluster-update-node-status-lock"
 )

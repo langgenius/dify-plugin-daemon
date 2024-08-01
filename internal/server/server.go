@@ -27,7 +27,7 @@ func (a *App) Run(config *app.Config) {
 	a.plugin_manager.Init(config)
 
 	// launch cluster
-	a.cluster.Launch(config)
+	a.cluster.Launch()
 
 	// start http server
 	server(config)

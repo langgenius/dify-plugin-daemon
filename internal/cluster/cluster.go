@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/cluster/cluster_id"
+	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 )
@@ -37,19 +37,21 @@ type Cluster struct {
 
 func NewCluster(config *app.Config) *Cluster {
 	return &Cluster{
-		id:        cluster_id.GetInstanceID(),
+		id:        uuid.New().String(),
 		port:      uint16(config.ServerPort),
 		stop_chan: make(chan bool),
 		stopped:   new(int32),
 	}
 }
 
-func (c *Cluster) Launch(config *app.Config) {
+func (c *Cluster) Launch() {
 	go c.clusterLifetime()
 }
 
-func (c *Cluster) Close() {
+func (c *Cluster) Close() error {
 	if atomic.CompareAndSwapInt32(c.stopped, 0, 1) {
 		close(c.stop_chan)
 	}
+
+	return nil
 }
