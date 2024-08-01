@@ -82,8 +82,8 @@ func (c *Cluster) updateNodeStatus() error {
 	c.node_lock.Lock()
 	defer c.node_lock.Unlock()
 
+	c.nodes.Clear()
 	for node_id, node := range nodes {
-		c.nodes.Clear()
 		c.nodes.Store(node_id, node)
 	}
 

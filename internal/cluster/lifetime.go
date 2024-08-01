@@ -86,7 +86,10 @@ func (c *Cluster) clusterLifetime() {
 					c.i_am_master = true
 					log.Info("current node has become the master of the cluster")
 				} else {
-					c.i_am_master = false
+					if c.i_am_master {
+						c.i_am_master = false
+						log.Info("current node has released the master slot")
+					}
 				}
 			} else {
 				// update the master
