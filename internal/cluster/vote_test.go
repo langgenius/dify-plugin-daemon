@@ -5,6 +5,7 @@ import (
 	"net"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,4 +68,24 @@ func TestVoteIps(t *testing.T) {
 
 	// wait for all nodes to be ready
 	wg.Wait()
+
+	// wait for all ips to be voted
+	time.Sleep(time.Second)
+
+	for _, node := range cluster {
+		nodes, err := node.GetNodes()
+		if err != nil {
+			t.Errorf("get nodes failed: %v", err)
+			return
+		}
+
+		for _, node := range nodes {
+			for _, ip := range node.Ips {
+				if len(ip.Votes) == 0 {
+					t.Errorf("vote for ip %s failed", ip.Address)
+					return
+				}
+			}
+		}
+	}
 }
