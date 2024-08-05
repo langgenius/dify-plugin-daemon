@@ -2,12 +2,12 @@ package cluster
 
 import (
 	"fmt"
-	"net"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 )
 
 func createSimulationHealthCheckSever() (uint16, error) {
@@ -18,13 +18,10 @@ func createSimulationHealthCheckSever() (uint16, error) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	listener, err := net.Listen("tcp", ":0")
+	port, err := network.GetRandomPort()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get a random port: %s", err.Error())
+		return 0, err
 	}
-	listener.Close()
-
-	port := listener.Addr().(*net.TCPAddr).Port
 
 	go func() {
 		router.Run(fmt.Sprintf(":%d", port))

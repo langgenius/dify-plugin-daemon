@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	ServerPort int16 `envconfig:"SERVER_PORT" validate:"required"`
+	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 
 	PluginInnerApiKey string `envconfig:"PLUGIN_INNER_API_KEY" validate:"required"`
 	PluginInnerApiURL string `envconfig:"PLUGIN_INNER_API_URL" validate:"required"`
@@ -28,13 +28,13 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	RedisHost string `envconfig:"REDIS_HOST" validate:"required"`
-	RedisPort int16  `envconfig:"REDIS_PORT" validate:"required"`
+	RedisPort uint16 `envconfig:"REDIS_PORT" validate:"required"`
 	RedisPass string `envconfig:"REDIS_PASS" validate:"required"`
 
 	DBUsername string `envconfig:"DB_USERNAME" validate:"required"`
 	DBPassword string `envconfig:"DB_PASSWORD" validate:"required"`
 	DBHost     string `envconfig:"DB_HOST" validate:"required"`
-	DBPort     int16  `envconfig:"DB_PORT" validate:"required"`
+	DBPort     uint16 `envconfig:"DB_PORT" validate:"required"`
 	DBDatabase string `envconfig:"DB_DATABASE" validate:"required"`
 	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 

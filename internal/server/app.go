@@ -6,4 +6,6 @@ import (
 
 type App struct {
 	cluster *cluster.Cluster
+
+	webhook_handler WebhookHandler
 }

@@ -40,9 +40,10 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.DifyInvocationConnectionIdleTimeout, 120)
 	setDefaultInt(&config.PluginRemoteInstallServerEventLoopNums, 8)
 	setDefaultInt(&config.PluginRemoteInstallingMaxConn, 128)
-	settDefaultBool(&config.PluginRemoteInstallingEnabled, true)
-	settDefaultString(&config.DBSslMode, "disable")
-	settDefaultString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
+	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
+	setDefaultBool(&config.PluginWebhookEnabled, true)
+	setDefaultString(&config.DBSslMode, "disable")
+	setDefaultString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
@@ -51,13 +52,13 @@ func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
 	}
 }
 
-func settDefaultString(value *string, defaultValue string) {
+func setDefaultString(value *string, defaultValue string) {
 	if *value == "" {
 		*value = defaultValue
 	}
 }
 
-func settDefaultBool(value *bool, defaultValue bool) {
+func setDefaultBool(value *bool, defaultValue bool) {
 	if !*value {
 		*value = defaultValue
 	}

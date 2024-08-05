@@ -11,27 +11,24 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
-	// generate a random port
-	listener, err := net.Listen("tcp", ":0")
+	port, err := network.GetRandomPort()
 	if err != nil {
-		t.Errorf("failed to get a random port: %s", err.Error())
+		t.Errorf("failed to get random port: %s", err.Error())
 		return nil, 0
 	}
-	listener.Close()
-
-	port := listener.Addr().(*net.TCPAddr).Port
 
 	// start plugin server
 	return NewRemotePluginServer(&app.Config{
 		PluginRemoteInstallingHost:             "0.0.0.0",
-		PluginRemoteInstallingPort:             uint16(port),
+		PluginRemoteInstallingPort:             port,
 		PluginRemoteInstallingMaxConn:          1,
 		PluginRemoteInstallServerEventLoopNums: 8,
-	}), uint16(port)
+	}), port
 }
 
 // TestLaunchAndClosePluginServer tests the launch and close of the plugin server

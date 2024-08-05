@@ -1,14 +1,17 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
-func (app *App) server(config *app.Config) {
+func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
 
 	engine.GET("/health/check", controllers.HealthCheck)
@@ -84,13 +87,28 @@ func (app *App) server(config *app.Config) {
 	}
 
 	if config.PluginWebhookEnabled {
-		engine.HEAD("/webhook/:hook_id/*path", controllers.WebhookHead)
-		engine.POST("/webhook/:hook_id/*path", controllers.WebhookPost)
-		engine.GET("/webhook/:hook_id/*path", controllers.WebhookGet)
-		engine.PUT("/webhook/:hook_id/*path", controllers.WebhookPut)
-		engine.DELETE("/webhook/:hook_id/*path", controllers.WebhookDelete)
-		engine.OPTIONS("/webhook/:hook_id/*path", controllers.WebhookOptions)
+		engine.HEAD("/webhook/:hook_id/*path", app.Webhook())
+		engine.POST("/webhook/:hook_id/*path", app.Webhook())
+		engine.GET("/webhook/:hook_id/*path", app.Webhook())
+		engine.PUT("/webhook/:hook_id/*path", app.Webhook())
+		engine.DELETE("/webhook/:hook_id/*path", app.Webhook())
+		engine.OPTIONS("/webhook/:hook_id/*path", app.Webhook())
 	}
 
-	engine.Run(fmt.Sprintf(":%d", config.ServerPort))
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", config.ServerPort),
+		Handler: engine,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Panic("listen: %s\n", err)
+		}
+	}()
+
+	return func() {
+		if err := srv.Shutdown(context.Background()); err != nil {
+			log.Panic("Server Shutdown: %s\n", err)
+		}
+	}
 }

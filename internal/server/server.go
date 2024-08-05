@@ -29,4 +29,7 @@ func (a *App) Run(config *app.Config) {
 
 	// start http server
 	a.server(config)
+
+	// block
+	select {}
 }
