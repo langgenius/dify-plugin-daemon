@@ -11,8 +11,6 @@ import (
 
 func (a *App) Run(config *app.Config) {
 	a.cluster = cluster.NewCluster(config)
-	plugin_manager.InitGlobalPluginManager(a.cluster)
-	a.plugin_manager = plugin_manager.GetGlobalPluginManager()
 
 	// init routine pool
 	routine.InitPool(config.RoutinePoolSize)
@@ -24,11 +22,11 @@ func (a *App) Run(config *app.Config) {
 	process.Init(config)
 
 	// init plugin daemon
-	a.plugin_manager.Init(config)
+	plugin_manager.InitGlobalPluginManager(a.cluster, config)
 
 	// launch cluster
 	a.cluster.Launch()
 
 	// start http server
-	server(config)
+	a.server(config)
 }

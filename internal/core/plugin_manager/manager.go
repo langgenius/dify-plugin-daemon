@@ -19,10 +19,11 @@ var (
 	manager *PluginManager
 )
 
-func InitGlobalPluginManager(cluster *cluster.Cluster) {
+func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config) {
 	manager = &PluginManager{
 		cluster: cluster,
 	}
+	manager.Init(configuration)
 }
 
 func GetGlobalPluginManager() *PluginManager {

@@ -82,9 +82,6 @@ func (c *Cluster) updateNodeStatus() error {
 	}
 
 	// update self nodes map
-	c.node_lock.Lock()
-	defer c.node_lock.Unlock()
-
 	c.nodes.Clear()
 	for node_id, node := range nodes {
 		c.nodes.Store(node_id, node)
@@ -109,8 +106,8 @@ func (c *Cluster) GetNodes() (map[string]node, error) {
 	return nodes, nil
 }
 
-// FetchPluginAvailableNodes fetches the available nodes of the given plugin
-func (c *Cluster) FetchPluginAvailableNodes(hashed_plugin_id string) ([]string, error) {
+// FetchPluginAvailableNodesByHashedId fetches the available nodes of the given plugin
+func (c *Cluster) FetchPluginAvailableNodesByHashedId(hashed_plugin_id string) ([]string, error) {
 	states, err := cache.ScanMap[entities.PluginRuntimeState](
 		PLUGIN_STATE_MAP_KEY, c.getScanPluginsByIdKey(hashed_plugin_id),
 	)
@@ -130,6 +127,11 @@ func (c *Cluster) FetchPluginAvailableNodes(hashed_plugin_id string) ([]string, 
 	}
 
 	return nodes, nil
+}
+
+func (c *Cluster) FetchPluginAvailableNodesById(plugin_id string) ([]string, error) {
+	hashed_plugin_id := entities.HashedIdentity(plugin_id)
+	return c.FetchPluginAvailableNodesByHashedId(hashed_plugin_id)
 }
 
 func (c *Cluster) IsMaster() bool {
@@ -191,9 +193,7 @@ func (c *Cluster) gcNode(node_id string) error {
 	}
 
 	// remove the node from the cluster
-	c.node_lock.Lock()
 	c.nodes.Delete(node_id)
-	c.node_lock.Unlock()
 
 	if err := c.LockNodeStatus(node_id); err != nil {
 		return err

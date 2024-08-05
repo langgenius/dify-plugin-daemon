@@ -19,13 +19,12 @@ type Cluster struct {
 	// port is the health check port of the cluster
 	port uint16
 
-	// plugins stores all the plugin life time of the cluster
+	// plugins stores all the plugin life time of the current node
 	plugins     mapping.Map[string, *pluginLifeTime]
 	plugin_lock sync.RWMutex
 
 	// nodes stores all the nodes of the cluster
-	nodes     mapping.Map[string, node]
-	node_lock sync.RWMutex
+	nodes mapping.Map[string, node]
 
 	// signals for waiting for the cluster to stop
 	stop_chan chan bool

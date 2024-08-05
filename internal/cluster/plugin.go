@@ -240,3 +240,8 @@ func (c *Cluster) autoGCPlugins() error {
 		},
 	)
 }
+
+func (c *Cluster) IsPluginNoCurrentNode(identity string) bool {
+	_, ok := c.plugins.Load(identity)
+	return ok
+}

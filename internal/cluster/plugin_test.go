@@ -74,7 +74,7 @@ func TestPluginScheduleLifetime(t *testing.T) {
 		return
 	}
 
-	nodes, err := cluster[0].FetchPluginAvailableNodes(hashed_identity)
+	nodes, err := cluster[0].FetchPluginAvailableNodesByHashedId(hashed_identity)
 	if err != nil {
 		t.Errorf("fetch plugin available nodes failed: %v", err)
 		return
@@ -97,7 +97,7 @@ func TestPluginScheduleLifetime(t *testing.T) {
 	time.Sleep(time.Second * 1)
 
 	// check if the plugin is stopped
-	nodes, err = cluster[0].FetchPluginAvailableNodes(hashed_identity)
+	nodes, err = cluster[0].FetchPluginAvailableNodesByHashedId(hashed_identity)
 	if err != nil {
 		t.Errorf("fetch plugin available nodes failed: %v", err)
 		return
@@ -188,7 +188,7 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 	for !done {
 		select {
 		case <-ticker.C:
-			nodes, err := cluster[master_idx].FetchPluginAvailableNodes(hashed_identity)
+			nodes, err := cluster[master_idx].FetchPluginAvailableNodesByHashedId(hashed_identity)
 			if err != nil {
 				t.Errorf("fetch plugin available nodes failed: %v", err)
 				return
@@ -209,7 +209,7 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 		return
 	}
 
-	nodes, err := cluster[1-master_idx].FetchPluginAvailableNodes(hashed_identity)
+	nodes, err := cluster[1-master_idx].FetchPluginAvailableNodesByHashedId(hashed_identity)
 	if err != nil {
 		t.Errorf("fetch plugin available nodes failed: %v", err)
 		return
