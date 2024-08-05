@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -192,4 +193,77 @@ func TestRedisScanMap(t *testing.T) {
 		t.Errorf("scan map async failed: %v", err)
 		return
 	}
+}
+
+func TestRedisP2PPubsub(t *testing.T) {
+	// get redis connection
+	if err := getRedisConnection(t); err != nil {
+		t.Errorf("get redis connection failed: %v", err)
+		return
+	}
+	defer Close()
+
+	ch := "test-channel"
+
+	type s struct{}
+
+	sub, cancel := Subscribe[s](ch)
+	defer cancel()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		<-sub
+		wg.Done()
+	}()
+
+	// test pubsub
+	err := Publish(ch, s{})
+	if err != nil {
+		t.Errorf("publish failed: %v", err)
+		return
+	}
+
+	wg.Wait()
+}
+
+func TestRedisP2ARedis(t *testing.T) {
+	// get redis connection
+	if err := getRedisConnection(t); err != nil {
+		t.Errorf("get redis connection failed: %v", err)
+		return
+	}
+	defer Close()
+
+	ch := "test-channel-p2a"
+
+	type s struct{}
+
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+
+	swg := sync.WaitGroup{}
+	swg.Add(3)
+
+	for i := 0; i < 3; i++ {
+		go func() {
+			sub, cancel := Subscribe[s](ch)
+			swg.Done()
+			defer cancel()
+			<-sub
+			wg.Done()
+		}()
+	}
+
+	swg.Wait()
+
+	// test pubsub
+	err := Publish(ch, s{})
+	if err != nil {
+		t.Errorf("publish failed: %v", err)
+		return
+	}
+
+	wg.Wait()
 }

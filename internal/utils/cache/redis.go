@@ -374,3 +374,37 @@ func Transaction(fn func(redis.Pipeliner) error) error {
 		return err
 	})
 }
+
+func Publish(channel string, message any, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	if _, ok := message.(string); !ok {
+		message = parser.MarshalJson(message)
+	}
+
+	return getCmdable(context...).Publish(ctx, channel, message).Err()
+}
+
+func Subscribe[T any](channel string) (<-chan T, func()) {
+	pubsub := client.Subscribe(ctx, channel)
+	ch := make(chan T)
+
+	go func() {
+		defer close(ch)
+
+		for msg := range pubsub.Channel() {
+			v, err := parser.UnmarshalJson[T](msg.Payload)
+			if err != nil {
+				continue
+			}
+
+			ch <- v
+		}
+	}()
+
+	return ch, func() {
+		pubsub.Close()
+	}
+}

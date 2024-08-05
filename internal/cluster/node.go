@@ -16,6 +16,9 @@ import (
 
 // update the status of the node
 func (c *Cluster) updateNodeStatus() error {
+	c.notifyNodeUpdate()
+	defer c.notifyNodeUpdateCompleted()
+
 	if err := c.LockNodeStatus(c.id); err != nil {
 		return err
 	}

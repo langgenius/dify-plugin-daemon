@@ -83,6 +83,9 @@ func (c *Cluster) getScanPluginsByIdKey(plugin_id string) string {
 // as for the plugin has exited, normally, it will be removed automatically
 // but once a plugin is not removed, it will be gc by the master node
 func (c *Cluster) schedulePlugins() error {
+	c.notifyPluginSchedule()
+	defer c.notifyPluginScheduleCompleted()
+
 	c.plugins.Range(func(key string, value *pluginLifeTime) bool {
 		if time.Since(value.last_scheduled_at) < PLUGIN_SCHEDULER_INTERVAL {
 			return true

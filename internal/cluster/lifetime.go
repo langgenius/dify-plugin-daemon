@@ -3,6 +3,7 @@ package cluster
 import (
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -38,12 +39,28 @@ const (
 	PLUGIN_DEACTIVATED_TIMEOUT       = time.Second * 30 // once a plugin is no longer active, it will be removed from the cluster
 )
 
+const (
+	CLUSTER_NEW_NODE_CHANNEL = "cluster-new-node-channel"
+)
+
 // lifetime of the cluster
 func (c *Cluster) clusterLifetime() {
 	defer func() {
 		if err := c.removeSelfNode(); err != nil {
 			log.Error("failed to remove the self node from the cluster: %s", err.Error())
 		}
+		c.notifyClusterStopped()
+
+		close(c.notify_cluster_stopped_chan)
+		close(c.notify_become_master_chan)
+		close(c.notify_master_gc_chan)
+		close(c.notify_master_gc_completed_chan)
+		close(c.notify_voting_chan)
+		close(c.notify_voting_completed_chan)
+		close(c.notify_plugin_schedule_chan)
+		close(c.notify_plugin_schedule_completed_chan)
+		close(c.notify_node_update_chan)
+		close(c.notify_node_update_completed_chan)
 	}()
 
 	ticker_lock_master := time.NewTicker(MASTER_LOCKING_INTERVAL)
@@ -63,17 +80,23 @@ func (c *Cluster) clusterLifetime() {
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling
 	routine.Submit(func() {
+		if err := c.updateNodeStatus(); err != nil {
+			log.Error("failed to update the status of the node: %s", err.Error())
+		}
+
+		if err := cache.Publish(CLUSTER_NEW_NODE_CHANNEL, newNodeEvent{
+			NodeID: c.id,
+		}); err != nil {
+			log.Error("failed to publish the new node event: %s", err.Error())
+		}
+
 		if err := c.voteIps(); err != nil {
 			log.Error("failed to vote the ips of the nodes: %s", err.Error())
 		}
 	})
 
-	// fetch all possible nodes
-	routine.Submit(func() {
-		if err := c.updateNodeStatus(); err != nil {
-			log.Error("failed to update the status of the node: %s", err.Error())
-		}
-	})
+	new_node_chan, cancel := cache.Subscribe[newNodeEvent](CLUSTER_NEW_NODE_CHANNEL)
+	defer cancel()
 
 	for {
 		select {
@@ -85,6 +108,7 @@ func (c *Cluster) clusterLifetime() {
 				} else if success {
 					c.i_am_master = true
 					log.Info("current node has become the master of the cluster")
+					c.notifyBecomeMaster()
 				} else {
 					if c.i_am_master {
 						c.i_am_master = false
@@ -103,16 +127,25 @@ func (c *Cluster) clusterLifetime() {
 			}
 		case <-master_gc_ticker.C:
 			if c.i_am_master {
+				c.notifyMasterGC()
 				if err := c.autoGCNodes(); err != nil {
 					log.Error("failed to gc the nodes have already deactivated: %s", err.Error())
 				}
 				if err := c.autoGCPlugins(); err != nil {
 					log.Error("failed to gc the plugins have already stopped: %s", err.Error())
 				}
+				c.notifyMasterGCCompleted()
 			}
 		case <-node_vote_ticker.C:
 			if err := c.voteIps(); err != nil {
 				log.Error("failed to vote the ips of the nodes: %s", err.Error())
+			}
+		case _, ok := <-new_node_chan:
+			if ok {
+				// vote for the new node
+				if err := c.voteIps(); err != nil {
+					log.Error("failed to vote the ips of the nodes: %s", err.Error())
+				}
 			}
 		case <-plugin_scheduler_ticker.C:
 			if err := c.schedulePlugins(); err != nil {

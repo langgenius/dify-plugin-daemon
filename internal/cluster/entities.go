@@ -21,3 +21,7 @@ type node struct {
 func (c *node) available() bool {
 	return time.Since(time.Unix(c.LastPingAt, 0)) < NODE_DISCONNECTED_TIMEOUT
 }
+
+type newNodeEvent struct {
+	NodeID string `json:"node_id"`
+}

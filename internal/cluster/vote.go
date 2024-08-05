@@ -13,6 +13,8 @@ import (
 )
 
 func (c *Cluster) voteIps() error {
+	c.notifyVoting()
+	defer c.notifyVotingCompleted()
 	var total_errors error
 	add_error := func(err error) {
 		if err != nil {

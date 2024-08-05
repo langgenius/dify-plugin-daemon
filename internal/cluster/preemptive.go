@@ -16,15 +16,16 @@ import (
 //
 // State:
 //	- hashmap[cluster-status]
-//		- node-id:
+//		- node_id:
 //			- list[ip]:
 //				- address: string
-//				- vote: int
+//				- vote[]:
+//					- node_id: string
+//					- voted_at: int64
+//					- failed: bool
 //			- last_ping_at: int64
-//	- preemption-lock: node-id
-//	- node-status-upgrade-status
+//	- preemption-lock: node_id
 //
-// A node will be removed from the cluster if it is no longer active
 
 const (
 	CLUSTER_STATUS_HASH_MAP_KEY = "cluster-nodes-status-hash-map"

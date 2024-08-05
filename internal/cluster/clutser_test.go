@@ -45,7 +45,7 @@ func closeSimulationCluster(clusters []*Cluster, t *testing.T) {
 	for _, cluster := range clusters {
 		cluster.Close()
 		// wait for the cluster to close
-		time.Sleep(time.Second * 1)
+		<-cluster.NotifyClusterStopped()
 		// check if the cluster is closed
 		_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
 		if err == nil {
@@ -64,7 +64,7 @@ func TestSingleClusterLifetime(t *testing.T) {
 	launchSimulationCluster(clusters, t)
 	defer closeSimulationCluster(clusters, t)
 
-	time.Sleep(time.Second * 1)
+	<-clusters[0].NotifyBecomeMaster()
 
 	_, err = cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, clusters[0].id)
 	if err != nil {
@@ -82,7 +82,12 @@ func TestMultipleClusterLifetime(t *testing.T) {
 	launchSimulationCluster(clusters, t)
 	defer closeSimulationCluster(clusters, t)
 
-	time.Sleep(time.Second * 1)
+	select {
+	case <-clusters[0].NotifyBecomeMaster():
+	case <-clusters[1].NotifyBecomeMaster():
+	case <-clusters[2].NotifyBecomeMaster():
+	}
+
 	has_master := false
 
 	for _, cluster := range clusters {
@@ -116,7 +121,11 @@ func TestClusterSubstituteMaster(t *testing.T) {
 	launchSimulationCluster(clusters, t)
 	defer closeSimulationCluster(clusters, t)
 
-	time.Sleep(time.Second * 1)
+	select {
+	case <-clusters[0].NotifyBecomeMaster():
+	case <-clusters[1].NotifyBecomeMaster():
+	case <-clusters[2].NotifyBecomeMaster():
+	}
 
 	// close the master
 	original_master_id := ""
@@ -170,7 +179,11 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 	launchSimulationCluster(clusters, t)
 	defer closeSimulationCluster(clusters, t)
 
-	time.Sleep(time.Second * 1)
+	select {
+	case <-clusters[0].NotifyBecomeMaster():
+	case <-clusters[1].NotifyBecomeMaster():
+	case <-clusters[2].NotifyBecomeMaster():
+	}
 
 	// randomly close a slave node to close
 	slave_node_id := ""
@@ -178,8 +191,8 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 		if !cluster.IsMaster() {
 			slave_node_id = cluster.id
 			cluster.Close()
-			// wait for normal gc
-			time.Sleep(time.Second * 1)
+			// wait for the cluster to close
+			<-cluster.NotifyClusterStopped()
 			// recover the node status
 			if err := cluster.updateNodeStatus(); err != nil {
 				t.Errorf("failed to recover the node status: %v", err)
@@ -195,7 +208,7 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 	}
 
 	// wait for master gc task
-	time.Sleep(MASTER_GC_INTERVAL * 2)
+	time.Sleep(NODE_DISCONNECTED_TIMEOUT*2 + time.Second)
 
 	_, err = cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, slave_node_id)
 	if err == nil {
