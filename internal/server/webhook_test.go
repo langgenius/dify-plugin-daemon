@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 )
@@ -19,7 +20,7 @@ func TestWebhookParams(t *testing.T) {
 	global_hook_id := ""
 	global_hook_path := ""
 
-	handler := func(hook_id string, path string) {
+	handler := func(ctx *gin.Context, hook_id string, path string) {
 		global_hook_id = hook_id
 		global_hook_path = path
 	}

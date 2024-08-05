@@ -62,56 +62,58 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		if !app.cluster.IsPluginNoCurrentNode(
 			plugin_id,
 		) {
-			// try find the correct node
-			nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id)
-			if err != nil {
-				ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
-				log.Error("fetch plugin available nodes failed: %s", err.Error())
-				return
-			} else if len(nodes) == 0 {
-				ctx.AbortWithStatusJSON(404, gin.H{"error": "No available node"})
-				log.Error("no available node")
-				return
-			}
-
-			// redirect to the correct node
-			node_id := nodes[0]
-			status_code, header, body, err := app.cluster.RedirectRequest(node_id, ctx.Request)
-			if err != nil {
-				log.Error("redirect request failed: %s", err.Error())
-				ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
-				return
-			}
-
-			// set status code
-			ctx.Writer.WriteHeader(status_code)
-
-			// set header
-			for key, values := range header {
-				for _, value := range values {
-					ctx.Writer.Header().Set(key, value)
-				}
-			}
-
-			for {
-				buf := make([]byte, 1024)
-				n, err := body.Read(buf)
-				if err != nil && err != io.EOF {
-					break
-				} else if err != nil {
-					ctx.Writer.Write(buf[:n])
-					break
-				}
-
-				if n > 0 {
-					ctx.Writer.Write(buf[:n])
-				}
-			}
-
+			app.Redirect(ctx, plugin_id)
 			ctx.Abort()
-			return
 		} else {
 			ctx.Next()
+		}
+	}
+}
+
+func (app *App) Redirect(ctx *gin.Context, plugin_id string) {
+	// try find the correct node
+	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id)
+	if err != nil {
+		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
+		log.Error("fetch plugin available nodes failed: %s", err.Error())
+		return
+	} else if len(nodes) == 0 {
+		ctx.AbortWithStatusJSON(404, gin.H{"error": "No available node"})
+		log.Error("no available node")
+		return
+	}
+
+	// redirect to the correct node
+	node_id := nodes[0]
+	status_code, header, body, err := app.cluster.RedirectRequest(node_id, ctx.Request)
+	if err != nil {
+		log.Error("redirect request failed: %s", err.Error())
+		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	// set status code
+	ctx.Writer.WriteHeader(status_code)
+
+	// set header
+	for key, values := range header {
+		for _, value := range values {
+			ctx.Writer.Header().Set(key, value)
+		}
+	}
+
+	for {
+		buf := make([]byte, 1024)
+		n, err := body.Read(buf)
+		if err != nil && err != io.EOF {
+			break
+		} else if err != nil {
+			ctx.Writer.Write(buf[:n])
+			break
+		}
+
+		if n > 0 {
+			ctx.Writer.Write(buf[:n])
 		}
 	}
 }
