@@ -9,7 +9,7 @@ import (
 )
 
 // DifyPlugin supports register and use webhook to improve the plugin's functionality
-// you can use it to do some magic things, look forward to your imagination Ciallo～(∠·ω< )⌒
+// you can use it to do some magics, looking forward to your imagination, Ciallo～(∠·ω< )⌒
 // - Yeuoly
 
 // WebhookHandler is a function type that can be used to handle webhook requests
