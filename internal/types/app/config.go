@@ -18,6 +18,8 @@ type Config struct {
 	PluginRemoteInstallingMaxConn          int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_CONN"`
 	PluginRemoteInstallServerEventLoopNums int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
+	PluginWebhookEnabled bool `envconfig:"PLUGIN_WEBHOOK_ENABLED"`
+
 	StoragePath        string `envconfig:"STORAGE_PATH"  validate:"required"`
 	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"  validate:"required"`
 

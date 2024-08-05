@@ -35,8 +35,8 @@ func (g *ginContextReader) Close() error {
 	return nil
 }
 
-// Redirect redirects the request to the correct cluster node
-func (app *App) Redirect() gin.HandlerFunc {
+// RedirectPluginInvoke redirects the request to the correct cluster node
+func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// get plugin identity
 		raw, err := ctx.GetRawData()
@@ -107,6 +107,9 @@ func (app *App) Redirect() gin.HandlerFunc {
 					ctx.Writer.Write(buf[:n])
 				}
 			}
+
+			ctx.Abort()
+			return
 		} else {
 			ctx.Next()
 		}
