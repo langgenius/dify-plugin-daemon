@@ -35,7 +35,11 @@ func (c *Cluster) RedirectRequest(
 	}
 
 	// copy headers
-	redirected_request.Header = request.Header
+	for key, values := range request.Header {
+		for _, value := range values {
+			redirected_request.Header.Add(key, value)
+		}
+	}
 
 	client := http.DefaultClient
 	resp, err := client.Do(redirected_request)
