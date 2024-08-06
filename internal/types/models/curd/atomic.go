@@ -5,13 +5,16 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"gorm.io/gorm"
 )
 
 // Create plugin for a tenant, create plugin if it has never been created before
 // and install it to the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin) (*models.Plugin, *models.PluginInstallation, error) {
+func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin, config map[string]any) (
+	*models.Plugin, *models.PluginInstallation, error,
+) {
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
@@ -30,6 +33,7 @@ func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin) (*mod
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_id", plugin.PluginID),
+			db.Equal("checksum", plugin.Checksum),
 			db.WLock(),
 		)
 
@@ -56,6 +60,7 @@ func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin) (*mod
 			PluginID: plugin_to_be_returns.PluginID,
 			TenantID: tenant_id,
 			UserID:   user_id,
+			Config:   parser.MarshalJson(config),
 		}
 
 		err = db.Create(installation, tx)
