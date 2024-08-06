@@ -304,3 +304,23 @@ func WithTransaction(fn func(tx *gorm.DB) error, ctx ...*gorm.DB) error {
 	tx.Commit()
 	return nil
 }
+
+// NOTE: not used in production, only for testing
+func DropTable(model any) error {
+	return DifyPluginDB.Migrator().DropTable(model)
+}
+
+// NOTE: not used in production, only for testing
+func DropDatabase(dbname string) error {
+	return DifyPluginDB.Exec(fmt.Sprintf("DROP DATABASE %s", dbname)).Error
+}
+
+// NOTE: not used in production, only for testing
+func CreateDatabase(dbname string) error {
+	return DifyPluginDB.Exec(fmt.Sprintf("CREATE DATABASE %s", dbname)).Error
+}
+
+// NOTE: not used in production, only for testing
+func CreateTable(model any) error {
+	return DifyPluginDB.Migrator().CreateTable(model)
+}
