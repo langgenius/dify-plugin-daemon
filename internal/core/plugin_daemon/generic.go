@@ -3,6 +3,7 @@ package plugin_daemon
 import (
 	"errors"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
@@ -16,8 +17,8 @@ func genericInvokePlugin[Req any, Rsp any](
 	session *session_manager.Session,
 	request *Req,
 	response_buffer_size int,
-	typ backwards_invocation.PluginAccessType,
-	action backwards_invocation.PluginAccessAction,
+	typ access_types.PluginAccessType,
+	action access_types.PluginAccessAction,
 ) (*stream.StreamResponse[Rsp], error) {
 	runtime := plugin_manager.GetGlobalPluginManager().Get(session.PluginIdentity())
 	if runtime == nil {
@@ -81,8 +82,8 @@ func genericInvokePlugin[Req any, Rsp any](
 
 func getInvokePluginMap(
 	session *session_manager.Session,
-	typ backwards_invocation.PluginAccessType,
-	action backwards_invocation.PluginAccessAction,
+	typ access_types.PluginAccessType,
+	action access_types.PluginAccessAction,
 	request any,
 ) map[string]any {
 	req := getBasicPluginAccessMap(session.UserID(), typ, action)

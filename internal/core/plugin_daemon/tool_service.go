@@ -1,7 +1,7 @@
 package plugin_daemon
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
@@ -18,8 +18,8 @@ func InvokeTool(
 		session,
 		request,
 		128,
-		backwards_invocation.PLUGIN_ACCESS_TYPE_TOOL,
-		backwards_invocation.PLUGIN_ACCESS_ACTION_INVOKE_TOOL,
+		access_types.PLUGIN_ACCESS_TYPE_TOOL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL,
 	)
 }
 
@@ -33,7 +33,7 @@ func ValidateToolCredentials(
 		session,
 		request,
 		1,
-		backwards_invocation.PLUGIN_ACCESS_TYPE_TOOL,
-		backwards_invocation.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
+		access_types.PLUGIN_ACCESS_TYPE_TOOL,
+		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
 	)
 }

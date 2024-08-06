@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
@@ -14,7 +15,7 @@ import (
 
 func InvokeDify(
 	runtime entities.PluginRuntimeInterface,
-	invoke_from PluginAccessType,
+	invoke_from access_types.PluginAccessType,
 	session *session_manager.Session, data []byte,
 ) error {
 	// unmarshal invoke data
@@ -33,7 +34,7 @@ func InvokeDify(
 		return err
 	}
 
-	if invoke_from == PLUGIN_ACCESS_TYPE_MODEL {
+	if invoke_from == access_types.PLUGIN_ACCESS_TYPE_MODEL {
 		request_handle.WriteError(fmt.Errorf("you can not invoke dify from %s", invoke_from))
 		request_handle.EndResponse()
 		return nil
