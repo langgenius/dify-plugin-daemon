@@ -311,11 +311,6 @@ func DropTable(model any) error {
 }
 
 // NOTE: not used in production, only for testing
-func DropDatabase(dbname string) error {
-	return DifyPluginDB.Exec(fmt.Sprintf("DROP DATABASE %s", dbname)).Error
-}
-
-// NOTE: not used in production, only for testing
 func CreateDatabase(dbname string) error {
 	return DifyPluginDB.Exec(fmt.Sprintf("CREATE DATABASE %s", dbname)).Error
 }

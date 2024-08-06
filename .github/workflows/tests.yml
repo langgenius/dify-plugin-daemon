@@ -24,6 +24,15 @@ jobs:
           - 6379:6379
         options: -e REDIS_PASSWORD=difyai123456
 
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: difyai123456
+          POSTGRES_DB: difyai
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v2
 

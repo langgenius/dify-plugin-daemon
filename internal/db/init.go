@@ -103,3 +103,19 @@ func Init(config *app.Config) {
 
 	log.Info("dify plugin db initialized")
 }
+
+func Close() {
+	db, err := DifyPluginDB.DB()
+	if err != nil {
+		log.Error("failed to close dify plugin db: %v", err)
+		return
+	}
+
+	err = db.Close()
+	if err != nil {
+		log.Error("failed to close dify plugin db: %v", err)
+		return
+	}
+
+	log.Info("dify plugin db closed")
+}
