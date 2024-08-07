@@ -38,7 +38,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	r.init()
 	// start plugin
 	e := exec.Command("bash", r.Config.Execution.Launch)
-	e.Dir = r.State.RelativePath
+	e.Dir = r.State.AbsolutePath
 	process.WrapProcess(e)
 
 	// get writer

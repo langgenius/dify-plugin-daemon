@@ -10,18 +10,20 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 func (r *LocalPluginRuntime) InitEnvironment() error {
-	if _, err := os.Stat(path.Join(r.State.RelativePath, ".installed")); err == nil {
+	if _, err := os.Stat(path.Join(r.State.AbsolutePath, ".installed")); err == nil {
 		return nil
 	}
 
 	// execute init command
 	handle := exec.Command("bash", r.Config.Execution.Install)
-	handle.Dir = r.State.RelativePath
+	handle.Dir = r.State.AbsolutePath
 	handle.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	// get stdout and stderr
@@ -115,11 +117,33 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	}
 
 	// create .installed file
-	f, err := os.Create(path.Join(r.State.RelativePath, ".installed"))
+	f, err := os.Create(path.Join(r.State.AbsolutePath, ".installed"))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
 	return nil
+}
+
+func (r *LocalPluginRuntime) calculateChecksum() string {
+	plugin_decoder, err := decoder.NewFSPluginDecoder(r.CWD)
+	if err != nil {
+		return ""
+	}
+
+	checksum, err := checksum.CalculateChecksum(plugin_decoder)
+	if err != nil {
+		return ""
+	}
+
+	return checksum
+}
+
+func (r *LocalPluginRuntime) Checksum() string {
+	if r.checksum == "" {
+		r.checksum = r.calculateChecksum()
+	}
+
+	return r.checksum
 }

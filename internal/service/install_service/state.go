@@ -1,4 +1,4 @@
-package install_task
+package install_service
 
 import (
 	"time"

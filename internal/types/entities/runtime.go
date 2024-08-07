@@ -109,7 +109,7 @@ func (r *PluginRuntime) UpdateScheduledAt(t time.Time) {
 	r.State.ScheduledAt = &t
 }
 
-func (r *PluginRuntime) InitState(checksum string) {
+func (r *PluginRuntime) InitState() {
 	r.State = PluginRuntimeState{
 		Restarts:    0,
 		Status:      PLUGIN_RUNTIME_STATUS_PENDING,
@@ -118,7 +118,6 @@ func (r *PluginRuntime) InitState(checksum string) {
 		Verified:    false,
 		ScheduledAt: nil,
 		Logs:        []string{},
-		Checksum:    checksum,
 	}
 }
 
@@ -150,10 +149,6 @@ func (r *PluginRuntime) AddRestarts() {
 	r.State.Restarts++
 }
 
-func (r *PluginRuntime) Checksum() string {
-	return r.State.Checksum
-}
-
 func (r *PluginRuntime) OnStop(f func()) {
 	r.onStopped = append(r.onStopped, f)
 }
@@ -175,13 +170,12 @@ const (
 type PluginRuntimeState struct {
 	Restarts     int        `json:"restarts"`
 	Status       string     `json:"status"`
-	RelativePath string     `json:"relative_path"`
+	AbsolutePath string     `json:"absolute_path"`
 	ActiveAt     *time.Time `json:"active_at"`
 	StoppedAt    *time.Time `json:"stopped_at"`
 	Verified     bool       `json:"verified"`
 	ScheduledAt  *time.Time `json:"scheduled_at"`
 	Logs         []string   `json:"logs"`
-	Checksum     string     `json:"checksum"`
 }
 
 func (s *PluginRuntimeState) Hash() (uint64, error) {

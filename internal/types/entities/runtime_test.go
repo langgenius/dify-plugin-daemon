@@ -9,7 +9,7 @@ func TestRuntimeStateHash(t *testing.T) {
 	state := PluginRuntimeState{
 		Restarts:     0,
 		Status:       PLUGIN_RUNTIME_STATUS_PENDING,
-		RelativePath: "aaa",
+		AbsolutePath: "aaa",
 		ActiveAt:     &[]time.Time{time.Now()}[0],
 		StoppedAt:    &[]time.Time{time.Now()}[0],
 		Verified:     true,

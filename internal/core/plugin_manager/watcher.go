@@ -55,6 +55,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 		} else if config.Platform == app.PLATFORM_LOCAL {
 			plugin_interface = &local_manager.LocalPluginRuntime{
 				PluginRuntime: plugin,
+				CWD:           plugin.State.AbsolutePath,
 			}
 		} else {
 			log.Error("unsupported platform: %s for plugin: %s", config.Platform, plugin.Config.Name)
@@ -102,7 +103,7 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 					State: entities.PluginRuntimeState{
 						Status:       entities.PLUGIN_RUNTIME_STATUS_PENDING,
 						Restarts:     0,
-						RelativePath: path.Join(root_path, plugin.Name()),
+						AbsolutePath: path.Join(root_path, plugin.Name()),
 						ActiveAt:     nil,
 						Verified:     err == nil,
 					},

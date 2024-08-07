@@ -6,6 +6,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
@@ -159,8 +160,17 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// registration transferred
 		runtime.registration_transferred = true
 
-		runtime.InitState(runtime.calculateChecksum())
+		runtime.checksum = runtime.calculateChecksum()
+		runtime.InitState()
 		runtime.SetActiveAt(time.Now())
+
+		// trigger registration event
+		if err := runtime.Register(); err != nil {
+			runtime.conn.Write([]byte("register failed\n"))
+			log.Error("register failed", "error", err)
+			runtime.conn.Close()
+			return
+		}
 
 		// publish runtime to watcher
 		s.response.Write(runtime)

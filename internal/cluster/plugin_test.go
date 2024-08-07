@@ -17,6 +17,10 @@ func (r *fakePlugin) InitEnvironment() error {
 	return nil
 }
 
+func (r *fakePlugin) Checksum() string {
+	return ""
+}
+
 func (r *fakePlugin) Identity() (string, error) {
 	return "", nil
 }

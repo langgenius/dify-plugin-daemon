@@ -179,5 +179,4 @@ func TestRedirectTraffic(t *testing.T) {
 			t.Fatal("node 1 did not receive correct requests")
 		}
 	}
-
 }

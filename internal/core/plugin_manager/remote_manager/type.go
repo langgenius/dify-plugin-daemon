@@ -40,6 +40,8 @@ type RemotePluginRuntime struct {
 	tenant_id string
 
 	alive bool
+
+	checksum string
 }
 
 func (r *RemotePluginRuntime) Identity() (string, error) {

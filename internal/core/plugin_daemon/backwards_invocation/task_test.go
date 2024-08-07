@@ -16,6 +16,10 @@ func (r *TPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
+func (r *TPluginRuntime) Checksum() string {
+	return ""
+}
+
 func (r *TPluginRuntime) Identity() (string, error) {
 	return "", nil
 }
