@@ -15,7 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func (p *PluginManager) startWatcher(config *app.Config) {
+func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
 		log.Info("start to handle new plugins in path: %s", config.StoragePath)
 		p.handleNewPlugins(config)
@@ -23,8 +23,6 @@ func (p *PluginManager) startWatcher(config *app.Config) {
 			p.handleNewPlugins(config)
 		}
 	}()
-
-	p.startRemoteWatcher(config)
 }
 
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {

@@ -3,14 +3,12 @@ package entities
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/gob"
 	"encoding/hex"
 	"hash/fnv"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 type (
@@ -111,7 +109,7 @@ func (r *PluginRuntime) UpdateScheduledAt(t time.Time) {
 	r.State.ScheduledAt = &t
 }
 
-func (r *PluginRuntime) InitState() {
+func (r *PluginRuntime) InitState(checksum string) {
 	r.State = PluginRuntimeState{
 		Restarts:    0,
 		Status:      PLUGIN_RUNTIME_STATUS_PENDING,
@@ -120,6 +118,7 @@ func (r *PluginRuntime) InitState() {
 		Verified:    false,
 		ScheduledAt: nil,
 		Logs:        []string{},
+		Checksum:    checksum,
 	}
 }
 
@@ -152,11 +151,7 @@ func (r *PluginRuntime) AddRestarts() {
 }
 
 func (r *PluginRuntime) Checksum() string {
-	buf := bytes.Buffer{}
-	binary.Write(&buf, binary.BigEndian, parser.MarshalJsonBytes(r.Config))
-	hash := sha256.New()
-	hash.Write(buf.Bytes())
-	return hex.EncodeToString(hash.Sum(nil))
+	return r.State.Checksum
 }
 
 func (r *PluginRuntime) OnStop(f func()) {
@@ -186,6 +181,7 @@ type PluginRuntimeState struct {
 	Verified     bool       `json:"verified"`
 	ScheduledAt  *time.Time `json:"scheduled_at"`
 	Logs         []string   `json:"logs"`
+	Checksum     string     `json:"checksum"`
 }
 
 func (s *PluginRuntimeState) Hash() (uint64, error) {

@@ -66,7 +66,7 @@ func TestVoteAddresses(t *testing.T) {
 	// wait for all nodes to be ready
 	wg.Wait()
 
-	// wait for all ips to be voted
+	// wait for all addresses to be voted
 	time.Sleep(time.Second)
 
 	for _, node := range cluster {

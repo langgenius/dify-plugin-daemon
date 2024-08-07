@@ -76,6 +76,9 @@ func (p *PluginManager) Init(configuration *app.Config) {
 		log.Panic("init dify invocation daemon failed: %s", err.Error())
 	}
 
-	// start plugin watcher
-	p.startWatcher(configuration)
+	// start local watcher
+	p.startLocalWatcher(configuration)
+
+	// start remote watcher
+	p.startRemoteWatcher(configuration)
 }
