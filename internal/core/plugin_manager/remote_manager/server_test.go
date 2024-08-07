@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -16,6 +17,15 @@ import (
 )
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
+	db.Init(&app.Config{
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
+	})
+
 	port, err := network.GetRandomPort()
 	if err != nil {
 		t.Errorf("failed to get random port: %s", err.Error())
