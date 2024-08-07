@@ -1,10 +1,18 @@
 package cluster
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
-type ip struct {
-	Address string `json:"address"`
-	Votes   []vote `json:"vote"`
+type address struct {
+	Ip    string `json:"ip"`
+	Port  uint16 `json:"port"`
+	Votes []vote `json:"vote"`
+}
+
+func (a *address) fullAddress() string {
+	return fmt.Sprintf("%s:%d", a.Ip, a.Port)
 }
 
 type vote struct {
@@ -14,8 +22,8 @@ type vote struct {
 }
 
 type node struct {
-	Ips        []ip  `json:"ips"`
-	LastPingAt int64 `json:"last_ping_at"`
+	Addresses  []address `json:"ips"`
+	LastPingAt int64     `json:"last_ping_at"`
 }
 
 func (c *node) available() bool {

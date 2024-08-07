@@ -12,7 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
 )
 
-func (c *Cluster) voteIps() error {
+func (c *Cluster) voteAddresses() error {
 	c.notifyVoting()
 	defer c.notifyVotingCompleted()
 	var total_errors error
@@ -39,9 +39,9 @@ func (c *Cluster) voteIps() error {
 
 		// vote for ips
 		ips_voting := make(map[string]bool)
-		for _, ip := range node_status.Ips {
+		for _, addr := range node_status.Addresses {
 			// skip ips which have already been voted by current node in the last 5 minutes
-			for _, vote := range ip.Votes {
+			for _, vote := range addr.Votes {
 				if vote.NodeID == c.id {
 					if time.Since(time.Unix(vote.VotedAt, 0)) < time.Minute*5 && !vote.Failed {
 						continue
@@ -51,7 +51,7 @@ func (c *Cluster) voteIps() error {
 				}
 			}
 
-			ips_voting[ip.Address] = c.voteIp(ip) == nil
+			ips_voting[addr.fullAddress()] = c.voteAddress(addr) == nil
 		}
 
 		// lock the node status
@@ -70,22 +70,22 @@ func (c *Cluster) voteIps() error {
 		}
 
 		// update the node status
-		for i, ip := range node_status.Ips {
+		for i, ip := range node_status.Addresses {
 			// update voting time
-			if success, ok := ips_voting[ip.Address]; ok {
+			if success, ok := ips_voting[ip.fullAddress()]; ok {
 				// check if the ip has already voted
 				already_voted := false
 				for j, vote := range ip.Votes {
 					if vote.NodeID == c.id {
-						node_status.Ips[i].Votes[j].VotedAt = time.Now().Unix()
-						node_status.Ips[i].Votes[j].Failed = !success
+						node_status.Addresses[i].Votes[j].VotedAt = time.Now().Unix()
+						node_status.Addresses[i].Votes[j].Failed = !success
 						already_voted = true
 						break
 					}
 				}
 				// add a new vote
 				if !already_voted {
-					node_status.Ips[i].Votes = append(node_status.Ips[i].Votes, vote{
+					node_status.Addresses[i].Votes = append(node_status.Addresses[i].Votes, vote{
 						NodeID:  c.id,
 						VotedAt: time.Now().Unix(),
 						Failed:  !success,
@@ -108,12 +108,12 @@ func (c *Cluster) voteIps() error {
 	return total_errors
 }
 
-func (c *Cluster) voteIp(ip ip) error {
+func (c *Cluster) voteAddress(addr address) error {
 	type healthcheck struct {
 		Status string `json:"status"`
 	}
 
-	healthcheck_endpoint, err := url.JoinPath(fmt.Sprintf("http://%s:%d", ip.Address, c.port), "health/check")
+	healthcheck_endpoint, err := url.JoinPath(fmt.Sprintf("http://%s:%d", addr.Ip, addr.Port), "health/check")
 	if err != nil {
 		return err
 	}
@@ -136,11 +136,11 @@ func (c *Cluster) voteIp(ip ip) error {
 	return nil
 }
 
-func (c *Cluster) SortIps(node_status node) []ip {
+func (c *Cluster) SortIps(node_status node) []address {
 	// sort by votes
-	sort.Slice(node_status.Ips, func(i, j int) bool {
-		return len(node_status.Ips[i].Votes) > len(node_status.Ips[j].Votes)
+	sort.Slice(node_status.Addresses, func(i, j int) bool {
+		return len(node_status.Addresses[i].Votes) > len(node_status.Addresses[j].Votes)
 	})
 
-	return node_status.Ips
+	return node_status.Addresses
 }

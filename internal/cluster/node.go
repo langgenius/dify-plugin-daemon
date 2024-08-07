@@ -34,10 +34,11 @@ func (c *Cluster) updateNodeStatus() error {
 				return err
 			}
 			node_status = &node{
-				Ips: parser.Map(func(from net.IP) ip {
-					return ip{
-						Address: from.String(),
-						Votes:   []vote{},
+				Addresses: parser.Map(func(from net.IP) address {
+					return address{
+						Ip:    from.String(),
+						Port:  c.port,
+						Votes: []vote{},
 					}
 				}, ips),
 			}
@@ -52,16 +53,17 @@ func (c *Cluster) updateNodeStatus() error {
 		// add new ip if not exist
 		for _, _ip := range ips {
 			found := false
-			for _, node_ip := range node_status.Ips {
-				if node_ip.Address == _ip.String() {
+			for _, node_ip := range node_status.Addresses {
+				if node_ip.Ip == _ip.String() {
 					found = true
 					break
 				}
 			}
 			if !found {
-				node_status.Ips = append(node_status.Ips, ip{
-					Address: _ip.String(),
-					Votes:   []vote{},
+				node_status.Addresses = append(node_status.Addresses, address{
+					Ip:    _ip.String(),
+					Port:  c.port,
+					Votes: []vote{},
 				})
 			}
 		}

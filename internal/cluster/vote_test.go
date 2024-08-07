@@ -30,7 +30,7 @@ func createSimulationHealthCheckSever() (uint16, error) {
 	return uint16(port), nil
 }
 
-func TestVoteIps(t *testing.T) {
+func TestVoteAddresses(t *testing.T) {
 	// create a health check server
 	port, err := createSimulationHealthCheckSever()
 	if err != nil {
@@ -77,9 +77,9 @@ func TestVoteIps(t *testing.T) {
 		}
 
 		for _, node := range nodes {
-			for _, ip := range node.Ips {
+			for _, ip := range node.Addresses {
 				if len(ip.Votes) == 0 {
-					t.Errorf("vote for ip %s failed", ip.Address)
+					t.Errorf("vote for ip %s failed", ip.Ip)
 					return
 				}
 			}

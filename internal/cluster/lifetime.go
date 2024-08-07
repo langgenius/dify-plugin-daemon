@@ -90,7 +90,7 @@ func (c *Cluster) clusterLifetime() {
 			log.Error("failed to publish the new node event: %s", err.Error())
 		}
 
-		if err := c.voteIps(); err != nil {
+		if err := c.voteAddresses(); err != nil {
 			log.Error("failed to vote the ips of the nodes: %s", err.Error())
 		}
 	})
@@ -137,13 +137,13 @@ func (c *Cluster) clusterLifetime() {
 				c.notifyMasterGCCompleted()
 			}
 		case <-node_vote_ticker.C:
-			if err := c.voteIps(); err != nil {
+			if err := c.voteAddresses(); err != nil {
 				log.Error("failed to vote the ips of the nodes: %s", err.Error())
 			}
 		case _, ok := <-new_node_chan:
 			if ok {
 				// vote for the new node
-				if err := c.voteIps(); err != nil {
+				if err := c.voteAddresses(); err != nil {
 					log.Error("failed to vote the ips of the nodes: %s", err.Error())
 				}
 			}

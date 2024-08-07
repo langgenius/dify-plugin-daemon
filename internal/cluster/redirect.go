@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strconv"
 )
 
 // RedirectRequest redirects the request to the specified node
@@ -26,7 +25,7 @@ func (c *Cluster) RedirectRequest(
 	// create a new request
 	redirected_request, err := http.NewRequest(
 		request.Method,
-		"http://"+ip.Address+":"+strconv.FormatUint(uint64(c.port), 10)+request.URL.Path,
+		"http://"+ip.fullAddress()+request.URL.Path,
 		request.Body,
 	)
 

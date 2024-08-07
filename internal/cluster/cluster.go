@@ -16,7 +16,7 @@ type Cluster struct {
 	// i_am_master is the flag to indicate whether the current node is the master node
 	i_am_master bool
 
-	// port is the health check port of the cluster
+	// main http port of the current node
 	port uint16
 
 	// plugins stores all the plugin life time of the current node
