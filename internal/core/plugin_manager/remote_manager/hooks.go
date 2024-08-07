@@ -87,6 +87,13 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	// close plugin
 	plugin.onDisconnected()
 
+	// uninstall plugin
+	if plugin.handshake && plugin.registration_transferred {
+		if err := plugin.Unregister(); err != nil {
+			log.Error("unregister plugin failed, error: %v", err)
+		}
+	}
+
 	return gnet.None
 }
 
@@ -167,7 +174,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// trigger registration event
 		if err := runtime.Register(); err != nil {
 			runtime.conn.Write([]byte("register failed\n"))
-			log.Error("register failed", "error", err)
+			log.Error("register failed, error: %v", err)
 			runtime.conn.Close()
 			return
 		}

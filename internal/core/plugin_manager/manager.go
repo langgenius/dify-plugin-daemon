@@ -2,6 +2,7 @@ package plugin_manager
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -12,6 +13,8 @@ import (
 )
 
 type PluginManager struct {
+	m sync.Map
+
 	cluster *cluster.Cluster
 }
 
@@ -30,9 +33,18 @@ func GetGlobalPluginManager() *PluginManager {
 	return manager
 }
 
+func (p *PluginManager) Add(plugin entities.PluginRuntimeInterface) error {
+	identity, err := plugin.Identity()
+	if err != nil {
+		return err
+	}
+	p.m.Store(identity, plugin)
+	return nil
+}
+
 func (p *PluginManager) List() []entities.PluginRuntimeInterface {
 	var runtimes []entities.PluginRuntimeInterface
-	m.Range(func(key, value interface{}) bool {
+	p.m.Range(func(key, value interface{}) bool {
 		if v, ok := value.(entities.PluginRuntimeInterface); ok {
 			runtimes = append(runtimes, v)
 		}
@@ -42,20 +54,12 @@ func (p *PluginManager) List() []entities.PluginRuntimeInterface {
 }
 
 func (p *PluginManager) Get(identity string) entities.PluginRuntimeInterface {
-	if v, ok := m.Load(identity); ok {
+	if v, ok := p.m.Load(identity); ok {
 		if r, ok := v.(entities.PluginRuntimeInterface); ok {
 			return r
 		}
 	}
 	return nil
-}
-
-func (p *PluginManager) Put(path string, binary []byte) {
-	//TODO: put binary into
-}
-
-func (p *PluginManager) Delete(identity string) {
-	//TODO: delete binary from
 }
 
 func (p *PluginManager) Init(configuration *app.Config) {

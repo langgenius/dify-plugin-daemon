@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"sync/atomic"
 	"time"
@@ -16,7 +17,8 @@ import (
 )
 
 func Webhook(ctx *gin.Context, webhook *models.Webhook, path string) {
-	req := ctx.Request
+	req := ctx.Request.Clone(context.Background())
+	req.URL.Path = path
 
 	var buffer bytes.Buffer
 	err := req.Write(&buffer)
@@ -73,6 +75,7 @@ func Webhook(ctx *gin.Context, webhook *models.Webhook, path string) {
 				return
 			}
 			ctx.Writer.Write(chunk)
+			ctx.Writer.Flush()
 		}
 	})
 

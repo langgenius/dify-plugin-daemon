@@ -41,7 +41,11 @@ type RemotePluginRuntime struct {
 
 	alive bool
 
+	// checksum
 	checksum string
+
+	// installation id
+	installation_id string
 }
 
 func (r *RemotePluginRuntime) Identity() (string, error) {

@@ -40,9 +40,10 @@ func genericInvokePlugin[Req any, Rsp any](
 			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
 			if err != nil {
 				log.Error("unmarshal json failed: %s", err.Error())
-				return
+				response.WriteError(err)
+			} else {
+				response.Write(chunk)
 			}
-			response.Write(chunk)
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
 			if err := backwards_invocation.InvokeDify(runtime, typ, session, chunk.Data); err != nil {
 				log.Error("invoke dify failed: %s", err.Error())

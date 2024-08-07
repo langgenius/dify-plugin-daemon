@@ -15,10 +15,10 @@ func InstallPlugin(
 	user_id string,
 	runtime entities.PluginRuntimeInterface,
 	configuration map[string]any,
-) error {
+) (string, error) {
 	identity, err := runtime.Identity()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	plugin := &models.Plugin{
@@ -31,12 +31,43 @@ func InstallPlugin(
 
 	plugin, installation, err := curd.CreatePlugin(tenant_id, user_id, plugin, configuration)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// check if there is a webhook for the plugin
 	if runtime.Configuration().Resource.Permission.AllowRegistryWebhook() {
 		_, err := InstallWebhook(plugin.PluginID, installation.ID, tenant_id, user_id)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return installation.ID, nil
+}
+
+func UninstallPlugin(tenant_id string, installation_id string, runtime entities.PluginRuntimeInterface) error {
+	identity, err := runtime.Identity()
+	if err != nil {
+		return err
+	}
+
+	// delete the plugin from db
+	resp, err := curd.DeletePlugin(tenant_id, identity, installation_id)
+	if err != nil {
+		return err
+	}
+
+	// delete the webhook from db
+	if runtime.Configuration().Resource.Permission.AllowRegistryWebhook() {
+		// get the webhook from db
+		webhook, err := GetWebhook(tenant_id, identity, resp.Installation.ID)
+		if err != nil && err != db.ErrDatabaseNotFound {
+			return err
+		} else if err == db.ErrDatabaseNotFound {
+			return nil
+		}
+
+		err = UninstallWebhook(webhook)
 		if err != nil {
 			return err
 		}
@@ -62,6 +93,20 @@ func InstallWebhook(plugin_id string, installation_id string, tenant_id string, 
 	}
 
 	return installation.HookID, nil
+}
+
+func GetWebhook(tenant_id string, plugin_id string, installation_id string) (*models.Webhook, error) {
+	webhook, err := db.GetOne[models.Webhook](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_id", plugin_id),
+		db.Equal("plugin_installation_id", installation_id),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &webhook, nil
 }
 
 // uninstalls a plugin from db

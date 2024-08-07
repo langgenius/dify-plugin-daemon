@@ -81,7 +81,6 @@ func (app *App) server(config *app.Config) func() {
 		engine.POST(
 			"/plugin/debugging/key",
 			CheckingKey(config.PluginInnerApiKey),
-			app.RedirectPluginInvoke(),
 			controllers.GetRemoteDebuggingKey,
 		)
 	}

@@ -45,7 +45,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 
 func (p *PluginManager) handleNewPlugins(config *app.Config) {
 	// load local plugins firstly
-	for plugin := range loadNewPlugins(config.StoragePath) {
+	for plugin := range p.loadNewPlugins(config.StoragePath) {
 		var plugin_interface entities.PluginRuntimeInterface
 
 		if config.Platform == app.PLATFORM_AWS_LAMBDA {
@@ -69,7 +69,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 }
 
 // chan should be closed after using that
-func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
+func (p *PluginManager) loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 	ch := make(chan entities.PluginRuntime)
 
 	plugins, err := os.ReadDir(root_path)
@@ -89,7 +89,7 @@ func loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 					continue
 				}
 
-				status := verifyPluginStatus(configuration)
+				status := p.verifyPluginStatus(configuration)
 				if status.exist {
 					continue
 				}
@@ -135,8 +135,8 @@ type pluginStatusResult struct {
 	exist bool
 }
 
-func verifyPluginStatus(config *plugin_entities.PluginDeclaration) pluginStatusResult {
-	_, exist := checkPluginExist(config.Identity())
+func (p *PluginManager) verifyPluginStatus(config *plugin_entities.PluginDeclaration) pluginStatusResult {
+	_, exist := p.checkPluginExist(config.Identity())
 	if exist {
 		return pluginStatusResult{
 			exist: true,

@@ -61,8 +61,10 @@ func InvokeWebhook(
 				resp.Close()
 				return http.StatusInternalServerError, nil, nil, err
 			}
+
 			response.Write(dehexed)
 			routine.Submit(func() {
+				defer response.Close()
 				for resp.Next() {
 					chunk, err := resp.Read()
 					if err != nil {

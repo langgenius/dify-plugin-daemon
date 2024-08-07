@@ -18,18 +18,7 @@ func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin, confi
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
-	_, err := db.GetOne[models.PluginInstallation](
-		db.Equal("plugin_id", plugin_to_be_returns.PluginID),
-		db.Equal("tenant_id", tenant_id),
-	)
-
-	if err != nil && err != db.ErrDatabaseNotFound {
-		return nil, nil, err
-	} else if err != nil {
-		return nil, nil, errors.New("plugin has been installed already")
-	}
-
-	err = db.WithTransaction(func(tx *gorm.DB) error {
+	err := db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_id", plugin.PluginID),
@@ -89,12 +78,13 @@ type DeletePluginResponse struct {
 // Delete plugin for a tenant, delete the plugin if it has never been created before
 // and uninstall it from the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func DeletePlugin(tenant_id string, plugin_id string) (*DeletePluginResponse, error) {
+func DeletePlugin(tenant_id string, plugin_id string, installation_id string) (*DeletePluginResponse, error) {
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
 	_, err := db.GetOne[models.PluginInstallation](
-		db.Equal("plugin_id", plugin_to_be_returns.PluginID),
+		db.Equal("id", installation_id),
+		db.Equal("plugin_id", plugin_id),
 		db.Equal("tenant_id", tenant_id),
 	)
 
@@ -109,7 +99,7 @@ func DeletePlugin(tenant_id string, plugin_id string) (*DeletePluginResponse, er
 	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_id", plugin_to_be_returns.PluginID),
+			db.Equal("plugin_id", plugin_id),
 			db.WLock(),
 		)
 

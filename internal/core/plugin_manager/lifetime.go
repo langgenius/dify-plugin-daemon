@@ -24,6 +24,13 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 		return
 	}
 
+	// add plugin to manager
+	err = p.Add(r)
+	if err != nil {
+		log.Error("add plugin to manager failed: %s", err.Error())
+		return
+	}
+
 	start_failed_times := 0
 
 	// remove lifetime state after plugin if it has been stopped
