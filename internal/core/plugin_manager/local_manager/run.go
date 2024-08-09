@@ -3,6 +3,7 @@ package local_manager
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"sync"
 
@@ -39,6 +40,9 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// start plugin
 	e := exec.Command("bash", r.Config.Execution.Launch)
 	e.Dir = r.State.AbsolutePath
+	// add env INSTALL_METHOD=local
+	e.Env = append(e.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
+
 	process.WrapProcess(e)
 
 	// get writer

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 var (
@@ -50,16 +50,12 @@ func (d *FSPluginDecoder) Open() error {
 }
 
 func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error {
-	return fs.WalkDir(d.fs, ".", func(root_path string, d fs.DirEntry, err error) error {
+	return filepath.Walk(d.root, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if d.IsDir() {
-			return nil
-		}
-
-		return fn(root_path, d.Name())
+		return fn(info.Name(), filepath.Dir(path))
 	})
 }
 
@@ -68,7 +64,7 @@ func (d *FSPluginDecoder) Close() error {
 }
 
 func (d *FSPluginDecoder) ReadFile(filename string) ([]byte, error) {
-	return os.ReadFile(path.Join(d.root, filename))
+	return os.ReadFile(filepath.Join(d.root, filename))
 }
 
 func (d *FSPluginDecoder) Signature() (string, error) {
