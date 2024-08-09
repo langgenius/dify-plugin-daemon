@@ -65,6 +65,7 @@ type InvokeTTSSchema struct {
 type RequestInvokeTTS struct {
 	BaseRequestInvokeModel
 	Credentials
+	InvokeTTSSchema
 
 	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type,eq=tts"`
 }
