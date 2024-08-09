@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/aws"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/process"
@@ -14,6 +15,11 @@ func (a *App) Run(config *app.Config) {
 
 	// init routine pool
 	routine.InitPool(config.RoutinePoolSize)
+
+	// init aws
+	if config.Platform == app.PLATFORM_AWS_LAMBDA {
+		aws.InitLambda(config)
+	}
 
 	// init db
 	db.Init(config)

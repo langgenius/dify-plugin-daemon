@@ -127,7 +127,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 }
 
 func (r *LocalPluginRuntime) calculateChecksum() string {
-	plugin_decoder, err := decoder.NewFSPluginDecoder(r.CWD)
+	plugin_decoder, err := decoder.NewFSPluginDecoder(r.LocalPath)
 	if err != nil {
 		return ""
 	}

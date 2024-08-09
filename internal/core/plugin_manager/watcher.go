@@ -1,13 +1,14 @@
 package plugin_manager
 
 import (
-	"os"
 	"path"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/storage"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -51,11 +52,16 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 		if config.Platform == app.PLATFORM_AWS_LAMBDA {
 			plugin_interface = &aws_manager.AWSPluginRuntime{
 				PluginRuntime: plugin,
+				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
+					LocalPath: plugin.State.AbsolutePath,
+				},
 			}
 		} else if config.Platform == app.PLATFORM_LOCAL {
 			plugin_interface = &local_manager.LocalPluginRuntime{
 				PluginRuntime: plugin,
-				CWD:           plugin.State.AbsolutePath,
+				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
+					LocalPath: plugin.State.AbsolutePath,
+				},
 			}
 		} else {
 			log.Error("unsupported platform: %s for plugin: %s", config.Platform, plugin.Config.Name)
@@ -72,7 +78,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 func (p *PluginManager) loadNewPlugins(root_path string) <-chan entities.PluginRuntime {
 	ch := make(chan entities.PluginRuntime)
 
-	plugins, err := os.ReadDir(root_path)
+	plugin_paths, err := storage.List(root_path)
 	if err != nil {
 		log.Error("no plugin found in path: %s", root_path)
 		close(ch)
@@ -80,9 +86,9 @@ func (p *PluginManager) loadNewPlugins(root_path string) <-chan entities.PluginR
 	}
 
 	routine.Submit(func() {
-		for _, plugin := range plugins {
-			if plugin.IsDir() {
-				configuration_path := path.Join(root_path, plugin.Name(), "manifest.yaml")
+		for _, plugin_path := range plugin_paths {
+			if plugin_path.IsDir() {
+				configuration_path := path.Join(root_path, plugin_path.Name(), "manifest.yaml")
 				configuration, err := parsePluginConfig(configuration_path)
 				if err != nil {
 					log.Error("parse plugin config error: %v", err)
@@ -95,15 +101,15 @@ func (p *PluginManager) loadNewPlugins(root_path string) <-chan entities.PluginR
 				}
 
 				// check if .verified file exists
-				verified_path := path.Join(root_path, plugin.Name(), ".verified")
-				_, err = os.Stat(verified_path)
+				verified_path := path.Join(root_path, plugin_path.Name(), ".verified")
+				_, err = storage.Exists(verified_path)
 
 				ch <- entities.PluginRuntime{
 					Config: *configuration,
 					State: entities.PluginRuntimeState{
 						Status:       entities.PLUGIN_RUNTIME_STATUS_PENDING,
 						Restarts:     0,
-						AbsolutePath: path.Join(root_path, plugin.Name()),
+						AbsolutePath: path.Join(root_path, plugin_path.Name()),
 						ActiveAt:     nil,
 						Verified:     err == nil,
 					},
@@ -118,7 +124,7 @@ func (p *PluginManager) loadNewPlugins(root_path string) <-chan entities.PluginR
 }
 
 func parsePluginConfig(configuration_path string) (*plugin_entities.PluginDeclaration, error) {
-	text, err := os.ReadFile(configuration_path)
+	text, err := storage.Read(configuration_path)
 	if err != nil {
 		return nil, err
 	}

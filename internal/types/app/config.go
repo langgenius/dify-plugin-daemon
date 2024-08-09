@@ -38,6 +38,16 @@ type Config struct {
 	DBDatabase string `envconfig:"DB_DATABASE" validate:"required"`
 	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
+	AWSLambdaRegion    *string `envconfig:"AWS_LAMBDA_REGION" validate:"omitempty"`
+	AWSLambdaAccessKey *string `envconfig:"AWS_LAMBDA_ACCESS_KEY" validate:"omitempty"`
+	AWSLambdaSecretKey *string `envconfig:"AWS_LAMBDA_SECRET_KEY" validate:"omitempty"`
+
+	AWSS3Enabled   bool    `envconfig:"AWS_S3_ENABLED" validate:"omitempty"`
+	AWSS3AccessKey *string `envconfig:"AWS_S3_ACCESS_KEY" validate:"omitempty"`
+	AWSS3SecretKey *string `envconfig:"AWS_S3_SECRET_KEY" validate:"omitempty"`
+	AWSS3Region    *string `envconfig:"AWS_S3_REGION" validate:"omitempty"`
+	AWSS3Bucket    *string `envconfig:"AWS_S3_BUCKET" validate:"omitempty"`
+
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
 	LifetimeCollectionGCInterval        int `envconfig:"LIFETIME_COLLECTION_GC_INTERVAL" validate:"required"`
 	LifetimeStateGCInterval             int `envconfig:"LIFETIME_STATE_GC_INTERVAL" validate:"required"`

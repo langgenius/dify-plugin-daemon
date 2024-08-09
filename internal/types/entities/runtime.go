@@ -21,6 +21,7 @@ type (
 	PluginRuntimeInterface interface {
 		PluginRuntimeTimeLifeInterface
 		PluginRuntimeSessionIOInterface
+		PluginRuntimeDockerInterface
 	}
 
 	PluginRuntimeTimeLifeInterface interface {
@@ -72,6 +73,10 @@ type (
 	PluginRuntimeSessionIOInterface interface {
 		Listen(session_id string) *BytesIOListener
 		Write(session_id string, data []byte)
+	}
+
+	PluginRuntimeDockerInterface interface {
+		DockerImage() (string, error)
 	}
 )
 

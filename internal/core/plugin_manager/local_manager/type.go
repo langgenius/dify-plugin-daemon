@@ -1,13 +1,15 @@
 package local_manager
 
-import "github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+import (
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+)
 
 type LocalPluginRuntime struct {
+	positive_manager.PositivePluginRuntime
 	entities.PluginRuntime
-	CWD string
 
+	wait_chan   chan bool
 	io_identity string
-	w           chan bool
-
-	checksum string
+	checksum    string
 }

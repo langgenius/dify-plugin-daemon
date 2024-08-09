@@ -17,14 +17,14 @@ func (r *LocalPluginRuntime) gc() {
 		RemoveStdio(r.io_identity)
 	}
 
-	if r.w != nil {
-		close(r.w)
-		r.w = nil
+	if r.wait_chan != nil {
+		close(r.wait_chan)
+		r.wait_chan = nil
 	}
 }
 
 func (r *LocalPluginRuntime) init() {
-	r.w = make(chan bool)
+	r.wait_chan = make(chan bool)
 	r.SetLaunching()
 }
 
@@ -120,8 +120,8 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 }
 
 func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
-	if r.w == nil {
+	if r.wait_chan == nil {
 		return nil, errors.New("plugin not started")
 	}
-	return r.w, nil
+	return r.wait_chan, nil
 }
