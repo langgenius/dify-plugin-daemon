@@ -1,8 +1,6 @@
 package remote_manager
 
 import (
-	"errors"
-	"strings"
 	"sync"
 	"time"
 
@@ -47,14 +45,6 @@ type RemotePluginRuntime struct {
 
 	// installation id
 	installation_id string
-}
-
-func (r *RemotePluginRuntime) Identity() (string, error) {
-	return strings.Join([]string{r.Configuration().Identity(), r.tenant_id}, ":"), nil
-}
-
-func (r *RemotePluginRuntime) DockerImage() (string, error) {
-	return "", errors.New("not implemented")
 }
 
 // Listen creates a new listener for the given session_id

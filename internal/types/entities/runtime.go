@@ -76,7 +76,8 @@ type (
 	}
 
 	PluginRuntimeDockerInterface interface {
-		DockerImage() (string, error)
+		// returns the docker image and the delete function, always call the delete function when the image is no longer needed
+		DockerImage() (string, func(), error)
 	}
 )
 

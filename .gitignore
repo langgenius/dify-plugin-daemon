@@ -3,3 +3,5 @@ logs/
 .vscode/
 .env
 cmd/**/__debug_bin*
+*.zip
+.DS_Store
