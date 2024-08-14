@@ -147,7 +147,7 @@ func TestAcceptConnection(t *testing.T) {
 		Plugins: []string{
 			"test",
 		},
-		Execution: plugin_entities.PluginDeclarationExecution{
+		Execution: plugin_entities.PluginExecution{
 			Install: "echo 'hello'",
 			Launch:  "echo 'hello'",
 		},

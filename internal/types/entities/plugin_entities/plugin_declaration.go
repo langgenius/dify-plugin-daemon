@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
@@ -91,40 +92,33 @@ type PluginResourceRequirement struct {
 
 type PluginDeclarationPlatformArch string
 
-const (
-	PLUGIN_PLATFORM_ARCH_AMD64 PluginDeclarationPlatformArch = "amd64"
-	PLUGIN_PLATFORM_ARCH_ARM64 PluginDeclarationPlatformArch = "arm64"
-)
-
-func isPluginDeclarationPlatformArch(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	switch value {
-	case string(PLUGIN_PLATFORM_ARCH_AMD64),
-		string(PLUGIN_PLATFORM_ARCH_ARM64):
-		return true
-	}
-	return false
+type PluginRunner struct {
+	Language   constants.Language `json:"language" yaml:"language" validate:"required,is_available_language"`
+	Version    string             `json:"version" yaml:"version" validate:"required,max=128"`
+	Entrypoint string             `json:"entrypoint" yaml:"entrypoint" validate:"required,max=256"`
 }
 
-type PluginDeclarationMeta struct {
-	Version string   `json:"version" yaml:"version" validate:"required"`
-	Arch    []string `json:"arch" yaml:"arch" validate:"required,dive,plugin_declaration_platform_arch"`
+type PluginMeta struct {
+	Version string           `json:"version" yaml:"version" validate:"required,version"`
+	Arch    []constants.Arch `json:"arch" yaml:"arch" validate:"required,dive,is_available_arch"`
+	Runner  PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
 }
 
-type PluginDeclarationExecution struct {
+type PluginExecution struct {
 	Install string `json:"install" yaml:"install" validate:"omitempty"`
 	Launch  string `json:"launch" yaml:"launch" validate:"omitempty"`
 }
 
 type PluginDeclaration struct {
-	Version   string                     `json:"version" yaml:"version" validate:"required,version"`
-	Type      DifyManifestType           `json:"type" yaml:"type" validate:"required,eq=plugin"`
-	Author    string                     `json:"author" yaml:"author" validate:"required"`
-	Name      string                     `json:"name" yaml:"name" validate:"required" enum:"plugin"`
-	CreatedAt time.Time                  `json:"created_at" yaml:"created_at" validate:"required"`
-	Resource  PluginResourceRequirement  `json:"resource" yaml:"resource" validate:"required"`
-	Plugins   []string                   `json:"plugins" yaml:"plugins" validate:"required"`
-	Execution PluginDeclarationExecution `json:"execution" yaml:"execution" validate:"required"`
+	Version   string                    `json:"version" yaml:"version" validate:"required,version"`
+	Type      DifyManifestType          `json:"type" yaml:"type" validate:"required,eq=plugin"`
+	Author    string                    `json:"author" yaml:"author" validate:"required,max=128"`
+	Name      string                    `json:"name" yaml:"name" validate:"required,max=128" enum:"plugin"`
+	CreatedAt time.Time                 `json:"created_at" yaml:"created_at" validate:"required"`
+	Resource  PluginResourceRequirement `json:"resource" yaml:"resource" validate:"required"`
+	Plugins   []string                  `json:"plugins" yaml:"plugins" validate:"required,dive,max=128"`
+	Execution PluginExecution           `json:"execution" yaml:"execution" validate:"required"`
+	Meta      PluginMeta                `json:"meta" yaml:"meta" validate:"required"`
 }
 
 var (
@@ -143,7 +137,6 @@ func (p *PluginDeclaration) Identity() string {
 
 func init() {
 	// init validator
-	validators.GlobalEntitiesValidator.RegisterValidation("plugin_declaration_platform_arch", isPluginDeclarationPlatformArch)
 	validators.GlobalEntitiesValidator.RegisterValidation("version", isVersion)
 }
 

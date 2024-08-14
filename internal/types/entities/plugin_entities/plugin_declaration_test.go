@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -30,9 +31,20 @@ func preparePluginDeclaration() PluginDeclaration {
 			},
 		},
 		Plugins: []string{},
-		Execution: PluginDeclarationExecution{
+		Execution: PluginExecution{
 			Install: "echo 'hello'",
 			Launch:  "echo 'hello'",
+		},
+		Meta: PluginMeta{
+			Version: "0.0.1",
+			Arch: []constants.Arch{
+				constants.AMD64,
+			},
+			Runner: PluginRunner{
+				Language:   constants.Python,
+				Version:    "3.12",
+				Entrypoint: "main",
+			},
 		},
 	}
 }
@@ -94,6 +106,30 @@ func TestPluginDeclarationIncorrectVersion(t *testing.T) {
 	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
 	if err == nil {
 		t.Errorf("failed to validate version")
+		return
+	}
+}
+
+func TestPluginUnsupportedLanguage(t *testing.T) {
+	declaration := preparePluginDeclaration()
+	declaration.Meta.Runner.Language = "test"
+	declaration_bytes := parser.MarshalJsonBytes(declaration)
+
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	if err == nil {
+		t.Errorf("failed to validate language")
+		return
+	}
+}
+
+func TestPluginUnsupportedArch(t *testing.T) {
+	declaration := preparePluginDeclaration()
+	declaration.Meta.Arch[0] = constants.Arch("test")
+	declaration_bytes := parser.MarshalJsonBytes(declaration)
+
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	if err == nil {
+		t.Errorf("failed to validate arch")
 		return
 	}
 }
