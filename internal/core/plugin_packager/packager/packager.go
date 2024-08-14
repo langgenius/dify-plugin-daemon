@@ -28,7 +28,7 @@ func (p *Packager) Pack() ([]byte, error) {
 	zip_buffer := new(bytes.Buffer)
 	zip_writer := zip.NewWriter(zip_buffer)
 
-	p.decoder.Walk(func(filename, dir string) error {
+	err = p.decoder.Walk(func(filename, dir string) error {
 		file, err := p.decoder.ReadFile(filename)
 		if err != nil {
 			return err

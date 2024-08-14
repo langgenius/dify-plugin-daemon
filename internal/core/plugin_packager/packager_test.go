@@ -16,6 +16,7 @@ var manifest []byte
 
 func TestPackagerAndVerifier(t *testing.T) {
 	// create a temp directory
+	os.RemoveAll("temp")
 	if err := os.Mkdir("temp", 0755); err != nil {
 		t.Errorf("failed to create temp directory: %s", err.Error())
 		return

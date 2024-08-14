@@ -10,6 +10,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
@@ -151,6 +152,17 @@ func TestAcceptConnection(t *testing.T) {
 			Install: "echo 'hello'",
 			Launch:  "echo 'hello'",
 		},
+		Meta: plugin_entities.PluginMeta{
+			Version: "0.0.1",
+			Arch: []constants.Arch{
+				constants.AMD64,
+			},
+			Runner: plugin_entities.PluginRunner{
+				Language:   constants.Python,
+				Version:    "3.12",
+				Entrypoint: "main",
+			},
+		},
 	})
 	conn.Write([]byte(key))
 	conn.Write([]byte("\n"))
@@ -158,14 +170,17 @@ func TestAcceptConnection(t *testing.T) {
 	conn.Write([]byte("\n"))
 	closed_chan := make(chan bool)
 
+	msg := ""
+
 	go func() {
 		// block here to accept messages until the connection is closed
 		buffer := make([]byte, 1024)
 		for {
-			_, err := conn.Read(buffer)
+			n, err := conn.Read(buffer)
 			if err != nil {
 				break
 			}
+			msg += string(buffer[:n])
 		}
 		close(closed_chan)
 	}()
@@ -178,7 +193,7 @@ func TestAcceptConnection(t *testing.T) {
 	case <-closed_chan:
 		// success
 		if !got_connection {
-			t.Errorf("failed to accept connection")
+			t.Errorf("failed to accept connection: %s", msg)
 			return
 		}
 		if connection_err != nil {

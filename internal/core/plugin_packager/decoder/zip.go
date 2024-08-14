@@ -3,6 +3,8 @@ package decoder
 import (
 	"archive/zip"
 	"bytes"
+	"io"
+	"io/fs"
 	"path"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -32,6 +34,16 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 	}
 
 	return decoder, nil
+}
+
+func (z *ZipPluginDecoder) Stat(filename string) (fs.FileInfo, error) {
+	f, err := z.reader.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return f.Stat()
 }
 
 func (z *ZipPluginDecoder) Open() error {
@@ -80,6 +92,10 @@ func (z *ZipPluginDecoder) ReadFile(filename string) ([]byte, error) {
 	}
 
 	return data.Bytes(), nil
+}
+
+func (z *ZipPluginDecoder) FileReader(filename string) (io.ReadCloser, error) {
+	return z.reader.Open(filename)
 }
 
 func (z *ZipPluginDecoder) decode() error {

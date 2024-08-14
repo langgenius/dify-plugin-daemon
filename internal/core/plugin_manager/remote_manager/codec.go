@@ -32,10 +32,13 @@ func (w *codec) getLines(data []byte) [][]byte {
 	w.buf.Write(data)
 
 	// read line by line, split by \n, remaining data will be kept in buffer
-	lines := bytes.Split(w.buf.Bytes(), []byte("\n"))
+	buf := make([]byte, w.buf.Len())
+	w.buf.Read(buf)
 	w.buf.Reset()
 
-	// if last line is not complete, keep it in buffer
+	lines := bytes.Split(buf, []byte("\n"))
+
+	// if last line is not completed, keep it in buffer
 	if len(lines[len(lines)-1]) != 0 {
 		w.buf.Write(lines[len(lines)-1])
 		lines = lines[:len(lines)-1]
