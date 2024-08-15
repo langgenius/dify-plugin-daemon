@@ -21,3 +21,9 @@ func NewErrorResponse(code int, message string) *Response {
 		Data:    nil,
 	}
 }
+
+type GenericResponse[T any] struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    T      `json:"data"`
+}

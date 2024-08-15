@@ -18,7 +18,7 @@ import (
 
 func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
-		log.Info("start to handle new plugins in path: %s", config.StoragePath)
+		log.Info("start to handle new plugins in path: %s", config.PluginStoragePath)
 		p.handleNewPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
 			p.handleNewPlugins(config)
@@ -46,7 +46,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 
 func (p *PluginManager) handleNewPlugins(config *app.Config) {
 	// load local plugins firstly
-	for plugin := range p.loadNewPlugins(config.StoragePath) {
+	for plugin := range p.loadNewPlugins(config.PluginStoragePath) {
 		var plugin_interface entities.PluginRuntimeInterface
 
 		if config.Platform == app.PLATFORM_AWS_LAMBDA {

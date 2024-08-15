@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
+	"fmt"
 	"hash/fnv"
 	"time"
 
@@ -22,6 +23,7 @@ type (
 		PluginRuntimeTimeLifeInterface
 		PluginRuntimeSessionIOInterface
 		PluginRuntimeDockerInterface
+		PluginRuntimeLogInterface
 	}
 
 	PluginRuntimeTimeLifeInterface interface {
@@ -68,6 +70,15 @@ type (
 		SetScheduledAt(t time.Time)
 		// add restarts to the plugin
 		AddRestarts()
+	}
+
+	PluginRuntimeLogInterface interface {
+		// Log adds a log to the plugin runtime state
+		Log(string)
+		// Warn adds a warning to the plugin runtime state
+		Warn(string)
+		// Error adds an error to the plugin runtime state
+		Error(string)
 	}
 
 	PluginRuntimeSessionIOInterface interface {
@@ -162,6 +173,18 @@ func (r *PluginRuntime) TriggerStop() {
 	for _, f := range r.onStopped {
 		f()
 	}
+}
+
+func (s *PluginRuntime) Log(log string) {
+	s.State.Logs = append(s.State.Logs, fmt.Sprintf("[Info] %s: %s", time.Now().Format(time.RFC3339), log))
+}
+
+func (s *PluginRuntime) Warn(log string) {
+	s.State.Logs = append(s.State.Logs, fmt.Sprintf("[Warn] %s: %s", time.Now().Format(time.RFC3339), log))
+}
+
+func (s *PluginRuntime) Error(log string) {
+	s.State.Logs = append(s.State.Logs, fmt.Sprintf("[Error] %s: %s", time.Now().Format(time.RFC3339), log))
 }
 
 type PluginRuntimeType string

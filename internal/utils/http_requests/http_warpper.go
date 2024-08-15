@@ -98,6 +98,8 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 
 	routine.Submit(func() {
 		scanner := bufio.NewScanner(resp.Body)
+		defer resp.Body.Close()
+
 		for scanner.Scan() {
 			data := scanner.Bytes()
 			if len(data) == 0 {
@@ -112,7 +114,8 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			// unmarshal
 			t, err := parser.UnmarshalJsonBytes[T](data)
 			if err != nil {
-				continue
+				ch.WriteError(err)
+				break
 			}
 
 			ch.Write(t)

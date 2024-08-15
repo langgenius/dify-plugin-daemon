@@ -1,5 +1,7 @@
 package http_requests
 
+import "io"
+
 type HttpOptions struct {
 	Type  string
 	Value interface{}
@@ -37,6 +39,15 @@ func HttpPayloadText(payload string) HttpOptions {
 // which is used for POST method only
 func HttpPayloadJson(payload interface{}) HttpOptions {
 	return HttpOptions{"payloadJson", payload}
+}
+
+// which is used for POST method only
+// payload follows the form data format, and files is a map from filename to file
+func HttpPayloadMultipart(payload map[string]string, files map[string]io.Reader) HttpOptions {
+	return HttpOptions{"payloadMultipart", map[string]interface{}{
+		"payload": payload,
+		"files":   files,
+	}}
 }
 
 func HttpWithDirectReferer() HttpOptions {

@@ -116,19 +116,11 @@ func TestPackager_Pack(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
+		f.Close()
 		os.Remove(f.Name())
 	}()
 
-	// read tar file and check if there is a dockerfile
-	// Open the tar file
-	tar_gz_file, err := os.Open(f.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tar_gz_file.Close()
-
-	// Create a new gzip reader
-	gzip_reader, err := gzip.NewReader(tar_gz_file)
+	gzip_reader, err := gzip.NewReader(f)
 	if err != nil {
 		t.Fatal(err)
 	}

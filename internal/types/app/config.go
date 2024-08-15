@@ -20,8 +20,9 @@ type Config struct {
 
 	PluginWebhookEnabled bool `envconfig:"PLUGIN_WEBHOOK_ENABLED"`
 
-	StoragePath        string `envconfig:"STORAGE_PLUGIN_PATH"  validate:"required"`
-	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"  validate:"required"`
+	PluginStoragePath  string `envconfig:"STORAGE_PLUGIN_PATH" validate:"required"`
+	PluginWorkingPath  string `envconfig:"PLUGIN_WORKING_PATH"`
+	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"`
 
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
 
@@ -43,6 +44,9 @@ type Config struct {
 	LifetimeStateGCInterval             int `envconfig:"LIFETIME_STATE_GC_INTERVAL" validate:"required"`
 
 	DifyInvocationConnectionIdleTimeout int `envconfig:"DIFY_INVOCATION_CONNECTION_IDLE_TIMEOUT" validate:"required"`
+
+	DifyPluginServerlessConnectorURL    *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL"`
+	DifyPluginServerlessConnectorAPIKey *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 }
 
 func (c *Config) Validate() error {
@@ -65,6 +69,26 @@ func (c *Config) Validate() error {
 		if c.PluginRemoteInstallServerEventLoopNums == 0 {
 			return fmt.Errorf("plugin remote install server event loop nums is empty")
 		}
+	}
+
+	if c.Platform == PLATFORM_AWS_LAMBDA {
+		if c.DifyPluginServerlessConnectorURL == nil {
+			return fmt.Errorf("dify plugin serverless connector url is empty")
+		}
+
+		if c.DifyPluginServerlessConnectorAPIKey == nil {
+			return fmt.Errorf("dify plugin serverless connector api key is empty")
+		}
+	} else if c.Platform == PLATFORM_LOCAL {
+		if c.PluginWorkingPath == "" {
+			return fmt.Errorf("plugin working path is empty")
+		}
+
+		if c.ProcessCachingPath == "" {
+			return fmt.Errorf("process caching path is empty")
+		}
+	} else {
+		return fmt.Errorf("invalid platform")
 	}
 
 	return nil

@@ -3,7 +3,6 @@ package aws_manager
 import "github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 
 func (r *AWSPluginRuntime) StartPlugin() error {
-
 	return nil
 }
 
