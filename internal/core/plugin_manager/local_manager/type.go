@@ -11,5 +11,4 @@ type LocalPluginRuntime struct {
 
 	wait_chan   chan bool
 	io_identity string
-	checksum    string
 }

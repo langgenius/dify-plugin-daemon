@@ -55,6 +55,8 @@ type (
 		Wait() (<-chan bool, error)
 		// returns the runtime type of the plugin
 		Type() PluginRuntimeType
+		// Cleanup the plugin runtime
+		Cleanup()
 
 		// set the plugin to active
 		SetActive()
@@ -199,6 +201,7 @@ type PluginRuntimeState struct {
 	Restarts     int        `json:"restarts"`
 	Status       string     `json:"status"`
 	AbsolutePath string     `json:"absolute_path"`
+	WorkingPath  string     `json:"working_path"`
 	ActiveAt     *time.Time `json:"active_at"`
 	StoppedAt    *time.Time `json:"stopped_at"`
 	Verified     bool       `json:"verified"`

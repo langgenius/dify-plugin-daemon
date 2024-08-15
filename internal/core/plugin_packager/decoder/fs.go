@@ -7,6 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 var (
@@ -20,6 +23,8 @@ type FSPluginDecoder struct {
 	root string
 
 	fs fs.FS
+
+	pluginDeclaration *plugin_entities.PluginDeclaration
 }
 
 func NewFSPluginDecoder(root string) (*FSPluginDecoder, error) {
@@ -29,6 +34,11 @@ func NewFSPluginDecoder(root string) (*FSPluginDecoder, error) {
 
 	err := decoder.Open()
 	if err != nil {
+		return nil, err
+	}
+
+	// read the manifest file
+	if _, err := decoder.Manifest(); err != nil {
 		return nil, err
 	}
 
@@ -92,4 +102,24 @@ func (d *FSPluginDecoder) Signature() (string, error) {
 
 func (d *FSPluginDecoder) CreateTime() (int64, error) {
 	return 0, nil
+}
+
+func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
+	if d.pluginDeclaration != nil {
+		return *d.pluginDeclaration, nil
+	}
+
+	// read the manifest file
+	manifest, err := d.ReadFile("manifest.json")
+	if err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	dec, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](manifest)
+	if err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	d.pluginDeclaration = &dec
+	return dec, nil
 }

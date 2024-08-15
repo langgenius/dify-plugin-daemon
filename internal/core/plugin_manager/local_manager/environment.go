@@ -10,8 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -124,26 +122,4 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	defer f.Close()
 
 	return nil
-}
-
-func (r *LocalPluginRuntime) calculateChecksum() string {
-	plugin_decoder, err := decoder.NewFSPluginDecoder(r.LocalPath)
-	if err != nil {
-		return ""
-	}
-
-	checksum, err := checksum.CalculateChecksum(plugin_decoder)
-	if err != nil {
-		return ""
-	}
-
-	return checksum
-}
-
-func (r *LocalPluginRuntime) Checksum() string {
-	if r.checksum == "" {
-		r.checksum = r.calculateChecksum()
-	}
-
-	return r.checksum
 }

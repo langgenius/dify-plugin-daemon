@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"path"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -18,6 +19,8 @@ type ZipPluginDecoder struct {
 
 	sig         string
 	create_time int64
+
+	pluginDeclaration *plugin_entities.PluginDeclaration
 }
 
 func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
@@ -30,6 +33,10 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 
 	err = decoder.Open()
 	if err != nil {
+		return nil, err
+	}
+
+	if _, err := decoder.Manifest(); err != nil {
 		return nil, err
 	}
 
@@ -154,4 +161,24 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 	}
 
 	return z.create_time, nil
+}
+
+func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
+	if z.pluginDeclaration != nil {
+		return *z.pluginDeclaration, nil
+	}
+
+	// read the manifest file
+	manifest, err := z.ReadFile("manifest.json")
+	if err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	dec, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](manifest)
+	if err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	z.pluginDeclaration = &dec
+	return dec, nil
 }

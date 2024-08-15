@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
@@ -19,6 +20,7 @@ import (
 
 type TPluginRuntime struct {
 	entities.PluginRuntime
+	positive_manager.PositivePluginRuntime
 }
 
 func (r *TPluginRuntime) InitEnvironment() error {

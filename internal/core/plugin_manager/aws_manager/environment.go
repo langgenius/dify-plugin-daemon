@@ -42,7 +42,7 @@ func (r *AWSPluginRuntime) InitEnvironment() error {
 	r.Log("Creating new lambda function")
 
 	// create lambda function
-	packager := NewPackager(r, r.decoder)
+	packager := NewPackager(r, r.Decoder)
 	context, err := packager.Pack()
 	if err != nil {
 		return err

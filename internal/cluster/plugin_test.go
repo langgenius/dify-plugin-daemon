@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 type fakePlugin struct {
 	entities.PluginRuntime
+	positive_manager.PositivePluginRuntime
 }
 
 func (r *fakePlugin) InitEnvironment() error {

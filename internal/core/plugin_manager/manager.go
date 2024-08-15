@@ -16,6 +16,9 @@ type PluginManager struct {
 	m sync.Map
 
 	cluster *cluster.Cluster
+
+	maxPluginPackageSize int64
+	workingDirectory     string
 }
 
 var (
@@ -24,7 +27,9 @@ var (
 
 func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config) {
 	manager = &PluginManager{
-		cluster: cluster,
+		cluster:              cluster,
+		maxPluginPackageSize: configuration.MaxPluginPackageSize,
+		workingDirectory:     configuration.PluginWorkingPath,
 	}
 	manager.Init(configuration)
 }

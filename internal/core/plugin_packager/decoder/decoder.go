@@ -3,6 +3,8 @@ package decoder
 import (
 	"io"
 	"io/fs"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 // PluginDecoder is an interface for decoding and interacting with plugin files
@@ -32,4 +34,7 @@ type PluginDecoder interface {
 
 	// CreateTime returns the creation time of the plugin as a Unix timestamp
 	CreateTime() (int64, error)
+
+	// Manifest returns the manifest of the plugin
+	Manifest() (plugin_entities.PluginDeclaration, error)
 }

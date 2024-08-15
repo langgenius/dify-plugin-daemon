@@ -4,12 +4,14 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 type TPluginRuntime struct {
 	entities.PluginRuntime
+	positive_manager.PositivePluginRuntime
 }
 
 func (r *TPluginRuntime) InitEnvironment() error {

@@ -14,6 +14,9 @@ func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInt
 	log.Info("new plugin logged in: %s", configuration.Identity())
 	defer log.Info("plugin %s has exited", configuration.Identity())
 
+	// cleanup plugin runtime state and working directory
+	defer r.Cleanup()
+
 	// stop plugin when the plugin reaches the end of its lifetime
 	defer r.Stop()
 
