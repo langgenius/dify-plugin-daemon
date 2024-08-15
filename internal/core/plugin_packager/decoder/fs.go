@@ -110,12 +110,12 @@ func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) 
 	}
 
 	// read the manifest file
-	manifest, err := d.ReadFile("manifest.json")
+	manifest, err := d.ReadFile("manifest.yaml")
 	if err != nil {
 		return plugin_entities.PluginDeclaration{}, err
 	}
 
-	dec, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](manifest)
+	dec, err := parser.UnmarshalYamlBytes[plugin_entities.PluginDeclaration](manifest)
 	if err != nil {
 		return plugin_entities.PluginDeclaration{}, err
 	}
