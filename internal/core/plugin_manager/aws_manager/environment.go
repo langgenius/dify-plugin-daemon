@@ -2,6 +2,8 @@ package aws_manager
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"time"
 
@@ -13,6 +15,25 @@ var (
 )
 
 func (r *AWSPluginRuntime) InitEnvironment() error {
+	if err := r.initEnvironment(); err != nil {
+		return err
+	}
+
+	// init http client
+	r.client = &http.Client{
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout:   5 * time.Second,
+				KeepAlive: 15 * time.Second,
+			}).Dial,
+			IdleConnTimeout: 120 * time.Second,
+		},
+	}
+
+	return nil
+}
+
+func (r *AWSPluginRuntime) initEnvironment() error {
 	r.Log("Starting to initialize environment")
 	// check if the plugin has already been initialized, at most 300s
 	if err := cache.Lock(AWS_LAUNCH_LOCK_PREFIX+r.Checksum(), 300*time.Second, 300*time.Second); err != nil {
