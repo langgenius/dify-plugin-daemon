@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -28,6 +29,10 @@ func server(recv_timeout time.Duration, send_timeout time.Duration) (string, fun
 	recved := 0
 
 	eng := gin.New()
+
+	// avoid log
+	gin.SetMode(gin.ReleaseMode)
+
 	eng.POST("/invoke", func(c *gin.Context) {
 		// fmt.Println("new send request")
 		id := c.Request.Header.Get("x-dify-plugin-request-id")
@@ -117,11 +122,14 @@ func server(recv_timeout time.Duration, send_timeout time.Duration) (string, fun
 
 	return fmt.Sprintf("http://localhost:%d", port), func() {
 		srv.Close()
-		fmt.Printf("recved: %d, responsed: %d\n", recved, response)
+		// fmt.Printf("recved: %d, responsed: %d\n", recved, response)
 	}, nil
 }
 
 func TestFullDuplexSimulator_SingleSendAndReceive(t *testing.T) {
+	log.SetShowLog(false)
+	defer log.SetShowLog(true)
+
 	url, cleanup, err := server(time.Second*100, time.Second*100)
 	if err != nil {
 		t.Fatal(err)
@@ -166,6 +174,9 @@ func TestFullDuplexSimulator_SingleSendAndReceive(t *testing.T) {
 }
 
 func TestFullDuplexSimulator_AutoReconnect(t *testing.T) {
+	log.SetShowLog(false)
+	defer log.SetShowLog(true)
+
 	// hmmm, to ensure the server is stable, we need to run the test 100 times
 	// don't ask me why, just trust me, I have spent 1 days to handle this race condition
 	wg := sync.WaitGroup{}
