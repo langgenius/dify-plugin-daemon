@@ -166,55 +166,67 @@ func TestFullDuplexSimulator_SingleSendAndReceive(t *testing.T) {
 }
 
 func TestFullDuplexSimulator_AutoReconnect(t *testing.T) {
-	url, cleanup, err := server(time.Millisecond*700, time.Second*10)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cleanup()
+	// hmmm, to ensure the server is stable, we need to run the test 100 times
+	// don't ask me why, just trust me, I have spent 1 days to handle this race condition
+	wg := sync.WaitGroup{}
+	wg.Add(100)
+	for i := 0; i < 100; i++ {
+		go func() {
+			defer wg.Done()
 
-	time.Sleep(time.Second)
-
-	simulator, err := NewFullDuplexSimulator(url, time.Millisecond*700, time.Second*10)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	l := 0
-	recved := strings.Builder{}
-	simulator.On(func(data []byte) {
-		l += len(data)
-		recved.Write(data)
-	})
-
-	done, err := simulator.StartTransaction()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer done()
-
-	ticker := time.NewTicker(time.Millisecond * 1)
-	counter := 0
-
-	for range ticker.C {
-		if err := simulator.Send([]byte(fmt.Sprintf("%05d", counter))); err != nil {
-			t.Fatal(err)
-		}
-		counter++
-		if counter == 3000 {
-			break
-		}
-	}
-
-	time.Sleep(time.Millisecond * 500)
-
-	if l != 3000*5 {
-		sent, received := simulator.GetStats()
-		t.Errorf(fmt.Sprintf("expected: %d, actual: %d, sent: %d, received: %d", 3000*5, l, sent, received))
-		// to find which one is missing
-		for i := 0; i < 3000; i++ {
-			if !strings.Contains(recved.String(), fmt.Sprintf("%05d", i)) {
-				t.Errorf(fmt.Sprintf("missing: %d", i))
+			url, cleanup, err := server(time.Millisecond*700, time.Second*10)
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
+			defer cleanup()
+
+			time.Sleep(time.Second)
+
+			simulator, err := NewFullDuplexSimulator(url, time.Millisecond*700, time.Second*10)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			l := 0
+			recved := strings.Builder{}
+			simulator.On(func(data []byte) {
+				l += len(data)
+				recved.Write(data)
+			})
+
+			done, err := simulator.StartTransaction()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer done()
+
+			ticker := time.NewTicker(time.Millisecond * 1)
+			counter := 0
+
+			for range ticker.C {
+				if err := simulator.Send([]byte(fmt.Sprintf("%05d", counter))); err != nil {
+					t.Fatal(err)
+				}
+				counter++
+				if counter == 3000 {
+					break
+				}
+			}
+
+			time.Sleep(time.Millisecond * 500)
+
+			if l != 3000*5 {
+				sent, received := simulator.GetStats()
+				t.Errorf(fmt.Sprintf("expected: %d, actual: %d, sent: %d, received: %d", 3000*5, l, sent, received))
+				// to find which one is missing
+				for i := 0; i < 3000; i++ {
+					if !strings.Contains(recved.String(), fmt.Sprintf("%05d", i)) {
+						t.Errorf(fmt.Sprintf("missing: %d", i))
+					}
+				}
+			}
+		}()
 	}
+
+	wg.Wait()
 }
