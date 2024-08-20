@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func server(timeout time.Duration) (string, func(), error) {
+func server(recv_timeout time.Duration, send_timeout time.Duration) (string, func(), error) {
 	routine.InitPool(1024)
 
 	port, err := network.GetRandomPort()
@@ -24,8 +25,11 @@ func server(timeout time.Duration) (string, func(), error) {
 	data := map[string]chan []byte{}
 	data_mu := sync.Mutex{}
 
+	recved := 0
+
 	eng := gin.New()
 	eng.POST("/invoke", func(c *gin.Context) {
+		// fmt.Println("new send request")
 		id := c.Request.Header.Get("x-dify-plugin-request-id")
 		var ch chan []byte
 
@@ -38,7 +42,7 @@ func server(timeout time.Duration) (string, func(), error) {
 		}
 		data_mu.Unlock()
 
-		time.AfterFunc(timeout, func() {
+		time.AfterFunc(send_timeout, func() {
 			c.Request.Body.Close()
 		})
 
@@ -46,16 +50,25 @@ func server(timeout time.Duration) (string, func(), error) {
 		for {
 			buf := make([]byte, 1024)
 			n, err := c.Request.Body.Read(buf)
+			if n != 0 {
+				recved += n
+				ch <- buf[:n]
+			}
 			if err != nil {
 				break
 			}
-			ch <- buf[:n]
 		}
 
-		c.Status(http.StatusOK)
+		// output closed
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.Write([]byte("closed\n"))
+		c.Writer.Flush()
 	})
 
+	response := 0
+
 	eng.GET("/response", func(ctx *gin.Context) {
+		// fmt.Println("new recv request")
 		id := ctx.Request.Header.Get("x-dify-plugin-request-id")
 		var ch chan []byte
 		data_mu.Lock()
@@ -74,16 +87,19 @@ func server(timeout time.Duration) (string, func(), error) {
 		ctx.Writer.Write([]byte("pong\n"))
 		ctx.Writer.Flush()
 
+		timer := time.NewTimer(recv_timeout)
+
 		for {
 			select {
 			case data := <-ch:
 				ctx.Writer.Write(data)
 				ctx.Writer.Flush()
+				response += len(data)
 			case <-ctx.Done():
 				return
 			case <-ctx.Writer.CloseNotify():
 				return
-			case <-time.After(timeout):
+			case <-timer.C:
 				ctx.Status(http.StatusOK)
 				return
 			}
@@ -101,11 +117,12 @@ func server(timeout time.Duration) (string, func(), error) {
 
 	return fmt.Sprintf("http://localhost:%d", port), func() {
 		srv.Close()
+		fmt.Printf("recved: %d, responsed: %d\n", recved, response)
 	}, nil
 }
 
-func TestFullDuplexSimulator_Send(t *testing.T) {
-	url, cleanup, err := server(time.Second * 100)
+func TestFullDuplexSimulator_SingleSendAndReceive(t *testing.T) {
+	url, cleanup, err := server(time.Second*100, time.Second*100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +130,7 @@ func TestFullDuplexSimulator_Send(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	simulator, err := NewFullDuplexSimulator(url)
+	simulator, err := NewFullDuplexSimulator(url, time.Second*100, time.Second*100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,5 +162,59 @@ func TestFullDuplexSimulator_Send(t *testing.T) {
 
 	if string(recved) != "hello\nworld\n" {
 		t.Fatal(fmt.Sprintf("recved: %s", string(recved)))
+	}
+}
+
+func TestFullDuplexSimulator_AutoReconnect(t *testing.T) {
+	url, cleanup, err := server(time.Millisecond*700, time.Second*10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanup()
+
+	time.Sleep(time.Second)
+
+	simulator, err := NewFullDuplexSimulator(url, time.Millisecond*700, time.Second*10)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	l := 0
+	recved := strings.Builder{}
+	simulator.On(func(data []byte) {
+		l += len(data)
+		recved.Write(data)
+	})
+
+	done, err := simulator.StartTransaction()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ticker := time.NewTicker(time.Millisecond * 1)
+	counter := 0
+
+	for range ticker.C {
+		if err := simulator.Send([]byte(fmt.Sprintf("%05d", counter))); err != nil {
+			t.Fatal(err)
+		}
+		counter++
+		if counter == 3000 {
+			break
+		}
+	}
+
+	time.Sleep(time.Millisecond * 500)
+
+	if l != 3000*5 {
+		sent, received := simulator.GetStats()
+		t.Errorf(fmt.Sprintf("expected: %d, actual: %d, sent: %d, received: %d", 3000*5, l, sent, received))
+		// to find which one is missing
+		for i := 0; i < 3000; i++ {
+			if !strings.Contains(recved.String(), fmt.Sprintf("%05d", i)) {
+				t.Errorf(fmt.Sprintf("missing: %d", i))
+			}
+		}
 	}
 }
