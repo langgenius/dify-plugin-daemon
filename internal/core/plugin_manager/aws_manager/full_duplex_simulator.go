@@ -36,6 +36,9 @@ type FullDuplexSimulator struct {
 	// total transactions
 	total_transactions int32
 
+	// connection restarts
+	connection_restarts int32
+
 	// sent bytes
 	sent_bytes int64
 	// received bytes
@@ -58,24 +61,27 @@ type FullDuplexSimulator struct {
 	// max retries
 	max_retries int
 
+	// request id
+	request_id string
+
+	// latest routine id
+	latest_routine_id string
+
 	// is sending connection alive
 	sending_connection_alive         int32
 	sending_routine_lock             sync.Mutex
 	virtual_sending_connection_alive int32
 
+	// receiving routine lock
+	receiving_routine_lock sync.Mutex
 	// is receiving connection alive
-	receiving_connection_alive         int32
-	receiving_routine_lock             sync.Mutex
 	virtual_receiving_connection_alive int32
 
 	// listener for data
 	listeners []func(data []byte)
 
 	// mutex for listeners
-	listeners_mu sync.RWMutex
-
-	// request id
-	request_id string
+	listeners_lock sync.RWMutex
 
 	// http client
 	client *http.Client
@@ -96,6 +102,7 @@ func NewFullDuplexSimulator(
 		sending_connection_max_alive_time:   sending_connection_max_alive_time,
 		receiving_connection_max_alive_time: receiving_connection_max_alive_time,
 		max_retries:                         10,
+		request_id:                          strings.RandomString(32),
 
 		// using keep alive to reduce the connection reset
 		client: &http.Client{
@@ -149,8 +156,8 @@ func (s *FullDuplexSimulator) Send(data []byte, timeout ...time.Duration) error 
 }
 
 func (s *FullDuplexSimulator) On(f func(data []byte)) {
-	s.listeners_mu.Lock()
-	defer s.listeners_mu.Unlock()
+	s.listeners_lock.Lock()
+	defer s.listeners_lock.Unlock()
 	s.listeners = append(s.listeners, f)
 }
 
@@ -159,16 +166,22 @@ func (s *FullDuplexSimulator) On(f func(data []byte)) {
 func (s *FullDuplexSimulator) StartTransaction() (func(), error) {
 	// start a transaction
 	if atomic.AddInt32(&s.alive_transactions, 1) == 1 {
+		// increase connection restarts
+		atomic.AddInt32(&s.connection_restarts, 1)
+
 		// reset request id
-		s.request_id = strings.RandomString(32)
+		routine_id := strings.RandomString(32)
+
+		// update latest request id
+		s.latest_routine_id = routine_id
 
 		// start sending connection
-		if err := s.startSendingConnection(); err != nil {
+		if err := s.startSendingConnection(routine_id); err != nil {
 			return nil, err
 		}
 
 		// start receiving connection
-		if err := s.startReceivingConnection(); err != nil {
+		if err := s.startReceivingConnection(routine_id); err != nil {
 			s.stopSendingConnection()
 			return nil, err
 		}
@@ -187,14 +200,11 @@ func (s *FullDuplexSimulator) stopTransaction() {
 	}
 }
 
-func (s *FullDuplexSimulator) startSendingConnection() error {
+func (s *FullDuplexSimulator) startSendingConnection(routine_id string) error {
 	// if virtual sending connection is already alive, do nothing
-	if atomic.LoadInt32(&s.virtual_sending_connection_alive) == 1 {
+	if !atomic.CompareAndSwapInt32(&s.virtual_sending_connection_alive, 0, 1) {
 		return nil
 	}
-
-	// set virtual sending connection as alive
-	atomic.StoreInt32(&s.virtual_sending_connection_alive, 1)
 
 	// lock the sending connection
 	s.sending_connection_timeline_lock.Lock()
@@ -216,20 +226,26 @@ func (s *FullDuplexSimulator) startSendingConnection() error {
 	req.Header.Set("x-dify-plugin-request-id", s.request_id)
 
 	routine.Submit(func() {
-		s.sendingConnectionRoutine(req)
+		s.sendingConnectionRoutine(req, routine_id)
 	})
 
 	return nil
 }
 
-func (s *FullDuplexSimulator) sendingConnectionRoutine(origin_req *http.Request) {
+func (s *FullDuplexSimulator) sendingConnectionRoutine(origin_req *http.Request, routine_id string) {
 	// lock the sending routine, to avoid there are multiple routines trying to establish the sending connection
 	s.sending_routine_lock.Lock()
+
 	// cancel the sending routine
 	defer s.sending_routine_lock.Unlock()
 
 	failed_times := 0
 	for atomic.LoadInt32(&s.virtual_sending_connection_alive) == 1 {
+		// check if the request id is the latest one, avoid this routine being used by a old request
+		if routine_id != s.latest_routine_id {
+			return
+		}
+
 		ctx, cancel := context.WithCancel(context.Background())
 		time.AfterFunc(s.sending_connection_max_alive_time, func() {
 			// reached max alive time, remove pipe writer
@@ -255,6 +271,8 @@ func (s *FullDuplexSimulator) sendingConnectionRoutine(origin_req *http.Request)
 
 		resp, err := s.client.Do(req)
 		if err != nil {
+			atomic.StoreInt32(&s.sending_connection_alive, 0)
+
 			// if virtual sending connection is not alive, clear the sending pipeline and return
 			if atomic.LoadInt32(&s.virtual_sending_connection_alive) == 0 {
 				// clear the sending pipeline
@@ -293,7 +311,7 @@ func (s *FullDuplexSimulator) sendingConnectionRoutine(origin_req *http.Request)
 }
 
 func (s *FullDuplexSimulator) stopSendingConnection() error {
-	if atomic.LoadInt32(&s.virtual_sending_connection_alive) == 0 {
+	if !atomic.CompareAndSwapInt32(&s.virtual_sending_connection_alive, 1, 0) {
 		return nil
 	}
 
@@ -315,33 +333,35 @@ func (s *FullDuplexSimulator) stopSendingConnection() error {
 	return nil
 }
 
-func (s *FullDuplexSimulator) startReceivingConnection() error {
+func (s *FullDuplexSimulator) startReceivingConnection(request_id string) error {
 	// if virtual receiving connection is already alive, do nothing
-	if atomic.LoadInt32(&s.virtual_receiving_connection_alive) == 1 {
+	if !atomic.CompareAndSwapInt32(&s.virtual_receiving_connection_alive, 0, 1) {
 		return nil
 	}
-
-	// set virtual receiving connection as alive
-	atomic.StoreInt32(&s.virtual_receiving_connection_alive, 1)
 
 	// lock the receiving connection
 	s.receiving_connection_timeline_lock.Lock()
 	defer s.receiving_connection_timeline_lock.Unlock()
 
 	routine.Submit(func() {
-		s.receivingConnectionRoutine()
+		s.receivingConnectionRoutine(request_id)
 	})
 
 	return nil
 }
 
-func (s *FullDuplexSimulator) receivingConnectionRoutine() {
+func (s *FullDuplexSimulator) receivingConnectionRoutine(routine_id string) {
 	// lock the receiving routine, to avoid there are multiple routines trying to establish the receiving connection
 	s.receiving_routine_lock.Lock()
 	// cancel the receiving routine
 	defer s.receiving_routine_lock.Unlock()
 
 	for atomic.LoadInt32(&s.virtual_receiving_connection_alive) == 1 {
+		// check if the request id is the latest one, avoid this routine being used by a old request
+		if routine_id != s.latest_routine_id {
+			return
+		}
+
 		recved_pong := false
 		buf := make([]byte, 0)
 		buf_len := 0
@@ -420,12 +440,9 @@ func (s *FullDuplexSimulator) receivingConnectionRoutine() {
 }
 
 func (s *FullDuplexSimulator) stopReceivingConnection() {
-	if atomic.LoadInt32(&s.virtual_receiving_connection_alive) == 0 {
+	if !atomic.CompareAndSwapInt32(&s.virtual_receiving_connection_alive, 1, 0) {
 		return
 	}
-
-	// mark receiving connection as dead
-	atomic.StoreInt32(&s.virtual_receiving_connection_alive, 0)
 
 	// cancel the receiving context
 	s.receiving_cancel_lock.Lock()
@@ -436,6 +453,6 @@ func (s *FullDuplexSimulator) stopReceivingConnection() {
 }
 
 // GetStats, returns the sent and received bytes
-func (s *FullDuplexSimulator) GetStats() (sent_bytes, received_bytes int64) {
-	return atomic.LoadInt64(&s.sent_bytes), atomic.LoadInt64(&s.received_bytes)
+func (s *FullDuplexSimulator) GetStats() (sent_bytes, received_bytes int64, connection_restarts int32) {
+	return atomic.LoadInt64(&s.sent_bytes), atomic.LoadInt64(&s.received_bytes), atomic.LoadInt32(&s.connection_restarts)
 }
