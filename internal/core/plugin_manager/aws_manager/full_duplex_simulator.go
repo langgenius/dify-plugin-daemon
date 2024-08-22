@@ -496,6 +496,7 @@ func (s *FullDuplexSimulator) receivingConnectionRoutine(routine_id string) {
 		req.Header.Set("Connection", "keep-alive")
 		req.Header.Set("x-dify-plugin-request-id", s.request_id)
 		req.Header.Set("x-dify-plugin-max-alive-time", fmt.Sprintf("%d", s.target_sending_connection_max_alive_time.Milliseconds()))
+		req.Header.Set("x-dify-plugin-max-sending-bytes", fmt.Sprintf("%d", s.max_receiving_bytes))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		req = req.Clone(ctx)
