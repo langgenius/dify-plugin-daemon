@@ -3,6 +3,7 @@ package aws_manager
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -27,8 +28,10 @@ type FullDuplexSimulator struct {
 	baseurl *url.URL
 
 	// single connection max alive time
-	sending_connection_max_alive_time   time.Duration
-	receiving_connection_max_alive_time time.Duration
+	sending_connection_max_alive_time          time.Duration
+	receiving_connection_max_alive_time        time.Duration
+	target_sending_connection_max_alive_time   time.Duration
+	target_receiving_connection_max_alive_time time.Duration
 
 	// how many transactions are alive
 	alive_transactions int32
@@ -40,7 +43,8 @@ type FullDuplexSimulator struct {
 	connection_restarts int32
 
 	// sent bytes
-	sent_bytes int64
+	sent_bytes                 int64
+	current_request_sent_bytes int32
 	// received bytes
 	received_bytes int64
 
@@ -60,6 +64,10 @@ type FullDuplexSimulator struct {
 
 	// max retries
 	max_retries int
+	// max sending single request sending bytes
+	max_sending_bytes int32
+	// max receiving single request receiving bytes
+	max_receiving_bytes int32
 
 	// request id
 	request_id string
@@ -70,6 +78,7 @@ type FullDuplexSimulator struct {
 	// is sending connection alive
 	sending_connection_alive         int32
 	sending_routine_lock             sync.Mutex
+	sending_lock                     sync.Mutex
 	virtual_sending_connection_alive int32
 
 	// receiving routine lock
@@ -87,22 +96,92 @@ type FullDuplexSimulator struct {
 	client *http.Client
 }
 
+type FullDuplexSimulatorOption struct {
+	// MaxRetries, default 10
+	MaxRetries int
+	// SendingConnectionMaxAliveTime, default 60s
+	SendingConnectionMaxAliveTime time.Duration
+	// TargetSendingConnectionMaxAliveTime, default 80s
+	TargetSendingConnectionMaxAliveTime time.Duration
+	// ReceivingConnectionMaxAliveTime, default 80s
+	ReceivingConnectionMaxAliveTime time.Duration
+	// TargetReceivingConnectionMaxAliveTime, default 60s
+	TargetReceivingConnectionMaxAliveTime time.Duration
+	// MaxSingleRequestSendingBytes, default 5 * 1024 * 1024
+	MaxSingleRequestSendingBytes int32
+	// MaxSingleRequestReceivingBytes, default 5 * 1024 * 1024
+	MaxSingleRequestReceivingBytes int32
+}
+
+func (opt *FullDuplexSimulatorOption) defaultOption() error {
+	if opt.MaxRetries == 0 {
+		opt.MaxRetries = 10
+	}
+
+	if opt.SendingConnectionMaxAliveTime == 0 {
+		opt.SendingConnectionMaxAliveTime = 60 * time.Second
+	}
+
+	if opt.ReceivingConnectionMaxAliveTime == 0 {
+		opt.ReceivingConnectionMaxAliveTime = 80 * time.Second
+	}
+
+	if opt.TargetSendingConnectionMaxAliveTime == 0 {
+		opt.TargetSendingConnectionMaxAliveTime = 80 * time.Second
+	}
+
+	if opt.TargetReceivingConnectionMaxAliveTime == 0 {
+		opt.TargetReceivingConnectionMaxAliveTime = 60 * time.Second
+	}
+
+	if opt.MaxSingleRequestSendingBytes == 0 {
+		opt.MaxSingleRequestSendingBytes = 5 * 1024 * 1024
+	}
+
+	if opt.MaxSingleRequestReceivingBytes == 0 {
+		opt.MaxSingleRequestReceivingBytes = 5 * 1024 * 1024
+	}
+
+	// target receiving connection max alive time should be larger than receiving connection max alive time
+	if opt.TargetReceivingConnectionMaxAliveTime < opt.ReceivingConnectionMaxAliveTime {
+		return errors.New("target receiving connection max alive time should be larger than receiving connection max alive time")
+	}
+
+	// sending connection max alive time should be larger than target sending connection max alive time
+	if opt.SendingConnectionMaxAliveTime < opt.TargetSendingConnectionMaxAliveTime {
+		return errors.New("sending connection max alive time should be larger than target sending connection max alive time")
+	}
+
+	return nil
+}
+
 func NewFullDuplexSimulator(
 	baseurl string,
-	sending_connection_max_alive_time time.Duration,
-	receiving_connection_max_alive_time time.Duration,
+	opt *FullDuplexSimulatorOption,
 ) (*FullDuplexSimulator, error) {
 	u, err := url.Parse(baseurl)
 	if err != nil {
 		return nil, err
 	}
 
+	if opt == nil {
+		opt = &FullDuplexSimulatorOption{}
+	}
+
+	if err := opt.defaultOption(); err != nil {
+		return nil, err
+	}
+
 	return &FullDuplexSimulator{
-		baseurl:                             u,
-		sending_connection_max_alive_time:   sending_connection_max_alive_time,
-		receiving_connection_max_alive_time: receiving_connection_max_alive_time,
-		max_retries:                         10,
-		request_id:                          strings.RandomString(32),
+		baseurl:                                    u,
+		sending_connection_max_alive_time:          opt.SendingConnectionMaxAliveTime,
+		target_sending_connection_max_alive_time:   opt.TargetSendingConnectionMaxAliveTime,
+		receiving_connection_max_alive_time:        opt.ReceivingConnectionMaxAliveTime,
+		target_receiving_connection_max_alive_time: opt.TargetReceivingConnectionMaxAliveTime,
+		max_sending_bytes:                          opt.MaxSingleRequestSendingBytes,
+		max_receiving_bytes:                        opt.MaxSingleRequestReceivingBytes,
+		max_retries:                                opt.MaxRetries,
+		request_id:                                 strings.RandomString(32),
 
 		// using keep alive to reduce the connection reset
 		client: &http.Client{
@@ -117,18 +196,49 @@ func NewFullDuplexSimulator(
 	}, nil
 }
 
-// send data to server
+// send data to server, it's thread-safe
 func (s *FullDuplexSimulator) Send(data []byte, timeout ...time.Duration) error {
+	s.sending_lock.Lock()
+	defer s.sending_lock.Unlock()
+
+	// split data into max 1024 bytes
+	for len(data) > 0 {
+		chunk := data
+		if len(chunk) > 1024 {
+			chunk = chunk[:1024]
+		}
+
+		data = data[len(chunk):]
+		if err := s.send(chunk, timeout...); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *FullDuplexSimulator) send(data []byte, timeout ...time.Duration) error {
+	started := time.Now()
+
 	timeout_duration := time.Second * 10
 	if len(timeout) > 0 {
 		timeout_duration = timeout[0]
 	}
 
-	started := time.Now()
-
 	for time.Since(started) < timeout_duration {
 		if atomic.LoadInt32(&s.sending_connection_alive) != 1 {
 			time.Sleep(time.Millisecond * 50)
+			continue
+		}
+
+		if atomic.AddInt32(&s.current_request_sent_bytes, int32(len(data))) > s.max_sending_bytes {
+			// reached max sending bytes, close current connection, and start a new one
+			s.sending_pipe_lock.Lock()
+			if s.sending_pipeline != nil {
+				s.sending_pipeline.Close()
+			}
+			s.sending_pipe_lock.Unlock()
+			atomic.StoreInt32(&s.current_request_sent_bytes, 0)
 			continue
 		}
 
@@ -146,13 +256,18 @@ func (s *FullDuplexSimulator) Send(data []byte, timeout ...time.Duration) error 
 			continue
 		} else {
 			atomic.AddInt64(&s.sent_bytes, int64(n))
+			atomic.AddInt32(&s.current_request_sent_bytes, int32(n))
 		}
 
 		s.sending_pipe_lock.Unlock()
-		return nil
+		break
 	}
 
-	return errors.New("send data timeout")
+	if time.Since(started) > timeout_duration {
+		return errors.New("send data timeout")
+	}
+
+	return nil
 }
 
 func (s *FullDuplexSimulator) On(f func(data []byte)) {
@@ -224,6 +339,7 @@ func (s *FullDuplexSimulator) startSendingConnection(routine_id string) error {
 	req.Header.Set("Content-Type", "octet-stream")
 	req.Header.Set("Connection", "keep-alive")
 	req.Header.Set("x-dify-plugin-request-id", s.request_id)
+	req.Header.Set("x-dify-plugin-max-alive-time", fmt.Sprintf("%d", s.target_receiving_connection_max_alive_time.Milliseconds()))
 
 	routine.Submit(func() {
 		s.sendingConnectionRoutine(req, routine_id)
@@ -379,6 +495,7 @@ func (s *FullDuplexSimulator) receivingConnectionRoutine(routine_id string) {
 		req.Header.Set("Content-Type", "octet-stream")
 		req.Header.Set("Connection", "keep-alive")
 		req.Header.Set("x-dify-plugin-request-id", s.request_id)
+		req.Header.Set("x-dify-plugin-max-alive-time", fmt.Sprintf("%d", s.target_sending_connection_max_alive_time.Milliseconds()))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		req = req.Clone(ctx)

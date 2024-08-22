@@ -45,7 +45,7 @@ func (s *S) Stop() {
 	s.srv.Close()
 }
 
-func server(recv_timeout time.Duration, send_timeout time.Duration) (*S, error) {
+func server() (*S, error) {
 	port, err := network.GetRandomPort()
 	if err != nil {
 		return nil, err
@@ -75,6 +75,7 @@ func server(recv_timeout time.Duration, send_timeout time.Duration) (*S, error) 
 
 		// fmt.Println("new send request")
 		id := c.Request.Header.Get("x-dify-plugin-request-id")
+		max_alive_time := c.Request.Header.Get("x-dify-plugin-max-alive-time")
 		s.current_send_request_id = id
 
 		var ch chan []byte
@@ -88,7 +89,12 @@ func server(recv_timeout time.Duration, send_timeout time.Duration) (*S, error) 
 		}
 		s.data_mu.Unlock()
 
-		time.AfterFunc(send_timeout, func() {
+		timeout, err := strconv.ParseInt(max_alive_time, 10, 64)
+		if err != nil {
+			timeout = 60
+		}
+
+		time.AfterFunc(time.Millisecond*time.Duration(timeout), func() {
 			c.Request.Body.Close()
 		})
 
@@ -118,6 +124,7 @@ func server(recv_timeout time.Duration, send_timeout time.Duration) (*S, error) 
 
 		// fmt.Println("new recv request")
 		id := ctx.Request.Header.Get("x-dify-plugin-request-id")
+		max_alive_time := ctx.Request.Header.Get("x-dify-plugin-max-alive-time")
 		s.current_recv_request_id = id
 
 		var ch chan []byte
@@ -137,7 +144,12 @@ func server(recv_timeout time.Duration, send_timeout time.Duration) (*S, error) 
 		ctx.Writer.Write([]byte("pong\n"))
 		ctx.Writer.Flush()
 
-		timer := time.NewTimer(recv_timeout)
+		timeout, err := strconv.ParseInt(max_alive_time, 10, 64)
+		if err != nil {
+			timeout = 60
+		}
+
+		timer := time.NewTimer(time.Millisecond * time.Duration(timeout))
 
 		for {
 			select {
@@ -167,7 +179,7 @@ func TestFullDuplexSimulator_SingleSendAndReceive(t *testing.T) {
 	log.SetShowLog(false)
 	defer log.SetShowLog(true)
 
-	srv, err := server(time.Second*100, time.Second*100)
+	srv, err := server()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +187,16 @@ func TestFullDuplexSimulator_SingleSendAndReceive(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	simulator, err := NewFullDuplexSimulator(srv.url, time.Second*100, time.Second*100)
+	simulator, err := NewFullDuplexSimulator(
+		srv.url, &FullDuplexSimulatorOption{
+			SendingConnectionMaxAliveTime:         time.Second * 100,
+			ReceivingConnectionMaxAliveTime:       time.Second * 100,
+			TargetSendingConnectionMaxAliveTime:   time.Second * 99,
+			TargetReceivingConnectionMaxAliveTime: time.Second * 101,
+			MaxSingleRequestSendingBytes:          1024 * 1024,
+			MaxSingleRequestReceivingBytes:        1024 * 1024,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +243,7 @@ func TestFullDuplexSimulator_AutoReconnect(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			srv, err := server(time.Millisecond*700, time.Second*10)
+			srv, err := server()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -230,7 +251,16 @@ func TestFullDuplexSimulator_AutoReconnect(t *testing.T) {
 
 			time.Sleep(time.Second)
 
-			simulator, err := NewFullDuplexSimulator(srv.url, time.Millisecond*700, time.Second*10)
+			simulator, err := NewFullDuplexSimulator(
+				srv.url, &FullDuplexSimulatorOption{
+					SendingConnectionMaxAliveTime:         time.Millisecond * 700,
+					TargetSendingConnectionMaxAliveTime:   time.Millisecond * 700,
+					ReceivingConnectionMaxAliveTime:       time.Millisecond * 10000,
+					TargetReceivingConnectionMaxAliveTime: time.Millisecond * 10000,
+					MaxSingleRequestSendingBytes:          1024 * 1024,
+					MaxSingleRequestReceivingBytes:        1024 * 1024,
+				},
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -266,12 +296,15 @@ func TestFullDuplexSimulator_AutoReconnect(t *testing.T) {
 			if l != 3000*5 {
 				sent, received, restarts := simulator.GetStats()
 				t.Errorf(fmt.Sprintf("expected: %d, actual: %d, sent: %d, received: %d, restarts: %d", 3000*5, l, sent, received, restarts))
+				server_recv_count := srv.recv_count
+				server_send_count := srv.send_count
+				t.Errorf(fmt.Sprintf("server recv count: %d, server send count: %d", server_recv_count, server_send_count))
 				// to find which one is missing
-				for i := 0; i < 3000; i++ {
-					if !strings.Contains(recved.String(), fmt.Sprintf("%05d", i)) {
-						t.Errorf(fmt.Sprintf("missing: %d", i))
-					}
-				}
+				// for i := 0; i < 3000; i++ {
+				// 	if !strings.Contains(recved.String(), fmt.Sprintf("%05d", i)) {
+				// 		t.Errorf(fmt.Sprintf("missing: %d", i))
+				// 	}
+				// }
 			}
 		}()
 	}
@@ -295,7 +328,7 @@ func TestFullDuplexSimulator_MultipleTransactions(t *testing.T) {
 		go func() {
 			defer w.Done()
 
-			srv, err := server(time.Millisecond*700, time.Second*10)
+			srv, err := server()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -303,7 +336,16 @@ func TestFullDuplexSimulator_MultipleTransactions(t *testing.T) {
 
 			time.Sleep(time.Second)
 
-			simulator, err := NewFullDuplexSimulator(srv.url, time.Millisecond*700, time.Second*10)
+			simulator, err := NewFullDuplexSimulator(
+				srv.url, &FullDuplexSimulatorOption{
+					SendingConnectionMaxAliveTime:         time.Millisecond * 700,
+					TargetSendingConnectionMaxAliveTime:   time.Millisecond * 700,
+					ReceivingConnectionMaxAliveTime:       time.Millisecond * 1000,
+					TargetReceivingConnectionMaxAliveTime: time.Millisecond * 1000,
+					MaxSingleRequestSendingBytes:          1024 * 1024,
+					MaxSingleRequestReceivingBytes:        1024 * 1024,
+				},
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -401,4 +443,56 @@ func TestFullDuplexSimulator_MultipleTransactions(t *testing.T) {
 	}
 
 	w.Wait()
+}
+
+func TestFullDuplexSimulator_SendLargeData(t *testing.T) {
+	log.SetShowLog(false)
+	defer log.SetShowLog(true)
+
+	srv, err := server()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer srv.Stop()
+
+	time.Sleep(time.Second)
+
+	l := 0
+
+	simulator, err := NewFullDuplexSimulator(
+		srv.url, &FullDuplexSimulatorOption{
+			SendingConnectionMaxAliveTime:         time.Millisecond * 700,
+			TargetSendingConnectionMaxAliveTime:   time.Millisecond * 700,
+			ReceivingConnectionMaxAliveTime:       time.Millisecond * 1000,
+			TargetReceivingConnectionMaxAliveTime: time.Millisecond * 1000,
+			MaxSingleRequestSendingBytes:          5 * 1024 * 1024,
+			MaxSingleRequestReceivingBytes:        5 * 1024 * 1024,
+		},
+	)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	simulator.On(func(data []byte) {
+		l += len(data)
+	})
+
+	done, err := simulator.StartTransaction()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	for i := 0; i < 300; i++ { // 300MB, this process should be done in 20 seconds
+		if err := simulator.Send([]byte(strings.Repeat("a", 1024*1024))); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	time.Sleep(time.Second * 1)
+
+	if l != 300*1024*1024 { // 300MB
+		t.Fatal(fmt.Sprintf("expected: %d, actual: %d", 300*1024*1024, l))
+	}
 }
