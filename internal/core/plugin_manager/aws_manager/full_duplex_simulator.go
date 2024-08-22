@@ -201,11 +201,11 @@ func (s *FullDuplexSimulator) Send(data []byte, timeout ...time.Duration) error 
 	s.sending_lock.Lock()
 	defer s.sending_lock.Unlock()
 
-	// split data into max 1024 bytes
+	// split data into max 10*1024 bytes
 	for len(data) > 0 {
 		chunk := data
-		if len(chunk) > 1024 {
-			chunk = chunk[:1024]
+		if len(chunk) > 10*1024 {
+			chunk = chunk[:10*1024]
 		}
 
 		data = data[len(chunk):]
