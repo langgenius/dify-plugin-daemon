@@ -10,7 +10,7 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.BytesIOListener
 		RemoveStdioListener(r.io_identity, session_id)
 	})
 	OnStdioEvent(r.io_identity, session_id, func(b []byte) {
-		listener.Emit(b)
+		listener.Send(b)
 	})
 	return listener
 }

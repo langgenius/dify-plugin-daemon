@@ -2,35 +2,35 @@ package entities
 
 import "sync"
 
-type IOListener[T any] struct {
+type Broadcast[T any] struct {
 	l        *sync.RWMutex
 	onClose  func()
 	listener []func(T)
 }
 
-type BytesIOListener = IOListener[[]byte]
+type BytesIOListener = Broadcast[[]byte]
 
-func NewIOListener[T any]() *IOListener[T] {
-	return &IOListener[T]{
+func NewIOListener[T any]() *Broadcast[T] {
+	return &Broadcast[T]{
 		l: &sync.RWMutex{},
 	}
 }
 
-func (r *IOListener[T]) AddListener(f func(T)) {
+func (r *Broadcast[T]) Listen(f func(T)) {
 	r.l.Lock()
 	defer r.l.Unlock()
 	r.listener = append(r.listener, f)
 }
 
-func (r *IOListener[T]) OnClose(f func()) {
+func (r *Broadcast[T]) OnClose(f func()) {
 	r.onClose = f
 }
 
-func (r *IOListener[T]) Close() {
+func (r *Broadcast[T]) Close() {
 	r.onClose()
 }
 
-func (r *IOListener[T]) Emit(data T) {
+func (r *Broadcast[T]) Send(data T) {
 	r.l.RLock()
 	defer r.l.RUnlock()
 	for _, listener := range r.listener {

@@ -28,7 +28,7 @@ func genericInvokePlugin[Req any, Rsp any](
 	response := stream.NewStreamResponse[Rsp](response_buffer_size)
 
 	listener := runtime.Listen(session.ID())
-	listener.AddListener(func(message []byte) {
+	listener.Listen(func(message []byte) {
 		chunk, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](message)
 		if err != nil {
 			log.Error("unmarshal json failed: %s", err.Error())

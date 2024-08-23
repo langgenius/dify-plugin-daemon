@@ -12,7 +12,7 @@ func (r *RemotePluginRuntime) Listen(session_id string) *entities.BytesIOListene
 	})
 
 	r.addCallback(session_id, func(data []byte) {
-		listener.Emit(data)
+		listener.Send(data)
 	})
 
 	return listener
