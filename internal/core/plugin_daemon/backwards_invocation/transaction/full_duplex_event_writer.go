@@ -19,8 +19,8 @@ func NewFullDuplexEventWriter(session *session_manager.Session) *FullDuplexTrans
 	}
 }
 
-func (w *FullDuplexTransactionWriter) Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any) {
-	w.session.Write(event, data)
+func (w *FullDuplexTransactionWriter) Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any) error {
+	return w.session.Write(event, data)
 }
 
 func (w *FullDuplexTransactionWriter) Done() {

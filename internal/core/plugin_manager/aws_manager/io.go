@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
@@ -22,8 +23,8 @@ func (r *AWSPluginRuntime) consume() {
 	}
 }
 
-func (r *AWSPluginRuntime) Listen(session_id string) *entities.BytesIOListener {
-	l := entities.NewIOListener[[]byte]()
+func (r *AWSPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
+	l := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	l.OnClose(func() {
 		// close the pipe writer
 		writer, exists := r.session_pool.Load(session_id)

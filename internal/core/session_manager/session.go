@@ -88,14 +88,18 @@ const (
 	PLUGIN_IN_STREAM_EVENT_RESPONSE PLUGIN_IN_STREAM_EVENT = "backwards_response"
 )
 
+func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
+	return parser.MarshalJsonBytes(map[string]any{
+		"session_id": s.id,
+		"event":      event,
+		"data":       data,
+	})
+}
+
 func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, data any) error {
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.id, parser.MarshalJsonBytes(map[string]any{
-		"session_id": s.id,
-		"event":      event,
-		"data":       data,
-	}))
+	s.runtime.Write(s.id, s.Message(event, data))
 	return nil
 }

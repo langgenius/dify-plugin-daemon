@@ -2,15 +2,27 @@ package local_manager
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
-func (r *LocalPluginRuntime) Listen(session_id string) *entities.BytesIOListener {
-	listener := entities.NewIOListener[[]byte]()
+func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
+	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
 		RemoveStdioListener(r.io_identity, session_id)
 	})
 	OnStdioEvent(r.io_identity, session_id, func(b []byte) {
-		listener.Send(b)
+		// unmarshal the session message
+		data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](b)
+		if err != nil {
+			log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
+			return
+		}
+		// set the runtime type
+		data.RuntimeType = r.Type()
+
+		listener.Send(data)
 	})
 	return listener
 }

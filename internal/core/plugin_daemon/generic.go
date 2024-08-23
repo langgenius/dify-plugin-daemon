@@ -29,13 +29,7 @@ func genericInvokePlugin[Req any, Rsp any](
 	response := stream.NewStreamResponse[Rsp](response_buffer_size)
 
 	listener := runtime.Listen(session.ID())
-	listener.Listen(func(message []byte) {
-		chunk, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](message)
-		if err != nil {
-			log.Error("unmarshal json failed: %s", err.Error())
-			return
-		}
-
+	listener.Listen(func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
 			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
@@ -49,7 +43,7 @@ func genericInvokePlugin[Req any, Rsp any](
 			// check if the request contains a aws_event_id
 			var writer backwards_invocation.BackwardsInvocationWriter
 			if chunk.RuntimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_AWS {
-				writer = transaction.NewAWSTransactionWriter(chunk.ServerlessEventId)
+				writer = transaction.NewAWSTransactionWriter(session, chunk.SessionWriter)
 			} else {
 				writer = transaction.NewFullDuplexEventWriter(session)
 			}

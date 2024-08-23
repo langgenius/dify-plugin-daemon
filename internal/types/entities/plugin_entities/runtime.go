@@ -84,7 +84,7 @@ type (
 	}
 
 	PluginRuntimeSessionIOInterface interface {
-		Listen(session_id string) *entities.BytesIOListener
+		Listen(session_id string) *entities.Broadcast[SessionMessage]
 		Write(session_id string, data []byte)
 	}
 

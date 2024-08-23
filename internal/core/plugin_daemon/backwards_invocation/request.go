@@ -10,16 +10,26 @@ import (
 type BackwardsInvocationType = dify_invocation.InvokeType
 
 type BackwardsInvocationWriter interface {
-	Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any)
+	Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any) error
 	Done()
 }
 
+// BackwardsInvocation is a struct that represents a backwards invocation
+// For different plugin runtime type, stream handler is different
+//  1. Local and Remote: they are both full duplex, multiplexing could be implemented by different session
+//     different session share the same physical channel.
+//  2. AWS: it is half duplex, one request could have multiple channels, we need to combine them into one stream
+//
+// That's why it has a writer, for different transaction, the writer is unique
 type BackwardsInvocation struct {
 	typ              BackwardsInvocationType
 	id               string
 	detailed_request map[string]any
 	session          *session_manager.Session
-	writer           BackwardsInvocationWriter
+
+	// writer is the writer that writes the data to the session
+	// NOTE: write operation will not raise errors
+	writer BackwardsInvocationWriter
 }
 
 func NewBackwardsInvocation(

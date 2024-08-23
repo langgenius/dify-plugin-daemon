@@ -2,6 +2,7 @@ package plugin_entities
 
 import (
 	"encoding/json"
+	"io"
 )
 
 type PluginUniversalEvent struct {
@@ -31,7 +32,7 @@ type SessionMessage struct {
 	RuntimeType PluginRuntimeType    `json:"runtime_type"`
 
 	// only used for aws event bridge, not used for stdio and tcp
-	ServerlessEventId string `json:"serverless_event_id"`
+	SessionWriter io.WriteCloser `json:"-"`
 }
 
 type SESSION_MESSAGE_TYPE string

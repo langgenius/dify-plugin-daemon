@@ -1,6 +1,8 @@
 package transaction
 
 import (
+	"io"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 )
@@ -8,22 +10,27 @@ import (
 // AWSTransactionWriter is a writer that implements the backwards_invocation.BackwardsInvocationWriter interface
 // it is used to write data to the plugin runtime
 type AWSTransactionWriter struct {
-	event_id string
+	session     *session_manager.Session
+	writeCloser io.WriteCloser
 
 	backwards_invocation.BackwardsInvocationWriter
 }
 
 // NewAWSTransactionWriter creates a new transaction writer
-func NewAWSTransactionWriter(event_id string) *AWSTransactionWriter {
+func NewAWSTransactionWriter(session *session_manager.Session, writeCloser io.WriteCloser) *AWSTransactionWriter {
 	return &AWSTransactionWriter{
-		event_id: event_id,
+		session:     session,
+		writeCloser: writeCloser,
 	}
 }
 
-func (w *AWSTransactionWriter) Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any) {
-
+// Write writes the event and data to the session
+// WARNING: write
+func (w *AWSTransactionWriter) Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any) error {
+	_, err := w.writeCloser.Write(w.session.Message(event, data))
+	return err
 }
 
 func (w *AWSTransactionWriter) Done() {
-
+	w.writeCloser.Close()
 }

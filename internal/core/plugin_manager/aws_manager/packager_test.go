@@ -47,7 +47,7 @@ func (r *TPluginRuntime) Wait() (<-chan bool, error) {
 	return nil, nil
 }
 
-func (r *TPluginRuntime) Listen(string) *entities.Broadcast[[]byte] {
+func (r *TPluginRuntime) Listen(string) *entities.Broadcast[plugin_entities.SessionMessage] {
 	return nil
 }
 
