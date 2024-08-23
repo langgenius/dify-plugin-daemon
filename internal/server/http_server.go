@@ -13,86 +13,11 @@ import (
 
 func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
-
 	engine.GET("/health/check", controllers.HealthCheck)
 
-	engine.POST(
-		"/plugin/tool/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeTool,
-	)
-	engine.POST(
-		"/plugin/tool/validate_credentials",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.ValidateToolCredentials,
-	)
-	engine.POST(
-		"/plugin/llm/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeLLM,
-	)
-	engine.POST(
-		"/plugin/text_embedding/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeTextEmbedding,
-	)
-	engine.POST(
-		"/plugin/rerank/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeRerank,
-	)
-	engine.POST(
-		"/plugin/tts/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeTTS,
-	)
-	engine.POST(
-		"/plugin/speech2text/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeSpeech2Text,
-	)
-	engine.POST(
-		"/plugin/moderation/invoke",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.InvokeModeration,
-	)
-	engine.POST(
-		"/plugin/model/validate_provider_credentials",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.ValidateProviderCredentials,
-	)
-	engine.POST(
-		"/plugin/model/validate_model_credentials",
-		CheckingKey(config.PluginInnerApiKey),
-		app.RedirectPluginInvoke(),
-		controllers.ValidateModelCredentials,
-	)
-
-	if config.PluginRemoteInstallingEnabled {
-		engine.POST(
-			"/plugin/debugging/key",
-			CheckingKey(config.PluginInnerApiKey),
-			controllers.GetRemoteDebuggingKey,
-		)
-	}
-
-	if config.PluginWebhookEnabled {
-		engine.HEAD("/webhook/:hook_id/*path", app.Webhook())
-		engine.POST("/webhook/:hook_id/*path", app.Webhook())
-		engine.GET("/webhook/:hook_id/*path", app.Webhook())
-		engine.PUT("/webhook/:hook_id/*path", app.Webhook())
-		engine.DELETE("/webhook/:hook_id/*path", app.Webhook())
-		engine.OPTIONS("/webhook/:hook_id/*path", app.Webhook())
-	}
+	app.pluginInvokeGroup(engine.Group("/plugin"), config)
+	app.remoteDebuggingGroup(engine.Group("/plugin/debugging"), config)
+	app.webhookGroup(engine.Group("/webhook"), config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -109,5 +34,39 @@ func (app *App) server(config *app.Config) func() {
 		if err := srv.Shutdown(context.Background()); err != nil {
 			log.Panic("Server Shutdown: %s\n", err)
 		}
+	}
+}
+
+func (app *App) pluginInvokeGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(CheckingKey(config.PluginInnerApiKey))
+	group.Use(app.RedirectPluginInvoke())
+	group.Use(app.InitClusterID())
+
+	group.POST("/tool/invoke", controllers.InvokeTool)
+	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials)
+	group.POST("/llm/invoke", controllers.InvokeLLM)
+	group.POST("/text_embedding/invoke", controllers.InvokeTextEmbedding)
+	group.POST("/rerank/invoke", controllers.InvokeRerank)
+	group.POST("/tts/invoke", controllers.InvokeTTS)
+	group.POST("/speech2text/invoke", controllers.InvokeSpeech2Text)
+	group.POST("/moderation/invoke", controllers.InvokeModeration)
+	group.POST("/model/validate_provider_credentials", controllers.ValidateProviderCredentials)
+	group.POST("/model/validate_model_credentials", controllers.ValidateModelCredentials)
+}
+
+func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
+	if config.PluginRemoteInstallingEnabled {
+		group.POST("/key", CheckingKey(config.PluginInnerApiKey), controllers.GetRemoteDebuggingKey)
+	}
+}
+
+func (app *App) webhookGroup(group *gin.RouterGroup, config *app.Config) {
+	if config.PluginWebhookEnabled {
+		group.HEAD("/:hook_id/*path", app.Webhook())
+		group.POST("/:hook_id/*path", app.Webhook())
+		group.GET("/:hook_id/*path", app.Webhook())
+		group.PUT("/:hook_id/*path", app.Webhook())
+		group.DELETE("/:hook_id/*path", app.Webhook())
+		group.OPTIONS("/:hook_id/*path", app.Webhook())
 	}
 }

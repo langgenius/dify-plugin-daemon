@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -22,20 +24,43 @@ type Session struct {
 	tenant_id       string
 	user_id         string
 	plugin_identity string
+	cluster_id      string
 }
 
-func NewSession(tenant_id string, user_id string, plugin_identity string) *Session {
+type SessionInfo struct {
+	TenantID       string `json:"tenant_id"`
+	UserID         string `json:"user_id"`
+	PluginIdentity string `json:"plugin_identity"`
+	ClusterID      string `json:"cluster_id"`
+}
+
+const (
+	SESSION_INFO_MAP_KEY = "session_info"
+)
+
+func NewSession(tenant_id string, user_id string, plugin_identity string, cluster_id string) *Session {
 	s := &Session{
 		id:              uuid.New().String(),
 		tenant_id:       tenant_id,
 		user_id:         user_id,
 		plugin_identity: plugin_identity,
+		cluster_id:      cluster_id,
 	}
 
 	session_lock.Lock()
-	defer session_lock.Unlock()
-
 	sessions[s.id] = s
+	session_lock.Unlock()
+
+	session_info := &SessionInfo{
+		TenantID:       tenant_id,
+		UserID:         user_id,
+		PluginIdentity: plugin_identity,
+		ClusterID:      cluster_id,
+	}
+
+	if err := cache.SetMapOneField(SESSION_INFO_MAP_KEY, s.id, session_info); err != nil {
+		log.Error("set session info to cache failed, %s", err)
+	}
 
 	return s
 }
@@ -49,16 +74,22 @@ func GetSession(id string) *Session {
 
 func DeleteSession(id string) {
 	session_lock.Lock()
-	defer session_lock.Unlock()
-
 	delete(sessions, id)
+	session_lock.Unlock()
+
+	if err := cache.DelMapField(SESSION_INFO_MAP_KEY, id); err != nil {
+		log.Error("delete session info from cache failed, %s", err)
+	}
 }
 
 func (s *Session) Close() {
 	session_lock.Lock()
-	defer session_lock.Unlock()
-
 	delete(sessions, s.id)
+	session_lock.Unlock()
+
+	if err := cache.DelMapField(SESSION_INFO_MAP_KEY, s.id); err != nil {
+		log.Error("delete session info from cache failed, %s", err)
+	}
 }
 
 func (s *Session) ID() string {

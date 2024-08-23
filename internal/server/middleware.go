@@ -117,3 +117,10 @@ func (app *App) Redirect(ctx *gin.Context, plugin_id string) {
 		}
 	}
 }
+
+func (app *App) InitClusterID() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Set("cluster_id", app.cluster.ID())
+		ctx.Next()
+	}
+}

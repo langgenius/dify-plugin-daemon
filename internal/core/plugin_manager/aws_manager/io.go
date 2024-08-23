@@ -47,6 +47,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
+	req.Header.Set("Dify-Plugin-Session-ID", session_id)
 
 	routine.Submit(func() {
 		// remove the session from listeners

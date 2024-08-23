@@ -77,6 +77,10 @@ func (c *Cluster) Close() error {
 	return nil
 }
 
+func (c *Cluster) ID() string {
+	return c.id
+}
+
 // trigger for master event
 func (c *Cluster) notifyBecomeMaster() {
 	if atomic.LoadInt32(&c.stopped) == 1 {

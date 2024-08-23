@@ -11,7 +11,7 @@ import (
 
 func InvokeTool(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeTool], ctx *gin.Context) {
 	// create session
-	session := createSession(r)
+	session := createSession(r, ctx.GetString("cluster_id"))
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[tool_entities.ToolResponseChunk], error) {
@@ -21,7 +21,7 @@ func InvokeTool(r *plugin_entities.InvokePluginRequest[requests.RequestInvokeToo
 
 func ValidateToolCredentials(r *plugin_entities.InvokePluginRequest[requests.RequestValidateToolCredentials], ctx *gin.Context) {
 	// create session
-	session := createSession(r)
+	session := createSession(r, ctx.GetString("cluster_id"))
 	defer session.Close()
 
 	baseSSEService(r, func() (*stream.StreamResponse[tool_entities.ValidateCredentialsResult], error) {

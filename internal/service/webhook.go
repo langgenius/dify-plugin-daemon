@@ -35,7 +35,7 @@ func Webhook(ctx *gin.Context, webhook *models.Webhook, path string) {
 		return
 	}
 
-	session := session_manager.NewSession(webhook.TenantID, "", webhook.PluginID)
+	session := session_manager.NewSession(webhook.TenantID, "", webhook.PluginID, ctx.GetString("cluster_id"))
 	defer session.Close()
 
 	session.BindRuntime(runtime)
