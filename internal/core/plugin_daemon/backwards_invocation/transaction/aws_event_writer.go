@@ -17,7 +17,10 @@ type AWSTransactionWriter struct {
 }
 
 // NewAWSTransactionWriter creates a new transaction writer
-func NewAWSTransactionWriter(session *session_manager.Session, writeCloser io.WriteCloser) *AWSTransactionWriter {
+func NewAWSTransactionWriter(
+	session *session_manager.Session,
+	writeCloser io.WriteCloser,
+) *AWSTransactionWriter {
 	return &AWSTransactionWriter{
 		session:     session,
 		writeCloser: writeCloser,
