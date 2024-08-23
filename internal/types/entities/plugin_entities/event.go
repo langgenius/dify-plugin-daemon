@@ -26,8 +26,12 @@ type PluginLogEvent struct {
 }
 
 type SessionMessage struct {
-	Type SESSION_MESSAGE_TYPE `json:"type"`
-	Data json.RawMessage      `json:"data"`
+	Type        SESSION_MESSAGE_TYPE `json:"type"`
+	Data        json.RawMessage      `json:"data"`
+	RuntimeType PluginRuntimeType    `json:"runtime_type"`
+
+	// only used for aws event bridge, not used for stdio and tcp
+	ServerlessEventId string `json:"serverless_event_id"`
 }
 
 type SESSION_MESSAGE_TYPE string

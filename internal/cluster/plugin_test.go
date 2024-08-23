@@ -6,12 +6,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 type fakePlugin struct {
-	entities.PluginRuntime
+	plugin_entities.PluginRuntime
 	positive_manager.PositivePluginRuntime
 }
 
@@ -31,8 +30,8 @@ func (r *fakePlugin) StartPlugin() error {
 	return nil
 }
 
-func (r *fakePlugin) Type() entities.PluginRuntimeType {
-	return entities.PLUGIN_RUNTIME_TYPE_LOCAL
+func (r *fakePlugin) Type() plugin_entities.PluginRuntimeType {
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 }
 
 func (r *fakePlugin) Wait() (<-chan bool, error) {
@@ -41,7 +40,7 @@ func (r *fakePlugin) Wait() (<-chan bool, error) {
 
 func getRandomPluginRuntime() fakePlugin {
 	return fakePlugin{
-		PluginRuntime: entities.PluginRuntime{
+		PluginRuntime: plugin_entities.PluginRuntime{
 			Config: plugin_entities.PluginDeclaration{
 				Name:      uuid.New().String(),
 				Version:   "0.0.1",

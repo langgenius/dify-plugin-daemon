@@ -1,4 +1,4 @@
-package entities
+package plugin_entities
 
 import (
 	"testing"

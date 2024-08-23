@@ -19,7 +19,7 @@ import (
 )
 
 type TPluginRuntime struct {
-	entities.PluginRuntime
+	plugin_entities.PluginRuntime
 	positive_manager.PositivePluginRuntime
 }
 
@@ -39,8 +39,8 @@ func (r *TPluginRuntime) StartPlugin() error {
 	return nil
 }
 
-func (r *TPluginRuntime) Type() entities.PluginRuntimeType {
-	return entities.PLUGIN_RUNTIME_TYPE_LOCAL
+func (r *TPluginRuntime) Type() plugin_entities.PluginRuntimeType {
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 }
 
 func (r *TPluginRuntime) Wait() (<-chan bool, error) {
@@ -97,7 +97,7 @@ func TestPackager_Pack(t *testing.T) {
 	}
 
 	packager := NewPackager(&TPluginRuntime{
-		PluginRuntime: entities.PluginRuntime{
+		PluginRuntime: plugin_entities.PluginRuntime{
 			Config: plugin_entities.PluginDeclaration{
 				Meta: plugin_entities.PluginMeta{
 					Runner: plugin_entities.PluginRunner{

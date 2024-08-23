@@ -4,13 +4,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
 )
 
 type RemotePluginRuntime struct {
-	entities.PluginRuntime
+	plugin_entities.PluginRuntime
 
 	// connection
 	conn gnet.Conn

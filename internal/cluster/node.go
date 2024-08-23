@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
@@ -110,7 +110,7 @@ func (c *Cluster) GetNodes() (map[string]node, error) {
 
 // FetchPluginAvailableNodesByHashedId fetches the available nodes of the given plugin
 func (c *Cluster) FetchPluginAvailableNodesByHashedId(hashed_plugin_id string) ([]string, error) {
-	states, err := cache.ScanMap[entities.PluginRuntimeState](
+	states, err := cache.ScanMap[plugin_entities.PluginRuntimeState](
 		PLUGIN_STATE_MAP_KEY, c.getScanPluginsByIdKey(hashed_plugin_id),
 	)
 	if err != nil {
@@ -132,7 +132,7 @@ func (c *Cluster) FetchPluginAvailableNodesByHashedId(hashed_plugin_id string) (
 }
 
 func (c *Cluster) FetchPluginAvailableNodesById(plugin_id string) ([]string, error) {
-	hashed_plugin_id := entities.HashedIdentity(plugin_id)
+	hashed_plugin_id := plugin_entities.HashedIdentity(plugin_id)
 	return c.FetchPluginAvailableNodesByHashedId(hashed_plugin_id)
 }
 

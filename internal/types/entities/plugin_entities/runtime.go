@@ -1,4 +1,4 @@
-package entities
+package plugin_entities
 
 import (
 	"bytes"
@@ -9,14 +9,14 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 )
 
 type (
 	PluginRuntime struct {
-		State     PluginRuntimeState                `json:"state"`
-		Config    plugin_entities.PluginDeclaration `json:"config"`
-		onStopped []func()                          `json:"-"`
+		State     PluginRuntimeState `json:"state"`
+		Config    PluginDeclaration  `json:"config"`
+		onStopped []func()           `json:"-"`
 	}
 
 	PluginRuntimeInterface interface {
@@ -28,7 +28,7 @@ type (
 
 	PluginRuntimeTimeLifeInterface interface {
 		// returns the plugin configuration
-		Configuration() *plugin_entities.PluginDeclaration
+		Configuration() *PluginDeclaration
 		// unique identity of the plugin
 		Identity() (string, error)
 		// hashed identity of the plugin
@@ -84,7 +84,7 @@ type (
 	}
 
 	PluginRuntimeSessionIOInterface interface {
-		Listen(session_id string) *BytesIOListener
+		Listen(session_id string) *entities.BytesIOListener
 		Write(session_id string, data []byte)
 	}
 
@@ -101,7 +101,7 @@ func (r *PluginRuntime) Stop() {
 	r.State.Status = PLUGIN_RUNTIME_STATUS_STOPPED
 }
 
-func (r *PluginRuntime) Configuration() *plugin_entities.PluginDeclaration {
+func (r *PluginRuntime) Configuration() *PluginDeclaration {
 	return &r.Config
 }
 

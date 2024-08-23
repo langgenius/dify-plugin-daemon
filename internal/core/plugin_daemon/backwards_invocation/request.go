@@ -9,22 +9,32 @@ import (
 
 type BackwardsInvocationType = dify_invocation.InvokeType
 
+type BackwardsInvocationWriter interface {
+	Write(event session_manager.PLUGIN_IN_STREAM_EVENT, data any)
+	Done()
+}
+
 type BackwardsInvocation struct {
 	typ              BackwardsInvocationType
 	id               string
 	detailed_request map[string]any
 	session          *session_manager.Session
+	writer           BackwardsInvocationWriter
 }
 
 func NewBackwardsInvocation(
 	typ BackwardsInvocationType,
-	id string, session *session_manager.Session, detailed_request map[string]any,
+	id string,
+	session *session_manager.Session,
+	writer BackwardsInvocationWriter,
+	detailed_request map[string]any,
 ) *BackwardsInvocation {
 	return &BackwardsInvocation{
 		typ:              typ,
 		id:               id,
 		detailed_request: detailed_request,
 		session:          session,
+		writer:           writer,
 	}
 }
 
@@ -33,24 +43,25 @@ func (bi *BackwardsInvocation) GetID() string {
 }
 
 func (bi *BackwardsInvocation) WriteError(err error) {
-	bi.session.Write(
+	bi.writer.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewErrorEvent(bi.id, err.Error()),
 	)
 }
 
 func (bi *BackwardsInvocation) WriteResponse(message string, data any) {
-	bi.session.Write(
+	bi.writer.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewResponseEvent(bi.id, message, data),
 	)
 }
 
 func (bi *BackwardsInvocation) EndResponse() {
-	bi.session.Write(
+	bi.writer.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewEndEvent(bi.id),
 	)
+	bi.writer.Done()
 }
 
 func (bi *BackwardsInvocation) Type() BackwardsInvocationType {

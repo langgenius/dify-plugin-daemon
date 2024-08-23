@@ -14,16 +14,16 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager/dockerfile"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/tmpfile"
 )
 
 type Packager struct {
-	runtime entities.PluginRuntimeInterface
+	runtime plugin_entities.PluginRuntimeInterface
 	decoder decoder.PluginDecoder
 }
 
-func NewPackager(runtime entities.PluginRuntimeInterface, decoder decoder.PluginDecoder) *Packager {
+func NewPackager(runtime plugin_entities.PluginRuntimeInterface, decoder decoder.PluginDecoder) *Packager {
 	return &Packager{
 		runtime: runtime,
 		decoder: decoder,

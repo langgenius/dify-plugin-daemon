@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
@@ -13,7 +13,7 @@ import (
 func InstallPlugin(
 	tenant_id string,
 	user_id string,
-	runtime entities.PluginRuntimeInterface,
+	runtime plugin_entities.PluginRuntimeInterface,
 	configuration map[string]any,
 ) (string, error) {
 	identity, err := runtime.Identity()
@@ -45,7 +45,7 @@ func InstallPlugin(
 	return installation.ID, nil
 }
 
-func UninstallPlugin(tenant_id string, installation_id string, runtime entities.PluginRuntimeInterface) error {
+func UninstallPlugin(tenant_id string, installation_id string, runtime plugin_entities.PluginRuntimeInterface) error {
 	identity, err := runtime.Identity()
 	if err != nil {
 		return err

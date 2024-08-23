@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
-func (p *PluginManager) lifetime(config *app.Config, r entities.PluginRuntimeInterface) {
+func (p *PluginManager) lifetime(config *app.Config, r plugin_entities.PluginRuntimeInterface) {
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())

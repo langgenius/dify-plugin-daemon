@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -14,9 +14,10 @@ var (
 	session_lock sync.RWMutex
 )
 
+// session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
 	id      string
-	runtime entities.PluginRuntimeSessionIOInterface
+	runtime plugin_entities.PluginRuntimeSessionIOInterface
 
 	tenant_id       string
 	user_id         string
@@ -76,7 +77,7 @@ func (s *Session) PluginIdentity() string {
 	return s.plugin_identity
 }
 
-func (s *Session) BindRuntime(runtime entities.PluginRuntimeSessionIOInterface) {
+func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeSessionIOInterface) {
 	s.runtime = runtime
 }
 

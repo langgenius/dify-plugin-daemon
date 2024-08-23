@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/process"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -29,8 +29,8 @@ func (r *LocalPluginRuntime) init() {
 	r.SetLaunching()
 }
 
-func (r *LocalPluginRuntime) Type() entities.PluginRuntimeType {
-	return entities.PLUGIN_RUNTIME_TYPE_LOCAL
+func (r *LocalPluginRuntime) Type() plugin_entities.PluginRuntimeType {
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 }
 
 func (r *LocalPluginRuntime) StartPlugin() error {

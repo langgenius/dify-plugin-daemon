@@ -14,7 +14,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -51,7 +50,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 func (p *PluginManager) handleNewPlugins(config *app.Config) {
 	// load local plugins firstly
 	for plugin := range p.loadNewPlugins(config.PluginStoragePath) {
-		var plugin_interface entities.PluginRuntimeInterface
+		var plugin_interface plugin_entities.PluginRuntimeInterface
 
 		if config.Platform == app.PLATFORM_AWS_LAMBDA {
 			plugin_interface = &aws_manager.AWSPluginRuntime{
@@ -83,7 +82,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 }
 
 type pluginRuntimeWithDecoder struct {
-	Runtime entities.PluginRuntime
+	Runtime plugin_entities.PluginRuntime
 	Decoder decoder.PluginDecoder
 }
 
@@ -193,10 +192,10 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 	}
 
 	return &pluginRuntimeWithDecoder{
-		Runtime: entities.PluginRuntime{
+		Runtime: plugin_entities.PluginRuntime{
 			Config: manifest,
-			State: entities.PluginRuntimeState{
-				Status:       entities.PLUGIN_RUNTIME_STATUS_PENDING,
+			State: plugin_entities.PluginRuntimeState{
+				Status:       plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
 				Restarts:     0,
 				AbsolutePath: plugin_path,
 				WorkingPath:  plugin_working_path,

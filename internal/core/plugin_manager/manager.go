@@ -7,7 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -38,7 +38,7 @@ func GetGlobalPluginManager() *PluginManager {
 	return manager
 }
 
-func (p *PluginManager) Add(plugin entities.PluginRuntimeInterface) error {
+func (p *PluginManager) Add(plugin plugin_entities.PluginRuntimeInterface) error {
 	identity, err := plugin.Identity()
 	if err != nil {
 		return err
@@ -47,10 +47,10 @@ func (p *PluginManager) Add(plugin entities.PluginRuntimeInterface) error {
 	return nil
 }
 
-func (p *PluginManager) List() []entities.PluginRuntimeInterface {
-	var runtimes []entities.PluginRuntimeInterface
+func (p *PluginManager) List() []plugin_entities.PluginRuntimeInterface {
+	var runtimes []plugin_entities.PluginRuntimeInterface
 	p.m.Range(func(key, value interface{}) bool {
-		if v, ok := value.(entities.PluginRuntimeInterface); ok {
+		if v, ok := value.(plugin_entities.PluginRuntimeInterface); ok {
 			runtimes = append(runtimes, v)
 		}
 		return true
@@ -58,9 +58,9 @@ func (p *PluginManager) List() []entities.PluginRuntimeInterface {
 	return runtimes
 }
 
-func (p *PluginManager) Get(identity string) entities.PluginRuntimeInterface {
+func (p *PluginManager) Get(identity string) plugin_entities.PluginRuntimeInterface {
 	if v, ok := p.m.Load(identity); ok {
-		if r, ok := v.(entities.PluginRuntimeInterface); ok {
+		if r, ok := v.(plugin_entities.PluginRuntimeInterface); ok {
 			return r
 		}
 	}

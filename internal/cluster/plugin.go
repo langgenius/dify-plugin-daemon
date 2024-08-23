@@ -6,23 +6,23 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
 type pluginLifeTime struct {
-	lifetime          entities.PluginRuntimeTimeLifeInterface
+	lifetime          plugin_entities.PluginRuntimeTimeLifeInterface
 	last_scheduled_at time.Time
 }
 
 type pluginState struct {
-	entities.PluginRuntimeState
+	plugin_entities.PluginRuntimeState
 	Identity string `json:"identity"`
 }
 
 // RegisterPlugin registers a plugin to the cluster, and start to be scheduled
-func (c *Cluster) RegisterPlugin(lifetime entities.PluginRuntimeTimeLifeInterface) error {
+func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginRuntimeTimeLifeInterface) error {
 	identity, err := lifetime.Identity()
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func (c *Cluster) forceGCNodePlugin(node_id string, plugin_id string) error {
 		c.plugin_lock.Unlock()
 	}
 
-	if err := c.removePluginState(node_id, entities.HashedIdentity(plugin_id)); err != nil {
+	if err := c.removePluginState(node_id, plugin_entities.HashedIdentity(plugin_id)); err != nil {
 		return err
 	}
 

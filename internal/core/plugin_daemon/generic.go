@@ -5,6 +5,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -45,7 +46,14 @@ func genericInvokePlugin[Req any, Rsp any](
 				response.Write(chunk)
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
-			if err := backwards_invocation.InvokeDify(runtime, typ, session, chunk.Data); err != nil {
+			// check if the request contains a aws_event_id
+			var writer backwards_invocation.BackwardsInvocationWriter
+			if chunk.RuntimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_AWS {
+				writer = transaction.NewAWSTransactionWriter(chunk.ServerlessEventId)
+			} else {
+				writer = transaction.NewFullDuplexEventWriter(session)
+			}
+			if err := backwards_invocation.InvokeDify(runtime, typ, session, writer, chunk.Data); err != nil {
 				log.Error("invoke dify failed: %s", err.Error())
 				return
 			}
