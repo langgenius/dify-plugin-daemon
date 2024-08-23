@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -51,7 +50,7 @@ type Config struct {
 
 	MaxPluginPackageSize int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 
-	MaxAWSLambdaTransactionTimeout time.Duration `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
+	MaxAWSLambdaTransactionTimeout int `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
 }
 
 func (c *Config) Validate() error {

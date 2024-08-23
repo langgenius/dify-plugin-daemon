@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
@@ -76,7 +77,9 @@ func (app *App) webhookGroup(group *gin.RouterGroup, config *app.Config) {
 
 func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app.Config) {
 	if config.Platform == app.PLATFORM_AWS_LAMBDA {
-		appRef.aws_transaction_handler = transaction.NewAWSTransactionHandler(config.MaxAWSLambdaTransactionTimeout)
+		appRef.aws_transaction_handler = transaction.NewAWSTransactionHandler(
+			time.Duration(config.MaxAWSLambdaTransactionTimeout) * time.Second,
+		)
 		group.POST(
 			"/transaction",
 			appRef.RedirectAWSLambdaTransaction,
