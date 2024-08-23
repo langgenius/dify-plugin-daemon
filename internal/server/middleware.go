@@ -119,7 +119,7 @@ func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id strin
 }
 
 func (app *App) RedirectAWSLambdaTransaction(ctx *gin.Context) {
-	session_id := ctx.GetString("session_id")
+	session_id := ctx.GetHeader("Dify-Plugin-Session-ID")
 	if session_id == "" {
 		ctx.AbortWithStatusJSON(404, gin.H{"error": "Session not found"})
 		return

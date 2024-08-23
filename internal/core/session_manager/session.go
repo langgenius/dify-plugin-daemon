@@ -19,7 +19,7 @@ var (
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
 	id      string
-	runtime plugin_entities.PluginRuntimeSessionIOInterface
+	runtime plugin_entities.PluginRuntimeInterface
 
 	tenant_id       string
 	user_id         string
@@ -108,8 +108,12 @@ func (s *Session) PluginIdentity() string {
 	return s.plugin_identity
 }
 
-func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeSessionIOInterface) {
+func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeInterface) {
 	s.runtime = runtime
+}
+
+func (s *Session) Runtime() plugin_entities.PluginRuntimeInterface {
+	return s.runtime
 }
 
 type PLUGIN_IN_STREAM_EVENT string

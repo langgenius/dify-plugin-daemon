@@ -16,5 +16,5 @@ type App struct {
 
 	// aws transaction handler
 	// accept aws transaction request and forward to the plugin daemon
-	aws_transaction_handler *transaction.AWSEventHandler
+	aws_transaction_handler *transaction.AWSTransactionHandler
 }

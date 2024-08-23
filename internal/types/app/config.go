@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -49,6 +50,8 @@ type Config struct {
 	DifyPluginServerlessConnectorAPIKey *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 
 	MaxPluginPackageSize int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
+
+	MaxAWSLambdaTransactionTimeout time.Duration `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
 }
 
 func (c *Config) Validate() error {
@@ -80,6 +83,10 @@ func (c *Config) Validate() error {
 
 		if c.DifyPluginServerlessConnectorAPIKey == nil {
 			return fmt.Errorf("dify plugin serverless connector api key is empty")
+		}
+
+		if c.MaxAWSLambdaTransactionTimeout == 0 {
+			return fmt.Errorf("max aws lambda transaction timeout is empty")
 		}
 	} else if c.Platform == PLATFORM_LOCAL {
 		if c.PluginWorkingPath == "" {

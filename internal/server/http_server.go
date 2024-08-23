@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
+	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -75,7 +76,11 @@ func (app *App) webhookGroup(group *gin.RouterGroup, config *app.Config) {
 
 func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app.Config) {
 	if config.Platform == app.PLATFORM_AWS_LAMBDA {
-		appRef.aws_transaction_handler = transaction.NewAWSEventHandler()
-		group.POST("/transaction", appRef.RedirectAWSLambdaTransaction, appRef.aws_transaction_handler.Handle)
+		appRef.aws_transaction_handler = transaction.NewAWSTransactionHandler(config.MaxAWSLambdaTransactionTimeout)
+		group.POST(
+			"/transaction",
+			appRef.RedirectAWSLambdaTransaction,
+			service.HandleAWSPluginTransaction(appRef.aws_transaction_handler),
+		)
 	}
 }
