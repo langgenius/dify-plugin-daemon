@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -18,6 +19,7 @@ func (app *App) server(config *app.Config) func() {
 	app.pluginInvokeGroup(engine.Group("/plugin"), config)
 	app.remoteDebuggingGroup(engine.Group("/plugin/debugging"), config)
 	app.webhookGroup(engine.Group("/webhook"), config)
+	app.awsLambdaTransactionGroup(engine.Group("/aws-lambda"), config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -68,5 +70,12 @@ func (app *App) webhookGroup(group *gin.RouterGroup, config *app.Config) {
 		group.PUT("/:hook_id/*path", app.Webhook())
 		group.DELETE("/:hook_id/*path", app.Webhook())
 		group.OPTIONS("/:hook_id/*path", app.Webhook())
+	}
+}
+
+func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app.Config) {
+	if config.Platform == app.PLATFORM_AWS_LAMBDA {
+		appRef.aws_transaction_handler = transaction.NewAWSEventHandler()
+		group.POST("/transaction", appRef.RedirectAWSLambdaTransaction, appRef.aws_transaction_handler.Handle)
 	}
 }

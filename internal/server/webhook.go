@@ -46,7 +46,7 @@ func (app *App) WebhookHandler(ctx *gin.Context, hook_id string, path string) {
 
 	// check if plugin exists in current node
 	if !app.cluster.IsPluginNoCurrentNode(webhook.PluginID) {
-		app.Redirect(ctx, webhook.PluginID)
+		app.redirectPluginInvokeByPluginID(ctx, webhook.PluginID)
 	} else {
 		service.Webhook(ctx, &webhook, path)
 	}

@@ -62,7 +62,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		if !app.cluster.IsPluginNoCurrentNode(
 			plugin_id,
 		) {
-			app.Redirect(ctx, plugin_id)
+			app.redirectPluginInvokeByPluginID(ctx, plugin_id)
 			ctx.Abort()
 		} else {
 			ctx.Next()
@@ -70,7 +70,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	}
 }
 
-func (app *App) Redirect(ctx *gin.Context, plugin_id string) {
+func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id string) {
 	// try find the correct node
 	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id)
 	if err != nil {
@@ -116,6 +116,16 @@ func (app *App) Redirect(ctx *gin.Context, plugin_id string) {
 			ctx.Writer.Write(buf[:n])
 		}
 	}
+}
+
+func (app *App) RedirectAWSLambdaTransaction(ctx *gin.Context) {
+	session_id := ctx.GetString("session_id")
+	if session_id == "" {
+		ctx.AbortWithStatusJSON(404, gin.H{"error": "Session not found"})
+		return
+	}
+
+	// TODO: check if session_id is valid
 }
 
 func (app *App) InitClusterID() gin.HandlerFunc {
