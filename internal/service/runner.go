@@ -6,16 +6,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func baseSSEService[T any, R any](
-	r *plugin_entities.InvokePluginRequest[T],
+// baseSSEService is a helper function to handle SSE service
+// it accepts a generator function that returns a stream response to gin context
+func baseSSEService[R any](
 	generator func() (*stream.StreamResponse[R], error),
 	ctx *gin.Context,
+	max_timeout_seconds int,
 ) {
 	writer := ctx.Writer
 	writer.WriteHeader(200)
@@ -36,7 +37,6 @@ func baseSSEService[T any, R any](
 	}
 
 	plugin_daemon_response, err := generator()
-	last_response_at := time.Now()
 
 	if err != nil {
 		write_data(entities.NewErrorResponse(-500, err.Error()))
@@ -46,7 +46,6 @@ func baseSSEService[T any, R any](
 
 	routine.Submit(func() {
 		for plugin_daemon_response.Next() {
-			last_response_at = time.Now()
 			chunk, err := plugin_daemon_response.Read()
 			if err != nil {
 				write_data(entities.NewErrorResponse(-500, err.Error()))
@@ -60,29 +59,24 @@ func baseSSEService[T any, R any](
 		}
 	})
 
-	ticker := time.NewTicker(15 * time.Second)
-	defer ticker.Stop()
+	timer := time.NewTimer(time.Duration(max_timeout_seconds) * time.Second)
+	defer timer.Stop()
 
 	defer func() {
 		atomic.StoreInt32(closed, 1)
 	}()
 
-	for {
-		select {
-		case <-writer.CloseNotify():
-			plugin_daemon_response.Close()
-			return
-		case <-done:
-			return
-		case <-ticker.C:
-			if time.Since(last_response_at) > 30*time.Second {
-				write_data(entities.NewErrorResponse(-500, "killed by timeout"))
-				if atomic.CompareAndSwapInt32(done_closed, 0, 1) {
-					close(done)
-				}
-				return
-			}
+	select {
+	case <-writer.CloseNotify():
+		plugin_daemon_response.Close()
+		return
+	case <-done:
+		return
+	case <-timer.C:
+		write_data(entities.NewErrorResponse(-500, "killed by timeout"))
+		if atomic.CompareAndSwapInt32(done_closed, 0, 1) {
+			close(done)
 		}
+		return
 	}
-
 }

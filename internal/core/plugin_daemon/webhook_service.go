@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/webhook_entities"
@@ -22,8 +21,6 @@ func InvokeWebhook(
 		session,
 		request,
 		128,
-		access_types.PLUGIN_ACCESS_TYPE_WEBHOOK,
-		access_types.PLUGIN_ACCESS_ACTION_WEBHOOK,
 	)
 
 	if err != nil {

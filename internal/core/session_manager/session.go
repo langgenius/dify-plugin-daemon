@@ -2,9 +2,12 @@ package session_manager
 
 import (
 	"errors"
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -18,47 +21,47 @@ var (
 
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
-	id      string
-	runtime plugin_entities.PluginRuntimeInterface
+	ID      string                                 `json:"id"`
+	runtime plugin_entities.PluginRuntimeInterface `json:"-"`
 
-	tenant_id       string
-	user_id         string
-	plugin_identity string
-	cluster_id      string
+	TenantID       string                             `json:"tenant_id"`
+	UserID         string                             `json:"user_id"`
+	PluginIdentity string                             `json:"plugin_identity"`
+	ClusterID      string                             `json:"cluster_id"`
+	InvokeFrom     access_types.PluginAccessType      `json:"invoke_from"`
+	Action         access_types.PluginAccessAction    `json:"action"`
+	Declaration    *plugin_entities.PluginDeclaration `json:"declaration"`
 }
 
-type SessionInfo struct {
-	TenantID       string `json:"tenant_id"`
-	UserID         string `json:"user_id"`
-	PluginIdentity string `json:"plugin_identity"`
-	ClusterID      string `json:"cluster_id"`
+func sessionKey(id string) string {
+	return fmt.Sprintf("session_info:%s", id)
 }
 
-const (
-	SESSION_INFO_MAP_KEY = "session_info"
-)
-
-func NewSession(tenant_id string, user_id string, plugin_identity string, cluster_id string) *Session {
+func NewSession(
+	tenant_id string,
+	user_id string,
+	plugin_identity string,
+	cluster_id string,
+	invoke_from access_types.PluginAccessType,
+	action access_types.PluginAccessAction,
+	declaration *plugin_entities.PluginDeclaration,
+) *Session {
 	s := &Session{
-		id:              uuid.New().String(),
-		tenant_id:       tenant_id,
-		user_id:         user_id,
-		plugin_identity: plugin_identity,
-		cluster_id:      cluster_id,
-	}
-
-	session_lock.Lock()
-	sessions[s.id] = s
-	session_lock.Unlock()
-
-	session_info := &SessionInfo{
+		ID:             uuid.New().String(),
 		TenantID:       tenant_id,
 		UserID:         user_id,
 		PluginIdentity: plugin_identity,
 		ClusterID:      cluster_id,
+		InvokeFrom:     invoke_from,
+		Action:         action,
+		Declaration:    declaration,
 	}
 
-	if err := cache.SetMapOneField(SESSION_INFO_MAP_KEY, s.id, session_info); err != nil {
+	session_lock.Lock()
+	sessions[s.ID] = s
+	session_lock.Unlock()
+
+	if err := cache.Store(sessionKey(s.ID), s, time.Minute*30); err != nil {
 		log.Error("set session info to cache failed, %s", err)
 	}
 
@@ -77,35 +80,13 @@ func DeleteSession(id string) {
 	delete(sessions, id)
 	session_lock.Unlock()
 
-	if err := cache.DelMapField(SESSION_INFO_MAP_KEY, id); err != nil {
+	if err := cache.Del(sessionKey(id)); err != nil {
 		log.Error("delete session info from cache failed, %s", err)
 	}
 }
 
 func (s *Session) Close() {
-	session_lock.Lock()
-	delete(sessions, s.id)
-	session_lock.Unlock()
-
-	if err := cache.DelMapField(SESSION_INFO_MAP_KEY, s.id); err != nil {
-		log.Error("delete session info from cache failed, %s", err)
-	}
-}
-
-func (s *Session) ID() string {
-	return s.id
-}
-
-func (s *Session) TenantID() string {
-	return s.tenant_id
-}
-
-func (s *Session) UserID() string {
-	return s.user_id
-}
-
-func (s *Session) PluginIdentity() string {
-	return s.plugin_identity
+	DeleteSession(s.ID)
 }
 
 func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeInterface) {
@@ -125,7 +106,7 @@ const (
 
 func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 	return parser.MarshalJsonBytes(map[string]any{
-		"session_id": s.id,
+		"session_id": s.ID,
 		"event":      event,
 		"data":       data,
 	})
@@ -135,6 +116,6 @@ func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, data any) error {
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.id, s.Message(event, data))
+	s.runtime.Write(s.ID, s.Message(event, data))
 	return nil
 }

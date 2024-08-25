@@ -24,6 +24,8 @@ type Config struct {
 	PluginWorkingPath  string `envconfig:"PLUGIN_WORKING_PATH"`
 	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"`
 
+	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
+
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
 
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`

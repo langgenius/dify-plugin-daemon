@@ -3,7 +3,6 @@ package plugin_daemon
 import (
 	"errors"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -18,17 +17,15 @@ func genericInvokePlugin[Req any, Rsp any](
 	session *session_manager.Session,
 	request *Req,
 	response_buffer_size int,
-	typ access_types.PluginAccessType,
-	action access_types.PluginAccessAction,
 ) (*stream.StreamResponse[Rsp], error) {
-	runtime := plugin_manager.GetGlobalPluginManager().Get(session.PluginIdentity())
+	runtime := plugin_manager.GetGlobalPluginManager().Get(session.PluginIdentity)
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}
 
 	response := stream.NewStreamResponse[Rsp](response_buffer_size)
 
-	listener := runtime.Listen(session.ID())
+	listener := runtime.Listen(session.ID)
 	listener.Listen(func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
@@ -41,13 +38,18 @@ func genericInvokePlugin[Req any, Rsp any](
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
 			// check if the request contains a aws_event_id
-			var writer backwards_invocation.BackwardsInvocationWriter
-			if chunk.RuntimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_AWS {
-				writer = transaction.NewAWSTransactionWriter(session, chunk.SessionWriter)
-			} else {
-				writer = transaction.NewFullDuplexEventWriter(session)
+			if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_AWS {
+				response.WriteError(errors.New("aws event is not supported by full duplex"))
+				response.Close()
+				return
 			}
-			if err := backwards_invocation.InvokeDify(runtime, typ, session, writer, chunk.Data); err != nil {
+			if err := backwards_invocation.InvokeDify(
+				runtime.Configuration(),
+				session.InvokeFrom,
+				session,
+				transaction.NewFullDuplexEventWriter(session),
+				chunk.Data,
+			); err != nil {
 				log.Error("invoke dify failed: %s", err.Error())
 				return
 			}
@@ -74,8 +76,6 @@ func genericInvokePlugin[Req any, Rsp any](
 		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
 		getInvokePluginMap(
 			session,
-			typ,
-			action,
 			request,
 		),
 	)
@@ -85,11 +85,9 @@ func genericInvokePlugin[Req any, Rsp any](
 
 func getInvokePluginMap(
 	session *session_manager.Session,
-	typ access_types.PluginAccessType,
-	action access_types.PluginAccessAction,
 	request any,
 ) map[string]any {
-	req := getBasicPluginAccessMap(session.UserID(), typ, action)
+	req := getBasicPluginAccessMap(session.UserID, session.InvokeFrom, session.Action)
 	for k, v := range parser.StructToMap(request) {
 		req[k] = v
 	}

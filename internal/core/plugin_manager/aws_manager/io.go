@@ -73,24 +73,9 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 				continue
 			}
 
-			data.RuntimeType = r.Type()
 			l.Send(data)
 		}
 
 		l.Close()
 	})
-}
-
-func (r *AWSPluginRuntime) PushRequest(session_id string, data plugin_entities.SessionMessage) error {
-	if r.Type() != data.RuntimeType {
-		return fmt.Errorf("runtime type mismatch")
-	}
-
-	broadcast, ok := r.listeners.Load(session_id)
-	if !ok {
-		return fmt.Errorf("session %s not found", session_id)
-	}
-
-	broadcast.Send(data)
-	return nil
 }

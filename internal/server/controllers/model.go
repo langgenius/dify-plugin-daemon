@@ -3,94 +3,111 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 )
 
-func InvokeLLM(c *gin.Context) {
+func InvokeLLM(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.InvokeLLM(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.InvokeLLM(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func InvokeTextEmbedding(c *gin.Context) {
+func InvokeTextEmbedding(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeTextEmbedding]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.InvokeTextEmbedding(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.InvokeTextEmbedding(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func InvokeRerank(c *gin.Context) {
+func InvokeRerank(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeRerank]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.InvokeRerank(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.InvokeRerank(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func InvokeTTS(c *gin.Context) {
+func InvokeTTS(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeTTS]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.InvokeTTS(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.InvokeTTS(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func InvokeSpeech2Text(c *gin.Context) {
+func InvokeSpeech2Text(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeSpeech2Text]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.InvokeSpeech2Text(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.InvokeSpeech2Text(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func InvokeModeration(c *gin.Context) {
+func InvokeModeration(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeModeration]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.InvokeModeration(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.InvokeModeration(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func ValidateProviderCredentials(c *gin.Context) {
+func ValidateProviderCredentials(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestValidateProviderCredentials]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.ValidateProviderCredentials(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.ValidateProviderCredentials(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }
 
-func ValidateModelCredentials(c *gin.Context) {
+func ValidateModelCredentials(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestValidateModelCredentials]
 
-	BindRequest[request](
-		c,
-		func(itr request) {
-			service.ValidateModelCredentials(&itr, c)
-		},
-	)
+	return func(c *gin.Context) {
+		BindRequest[request](
+			c,
+			func(itr request) {
+				service.ValidateModelCredentials(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
 }

@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -39,7 +40,6 @@ func (w *awsTransactionWriteCloser) Close() error {
 func (h *AWSTransactionHandler) Handle(
 	ctx *gin.Context,
 	session_id string,
-	runtime *aws_manager.AWSPluginRuntime,
 ) {
 	writer := &awsTransactionWriteCloser{
 		ResponseWriter: ctx.Writer,
@@ -67,15 +67,24 @@ func (h *AWSTransactionHandler) Handle(
 		return
 	}
 
-	data.RuntimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
-	data.SessionWriter = writer
-
-	// send the data to the plugin runtime
-	if err := runtime.PushRequest(session_id, data); err != nil {
-		log.Error("push request failed: %s", err.Error())
+	session := session_manager.GetSession(session_id)
+	if err != nil {
+		log.Error("get session failed: %s", err.Error())
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
+	}
+
+	aws_response_writer := NewAWSTransactionWriter(session, writer)
+
+	if err := backwards_invocation.InvokeDify(
+		session.Declaration,
+		session.InvokeFrom,
+		session,
+		aws_response_writer,
+		data.Data,
+	); err != nil {
+		log.Error("invoke dify failed: %s", err.Error())
 	}
 
 	select {

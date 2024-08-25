@@ -1,7 +1,6 @@
 package plugin_daemon
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
@@ -18,8 +17,6 @@ func InvokeLLM(
 		session,
 		request,
 		512,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
 	)
 }
 
@@ -33,8 +30,6 @@ func InvokeTextEmbedding(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
 	)
 }
 
@@ -48,8 +43,6 @@ func InvokeRerank(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
 	)
 }
 
@@ -63,8 +56,6 @@ func InvokeTTS(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TTS,
 	)
 }
 
@@ -78,8 +69,6 @@ func InvokeSpeech2Text(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_SPEECH2TEXT,
 	)
 }
 
@@ -93,8 +82,6 @@ func InvokeModeration(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
 	)
 }
 
@@ -108,8 +95,6 @@ func ValidateProviderCredentials(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
 	)
 }
 
@@ -123,7 +108,5 @@ func ValidateModelCredentials(
 		session,
 		request,
 		1,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
 	)
 }

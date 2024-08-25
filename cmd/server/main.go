@@ -42,6 +42,7 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.PluginRemoteInstallingMaxConn, 128)
 	setDefaultInt(&config.MaxPluginPackageSize, 52428800)
 	setDefaultInt(&config.MaxAWSLambdaTransactionTimeout, 150)
+	setDefaultInt(&config.PluginMaxExecutionTimeout, 240)
 	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBool(&config.PluginWebhookEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")

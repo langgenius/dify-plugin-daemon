@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
@@ -35,7 +36,15 @@ func Webhook(ctx *gin.Context, webhook *models.Webhook, path string) {
 		return
 	}
 
-	session := session_manager.NewSession(webhook.TenantID, "", webhook.PluginID, ctx.GetString("cluster_id"))
+	session := session_manager.NewSession(
+		webhook.TenantID,
+		"",
+		webhook.PluginID,
+		ctx.GetString("cluster_id"),
+		access_types.PLUGIN_ACCESS_TYPE_WEBHOOK,
+		access_types.PLUGIN_ACCESS_ACTION_WEBHOOK,
+		runtime.Configuration(),
+	)
 	defer session.Close()
 
 	session.BindRuntime(runtime)

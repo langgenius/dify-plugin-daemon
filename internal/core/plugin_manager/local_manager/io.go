@@ -19,8 +19,6 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 			log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
 			return
 		}
-		// set the runtime type
-		data.RuntimeType = r.Type()
 
 		listener.Send(data)
 	})

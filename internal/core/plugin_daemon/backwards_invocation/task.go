@@ -14,7 +14,7 @@ import (
 )
 
 func InvokeDify(
-	runtime plugin_entities.PluginRuntimeInterface,
+	declaration *plugin_entities.PluginDeclaration,
 	invoke_from access_types.PluginAccessType,
 	session *session_manager.Session,
 	writer BackwardsInvocationWriter,
@@ -43,7 +43,7 @@ func InvokeDify(
 	}
 
 	// check permission
-	if err := checkPermission(runtime, request_handle); err != nil {
+	if err := checkPermission(declaration, request_handle); err != nil {
 		request_handle.WriteError(err)
 		request_handle.EndResponse()
 		return nil
@@ -61,63 +61,63 @@ func InvokeDify(
 var (
 	permissionMapping = map[dify_invocation.InvokeType]map[string]any{
 		dify_invocation.INVOKE_TYPE_TOOL: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeTool()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeTool()
 			},
 			"error": "permission denied, you need to enable tool access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_LLM: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeLLM()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeLLM()
 			},
 			"error": "permission denied, you need to enable llm access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeTextEmbedding()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeTextEmbedding()
 			},
 			"error": "permission denied, you need to enable text-embedding access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_RERANK: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeRerank()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeRerank()
 			},
 			"error": "permission denied, you need to enable rerank access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_TTS: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeTTS()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeTTS()
 			},
 			"error": "permission denied, you need to enable tts access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_SPEECH2TEXT: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeSpeech2Text()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeSpeech2Text()
 			},
 			"error": "permission denied, you need to enable speech2text access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_MODERATION: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeModeration()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeModeration()
 			},
 			"error": "permission denied, you need to enable moderation access in plugin manifest",
 		},
 		dify_invocation.INVOKE_TYPE_NODE: {
-			"func": func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool {
-				return runtime.Configuration().Resource.Permission.AllowInvokeNode()
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeNode()
 			},
 			"error": "permission denied, you need to enable node access in plugin manifest",
 		},
 	}
 )
 
-func checkPermission(runtime plugin_entities.PluginRuntimeTimeLifeInterface, request_handle *BackwardsInvocation) error {
+func checkPermission(runtime *plugin_entities.PluginDeclaration, request_handle *BackwardsInvocation) error {
 	permission, ok := permissionMapping[request_handle.Type()]
 	if !ok {
 		return fmt.Errorf("unsupported invoke type: %s", request_handle.Type())
 	}
 
-	permission_func, ok := permission["func"].(func(runtime plugin_entities.PluginRuntimeTimeLifeInterface) bool)
+	permission_func, ok := permission["func"].(func(runtime *plugin_entities.PluginDeclaration) bool)
 	if !ok {
 		return fmt.Errorf("permission function not found: %s", request_handle.Type())
 	}

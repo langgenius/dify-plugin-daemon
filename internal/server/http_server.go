@@ -46,16 +46,16 @@ func (app *App) pluginInvokeGroup(group *gin.RouterGroup, config *app.Config) {
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 
-	group.POST("/tool/invoke", controllers.InvokeTool)
-	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials)
-	group.POST("/llm/invoke", controllers.InvokeLLM)
-	group.POST("/text_embedding/invoke", controllers.InvokeTextEmbedding)
-	group.POST("/rerank/invoke", controllers.InvokeRerank)
-	group.POST("/tts/invoke", controllers.InvokeTTS)
-	group.POST("/speech2text/invoke", controllers.InvokeSpeech2Text)
-	group.POST("/moderation/invoke", controllers.InvokeModeration)
-	group.POST("/model/validate_provider_credentials", controllers.ValidateProviderCredentials)
-	group.POST("/model/validate_model_credentials", controllers.ValidateModelCredentials)
+	group.POST("/tool/invoke", controllers.InvokeTool(config))
+	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials(config))
+	group.POST("/llm/invoke", controllers.InvokeLLM(config))
+	group.POST("/text_embedding/invoke", controllers.InvokeTextEmbedding(config))
+	group.POST("/rerank/invoke", controllers.InvokeRerank(config))
+	group.POST("/tts/invoke", controllers.InvokeTTS(config))
+	group.POST("/speech2text/invoke", controllers.InvokeSpeech2Text(config))
+	group.POST("/moderation/invoke", controllers.InvokeModeration(config))
+	group.POST("/model/validate_provider_credentials", controllers.ValidateProviderCredentials(config))
+	group.POST("/model/validate_model_credentials", controllers.ValidateModelCredentials(config))
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {

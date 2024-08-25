@@ -38,27 +38,23 @@ func (r *TPluginRuntime) Wait() (<-chan bool, error) {
 }
 
 func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
-	all_permitted_runtime := TPluginRuntime{
-		PluginRuntime: plugin_entities.PluginRuntime{
-			Config: plugin_entities.PluginDeclaration{
-				Resource: plugin_entities.PluginResourceRequirement{
-					Permission: &plugin_entities.PluginPermissionRequirement{
-						Tool: &plugin_entities.PluginPermissionToolRequirement{
-							Enabled: true,
-						},
-						Model: &plugin_entities.PluginPermissionModelRequirement{
-							Enabled:       true,
-							LLM:           true,
-							TextEmbedding: true,
-							Rerank:        true,
-							Moderation:    true,
-							TTS:           true,
-							Speech2text:   true,
-						},
-						Node: &plugin_entities.PluginPermissionNodeRequirement{
-							Enabled: true,
-						},
-					},
+	all_permitted_runtime := plugin_entities.PluginDeclaration{
+		Resource: plugin_entities.PluginResourceRequirement{
+			Permission: &plugin_entities.PluginPermissionRequirement{
+				Tool: &plugin_entities.PluginPermissionToolRequirement{
+					Enabled: true,
+				},
+				Model: &plugin_entities.PluginPermissionModelRequirement{
+					Enabled:       true,
+					LLM:           true,
+					TextEmbedding: true,
+					Rerank:        true,
+					Moderation:    true,
+					TTS:           true,
+					Speech2text:   true,
+				},
+				Node: &plugin_entities.PluginPermissionNodeRequirement{
+					Enabled: true,
 				},
 			},
 		},
@@ -106,12 +102,8 @@ func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
 }
 
 func TestBackwardsInvocationAllDeniedPermission(t *testing.T) {
-	all_denied_runtime := TPluginRuntime{
-		PluginRuntime: plugin_entities.PluginRuntime{
-			Config: plugin_entities.PluginDeclaration{
-				Resource: plugin_entities.PluginResourceRequirement{},
-			},
-		},
+	all_denied_runtime := plugin_entities.PluginDeclaration{
+		Resource: plugin_entities.PluginResourceRequirement{},
 	}
 
 	invoke_llm_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_LLM, "", nil, nil, nil)

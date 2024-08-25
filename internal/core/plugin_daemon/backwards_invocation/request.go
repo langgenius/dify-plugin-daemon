@@ -86,12 +86,12 @@ func (bi *BackwardsInvocation) TenantID() (string, error) {
 	if bi.session == nil {
 		return "", fmt.Errorf("session is nil")
 	}
-	return bi.session.TenantID(), nil
+	return bi.session.TenantID, nil
 }
 
 func (bi *BackwardsInvocation) UserID() (string, error) {
 	if bi.session == nil {
 		return "", fmt.Errorf("session is nil")
 	}
-	return bi.session.UserID(), nil
+	return bi.session.UserID, nil
 }

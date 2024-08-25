@@ -21,8 +21,6 @@ func (r *RemotePluginRuntime) Listen(session_id string) *entities.Broadcast[plug
 			log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
 			return
 		}
-		// set the runtime type
-		chunk.RuntimeType = r.Type()
 
 		listener.Send(chunk)
 	})
