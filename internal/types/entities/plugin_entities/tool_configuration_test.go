@@ -539,3 +539,121 @@ func TestWrongToolParameterFormToolProvider_Validate(t *testing.T) {
 		return
 	}
 }
+
+func TestJSONSchemaTypeToolProvider_Validate(t *testing.T) {
+	const data = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description",
+			"zh_Hans": "描述",
+			"pt_BR": "descrição"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label",
+			"zh_Hans": "标签",
+			"pt_BR": "etiqueta"
+		},
+		"tags": []
+	},
+	"credentials_schema": {},
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label",
+					"zh_Hans": "标签",
+					"pt_BR": "etiqueta"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description",
+					"zh_Hans": "描述",
+					"pt_BR": "descrição"
+				},
+				"llm": "description"
+			},
+			"output_schema": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	]
+}
+	`
+
+	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+}
+
+func TestWrongJSONSchemaToolProvider_Validate(t *testing.T) {
+	const data = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description",
+			"zh_Hans": "描述",
+			"pt_BR": "descrição"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label",
+			"zh_Hans": "标签",
+			"pt_BR": "etiqueta"
+		},
+		"tags": []
+	},
+	"credentials_schema": {},
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label",
+					"zh_Hans": "标签",
+					"pt_BR": "etiqueta"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description",
+					"zh_Hans": "描述",
+					"pt_BR": "descrição"
+				},
+				"llm": "description"
+			},
+			"output_schema": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "aaa"
+					}
+				}
+			}
+		}
+	]
+}
+	`
+
+	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+}

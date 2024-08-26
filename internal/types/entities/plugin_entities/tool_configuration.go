@@ -9,6 +9,7 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 type ToolIdentity struct {
@@ -85,10 +86,25 @@ type ToolDescription struct {
 	LLM   string     `json:"llm" validate:"required"`
 }
 
+type ToolOutputSchema map[string]any
+
 type ToolConfiguration struct {
-	Identity    ToolIdentity    `json:"identity" validate:"required"`
-	Description ToolDescription `json:"description" validate:"required"`
-	Parameters  []ToolParameter `json:"parameters" validate:"omitempty,dive"`
+	Identity     ToolIdentity     `json:"identity" validate:"required"`
+	Description  ToolDescription  `json:"description" validate:"required"`
+	Parameters   []ToolParameter  `json:"parameters" validate:"omitempty,dive"`
+	OutputSchema ToolOutputSchema `json:"output_schema" validate:"omitempty,json_schema"`
+}
+
+func isJSONSchema(fl validator.FieldLevel) bool {
+	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(fl.Field().Interface()))
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("json_schema", isJSONSchema)
 }
 
 type ToolCredentialsOption struct {
