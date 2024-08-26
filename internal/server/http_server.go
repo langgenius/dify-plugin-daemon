@@ -21,7 +21,7 @@ func (app *App) server(config *app.Config) func() {
 	app.pluginInvokeGroup(engine.Group("/plugin"), config)
 	app.remoteDebuggingGroup(engine.Group("/plugin/debugging"), config)
 	app.webhookGroup(engine.Group("/webhook"), config)
-	app.awsLambdaTransactionGroup(engine.Group("/aws-lambda"), config)
+	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -82,7 +82,6 @@ func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app
 		)
 		group.POST(
 			"/transaction",
-			appRef.RedirectAWSLambdaTransaction,
 			service.HandleAWSPluginTransaction(appRef.aws_transaction_handler),
 		)
 	}

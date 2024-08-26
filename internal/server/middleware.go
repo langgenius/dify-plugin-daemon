@@ -118,16 +118,6 @@ func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id strin
 	}
 }
 
-func (app *App) RedirectAWSLambdaTransaction(ctx *gin.Context) {
-	session_id := ctx.GetHeader("Dify-Plugin-Session-ID")
-	if session_id == "" {
-		ctx.AbortWithStatusJSON(404, gin.H{"error": "Session not found"})
-		return
-	}
-
-	// TODO: check if session_id is valid
-}
-
 func (app *App) InitClusterID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Set("cluster_id", app.cluster.ID())

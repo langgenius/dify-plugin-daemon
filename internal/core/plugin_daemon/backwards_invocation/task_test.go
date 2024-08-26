@@ -56,6 +56,9 @@ func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
 				Node: &plugin_entities.PluginPermissionNodeRequirement{
 					Enabled: true,
 				},
+				App: &plugin_entities.PluginPermissionAppRequirement{
+					Enabled: true,
+				},
 			},
 		},
 	}
@@ -97,6 +100,11 @@ func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
 
 	invoke_node_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE, "", nil, nil, nil)
 	if err := checkPermission(&all_permitted_runtime, invoke_node_request); err != nil {
+		t.Errorf("checkPermission failed: %s", err.Error())
+	}
+
+	invoke_app_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_APP, "", nil, nil, nil)
+	if err := checkPermission(&all_permitted_runtime, invoke_app_request); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 }
@@ -146,4 +154,8 @@ func TestBackwardsInvocationAllDeniedPermission(t *testing.T) {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
+	invoke_app_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_APP, "", nil, nil, nil)
+	if err := checkPermission(&all_denied_runtime, invoke_app_request); err == nil {
+		t.Errorf("checkPermission failed: expected error, got nil")
+	}
 }

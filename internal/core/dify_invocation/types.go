@@ -1,6 +1,7 @@
 package dify_invocation
 
 import (
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/app_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 )
 
@@ -21,6 +22,7 @@ const (
 	INVOKE_TYPE_MODERATION     InvokeType = "moderation"
 	INVOKE_TYPE_TOOL           InvokeType = "tool"
 	INVOKE_TYPE_NODE           InvokeType = "node"
+	INVOKE_TYPE_APP            InvokeType = "app"
 )
 
 type InvokeLLMRequest struct {
@@ -57,6 +59,23 @@ type InvokeModerationRequest struct {
 	BaseInvokeDifyRequest
 	requests.BaseRequestInvokeModel
 	requests.InvokeModerationSchema
+}
+
+type InvokeAppSchema struct {
+	AppId          string                  `json:"app_id" validate:"required"`
+	Inputs         map[string]any          `json:"inputs" validate:"omitempty"`
+	Query          string                  `json:"query" validate:"omitempty"`
+	ResponseMode   string                  `json:"response_mode"`
+	ConversationId string                  `json:"conversation_id"`
+	User           string                  `json:"user" validate:"omitempty"`
+	Files          []*app_entities.FileVar `json:"files" validate:"omitempty,dive"`
+}
+
+type InvokeAppRequest struct {
+	BaseInvokeDifyRequest
+	requests.BaseRequestInvokeModel
+
+	InvokeAppSchema
 }
 
 type InvokeToolRequest struct {

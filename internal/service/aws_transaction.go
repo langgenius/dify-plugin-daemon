@@ -11,7 +11,7 @@ import (
 func HandleAWSPluginTransaction(handler *transaction.AWSTransactionHandler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get session id from the context
-		session_id := c.GetString("session_id")
+		session_id := c.Request.Header.Get("Dify-Plugin-Session-ID")
 		session := session_manager.GetSession(session_id)
 		if session == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "session not found"})

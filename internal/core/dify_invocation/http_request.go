@@ -58,3 +58,7 @@ func InvokeModeration(payload *InvokeModerationRequest) (*model_entities.Moderat
 func InvokeTool(payload *InvokeToolRequest) (*stream.StreamResponse[tool_entities.ToolResponseChunk], error) {
 	return StreamResponse[tool_entities.ToolResponseChunk]("POST", "invoke/tool", http_requests.HttpPayloadJson(payload))
 }
+
+func InvokeApp(payload *InvokeAppRequest) (*stream.StreamResponse[map[string]any], error) {
+	return StreamResponse[map[string]any]("POST", "invoke/app", http_requests.HttpPayloadJson(payload))
+}

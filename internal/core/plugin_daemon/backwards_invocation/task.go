@@ -108,6 +108,12 @@ var (
 			},
 			"error": "permission denied, you need to enable node access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_APP: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeApp()
+			},
+			"error": "permission denied, you need to enable app access in plugin manifest",
+		},
 	}
 )
 
@@ -182,6 +188,9 @@ var (
 		},
 		dify_invocation.INVOKE_TYPE_MODERATION: func(handle *BackwardsInvocation) {
 			genericDispatchTask[dify_invocation.InvokeModerationRequest](handle, executeDifyInvocationModerationTask)
+		},
+		dify_invocation.INVOKE_TYPE_APP: func(handle *BackwardsInvocation) {
+			genericDispatchTask[dify_invocation.InvokeAppRequest](handle, executeDifyInvocationAppTask)
 		},
 	}
 )
@@ -323,4 +332,27 @@ func executeDifyInvocationModerationTask(
 	}
 
 	handle.WriteResponse("struct", response)
+}
+
+func executeDifyInvocationAppTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeAppRequest,
+) {
+	response, err := dify_invocation.InvokeApp(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke app failed: %s", err.Error()))
+		return
+	}
+
+	user_id, err := handle.UserID()
+	if err != nil {
+		handle.WriteError(fmt.Errorf("get user id failed: %s", err.Error()))
+		return
+	}
+
+	request.User = user_id
+
+	response.Wrap(func(t map[string]any) {
+		handle.WriteResponse("stream", t)
+	})
 }
