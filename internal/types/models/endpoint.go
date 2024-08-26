@@ -2,8 +2,8 @@ package models
 
 import "time"
 
-// HookID is a pointer to plugin id and tenant id, using it to identify the webhook plugin
-type Webhook struct {
+// HookID is a pointer to plugin id and tenant id, using it to identify the endpoint plugin
+type Endpoint struct {
 	Model
 	HookID               string    `json:"hook_id" orm:"uniqueIndex;size:127;column:hook_id"`
 	TenantID             string    `json:"tenant_id" orm:"index;size:64;column:tenant_id"`

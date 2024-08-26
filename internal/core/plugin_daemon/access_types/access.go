@@ -3,9 +3,9 @@ package access_types
 type PluginAccessType string
 
 const (
-	PLUGIN_ACCESS_TYPE_TOOL    PluginAccessType = "tool"
-	PLUGIN_ACCESS_TYPE_MODEL   PluginAccessType = "model"
-	PLUGIN_ACCESS_TYPE_WEBHOOK PluginAccessType = "webhook"
+	PLUGIN_ACCESS_TYPE_TOOL     PluginAccessType = "tool"
+	PLUGIN_ACCESS_TYPE_MODEL    PluginAccessType = "model"
+	PLUGIN_ACCESS_TYPE_Endpoint PluginAccessType = "endpoint"
 )
 
 type PluginAccessAction string
@@ -21,5 +21,5 @@ const (
 	PLUGIN_ACCESS_ACTION_INVOKE_MODERATION             PluginAccessAction = "invoke_moderation"
 	PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS PluginAccessAction = "validate_provider_credentials"
 	PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS    PluginAccessAction = "validate_model_credentials"
-	PLUGIN_ACCESS_ACTION_WEBHOOK                       PluginAccessAction = "invoke_webhook"
+	PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT               PluginAccessAction = "invoke_endpoint"
 )

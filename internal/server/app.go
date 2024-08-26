@@ -10,9 +10,9 @@ type App struct {
 	// schedule all the tasks related to the cluster, like request direct
 	cluster *cluster.Cluster
 
-	// webhook handler
+	// endpoint handler
 	// customize behavior of endpoint
-	webhook_handler WebhookHandler
+	endpoint_handler EndpointHandler
 
 	// aws transaction handler
 	// accept aws transaction request and forward to the plugin daemon

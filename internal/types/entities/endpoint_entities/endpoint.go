@@ -1,6 +1,6 @@
-package webhook_entities
+package endpoint_entities
 
-type WebhookResponseChunk struct {
+type EndpointResponseChunk struct {
 	Status  *uint16           `json:"status" validate:"omitempty"`
 	Headers map[string]string `json:"headers" validate:"omitempty"`
 	Result  *string           `json:"result" validate:"omitempty"`

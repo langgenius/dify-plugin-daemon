@@ -17,7 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func Webhook(ctx *gin.Context, webhook *models.Webhook, path string) {
+func Endpoint(ctx *gin.Context, endpoint *models.Endpoint, path string) {
 	req := ctx.Request.Clone(context.Background())
 	req.URL.Path = path
 
@@ -30,26 +30,26 @@ func Webhook(ctx *gin.Context, webhook *models.Webhook, path string) {
 
 	// fetch plugin
 	manager := plugin_manager.GetGlobalPluginManager()
-	runtime := manager.Get(webhook.PluginID)
+	runtime := manager.Get(endpoint.PluginID)
 	if runtime == nil {
 		ctx.JSON(404, gin.H{"error": "plugin not found"})
 		return
 	}
 
 	session := session_manager.NewSession(
-		webhook.TenantID,
+		endpoint.TenantID,
 		"",
-		webhook.PluginID,
+		endpoint.PluginID,
 		ctx.GetString("cluster_id"),
-		access_types.PLUGIN_ACCESS_TYPE_WEBHOOK,
-		access_types.PLUGIN_ACCESS_ACTION_WEBHOOK,
+		access_types.PLUGIN_ACCESS_TYPE_Endpoint,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
 		runtime.Configuration(),
 	)
 	defer session.Close()
 
 	session.BindRuntime(runtime)
 
-	status_code, headers, response, err := plugin_daemon.InvokeWebhook(session, &requests.RequestInvokeWebhook{
+	status_code, headers, response, err := plugin_daemon.InvokeEndpoint(session, &requests.RequestInvokeEndpoint{
 		RawHttpRequest: hex.EncodeToString(buffer.Bytes()),
 	})
 	if err != nil {

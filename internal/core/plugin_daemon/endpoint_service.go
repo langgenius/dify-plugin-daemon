@@ -5,19 +5,19 @@ import (
 	"net/http"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/webhook_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func InvokeWebhook(
+func InvokeEndpoint(
 	session *session_manager.Session,
-	request *requests.RequestInvokeWebhook,
+	request *requests.RequestInvokeEndpoint,
 ) (
 	int, *http.Header, *stream.StreamResponse[[]byte], error,
 ) {
-	resp, err := genericInvokePlugin[requests.RequestInvokeWebhook, webhook_entities.WebhookResponseChunk](
+	resp, err := genericInvokePlugin[requests.RequestInvokeEndpoint, endpoint_entities.EndpointResponseChunk](
 		session,
 		request,
 		128,

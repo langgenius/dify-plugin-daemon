@@ -34,9 +34,9 @@ func InstallPlugin(
 		return "", err
 	}
 
-	// check if there is a webhook for the plugin
-	if runtime.Configuration().Resource.Permission.AllowRegistryWebhook() {
-		_, err := InstallWebhook(plugin.PluginID, installation.ID, tenant_id, user_id)
+	// check if there is a endpoint for the plugin
+	if runtime.Configuration().Resource.Permission.AllowRegistryEndpoint() {
+		_, err := InstallEndpoint(plugin.PluginID, installation.ID, tenant_id, user_id)
 		if err != nil {
 			return "", err
 		}
@@ -57,17 +57,17 @@ func UninstallPlugin(tenant_id string, installation_id string, runtime plugin_en
 		return err
 	}
 
-	// delete the webhook from db
-	if runtime.Configuration().Resource.Permission.AllowRegistryWebhook() {
-		// get the webhook from db
-		webhook, err := GetWebhook(tenant_id, identity, resp.Installation.ID)
+	// delete the endpoint from db
+	if runtime.Configuration().Resource.Permission.AllowRegistryEndpoint() {
+		// get the endpoint from db
+		endpoint, err := GetEndpoint(tenant_id, identity, resp.Installation.ID)
 		if err != nil && err != db.ErrDatabaseNotFound {
 			return err
 		} else if err == db.ErrDatabaseNotFound {
 			return nil
 		}
 
-		err = UninstallWebhook(webhook)
+		err = UninstallEndpoint(endpoint)
 		if err != nil {
 			return err
 		}
@@ -77,9 +77,9 @@ func UninstallPlugin(tenant_id string, installation_id string, runtime plugin_en
 }
 
 // installs a plugin to db,
-// returns the webhook id
-func InstallWebhook(plugin_id string, installation_id string, tenant_id string, user_id string) (string, error) {
-	installation := &models.Webhook{
+// returns the endpoint id
+func InstallEndpoint(plugin_id string, installation_id string, tenant_id string, user_id string) (string, error) {
+	installation := &models.Endpoint{
 		HookID:               strings.RandomString(64),
 		PluginID:             plugin_id,
 		TenantID:             tenant_id,
@@ -95,8 +95,8 @@ func InstallWebhook(plugin_id string, installation_id string, tenant_id string, 
 	return installation.HookID, nil
 }
 
-func GetWebhook(tenant_id string, plugin_id string, installation_id string) (*models.Webhook, error) {
-	webhook, err := db.GetOne[models.Webhook](
+func GetEndpoint(tenant_id string, plugin_id string, installation_id string) (*models.Endpoint, error) {
+	endpoint, err := db.GetOne[models.Endpoint](
 		db.Equal("tenant_id", tenant_id),
 		db.Equal("plugin_id", plugin_id),
 		db.Equal("plugin_installation_id", installation_id),
@@ -106,10 +106,10 @@ func GetWebhook(tenant_id string, plugin_id string, installation_id string) (*mo
 		return nil, err
 	}
 
-	return &webhook, nil
+	return &endpoint, nil
 }
 
 // uninstalls a plugin from db
-func UninstallWebhook(webhook *models.Webhook) error {
-	return db.Delete(webhook)
+func UninstallEndpoint(endpoint *models.Endpoint) error {
+	return db.Delete(endpoint)
 }

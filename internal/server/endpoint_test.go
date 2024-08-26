@@ -10,7 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 )
 
-func TestWebhookParams(t *testing.T) {
+func TestEndpointParams(t *testing.T) {
 	port, err := network.GetRandomPort()
 	if err != nil {
 		t.Errorf("failed to get random port: %s", err.Error())
@@ -26,17 +26,17 @@ func TestWebhookParams(t *testing.T) {
 	}
 
 	app_pointer := &App{
-		webhook_handler: handler,
+		endpoint_handler: handler,
 	}
 	cancel := app_pointer.server(&app.Config{
-		ServerPort:           port,
-		PluginWebhookEnabled: true,
+		ServerPort:            port,
+		PluginEndpointEnabled: true,
 	})
 	defer cancel()
 
-	// test webhook params
+	// test endpoint params
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://localhost:"+strconv.Itoa(int(port))+"/webhook/1111/v1/chat/completions", nil)
+	req, err := http.NewRequest("POST", "http://localhost:"+strconv.Itoa(int(port))+"/e/1111/v1/chat/completions", nil)
 	if err != nil {
 		t.Errorf("failed to create request: %s", err.Error())
 		return

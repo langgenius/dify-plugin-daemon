@@ -44,7 +44,7 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.MaxAWSLambdaTransactionTimeout, 150)
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 240)
 	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
-	setDefaultBool(&config.PluginWebhookEnabled, true)
+	setDefaultBool(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
 	setDefaultString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
 }

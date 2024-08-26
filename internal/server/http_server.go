@@ -20,7 +20,7 @@ func (app *App) server(config *app.Config) func() {
 
 	app.pluginInvokeGroup(engine.Group("/plugin"), config)
 	app.remoteDebuggingGroup(engine.Group("/plugin/debugging"), config)
-	app.webhookGroup(engine.Group("/webhook"), config)
+	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
 
 	srv := &http.Server{
@@ -64,14 +64,14 @@ func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config)
 	}
 }
 
-func (app *App) webhookGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginWebhookEnabled {
-		group.HEAD("/:hook_id/*path", app.Webhook())
-		group.POST("/:hook_id/*path", app.Webhook())
-		group.GET("/:hook_id/*path", app.Webhook())
-		group.PUT("/:hook_id/*path", app.Webhook())
-		group.DELETE("/:hook_id/*path", app.Webhook())
-		group.OPTIONS("/:hook_id/*path", app.Webhook())
+func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
+	if config.PluginEndpointEnabled {
+		group.HEAD("/:hook_id/*path", app.Endpoint())
+		group.POST("/:hook_id/*path", app.Endpoint())
+		group.GET("/:hook_id/*path", app.Endpoint())
+		group.PUT("/:hook_id/*path", app.Endpoint())
+		group.DELETE("/:hook_id/*path", app.Endpoint())
+		group.OPTIONS("/:hook_id/*path", app.Endpoint())
 	}
 }
 

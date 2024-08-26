@@ -17,11 +17,11 @@ const (
 )
 
 type PluginPermissionRequirement struct {
-	Tool    *PluginPermissionToolRequirement    `json:"tool" yaml:"tool" validate:"omitempty"`
-	Model   *PluginPermissionModelRequirement   `json:"model" yaml:"model" validate:"omitempty"`
-	Node    *PluginPermissionNodeRequirement    `json:"node" yaml:"node" validate:"omitempty"`
-	Webhook *PluginPermissionWebhookRequirement `json:"webhook" yaml:"webhook" validate:"omitempty"`
-	App     *PluginPermissionAppRequirement     `json:"app" yaml:"app" validate:"omitempty"`
+	Tool     *PluginPermissionToolRequirement     `json:"tool" yaml:"tool" validate:"omitempty"`
+	Model    *PluginPermissionModelRequirement    `json:"model" yaml:"model" validate:"omitempty"`
+	Node     *PluginPermissionNodeRequirement     `json:"node" yaml:"node" validate:"omitempty"`
+	Endpoint *PluginPermissionEndpointRequirement `json:"endpoint" yaml:"endpoint" validate:"omitempty"`
+	App      *PluginPermissionAppRequirement      `json:"app" yaml:"app" validate:"omitempty"`
 }
 
 func (p *PluginPermissionRequirement) AllowInvokeTool() bool {
@@ -60,8 +60,8 @@ func (p *PluginPermissionRequirement) AllowInvokeApp() bool {
 	return p != nil && p.App != nil && p.App.Enabled
 }
 
-func (p *PluginPermissionRequirement) AllowRegistryWebhook() bool {
-	return p != nil && p.Webhook != nil && p.Webhook.Enabled
+func (p *PluginPermissionRequirement) AllowRegistryEndpoint() bool {
+	return p != nil && p.Endpoint != nil && p.Endpoint.Enabled
 }
 
 type PluginPermissionToolRequirement struct {
@@ -82,7 +82,7 @@ type PluginPermissionNodeRequirement struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
 
-type PluginPermissionWebhookRequirement struct {
+type PluginPermissionEndpointRequirement struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
 
