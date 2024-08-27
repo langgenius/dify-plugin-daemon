@@ -26,12 +26,16 @@ type ToolParameterOption struct {
 type ToolParameterType string
 
 const (
-	TOOL_PARAMETER_TYPE_STRING       ToolParameterType = "string"
-	TOOL_PARAMETER_TYPE_NUMBER       ToolParameterType = "number"
-	TOOL_PARAMETER_TYPE_BOOLEAN      ToolParameterType = "boolean"
-	TOOL_PARAMETER_TYPE_SELECT       ToolParameterType = "select"
-	TOOL_PARAMETER_TYPE_SECRET_INPUT ToolParameterType = "secret_input"
-	TOOL_PARAMETER_TYPE_FILE         ToolParameterType = "file"
+	TOOL_PARAMETER_TYPE_STRING            ToolParameterType = STRING
+	TOOL_PARAMETER_TYPE_NUMBER            ToolParameterType = NUMBER
+	TOOL_PARAMETER_TYPE_BOOLEAN           ToolParameterType = BOOLEAN
+	TOOL_PARAMETER_TYPE_SELECT            ToolParameterType = SELECT
+	TOOL_PARAMETER_TYPE_SECRET_INPUT      ToolParameterType = SECRET_INPUT
+	TOOL_PARAMETER_TYPE_FILE              ToolParameterType = FILE
+	TOOL_PARAMETER_TYPE_MODEL_CONFIG      ToolParameterType = MODEL_CONFIG
+	TOOL_PARAMETER_TYPE_CHAT_APP_ID       ToolParameterType = CHAT_APP_ID
+	TOOL_PARAMETER_TYPE_COMPLETION_APP_ID ToolParameterType = COMPLETION_APP_ID
+	TOOL_PARAMETER_TYPE_WORKFLOW_APP_ID   ToolParameterType = WORKFLOW_APP_ID
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -42,7 +46,11 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_BOOLEAN),
 		string(TOOL_PARAMETER_TYPE_SELECT),
 		string(TOOL_PARAMETER_TYPE_SECRET_INPUT),
-		string(TOOL_PARAMETER_TYPE_FILE):
+		string(TOOL_PARAMETER_TYPE_FILE),
+		string(TOOL_PARAMETER_TYPE_MODEL_CONFIG),
+		string(TOOL_PARAMETER_TYPE_CHAT_APP_ID),
+		string(TOOL_PARAMETER_TYPE_COMPLETION_APP_ID),
+		string(TOOL_PARAMETER_TYPE_WORKFLOW_APP_ID):
 		return true
 	}
 	return false
@@ -107,44 +115,6 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("json_schema", isJSONSchema)
 }
 
-type ToolCredentialsOption struct {
-	Value string     `json:"value" validate:"required"`
-	Label I18nObject `json:"label" validate:"required"`
-}
-
-type CredentialType string
-
-const (
-	CREDENTIAL_TYPE_SECRET_INPUT CredentialType = "secret-input"
-	CREDENTIAL_TYPE_TEXT_INPUT   CredentialType = "text-input"
-	CREDENTIAL_TYPE_SELECT       CredentialType = "select"
-	CREDENTIAL_TYPE_BOOLEAN      CredentialType = "boolean"
-)
-
-func isCredentialType(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	switch value {
-	case string(CREDENTIAL_TYPE_SECRET_INPUT),
-		string(CREDENTIAL_TYPE_TEXT_INPUT),
-		string(CREDENTIAL_TYPE_SELECT),
-		string(CREDENTIAL_TYPE_BOOLEAN):
-		return true
-	}
-	return false
-}
-
-type ToolProviderCredential struct {
-	Name        string                  `json:"name" validate:"required,gt=0,lt=1024"`
-	Type        CredentialType          `json:"type" validate:"required,credential_type"`
-	Required    bool                    `json:"required"`
-	Default     any                     `json:"default" validate:"omitempty,is_basic_type"`
-	Options     []ToolCredentialsOption `json:"options" validate:"omitempty,dive"`
-	Label       I18nObject              `json:"label" validate:"required"`
-	Helper      *I18nObject             `json:"helper" validate:"omitempty"`
-	URL         *string                 `json:"url" validate:"omitempty"`
-	Placeholder *I18nObject             `json:"placeholder" validate:"omitempty"`
-}
-
 type ToolLabel string
 
 const (
@@ -200,9 +170,9 @@ type ToolProviderIdentity struct {
 }
 
 type ToolProviderConfiguration struct {
-	Identity          ToolProviderIdentity              `json:"identity" validate:"required"`
-	CredentialsSchema map[string]ToolProviderCredential `json:"credentials_schema" validate:"omitempty,dive"`
-	Tools             []ToolConfiguration               `json:"tools" validate:"required,dive"`
+	Identity          ToolProviderIdentity      `json:"identity" validate:"required"`
+	CredentialsSchema map[string]ProviderConfig `json:"credentials_schema" validate:"omitempty,dive"`
+	Tools             []ToolConfiguration       `json:"tools" validate:"required,dive"`
 }
 
 func init() {
@@ -235,19 +205,6 @@ func init() {
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("tool_parameter_form", fe.Field())
-			return t
-		},
-	)
-
-	validators.GlobalEntitiesValidator.RegisterValidation("credential_type", isCredentialType)
-	validators.GlobalEntitiesValidator.RegisterTranslation(
-		"credential_type",
-		translator,
-		func(ut ut.Translator) error {
-			return ut.Add("credential_type", "{0} is not a valid credential type", true)
-		},
-		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("credential_type", fe.Field())
 			return t
 		},
 	)

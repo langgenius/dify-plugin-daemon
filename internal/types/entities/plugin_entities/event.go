@@ -5,8 +5,8 @@ import (
 )
 
 type PluginUniversalEvent struct {
-	Event     PluginEventType `json:"event"`
 	SessionId string          `json:"session_id"`
+	Event     PluginEventType `json:"event"`
 	Data      json.RawMessage `json:"data"`
 }
 
