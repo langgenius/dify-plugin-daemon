@@ -5,3 +5,4 @@ logs/
 cmd/**/__debug_bin*
 *.zip
 .DS_Store
+storage/
