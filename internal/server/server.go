@@ -10,8 +10,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func (a *App) Run(config *app.Config) {
-	a.cluster = cluster.NewCluster(config)
+func (app *App) Run(config *app.Config) {
+	app.cluster = cluster.NewCluster(config)
 
 	// init routine pool
 	routine.InitPool(config.RoutinePoolSize)
@@ -23,16 +23,16 @@ func (a *App) Run(config *app.Config) {
 	process.Init(config)
 
 	// init plugin daemon
-	plugin_manager.InitGlobalPluginManager(a.cluster, config)
+	plugin_manager.InitGlobalPluginManager(app.cluster, config)
 
 	// init persistence
 	persistence.InitPersistence(config)
 
 	// launch cluster
-	a.cluster.Launch()
+	app.cluster.Launch()
 
 	// start http server
-	a.server(config)
+	app.server(config)
 
 	// block
 	select {}

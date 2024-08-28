@@ -31,6 +31,8 @@ func InitPersistence(config *app.Config) {
 	} else {
 		log.Panic("Invalid persistence storage type: %s", config.PersistenceStorageType)
 	}
+
+	log.Info("Persistence initialized")
 }
 
 func GetPersistence() *Persistence {
