@@ -3,6 +3,7 @@ package persistence
 import (
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 )
@@ -15,19 +16,21 @@ const (
 	CACHE_KEY_PREFIX = "persistence:cache"
 )
 
-func (c *Persistence) getCacheKey(tenant_id string, plugin_checksum string) string {
-	return fmt.Sprintf("%s:%s:%s", CACHE_KEY_PREFIX, tenant_id, plugin_checksum)
+func (c *Persistence) getCacheKey(tenant_id string, plugin_checksum string, key string) string {
+	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenant_id, plugin_checksum, key)
 }
 
 func (c *Persistence) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
-	// add to cache
-	h := hex.EncodeToString(data)
-	return cache.SetMapOneField(c.getCacheKey(tenant_id, plugin_checksum), key, h)
+	if len(key) > 64 {
+		return fmt.Errorf("key length must be less than 64 characters")
+	}
+
+	return c.storage.Save(tenant_id, plugin_checksum, key, data)
 }
 
 func (c *Persistence) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
 	// check if the key exists in cache
-	h, err := cache.GetMapFieldString(c.getCacheKey(tenant_id, plugin_checksum), key)
+	h, err := cache.GetString(c.getCacheKey(tenant_id, plugin_checksum, key))
 	if err != nil && err != cache.ErrNotFound {
 		return nil, err
 	}
@@ -36,12 +39,20 @@ func (c *Persistence) Load(tenant_id string, plugin_checksum string, key string)
 	}
 
 	// load from storage
-	return c.storage.Load(tenant_id, plugin_checksum, key)
+	data, err := c.storage.Load(tenant_id, plugin_checksum, key)
+	if err != nil {
+		return nil, err
+	}
+
+	// add to cache
+	cache.Store(c.getCacheKey(tenant_id, plugin_checksum, key), hex.EncodeToString(data), time.Minute*5)
+
+	return data, nil
 }
 
 func (c *Persistence) Delete(tenant_id string, plugin_checksum string, key string) error {
 	// delete from cache and storage
-	err := cache.DelMapField(c.getCacheKey(tenant_id, plugin_checksum), key)
+	err := cache.Del(c.getCacheKey(tenant_id, plugin_checksum, key))
 	if err != nil {
 		return err
 	}

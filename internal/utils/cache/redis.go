@@ -261,6 +261,52 @@ func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	return result, nil
 }
 
+// ScanKeys scan the keys with match pattern
+func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
+	if client == nil {
+		return nil, ErrDBNotInit
+	}
+
+	result := make([]string, 0)
+
+	if err := ScanKeysAsync(match, func(keys []string) error {
+		result = append(result, keys...)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// ScanKeysAsync scan the keys with match pattern, format like "key*"
+func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	cursor := uint64(0)
+
+	for {
+		keys, new_cursor, err := getCmdable(context...).Scan(ctx, cursor, match, 32).Result()
+		if err != nil {
+			return err
+		}
+
+		if err := fn(keys); err != nil {
+			return err
+		}
+
+		if new_cursor == 0 {
+			break
+		}
+
+		cursor = new_cursor
+	}
+
+	return nil
+}
+
 // ScanMap scan the map with match pattern, format like "key*"
 func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[string]V, error) {
 	if client == nil {
