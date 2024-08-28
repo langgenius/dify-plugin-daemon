@@ -22,6 +22,7 @@ type PluginPermissionRequirement struct {
 	Node     *PluginPermissionNodeRequirement     `json:"node" yaml:"node" validate:"omitempty"`
 	Endpoint *PluginPermissionEndpointRequirement `json:"endpoint" yaml:"endpoint" validate:"omitempty"`
 	App      *PluginPermissionAppRequirement      `json:"app" yaml:"app" validate:"omitempty"`
+	Storage  *PluginPermissionStorageRequirement  `json:"storage" yaml:"storage" validate:"omitempty"`
 }
 
 func (p *PluginPermissionRequirement) AllowInvokeTool() bool {
@@ -64,6 +65,10 @@ func (p *PluginPermissionRequirement) AllowRegistryEndpoint() bool {
 	return p != nil && p.Endpoint != nil && p.Endpoint.Enabled
 }
 
+func (p *PluginPermissionRequirement) AllowInvokeStorage() bool {
+	return p != nil && p.Storage != nil && p.Storage.Enabled
+}
+
 type PluginPermissionToolRequirement struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
@@ -90,11 +95,14 @@ type PluginPermissionAppRequirement struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
 
+type PluginPermissionStorageRequirement struct {
+	Enabled bool   `json:"enabled" yaml:"enabled"`
+	Size    uint64 `json:"size" yaml:"size" validate:"min=1024,max=1073741824"` // min 1024 bytes, max 1G
+}
+
 type PluginResourceRequirement struct {
 	// Memory in bytes
 	Memory int64 `json:"memory" yaml:"memory" validate:"required"`
-	// Storage in bytes
-	Storage int64 `json:"storage" yaml:"storage" validate:"required"`
 	// Permission requirements
 	Permission *PluginPermissionRequirement `json:"permission" yaml:"permission" validate:"omitempty"`
 }

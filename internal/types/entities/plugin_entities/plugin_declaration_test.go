@@ -16,8 +16,7 @@ func preparePluginDeclaration() PluginDeclaration {
 		Author:    "test",
 		CreatedAt: time.Now(),
 		Resource: PluginResourceRequirement{
-			Memory:  1,
-			Storage: 1,
+			Memory: 1,
 			Permission: &PluginPermissionRequirement{
 				Tool: &PluginPermissionToolRequirement{
 					Enabled: true,
@@ -27,6 +26,10 @@ func preparePluginDeclaration() PluginDeclaration {
 				},
 				Node: &PluginPermissionNodeRequirement{
 					Enabled: true,
+				},
+				Storage: &PluginPermissionStorageRequirement{
+					Enabled: true,
+					Size:    1024,
 				},
 			},
 		},
@@ -96,6 +99,10 @@ func TestPluginDeclarationFullTest(t *testing.T) {
 		return
 	}
 
+	if new_declaration.Resource.Permission.Storage == nil {
+		t.Errorf("storage permission is nil")
+		return
+	}
 }
 
 func TestPluginDeclarationIncorrectVersion(t *testing.T) {
@@ -130,6 +137,27 @@ func TestPluginUnsupportedArch(t *testing.T) {
 	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
 	if err == nil {
 		t.Errorf("failed to validate arch")
+		return
+	}
+}
+
+func TestPluginStorageSizeTooSmallOrTooLarge(t *testing.T) {
+	declaration := preparePluginDeclaration()
+	declaration.Resource.Permission.Storage.Size = 1023
+	declaration_bytes := parser.MarshalJsonBytes(declaration)
+
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	if err == nil {
+		t.Errorf("failed to validate storage size")
+		return
+	}
+
+	declaration.Resource.Permission.Storage.Size = 1073741825
+	declaration_bytes = parser.MarshalJsonBytes(declaration)
+
+	_, err = parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	if err == nil {
+		t.Errorf("failed to validate storage size")
 		return
 	}
 }

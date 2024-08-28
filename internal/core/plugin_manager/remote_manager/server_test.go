@@ -142,7 +142,6 @@ func TestAcceptConnection(t *testing.T) {
 		CreatedAt: time.Now(),
 		Resource: plugin_entities.PluginResourceRequirement{
 			Memory:     1,
-			Storage:    1,
 			Permission: nil,
 		},
 		Plugins: []string{

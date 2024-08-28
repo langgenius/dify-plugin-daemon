@@ -116,6 +116,12 @@ var (
 			},
 			"error": "permission denied, you need to enable app access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_STORAGE: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeStorage()
+			},
+			"error": "permission denied, you need to enable storage access in plugin manifest",
+		},
 	}
 )
 
