@@ -20,9 +20,13 @@ func InitPersistence(config *app.Config) *Persistence {
 		return &Persistence{
 			storage: s3,
 		}
+	} else if config.PersistenceStorageType == "local" {
+		return &Persistence{
+			storage: NewLocalWrapper(),
+		}
+	} else {
+		log.Panic("Invalid persistence storage type: %s", config.PersistenceStorageType)
 	}
 
-	return &Persistence{
-		storage: NewLocalWrapper(),
-	}
+	return nil
 }
