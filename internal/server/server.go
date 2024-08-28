@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/process"
@@ -23,6 +24,9 @@ func (a *App) Run(config *app.Config) {
 
 	// init plugin daemon
 	plugin_manager.InitGlobalPluginManager(a.cluster, config)
+
+	// init persistence
+	a.persistence = persistence.InitPersistence(config)
 
 	// launch cluster
 	a.cluster.Launch()

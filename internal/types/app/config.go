@@ -41,6 +41,13 @@ type Config struct {
 	DBDatabase string `envconfig:"DB_DATABASE" validate:"required"`
 	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
+	PersistenceStorageType        string `envconfig:"PERSISTENCE_STORAGE_TYPE" validate:"required,oneof=local s3"`
+	PersistenceStorageLocalPath   string `envconfig:"PERSISTENCE_STORAGE_LOCAL_PATH"`
+	PersistenceStorageS3Region    string `envconfig:"PERSISTENCE_STORAGE_S3_REGION"`
+	PersistenceStorageS3AccessKey string `envconfig:"PERSISTENCE_STORAGE_S3_ACCESS_KEY"`
+	PersistenceStorageS3SecretKey string `envconfig:"PERSISTENCE_STORAGE_S3_SECRET_KEY"`
+	PersistenceStorageS3Bucket    string `envconfig:"PERSISTENCE_STORAGE_S3_BUCKET"`
+
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
 	LifetimeCollectionGCInterval        int `envconfig:"LIFETIME_COLLECTION_GC_INTERVAL" validate:"required"`
 	LifetimeStateGCInterval             int `envconfig:"LIFETIME_STATE_GC_INTERVAL" validate:"required"`
@@ -99,6 +106,15 @@ func (c *Config) Validate() error {
 		}
 	} else {
 		return fmt.Errorf("invalid platform")
+	}
+
+	if c.PersistenceStorageType == "s3" {
+		if c.PersistenceStorageS3Region == "" ||
+			c.PersistenceStorageS3AccessKey == "" ||
+			c.PersistenceStorageS3SecretKey == "" ||
+			c.PersistenceStorageS3Bucket == "" {
+			return fmt.Errorf("s3 region, access key, secret key, bucket is empty")
+		}
 	}
 
 	return nil
