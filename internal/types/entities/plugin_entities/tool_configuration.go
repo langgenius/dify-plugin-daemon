@@ -26,16 +26,14 @@ type ToolParameterOption struct {
 type ToolParameterType string
 
 const (
-	TOOL_PARAMETER_TYPE_STRING            ToolParameterType = STRING
-	TOOL_PARAMETER_TYPE_NUMBER            ToolParameterType = NUMBER
-	TOOL_PARAMETER_TYPE_BOOLEAN           ToolParameterType = BOOLEAN
-	TOOL_PARAMETER_TYPE_SELECT            ToolParameterType = SELECT
-	TOOL_PARAMETER_TYPE_SECRET_INPUT      ToolParameterType = SECRET_INPUT
-	TOOL_PARAMETER_TYPE_FILE              ToolParameterType = FILE
-	TOOL_PARAMETER_TYPE_MODEL_CONFIG      ToolParameterType = MODEL_CONFIG
-	TOOL_PARAMETER_TYPE_CHAT_APP_ID       ToolParameterType = CHAT_APP_ID
-	TOOL_PARAMETER_TYPE_COMPLETION_APP_ID ToolParameterType = COMPLETION_APP_ID
-	TOOL_PARAMETER_TYPE_WORKFLOW_APP_ID   ToolParameterType = WORKFLOW_APP_ID
+	TOOL_PARAMETER_TYPE_STRING       ToolParameterType = STRING
+	TOOL_PARAMETER_TYPE_NUMBER       ToolParameterType = NUMBER
+	TOOL_PARAMETER_TYPE_BOOLEAN      ToolParameterType = BOOLEAN
+	TOOL_PARAMETER_TYPE_SELECT       ToolParameterType = SELECT
+	TOOL_PARAMETER_TYPE_SECRET_INPUT ToolParameterType = SECRET_INPUT
+	TOOL_PARAMETER_TYPE_FILE         ToolParameterType = FILE
+	TOOL_PARAMETER_TYPE_APP_SELECTOR ToolParameterType = APP_SELECTOR
+	TOOL_PARAMETER_TYPE_MODEL_CONFIG ToolParameterType = MODEL_CONFIG
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -47,10 +45,8 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_SELECT),
 		string(TOOL_PARAMETER_TYPE_SECRET_INPUT),
 		string(TOOL_PARAMETER_TYPE_FILE),
-		string(TOOL_PARAMETER_TYPE_MODEL_CONFIG),
-		string(TOOL_PARAMETER_TYPE_CHAT_APP_ID),
-		string(TOOL_PARAMETER_TYPE_COMPLETION_APP_ID),
-		string(TOOL_PARAMETER_TYPE_WORKFLOW_APP_ID):
+		string(TOOL_PARAMETER_TYPE_APP_SELECTOR),
+		string(TOOL_PARAMETER_TYPE_MODEL_CONFIG):
 		return true
 	}
 	return false
@@ -80,6 +76,7 @@ type ToolParameter struct {
 	Label            I18nObject            `json:"label" validate:"required"`
 	HumanDescription I18nObject            `json:"human_description" validate:"required"`
 	Type             ToolParameterType     `json:"type" validate:"required,tool_parameter_type"`
+	Scope            *string               `json:"scope" validate:"omitempty,is_scope"`
 	Form             ToolParameterForm     `json:"form" validate:"required,tool_parameter_form"`
 	LLMDescription   string                `json:"llm_description" validate:"omitempty"`
 	Required         bool                  `json:"required" validate:"required"`

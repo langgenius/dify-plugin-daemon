@@ -1,6 +1,7 @@
 package plugin_entities
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -653,6 +654,170 @@ func TestWrongJSONSchemaToolProvider_Validate(t *testing.T) {
 
 	_, err := UnmarshalToolProviderConfiguration([]byte(data))
 	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+}
+
+func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
+	const data = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description",
+			"zh_Hans": "描述",
+			"pt_BR": "descrição"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label",
+			"zh_Hans": "标签",
+			"pt_BR": "etiqueta"
+		},
+		"tags": []
+	},
+	"credentials_schema": {
+		"api_key": {
+			"name": "app-selector",
+			"type": "app-selector",
+			"scope": "wrong",
+			"required": false,
+			"default": null,
+			"label": {
+				"en_US": "app-selector",
+				"zh_Hans": "app-selector",
+				"pt_BR": "app-selector"
+			},
+			"helper": {
+				"en_US": "app-selector",
+				"zh_Hans": "app-selector",
+				"pt_BR": "app-selector"
+			},
+			"url": "https://example.com",
+			"placeholder": {
+				"en_US": "app-selector",
+				"zh_Hans": "app-selector",
+				"pt_BR": "app-selector"
+			}
+		}
+	},
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label",
+					"zh_Hans": "标签",
+					"pt_BR": "etiqueta"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description",
+					"zh_Hans": "描述",
+					"pt_BR": "descrição"
+				},
+				"llm": "description"
+			},
+			"parameters": [
+				{
+					"name": "parameter-app-selector",
+					"label": {
+						"en_US": "label",
+						"zh_Hans": "标签",
+						"pt_BR": "etiqueta"
+					},
+					"human_description": {
+						"en_US": "description",
+						"zh_Hans": "描述",
+						"pt_BR": "descrição"
+					},
+					"type": "app-selector",
+					"form": "llm",
+					"scope": "wrong",
+					"required": true,
+					"default": "default",
+					"options": []
+				}
+			]
+		}
+	]
+}
+	`
+
+	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+
+	str := err.Error()
+	if !strings.Contains(str, "api_key") {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+
+	if !strings.Contains(str, "ToolProviderConfiguration.Tools[0].Parameters[0].Scope") {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+}
+
+func TestAppSelectorScopeToolProvider_Validate(t *testing.T) {
+	const data = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description",
+			"zh_Hans": "描述",
+			"pt_BR": "descrição"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label",
+			"zh_Hans": "标签",
+			"pt_BR": "etiqueta"
+		},
+		"tags": []
+	},
+	"credentials_schema": {
+		"app-selector": {
+			"name": "app-selector",
+			"type": "app-selector",
+			"scope": "all",
+			"required": false,
+			"default": null,
+			"label": {
+				"en_US": "app-selector",
+				"zh_Hans": "app-selector",
+				"pt_BR": "app-selector"
+			},
+			"helper": {
+				"en_US": "app-selector",
+				"zh_Hans": "app-selector",
+				"pt_BR": "app-selector"
+			},
+			"url": "https://example.com",
+			"placeholder": {
+				"en_US": "app-selector",
+				"zh_Hans": "app-selector",
+				"pt_BR": "app-selector"
+			}
+		}
+	},
+	"tools": [
+	
+	]
+}
+	`
+
+	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	if err != nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
