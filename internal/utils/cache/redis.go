@@ -208,6 +208,23 @@ func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T,
 	return &result, err
 }
 
+// GetMapFieldString get the string
+func GetMapFieldString(key string, field string, context ...redis.Cmdable) (string, error) {
+	if client == nil {
+		return "", ErrDBNotInit
+	}
+
+	val, err := getCmdable(context...).HGet(ctx, serialKey(key), field).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", ErrNotFound
+		}
+		return "", err
+	}
+
+	return val, nil
+}
+
 // DelMapField delete the map field with key
 func DelMapField(key string, field string, context ...redis.Cmdable) error {
 	if client == nil {

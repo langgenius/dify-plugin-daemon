@@ -46,14 +46,14 @@ func NewS3Wrapper(region string, access_key string, secret_key string, bucket st
 	}, nil
 }
 
-func (s *S3Wrapper) Save(tenant_id string, key string, data []byte) error {
+func (s *S3Wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
 	return nil
 }
 
-func (s *S3Wrapper) Load(tenant_id string, key string) ([]byte, error) {
+func (s *S3Wrapper) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
 	return nil, nil
 }
 
-func (s *S3Wrapper) Delete(tenant_id string, key string) error {
+func (s *S3Wrapper) Delete(tenant_id string, plugin_checksum string, key string) error {
 	return nil
 }

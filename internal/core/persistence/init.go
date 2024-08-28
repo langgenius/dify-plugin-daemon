@@ -22,7 +22,7 @@ func InitPersistence(config *app.Config) *Persistence {
 		}
 	} else if config.PersistenceStorageType == "local" {
 		return &Persistence{
-			storage: NewLocalWrapper(),
+			storage: NewLocalWrapper(config.PersistenceStorageLocalPath),
 		}
 	} else {
 		log.Panic("Invalid persistence storage type: %s", config.PersistenceStorageType)
