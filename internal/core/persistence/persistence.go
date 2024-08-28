@@ -25,7 +25,12 @@ func (c *Persistence) Save(tenant_id string, plugin_identity string, key string,
 		return fmt.Errorf("key length must be less than 64 characters")
 	}
 
-	return c.storage.Save(tenant_id, plugin_identity, key, data)
+	if err := c.storage.Save(tenant_id, plugin_identity, key, data); err != nil {
+		return err
+	}
+
+	// delete from cache
+	return cache.Del(c.getCacheKey(tenant_id, plugin_identity, key))
 }
 
 func (c *Persistence) Load(tenant_id string, plugin_identity string, key string) ([]byte, error) {
