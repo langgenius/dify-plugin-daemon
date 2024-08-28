@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -41,12 +40,6 @@ func Endpoint(
 		return
 	}
 
-	persistence := persistence.GetPersistence()
-	if persistence == nil {
-		ctx.JSON(500, gin.H{"error": "persistence not found"})
-		return
-	}
-
 	session := session_manager.NewSession(
 		endpoint.TenantID,
 		"",
@@ -55,7 +48,6 @@ func Endpoint(
 		access_types.PLUGIN_ACCESS_TYPE_Endpoint,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
 		runtime.Configuration(),
-		persistence,
 	)
 	defer session.Close()
 

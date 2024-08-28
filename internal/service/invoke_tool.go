@@ -1,10 +1,7 @@
 package service
 
 import (
-	"errors"
-
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -22,11 +19,6 @@ func createSession[T any](
 	access_action access_types.PluginAccessAction,
 	cluster_id string,
 ) (*session_manager.Session, error) {
-	persistence := persistence.GetPersistence()
-	if persistence == nil {
-		return nil, errors.New("persistence not found")
-	}
-
 	plugin_identity := parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion)
 	runtime := plugin_manager.GetGlobalPluginManager().Get(plugin_identity)
 
@@ -38,7 +30,6 @@ func createSession[T any](
 		access_type,
 		access_action,
 		runtime.Configuration(),
-		persistence,
 	)
 
 	session.BindRuntime(runtime)

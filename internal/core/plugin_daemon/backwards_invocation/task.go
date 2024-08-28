@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
@@ -370,7 +371,7 @@ func executeDifyInvocationStorageTask(
 		return
 	}
 
-	persistence := handle.session.Storage()
+	persistence := persistence.GetPersistence()
 	if persistence == nil {
 		handle.WriteError(fmt.Errorf("persistence not found"))
 		return

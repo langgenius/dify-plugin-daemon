@@ -68,10 +68,10 @@ func (h *AWSTransactionHandler) Handle(
 	}
 
 	session := session_manager.GetSession(session_id)
-	if err != nil {
-		log.Error("get session failed: %s", err.Error())
+	if session == nil {
+		log.Error("session not found: %s", session_id)
 		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte(err.Error()))
+		writer.Write([]byte("session not found"))
 		return
 	}
 
