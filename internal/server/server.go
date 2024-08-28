@@ -26,7 +26,7 @@ func (a *App) Run(config *app.Config) {
 	plugin_manager.InitGlobalPluginManager(a.cluster, config)
 
 	// init persistence
-	a.persistence = persistence.InitPersistence(config)
+	persistence.InitPersistence(config)
 
 	// launch cluster
 	a.cluster.Launch()

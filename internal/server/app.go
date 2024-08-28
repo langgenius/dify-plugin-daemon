@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 )
 
@@ -18,7 +17,4 @@ type App struct {
 	// aws transaction handler
 	// accept aws transaction request and forward to the plugin daemon
 	aws_transaction_handler *transaction.AWSTransactionHandler
-
-	// persistence
-	persistence *persistence.Persistence
 }

@@ -5,7 +5,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
-func InitPersistence(config *app.Config) *Persistence {
+var (
+	persistence *Persistence
+)
+
+func InitPersistence(config *app.Config) {
 	if config.PersistenceStorageType == "s3" {
 		s3, err := NewS3Wrapper(
 			config.PersistenceStorageS3Region,
@@ -17,16 +21,18 @@ func InitPersistence(config *app.Config) *Persistence {
 			log.Panic("Failed to initialize S3 wrapper: %v", err)
 		}
 
-		return &Persistence{
+		persistence = &Persistence{
 			storage: s3,
 		}
 	} else if config.PersistenceStorageType == "local" {
-		return &Persistence{
+		persistence = &Persistence{
 			storage: NewLocalWrapper(config.PersistenceStorageLocalPath),
 		}
 	} else {
 		log.Panic("Invalid persistence storage type: %s", config.PersistenceStorageType)
 	}
+}
 
-	return nil
+func GetPersistence() *Persistence {
+	return persistence
 }

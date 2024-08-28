@@ -1,8 +1,10 @@
 package dify_invocation
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/app_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
 
 type BaseInvokeDifyRequest struct {
@@ -23,6 +25,7 @@ const (
 	INVOKE_TYPE_TOOL           InvokeType = "tool"
 	INVOKE_TYPE_NODE           InvokeType = "node"
 	INVOKE_TYPE_APP            InvokeType = "app"
+	INVOKE_TYPE_STORAGE        InvokeType = "storage"
 )
 
 type InvokeLLMRequest struct {
@@ -69,6 +72,29 @@ type InvokeAppSchema struct {
 	ConversationId string                  `json:"conversation_id"`
 	User           string                  `json:"user" validate:"omitempty"`
 	Files          []*app_entities.FileVar `json:"files" validate:"omitempty,dive"`
+}
+
+type StorageOpt string
+
+const (
+	STORAGE_OPT_GET StorageOpt = "get"
+	STORAGE_OPT_SET StorageOpt = "set"
+	STORAGE_OPT_DEL StorageOpt = "del"
+)
+
+func isStorageOpt(fl validator.FieldLevel) bool {
+	opt := StorageOpt(fl.Field().String())
+	return opt == STORAGE_OPT_GET || opt == STORAGE_OPT_SET || opt == STORAGE_OPT_DEL
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("storage_opt", isStorageOpt)
+}
+
+type InvokeStorageRequest struct {
+	Opt   StorageOpt `json:"opt" validate:"required,storage_opt"`
+	Key   string     `json:"key" validate:"required"`
+	Value string     `json:"value"` // encoded in hex, optional
 }
 
 type InvokeAppRequest struct {

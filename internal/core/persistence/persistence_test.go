@@ -17,18 +17,18 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	}
 	defer cache.Close()
 
-	p := InitPersistence(&app.Config{
+	InitPersistence(&app.Config{
 		PersistenceStorageType:      "local",
 		PersistenceStorageLocalPath: "./persistence_storage",
 	})
 
 	key := strings.RandomString(10)
 
-	if err := p.Save("tenant_id", "plugin_checksum", key, []byte("data")); err != nil {
+	if err := persistence.Save("tenant_id", "plugin_checksum", key, []byte("data")); err != nil {
 		t.Fatalf("Failed to save data: %v", err)
 	}
 
-	data, err := p.Load("tenant_id", "plugin_checksum", key)
+	data, err := persistence.Load("tenant_id", "plugin_checksum", key)
 	if err != nil {
 		t.Fatalf("Failed to load data: %v", err)
 	}
@@ -65,14 +65,14 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 	}
 	defer cache.Close()
 
-	p := InitPersistence(&app.Config{
+	InitPersistence(&app.Config{
 		PersistenceStorageType:      "local",
 		PersistenceStorageLocalPath: "./persistence_storage",
 	})
 
 	key := strings.RandomString(65)
 
-	if err := p.Save("tenant_id", "plugin_checksum", key, []byte("data")); err == nil {
+	if err := persistence.Save("tenant_id", "plugin_checksum", key, []byte("data")); err == nil {
 		t.Fatalf("Expected error, got nil")
 	}
 }
@@ -84,18 +84,18 @@ func TestPersistenceDelete(t *testing.T) {
 	}
 	defer cache.Close()
 
-	p := InitPersistence(&app.Config{
+	InitPersistence(&app.Config{
 		PersistenceStorageType:      "local",
 		PersistenceStorageLocalPath: "./persistence_storage",
 	})
 
 	key := strings.RandomString(10)
 
-	if err := p.Save("tenant_id", "plugin_checksum", key, []byte("data")); err != nil {
+	if err := persistence.Save("tenant_id", "plugin_checksum", key, []byte("data")); err != nil {
 		t.Fatalf("Failed to save data: %v", err)
 	}
 
-	if err := p.Delete("tenant_id", "plugin_checksum", key); err != nil {
+	if err := persistence.Delete("tenant_id", "plugin_checksum", key); err != nil {
 		t.Fatalf("Failed to delete data: %v", err)
 	}
 

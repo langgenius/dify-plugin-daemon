@@ -16,12 +16,16 @@ func InvokeTool(
 	max_timeout_seconds int,
 ) {
 	// create session
-	session := createSession(
+	session, err := createSession(
 		r,
 		access_types.PLUGIN_ACCESS_TYPE_TOOL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL,
 		ctx.GetString("cluster_id"),
 	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 	defer session.Close()
 
 	baseSSEService(
@@ -39,12 +43,16 @@ func ValidateToolCredentials(
 	max_timeout_seconds int,
 ) {
 	// create session
-	session := createSession(
+	session, err := createSession(
 		r,
 		access_types.PLUGIN_ACCESS_TYPE_TOOL,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
 		ctx.GetString("cluster_id"),
 	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 	defer session.Close()
 
 	baseSSEService(

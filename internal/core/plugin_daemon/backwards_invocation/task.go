@@ -1,6 +1,7 @@
 package backwards_invocation
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -169,28 +170,31 @@ func prepareDifyInvocationArguments(
 var (
 	dispatchMapping = map[dify_invocation.InvokeType]func(handle *BackwardsInvocation){
 		dify_invocation.INVOKE_TYPE_TOOL: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeToolRequest](handle, executeDifyInvocationToolTask)
+			genericDispatchTask(handle, executeDifyInvocationToolTask)
 		},
 		dify_invocation.INVOKE_TYPE_LLM: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeLLMRequest](handle, executeDifyInvocationLLMTask)
+			genericDispatchTask(handle, executeDifyInvocationLLMTask)
 		},
 		dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeTextEmbeddingRequest](handle, executeDifyInvocationTextEmbeddingTask)
+			genericDispatchTask(handle, executeDifyInvocationTextEmbeddingTask)
 		},
 		dify_invocation.INVOKE_TYPE_RERANK: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeRerankRequest](handle, executeDifyInvocationRerankTask)
+			genericDispatchTask(handle, executeDifyInvocationRerankTask)
 		},
 		dify_invocation.INVOKE_TYPE_TTS: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeTTSRequest](handle, executeDifyInvocationTTSTask)
+			genericDispatchTask(handle, executeDifyInvocationTTSTask)
 		},
 		dify_invocation.INVOKE_TYPE_SPEECH2TEXT: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeSpeech2TextRequest](handle, executeDifyInvocationSpeech2TextTask)
+			genericDispatchTask(handle, executeDifyInvocationSpeech2TextTask)
 		},
 		dify_invocation.INVOKE_TYPE_MODERATION: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeModerationRequest](handle, executeDifyInvocationModerationTask)
+			genericDispatchTask(handle, executeDifyInvocationModerationTask)
 		},
 		dify_invocation.INVOKE_TYPE_APP: func(handle *BackwardsInvocation) {
-			genericDispatchTask[dify_invocation.InvokeAppRequest](handle, executeDifyInvocationAppTask)
+			genericDispatchTask(handle, executeDifyInvocationAppTask)
+		},
+		dify_invocation.INVOKE_TYPE_STORAGE: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationStorageTask)
 		},
 	}
 )
@@ -355,4 +359,64 @@ func executeDifyInvocationAppTask(
 	response.Wrap(func(t map[string]any) {
 		handle.WriteResponse("stream", t)
 	})
+}
+
+func executeDifyInvocationStorageTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeStorageRequest,
+) {
+	if handle.session == nil {
+		handle.WriteError(fmt.Errorf("session not found"))
+		return
+	}
+
+	persistence := handle.session.Storage()
+	if persistence == nil {
+		handle.WriteError(fmt.Errorf("persistence not found"))
+		return
+	}
+
+	tenant_id, err := handle.TenantID()
+	if err != nil {
+		handle.WriteError(fmt.Errorf("get tenant id failed: %s", err.Error()))
+		return
+	}
+
+	plugin_id := handle.session.PluginIdentity
+
+	if request.Opt == dify_invocation.STORAGE_OPT_GET {
+		data, err := persistence.Load(tenant_id, plugin_id, request.Key)
+		if err != nil {
+			handle.WriteError(fmt.Errorf("load data failed: %s", err.Error()))
+			return
+		}
+
+		handle.WriteResponse("struct", map[string]any{
+			"data": hex.EncodeToString(data),
+		})
+	} else if request.Opt == dify_invocation.STORAGE_OPT_SET {
+		data, err := hex.DecodeString(request.Value)
+		if err != nil {
+			handle.WriteError(fmt.Errorf("decode data failed: %s", err.Error()))
+			return
+		}
+
+		if err := persistence.Save(tenant_id, plugin_id, request.Key, data); err != nil {
+			handle.WriteError(fmt.Errorf("save data failed: %s", err.Error()))
+			return
+		}
+
+		handle.WriteResponse("struct", map[string]any{
+			"data": "ok",
+		})
+	} else if request.Opt == dify_invocation.STORAGE_OPT_DEL {
+		if err := persistence.Delete(tenant_id, plugin_id, request.Key); err != nil {
+			handle.WriteError(fmt.Errorf("delete data failed: %s", err.Error()))
+			return
+		}
+
+		handle.WriteResponse("struct", map[string]any{
+			"data": "ok",
+		})
+	}
 }

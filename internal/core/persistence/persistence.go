@@ -16,21 +16,21 @@ const (
 	CACHE_KEY_PREFIX = "persistence:cache"
 )
 
-func (c *Persistence) getCacheKey(tenant_id string, plugin_checksum string, key string) string {
-	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenant_id, plugin_checksum, key)
+func (c *Persistence) getCacheKey(tenant_id string, plugin_identity string, key string) string {
+	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenant_id, plugin_identity, key)
 }
 
-func (c *Persistence) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
+func (c *Persistence) Save(tenant_id string, plugin_identity string, key string, data []byte) error {
 	if len(key) > 64 {
 		return fmt.Errorf("key length must be less than 64 characters")
 	}
 
-	return c.storage.Save(tenant_id, plugin_checksum, key, data)
+	return c.storage.Save(tenant_id, plugin_identity, key, data)
 }
 
-func (c *Persistence) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
+func (c *Persistence) Load(tenant_id string, plugin_identity string, key string) ([]byte, error) {
 	// check if the key exists in cache
-	h, err := cache.GetString(c.getCacheKey(tenant_id, plugin_checksum, key))
+	h, err := cache.GetString(c.getCacheKey(tenant_id, plugin_identity, key))
 	if err != nil && err != cache.ErrNotFound {
 		return nil, err
 	}
@@ -39,22 +39,22 @@ func (c *Persistence) Load(tenant_id string, plugin_checksum string, key string)
 	}
 
 	// load from storage
-	data, err := c.storage.Load(tenant_id, plugin_checksum, key)
+	data, err := c.storage.Load(tenant_id, plugin_identity, key)
 	if err != nil {
 		return nil, err
 	}
 
 	// add to cache
-	cache.Store(c.getCacheKey(tenant_id, plugin_checksum, key), hex.EncodeToString(data), time.Minute*5)
+	cache.Store(c.getCacheKey(tenant_id, plugin_identity, key), hex.EncodeToString(data), time.Minute*5)
 
 	return data, nil
 }
 
-func (c *Persistence) Delete(tenant_id string, plugin_checksum string, key string) error {
+func (c *Persistence) Delete(tenant_id string, plugin_identity string, key string) error {
 	// delete from cache and storage
-	err := cache.Del(c.getCacheKey(tenant_id, plugin_checksum, key))
+	err := cache.Del(c.getCacheKey(tenant_id, plugin_identity, key))
 	if err != nil {
 		return err
 	}
-	return c.storage.Delete(tenant_id, plugin_checksum, key)
+	return c.storage.Delete(tenant_id, plugin_identity, key)
 }

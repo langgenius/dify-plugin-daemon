@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -17,7 +18,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func Endpoint(ctx *gin.Context, endpoint *models.Endpoint, path string) {
+func Endpoint(
+	ctx *gin.Context,
+	endpoint *models.Endpoint,
+	path string,
+) {
 	req := ctx.Request.Clone(context.Background())
 	req.URL.Path = path
 
@@ -36,6 +41,12 @@ func Endpoint(ctx *gin.Context, endpoint *models.Endpoint, path string) {
 		return
 	}
 
+	persistence := persistence.GetPersistence()
+	if persistence == nil {
+		ctx.JSON(500, gin.H{"error": "persistence not found"})
+		return
+	}
+
 	session := session_manager.NewSession(
 		endpoint.TenantID,
 		"",
@@ -44,6 +55,7 @@ func Endpoint(ctx *gin.Context, endpoint *models.Endpoint, path string) {
 		access_types.PLUGIN_ACCESS_TYPE_Endpoint,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
 		runtime.Configuration(),
+		persistence,
 	)
 	defer session.Close()
 
