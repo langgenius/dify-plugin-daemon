@@ -36,10 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Golang 1.20
+      - name: Setup Golang 1.20.6
         uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
+          go-version: '1.21.6'
 
       - name: Setup License
         run: go run cmd/license/generate/main.go
