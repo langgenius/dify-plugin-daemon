@@ -31,6 +31,18 @@ func StreamResponse[T any](method string, path string, options ...http_requests.
 	return http_requests.RequestAndParseStream[T](client, difyPath(path), method, options...)
 }
 
+func StreamResponseMap(method string, path string, options ...http_requests.HttpOptions) (*stream.StreamResponse[map[string]any], error) {
+	options = append(
+		options, http_requests.HttpHeader(map[string]string{
+			"X-Inner-Api-Key": PLUGIN_INNER_API_KEY,
+		}),
+		http_requests.HttpWriteTimeout(5000),
+		http_requests.HttpReadTimeout(60000),
+	)
+
+	return http_requests.RequestAndParseStreamMap(client, difyPath(path), method, options...)
+}
+
 func InvokeLLM(payload *InvokeLLMRequest) (*stream.StreamResponse[model_entities.LLMResultChunk], error) {
 	return StreamResponse[model_entities.LLMResultChunk]("POST", "invoke/llm", http_requests.HttpPayloadJson(payload))
 }
@@ -60,5 +72,5 @@ func InvokeTool(payload *InvokeToolRequest) (*stream.StreamResponse[tool_entitie
 }
 
 func InvokeApp(payload *InvokeAppRequest) (*stream.StreamResponse[map[string]any], error) {
-	return StreamResponse[map[string]any]("POST", "invoke/app", http_requests.HttpPayloadJson(payload))
+	return StreamResponseMap("POST", "invoke/app", http_requests.HttpPayloadJson(payload))
 }

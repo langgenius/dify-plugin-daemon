@@ -126,6 +126,64 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	return ch, nil
 }
 
+// TODO: improve this, deduplicate code
+func RequestAndParseStreamMap(client *http.Client, url string, method string, options ...HttpOptions) (*stream.StreamResponse[map[string]any], error) {
+	resp, err := Request(client, url, method, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		error_text, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, error_text)
+	}
+
+	ch := stream.NewStreamResponse[map[string]any](1024)
+
+	// get read timeout
+	read_timeout := int64(60000)
+	for _, option := range options {
+		if option.Type == "read_timeout" {
+			read_timeout = option.Value.(int64)
+			break
+		}
+	}
+	time.AfterFunc(time.Millisecond*time.Duration(read_timeout), func() {
+		// close the response body if timeout
+		resp.Body.Close()
+	})
+
+	routine.Submit(func() {
+		scanner := bufio.NewScanner(resp.Body)
+		defer resp.Body.Close()
+
+		for scanner.Scan() {
+			data := scanner.Bytes()
+			if len(data) == 0 {
+				continue
+			}
+
+			if bytes.HasPrefix(data, []byte("data: ")) {
+				// split
+				data = data[6:]
+			}
+
+			// unmarshal
+			t, err := parser.UnmarshalJsonBytes2Map(data)
+			if err != nil {
+				continue
+			}
+
+			ch.Write(t)
+		}
+
+		ch.Close()
+	})
+
+	return ch, nil
+}
+
 func GetAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.StreamResponse[T], error) {
 	return RequestAndParseStream[T](client, url, "GET", options...)
 }
