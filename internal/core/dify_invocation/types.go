@@ -99,7 +99,6 @@ type InvokeStorageRequest struct {
 
 type InvokeAppRequest struct {
 	BaseInvokeDifyRequest
-	requests.BaseRequestInvokeModel
 
 	InvokeAppSchema
 }

@@ -114,8 +114,7 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			// unmarshal
 			t, err := parser.UnmarshalJsonBytes[T](data)
 			if err != nil {
-				ch.WriteError(err)
-				break
+				continue
 			}
 
 			ch.Write(t)
