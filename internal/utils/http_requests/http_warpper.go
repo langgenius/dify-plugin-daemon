@@ -23,6 +23,11 @@ func parseJsonBody(resp *http.Response, ret interface{}) error {
 func RequestAndParse[T any](client *http.Client, url string, method string, options ...HttpOptions) (*T, error) {
 	var ret T
 
+	// check if ret is a map, if so, create a new map
+	if _, ok := any(ret).(map[string]any); ok {
+		ret = *new(T)
+	}
+
 	resp, err := Request(client, url, method, options...)
 	if err != nil {
 		return nil, err

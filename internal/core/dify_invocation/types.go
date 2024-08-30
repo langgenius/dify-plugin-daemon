@@ -3,6 +3,7 @@ package dify_invocation
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/app_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
@@ -26,6 +27,7 @@ const (
 	INVOKE_TYPE_NODE           InvokeType = "node"
 	INVOKE_TYPE_APP            InvokeType = "app"
 	INVOKE_TYPE_STORAGE        InvokeType = "storage"
+	INVOKE_TYPE_ENCRYPT        InvokeType = "encrypt"
 )
 
 type InvokeLLMRequest struct {
@@ -101,6 +103,34 @@ type InvokeAppRequest struct {
 	BaseInvokeDifyRequest
 
 	InvokeAppSchema
+}
+
+type EncryptOpt string
+
+const (
+	ENCRYPT_OPT_ENCRYPT EncryptOpt = "encrypt"
+	ENCRYPT_OPT_DECRYPT EncryptOpt = "decrypt"
+)
+
+func isEncryptOpt(fl validator.FieldLevel) bool {
+	opt := EncryptOpt(fl.Field().String())
+	return opt == ENCRYPT_OPT_ENCRYPT || opt == ENCRYPT_OPT_DECRYPT
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("encrypt_opt", isEncryptOpt)
+}
+
+type InvokeEncryptSchema struct {
+	Opt    EncryptOpt                                `json:"opt" validate:"required,encrypt_opt"`
+	Data   map[string]any                            `json:"data" validate:"omitempty"`
+	Config map[string]plugin_entities.ProviderConfig `json:"config" validate:"omitempty,dive"`
+}
+
+type InvokeEncryptRequest struct {
+	BaseInvokeDifyRequest
+
+	InvokeEncryptSchema
 }
 
 type InvokeToolRequest struct {

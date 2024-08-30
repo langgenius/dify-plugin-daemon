@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
@@ -15,6 +16,11 @@ func UnmarshalJsonBytes[T any](data []byte) (T, error) {
 	err := json.Unmarshal(data, &result)
 	if err != nil {
 		return result, err
+	}
+
+	// skip validate if T is a map
+	if reflect.TypeOf(result).Kind() == reflect.Map {
+		return result, nil
 	}
 
 	if err := validators.GlobalEntitiesValidator.Struct(&result); err != nil {
