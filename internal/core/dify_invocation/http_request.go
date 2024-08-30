@@ -64,6 +64,10 @@ func InvokeApp(payload *InvokeAppRequest) (*stream.StreamResponse[map[string]any
 }
 
 func InvokeEncrypt(payload *InvokeEncryptRequest) (map[string]any, error) {
+	if !payload.EncryptRequired(payload.Data) {
+		return payload.Data, nil
+	}
+
 	data, err := Request[map[string]any]("POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
 	if err != nil {
 		return nil, err

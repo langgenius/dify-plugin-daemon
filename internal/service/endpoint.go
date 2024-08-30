@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -40,6 +41,34 @@ func Endpoint(
 		return
 	}
 
+	// fetch endpoint declaration
+	endpoint_declaration := runtime.Configuration().Endpoint
+	if endpoint_declaration == nil {
+		ctx.JSON(404, gin.H{"error": "endpoint declaration not found"})
+		return
+	}
+
+	// decrypt settings
+	settings, err := dify_invocation.InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
+			TenantId: endpoint.TenantID,
+			UserId:   "",
+			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
+		},
+		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
+			Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
+			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
+			Identity:  endpoint.ID,
+			Data:      endpoint.GetSettings(),
+			Config:    endpoint_declaration.Settings,
+		},
+	})
+
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": "failed to decrypt data"})
+		return
+	}
+
 	session := session_manager.NewSession(
 		endpoint.TenantID,
 		"",
@@ -53,9 +82,12 @@ func Endpoint(
 
 	session.BindRuntime(runtime)
 
-	status_code, headers, response, err := plugin_daemon.InvokeEndpoint(session, &requests.RequestInvokeEndpoint{
-		RawHttpRequest: hex.EncodeToString(buffer.Bytes()),
-	})
+	status_code, headers, response, err := plugin_daemon.InvokeEndpoint(
+		session, &requests.RequestInvokeEndpoint{
+			RawHttpRequest: hex.EncodeToString(buffer.Bytes()),
+			Settings:       settings,
+		},
+	)
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return

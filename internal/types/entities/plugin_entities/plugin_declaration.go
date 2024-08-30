@@ -127,15 +127,18 @@ type PluginExecution struct {
 }
 
 type PluginDeclaration struct {
-	Version   string                    `json:"version" yaml:"version" validate:"required,version"`
-	Type      DifyManifestType          `json:"type" yaml:"type" validate:"required,eq=plugin"`
-	Author    string                    `json:"author" yaml:"author" validate:"required,max=128"`
-	Name      string                    `json:"name" yaml:"name" validate:"required,max=128" enum:"plugin"`
-	CreatedAt time.Time                 `json:"created_at" yaml:"created_at" validate:"required"`
-	Resource  PluginResourceRequirement `json:"resource" yaml:"resource" validate:"required"`
-	Plugins   []string                  `json:"plugins" yaml:"plugins" validate:"required,dive,max=128"`
-	Execution PluginExecution           `json:"execution" yaml:"execution" validate:"required"`
-	Meta      PluginMeta                `json:"meta" yaml:"meta" validate:"required"`
+	Version   string                       `json:"version" yaml:"version" validate:"required,version"`
+	Type      DifyManifestType             `json:"type" yaml:"type" validate:"required,eq=plugin"`
+	Author    string                       `json:"author" yaml:"author" validate:"required,max=128"`
+	Name      string                       `json:"name" yaml:"name" validate:"required,max=128" enum:"plugin"`
+	CreatedAt time.Time                    `json:"created_at" yaml:"created_at" validate:"required"`
+	Resource  PluginResourceRequirement    `json:"resource" yaml:"resource" validate:"required"`
+	Plugins   []string                     `json:"plugins" yaml:"plugins" validate:"required,dive,max=128"`
+	Execution PluginExecution              `json:"execution" yaml:"execution" validate:"required"`
+	Meta      PluginMeta                   `json:"meta" yaml:"meta" validate:"required"`
+	Endpoint  *EndpointProviderDeclaration `json:"endpoints" validate:"omitempty"`
+	Models    *ModelProviderConfiguration  `json:"models" validate:"omitempty"`
+	Tools     *ToolProviderConfiguration   `json:"tools" validate:"omitempty"`
 }
 
 var (

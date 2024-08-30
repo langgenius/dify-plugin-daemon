@@ -117,20 +117,51 @@ func isEncryptOpt(fl validator.FieldLevel) bool {
 	return opt == ENCRYPT_OPT_ENCRYPT || opt == ENCRYPT_OPT_DECRYPT
 }
 
+type EncryptNamespace string
+
+const (
+	ENCRYPT_NAMESPACE_ENDPOINT EncryptNamespace = "endpoint"
+)
+
+func isEncryptNamespace(fl validator.FieldLevel) bool {
+	opt := EncryptNamespace(fl.Field().String())
+	return opt == ENCRYPT_NAMESPACE_ENDPOINT
+}
+
 func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("encrypt_opt", isEncryptOpt)
+	validators.GlobalEntitiesValidator.RegisterValidation("encrypt_namespace", isEncryptNamespace)
 }
 
 type InvokeEncryptSchema struct {
-	Opt    EncryptOpt                                `json:"opt" validate:"required,encrypt_opt"`
-	Data   map[string]any                            `json:"data" validate:"omitempty"`
-	Config map[string]plugin_entities.ProviderConfig `json:"config" validate:"omitempty,dive"`
+	Opt       EncryptOpt                                `json:"opt" validate:"required,encrypt_opt"`
+	Namespace EncryptNamespace                          `json:"namespace" validate:"required,encrypt_namespace"`
+	Identity  string                                    `json:"identity" validate:"required"`
+	Data      map[string]any                            `json:"data" validate:"omitempty"`
+	Config    map[string]plugin_entities.ProviderConfig `json:"config" validate:"omitempty,dive"`
 }
 
 type InvokeEncryptRequest struct {
 	BaseInvokeDifyRequest
 
 	InvokeEncryptSchema
+}
+
+func (r *InvokeEncryptRequest) EncryptRequired(settings map[string]any) bool {
+	if r.Config == nil {
+		return false
+	}
+
+	// filter out which key needs encrypt
+	for k := range settings {
+		if config, ok := r.Config[k]; ok {
+			if config.Type == plugin_entities.CONFIG_TYPE_SECRET_INPUT {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 type InvokeToolRequest struct {

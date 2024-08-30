@@ -35,7 +35,10 @@ func init() {
 }
 
 type EndpointDeclaration struct {
-	Path     string                    `json:"path" yaml:"path" validate:"required"`
-	Method   EndpointMethod            `json:"method" yaml:"method" validate:"required,is_available_endpoint_method"`
+	Path   string         `json:"path" yaml:"path" validate:"required"`
+	Method EndpointMethod `json:"method" yaml:"method" validate:"required,is_available_endpoint_method"`
+}
+
+type EndpointProviderDeclaration struct {
 	Settings map[string]ProviderConfig `json:"settings" validate:"omitempty,dive"`
 }
