@@ -135,10 +135,13 @@ func TestAcceptConnection(t *testing.T) {
 
 	// send handshake
 	handle_shake_message := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
-		Version:   "1.0.0",
-		Type:      plugin_entities.PluginType,
-		Author:    "Yeuoly",
-		Name:      "ci_test",
+		Version: "1.0.0",
+		Type:    plugin_entities.PluginType,
+		Author:  "Yeuoly",
+		Name:    "ci_test",
+		Label: plugin_entities.I18nObject{
+			EnUS: "ci_test",
+		},
 		CreatedAt: time.Now(),
 		Resource: plugin_entities.PluginResourceRequirement{
 			Memory:     1,

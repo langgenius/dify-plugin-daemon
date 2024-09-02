@@ -42,7 +42,10 @@ func getRandomPluginRuntime() fakePlugin {
 	return fakePlugin{
 		PluginRuntime: plugin_entities.PluginRuntime{
 			Config: plugin_entities.PluginDeclaration{
-				Name:      uuid.New().String(),
+				Name: uuid.New().String(),
+				Label: plugin_entities.I18nObject{
+					EnUS: "label",
+				},
 				Version:   "0.0.1",
 				Type:      plugin_entities.PluginType,
 				Author:    "Yeuoly",

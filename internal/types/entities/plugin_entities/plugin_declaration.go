@@ -136,6 +136,7 @@ type PluginDeclaration struct {
 	Type      DifyManifestType             `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
 	Author    string                       `json:"author" yaml:"author,omitempty" validate:"required,max=128"`
 	Name      string                       `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
+	Label     I18nObject                   `json:"label" yaml:"label" validate:"required"`
 	CreatedAt time.Time                    `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
 	Resource  PluginResourceRequirement    `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins   []string                     `json:"plugins" yaml:"plugins,omitempty" validate:"required,dive,max=128"`
@@ -147,13 +148,19 @@ type PluginDeclaration struct {
 }
 
 var (
-	plugin_declaration_version_regex = regexp.MustCompile(`^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$`)
+	PluginNameRegex               = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,128}$`)
+	PluginDeclarationVersionRegex = regexp.MustCompile(`^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$`)
 )
 
 func isVersion(fl validator.FieldLevel) bool {
 	// version format must be like x.x.x, at least 2 digits and most 5 digits, and it can be ends with a letter
 	value := fl.Field().String()
-	return plugin_declaration_version_regex.MatchString(value)
+	return PluginDeclarationVersionRegex.MatchString(value)
+}
+
+func isPluginName(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return PluginNameRegex.MatchString(value)
 }
 
 func (p *PluginDeclaration) Identity() string {
@@ -179,6 +186,7 @@ func (p *PluginDeclaration) ManifestValidate() error {
 func init() {
 	// init validator
 	validators.GlobalEntitiesValidator.RegisterValidation("version", isVersion)
+	validators.GlobalEntitiesValidator.RegisterValidation("plugin_name", isPluginName)
 }
 
 func UnmarshalPluginDeclarationFromYaml(data []byte) (*PluginDeclaration, error) {

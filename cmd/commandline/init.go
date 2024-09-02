@@ -95,6 +95,9 @@ func (m model) createPlugin() {
 		Resource: plugin_entities.PluginResourceRequirement{
 			Permission: &permission,
 		},
+		Label: plugin_entities.I18nObject{
+			EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+		},
 	}
 
 	manifest.Meta = plugin_entities.PluginMeta{

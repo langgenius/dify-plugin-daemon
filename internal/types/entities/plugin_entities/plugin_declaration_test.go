@@ -10,9 +10,12 @@ import (
 
 func preparePluginDeclaration() PluginDeclaration {
 	return PluginDeclaration{
-		Version:   "0.0.1",
-		Type:      PluginType,
-		Name:      "test",
+		Version: "0.0.1",
+		Type:    PluginType,
+		Name:    "test",
+		Label: I18nObject{
+			EnUS: "test",
+		},
 		Author:    "test",
 		CreatedAt: time.Now(),
 		Resource: PluginResourceRequirement{

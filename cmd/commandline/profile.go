@@ -5,6 +5,7 @@ import (
 
 	ti "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 type profile struct {
@@ -47,9 +48,12 @@ func (p profile) View() string {
 	return s
 }
 
-func (p *profile) checkEmpty() bool {
+func (p *profile) checkRule() bool {
 	if p.inputs[p.cursor].Value() == "" {
 		p.warning = "Name and author cannot be empty"
+		return false
+	} else if p.cursor == 0 && !plugin_entities.PluginNameRegex.MatchString(p.inputs[p.cursor].Value()) {
+		p.warning = "Plugin name must be 1-128 characters long, and can only contain letters, numbers, dashes and underscores"
 		return false
 	} else {
 		p.warning = ""
@@ -67,7 +71,7 @@ func (p profile) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 			return p, SUB_MENU_EVENT_NONE, tea.Quit
 		case "down":
 			// check if empty
-			if !p.checkEmpty() {
+			if !p.checkRule() {
 				return p, SUB_MENU_EVENT_NONE, nil
 			}
 
@@ -77,7 +81,7 @@ func (p profile) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 				p.cursor = 0
 			}
 		case "up":
-			if !p.checkEmpty() {
+			if !p.checkRule() {
 				return p, SUB_MENU_EVENT_NONE, nil
 			}
 
@@ -86,7 +90,7 @@ func (p profile) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 				p.cursor = len(p.inputs) - 1
 			}
 		case "enter":
-			if !p.checkEmpty() {
+			if !p.checkRule() {
 				return p, SUB_MENU_EVENT_NONE, nil
 			}
 
