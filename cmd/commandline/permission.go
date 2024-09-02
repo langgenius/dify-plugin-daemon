@@ -40,6 +40,10 @@ func newPermission() permission {
 	}
 }
 
+func (p permission) Permission() plugin_entities.PluginPermissionRequirement {
+	return p.permission
+}
+
 func (p permission) View() string {
 	cursor := func(key string) string {
 		if p.cursor == key {

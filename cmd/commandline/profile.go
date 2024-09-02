@@ -10,6 +10,8 @@ import (
 type profile struct {
 	cursor int
 	inputs []ti.Model
+
+	warning string
 }
 
 func newProfile() profile {
@@ -38,7 +40,21 @@ func (p profile) Author() string {
 }
 
 func (p profile) View() string {
-	return fmt.Sprintf("Edit profile of the plugin\n%s\n%s\n", p.inputs[0].View(), p.inputs[1].View())
+	s := fmt.Sprintf("Edit profile of the plugin\n%s\n%s\n", p.inputs[0].View(), p.inputs[1].View())
+	if p.warning != "" {
+		s += fmt.Sprintf("\033[31m%s\033[0m\n", p.warning)
+	}
+	return s
+}
+
+func (p *profile) checkEmpty() bool {
+	if p.inputs[p.cursor].Value() == "" {
+		p.warning = "Name and author cannot be empty"
+		return false
+	} else {
+		p.warning = ""
+	}
+	return true
 }
 
 func (p profile) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
@@ -47,21 +63,33 @@ func (p profile) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c":
 			return p, SUB_MENU_EVENT_NONE, tea.Quit
 		case "down":
+			// check if empty
+			if !p.checkEmpty() {
+				return p, SUB_MENU_EVENT_NONE, nil
+			}
+
 			// focus next
 			p.cursor++
 			if p.cursor >= len(p.inputs) {
 				p.cursor = 0
 			}
 		case "up":
-			// focus previous
+			if !p.checkEmpty() {
+				return p, SUB_MENU_EVENT_NONE, nil
+			}
+
 			p.cursor--
 			if p.cursor < 0 {
 				p.cursor = len(p.inputs) - 1
 			}
 		case "enter":
+			if !p.checkEmpty() {
+				return p, SUB_MENU_EVENT_NONE, nil
+			}
+
 			// submit
 			if p.cursor == len(p.inputs)-1 {
 				return p, SUB_MENU_EVENT_NEXT, nil

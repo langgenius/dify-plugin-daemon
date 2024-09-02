@@ -18,12 +18,12 @@ const (
 )
 
 type PluginPermissionRequirement struct {
-	Tool     *PluginPermissionToolRequirement     `json:"tool" yaml:"tool" validate:"omitempty"`
-	Model    *PluginPermissionModelRequirement    `json:"model" yaml:"model" validate:"omitempty"`
-	Node     *PluginPermissionNodeRequirement     `json:"node" yaml:"node" validate:"omitempty"`
-	Endpoint *PluginPermissionEndpointRequirement `json:"endpoint" yaml:"endpoint" validate:"omitempty"`
-	App      *PluginPermissionAppRequirement      `json:"app" yaml:"app" validate:"omitempty"`
-	Storage  *PluginPermissionStorageRequirement  `json:"storage" yaml:"storage" validate:"omitempty"`
+	Tool     *PluginPermissionToolRequirement     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+	Model    *PluginPermissionModelRequirement    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
+	Node     *PluginPermissionNodeRequirement     `json:"node,omitempty" yaml:"node,omitempty" validate:"omitempty"`
+	Endpoint *PluginPermissionEndpointRequirement `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
+	App      *PluginPermissionAppRequirement      `json:"app,omitempty" yaml:"app,omitempty" validate:"omitempty"`
+	Storage  *PluginPermissionStorageRequirement  `json:"storage,omitempty" yaml:"storage,omitempty" validate:"omitempty"`
 }
 
 func (p *PluginPermissionRequirement) AllowInvokeTool() bool {
@@ -109,7 +109,7 @@ type PluginResourceRequirement struct {
 	// Memory in bytes
 	Memory int64 `json:"memory" yaml:"memory" validate:"required"`
 	// Permission requirements
-	Permission *PluginPermissionRequirement `json:"permission" yaml:"permission" validate:"omitempty"`
+	Permission *PluginPermissionRequirement `json:"permission,omitempty" yaml:"permission,omitempty" validate:"omitempty"`
 }
 
 type PluginDeclarationPlatformArch string
@@ -132,18 +132,18 @@ type PluginExecution struct {
 }
 
 type PluginDeclaration struct {
-	Version   string                       `json:"version" yaml:"version" validate:"required,version"`
-	Type      DifyManifestType             `json:"type" yaml:"type" validate:"required,eq=plugin"`
-	Author    string                       `json:"author" yaml:"author" validate:"required,max=128"`
-	Name      string                       `json:"name" yaml:"name" validate:"required,max=128" enum:"plugin"`
-	CreatedAt time.Time                    `json:"created_at" yaml:"created_at" validate:"required"`
-	Resource  PluginResourceRequirement    `json:"resource" yaml:"resource" validate:"required"`
-	Plugins   []string                     `json:"plugins" yaml:"plugins" validate:"required,dive,max=128"`
-	Execution PluginExecution              `json:"execution" yaml:"execution" validate:"required"`
-	Meta      PluginMeta                   `json:"meta" yaml:"meta" validate:"required"`
-	Endpoint  *EndpointProviderDeclaration `json:"endpoints" validate:"omitempty"`
-	Model     *ModelProviderConfiguration  `json:"models" validate:"omitempty"`
-	Tool      *ToolProviderConfiguration   `json:"tools" validate:"omitempty"`
+	Version   string                       `json:"version" yaml:"version,omitempty" validate:"required,version"`
+	Type      DifyManifestType             `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
+	Author    string                       `json:"author" yaml:"author,omitempty" validate:"required,max=128"`
+	Name      string                       `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
+	CreatedAt time.Time                    `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
+	Resource  PluginResourceRequirement    `json:"resource" yaml:"resource,omitempty" validate:"required"`
+	Plugins   []string                     `json:"plugins" yaml:"plugins,omitempty" validate:"required,dive,max=128"`
+	Execution PluginExecution              `json:"execution" yaml:"execution,omitempty" validate:"required"`
+	Meta      PluginMeta                   `json:"meta" yaml:"meta,omitempty" validate:"required"`
+	Endpoint  *EndpointProviderDeclaration `json:"-" yaml:"-" validate:"omitempty"`
+	Model     *ModelProviderConfiguration  `json:"-" yaml:"-" validate:"omitempty"`
+	Tool      *ToolProviderConfiguration   `json:"-" yaml:"-" validate:"omitempty"`
 }
 
 var (

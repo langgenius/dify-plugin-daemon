@@ -31,7 +31,7 @@ func (l language) View() string {
 	s := "Select the language you want to use for plugin development\n"
 	for i, language := range languages {
 		if i == l.cursor {
-			s += fmt.Sprintf("-> %s\n", language)
+			s += fmt.Sprintf("\033[32m-> %s\033[0m\n", language)
 		} else {
 			s += fmt.Sprintf("  %s\n", language)
 		}
@@ -57,6 +57,7 @@ func (l language) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 			}
 		case "enter":
 			if l.cursor != 0 {
+				l.cursor = 0
 				return l, SUB_MENU_EVENT_NONE, nil
 			}
 
