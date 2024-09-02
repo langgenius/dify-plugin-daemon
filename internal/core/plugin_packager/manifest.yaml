@@ -13,8 +13,7 @@ resource:
       enabled: true
       llm: true
 plugins:
-  - "endpoints/neko.yaml"
-  - "endpoints/duck.yaml"
+  - "neko.yaml"
 execution:
   install: install.sh
   launch: launch.sh

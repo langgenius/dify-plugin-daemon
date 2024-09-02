@@ -14,6 +14,9 @@ import (
 //go:embed manifest.yaml
 var manifest []byte
 
+//go:embed neko.yaml
+var neko []byte
+
 func TestPackagerAndVerifier(t *testing.T) {
 	// create a temp directory
 	os.RemoveAll("temp")
@@ -29,6 +32,11 @@ func TestPackagerAndVerifier(t *testing.T) {
 	// create manifest
 	if err := os.WriteFile("temp/manifest.yaml", manifest, 0644); err != nil {
 		t.Errorf("failed to write manifest: %s", err.Error())
+		return
+	}
+
+	if err := os.WriteFile("temp/neko.yaml", neko, 0644); err != nil {
+		t.Errorf("failed to write neko: %s", err.Error())
 		return
 	}
 
