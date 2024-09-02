@@ -210,7 +210,7 @@ type ModelProviderConfiguration struct {
 	Models                   []string                         `json:"models" validate:"required,lte=1024"`
 	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" validate:"omitempty"`
 	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" validate:"omitempty"`
-	ModelDeclarations        []ModelConfiguration             `json:"model_declarations" validate:"required,lte=1024,dive"`
+	ModelDeclarations        []ModelConfiguration             `json:"model_declarations"`
 }
 
 func init() {

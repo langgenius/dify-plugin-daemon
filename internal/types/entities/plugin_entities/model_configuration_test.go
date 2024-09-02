@@ -115,39 +115,7 @@ provider_credential_schema:
         zh_Hans: 在此输入您的 API Base, 如：https://api.openai.com
         en_US: Enter your API Base, e.g. https://api.openai.com
 models:
-  - model: gpt-3.5-turbo-16k-0613
-    label:
-      zh_Hans: gpt-3.5-turbo-16k-0613
-      en_US: gpt-3.5-turbo-16k-0613
-    model_type: llm
-    features:
-      - multi-tool-call
-      - agent-thought
-      - stream-tool-call
-    model_properties:
-      mode: chat
-      context_size: 16385
-    parameter_rules:
-      - name: temperature
-        use_template: temperature
-      - name: top_p
-        use_template: top_p
-      - name: presence_penalty
-        use_template: presence_penalty
-      - name: frequency_penalty
-        use_template: frequency_penalty
-      - name: max_tokens
-        use_template: max_tokens
-        default: 512
-        min: 1
-        max: 16385
-      - name: response_format
-        use_template: response_format
-    pricing:
-      input: '0.003'
-      output: '0.004'
-      unit: '0.001'
-      currency: USD
+  - plugin/123
     `
 )
 
@@ -161,5 +129,4 @@ func TestFullFunctionModelProvider_Validate(t *testing.T) {
 	if err != nil {
 		t.Errorf("UnmarshalModelProviderConfiguration() error = %v", err)
 	}
-
 }
