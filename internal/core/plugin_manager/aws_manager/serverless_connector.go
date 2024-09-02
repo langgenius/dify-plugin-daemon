@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
@@ -20,9 +21,13 @@ type LambdaFunction struct {
 
 // Ping the serverless connector, return error if failed
 func ping() error {
+	url, err := url.JoinPath(baseurl.String(), "/ping")
+	if err != nil {
+		return err
+	}
 	response, err := http_requests.PostAndParse[entities.GenericResponse[string]](
 		client,
-		"/ping",
+		url,
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
@@ -54,9 +59,14 @@ func fetchLambda(identity string, checksum string) (*LambdaFunction, error) {
 		},
 	}
 
+	url, err := url.JoinPath(baseurl.String(), "/v1/lambda/fetch")
+	if err != nil {
+		return nil, err
+	}
+
 	response, err := http_requests.PostAndParse[entities.GenericResponse[LambdaFunction]](
 		client,
-		"/v1/lambda/fetch",
+		url,
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
@@ -95,9 +105,14 @@ type LaunchAWSLambdaFunctionResponse struct {
 // and build it a docker image, then run it on serverless platform like AWS Lambda
 // it returns a event stream, the caller should consider it as a async operation
 func launchLambda(identity string, checksum string, context_tar io.Reader) (*stream.StreamResponse[LaunchAWSLambdaFunctionResponse], error) {
+	url, err := url.JoinPath(baseurl.String(), "/v1/lambda/launch")
+	if err != nil {
+		return nil, err
+	}
+
 	response, err := http_requests.PostAndParseStream[LaunchAWSLambdaFunctionResponse](
 		client,
-		"/v1/lambda/launch",
+		url,
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
