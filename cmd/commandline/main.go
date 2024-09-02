@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,15 +22,6 @@ var (
 		Short: "Plugin",
 		Long:  "Plugin related commands",
 	}
-
-	pluginInitCommand = &cobra.Command{
-		Use:   "init",
-		Short: "Init",
-		Long:  "Init",
-		Run: func(c *cobra.Command, args []string) {
-			cmd.InitPlugin()
-		},
-	}
 )
 
 func init() {
@@ -39,7 +29,6 @@ func init() {
 
 	rootCommand.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dify.yaml)")
 	rootCommand.AddCommand(pluginCommand)
-	pluginCommand.AddCommand(pluginInitCommand)
 }
 
 func initConfig() {
