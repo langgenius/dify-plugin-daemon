@@ -93,7 +93,7 @@ func (p *Packager) Pack() (*os.File, error) {
 
 		full_filename := path.Join(dir, filename)
 
-		state, err := p.decoder.Stat(filename)
+		state, err := p.decoder.Stat(full_filename)
 		if err != nil {
 			return err
 		}

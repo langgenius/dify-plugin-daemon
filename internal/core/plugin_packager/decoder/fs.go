@@ -61,6 +61,10 @@ func (d *FSPluginDecoder) Open() error {
 
 func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error {
 	return filepath.Walk(d.root, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
 		// trim the first directory path
 		path = strings.TrimPrefix(path, d.root)
 		// trim / from the beginning

@@ -81,7 +81,13 @@ func TestPackager_Pack(t *testing.T) {
 				return err
 			}
 			defer origin_file.Close()
-			if err := os.WriteFile(filepath.Join(tmpDir, path), []byte{}, 0644); err != nil {
+
+			content, err := io.ReadAll(origin_file)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(filepath.Join(tmpDir, path), content, 0644); err != nil {
 				return err
 			}
 		}

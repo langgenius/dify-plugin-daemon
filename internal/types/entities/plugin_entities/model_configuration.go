@@ -207,9 +207,10 @@ type ModelProviderConfiguration struct {
 	Help                     *ModelProviderHelpEntity         `json:"help" validate:"omitempty"`
 	SupportedModelTypes      []ModelType                      `json:"supported_model_types" validate:"required,lte=16,dive,model_type"`
 	ConfigurateMethods       []ModelProviderConfigurateMethod `json:"configurate_methods" validate:"required,lte=16,dive,model_provider_configurate_method"`
-	Models                   []ModelConfiguration             `json:"models" validate:"omitempty,lte=1024,dive"`
+	Models                   []string                         `json:"models" validate:"required,lte=1024"`
 	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" validate:"omitempty"`
 	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" validate:"omitempty"`
+	ModelDeclarations        []ModelConfiguration             `json:"model_declarations" validate:"required,lte=1024,dive"`
 }
 
 func init() {
