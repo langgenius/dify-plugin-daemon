@@ -93,6 +93,11 @@ func TestWrongSign(t *testing.T) {
 		return
 	}
 
+	if err := os.WriteFile("temp/neko.yaml", neko, 0644); err != nil {
+		t.Errorf("failed to write neko: %s", err.Error())
+		return
+	}
+
 	origin_decoder, err := decoder.NewFSPluginDecoder("temp")
 	if err != nil {
 		t.Errorf("failed to create decoder: %s", err.Error())
