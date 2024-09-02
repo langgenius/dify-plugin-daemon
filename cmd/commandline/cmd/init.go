@@ -1,6 +1,7 @@
-package main
+package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,6 +11,23 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
+
+func InitPlugin() {
+	m := initialize()
+	p := tea.NewProgram(m)
+	if result, err := p.Run(); err != nil {
+		fmt.Println("Error running program:", err)
+	} else {
+		if m, ok := result.(model); ok {
+			if m.completed {
+				m.createPlugin()
+			}
+		} else {
+			log.Error("Error running program:", err)
+			return
+		}
+	}
+}
 
 type subMenuKey string
 
@@ -23,6 +41,8 @@ type model struct {
 	subMenus       map[subMenuKey]subMenu
 	subMenuSeq     []subMenuKey
 	currentSubMenu subMenuKey
+
+	completed bool
 }
 
 func initialize() model {
@@ -62,6 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		} else {
+			m.completed = true
 			return m, tea.Quit
 		}
 	case SUB_MENU_EVENT_PREV:
@@ -93,6 +114,7 @@ func (m model) createPlugin() {
 		Name:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
 		CreatedAt: time.Now(),
 		Resource: plugin_entities.PluginResourceRequirement{
+			Memory:     1024 * 1024 * 256, // 256MB
 			Permission: &permission,
 		},
 		Label: plugin_entities.I18nObject{
