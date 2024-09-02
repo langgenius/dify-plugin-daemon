@@ -13,6 +13,7 @@ import (
 
 type ZipPluginDecoder struct {
 	PluginDecoder
+	PluginDecoderHelper
 
 	reader *zip.Reader
 	err    error
@@ -164,21 +165,5 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 }
 
 func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
-	if z.pluginDeclaration != nil {
-		return *z.pluginDeclaration, nil
-	}
-
-	// read the manifest file
-	manifest, err := z.ReadFile("manifest.yaml")
-	if err != nil {
-		return plugin_entities.PluginDeclaration{}, err
-	}
-
-	dec, err := parser.UnmarshalYamlBytes[plugin_entities.PluginDeclaration](manifest)
-	if err != nil {
-		return plugin_entities.PluginDeclaration{}, err
-	}
-
-	z.pluginDeclaration = &dec
-	return dec, nil
+	return z.PluginDecoderHelper.Manifest(z)
 }

@@ -1,10 +1,13 @@
 package decoder
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 // PluginDecoder is an interface for decoding and interacting with plugin files
@@ -37,4 +40,67 @@ type PluginDecoder interface {
 
 	// Manifest returns the manifest of the plugin
 	Manifest() (plugin_entities.PluginDeclaration, error)
+}
+
+type PluginDecoderHelper struct {
+	pluginDeclaration *plugin_entities.PluginDeclaration
+}
+
+func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.PluginDeclaration, error) {
+	if p.pluginDeclaration != nil {
+		return *p.pluginDeclaration, nil
+	}
+
+	// read the manifest file
+	manifest, err := decoder.ReadFile("manifest.yaml")
+	if err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	dec, err := parser.UnmarshalYamlBytes[plugin_entities.PluginDeclaration](manifest)
+	if err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	// try to load plugins
+	plugins := dec.Plugins
+	for _, plugin := range plugins {
+		// read yaml
+		plugin_yaml, err := decoder.ReadFile(plugin)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read plugin file: %s", plugin))
+		}
+
+		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.GenericProviderDeclaration](plugin_yaml)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", plugin))
+		}
+
+		switch plugin_dec.Type {
+		case plugin_entities.PROVIDER_TYPE_ENDPOINT:
+			dec.Endpoint, err = parser.MapToStruct[plugin_entities.EndpointProviderDeclaration](plugin_dec.Provider)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert endpoint to struct: %s", plugin))
+			}
+		case plugin_entities.PROVIDER_TYPE_TOOL:
+			dec.Tool, err = parser.MapToStruct[plugin_entities.ToolProviderConfiguration](plugin_dec.Provider)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert tool to struct: %s", plugin))
+			}
+		case plugin_entities.PROVIDER_TYPE_MODEL:
+			dec.Model, err = parser.MapToStruct[plugin_entities.ModelProviderConfiguration](plugin_dec.Provider)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert model to struct: %s", plugin))
+			}
+		default:
+			return plugin_entities.PluginDeclaration{}, fmt.Errorf("unknown provider type: %s", plugin_dec.Type)
+		}
+	}
+
+	if err := dec.ManifestValidate(); err != nil {
+		return plugin_entities.PluginDeclaration{}, err
+	}
+
+	p.pluginDeclaration = &dec
+	return dec, nil
 }

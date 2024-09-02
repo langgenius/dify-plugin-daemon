@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 var (
@@ -18,13 +17,12 @@ var (
 
 type FSPluginDecoder struct {
 	PluginDecoder
+	PluginDecoderHelper
 
 	// root directory of the plugin
 	root string
 
 	fs fs.FS
-
-	pluginDeclaration *plugin_entities.PluginDeclaration
 }
 
 func NewFSPluginDecoder(root string) (*FSPluginDecoder, error) {
@@ -105,21 +103,5 @@ func (d *FSPluginDecoder) CreateTime() (int64, error) {
 }
 
 func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
-	if d.pluginDeclaration != nil {
-		return *d.pluginDeclaration, nil
-	}
-
-	// read the manifest file
-	manifest, err := d.ReadFile("manifest.yaml")
-	if err != nil {
-		return plugin_entities.PluginDeclaration{}, err
-	}
-
-	dec, err := parser.UnmarshalYamlBytes[plugin_entities.PluginDeclaration](manifest)
-	if err != nil {
-		return plugin_entities.PluginDeclaration{}, err
-	}
-
-	d.pluginDeclaration = &dec
-	return dec, nil
+	return d.PluginDecoderHelper.Manifest(d)
 }

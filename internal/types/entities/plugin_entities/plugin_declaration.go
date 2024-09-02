@@ -1,6 +1,7 @@
 package plugin_entities
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
@@ -137,8 +138,8 @@ type PluginDeclaration struct {
 	Execution PluginExecution              `json:"execution" yaml:"execution" validate:"required"`
 	Meta      PluginMeta                   `json:"meta" yaml:"meta" validate:"required"`
 	Endpoint  *EndpointProviderDeclaration `json:"endpoints" validate:"omitempty"`
-	Models    *ModelProviderConfiguration  `json:"models" validate:"omitempty"`
-	Tools     *ToolProviderConfiguration   `json:"tools" validate:"omitempty"`
+	Model     *ModelProviderConfiguration  `json:"models" validate:"omitempty"`
+	Tool      *ToolProviderConfiguration   `json:"tools" validate:"omitempty"`
 }
 
 var (
@@ -146,13 +147,29 @@ var (
 )
 
 func isVersion(fl validator.FieldLevel) bool {
-	// version format must be like x.x.x, at least 2 digits and most 5 digits, can be ends with a letter
+	// version format must be like x.x.x, at least 2 digits and most 5 digits, and it can be ends with a letter
 	value := fl.Field().String()
 	return plugin_declaration_version_regex.MatchString(value)
 }
 
 func (p *PluginDeclaration) Identity() string {
 	return parser.MarshalPluginIdentity(p.Name, p.Version)
+}
+
+func (p *PluginDeclaration) ManifestValidate() error {
+	if p.Endpoint == nil && p.Model == nil && p.Tool == nil {
+		return fmt.Errorf("at least one of endpoint, model, or tool must be provided")
+	}
+
+	if p.Model != nil && p.Tool != nil {
+		return fmt.Errorf("model and tool cannot be provided at the same time")
+	}
+
+	if p.Model != nil && p.Endpoint != nil {
+		return fmt.Errorf("model and endpoint cannot be provided at the same time")
+	}
+
+	return nil
 }
 
 func init() {
