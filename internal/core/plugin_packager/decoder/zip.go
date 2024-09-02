@@ -20,8 +20,6 @@ type ZipPluginDecoder struct {
 
 	sig         string
 	create_time int64
-
-	pluginDeclaration *plugin_entities.PluginDeclaration
 }
 
 func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
