@@ -41,7 +41,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 		}()
 		go func() {
 			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
-				p.lifetime(config, rpr)
+				p.lifetime(rpr)
 			})
 		}()
 	}
@@ -76,7 +76,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 		}
 
 		routine.Submit(func() {
-			p.lifetime(config, plugin_interface)
+			p.lifetime(plugin_interface)
 		})
 	}
 }
