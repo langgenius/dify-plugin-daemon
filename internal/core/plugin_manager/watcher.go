@@ -206,17 +206,3 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 		Decoder: decoder,
 	}, nil
 }
-
-func parsePluginConfig(configuration_path string) (*plugin_entities.PluginDeclaration, error) {
-	text, err := os.ReadFile(configuration_path)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := plugin_entities.UnmarshalPluginDeclarationFromYaml(text)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
