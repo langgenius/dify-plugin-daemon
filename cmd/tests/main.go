@@ -1,42 +1,28 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
 
-type Inf interface {
-	Set(int)
-}
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+)
 
-type A struct {
-	num int
-}
+const data = `name: John
+age: 30
+a:
+  b: 2
+`
 
-func (a *A) Set(data int) {
-	a.num = data
-}
-
-type B struct {
-	num int
-}
-
-func (b *B) Set(data int) {
-	b.num = data
-}
-
-type C interface {
-	*A | *B
-
-	Inf
-}
-
-type D[T C] struct {
-	data T
+type Test struct {
+	Name string `yaml:"name"`
+	Age  int    `yaml:"age"`
+	A    json.RawMessage
 }
 
 func main() {
-	d := D[*B]{
-		data: &B{},
+	ret, err := parser.UnmarshalYamlBytes[Test]([]byte(data))
+	if err != nil {
+		fmt.Println(err)
 	}
-	d.data.Set(10)
-
-	fmt.Println(d.data.num)
+	fmt.Println(ret)
 }

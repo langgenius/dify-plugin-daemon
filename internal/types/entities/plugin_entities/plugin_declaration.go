@@ -30,6 +30,10 @@ func (p *PluginPermissionRequirement) AllowInvokeTool() bool {
 	return p != nil && p.Tool != nil && p.Tool.Enabled
 }
 
+func (p *PluginPermissionRequirement) AllowInvokeModel() bool {
+	return p != nil && p.Model != nil && p.Model.Enabled
+}
+
 func (p *PluginPermissionRequirement) AllowInvokeLLM() bool {
 	return p != nil && p.Model != nil && p.Model.Enabled && p.Model.LLM
 }

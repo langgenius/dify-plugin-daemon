@@ -9,6 +9,7 @@ type Language string
 
 const (
 	Python Language = "python"
+	Go     Language = "go" // not supported yet
 )
 
 func isAvailableLanguage(fl validator.FieldLevel) bool {
