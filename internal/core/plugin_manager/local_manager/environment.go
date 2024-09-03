@@ -123,3 +123,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 
 	return nil
 }
+
+func (r *LocalPluginRuntime) Identity() (string, error) {
+	return fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum()), nil
+}

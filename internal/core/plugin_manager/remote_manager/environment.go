@@ -1,11 +1,13 @@
 package remote_manager
 
 import (
+	"fmt"
 	"strings"
 )
 
 func (r *RemotePluginRuntime) Identity() (string, error) {
-	return strings.Join([]string{r.Configuration().Identity(), r.tenant_id}, ":"), nil
+	identity := strings.Join([]string{r.Configuration().Identity(), r.tenant_id}, ":")
+	return fmt.Sprintf("%s@%s", identity, r.Checksum()), nil
 }
 
 func (r *RemotePluginRuntime) Cleanup() {

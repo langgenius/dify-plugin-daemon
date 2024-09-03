@@ -105,10 +105,6 @@ func (r *PluginRuntime) Configuration() *PluginDeclaration {
 	return &r.Config
 }
 
-func (r *PluginRuntime) Identity() (string, error) {
-	return r.Config.Identity(), nil
-}
-
 func HashedIdentity(identity string) string {
 	hash := sha256.New()
 	hash.Write([]byte(identity))

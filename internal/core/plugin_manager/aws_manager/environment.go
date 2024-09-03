@@ -33,6 +33,10 @@ func (r *AWSPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
+func (r *AWSPluginRuntime) Identity() (string, error) {
+	return fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum()), nil
+}
+
 func (r *AWSPluginRuntime) initEnvironment() error {
 	r.Log("Starting to initialize environment")
 	// check if the plugin has already been initialized, at most 300s
@@ -95,8 +99,4 @@ func (r *AWSPluginRuntime) initEnvironment() error {
 	}
 
 	return nil
-}
-
-func (r *AWSPluginRuntime) Checksum() string {
-	return ""
 }
