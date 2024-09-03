@@ -145,10 +145,10 @@ type PluginDeclarationWithoutAdvancedFields struct {
 }
 
 type PluginDeclaration struct {
-	PluginDeclarationWithoutAdvancedFields
-	Endpoint *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
-	Model    *ModelProviderConfiguration  `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
-	Tool     *ToolProviderConfiguration   `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+	PluginDeclarationWithoutAdvancedFields `yaml:",inline"`
+	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
+	Model                                  *ModelProviderConfiguration  `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
+	Tool                                   *ToolProviderConfiguration   `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
 }
 
 var (
