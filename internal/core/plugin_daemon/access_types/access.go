@@ -5,7 +5,7 @@ type PluginAccessType string
 const (
 	PLUGIN_ACCESS_TYPE_TOOL     PluginAccessType = "tool"
 	PLUGIN_ACCESS_TYPE_MODEL    PluginAccessType = "model"
-	PLUGIN_ACCESS_TYPE_Endpoint PluginAccessType = "endpoint"
+	PLUGIN_ACCESS_TYPE_ENDPOINT PluginAccessType = "endpoint"
 )
 
 type PluginAccessAction string

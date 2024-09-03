@@ -12,5 +12,14 @@ func (plugin *RemotePluginRuntime) Register() error {
 }
 
 func (plugin *RemotePluginRuntime) Unregister() error {
-	return install_service.UninstallPlugin(plugin.tenant_id, plugin.installation_id, plugin)
+	identity, err := plugin.Identity()
+	if err != nil {
+		return err
+	}
+	return install_service.UninstallPlugin(
+		plugin.tenant_id,
+		plugin.installation_id,
+		identity,
+		plugin.Type(),
+	)
 }

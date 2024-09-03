@@ -43,7 +43,7 @@ func (p *PluginManager) Add(plugin plugin_entities.PluginRuntimeInterface) error
 	if err != nil {
 		return err
 	}
-	p.m.Store(identity, plugin)
+	p.m.Store(identity.String(), plugin)
 	return nil
 }
 

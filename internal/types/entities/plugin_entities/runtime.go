@@ -30,7 +30,7 @@ type (
 		// returns the plugin configuration
 		Configuration() *PluginDeclaration
 		// unique identity of the plugin
-		Identity() (string, error)
+		Identity() (PluginIdentity, error)
 		// hashed identity of the plugin
 		HashedIdentity() (string, error)
 		// before the plugin starts, it will call this method to initialize the environment

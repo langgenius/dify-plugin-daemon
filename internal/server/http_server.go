@@ -22,6 +22,7 @@ func (app *App) server(config *app.Config) func() {
 	app.remoteDebuggingGroup(engine.Group("/plugin/debugging"), config)
 	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
+	app.endpointManagementGroup(engine.Group("/endpoint"))
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -85,4 +86,10 @@ func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app
 			service.HandleAWSPluginTransaction(appRef.aws_transaction_handler),
 		)
 	}
+}
+
+func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
+	group.POST("/setup", controllers.SetupEndpoint)
+	group.POST("/remove", controllers.RemoveEndpoint)
+	group.GET("/list", controllers.ListEndpoints)
 }

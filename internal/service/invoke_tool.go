@@ -25,7 +25,7 @@ func createSession[T any](
 	session := session_manager.NewSession(
 		r.TenantId,
 		r.UserId,
-		parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion),
+		plugin_entities.PluginIdentity(plugin_identity),
 		cluster_id,
 		access_type,
 		access_action,

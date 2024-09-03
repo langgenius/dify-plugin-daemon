@@ -10,46 +10,48 @@ import (
 
 func preparePluginDeclaration() PluginDeclaration {
 	return PluginDeclaration{
-		Version: "0.0.1",
-		Type:    PluginType,
-		Name:    "test",
-		Label: I18nObject{
-			EnUS: "test",
-		},
-		Author:    "test",
-		CreatedAt: time.Now(),
-		Resource: PluginResourceRequirement{
-			Memory: 1,
-			Permission: &PluginPermissionRequirement{
-				Tool: &PluginPermissionToolRequirement{
-					Enabled: true,
-				},
-				Model: &PluginPermissionModelRequirement{
-					Enabled: true,
-				},
-				Node: &PluginPermissionNodeRequirement{
-					Enabled: true,
-				},
-				Storage: &PluginPermissionStorageRequirement{
-					Enabled: true,
-					Size:    1024,
-				},
-			},
-		},
-		Plugins: []string{},
-		Execution: PluginExecution{
-			Install: "echo 'hello'",
-			Launch:  "echo 'hello'",
-		},
-		Meta: PluginMeta{
+		PluginDeclarationWithoutAdvancedFields: PluginDeclarationWithoutAdvancedFields{
 			Version: "0.0.1",
-			Arch: []constants.Arch{
-				constants.AMD64,
+			Type:    PluginType,
+			Name:    "test",
+			Label: I18nObject{
+				EnUS: "test",
 			},
-			Runner: PluginRunner{
-				Language:   constants.Python,
-				Version:    "3.12",
-				Entrypoint: "main",
+			Author:    "test",
+			CreatedAt: time.Now(),
+			Resource: PluginResourceRequirement{
+				Memory: 1,
+				Permission: &PluginPermissionRequirement{
+					Tool: &PluginPermissionToolRequirement{
+						Enabled: true,
+					},
+					Model: &PluginPermissionModelRequirement{
+						Enabled: true,
+					},
+					Node: &PluginPermissionNodeRequirement{
+						Enabled: true,
+					},
+					Storage: &PluginPermissionStorageRequirement{
+						Enabled: true,
+						Size:    1024,
+					},
+				},
+			},
+			Plugins: []string{},
+			Execution: PluginExecution{
+				Install: "echo 'hello'",
+				Launch:  "echo 'hello'",
+			},
+			Meta: PluginMeta{
+				Version: "0.0.1",
+				Arch: []constants.Arch{
+					constants.AMD64,
+				},
+				Runner: PluginRunner{
+					Language:   constants.Python,
+					Version:    "3.12",
+					Entrypoint: "main",
+				},
 			},
 		},
 	}

@@ -22,8 +22,8 @@ func (r *fakePlugin) Checksum() string {
 	return ""
 }
 
-func (r *fakePlugin) Identity() (string, error) {
-	return "", nil
+func (r *fakePlugin) Identity() (plugin_entities.PluginIdentity, error) {
+	return plugin_entities.PluginIdentity(""), nil
 }
 
 func (r *fakePlugin) StartPlugin() error {
@@ -42,15 +42,17 @@ func getRandomPluginRuntime() fakePlugin {
 	return fakePlugin{
 		PluginRuntime: plugin_entities.PluginRuntime{
 			Config: plugin_entities.PluginDeclaration{
-				Name: uuid.New().String(),
-				Label: plugin_entities.I18nObject{
-					EnUS: "label",
+				PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+					Name: uuid.New().String(),
+					Label: plugin_entities.I18nObject{
+						EnUS: "label",
+					},
+					Version:   "0.0.1",
+					Type:      plugin_entities.PluginType,
+					Author:    "Yeuoly",
+					CreatedAt: time.Now(),
+					Plugins:   []string{"test"},
 				},
-				Version:   "0.0.1",
-				Type:      plugin_entities.PluginType,
-				Author:    "Yeuoly",
-				CreatedAt: time.Now(),
-				Plugins:   []string{"test"},
 			},
 		},
 	}

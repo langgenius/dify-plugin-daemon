@@ -28,7 +28,7 @@ type Session struct {
 
 	TenantID       string                             `json:"tenant_id"`
 	UserID         string                             `json:"user_id"`
-	PluginIdentity string                             `json:"plugin_identity"`
+	PluginIdentity plugin_entities.PluginIdentity     `json:"plugin_identity"`
 	ClusterID      string                             `json:"cluster_id"`
 	InvokeFrom     access_types.PluginAccessType      `json:"invoke_from"`
 	Action         access_types.PluginAccessAction    `json:"action"`
@@ -42,7 +42,7 @@ func sessionKey(id string) string {
 func NewSession(
 	tenant_id string,
 	user_id string,
-	plugin_identity string,
+	plugin_identity plugin_entities.PluginIdentity,
 	cluster_id string,
 	invoke_from access_types.PluginAccessType,
 	action access_types.PluginAccessAction,

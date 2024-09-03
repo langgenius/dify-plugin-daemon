@@ -88,7 +88,10 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	plugin.onDisconnected()
 
 	// uninstall plugin
-	if plugin.handshake && plugin.registration_transferred {
+	if plugin.handshake && plugin.registration_transferred &&
+		plugin.endpoints_registration_transferred &&
+		plugin.models_registration_transferred &&
+		plugin.tools_registration_transferred {
 		if err := plugin.Unregister(); err != nil {
 			log.Error("unregister plugin failed, error: %v", err)
 		}
@@ -118,6 +121,10 @@ func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 
 	// handle messages
 	for _, message := range messages {
+		if len(message) == 0 {
+			continue
+		}
+
 		s.onMessage(runtime, message)
 	}
 
@@ -166,6 +173,54 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 		// registration transferred
 		runtime.registration_transferred = true
+	} else if !runtime.tools_registration_transferred {
+		tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderConfiguration](message)
+		if err != nil {
+			runtime.conn.Write([]byte("tools register failed\n"))
+			log.Error("tools register failed, error: %v", err)
+			runtime.conn.Close()
+			return
+		}
+
+		runtime.tools_registration_transferred = true
+
+		if len(tools) > 0 {
+			declaration := runtime.Config
+			declaration.Tool = &tools[0]
+			runtime.Config = declaration
+		}
+	} else if !runtime.models_registration_transferred {
+		models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderConfiguration](message)
+		if err != nil {
+			runtime.conn.Write([]byte("models register failed\n"))
+			log.Error("models register failed, error: %v", err)
+			runtime.conn.Close()
+			return
+		}
+
+		runtime.models_registration_transferred = true
+
+		if len(models) > 0 {
+			declaration := runtime.Config
+			declaration.Model = &models[0]
+			runtime.Config = declaration
+		}
+	} else if !runtime.endpoints_registration_transferred {
+		endpoints, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.EndpointProviderDeclaration](message)
+		if err != nil {
+			runtime.conn.Write([]byte("endpoints register failed\n"))
+			log.Error("endpoints register failed, error: %v", err)
+			runtime.conn.Close()
+			return
+		}
+
+		runtime.endpoints_registration_transferred = true
+
+		if len(endpoints) > 0 {
+			declaration := runtime.Config
+			declaration.Endpoint = &endpoints[0]
+			runtime.Config = declaration
+		}
 
 		runtime.checksum = runtime.calculateChecksum()
 		runtime.InitState()

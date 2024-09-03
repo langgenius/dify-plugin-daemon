@@ -392,7 +392,7 @@ func executeDifyInvocationStorageTask(
 	plugin_id := handle.session.PluginIdentity
 
 	if request.Opt == dify_invocation.STORAGE_OPT_GET {
-		data, err := persistence.Load(tenant_id, plugin_id, request.Key)
+		data, err := persistence.Load(tenant_id, plugin_id.PluginID(), request.Key)
 		if err != nil {
 			handle.WriteError(fmt.Errorf("load data failed: %s", err.Error()))
 			return
@@ -408,7 +408,7 @@ func executeDifyInvocationStorageTask(
 			return
 		}
 
-		if err := persistence.Save(tenant_id, plugin_id, request.Key, data); err != nil {
+		if err := persistence.Save(tenant_id, plugin_id.PluginID(), request.Key, data); err != nil {
 			handle.WriteError(fmt.Errorf("save data failed: %s", err.Error()))
 			return
 		}
@@ -417,7 +417,7 @@ func executeDifyInvocationStorageTask(
 			"data": "ok",
 		})
 	} else if request.Opt == dify_invocation.STORAGE_OPT_DEL {
-		if err := persistence.Delete(tenant_id, plugin_id, request.Key); err != nil {
+		if err := persistence.Delete(tenant_id, plugin_id.PluginID(), request.Key); err != nil {
 			handle.WriteError(fmt.Errorf("delete data failed: %s", err.Error()))
 			return
 		}

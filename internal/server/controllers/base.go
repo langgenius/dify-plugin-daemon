@@ -17,17 +17,18 @@ func BindRequest[T any](r *gin.Context, success func(T)) {
 		err = r.ShouldBind(&request)
 	}
 
-	// validate
-	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
-		resp := entities.NewErrorResponse(-400, "Invalid request")
+	if err != nil {
+		resp := entities.NewErrorResponse(-400, err.Error())
 		r.JSON(400, resp)
 		return
 	}
 
-	if err != nil {
-		resp := entities.NewErrorResponse(-400, "Invalid request")
+	// validate, we have customized some validators which are not supported by gin binding
+	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
+		resp := entities.NewErrorResponse(-400, err.Error())
 		r.JSON(400, resp)
 		return
 	}
+
 	success(request)
 }

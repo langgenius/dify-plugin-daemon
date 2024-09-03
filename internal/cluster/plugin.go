@@ -28,7 +28,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginRuntimeTimeLifeI
 		return err
 	}
 
-	if c.plugins.Exits(identity) {
+	if c.plugins.Exits(identity.String()) {
 		return errors.New("plugin has been registered")
 	}
 
@@ -38,7 +38,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginRuntimeTimeLifeI
 
 	lifetime.OnStop(func() {
 		c.plugin_lock.Lock()
-		c.plugins.Delete(identity)
+		c.plugins.Delete(identity.String())
 		// remove plugin state
 		c.doPluginStateUpdate(l)
 		c.plugin_lock.Unlock()
@@ -46,7 +46,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginRuntimeTimeLifeI
 
 	c.plugin_lock.Lock()
 	if !lifetime.Stopped() {
-		c.plugins.Store(identity, l)
+		c.plugins.Store(identity.String(), l)
 
 		// do plugin state update immediately
 		err = c.doPluginStateUpdate(l)
@@ -116,14 +116,14 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 	}
 
 	schedule_state := &pluginState{
-		Identity:           identity,
+		Identity:           identity.String(),
 		PluginRuntimeState: state,
 	}
 
 	state_key := c.getPluginStateKey(c.id, hash_identity)
 
 	// check if the plugin has been removed
-	if !c.plugins.Exits(identity) {
+	if !c.plugins.Exits(identity.String()) {
 		// remove state
 		err = c.removePluginState(c.id, hash_identity)
 		if err != nil {

@@ -108,17 +108,19 @@ func (m model) createPlugin() {
 	permission := m.subMenus[SUB_MENU_KEY_PERMISSION].(permission).Permission()
 
 	manifest := &plugin_entities.PluginDeclaration{
-		Version:   "0.0.1",
-		Type:      plugin_entities.PluginType,
-		Author:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
-		Name:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
-		CreatedAt: time.Now(),
-		Resource: plugin_entities.PluginResourceRequirement{
-			Memory:     1024 * 1024 * 256, // 256MB
-			Permission: &permission,
-		},
-		Label: plugin_entities.I18nObject{
-			EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+			Version:   "0.0.1",
+			Type:      plugin_entities.PluginType,
+			Author:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
+			Name:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+			CreatedAt: time.Now(),
+			Resource: plugin_entities.PluginResourceRequirement{
+				Memory:     1024 * 1024 * 256, // 256MB
+				Permission: &permission,
+			},
+			Label: plugin_entities.I18nObject{
+				EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+			},
 		},
 	}
 

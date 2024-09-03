@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -21,6 +22,7 @@ import (
 func Endpoint(
 	ctx *gin.Context,
 	endpoint *models.Endpoint,
+	plugin_installation *models.PluginInstallation,
 	path string,
 ) {
 	req := ctx.Request.Clone(context.Background())
@@ -35,7 +37,7 @@ func Endpoint(
 
 	// fetch plugin
 	manager := plugin_manager.GetGlobalPluginManager()
-	runtime := manager.Get(endpoint.PluginID)
+	runtime := manager.Get(plugin_installation.PluginIdentity)
 	if runtime == nil {
 		ctx.JSON(404, gin.H{"error": "plugin not found"})
 		return
@@ -72,9 +74,9 @@ func Endpoint(
 	session := session_manager.NewSession(
 		endpoint.TenantID,
 		"",
-		endpoint.PluginID,
+		plugin_entities.PluginIdentity(plugin_installation.PluginIdentity),
 		ctx.GetString("cluster_id"),
-		access_types.PLUGIN_ACCESS_TYPE_Endpoint,
+		access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
 		runtime.Configuration(),
 	)

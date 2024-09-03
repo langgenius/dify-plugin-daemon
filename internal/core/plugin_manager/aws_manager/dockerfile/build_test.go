@@ -10,14 +10,16 @@ import (
 
 func preparePluginDeclaration() *plugin_entities.PluginDeclaration {
 	return &plugin_entities.PluginDeclaration{
-		Meta: plugin_entities.PluginMeta{
-			Arch: []constants.Arch{
-				constants.AMD64,
-			},
-			Runner: plugin_entities.PluginRunner{
-				Language:   constants.Python,
-				Version:    "3.12",
-				Entrypoint: "main",
+		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+			Meta: plugin_entities.PluginMeta{
+				Arch: []constants.Arch{
+					constants.AMD64,
+				},
+				Runner: plugin_entities.PluginRunner{
+					Language:   constants.Python,
+					Version:    "3.12",
+					Entrypoint: "main",
+				},
 			},
 		},
 	}

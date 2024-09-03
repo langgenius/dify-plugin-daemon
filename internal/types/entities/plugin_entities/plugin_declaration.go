@@ -66,7 +66,7 @@ func (p *PluginPermissionRequirement) AllowInvokeApp() bool {
 	return p != nil && p.App != nil && p.App.Enabled
 }
 
-func (p *PluginPermissionRequirement) AllowRegistryEndpoint() bool {
+func (p *PluginPermissionRequirement) AllowRegisterEndpoint() bool {
 	return p != nil && p.Endpoint != nil && p.Endpoint.Enabled
 }
 
@@ -131,20 +131,24 @@ type PluginExecution struct {
 	Launch  string `json:"launch" yaml:"launch" validate:"omitempty"`
 }
 
+type PluginDeclarationWithoutAdvancedFields struct {
+	Version   string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
+	Type      DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
+	Author    string                    `json:"author" yaml:"author,omitempty" validate:"required,max=128"`
+	Name      string                    `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
+	Label     I18nObject                `json:"label" yaml:"label" validate:"required"`
+	CreatedAt time.Time                 `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
+	Resource  PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
+	Plugins   []string                  `json:"plugins" yaml:"plugins,omitempty" validate:"required,dive,max=128"`
+	Execution PluginExecution           `json:"execution" yaml:"execution,omitempty" validate:"required"`
+	Meta      PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
+}
+
 type PluginDeclaration struct {
-	Version   string                       `json:"version" yaml:"version,omitempty" validate:"required,version"`
-	Type      DifyManifestType             `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
-	Author    string                       `json:"author" yaml:"author,omitempty" validate:"required,max=128"`
-	Name      string                       `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
-	Label     I18nObject                   `json:"label" yaml:"label" validate:"required"`
-	CreatedAt time.Time                    `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
-	Resource  PluginResourceRequirement    `json:"resource" yaml:"resource,omitempty" validate:"required"`
-	Plugins   []string                     `json:"plugins" yaml:"plugins,omitempty" validate:"required,dive,max=128"`
-	Execution PluginExecution              `json:"execution" yaml:"execution,omitempty" validate:"required"`
-	Meta      PluginMeta                   `json:"meta" yaml:"meta,omitempty" validate:"required"`
-	Endpoint  *EndpointProviderDeclaration `json:"-" yaml:"-" validate:"omitempty"`
-	Model     *ModelProviderConfiguration  `json:"-" yaml:"-" validate:"omitempty"`
-	Tool      *ToolProviderConfiguration   `json:"-" yaml:"-" validate:"omitempty"`
+	PluginDeclarationWithoutAdvancedFields
+	Endpoint *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
+	Model    *ModelProviderConfiguration  `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
+	Tool     *ToolProviderConfiguration   `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
 }
 
 var (

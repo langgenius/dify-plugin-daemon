@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 )
 
@@ -33,8 +34,8 @@ func (r *AWSPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
-func (r *AWSPluginRuntime) Identity() (string, error) {
-	return fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum()), nil
+func (r *AWSPluginRuntime) Identity() (plugin_entities.PluginIdentity, error) {
+	return plugin_entities.PluginIdentity(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
 }
 
 func (r *AWSPluginRuntime) initEnvironment() error {
@@ -50,7 +51,7 @@ func (r *AWSPluginRuntime) initEnvironment() error {
 	if err != nil {
 		return err
 	}
-	function, err := fetchLambda(identity, r.Checksum())
+	function, err := fetchLambda(identity.String(), r.Checksum())
 	if err != nil {
 		if err != ErrNoLambdaFunction {
 			return err
@@ -75,7 +76,7 @@ func (r *AWSPluginRuntime) initEnvironment() error {
 	defer os.Remove(context.Name())
 	defer context.Close()
 
-	response, err := launchLambda(identity, r.Checksum(), context)
+	response, err := launchLambda(identity.String(), r.Checksum(), context)
 	if err != nil {
 		return err
 	}

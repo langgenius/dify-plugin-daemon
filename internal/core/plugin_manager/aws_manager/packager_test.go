@@ -31,8 +31,8 @@ func (r *TPluginRuntime) Checksum() string {
 	return "test_checksum"
 }
 
-func (r *TPluginRuntime) Identity() (string, error) {
-	return "", nil
+func (r *TPluginRuntime) Identity() (plugin_entities.PluginIdentity, error) {
+	return plugin_entities.PluginIdentity("test_identity"), nil
 }
 
 func (r *TPluginRuntime) StartPlugin() error {
@@ -105,14 +105,16 @@ func TestPackager_Pack(t *testing.T) {
 	packager := NewPackager(&TPluginRuntime{
 		PluginRuntime: plugin_entities.PluginRuntime{
 			Config: plugin_entities.PluginDeclaration{
-				Meta: plugin_entities.PluginMeta{
-					Runner: plugin_entities.PluginRunner{
-						Language:   constants.Python,
-						Version:    "3.12",
-						Entrypoint: "main",
-					},
-					Arch: []constants.Arch{
-						constants.AMD64,
+				PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+					Meta: plugin_entities.PluginMeta{
+						Runner: plugin_entities.PluginRunner{
+							Language:   constants.Python,
+							Version:    "3.12",
+							Entrypoint: "main",
+						},
+						Arch: []constants.Arch{
+							constants.AMD64,
+						},
 					},
 				},
 			},

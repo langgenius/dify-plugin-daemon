@@ -6,31 +6,42 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"gorm.io/gorm"
 )
 
 // Create plugin for a tenant, create plugin if it has never been created before
 // and install it to the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func CreatePlugin(tenant_id string, user_id string, plugin_identity string, install_type plugin_entities.PluginRuntimeType) (
+func CreatePlugin(
+	tenant_id string,
+	user_id string,
+	plugin_identity plugin_entities.PluginIdentity,
+	install_type plugin_entities.PluginRuntimeType,
+	declaration *plugin_entities.PluginDeclaration,
+) (
 	*models.Plugin, *models.PluginInstallation, error,
 ) {
+
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_id", plugin_identity),
+			db.Equal("plugin_identity", plugin_identity.String()),
+			db.Equal("plugin_id", plugin_identity.PluginID()),
 			db.Equal("install_type", string(install_type)),
 			db.WLock(),
 		)
 
 		if err == db.ErrDatabaseNotFound {
 			plugin := &models.Plugin{
-				PluginID:    plugin_identity,
-				InstallType: install_type,
-				Refers:      1,
+				PluginID:       plugin_identity.PluginID(),
+				PluginIdentity: plugin_identity.String(),
+				InstallType:    install_type,
+				Refers:         1,
+				Declaration:    parser.MarshalJson(declaration),
 			}
 
 			err := db.Create(plugin, tx)
@@ -51,9 +62,10 @@ func CreatePlugin(tenant_id string, user_id string, plugin_identity string, inst
 		}
 
 		installation := &models.PluginInstallation{
-			PluginID: plugin_to_be_returns.PluginID,
-			TenantID: tenant_id,
-			UserID:   user_id,
+			PluginID:       plugin_to_be_returns.PluginID,
+			PluginIdentity: plugin_to_be_returns.PluginIdentity,
+			TenantID:       tenant_id,
+			UserID:         user_id,
 		}
 
 		err = db.Create(installation, tx)
@@ -82,13 +94,13 @@ type DeletePluginResponse struct {
 // Delete plugin for a tenant, delete the plugin if it has never been created before
 // and uninstall it from the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func DeletePlugin(tenant_id string, plugin_id string, installation_id string) (*DeletePluginResponse, error) {
+func DeletePlugin(tenant_id string, plugin_identity plugin_entities.PluginIdentity, installation_id string) (*DeletePluginResponse, error) {
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
 	_, err := db.GetOne[models.PluginInstallation](
 		db.Equal("id", installation_id),
-		db.Equal("plugin_id", plugin_id),
+		db.Equal("plugin_identity", plugin_identity.String()),
 		db.Equal("tenant_id", tenant_id),
 	)
 
@@ -103,7 +115,7 @@ func DeletePlugin(tenant_id string, plugin_id string, installation_id string) (*
 	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_id", plugin_id),
+			db.Equal("plugin_identity", plugin_identity.String()),
 			db.WLock(),
 		)
 
@@ -122,7 +134,7 @@ func DeletePlugin(tenant_id string, plugin_id string, installation_id string) (*
 
 		installation, err := db.GetOne[models.PluginInstallation](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_id", plugin_id),
+			db.Equal("plugin_identity", plugin_identity.String()),
 			db.Equal("tenant_id", tenant_id),
 		)
 

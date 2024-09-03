@@ -43,10 +43,20 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 		return
 	}
 
+	// get plugin installation
+	plugin_installation, err := db.GetOne[models.PluginInstallation](
+		db.Equal("plugin_id", endpoint.PluginID),
+		db.Equal("tenant_id", endpoint.TenantID),
+	)
+	if err != nil {
+		ctx.JSON(404, gin.H{"error": "plugin installation not found"})
+		return
+	}
+
 	// check if plugin exists in current node
-	if !app.cluster.IsPluginNoCurrentNode(endpoint.PluginID) {
-		app.redirectPluginInvokeByPluginID(ctx, endpoint.PluginID)
+	if !app.cluster.IsPluginNoCurrentNode(plugin_installation.PluginIdentity) {
+		app.redirectPluginInvokeByPluginID(ctx, plugin_installation.PluginIdentity)
 	} else {
-		service.Endpoint(ctx, &endpoint, path)
+		service.Endpoint(ctx, &endpoint, &plugin_installation, path)
 	}
 }

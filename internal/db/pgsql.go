@@ -38,6 +38,14 @@ func Delete(data any, ctx ...*gorm.DB) error {
 	return DifyPluginDB.Delete(data).Error
 }
 
+func DeleteByCondition[T any](condition T, ctx ...*gorm.DB) error {
+	var model T
+	if len(ctx) > 0 {
+		return ctx[0].Where(condition).Delete(&model).Error
+	}
+	return DifyPluginDB.Where(condition).Delete(&model).Error
+}
+
 func ReplaceAssociation[T any, R any](source *T, field string, associations []R, ctx ...*gorm.DB) error {
 	if len(ctx) > 0 {
 		return ctx[0].Model(source).Association(field).Replace(associations)

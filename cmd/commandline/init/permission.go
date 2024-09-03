@@ -84,7 +84,7 @@ func (p permission) View() string {
 	}
 
 	s += "Endpoints:\n"
-	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegistryEndpoint()))
+	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegisterEndpoint()))
 	return s
 }
 
@@ -183,7 +183,7 @@ func (p *permission) edit() {
 	}
 
 	if p.cursor == "endpoint.enabled" {
-		if p.permission.AllowRegistryEndpoint() {
+		if p.permission.AllowRegisterEndpoint() {
 			p.permission.Endpoint = nil
 		} else {
 			p.permission.Endpoint = &plugin_entities.PluginPermissionEndpointRequirement{

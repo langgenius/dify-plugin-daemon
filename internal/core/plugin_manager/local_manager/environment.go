@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -124,6 +125,6 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
-func (r *LocalPluginRuntime) Identity() (string, error) {
-	return fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum()), nil
+func (r *LocalPluginRuntime) Identity() (plugin_entities.PluginIdentity, error) {
+	return plugin_entities.PluginIdentity(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
 }

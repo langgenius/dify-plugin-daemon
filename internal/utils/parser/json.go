@@ -19,12 +19,29 @@ func UnmarshalJsonBytes[T any](data []byte) (T, error) {
 	}
 
 	// skip validate if T is a map
-	if reflect.TypeOf(result).Kind() == reflect.Map {
+	typ := reflect.TypeOf(result)
+	if typ.Kind() == reflect.Map {
 		return result, nil
 	}
 
 	if err := validators.GlobalEntitiesValidator.Struct(&result); err != nil {
 		return result, err
+	}
+
+	return result, err
+}
+
+func UnmarshalJsonBytes2Slice[T any](data []byte) ([]T, error) {
+	var result []T
+	err := json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range result {
+		if err := validators.GlobalEntitiesValidator.Struct(&item); err != nil {
+			return nil, err
+		}
 	}
 
 	return result, err
