@@ -1,7 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/spf13/cobra"
 )
 
@@ -16,9 +22,40 @@ var (
 	}
 
 	pluginPackageCommand = &cobra.Command{
-		Use:   "package",
+		Use:   "package plugin_path [-o output_path]",
 		Short: "Package",
 		Long:  "Package plugins",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				fmt.Println("Error: plugin_path is required")
+				return
+			}
+			output_path := "./plugin.difypkg"
+			if cmd.Flag("output_path") != nil {
+				output_path = cmd.Flag("output_path").Value.String()
+			}
+			decoder, err := decoder.NewFSPluginDecoder(args[0])
+			if err != nil {
+				log.Error("failed to create plugin decoder , plugin path: %s, error: %v", args[0], err)
+				return
+			}
+
+			packager := packager.NewPackager(decoder)
+			zip_file, err := packager.Pack()
+
+			if err != nil {
+				log.Error("failed to package plugin %v", err)
+				return
+			}
+
+			err = os.WriteFile(output_path, zip_file, 0644)
+			if err != nil {
+				log.Error("failed to write package file %v", err)
+				return
+			}
+
+			log.Info("plugin packaged successfully, output path: %s", output_path)
+		},
 	}
 
 	pluginPermissionCommand = &cobra.Command{

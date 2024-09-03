@@ -178,6 +178,7 @@ func (p *permission) edit() {
 				Enabled: true,
 				Size:    1048576,
 			}
+			p.storageSizeEditor.SetValue(fmt.Sprintf("%d", p.permission.Storage.Size))
 		}
 	}
 

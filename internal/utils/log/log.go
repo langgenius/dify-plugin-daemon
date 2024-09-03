@@ -90,6 +90,8 @@ func (l *Log) writeLog(level string, format string, stdout bool, v ...interface{
 			logger.Output(4, LOG_LEVEL_WARN_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "ERROR" {
 			logger.Output(4, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
+		} else if level == "PANIC" {
+			logger.Output(4, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
 		}
 	}
 
