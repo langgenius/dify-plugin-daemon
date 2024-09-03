@@ -35,7 +35,7 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 	return result, nil
 }
 
-func launchSimulationCluster(clusters []*Cluster, t *testing.T) {
+func launchSimulationCluster(clusters []*Cluster) {
 	for _, cluster := range clusters {
 		cluster.Launch()
 	}
@@ -61,7 +61,7 @@ func TestSingleClusterLifetime(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-	launchSimulationCluster(clusters, t)
+	launchSimulationCluster(clusters)
 	defer closeSimulationCluster(clusters, t)
 
 	<-clusters[0].NotifyBecomeMaster()
@@ -79,7 +79,7 @@ func TestMultipleClusterLifetime(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-	launchSimulationCluster(clusters, t)
+	launchSimulationCluster(clusters)
 	defer closeSimulationCluster(clusters, t)
 
 	select {
@@ -118,7 +118,7 @@ func TestClusterSubstituteMaster(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-	launchSimulationCluster(clusters, t)
+	launchSimulationCluster(clusters)
 	defer closeSimulationCluster(clusters, t)
 
 	select {
@@ -176,7 +176,7 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 		t.Errorf("create simulation cluster failed: %v", err)
 		return
 	}
-	launchSimulationCluster(clusters, t)
+	launchSimulationCluster(clusters)
 	defer closeSimulationCluster(clusters, t)
 
 	select {

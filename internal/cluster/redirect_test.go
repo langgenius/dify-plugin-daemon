@@ -127,7 +127,7 @@ func TestRedirectTraffic(t *testing.T) {
 	}
 
 	// launch cluster
-	launchSimulationCluster(cluster, t)
+	launchSimulationCluster(cluster)
 	defer closeSimulationCluster(cluster, t)
 
 	// wait for all nodes to be ready

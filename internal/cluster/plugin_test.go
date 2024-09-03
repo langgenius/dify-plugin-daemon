@@ -66,7 +66,7 @@ func TestPluginScheduleLifetime(t *testing.T) {
 		return
 	}
 
-	launchSimulationCluster(cluster, t)
+	launchSimulationCluster(cluster)
 	defer closeSimulationCluster(cluster, t)
 
 	time.Sleep(time.Second * 1)
@@ -131,7 +131,7 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 		return
 	}
 
-	launchSimulationCluster(cluster, t)
+	launchSimulationCluster(cluster)
 	defer closeSimulationCluster(cluster, t)
 
 	// add plugin to the cluster

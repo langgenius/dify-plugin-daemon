@@ -60,7 +60,7 @@ func TestVoteAddresses(t *testing.T) {
 		}()
 	}
 
-	launchSimulationCluster(cluster, t)
+	launchSimulationCluster(cluster)
 	defer closeSimulationCluster(cluster, t)
 
 	// wait for all nodes to be ready
