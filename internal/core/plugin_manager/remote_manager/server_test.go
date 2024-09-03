@@ -172,6 +172,9 @@ func TestAcceptConnection(t *testing.T) {
 	conn.Write([]byte("\n"))
 	conn.Write(handle_shake_message)
 	conn.Write([]byte("\n"))
+	conn.Write([]byte("[]\n"))
+	conn.Write([]byte("[]\n"))
+	conn.Write([]byte("[]\n"))
 	closed_chan := make(chan bool)
 
 	msg := ""
