@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/cmd"
+	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
 	"github.com/spf13/cobra"
 )
 
@@ -11,8 +11,32 @@ var (
 		Short: "Init",
 		Long:  "Init",
 		Run: func(c *cobra.Command, args []string) {
-			cmd.InitPlugin()
+			init_pkg.InitPlugin()
 		},
+	}
+
+	pluginModelCommand = &cobra.Command{
+		Use:   "model",
+		Short: "Model",
+		Long:  "Model management for plugin",
+	}
+
+	pluginToolCommand = &cobra.Command{
+		Use:   "tool",
+		Short: "Tool",
+		Long:  "Tool management for plugin",
+	}
+
+	pluginEndpointCommand = &cobra.Command{
+		Use:   "endpoint",
+		Short: "Endpoint",
+		Long:  "Endpoint management for plugin",
+	}
+
+	pluginPackageCommand = &cobra.Command{
+		Use:   "package",
+		Short: "Package",
+		Long:  "Package plugins",
 	}
 
 	pluginPermissionCommand = &cobra.Command{
@@ -33,20 +57,24 @@ endpoint				- allow plugin to register endpoint`,
 	}
 
 	pluginPermissionAddCommand = &cobra.Command{
-		Use:   "add",
-		Short: "Add permission to plugin",
+		Use:   "add permission",
+		Short: "",
 		Long:  "Add permission to plugin, you can find the available permission by running `dify plugin permission`",
 	}
 
 	pluginPermissionDropCommand = &cobra.Command{
-		Use:   "drop",
-		Short: "Drop permission from plugin",
+		Use:   "drop permission",
+		Short: "",
 		Long:  "Drop permission from plugin, you can find the available permission by running `dify plugin permission`",
 	}
 )
 
 func init() {
 	pluginCommand.AddCommand(pluginInitCommand)
+	pluginCommand.AddCommand(pluginModelCommand)
+	pluginCommand.AddCommand(pluginToolCommand)
+	pluginCommand.AddCommand(pluginEndpointCommand)
+	pluginCommand.AddCommand(pluginPackageCommand)
 	pluginCommand.AddCommand(pluginPermissionCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionAddCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionDropCommand)

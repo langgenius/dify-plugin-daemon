@@ -1,4 +1,4 @@
-package cmd
+package init
 
 import tea "github.com/charmbracelet/bubbletea"
 
