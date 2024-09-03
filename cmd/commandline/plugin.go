@@ -5,6 +5,7 @@ import (
 	"os"
 
 	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -58,6 +59,53 @@ var (
 		},
 	}
 
+	pluginChecksumCommand = &cobra.Command{
+		Use:   "checksum plugin_path",
+		Short: "Checksum",
+		Long:  "Calculate the checksum of the plugin, you need specify the plugin path or .difypkg file path",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				fmt.Println("Error: plugin_path is required")
+				return
+			}
+
+			plugin_path := args[0]
+			var plugin_decoder decoder.PluginDecoder
+			if stat, err := os.Stat(plugin_path); err == nil {
+				if stat.IsDir() {
+					plugin_decoder, err = decoder.NewFSPluginDecoder(plugin_path)
+					if err != nil {
+						log.Error("failed to create plugin decoder, plugin path: %s, error: %v", plugin_path, err)
+						return
+					}
+				} else {
+					bytes, err := os.ReadFile(plugin_path)
+					if err != nil {
+						log.Error("failed to read plugin file, plugin path: %s, error: %v", plugin_path, err)
+						return
+					}
+
+					plugin_decoder, err = decoder.NewZipPluginDecoder(bytes)
+					if err != nil {
+						log.Error("failed to create plugin decoder, plugin path: %s, error: %v", plugin_path, err)
+						return
+					}
+				}
+			} else {
+				log.Error("failed to get plugin file info, plugin path: %s, error: %v", plugin_path, err)
+				return
+			}
+
+			checksum, err := checksum.CalculateChecksum(plugin_decoder)
+			if err != nil {
+				log.Error("failed to calculate checksum, plugin path: %s, error: %v", plugin_path, err)
+				return
+			}
+
+			log.Info("plugin checksum: %s", checksum)
+		},
+	}
+
 	pluginPermissionCommand = &cobra.Command{
 		Use:   "permission",
 		Short: "Permission",
@@ -91,6 +139,7 @@ endpoint				- allow plugin to register endpoint`,
 func init() {
 	pluginCommand.AddCommand(pluginInitCommand)
 	pluginCommand.AddCommand(pluginPackageCommand)
+	pluginCommand.AddCommand(pluginChecksumCommand)
 	pluginCommand.AddCommand(pluginPermissionCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionAddCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionDropCommand)

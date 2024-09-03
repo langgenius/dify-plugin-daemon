@@ -3,6 +3,7 @@ package packager
 import (
 	"archive/zip"
 	"bytes"
+	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 )
@@ -29,12 +30,13 @@ func (p *Packager) Pack() ([]byte, error) {
 	zip_writer := zip.NewWriter(zip_buffer)
 
 	err = p.decoder.Walk(func(filename, dir string) error {
-		file, err := p.decoder.ReadFile(filename)
+		full_path := filepath.Join(dir, filename)
+		file, err := p.decoder.ReadFile(full_path)
 		if err != nil {
 			return err
 		}
 
-		zip_file, err := zip_writer.Create(filename)
+		zip_file, err := zip_writer.Create(full_path)
 		if err != nil {
 			return err
 		}
