@@ -14,35 +14,18 @@ func InstallPlugin(
 	tenant_id string,
 	user_id string,
 	runtime plugin_entities.PluginRuntimeInterface,
-	configuration map[string]any,
-) (string, error) {
+) (*models.Plugin, *models.PluginInstallation, error) {
 	identity, err := runtime.Identity()
 	if err != nil {
-		return "", err
+		return nil, nil, err
 	}
 
-	plugin := &models.Plugin{
-		PluginID:     identity,
-		Refers:       0,
-		Checksum:     runtime.Checksum(),
-		InstallType:  runtime.Type(),
-		ManifestType: runtime.Configuration().Type,
-	}
-
-	plugin, installation, err := curd.CreatePlugin(tenant_id, user_id, plugin, configuration)
+	plugin, installation, err := curd.CreatePlugin(tenant_id, user_id, identity, runtime.Type())
 	if err != nil {
-		return "", err
+		return nil, nil, err
 	}
 
-	// check if there is a endpoint for the plugin
-	if runtime.Configuration().Resource.Permission.AllowRegistryEndpoint() {
-		_, err := InstallEndpoint(plugin.PluginID, installation.ID, tenant_id, user_id)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return installation.ID, nil
+	return plugin, installation, nil
 }
 
 func UninstallPlugin(tenant_id string, installation_id string, runtime plugin_entities.PluginRuntimeInterface) error {
@@ -52,35 +35,19 @@ func UninstallPlugin(tenant_id string, installation_id string, runtime plugin_en
 	}
 
 	// delete the plugin from db
-	resp, err := curd.DeletePlugin(tenant_id, identity, installation_id)
+	_, err = curd.DeletePlugin(tenant_id, identity, installation_id)
 	if err != nil {
 		return err
-	}
-
-	// delete the endpoint from db
-	if runtime.Configuration().Resource.Permission.AllowRegistryEndpoint() {
-		// get the endpoint from db
-		endpoint, err := GetEndpoint(tenant_id, identity, resp.Installation.ID)
-		if err != nil && err != db.ErrDatabaseNotFound {
-			return err
-		} else if err == db.ErrDatabaseNotFound {
-			return nil
-		}
-
-		err = UninstallEndpoint(endpoint)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
 }
 
-// installs a plugin to db,
+// setup a plugin to db,
 // returns the endpoint id
-func InstallEndpoint(plugin_id string, installation_id string, tenant_id string, user_id string) (string, error) {
+func SetupEndpoint(plugin_id string, installation_id string, tenant_id string, user_id string) (string, error) {
 	installation := &models.Endpoint{
-		HookID:               strings.RandomString(64),
+		HookID:               strings.RandomString(32),
 		PluginID:             plugin_id,
 		TenantID:             tenant_id,
 		UserID:               user_id,

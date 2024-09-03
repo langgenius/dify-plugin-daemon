@@ -4,15 +4,15 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"gorm.io/gorm"
 )
 
 // Create plugin for a tenant, create plugin if it has never been created before
 // and install it to the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin, config map[string]any) (
+func CreatePlugin(tenant_id string, user_id string, plugin_identity string, install_type plugin_entities.PluginRuntimeType) (
 	*models.Plugin, *models.PluginInstallation, error,
 ) {
 	var plugin_to_be_returns *models.Plugin
@@ -21,13 +21,18 @@ func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin, confi
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_id", plugin.PluginID),
-			db.Equal("checksum", plugin.Checksum),
+			db.Equal("plugin_id", plugin_identity),
+			db.Equal("install_type", string(install_type)),
 			db.WLock(),
 		)
 
 		if err == db.ErrDatabaseNotFound {
-			plugin.Refers = 1
+			plugin := &models.Plugin{
+				PluginID:    plugin_identity,
+				InstallType: install_type,
+				Refers:      1,
+			}
+
 			err := db.Create(plugin, tx)
 			if err != nil {
 				return err
@@ -49,7 +54,6 @@ func CreatePlugin(tenant_id string, user_id string, plugin *models.Plugin, confi
 			PluginID: plugin_to_be_returns.PluginID,
 			TenantID: tenant_id,
 			UserID:   user_id,
-			Config:   parser.MarshalJson(config),
 		}
 
 		err = db.Create(installation, tx)
