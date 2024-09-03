@@ -26,6 +26,14 @@ const (
 	LOG_LEVEL_ERROR = 3
 )
 
+const (
+	LOG_LEVEL_DEBUG_COLOR = "\033[34m"
+	LOG_LEVEL_INFO_COLOR  = "\033[32m"
+	LOG_LEVEL_WARN_COLOR  = "\033[33m"
+	LOG_LEVEL_ERROR_COLOR = "\033[31m"
+	LOG_LEVEL_COLOR_END   = "\033[0m"
+)
+
 func (l *Log) Debug(format string, stdout bool, v ...interface{}) {
 	if l.Level <= LOG_LEVEL_DEBUG {
 		l.writeLog("DEBUG", format, stdout, v...)
@@ -69,11 +77,20 @@ func (l *Log) writeLog(level string, format string, stdout bool, v ...interface{
 			panic(err)
 		}
 	}
+
 	//write log
 	format = fmt.Sprintf("["+level+"]"+format, v...)
 
 	if show_log && stdout {
-		logger.Output(4, format)
+		if level == "DEBUG" {
+			logger.Output(4, LOG_LEVEL_DEBUG_COLOR+format+LOG_LEVEL_COLOR_END)
+		} else if level == "INFO" {
+			logger.Output(4, LOG_LEVEL_INFO_COLOR+format+LOG_LEVEL_COLOR_END)
+		} else if level == "WARN" {
+			logger.Output(4, LOG_LEVEL_WARN_COLOR+format+LOG_LEVEL_COLOR_END)
+		} else if level == "ERROR" {
+			logger.Output(4, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
+		}
 	}
 
 	_, err := l.File.Write([]byte(format + "\n"))

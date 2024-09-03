@@ -198,19 +198,19 @@ type ModelProviderHelpEntity struct {
 }
 
 type ModelProviderConfiguration struct {
-	Provider                 string                           `json:"provider" validate:"required,lt=256"`
-	Label                    I18nObject                       `json:"label" validate:"required"`
-	Description              *I18nObject                      `json:"description" validate:"omitempty"`
-	IconSmall                *I18nObject                      `json:"icon_small" validate:"omitempty"`
-	IconLarge                *I18nObject                      `json:"icon_large" validate:"omitempty"`
-	Background               *string                          `json:"background" validate:"omitempty"`
-	Help                     *ModelProviderHelpEntity         `json:"help" validate:"omitempty"`
-	SupportedModelTypes      []ModelType                      `json:"supported_model_types" validate:"required,lte=16,dive,model_type"`
-	ConfigurateMethods       []ModelProviderConfigurateMethod `json:"configurate_methods" validate:"required,lte=16,dive,model_provider_configurate_method"`
-	Models                   []string                         `json:"models" validate:"required,lte=1024"`
-	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" validate:"omitempty"`
-	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" validate:"omitempty"`
-	ModelDeclarations        []ModelConfiguration             `json:"model_declarations"`
+	Provider                 string                           `json:"provider" yaml:"provider" validate:"required,lt=256"`
+	Label                    I18nObject                       `json:"label" yaml:"label" validate:"required"`
+	Description              *I18nObject                      `json:"description" yaml:"description,omitempty" validate:"omitempty"`
+	IconSmall                *I18nObject                      `json:"icon_small" yaml:"icon_small,omitempty" validate:"omitempty"`
+	IconLarge                *I18nObject                      `json:"icon_large" yaml:"icon_large,omitempty" validate:"omitempty"`
+	Background               *string                          `json:"background" yaml:"background,omitempty" validate:"omitempty"`
+	Help                     *ModelProviderHelpEntity         `json:"help" yaml:"help,omitempty" validate:"omitempty"`
+	SupportedModelTypes      []ModelType                      `json:"supported_model_types" yaml:"supported_model_types" validate:"required,lte=16,dive,model_type"`
+	ConfigurateMethods       []ModelProviderConfigurateMethod `json:"configurate_methods" yaml:"configurate_methods" validate:"required,lte=16,dive,model_provider_configurate_method"`
+	Models                   []string                         `json:"models" yaml:"models" validate:"required,lte=1024"`
+	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" yaml:"provider_credential_schema,omitempty" validate:"omitempty"`
+	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" yaml:"model_credential_schema,omitempty" validate:"omitempty"`
+	ModelDeclarations        []ModelConfiguration             `json:"model_declarations" yaml:"model_declarations,omitempty"`
 }
 
 func init() {

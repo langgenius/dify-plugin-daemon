@@ -15,24 +15,6 @@ var (
 		},
 	}
 
-	pluginModelCommand = &cobra.Command{
-		Use:   "model",
-		Short: "Model",
-		Long:  "Model management for plugin",
-	}
-
-	pluginToolCommand = &cobra.Command{
-		Use:   "tool",
-		Short: "Tool",
-		Long:  "Tool management for plugin",
-	}
-
-	pluginEndpointCommand = &cobra.Command{
-		Use:   "endpoint",
-		Short: "Endpoint",
-		Long:  "Endpoint management for plugin",
-	}
-
 	pluginPackageCommand = &cobra.Command{
 		Use:   "package",
 		Short: "Package",
@@ -71,9 +53,6 @@ endpoint				- allow plugin to register endpoint`,
 
 func init() {
 	pluginCommand.AddCommand(pluginInitCommand)
-	pluginCommand.AddCommand(pluginModelCommand)
-	pluginCommand.AddCommand(pluginToolCommand)
-	pluginCommand.AddCommand(pluginEndpointCommand)
 	pluginCommand.AddCommand(pluginPackageCommand)
 	pluginCommand.AddCommand(pluginPermissionCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionAddCommand)
