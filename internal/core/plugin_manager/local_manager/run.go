@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/process"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -33,14 +34,28 @@ func (r *LocalPluginRuntime) Type() plugin_entities.PluginRuntimeType {
 	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 }
 
+func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
+	if r.Config.Meta.Runner.Language == constants.Python {
+		cmd := exec.Command(r.python_interpreter_path, "-m", r.Config.Meta.Runner.Entrypoint)
+		cmd.Dir = r.State.WorkingPath
+		return cmd, nil
+	}
+
+	return nil, fmt.Errorf("unsupported language: %s", r.Config.Meta.Runner.Language)
+}
+
 func (r *LocalPluginRuntime) StartPlugin() error {
 	defer log.Info("plugin %s stopped", r.Config.Identity())
 
 	r.init()
+
 	// start plugin
-	// TODO: use exec.Command("bash") instead of exec.Command("bash", r.Config.Execution.Launch)
-	e := exec.Command("bash")
-	e.Dir = r.State.AbsolutePath
+	e, err := r.getCmd()
+	if err != nil {
+		return err
+	}
+
+	e.Dir = r.State.WorkingPath
 	// add env INSTALL_METHOD=local
 	e.Env = append(e.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
 

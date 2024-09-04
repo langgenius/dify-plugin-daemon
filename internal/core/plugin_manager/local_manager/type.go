@@ -11,4 +11,7 @@ type LocalPluginRuntime struct {
 
 	wait_chan   chan bool
 	io_identity string
+
+	// python interpreter path, currently only support python
+	python_interpreter_path string
 }

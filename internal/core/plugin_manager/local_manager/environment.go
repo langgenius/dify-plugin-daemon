@@ -3,16 +3,10 @@ package local_manager
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"strings"
-	"sync"
-	"syscall"
-	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 func (r *LocalPluginRuntime) InitEnvironment() error {
@@ -20,99 +14,14 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 		return nil
 	}
 
-	// execute init command, create
-	// TODO
-	handle := exec.Command("bash")
-	handle.Dir = r.State.AbsolutePath
-	handle.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var err error
+	if r.Config.Meta.Runner.Language == constants.Python {
+		err = r.InitPythonEnvironment()
+	} else {
+		return fmt.Errorf("unsupported language: %s", r.Config.Meta.Runner.Language)
+	}
 
-	// get stdout and stderr
-	stdout, err := handle.StdoutPipe()
 	if err != nil {
-		return err
-	}
-	defer stdout.Close()
-
-	stderr, err := handle.StderrPipe()
-	if err != nil {
-		return err
-	}
-	defer stderr.Close()
-
-	// start command
-	if err := handle.Start(); err != nil {
-		return err
-	}
-	defer func() {
-		if handle.Process != nil {
-			handle.Process.Kill()
-		}
-	}()
-
-	var err_msg strings.Builder
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	last_active_at := time.Now()
-
-	routine.Submit(func() {
-		defer wg.Done()
-		// read stdout
-		buf := make([]byte, 1024)
-		for {
-			n, err := stdout.Read(buf)
-			if err != nil {
-				break
-			}
-			log.Info("installing %s - %s", r.Config.Identity(), string(buf[:n]))
-			last_active_at = time.Now()
-		}
-	})
-
-	routine.Submit(func() {
-		defer wg.Done()
-		// read stderr
-		buf := make([]byte, 1024)
-		for {
-			n, err := stderr.Read(buf)
-			if err != nil && err != os.ErrClosed {
-				last_active_at = time.Now()
-				err_msg.WriteString(string(buf[:n]))
-				break
-			} else if err == os.ErrClosed {
-				break
-			}
-
-			if n > 0 {
-				err_msg.WriteString(string(buf[:n]))
-				last_active_at = time.Now()
-			}
-		}
-	})
-
-	routine.Submit(func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for range ticker.C {
-			if handle.ProcessState != nil && handle.ProcessState.Exited() {
-				break
-			}
-
-			if time.Since(last_active_at) > 60*time.Second {
-				handle.Process.Kill()
-				err_msg.WriteString("init process exited due to long time no activity")
-				break
-			}
-		}
-	})
-
-	wg.Wait()
-
-	if err_msg.Len() > 0 {
-		return fmt.Errorf("install failed: %s", err_msg.String())
-	}
-
-	if err := handle.Wait(); err != nil {
 		return err
 	}
 
