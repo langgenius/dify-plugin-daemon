@@ -21,15 +21,15 @@ var (
 )
 
 type stdioHolder struct {
-	id              string
-	plugin_identity string
-	writer          io.WriteCloser
-	reader          io.ReadCloser
-	err_reader      io.ReadCloser
-	l               *sync.Mutex
-	listener        map[string]func([]byte)
-	error_listener  map[string]func([]byte)
-	started         bool
+	id                       string
+	plugin_unique_identifier string
+	writer                   io.WriteCloser
+	reader                   io.ReadCloser
+	err_reader               io.ReadCloser
+	l                        *sync.Mutex
+	listener                 map[string]func([]byte)
+	error_listener           map[string]func([]byte)
+	started                  bool
 
 	err_message                 string
 	last_err_message_updated_at time.Time
@@ -94,7 +94,7 @@ func (s *stdioHolder) StartStdout() {
 					continue
 				}
 
-				log.Info("plugin %s: %s", s.plugin_identity, logEvent.Message)
+				log.Info("plugin %s: %s", s.plugin_unique_identifier, logEvent.Message)
 			}
 		case plugin_entities.PLUGIN_EVENT_SESSION:
 			for _, listener := range listeners {
@@ -107,7 +107,7 @@ func (s *stdioHolder) StartStdout() {
 				}
 			}
 		case plugin_entities.PLUGIN_EVENT_ERROR:
-			log.Error("plugin %s: %s", s.plugin_identity, event.Data)
+			log.Error("plugin %s: %s", s.plugin_unique_identifier, event.Data)
 		case plugin_entities.PLUGIN_EVENT_HEARTBEAT:
 			s.last_active_at = time.Now()
 		}

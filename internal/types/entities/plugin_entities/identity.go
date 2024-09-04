@@ -2,9 +2,9 @@ package plugin_entities
 
 import "strings"
 
-type PluginIdentity string
+type PluginUniqueIdentifier string
 
-func (p PluginIdentity) PluginID() string {
+func (p PluginUniqueIdentifier) PluginID() string {
 	// try find @
 	split := strings.Split(p.String(), "@")
 	if len(split) == 2 {
@@ -13,6 +13,6 @@ func (p PluginIdentity) PluginID() string {
 	return p.String()
 }
 
-func (p PluginIdentity) String() string {
+func (p PluginUniqueIdentifier) String() string {
 	return string(p)
 }

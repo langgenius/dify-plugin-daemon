@@ -58,8 +58,8 @@ func (p *PluginManager) List() []plugin_entities.PluginRuntimeInterface {
 	return runtimes
 }
 
-func (p *PluginManager) Get(identity string) plugin_entities.PluginRuntimeInterface {
-	if v, ok := p.m.Load(identity); ok {
+func (p *PluginManager) Get(identity plugin_entities.PluginUniqueIdentifier) plugin_entities.PluginRuntimeInterface {
+	if v, ok := p.m.Load(identity.String()); ok {
 		if r, ok := v.(plugin_entities.PluginRuntimeInterface); ok {
 			return r
 		}

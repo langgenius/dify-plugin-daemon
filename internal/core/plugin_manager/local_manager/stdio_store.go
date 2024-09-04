@@ -8,18 +8,18 @@ import (
 )
 
 func PutStdioIo(
-	plugin_identity string, writer io.WriteCloser,
+	plugin_unique_identifier string, writer io.WriteCloser,
 	reader io.ReadCloser, err_reader io.ReadCloser,
 ) *stdioHolder {
 	id := uuid.New().String()
 
 	holder := &stdioHolder{
-		plugin_identity: plugin_identity,
-		writer:          writer,
-		reader:          reader,
-		err_reader:      err_reader,
-		id:              id,
-		l:               &sync.Mutex{},
+		plugin_unique_identifier: plugin_unique_identifier,
+		writer:                   writer,
+		reader:                   reader,
+		err_reader:               err_reader,
+		id:                       id,
+		l:                        &sync.Mutex{},
 
 		health_chan_lock: &sync.Mutex{},
 		health_chan:      make(chan bool),

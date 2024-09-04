@@ -20,8 +20,9 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 		return nil
 	}
 
-	// execute init command
-	handle := exec.Command("bash", r.Config.Execution.Install)
+	// execute init command, create
+	// TODO
+	handle := exec.Command("bash")
 	handle.Dir = r.State.AbsolutePath
 	handle.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
@@ -125,6 +126,6 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
-func (r *LocalPluginRuntime) Identity() (plugin_entities.PluginIdentity, error) {
-	return plugin_entities.PluginIdentity(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
+func (r *LocalPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
+	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
 }

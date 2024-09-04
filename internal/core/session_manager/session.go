@@ -26,13 +26,13 @@ type Session struct {
 	runtime     plugin_entities.PluginRuntimeInterface `json:"-"`
 	persistence *persistence.Persistence               `json:"-"`
 
-	TenantID       string                             `json:"tenant_id"`
-	UserID         string                             `json:"user_id"`
-	PluginIdentity plugin_entities.PluginIdentity     `json:"plugin_identity"`
-	ClusterID      string                             `json:"cluster_id"`
-	InvokeFrom     access_types.PluginAccessType      `json:"invoke_from"`
-	Action         access_types.PluginAccessAction    `json:"action"`
-	Declaration    *plugin_entities.PluginDeclaration `json:"declaration"`
+	TenantID               string                                 `json:"tenant_id"`
+	UserID                 string                                 `json:"user_id"`
+	PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier"`
+	ClusterID              string                                 `json:"cluster_id"`
+	InvokeFrom             access_types.PluginAccessType          `json:"invoke_from"`
+	Action                 access_types.PluginAccessAction        `json:"action"`
+	Declaration            *plugin_entities.PluginDeclaration     `json:"declaration"`
 }
 
 func sessionKey(id string) string {
@@ -42,21 +42,21 @@ func sessionKey(id string) string {
 func NewSession(
 	tenant_id string,
 	user_id string,
-	plugin_identity plugin_entities.PluginIdentity,
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	cluster_id string,
 	invoke_from access_types.PluginAccessType,
 	action access_types.PluginAccessAction,
 	declaration *plugin_entities.PluginDeclaration,
 ) *Session {
 	s := &Session{
-		ID:             uuid.New().String(),
-		TenantID:       tenant_id,
-		UserID:         user_id,
-		PluginIdentity: plugin_identity,
-		ClusterID:      cluster_id,
-		InvokeFrom:     invoke_from,
-		Action:         action,
-		Declaration:    declaration,
+		ID:                     uuid.New().String(),
+		TenantID:               tenant_id,
+		UserID:                 user_id,
+		PluginUniqueIdentifier: plugin_unique_identifier,
+		ClusterID:              cluster_id,
+		InvokeFrom:             invoke_from,
+		Action:                 action,
+		Declaration:            declaration,
 	}
 
 	session_lock.Lock()

@@ -22,8 +22,8 @@ func (r *fakePlugin) Checksum() string {
 	return ""
 }
 
-func (r *fakePlugin) Identity() (plugin_entities.PluginIdentity, error) {
-	return plugin_entities.PluginIdentity(""), nil
+func (r *fakePlugin) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
+	return plugin_entities.PluginUniqueIdentifier(""), nil
 }
 
 func (r *fakePlugin) StartPlugin() error {

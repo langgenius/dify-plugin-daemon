@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -54,8 +55,12 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 	}
 
 	// check if plugin exists in current node
-	if !app.cluster.IsPluginNoCurrentNode(plugin_installation.PluginIdentity) {
-		app.redirectPluginInvokeByPluginID(ctx, plugin_installation.PluginIdentity)
+	if !app.cluster.IsPluginNoCurrentNode(
+		plugin_entities.PluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier),
+	) {
+		app.redirectPluginInvokeByPluginID(ctx, plugin_entities.PluginUniqueIdentifier(
+			plugin_installation.PluginUniqueIdentifier,
+		))
 	} else {
 		service.Endpoint(ctx, &endpoint, &plugin_installation, path)
 	}

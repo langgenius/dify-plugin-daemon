@@ -14,13 +14,13 @@ import (
 func SetupEndpoint(
 	tenant_id string,
 	user_id string,
-	plugin_identity plugin_entities.PluginIdentity,
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	settings map[string]any,
 ) *entities.Response {
 	// try find plugin installation
 	installation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
-		db.Equal("plugin_identity", plugin_identity.String()),
+		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 	)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
@@ -28,7 +28,7 @@ func SetupEndpoint(
 
 	// try get plugin
 	plugin, err := db.GetOne[models.Plugin](
-		db.Equal("plugin_identity", plugin_identity.String()),
+		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 	)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
@@ -70,7 +70,7 @@ func SetupEndpoint(
 	}
 
 	_, err = install_service.InstallEndpoint(
-		plugin_identity,
+		plugin_unique_identifier,
 		installation.ID,
 		tenant_id,
 		user_id,
@@ -104,7 +104,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 		}
 
 		plugin, err := db.GetOne[models.Plugin](
-			db.Equal("plugin_identity", plugin_installation.PluginIdentity),
+			db.Equal("plugin_unique_identifier", plugin_installation.PluginUniqueIdentifier),
 		)
 		if err != nil {
 			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))

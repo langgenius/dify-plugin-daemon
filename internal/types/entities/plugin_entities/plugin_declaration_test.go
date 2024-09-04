@@ -38,10 +38,6 @@ func preparePluginDeclaration() PluginDeclaration {
 				},
 			},
 			Plugins: []string{},
-			Execution: PluginExecution{
-				Install: "echo 'hello'",
-				Launch:  "echo 'hello'",
-			},
 			Meta: PluginMeta{
 				Version: "0.0.1",
 				Arch: []constants.Arch{

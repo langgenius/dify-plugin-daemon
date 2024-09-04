@@ -40,11 +40,11 @@ func InstallPlugin(
 func UninstallPlugin(
 	tenant_id string,
 	installation_id string,
-	plugin_identity plugin_entities.PluginIdentity,
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	install_type plugin_entities.PluginRuntimeType,
 ) error {
 	// delete the plugin from db
-	_, err := curd.DeletePlugin(tenant_id, plugin_identity, installation_id)
+	_, err := curd.DeletePlugin(tenant_id, plugin_unique_identifier, installation_id)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func UninstallPlugin(
 	// delete endpoints if plugin is not installed through remote
 	if install_type != plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
 		if err := db.DeleteByCondition(models.Endpoint{
-			PluginID: plugin_identity.PluginID(),
+			PluginID: plugin_unique_identifier.PluginID(),
 			TenantID: tenant_id,
 		}); err != nil {
 			return err
@@ -65,7 +65,7 @@ func UninstallPlugin(
 // setup a plugin to db,
 // returns the endpoint id
 func InstallEndpoint(
-	plugin_id plugin_entities.PluginIdentity,
+	plugin_id plugin_entities.PluginUniqueIdentifier,
 	installation_id string,
 	tenant_id string,
 	user_id string,

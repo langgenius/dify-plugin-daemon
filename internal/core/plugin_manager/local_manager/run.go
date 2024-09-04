@@ -38,11 +38,14 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	r.init()
 	// start plugin
-	e := exec.Command("bash", r.Config.Execution.Launch)
+	// TODO: use exec.Command("bash") instead of exec.Command("bash", r.Config.Execution.Launch)
+	e := exec.Command("bash")
 	e.Dir = r.State.AbsolutePath
 	// add env INSTALL_METHOD=local
 	e.Env = append(e.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
 
+	// NOTE: subprocess will be taken care of by subprocess manager
+	// ensure all subprocess are killed when parent process exits, especially on Golang debugger
 	process.WrapProcess(e)
 
 	// get writer

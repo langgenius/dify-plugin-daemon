@@ -34,8 +34,8 @@ func (r *AWSPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
-func (r *AWSPluginRuntime) Identity() (plugin_entities.PluginIdentity, error) {
-	return plugin_entities.PluginIdentity(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
+func (r *AWSPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
+	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
 }
 
 func (r *AWSPluginRuntime) initEnvironment() error {

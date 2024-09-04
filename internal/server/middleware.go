@@ -49,20 +49,18 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 			reader: bytes.NewReader(raw),
 		}
 
-		identity, err := parser.UnmarshalJsonBytes[plugin_entities.InvokePluginPluginIdentity](raw)
+		identity, err := parser.UnmarshalJsonBytes[plugin_entities.BasePluginIdentifier](raw)
 
 		if err != nil {
 			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request"})
 			return
 		}
 
-		plugin_id := parser.MarshalPluginIdentity(identity.PluginName, identity.PluginVersion)
-
 		// check if plugin in current node
 		if !app.cluster.IsPluginNoCurrentNode(
-			plugin_id,
+			identity.PluginUniqueIdentifier,
 		) {
-			app.redirectPluginInvokeByPluginID(ctx, plugin_id)
+			app.redirectPluginInvokeByPluginID(ctx, identity.PluginUniqueIdentifier)
 			ctx.Abort()
 		} else {
 			ctx.Next()
@@ -70,9 +68,9 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	}
 }
 
-func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id string) {
+func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id plugin_entities.PluginUniqueIdentifier) {
 	// try find the correct node
-	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id)
+	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id.PluginID())
 	if err != nil {
 		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
 		log.Error("fetch plugin available nodes failed: %s", err.Error())

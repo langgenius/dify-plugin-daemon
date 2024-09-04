@@ -31,8 +31,8 @@ func (r *TPluginRuntime) Checksum() string {
 	return "test_checksum"
 }
 
-func (r *TPluginRuntime) Identity() (plugin_entities.PluginIdentity, error) {
-	return plugin_entities.PluginIdentity("test_identity"), nil
+func (r *TPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
+	return plugin_entities.PluginUniqueIdentifier("test_identity"), nil
 }
 
 func (r *TPluginRuntime) StartPlugin() error {

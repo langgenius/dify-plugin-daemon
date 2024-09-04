@@ -7,8 +7,8 @@ import (
 
 type Plugin struct {
 	Model
-	// PluginIdentity is a unique identifier for the plugin, it contains version and checksum
-	PluginIdentity string `json:"plugin_identity" orm:"index;size:127"`
+	// PluginUniqueIdentifier is a unique identifier for the plugin, it contains version and checksum
+	PluginUniqueIdentifier string `json:"plugin_unique_identifier" orm:"index;size:127"`
 	// PluginID is the id of the plugin, only plugin name is considered
 	PluginID     string                            `json:"id" orm:"index;size:127"`
 	Refers       int                               `json:"refers" orm:"default:0"`

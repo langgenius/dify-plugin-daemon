@@ -389,7 +389,7 @@ func executeDifyInvocationStorageTask(
 		return
 	}
 
-	plugin_id := handle.session.PluginIdentity
+	plugin_id := handle.session.PluginUniqueIdentifier
 
 	if request.Opt == dify_invocation.STORAGE_OPT_GET {
 		data, err := persistence.Load(tenant_id, plugin_id.PluginID(), request.Key)

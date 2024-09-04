@@ -126,11 +126,6 @@ type PluginMeta struct {
 	Runner  PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
 }
 
-type PluginExecution struct {
-	Install string `json:"install" yaml:"install" validate:"omitempty"`
-	Launch  string `json:"launch" yaml:"launch" validate:"omitempty"`
-}
-
 type PluginDeclarationWithoutAdvancedFields struct {
 	Version   string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
 	Type      DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
@@ -140,7 +135,6 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	CreatedAt time.Time                 `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
 	Resource  PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins   []string                  `json:"plugins" yaml:"plugins,omitempty" validate:"required,dive,max=128"`
-	Execution PluginExecution           `json:"execution" yaml:"execution,omitempty" validate:"required"`
 	Meta      PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
 }
 
@@ -168,7 +162,7 @@ func isPluginName(fl validator.FieldLevel) bool {
 }
 
 func (p *PluginDeclaration) Identity() string {
-	return parser.MarshalPluginIdentity(p.Name, p.Version)
+	return parser.MarshalPluginUniqueIdentifier(p.Name, p.Version)
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {

@@ -9,7 +9,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
@@ -19,13 +18,12 @@ func createSession[T any](
 	access_action access_types.PluginAccessAction,
 	cluster_id string,
 ) (*session_manager.Session, error) {
-	plugin_identity := parser.MarshalPluginIdentity(r.PluginName, r.PluginVersion)
-	runtime := plugin_manager.GetGlobalPluginManager().Get(plugin_identity)
+	runtime := plugin_manager.GetGlobalPluginManager().Get(r.PluginUniqueIdentifier)
 
 	session := session_manager.NewSession(
 		r.TenantId,
 		r.UserId,
-		plugin_entities.PluginIdentity(plugin_identity),
+		r.PluginUniqueIdentifier,
 		cluster_id,
 		access_type,
 		access_action,

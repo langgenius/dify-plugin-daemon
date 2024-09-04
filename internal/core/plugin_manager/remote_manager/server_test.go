@@ -151,10 +151,6 @@ func TestAcceptConnection(t *testing.T) {
 			Plugins: []string{
 				"test",
 			},
-			Execution: plugin_entities.PluginExecution{
-				Install: "echo 'hello'",
-				Launch:  "echo 'hello'",
-			},
 			Meta: plugin_entities.PluginMeta{
 				Version: "0.0.1",
 				Arch: []constants.Arch{

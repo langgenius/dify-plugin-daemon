@@ -8,18 +8,18 @@ import (
 
 func SetupEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		PluginIdentity string         `json:"plugin_identity" binding:"required"`
-		TenantID       string         `json:"tenant_id" binding:"required"`
-		UserID         string         `json:"user_id" binding:"required"`
-		Settings       map[string]any `json:"settings" binding:"omitempty"`
+		PluginUniqueIdentifier string         `json:"plugin_unique_identifier" binding:"required"`
+		TenantID               string         `json:"tenant_id" binding:"required"`
+		UserID                 string         `json:"user_id" binding:"required"`
+		Settings               map[string]any `json:"settings" binding:"omitempty"`
 	}) {
-		plugin_identity := request.PluginIdentity
+		plugin_unique_identifier := request.PluginUniqueIdentifier
 		tenant_id := request.TenantID
 		user_id := request.UserID
 		settings := request.Settings
 
 		ctx.JSON(200, service.SetupEndpoint(
-			tenant_id, user_id, plugin_entities.PluginIdentity(plugin_identity), settings,
+			tenant_id, user_id, plugin_entities.PluginUniqueIdentifier(plugin_unique_identifier), settings,
 		))
 	})
 }
@@ -40,12 +40,12 @@ func ListEndpoints(ctx *gin.Context) {
 
 func RemoveEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		PluginIdentity string `json:"plugin_identity"`
-		TenantID       string `json:"tenant_id"`
+		PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
+		TenantID               string `json:"tenant_id"`
 	}) {
-		plugin_identity := request.PluginIdentity
+		plugin_unique_identifier := request.PluginUniqueIdentifier
 		tenant_id := request.TenantID
 
-		ctx.JSON(200, service.RemoveEndpoint(plugin_identity, tenant_id))
+		ctx.JSON(200, service.RemoveEndpoint(plugin_unique_identifier, tenant_id))
 	})
 }
