@@ -174,7 +174,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// registration transferred
 		runtime.registration_transferred = true
 	} else if !runtime.tools_registration_transferred {
-		tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderConfiguration](message)
+		tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderDeclaration](message)
 		if err != nil {
 			runtime.conn.Write([]byte("tools register failed\n"))
 			log.Error("tools register failed, error: %v", err)
@@ -190,7 +190,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			runtime.Config = declaration
 		}
 	} else if !runtime.models_registration_transferred {
-		models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderConfiguration](message)
+		models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderDeclaration](message)
 		if err != nil {
 			runtime.conn.Write([]byte("models register failed\n"))
 			log.Error("models register failed, error: %v", err)

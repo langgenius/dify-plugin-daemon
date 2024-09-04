@@ -120,7 +120,7 @@ type ModelPricing struct {
 	PricePerUnit float64 `json:"price_per_unit" validate:"required"`
 }
 
-type ModelConfiguration struct {
+type ModelDeclaration struct {
 	Model           string                         `json:"model" validate:"required,lt=256"`
 	Label           I18nObject                     `json:"label" validate:"required"`
 	ModelType       ModelType                      `json:"model_type" validate:"required,model_type"`
@@ -197,7 +197,7 @@ type ModelProviderHelpEntity struct {
 	URL   I18nObject `json:"url" validate:"required"`
 }
 
-type ModelProviderConfiguration struct {
+type ModelProviderDeclaration struct {
 	Provider                 string                           `json:"provider" yaml:"provider" validate:"required,lt=256"`
 	Label                    I18nObject                       `json:"label" yaml:"label" validate:"required"`
 	Description              *I18nObject                      `json:"description" yaml:"description,omitempty" validate:"omitempty"`
@@ -210,7 +210,7 @@ type ModelProviderConfiguration struct {
 	Models                   []string                         `json:"models" yaml:"models" validate:"required,lte=1024"`
 	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" yaml:"provider_credential_schema,omitempty" validate:"omitempty"`
 	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" yaml:"model_credential_schema,omitempty" validate:"omitempty"`
-	ModelDeclarations        []ModelConfiguration             `json:"model_declarations" yaml:"model_declarations,omitempty"`
+	ModelDeclarations        []ModelDeclaration               `json:"model_declarations" yaml:"model_declarations,omitempty"`
 }
 
 func init() {

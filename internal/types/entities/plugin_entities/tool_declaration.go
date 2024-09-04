@@ -95,7 +95,7 @@ type ToolDescription struct {
 
 type ToolOutputSchema map[string]any
 
-type ToolConfiguration struct {
+type ToolDeclaration struct {
 	Identity     ToolIdentity     `json:"identity" validate:"required"`
 	Description  ToolDescription  `json:"description" validate:"required"`
 	Parameters   []ToolParameter  `json:"parameters" validate:"omitempty,dive"`
@@ -104,10 +104,7 @@ type ToolConfiguration struct {
 
 func isJSONSchema(fl validator.FieldLevel) bool {
 	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(fl.Field().Interface()))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func init() {
@@ -168,10 +165,10 @@ type ToolProviderIdentity struct {
 	Tags        []ToolLabel `json:"tags" validate:"required,dive,tool_label"`
 }
 
-type ToolProviderConfiguration struct {
+type ToolProviderDeclaration struct {
 	Identity          ToolProviderIdentity      `json:"identity" validate:"required"`
 	CredentialsSchema map[string]ProviderConfig `json:"credentials_schema" validate:"omitempty,dive"`
-	Tools             []ToolConfiguration       `json:"tools" validate:"required,dive"`
+	Tools             []ToolDeclaration         `json:"tools" validate:"required,dive"`
 }
 
 func init() {
@@ -224,8 +221,8 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isBasicType)
 }
 
-func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderConfiguration, error) {
-	obj, err := parser.UnmarshalJsonBytes[ToolProviderConfiguration](data)
+func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderDeclaration, error) {
+	obj, err := parser.UnmarshalJsonBytes[ToolProviderDeclaration](data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal tool provider configuration: %w", err)
 	}

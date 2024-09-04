@@ -83,12 +83,12 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert endpoint to struct: %s", plugin))
 			}
 		case plugin_entities.PROVIDER_TYPE_TOOL:
-			dec.Tool, err = parser.MapToStruct[plugin_entities.ToolProviderConfiguration](plugin_dec.Provider)
+			dec.Tool, err = parser.MapToStruct[plugin_entities.ToolProviderDeclaration](plugin_dec.Provider)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert tool to struct: %s", plugin))
 			}
 		case plugin_entities.PROVIDER_TYPE_MODEL:
-			dec.Model, err = parser.MapToStruct[plugin_entities.ModelProviderConfiguration](plugin_dec.Provider)
+			dec.Model, err = parser.MapToStruct[plugin_entities.ModelProviderDeclaration](plugin_dec.Provider)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert model to struct: %s", plugin))
 			}
