@@ -23,6 +23,7 @@ func (app *App) server(config *app.Config) func() {
 	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
 	app.endpointManagementGroup(engine.Group("/endpoint"))
+	app.pluginGroup(engine.Group("/plugin"), config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -92,4 +93,10 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 	group.POST("/setup", controllers.SetupEndpoint)
 	group.POST("/remove", controllers.RemoveEndpoint)
 	group.GET("/list", controllers.ListEndpoints)
+}
+
+func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(CheckingKey(config.PluginInnerApiKey))
+
+	group.GET("/asset/:id", controllers.GetAsset)
 }

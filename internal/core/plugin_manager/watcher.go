@@ -176,7 +176,6 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 		return nil, errors.Join(fmt.Errorf("plugin already exists: %s", manifest.Identity()), err)
 	}
 
-	// TODO: use plugin unique id as the working directory
 	checksum, err := checksum.CalculateChecksum(decoder)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))

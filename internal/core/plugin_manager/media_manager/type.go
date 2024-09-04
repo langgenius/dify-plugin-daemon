@@ -69,3 +69,12 @@ func (m *MediaManager) Get(id string) ([]byte, error) {
 
 	return file, nil
 }
+
+func (m *MediaManager) Delete(id string) error {
+	// delete from cache
+	m.cache.Remove(id)
+
+	// delete from storage
+	filepath := path.Join(m.storagePath, id)
+	return os.Remove(filepath)
+}

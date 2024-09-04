@@ -168,9 +168,10 @@ func TestAcceptConnection(t *testing.T) {
 	conn.Write([]byte("\n"))
 	conn.Write(handle_shake_message)
 	conn.Write([]byte("\n"))
-	conn.Write([]byte("[]\n"))
-	conn.Write([]byte("[]\n"))
-	conn.Write([]byte("[]\n"))
+	conn.Write([]byte("[]\n")) // transfer tool
+	conn.Write([]byte("[]\n")) // transfer model
+	conn.Write([]byte("[]\n")) // transfer endpoint
+	conn.Write([]byte("[]\n")) // transfer file
 	closed_chan := make(chan bool)
 
 	msg := ""

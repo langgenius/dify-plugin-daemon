@@ -83,6 +83,10 @@ func (p *PluginManager) Get(identity plugin_entities.PluginUniqueIdentifier) plu
 	return nil
 }
 
+func (p *PluginManager) GetAsset(id string) ([]byte, error) {
+	return p.mediaManager.Get(id)
+}
+
 func (p *PluginManager) Init(configuration *app.Config) {
 	// TODO: init plugin manager
 	log.Info("start plugin manager daemon...")

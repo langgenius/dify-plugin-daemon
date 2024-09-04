@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -49,6 +50,10 @@ func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	// new plugin connected
 	c.SetContext(&codec{})
 	runtime := &RemotePluginRuntime{
+		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(
+			s.mediaManager,
+		),
+
 		conn:           c,
 		response:       stream.NewStreamResponse[[]byte](512),
 		callbacks:      make(map[string][]func([]byte)),
@@ -90,6 +95,9 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 
 	// close plugin
 	plugin.onDisconnected()
+
+	// clear assets
+	plugin.ClearAssets()
 
 	// uninstall plugin
 	if plugin.handshake && plugin.registration_transferred &&
@@ -252,6 +260,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			runtime.conn.Close()
 			return
 		}
+
+		runtime.assets_transferred = true
 
 		runtime.checksum = runtime.calculateChecksum()
 		runtime.InitState()

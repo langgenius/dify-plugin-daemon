@@ -160,7 +160,7 @@ type ToolProviderIdentity struct {
 	Author      string      `json:"author" validate:"required"`
 	Name        string      `json:"name" validate:"required"`
 	Description I18nObject  `json:"description" validate:"required"`
-	Icon        []byte      `json:"icon" validate:"required"`
+	Icon        string      `json:"icon" validate:"required"`
 	Label       I18nObject  `json:"label" validate:"required"`
 	Tags        []ToolLabel `json:"tags" validate:"required,dive,tool_label"`
 }

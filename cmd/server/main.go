@@ -47,8 +47,9 @@ func setDefault(config *app.Config) {
 	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBool(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
-	setDefaultString(&config.PluginMediaCachePath, "/var/dify-plugin-daemon/media-cache")
-	setDefaultString(&config.ProcessCachingPath, "/var/dify-plugin-daemon/subprocesses")
+	setDefaultString(&config.PluginMediaCachePath, "./storage/assets")
+	setDefaultString(&config.PersistenceStorageLocalPath, "./storage/persistence")
+	setDefaultString(&config.ProcessCachingPath, "./storage/subprocesses")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
