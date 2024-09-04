@@ -221,7 +221,7 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("is_basic_type", isBasicType)
 }
 
-func UnmarshalToolProviderConfiguration(data []byte) (*ToolProviderDeclaration, error) {
+func UnmarshalToolProviderDeclaration(data []byte) (*ToolProviderDeclaration, error) {
 	obj, err := parser.UnmarshalJsonBytes[ToolProviderDeclaration](data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal tool provider configuration: %w", err)

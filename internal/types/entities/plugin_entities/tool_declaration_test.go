@@ -104,7 +104,7 @@ func TestFullFunctionToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err != nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v", err)
 		return
@@ -162,7 +162,7 @@ func TestWithoutAuthorToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -220,7 +220,7 @@ func TestWithoutNameToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -274,7 +274,7 @@ func TestWithoutDescriptionToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -333,7 +333,7 @@ func TestWrongCredentialTypeToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -392,7 +392,7 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -463,7 +463,7 @@ func TestWrongToolParameterTypeToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -534,7 +534,7 @@ func TestWrongToolParameterFormToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -593,7 +593,7 @@ func TestJSONSchemaTypeToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err != nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -652,7 +652,7 @@ func TestWrongJSONSchemaToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -748,7 +748,7 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err == nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
@@ -760,7 +760,7 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 		return
 	}
 
-	if !strings.Contains(str, "ToolProviderConfiguration.Tools[0].Parameters[0].Scope") {
+	if !strings.Contains(str, "ToolProviderDeclaration.Tools[0].Parameters[0].Scope") {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
@@ -816,7 +816,7 @@ func TestAppSelectorScopeToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderConfiguration([]byte(data))
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err != nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
