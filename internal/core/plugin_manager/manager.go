@@ -9,7 +9,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 )
 
 type PluginManager struct {
@@ -19,6 +21,11 @@ type PluginManager struct {
 
 	maxPluginPackageSize int64
 	workingDirectory     string
+
+	// running plugin in storage contains relations between plugin packages and their running instances
+	runningPluginInStorage mapping.Map[string, string]
+	// start process lock
+	startProcessLock *lock.HighGranularityLock
 }
 
 var (
@@ -30,6 +37,7 @@ func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config
 		cluster:              cluster,
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
 		workingDirectory:     configuration.PluginWorkingPath,
+		startProcessLock:     lock.NewHighGranularityLock(),
 	}
 	manager.Init(configuration)
 }

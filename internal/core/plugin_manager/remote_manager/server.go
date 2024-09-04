@@ -60,7 +60,6 @@ func (r *RemotePluginServer) Stop() error {
 // Launch starts the server
 func (r *RemotePluginServer) Launch() error {
 	// kill the process if port is already in use
-	// TODO: switch to optional
 	exec.Command("fuser", "-k", "tcp", fmt.Sprintf("%d", r.server.port)).Run()
 
 	time.Sleep(time.Millisecond * 100)

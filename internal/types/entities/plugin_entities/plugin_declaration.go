@@ -162,7 +162,7 @@ func isPluginName(fl validator.FieldLevel) bool {
 }
 
 func (p *PluginDeclaration) Identity() string {
-	return parser.MarshalPluginUniqueIdentifier(p.Name, p.Version)
+	return parser.MarshalPluginID(p.Name, p.Version)
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {

@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -75,7 +77,23 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 			continue
 		}
 
+		identity, err := plugin_interface.Identity()
+		if err != nil {
+			log.Error("get plugin identity error: %v", err)
+			continue
+		}
+
+		// store the plugin in the storage, avoid duplicate loading
+		p.runningPluginInStorage.Store(plugin.Runtime.State.AbsolutePath, identity.String())
+
 		routine.Submit(func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Error("plugin runtime error: %v", r)
+				}
+			}()
+			// delete the plugin from the storage when the plugin is stopped
+			defer p.runningPluginInStorage.Delete(plugin.Runtime.State.AbsolutePath)
 			p.lifetime(plugin_interface)
 		})
 	}
@@ -100,16 +118,20 @@ func (p *PluginManager) loadNewPlugins(root_path string) <-chan *pluginRuntimeWi
 	routine.Submit(func() {
 		for _, plugin := range plugins {
 			if !plugin.IsDir() {
-				plugin, err := p.loadPlugin(path.Join(root_path, plugin.Name()))
+				abs_path := path.Join(root_path, plugin.Name())
+				if _, ok := p.runningPluginInStorage.Load(abs_path); ok {
+					// if the plugin is already running, skip it
+					continue
+				}
+
+				plugin, err := p.loadPlugin(abs_path)
 				if err != nil {
 					log.Error("load plugin error: %v", err)
 					continue
 				}
-
 				ch <- plugin
 			}
 		}
-
 		close(ch)
 	})
 
@@ -119,14 +141,12 @@ func (p *PluginManager) loadNewPlugins(root_path string) <-chan *pluginRuntimeWi
 func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecoder, error) {
 	pack, err := os.Open(plugin_path)
 	if err != nil {
-		log.Error("open plugin package error: %v", err)
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("open plugin package error"))
 	}
 	defer pack.Close()
 
 	if info, err := pack.Stat(); err != nil {
-		log.Error("get plugin package info error: %v", err)
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("get plugin package info error"))
 	} else if info.Size() > p.maxPluginPackageSize {
 		log.Error("plugin package size is too large: %d", info.Size())
 		return nil, err
@@ -134,35 +154,36 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 
 	plugin_zip, err := io.ReadAll(pack)
 	if err != nil {
-		log.Error("read plugin package error: %v", err)
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("read plugin package error"))
 	}
 
 	decoder, err := decoder.NewZipPluginDecoder(plugin_zip)
 	if err != nil {
-		log.Error("create plugin decoder error: %v", err)
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
 	}
 
 	// get manifest
 	manifest, err := decoder.Manifest()
 	if err != nil {
-		log.Error("get plugin manifest error: %v", err)
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("get plugin manifest error"))
 	}
 
 	// check if already exists
 	if _, exist := p.m.Load(manifest.Identity()); exist {
-		log.Warn("plugin already exists: %s", manifest.Identity())
-		return nil, fmt.Errorf("plugin already exists: %s", manifest.Identity())
+		return nil, errors.Join(fmt.Errorf("plugin already exists: %s", manifest.Identity()), err)
 	}
 
-	plugin_working_path := path.Join(p.workingDirectory, manifest.Identity())
+	// TODO: use plugin unique id as the working directory
+	checksum, err := checksum.CalculateChecksum(decoder)
+	if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))
+	}
+
+	plugin_working_path := path.Join(p.workingDirectory, fmt.Sprintf("%s@%s", manifest.Identity(), checksum))
 
 	// check if working directory exists
 	if _, err := os.Stat(plugin_working_path); err == nil {
-		log.Warn("plugin working directory already exists: %s", plugin_working_path)
-		return nil, fmt.Errorf("plugin working directory already exists: %s", plugin_working_path)
+		return nil, errors.Join(fmt.Errorf("plugin working directory already exists: %s", plugin_working_path), err)
 	}
 
 	// copy to working directory
@@ -187,8 +208,7 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 
 		return nil
 	}); err != nil {
-		log.Error("copy plugin to working directory error: %v", err)
-		return nil, err
+		return nil, errors.Join(fmt.Errorf("copy plugin to working directory error: %v", err), err)
 	}
 
 	return &pluginRuntimeWithDecoder{
