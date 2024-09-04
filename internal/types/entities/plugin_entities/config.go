@@ -10,17 +10,19 @@ import (
 type ConfigType string
 
 const (
-	CONFIG_TYPE_SECRET_INPUT ConfigType = SECRET_INPUT
-	CONFIG_TYPE_TEXT_INPUT   ConfigType = TEXT_INPUT
-	CONFIG_TYPE_SELECT       ConfigType = SELECT
-	CONFIG_TYPE_BOOLEAN      ConfigType = BOOLEAN
-	CONFIG_TYPE_MODEL_CONFIG ConfigType = MODEL_CONFIG
-	CONFIG_TYPE_APP_SELECTOR ConfigType = APP_SELECTOR
+	CONFIG_TYPE_SECRET_INPUT  ConfigType = SECRET_INPUT
+	CONFIG_TYPE_TEXT_INPUT    ConfigType = TEXT_INPUT
+	CONFIG_TYPE_SELECT        ConfigType = SELECT
+	CONFIG_TYPE_BOOLEAN       ConfigType = BOOLEAN
+	CONFIG_TYPE_MODEL_CONFIG  ConfigType = MODEL_CONFIG
+	CONFIG_TYPE_APP_SELECTOR  ConfigType = APP_SELECTOR
+	CONFIG_TYPE_TOOL_SELECTOR ConfigType = TOOL_SELECTOR
 )
 
 type ModelConfigScope string
 
 const (
+	MODEL_CONFIG_SCOPE_ALL            ModelConfigScope = "all"
 	MODEL_CONFIG_SCOPE_LLM            ModelConfigScope = "llm"
 	MODEL_CONFIG_SCOPE_TEXT_EMBEDDING ModelConfigScope = "text-embedding"
 	MODEL_CONFIG_SCOPE_RERANK         ModelConfigScope = "rerank"
@@ -37,6 +39,15 @@ const (
 	APP_SELECTOR_SCOPE_CHAT       AppSelectorScope = "chat"
 	APP_SELECTOR_SCOPE_WORKFLOW   AppSelectorScope = "workflow"
 	APP_SELECTOR_SCOPE_COMPLETION AppSelectorScope = "completion"
+)
+
+type ToolSelectorScope string
+
+const (
+	TOOL_SELECTOR_SCOPE_ALL      ToolSelectorScope = "all"
+	TOOL_SELECTOR_SCOPE_PLUGIN   ToolSelectorScope = "plugin"
+	TOOL_SELECTOR_SCOPE_API      ToolSelectorScope = "api"
+	TOOL_SELECTOR_SCOPE_WORKFLOW ToolSelectorScope = "workflow"
 )
 
 func isCredentialType(fl validator.FieldLevel) bool {
@@ -84,6 +95,17 @@ func isAppSelectorScope(fl validator.FieldLevel) bool {
 	return false
 }
 
+func isToolSelectorScope(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	switch value {
+	case string(TOOL_SELECTOR_SCOPE_ALL),
+		string(TOOL_SELECTOR_SCOPE_PLUGIN),
+		string(TOOL_SELECTOR_SCOPE_API),
+		string(TOOL_SELECTOR_SCOPE_WORKFLOW):
+		return true
+	}
+	return false
+}
 func isScope(fl validator.FieldLevel) bool {
 	// get parent and check if it's a provider config
 	parent := fl.Parent().Interface()
@@ -93,6 +115,8 @@ func isScope(fl validator.FieldLevel) bool {
 			return isAppSelectorScope(fl)
 		} else if provider_config.Type == CONFIG_TYPE_MODEL_CONFIG {
 			return isModelConfigScope(fl)
+		} else if provider_config.Type == CONFIG_TYPE_TOOL_SELECTOR {
+			return isToolSelectorScope(fl)
 		} else {
 			return false
 		}
@@ -140,6 +164,19 @@ func init() {
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("is_model_config_scope", fe.Field())
+			return t
+		},
+	)
+
+	validators.GlobalEntitiesValidator.RegisterValidation("is_tool_selector_scope", isToolSelectorScope)
+	validators.GlobalEntitiesValidator.RegisterTranslation(
+		"is_tool_selector_scope",
+		translator,
+		func(ut ut.Translator) error {
+			return ut.Add("is_tool_selector_scope", "{0} is not a valid tool selector scope", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("is_tool_selector_scope", fe.Field())
 			return t
 		},
 	)
