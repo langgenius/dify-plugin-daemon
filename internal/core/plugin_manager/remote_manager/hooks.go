@@ -1,9 +1,11 @@
 package remote_manager
 
 import (
+	"encoding/hex"
 	"sync"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -16,6 +18,8 @@ type DifyServer struct {
 	gnet.BuiltinEventEngine
 
 	engine gnet.Engine
+
+	mediaManager *media_manager.MediaManager
 
 	// listening address
 	addr string
@@ -221,6 +225,33 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			declaration.Endpoint = &endpoints[0]
 			runtime.Config = declaration
 		}
+	} else if !runtime.assets_transferred {
+		assets, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.RemoteAssetPayload](message)
+		if err != nil {
+			runtime.conn.Write([]byte("assets register failed\n"))
+			log.Error("assets register failed, error: %v", err)
+			runtime.conn.Close()
+			return
+		}
+
+		files := make(map[string][]byte)
+		for _, asset := range assets {
+			files[asset.Filename], err = hex.DecodeString(asset.Data)
+			if err != nil {
+				runtime.conn.Write([]byte("assets decode failed\n"))
+				log.Error("assets decode failed, error: %v", err)
+				runtime.conn.Close()
+				return
+			}
+		}
+
+		// remap assets
+		if err := runtime.RemapAssets(&runtime.Config, files); err != nil {
+			runtime.conn.Write([]byte("assets remap failed\n"))
+			log.Error("assets remap failed, error: %v", err)
+			runtime.conn.Close()
+			return
+		}
 
 		runtime.checksum = runtime.calculateChecksum()
 		runtime.InitState()
@@ -240,4 +271,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// continue handle messages if handshake completed
 		runtime.response.Write(message)
 	}
+}
+
+func (s *DifyServer) onAssets(runtime *RemotePluginRuntime, assets []plugin_entities.RemoteAssetPayload) {
+
 }

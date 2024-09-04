@@ -4,12 +4,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
 )
 
 type RemotePluginRuntime struct {
+	basic_manager.BasicPluginRuntime
 	plugin_entities.PluginRuntime
 
 	// connection
@@ -38,6 +40,7 @@ type RemotePluginRuntime struct {
 	tools_registration_transferred     bool
 	models_registration_transferred    bool
 	endpoints_registration_transferred bool
+	assets_transferred                 bool
 
 	// tenant id
 	tenant_id string

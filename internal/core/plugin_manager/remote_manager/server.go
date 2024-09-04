@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
@@ -77,7 +78,7 @@ func (r *RemotePluginServer) Launch() error {
 }
 
 // NewRemotePluginServer creates a new RemotePluginServer
-func NewRemotePluginServer(config *app.Config) *RemotePluginServer {
+func NewRemotePluginServer(config *app.Config, media_manager *media_manager.MediaManager) *RemotePluginServer {
 	addr := fmt.Sprintf(
 		"tcp://%s:%d",
 		config.PluginRemoteInstallingHost,
@@ -90,11 +91,12 @@ func NewRemotePluginServer(config *app.Config) *RemotePluginServer {
 
 	multicore := true
 	s := &DifyServer{
-		addr:      addr,
-		port:      config.PluginRemoteInstallingPort,
-		multicore: multicore,
-		num_loops: config.PluginRemoteInstallServerEventLoopNums,
-		response:  response,
+		mediaManager: media_manager,
+		addr:         addr,
+		port:         config.PluginRemoteInstallingPort,
+		multicore:    multicore,
+		num_loops:    config.PluginRemoteInstallServerEventLoopNums,
+		response:     response,
 
 		plugins:      make(map[int]*RemotePluginRuntime),
 		plugins_lock: &sync.RWMutex{},

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
@@ -34,7 +35,7 @@ func (p *PluginManager) startLocalWatcher(config *app.Config) {
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	// launch TCP debugging server if enabled
 	if config.PluginRemoteInstallingEnabled {
-		server := remote_manager.NewRemotePluginServer(config)
+		server := remote_manager.NewRemotePluginServer(config, p.mediaManager)
 		go func() {
 			err := server.Launch()
 			if err != nil {
@@ -58,18 +59,20 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 			plugin_interface = &aws_manager.AWSPluginRuntime{
 				PluginRuntime: plugin.Runtime,
 				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-					LocalPackagePath: plugin.Runtime.State.AbsolutePath,
-					WorkingPath:      plugin.Runtime.State.WorkingPath,
-					Decoder:          plugin.Decoder,
+					BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
+					LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
+					WorkingPath:        plugin.Runtime.State.WorkingPath,
+					Decoder:            plugin.Decoder,
 				},
 			}
 		} else if config.Platform == app.PLATFORM_LOCAL {
 			plugin_interface = &local_manager.LocalPluginRuntime{
 				PluginRuntime: plugin.Runtime,
 				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-					LocalPackagePath: plugin.Runtime.State.AbsolutePath,
-					WorkingPath:      plugin.Runtime.State.WorkingPath,
-					Decoder:          plugin.Decoder,
+					BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
+					LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
+					WorkingPath:        plugin.Runtime.State.WorkingPath,
+					Decoder:            plugin.Decoder,
 				},
 			}
 		} else {

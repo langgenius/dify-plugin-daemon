@@ -6,6 +6,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -22,6 +23,9 @@ type PluginManager struct {
 	maxPluginPackageSize int64
 	workingDirectory     string
 
+	// mediaManager is used to manage media files like plugin icons, images, etc.
+	mediaManager *media_manager.MediaManager
+
 	// running plugin in storage contains relations between plugin packages and their running instances
 	runningPluginInStorage mapping.Map[string, string]
 	// start process lock
@@ -37,7 +41,11 @@ func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config
 		cluster:              cluster,
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
 		workingDirectory:     configuration.PluginWorkingPath,
-		startProcessLock:     lock.NewHighGranularityLock(),
+		mediaManager: media_manager.NewMediaManager(
+			configuration.PluginMediaCachePath,
+			configuration.PluginMediaCacheSize,
+		),
+		startProcessLock: lock.NewHighGranularityLock(),
 	}
 	manager.Init(configuration)
 }

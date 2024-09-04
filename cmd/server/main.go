@@ -43,10 +43,12 @@ func setDefault(config *app.Config) {
 	setDefaultInt(&config.MaxPluginPackageSize, 52428800)
 	setDefaultInt(&config.MaxAWSLambdaTransactionTimeout, 150)
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 240)
+	setDefaultInt(&config.PluginMediaCacheSize, 1024)
 	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBool(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
-	setDefaultString(&config.ProcessCachingPath, "/tmp/dify-plugin-daemon-subprocesses")
+	setDefaultString(&config.PluginMediaCachePath, "/var/dify-plugin-daemon/media-cache")
+	setDefaultString(&config.ProcessCachingPath, "/var/dify-plugin-daemon/subprocesses")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
