@@ -55,8 +55,15 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 	for plugin := range p.loadNewPlugins(config.PluginStoragePath) {
 		var plugin_interface plugin_entities.PluginRuntimeInterface
 
+		// get assets
+		assets, err := plugin.Decoder.Assets()
+		if err != nil {
+			log.Error("get plugin assets error: %v", err)
+			continue
+		}
+
 		if config.Platform == app.PLATFORM_AWS_LAMBDA {
-			plugin_interface = &aws_manager.AWSPluginRuntime{
+			aws_plugin_runtime := &aws_manager.AWSPluginRuntime{
 				PluginRuntime: plugin.Runtime,
 				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
 					BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
@@ -65,8 +72,16 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 					Decoder:            plugin.Decoder,
 				},
 			}
+			if err := aws_plugin_runtime.RemapAssets(
+				&aws_plugin_runtime.Config,
+				assets,
+			); err != nil {
+				log.Error("remap plugin assets error: %v", err)
+				continue
+			}
+			plugin_interface = aws_plugin_runtime
 		} else if config.Platform == app.PLATFORM_LOCAL {
-			plugin_interface = &local_manager.LocalPluginRuntime{
+			local_plugin_runtime := &local_manager.LocalPluginRuntime{
 				PluginRuntime: plugin.Runtime,
 				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
 					BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
@@ -75,6 +90,14 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 					Decoder:            plugin.Decoder,
 				},
 			}
+			if err := local_plugin_runtime.RemapAssets(
+				&local_plugin_runtime.Config,
+				assets,
+			); err != nil {
+				log.Error("remap plugin assets error: %v", err)
+				continue
+			}
+			plugin_interface = local_plugin_runtime
 		} else {
 			log.Error("unsupported platform: %s for plugin: %s", config.Platform, plugin.Runtime.Config.Name)
 			continue

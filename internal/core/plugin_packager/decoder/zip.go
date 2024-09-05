@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"path"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -100,6 +101,23 @@ func (z *ZipPluginDecoder) ReadFile(filename string) ([]byte, error) {
 	return data.Bytes(), nil
 }
 
+func (z *ZipPluginDecoder) ReadDir(dirname string) ([]string, error) {
+	if z.reader == nil {
+		return nil, z.err
+	}
+
+	files := make([]string, 0)
+	dir_name_with_slash := strings.TrimSuffix(dirname, "/") + "/"
+
+	for _, file := range z.reader.File {
+		if strings.HasPrefix(file.Name, dir_name_with_slash) {
+			files = append(files, file.Name)
+		}
+	}
+
+	return files, nil
+}
+
 func (z *ZipPluginDecoder) FileReader(filename string) (io.ReadCloser, error) {
 	return z.reader.Open(filename)
 }
@@ -164,4 +182,8 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 
 func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
 	return z.PluginDecoderHelper.Manifest(z)
+}
+
+func (z *ZipPluginDecoder) Assets() (map[string][]byte, error) {
+	return z.PluginDecoderHelper.Assets(z)
 }

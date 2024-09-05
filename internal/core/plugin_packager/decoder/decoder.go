@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -21,6 +22,14 @@ type PluginDecoder interface {
 
 	// ReadFile reads the entire contents of a file and returns it as a byte slice
 	ReadFile(filename string) ([]byte, error)
+
+	// ReadDir reads the contents of a directory and returns a slice of strings
+	// The strings are the filenames, it's a full path and directory will not be included
+	// It executes recursively
+	// Example:
+	// - dirname: "config"
+	// - return: ["config/settings.yaml", "config/default.yaml"]
+	ReadDir(dirname string) ([]string, error)
 
 	// Close releases any resources used by the decoder
 	Close() error
@@ -40,6 +49,9 @@ type PluginDecoder interface {
 
 	// Manifest returns the manifest of the plugin
 	Manifest() (plugin_entities.PluginDeclaration, error)
+
+	// Assets returns a map of assets, the key is the filename, the value is the content
+	Assets() (map[string][]byte, error)
 }
 
 type PluginDecoderHelper struct {
@@ -103,4 +115,24 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 
 	p.pluginDeclaration = &dec
 	return dec, nil
+}
+
+func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, error) {
+	files, err := decoder.ReadDir("_assets")
+	if err != nil {
+		return nil, err
+	}
+
+	assets := make(map[string][]byte)
+	for _, file := range files {
+		content, err := decoder.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		// trim _assets
+		file, _ = strings.CutPrefix(file, "_assets/")
+		assets[file] = content
+	}
+
+	return assets, nil
 }

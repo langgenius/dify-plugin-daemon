@@ -17,6 +17,9 @@ var manifest []byte
 //go:embed neko.yaml
 var neko []byte
 
+//go:embed _assets/test.svg
+var test_svg []byte
+
 func TestPackagerAndVerifier(t *testing.T) {
 	// create a temp directory
 	os.RemoveAll("temp")
@@ -40,9 +43,31 @@ func TestPackagerAndVerifier(t *testing.T) {
 		return
 	}
 
+	if err := os.MkdirAll("temp/_assets", 0755); err != nil {
+		t.Errorf("failed to create _assets directory: %s", err.Error())
+		return
+	}
+
+	if err := os.WriteFile("temp/_assets/test.svg", test_svg, 0644); err != nil {
+		t.Errorf("failed to write test.svg: %s", err.Error())
+		return
+	}
+
 	origin_decoder, err := decoder.NewFSPluginDecoder("temp")
 	if err != nil {
 		t.Errorf("failed to create decoder: %s", err.Error())
+		return
+	}
+
+	// check assets
+	assets, err := origin_decoder.Assets()
+	if err != nil {
+		t.Errorf("failed to get assets: %s", err.Error())
+		return
+	}
+
+	if assets["test.svg"] == nil {
+		t.Errorf("should have test.svg asset, got %v", assets)
 		return
 	}
 
@@ -65,6 +90,18 @@ func TestPackagerAndVerifier(t *testing.T) {
 	signed_decoder, err := decoder.NewZipPluginDecoder(signed)
 	if err != nil {
 		t.Errorf("failed to create zip decoder: %s", err.Error())
+		return
+	}
+
+	// check assets
+	assets, err = signed_decoder.Assets()
+	if err != nil {
+		t.Errorf("failed to get assets: %s", err.Error())
+		return
+	}
+
+	if assets["test.svg"] == nil {
+		t.Errorf("should have test.svg asset, got %v", assets)
 		return
 	}
 

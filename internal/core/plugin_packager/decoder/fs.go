@@ -94,6 +94,30 @@ func (d *FSPluginDecoder) ReadFile(filename string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(d.root, filename))
 }
 
+func (d *FSPluginDecoder) ReadDir(dirname string) ([]string, error) {
+	var files []string
+	err := filepath.WalkDir(
+		filepath.Join(d.root, dirname),
+		func(path string, info fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				rel_path, err := filepath.Rel(d.root, path)
+				if err != nil {
+					return err
+				}
+				files = append(files, rel_path)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
 func (d *FSPluginDecoder) FileReader(filename string) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(d.root, filename))
 }
@@ -108,4 +132,8 @@ func (d *FSPluginDecoder) CreateTime() (int64, error) {
 
 func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
 	return d.PluginDecoderHelper.Manifest(d)
+}
+
+func (d *FSPluginDecoder) Assets() (map[string][]byte, error) {
+	return d.PluginDecoderHelper.Assets(d)
 }
