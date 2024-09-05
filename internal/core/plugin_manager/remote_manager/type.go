@@ -10,12 +10,17 @@ import (
 	"github.com/panjf2000/gnet/v2"
 )
 
+type pluginRuntimeMode string
+
+const _PLUGIN_RUNTIME_MODE_CI pluginRuntimeMode = "ci"
+
 type RemotePluginRuntime struct {
 	basic_manager.BasicPluginRuntime
 	plugin_entities.PluginRuntime
 
 	// connection
-	conn gnet.Conn
+	conn   gnet.Conn
+	closed int32
 
 	// response entity to accept new events
 	response *stream.StreamResponse[[]byte]

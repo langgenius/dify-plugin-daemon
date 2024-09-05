@@ -3,6 +3,7 @@ package remote_manager
 import (
 	"encoding/hex"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
@@ -13,6 +14,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
+)
+
+var (
+	_mode pluginRuntimeMode
 )
 
 type DifyServer struct {
@@ -100,12 +105,11 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	plugin.ClearAssets()
 
 	// uninstall plugin
-	if plugin.handshake && plugin.registration_transferred &&
-		plugin.endpoints_registration_transferred &&
-		plugin.models_registration_transferred &&
-		plugin.tools_registration_transferred {
-		if err := plugin.Unregister(); err != nil {
-			log.Error("unregister plugin failed, error: %v", err)
+	if plugin.assets_transferred {
+		if _mode != _PLUGIN_RUNTIME_MODE_CI {
+			if err := plugin.Unregister(); err != nil {
+				log.Error("unregister plugin failed, error: %v", err)
+			}
 		}
 	}
 
@@ -150,20 +154,25 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		return
 	}
 
+	close := func(message []byte) {
+		if atomic.CompareAndSwapInt32(&runtime.closed, 0, 1) {
+			runtime.conn.Write(message)
+			runtime.conn.Close()
+		}
+	}
+
 	if !runtime.handshake {
 		key := string(message)
 
 		info, err := GetConnectionInfo(key)
 		if err == cache.ErrNotFound {
 			// close connection if handshake failed
-			runtime.conn.Write([]byte("handshake failed, invalid key\n"))
-			runtime.conn.Close()
+			close([]byte("handshake failed, invalid key\n"))
 			runtime.handshake_failed = true
 			return
 		} else if err != nil {
 			// close connection if handshake failed
-			runtime.conn.Write([]byte("internal error\n"))
-			runtime.conn.Close()
+			close([]byte("internal error\n"))
 			return
 		}
 
@@ -176,8 +185,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		declaration, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](message)
 		if err != nil {
 			// close connection if handshake failed
-			runtime.conn.Write([]byte("handshake failed\n"))
-			runtime.conn.Close()
+			close([]byte("handshake failed, invalid plugin declaration\n"))
 			return
 		}
 
@@ -188,9 +196,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	} else if !runtime.tools_registration_transferred {
 		tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderDeclaration](message)
 		if err != nil {
-			runtime.conn.Write([]byte("tools register failed\n"))
 			log.Error("tools register failed, error: %v", err)
-			runtime.conn.Close()
+			close([]byte("tools register failed, invalid tools declaration\n"))
 			return
 		}
 
@@ -204,9 +211,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	} else if !runtime.models_registration_transferred {
 		models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderDeclaration](message)
 		if err != nil {
-			runtime.conn.Write([]byte("models register failed\n"))
 			log.Error("models register failed, error: %v", err)
-			runtime.conn.Close()
+			close([]byte("models register failed, invalid models declaration\n"))
 			return
 		}
 
@@ -220,9 +226,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	} else if !runtime.endpoints_registration_transferred {
 		endpoints, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.EndpointProviderDeclaration](message)
 		if err != nil {
-			runtime.conn.Write([]byte("endpoints register failed\n"))
 			log.Error("endpoints register failed, error: %v", err)
-			runtime.conn.Close()
+			close([]byte("endpoints register failed, invalid endpoints declaration\n"))
 			return
 		}
 
@@ -236,9 +241,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	} else if !runtime.assets_transferred {
 		assets, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.RemoteAssetPayload](message)
 		if err != nil {
-			runtime.conn.Write([]byte("assets register failed\n"))
 			log.Error("assets register failed, error: %v", err)
-			runtime.conn.Close()
+			close([]byte("assets register failed, invalid assets declaration\n"))
 			return
 		}
 
@@ -246,18 +250,16 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		for _, asset := range assets {
 			files[asset.Filename], err = hex.DecodeString(asset.Data)
 			if err != nil {
-				runtime.conn.Write([]byte("assets decode failed\n"))
 				log.Error("assets decode failed, error: %v", err)
-				runtime.conn.Close()
+				close([]byte("assets decode failed, invalid assets data, cannot decode file\n"))
 				return
 			}
 		}
 
 		// remap assets
 		if err := runtime.RemapAssets(&runtime.Config, files); err != nil {
-			runtime.conn.Write([]byte("assets remap failed\n"))
 			log.Error("assets remap failed, error: %v", err)
-			runtime.conn.Close()
+			close([]byte("assets remap failed, invalid assets data, cannot remap\n"))
 			return
 		}
 
@@ -269,9 +271,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 		// trigger registration event
 		if err := runtime.Register(); err != nil {
-			runtime.conn.Write([]byte("register failed\n"))
 			log.Error("register failed, error: %v", err)
-			runtime.conn.Close()
+			close([]byte("register failed, cannot register\n"))
 			return
 		}
 
@@ -281,8 +282,4 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// continue handle messages if handshake completed
 		runtime.response.Write(message)
 	}
-}
-
-func (s *DifyServer) onAssets(runtime *RemotePluginRuntime, assets []plugin_entities.RemoteAssetPayload) {
-
 }

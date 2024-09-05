@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
@@ -16,6 +17,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
+
+func init() {
+	_mode = _PLUGIN_RUNTIME_MODE_CI
+}
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 	db.Init(&app.Config{
@@ -39,7 +44,7 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 		PluginRemoteInstallingPort:             port,
 		PluginRemoteInstallingMaxConn:          1,
 		PluginRemoteInstallServerEventLoopNums: 8,
-	}, nil), port
+	}, media_manager.NewMediaManager("./storage/assets", 10)), port
 }
 
 // TestLaunchAndClosePluginServer tests the launch and close of the plugin server
@@ -140,6 +145,7 @@ func TestAcceptConnection(t *testing.T) {
 			Type:    plugin_entities.PluginType,
 			Author:  "Yeuoly",
 			Name:    "ci_test",
+			Icon:    "test.svg",
 			Label: plugin_entities.I18nObject{
 				EnUS: "ci_test",
 			},
@@ -171,7 +177,13 @@ func TestAcceptConnection(t *testing.T) {
 	conn.Write([]byte("[]\n")) // transfer tool
 	conn.Write([]byte("[]\n")) // transfer model
 	conn.Write([]byte("[]\n")) // transfer endpoint
-	conn.Write([]byte("[]\n")) // transfer file
+	conn.Write(parser.MarshalJsonBytes([]plugin_entities.RemoteAssetPayload{
+		{
+			Filename: "test.svg",
+			Data:     "a2a2",
+		},
+	}))
+	conn.Write([]byte("\n"))
 	closed_chan := make(chan bool)
 
 	msg := ""
