@@ -14,6 +14,7 @@ func preparePluginDeclaration() PluginDeclaration {
 			Version: "0.0.1",
 			Type:    PluginType,
 			Name:    "test",
+			Icon:    "test.svg",
 			Label: I18nObject{
 				EnUS: "test",
 			},
