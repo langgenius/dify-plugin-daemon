@@ -28,7 +28,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginRuntimeTimeLifeI
 		return err
 	}
 
-	if c.plugins.Exits(identity.String()) {
+	if c.plugins.Exists(identity.String()) {
 		return errors.New("plugin has been registered")
 	}
 
@@ -123,7 +123,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 	state_key := c.getPluginStateKey(c.id, hash_identity)
 
 	// check if the plugin has been removed
-	if !c.plugins.Exits(identity.String()) {
+	if !c.plugins.Exists(identity.String()) {
 		// remove state
 		err = c.removePluginState(c.id, hash_identity)
 		if err != nil {
