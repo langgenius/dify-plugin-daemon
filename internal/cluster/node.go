@@ -123,7 +123,7 @@ func (c *Cluster) FetchPluginAvailableNodesByHashedId(hashed_plugin_id string) (
 		if err != nil {
 			continue
 		}
-		if c.nodes.Exits(node_id) {
+		if c.nodes.Exists(node_id) {
 			nodes = append(nodes, node_id)
 		}
 	}

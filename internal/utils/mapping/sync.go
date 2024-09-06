@@ -72,7 +72,7 @@ func (m *Map[K, V]) Len() int {
 	return int(atomic.LoadInt32(&m.len))
 }
 
-func (m *Map[K, V]) Exits(key K) bool {
+func (m *Map[K, V]) Exists(key K) bool {
 	_, ok := m.Load(key)
 	return ok
 }
