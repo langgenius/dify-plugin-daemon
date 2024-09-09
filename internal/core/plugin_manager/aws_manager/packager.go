@@ -19,11 +19,11 @@ import (
 )
 
 type Packager struct {
-	runtime plugin_entities.PluginRuntimeInterface
+	runtime plugin_entities.PluginLifetime
 	decoder decoder.PluginDecoder
 }
 
-func NewPackager(runtime plugin_entities.PluginRuntimeInterface, decoder decoder.PluginDecoder) *Packager {
+func NewPackager(runtime plugin_entities.PluginLifetime, decoder decoder.PluginDecoder) *Packager {
 	return &Packager{
 		runtime: runtime,
 		decoder: decoder,

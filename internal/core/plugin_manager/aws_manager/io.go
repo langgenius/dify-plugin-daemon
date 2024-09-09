@@ -31,7 +31,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 		return
 	}
 
-	url, err := url.JoinPath(r.lambda_url, "invoke")
+	url, err := url.JoinPath(r.LambdaURL, "invoke")
 	if err != nil {
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
 		return

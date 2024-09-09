@@ -2,7 +2,6 @@ package plugin_manager
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -16,7 +15,7 @@ import (
 )
 
 type PluginManager struct {
-	m sync.Map
+	m mapping.Map[string, plugin_entities.PluginLifetime]
 
 	cluster *cluster.Cluster
 
@@ -30,6 +29,7 @@ type PluginManager struct {
 	runningPluginInStorage mapping.Map[string, string]
 	// start process lock
 	startProcessLock *lock.HighGranularityLock
+	// serverless runtime
 }
 
 var (
@@ -54,33 +54,32 @@ func GetGlobalPluginManager() *PluginManager {
 	return manager
 }
 
-func (p *PluginManager) Add(plugin plugin_entities.PluginRuntimeInterface) error {
+func (p *PluginManager) Add(
+	plugin plugin_entities.PluginLifetime,
+) error {
 	identity, err := plugin.Identity()
 	if err != nil {
 		return err
 	}
+
 	p.m.Store(identity.String(), plugin)
 	return nil
 }
 
-func (p *PluginManager) List() []plugin_entities.PluginRuntimeInterface {
-	var runtimes []plugin_entities.PluginRuntimeInterface
-	p.m.Range(func(key, value interface{}) bool {
-		if v, ok := value.(plugin_entities.PluginRuntimeInterface); ok {
-			runtimes = append(runtimes, v)
-		}
-		return true
-	})
-	return runtimes
-}
-
-func (p *PluginManager) Get(identity plugin_entities.PluginUniqueIdentifier) plugin_entities.PluginRuntimeInterface {
+func (p *PluginManager) Get(
+	identity plugin_entities.PluginUniqueIdentifier,
+) plugin_entities.PluginLifetime {
 	if v, ok := p.m.Load(identity.String()); ok {
-		if r, ok := v.(plugin_entities.PluginRuntimeInterface); ok {
-			return r
-		}
+		return v
 	}
-	return nil
+
+	// check if plugin is a serverless runtime
+	plugin_session_interface, err := p.getServerlessPluginRuntime(identity)
+	if err != nil {
+		return nil
+	}
+
+	return plugin_session_interface
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {
@@ -106,7 +105,9 @@ func (p *PluginManager) Init(configuration *app.Config) {
 	}
 
 	// start local watcher
-	p.startLocalWatcher(configuration)
+	if configuration.Platform == app.PLATFORM_LOCAL {
+		p.startLocalWatcher(configuration)
+	}
 
 	// start remote watcher
 	p.startRemoteWatcher(configuration)

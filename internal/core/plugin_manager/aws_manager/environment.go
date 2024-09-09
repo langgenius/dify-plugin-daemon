@@ -16,10 +16,6 @@ var (
 )
 
 func (r *AWSPluginRuntime) InitEnvironment() error {
-	if err := r.initEnvironment(); err != nil {
-		return err
-	}
-
 	// init http client
 	r.client = &http.Client{
 		Transport: &http.Transport{
@@ -38,7 +34,8 @@ func (r *AWSPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, e
 	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
 }
 
-func (r *AWSPluginRuntime) initEnvironment() error {
+// UploadPlugin uploads the plugin to the AWS Lambda
+func (r *AWSPluginRuntime) UploadPlugin() error {
 	r.Log("Starting to initialize environment")
 	// check if the plugin has already been initialized, at most 300s
 	if err := cache.Lock(AWS_LAUNCH_LOCK_PREFIX+r.Checksum(), 300*time.Second, 300*time.Second); err != nil {
@@ -58,9 +55,9 @@ func (r *AWSPluginRuntime) initEnvironment() error {
 		}
 	} else {
 		// found, return directly
-		r.lambda_url = function.FunctionURL
-		r.lambda_name = function.FunctionName
-		r.Log(fmt.Sprintf("Found existing lambda function: %s", r.lambda_name))
+		r.LambdaURL = function.FunctionURL
+		r.LambdaName = function.FunctionName
+		r.Log(fmt.Sprintf("Found existing lambda function: %s", r.LambdaName))
 		return nil
 	}
 
@@ -91,9 +88,9 @@ func (r *AWSPluginRuntime) initEnvironment() error {
 		case Error:
 			return fmt.Errorf("error: %s", response.Message)
 		case LambdaUrl:
-			r.lambda_url = response.Message
+			r.LambdaURL = response.Message
 		case Lambda:
-			r.lambda_name = response.Message
+			r.LambdaName = response.Message
 		case Info:
 			r.Log(fmt.Sprintf("installing: %s", response.Message))
 		}

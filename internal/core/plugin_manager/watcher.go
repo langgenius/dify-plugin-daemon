@@ -8,7 +8,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
@@ -25,9 +24,9 @@ import (
 func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
 		log.Info("start to handle new plugins in path: %s", config.PluginStoragePath)
-		p.handleNewPlugins(config)
+		p.handleNewLocalPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
-			p.handleNewPlugins(config)
+			p.handleNewLocalPlugins(config)
 		}
 	}()
 }
@@ -44,17 +43,15 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 		}()
 		go func() {
 			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
-				p.lifetime(rpr)
+				p.localLifetime(rpr)
 			})
 		}()
 	}
 }
 
-func (p *PluginManager) handleNewPlugins(config *app.Config) {
+func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 	// load local plugins firstly
-	for plugin := range p.loadNewPlugins(config.PluginStoragePath) {
-		var plugin_interface plugin_entities.PluginRuntimeInterface
-
+	for plugin := range p.loadNewLocalPlugins(config.PluginStoragePath) {
 		// get assets
 		assets, err := plugin.Decoder.Assets()
 		if err != nil {
@@ -62,48 +59,24 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 			continue
 		}
 
-		if config.Platform == app.PLATFORM_AWS_LAMBDA {
-			aws_plugin_runtime := &aws_manager.AWSPluginRuntime{
-				PluginRuntime: plugin.Runtime,
-				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-					BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
-					LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
-					WorkingPath:        plugin.Runtime.State.WorkingPath,
-					Decoder:            plugin.Decoder,
-				},
-			}
-			if err := aws_plugin_runtime.RemapAssets(
-				&aws_plugin_runtime.Config,
-				assets,
-			); err != nil {
-				log.Error("remap plugin assets error: %v", err)
-				continue
-			}
-			plugin_interface = aws_plugin_runtime
-		} else if config.Platform == app.PLATFORM_LOCAL {
-			local_plugin_runtime := &local_manager.LocalPluginRuntime{
-				PluginRuntime: plugin.Runtime,
-				PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-					BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
-					LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
-					WorkingPath:        plugin.Runtime.State.WorkingPath,
-					Decoder:            plugin.Decoder,
-				},
-			}
-			if err := local_plugin_runtime.RemapAssets(
-				&local_plugin_runtime.Config,
-				assets,
-			); err != nil {
-				log.Error("remap plugin assets error: %v", err)
-				continue
-			}
-			plugin_interface = local_plugin_runtime
-		} else {
-			log.Error("unsupported platform: %s for plugin: %s", config.Platform, plugin.Runtime.Config.Name)
+		local_plugin_runtime := &local_manager.LocalPluginRuntime{
+			PluginRuntime: plugin.Runtime,
+			PositivePluginRuntime: positive_manager.PositivePluginRuntime{
+				BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
+				LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
+				WorkingPath:        plugin.Runtime.State.WorkingPath,
+				Decoder:            plugin.Decoder,
+			},
+		}
+		if err := local_plugin_runtime.RemapAssets(
+			&local_plugin_runtime.Config,
+			assets,
+		); err != nil {
+			log.Error("remap plugin assets error: %v", err)
 			continue
 		}
 
-		identity, err := plugin_interface.Identity()
+		identity, err := local_plugin_runtime.Identity()
 		if err != nil {
 			log.Error("get plugin identity error: %v", err)
 			continue
@@ -112,6 +85,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 		// store the plugin in the storage, avoid duplicate loading
 		p.runningPluginInStorage.Store(plugin.Runtime.State.AbsolutePath, identity.String())
 
+		// local plugin
 		routine.Submit(func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -120,7 +94,7 @@ func (p *PluginManager) handleNewPlugins(config *app.Config) {
 			}()
 			// delete the plugin from the storage when the plugin is stopped
 			defer p.runningPluginInStorage.Delete(plugin.Runtime.State.AbsolutePath)
-			p.lifetime(plugin_interface)
+			p.localLifetime(local_plugin_runtime)
 		})
 	}
 }
@@ -131,7 +105,7 @@ type pluginRuntimeWithDecoder struct {
 }
 
 // chan should be closed after using that
-func (p *PluginManager) loadNewPlugins(root_path string) <-chan *pluginRuntimeWithDecoder {
+func (p *PluginManager) loadNewLocalPlugins(root_path string) <-chan *pluginRuntimeWithDecoder {
 	ch := make(chan *pluginRuntimeWithDecoder)
 
 	plugins, err := os.ReadDir(root_path)

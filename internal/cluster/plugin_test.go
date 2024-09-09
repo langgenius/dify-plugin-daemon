@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
@@ -36,6 +37,13 @@ func (r *fakePlugin) Type() plugin_entities.PluginRuntimeType {
 
 func (r *fakePlugin) Wait() (<-chan bool, error) {
 	return nil, nil
+}
+
+func (r *fakePlugin) Listen(string) *entities.Broadcast[plugin_entities.SessionMessage] {
+	return nil
+}
+
+func (r *fakePlugin) Write(string, []byte) {
 }
 
 func getRandomPluginRuntime() fakePlugin {

@@ -14,7 +14,7 @@ import (
 func InstallPlugin(
 	tenant_id string,
 	user_id string,
-	runtime plugin_entities.PluginRuntimeInterface,
+	runtime plugin_entities.PluginLifetime,
 ) (*models.Plugin, *models.PluginInstallation, error) {
 	identity, err := runtime.Identity()
 	if err != nil {

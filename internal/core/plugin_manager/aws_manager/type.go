@@ -14,8 +14,8 @@ type AWSPluginRuntime struct {
 	plugin_entities.PluginRuntime
 
 	// access url for the lambda function
-	lambda_url  string
-	lambda_name string
+	LambdaURL  string
+	LambdaName string
 
 	// listeners mapping session id to the listener
 	listeners mapping.Map[string, *entities.Broadcast[plugin_entities.SessionMessage]]

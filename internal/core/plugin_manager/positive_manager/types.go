@@ -13,5 +13,5 @@ type PositivePluginRuntime struct {
 	// plugin decoder used to manage the plugin
 	Decoder decoder.PluginDecoder
 
-	checksum string
+	InnerChecksum string
 }

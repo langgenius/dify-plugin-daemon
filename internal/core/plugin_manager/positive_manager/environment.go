@@ -22,11 +22,11 @@ func (r *PositivePluginRuntime) calculateChecksum() string {
 }
 
 func (r *PositivePluginRuntime) Checksum() string {
-	if r.checksum == "" {
-		r.checksum = r.calculateChecksum()
+	if r.InnerChecksum == "" {
+		r.InnerChecksum = r.calculateChecksum()
 	}
 
-	return r.checksum
+	return r.InnerChecksum
 }
 
 func (r *PositivePluginRuntime) Cleanup() {

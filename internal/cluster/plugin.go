@@ -12,7 +12,7 @@ import (
 )
 
 type pluginLifeTime struct {
-	lifetime          plugin_entities.PluginRuntimeTimeLifeInterface
+	lifetime          plugin_entities.PluginLifetime
 	last_scheduled_at time.Time
 }
 
@@ -22,7 +22,7 @@ type pluginState struct {
 }
 
 // RegisterPlugin registers a plugin to the cluster, and start to be scheduled
-func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginRuntimeTimeLifeInterface) error {
+func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error {
 	identity, err := lifetime.Identity()
 	if err != nil {
 		return err

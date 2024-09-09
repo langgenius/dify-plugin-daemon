@@ -22,9 +22,9 @@ var (
 
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
-	ID          string                                 `json:"id"`
-	runtime     plugin_entities.PluginRuntimeInterface `json:"-"`
-	persistence *persistence.Persistence               `json:"-"`
+	ID          string                         `json:"id"`
+	runtime     plugin_entities.PluginLifetime `json:"-"`
+	persistence *persistence.Persistence       `json:"-"`
 
 	TenantID               string                                 `json:"tenant_id"`
 	UserID                 string                                 `json:"user_id"`
@@ -102,11 +102,11 @@ func (s *Session) Close() {
 	DeleteSession(s.ID)
 }
 
-func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeInterface) {
+func (s *Session) BindRuntime(runtime plugin_entities.PluginLifetime) {
 	s.runtime = runtime
 }
 
-func (s *Session) Runtime() plugin_entities.PluginRuntimeInterface {
+func (s *Session) Runtime() plugin_entities.PluginLifetime {
 	return s.runtime
 }
 

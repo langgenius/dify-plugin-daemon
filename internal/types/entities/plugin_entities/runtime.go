@@ -19,45 +19,23 @@ type (
 		onStopped []func()           `json:"-"`
 	}
 
-	PluginRuntimeInterface interface {
-		PluginRuntimeTimeLifeInterface
+	PluginLifetime interface {
+		PluginBasicInfoInterface
 		PluginRuntimeSessionIOInterface
-		PluginRuntimeDockerInterface
-		PluginRuntimeLogInterface
+		PluginClusterLifetime
 	}
 
-	PluginRuntimeTimeLifeInterface interface {
-		// returns the plugin configuration
-		Configuration() *PluginDeclaration
-		// unique identity of the plugin
-		Identity() (PluginUniqueIdentifier, error)
-		// hashed identity of the plugin
-		HashedIdentity() (string, error)
+	PluginFullDuplexLifetime interface {
+		PluginLifetime
+
 		// before the plugin starts, it will call this method to initialize the environment
 		InitEnvironment() error
 		// start the plugin, returns errors if the plugin fails to start and hangs until the plugin stops
 		StartPlugin() error
-		// returns true if the plugin is stopped
-		Stopped() bool
-		// stop the plugin
-		Stop()
-		// add a function to be called when the plugin stops
-		OnStop(func())
-		// trigger the stop event
-		TriggerStop()
-		// returns the runtime state of the plugin
-		RuntimeState() PluginRuntimeState
-		// Update the runtime state of the plugin
-		UpdateScheduledAt(t time.Time)
-		// returns the checksum of the plugin
-		Checksum() string
 		// wait for the plugin to stop
 		Wait() (<-chan bool, error)
-		// returns the runtime type of the plugin
-		Type() PluginRuntimeType
 		// Cleanup the plugin runtime
 		Cleanup()
-
 		// set the plugin to active
 		SetActive()
 		// set the plugin to launching
@@ -74,7 +52,22 @@ type (
 		AddRestarts()
 	}
 
-	PluginRuntimeLogInterface interface {
+	PluginServerlessLifetime interface {
+		PluginLifetime
+
+		// before the plugin starts, it will call this method to initialize the environment
+		InitEnvironment() error
+		// UploadPlugin uploads the plugin to the AWS Lambda
+		UploadPlugin() error
+	}
+
+	PluginRuntimeSessionIOInterface interface {
+		PluginBasicInfoInterface
+
+		// Listen listens for messages from the plugin
+		Listen(session_id string) *entities.Broadcast[SessionMessage]
+		// Write writes a message to the plugin
+		Write(session_id string, data []byte)
 		// Log adds a log to the plugin runtime state
 		Log(string)
 		// Warn adds a warning to the plugin runtime state
@@ -83,13 +76,32 @@ type (
 		Error(string)
 	}
 
-	PluginRuntimeSessionIOInterface interface {
-		Listen(session_id string) *entities.Broadcast[SessionMessage]
-		Write(session_id string, data []byte)
+	PluginClusterLifetime interface {
+		// stop the plugin
+		Stop()
+		// add a function to be called when the plugin stops
+		OnStop(func())
+		// trigger the stop event
+		TriggerStop()
+		// returns true if the plugin is stopped
+		Stopped() bool
+		// returns the runtime state of the plugin
+		RuntimeState() PluginRuntimeState
+		// Update the runtime state of the plugin
+		UpdateScheduledAt(t time.Time)
 	}
 
-	PluginRuntimeDockerInterface interface {
-		// returns the docker image and the delete function, always call the delete function when the image is no longer needed
+	PluginBasicInfoInterface interface {
+		// returns the runtime type of the plugin
+		Type() PluginRuntimeType
+		// returns the plugin configuration
+		Configuration() *PluginDeclaration
+		// unique identity of the plugin
+		Identity() (PluginUniqueIdentifier, error)
+		// hashed identity of the plugin
+		HashedIdentity() (string, error)
+		// returns the checksum of the plugin
+		Checksum() string
 	}
 )
 

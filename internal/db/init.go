@@ -81,6 +81,7 @@ func autoMigrate() error {
 		models.Plugin{},
 		models.PluginInstallation{},
 		models.Endpoint{},
+		models.ServerlessRuntime{},
 	)
 }
 

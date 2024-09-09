@@ -7,7 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
-func (p *PluginManager) lifetime(r plugin_entities.PluginRuntimeInterface) {
+func (p *PluginManager) localLifetime(r plugin_entities.PluginFullDuplexLifetime) {
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
@@ -85,4 +85,8 @@ func (p *PluginManager) lifetime(r plugin_entities.PluginRuntimeInterface) {
 		// add restart times
 		r.AddRestarts()
 	}
+}
+
+func (p *PluginManager) serverlessLifetime(r plugin_entities.PluginServerlessLifetime, onStop func()) {
+	//
 }
