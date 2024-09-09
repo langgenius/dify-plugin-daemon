@@ -14,13 +14,13 @@ const (
 	TEST_PREFIX = "test"
 )
 
-func getRedisConnection(t *testing.T) error {
+func getRedisConnection() error {
 	return InitRedisClient("0.0.0.0:6379", "difyai123456")
 }
 
 func TestRedisConnection(t *testing.T) {
 	// get redis connection
-	if err := getRedisConnection(t); err != nil {
+	if err := getRedisConnection(); err != nil {
 		t.Errorf("get redis connection failed: %v", err)
 		return
 	}
@@ -34,7 +34,7 @@ func TestRedisConnection(t *testing.T) {
 
 func TestRedisTransaction(t *testing.T) {
 	// get redis connection
-	if err := getRedisConnection(t); err != nil {
+	if err := getRedisConnection(); err != nil {
 		t.Errorf("get redis connection failed: %v", err)
 		return
 	}
@@ -117,7 +117,7 @@ func TestRedisTransaction(t *testing.T) {
 
 func TestRedisScanMap(t *testing.T) {
 	// get redis connection
-	if err := getRedisConnection(t); err != nil {
+	if err := getRedisConnection(); err != nil {
 		t.Errorf("get redis connection failed: %v", err)
 		return
 	}
@@ -197,7 +197,7 @@ func TestRedisScanMap(t *testing.T) {
 
 func TestRedisP2PPubsub(t *testing.T) {
 	// get redis connection
-	if err := getRedisConnection(t); err != nil {
+	if err := getRedisConnection(); err != nil {
 		t.Errorf("get redis connection failed: %v", err)
 		return
 	}
@@ -230,7 +230,7 @@ func TestRedisP2PPubsub(t *testing.T) {
 
 func TestRedisP2ARedis(t *testing.T) {
 	// get redis connection
-	if err := getRedisConnection(t); err != nil {
+	if err := getRedisConnection(); err != nil {
 		t.Errorf("get redis connection failed: %v", err)
 		return
 	}
