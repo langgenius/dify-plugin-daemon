@@ -10,13 +10,13 @@ import (
 type ConfigType string
 
 const (
-	CONFIG_TYPE_SECRET_INPUT  ConfigType = SECRET_INPUT
-	CONFIG_TYPE_TEXT_INPUT    ConfigType = TEXT_INPUT
-	CONFIG_TYPE_SELECT        ConfigType = SELECT
-	CONFIG_TYPE_BOOLEAN       ConfigType = BOOLEAN
-	CONFIG_TYPE_MODEL_CONFIG  ConfigType = MODEL_CONFIG
-	CONFIG_TYPE_APP_SELECTOR  ConfigType = APP_SELECTOR
-	CONFIG_TYPE_TOOL_SELECTOR ConfigType = TOOL_SELECTOR
+	CONFIG_TYPE_SECRET_INPUT   ConfigType = SECRET_INPUT
+	CONFIG_TYPE_TEXT_INPUT     ConfigType = TEXT_INPUT
+	CONFIG_TYPE_SELECT         ConfigType = SELECT
+	CONFIG_TYPE_BOOLEAN        ConfigType = BOOLEAN
+	CONFIG_TYPE_MODEL_SELECTOR ConfigType = MODEL_SELECTOR
+	CONFIG_TYPE_APP_SELECTOR   ConfigType = APP_SELECTOR
+	CONFIG_TYPE_TOOL_SELECTOR  ConfigType = TOOL_SELECTOR
 )
 
 type ModelConfigScope string
@@ -113,7 +113,7 @@ func isScope(fl validator.FieldLevel) bool {
 		// check config type
 		if provider_config.Type == CONFIG_TYPE_APP_SELECTOR {
 			return isAppSelectorScope(fl)
-		} else if provider_config.Type == CONFIG_TYPE_MODEL_CONFIG {
+		} else if provider_config.Type == CONFIG_TYPE_MODEL_SELECTOR {
 			return isModelConfigScope(fl)
 		} else if provider_config.Type == CONFIG_TYPE_TOOL_SELECTOR {
 			return isToolSelectorScope(fl)
