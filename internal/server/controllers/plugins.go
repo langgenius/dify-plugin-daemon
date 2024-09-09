@@ -18,3 +18,12 @@ func GetAsset(c *gin.Context) {
 
 	c.Data(http.StatusOK, "application/octet-stream", asset)
 }
+
+func InstallPlugin(c *gin.Context) {
+}
+
+func UninstallPlugin(c *gin.Context) {
+}
+
+func ListPlugins(c *gin.Context) {
+}

@@ -70,7 +70,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 
 func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id plugin_entities.PluginUniqueIdentifier) {
 	// try find the correct node
-	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id.PluginID())
+	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id.String())
 	if err != nil {
 		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
 		log.Error("fetch plugin available nodes failed: %s", err.Error())
