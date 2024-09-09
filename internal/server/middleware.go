@@ -5,19 +5,15 @@ import (
 	"io"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-)
-
-const (
-	X_PLUGIN_IDENTIFIER = "X-Plugin-Identifier"
-	X_API_KEY           = "X-Api-Key"
 )
 
 func CheckingKey(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get header X-Api-Key
-		if c.GetHeader(X_API_KEY) != key {
+		if c.GetHeader(constants.X_API_KEY) != key {
 			c.JSON(401, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
@@ -53,7 +49,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 			reader: bytes.NewReader(raw),
 		}
 
-		identity := plugin_entities.PluginUniqueIdentifier(ctx.Request.Header.Get(X_PLUGIN_IDENTIFIER))
+		identity := plugin_entities.PluginUniqueIdentifier(ctx.Request.Header.Get(constants.X_PLUGIN_IDENTIFIER))
 		if identity == "" {
 			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request"})
 			return

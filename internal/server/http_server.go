@@ -93,6 +93,8 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 	group.POST("/setup", controllers.SetupEndpoint)
 	group.POST("/remove", controllers.RemoveEndpoint)
 	group.GET("/list", controllers.ListEndpoints)
+	group.POST("/enable", controllers.EnableEndpoint)
+	group.POST("/disable", controllers.DisableEndpoint)
 }
 
 func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {

@@ -14,6 +14,7 @@ type Endpoint struct {
 	UserID    string    `json:"user_id" orm:"index;size:64;column:user_id"`
 	PluginID  string    `json:"plugin_id" orm:"index;size:64;column:plugin_id"`
 	ExpiredAt time.Time `json:"expired_at" orm:"column:expired_at"`
+	Enabled   bool      `json:"enabled" orm:"column:enabled"`
 	Settings  string    `json:"settings" orm:"column:settings;size:2048"`
 }
 

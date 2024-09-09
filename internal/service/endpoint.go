@@ -13,6 +13,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -134,4 +137,40 @@ func Endpoint(
 	case <-time.After(30 * time.Second):
 		ctx.JSON(500, gin.H{"error": "killed by timeout"})
 	}
+}
+
+func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
+	endpoint, err := db.GetOne[models.Endpoint](
+		db.Equal("id", endpoint_id),
+		db.Equal("tenant_id", tenant_id),
+	)
+	if err != nil {
+		return entities.NewErrorResponse(-404, "Endpoint not found")
+	}
+
+	endpoint.Enabled = true
+
+	if err := install_service.EnabledEndpoint(&endpoint); err != nil {
+		return entities.NewErrorResponse(-500, "Failed to enable endpoint")
+	}
+
+	return entities.NewSuccessResponse("success")
+}
+
+func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
+	endpoint, err := db.GetOne[models.Endpoint](
+		db.Equal("id", endpoint_id),
+		db.Equal("tenant_id", tenant_id),
+	)
+	if err != nil {
+		return entities.NewErrorResponse(-404, "Endpoint not found")
+	}
+
+	endpoint.Enabled = false
+
+	if err := install_service.DisabledEndpoint(&endpoint); err != nil {
+		return entities.NewErrorResponse(-500, "Failed to disable endpoint")
+	}
+
+	return entities.NewSuccessResponse("success")
 }

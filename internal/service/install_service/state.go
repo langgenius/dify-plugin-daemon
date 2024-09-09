@@ -81,6 +81,7 @@ func InstallEndpoint(
 		PluginID:  plugin_id.PluginID(),
 		TenantID:  tenant_id,
 		UserID:    user_id,
+		Enabled:   true,
 		ExpiredAt: time.Now().Add(time.Hour * 24 * 365 * 10),
 		Settings:  string(settings_json),
 	}
@@ -111,4 +112,14 @@ func GetEndpoint(
 // uninstalls a plugin from db
 func UninstallEndpoint(endpoint *models.Endpoint) error {
 	return db.Delete(endpoint)
+}
+
+func EnabledEndpoint(endpoint *models.Endpoint) error {
+	endpoint.Enabled = true
+	return db.Update(endpoint)
+}
+
+func DisabledEndpoint(endpoint *models.Endpoint) error {
+	endpoint.Enabled = false
+	return db.Update(endpoint)
 }

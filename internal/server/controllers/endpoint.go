@@ -7,19 +7,20 @@ import (
 )
 
 func SetupEndpoint(ctx *gin.Context) {
-	BindRequest(ctx, func(request struct {
-		PluginUniqueIdentifier string         `json:"plugin_unique_identifier" binding:"required"`
-		TenantID               string         `json:"tenant_id" binding:"required"`
-		UserID                 string         `json:"user_id" binding:"required"`
-		Settings               map[string]any `json:"settings" binding:"omitempty"`
-	}) {
-		plugin_unique_identifier := request.PluginUniqueIdentifier
+	BindRequestWithPluginUniqueIdentifier(ctx, func(
+		request struct {
+			TenantID string         `json:"tenant_id" binding:"required"`
+			UserID   string         `json:"user_id" binding:"required"`
+			Settings map[string]any `json:"settings" binding:"omitempty"`
+		},
+		plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	) {
 		tenant_id := request.TenantID
 		user_id := request.UserID
 		settings := request.Settings
 
 		ctx.JSON(200, service.SetupEndpoint(
-			tenant_id, user_id, plugin_entities.PluginUniqueIdentifier(plugin_unique_identifier), settings,
+			tenant_id, user_id, plugin_unique_identifier, settings,
 		))
 	})
 }
@@ -40,12 +41,36 @@ func ListEndpoints(ctx *gin.Context) {
 
 func RemoveEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
-		TenantID               string `json:"tenant_id"`
+		EndpointID string `json:"endpoint_id" binding:"required"`
+		TenantID   string `json:"tenant_id" binding:"required"`
 	}) {
-		plugin_unique_identifier := request.PluginUniqueIdentifier
+		endpoint_id := request.EndpointID
 		tenant_id := request.TenantID
 
-		ctx.JSON(200, service.RemoveEndpoint(plugin_unique_identifier, tenant_id))
+		ctx.JSON(200, service.RemoveEndpoint(endpoint_id, tenant_id))
+	})
+}
+
+func EnableEndpoint(ctx *gin.Context) {
+	BindRequest(ctx, func(request struct {
+		EndpointID string `json:"endpoint_id" binding:"required"`
+		TenantID   string `json:"tenant_id" binding:"required"`
+	}) {
+		tenant_id := request.TenantID
+		endpoint_id := request.EndpointID
+
+		ctx.JSON(200, service.EnableEndpoint(endpoint_id, tenant_id))
+	})
+}
+
+func DisableEndpoint(ctx *gin.Context) {
+	BindRequest(ctx, func(request struct {
+		EndpointID string `json:"endpoint_id" binding:"required"`
+		TenantID   string `json:"tenant_id" binding:"required"`
+	}) {
+		tenant_id := request.TenantID
+		endpoint_id := request.EndpointID
+
+		ctx.JSON(200, service.DisableEndpoint(endpoint_id, tenant_id))
 	})
 }
