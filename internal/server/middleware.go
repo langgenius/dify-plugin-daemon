@@ -7,13 +7,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+)
+
+const (
+	X_PLUGIN_IDENTIFIER = "X-Plugin-Identifier"
+	X_API_KEY           = "X-Api-Key"
 )
 
 func CheckingKey(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get header X-Api-Key
-		if c.GetHeader("X-Api-Key") != key {
+		if c.GetHeader(X_API_KEY) != key {
 			c.JSON(401, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
@@ -49,18 +53,17 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 			reader: bytes.NewReader(raw),
 		}
 
-		identity, err := parser.UnmarshalJsonBytes[plugin_entities.BasePluginIdentifier](raw)
-
-		if err != nil {
+		identity := plugin_entities.PluginUniqueIdentifier(ctx.Request.Header.Get(X_PLUGIN_IDENTIFIER))
+		if identity == "" {
 			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request"})
 			return
 		}
 
 		// check if plugin in current node
 		if !app.cluster.IsPluginNoCurrentNode(
-			identity.PluginUniqueIdentifier,
+			identity,
 		) {
-			app.redirectPluginInvokeByPluginID(ctx, identity.PluginUniqueIdentifier)
+			app.redirectPluginInvokeByPluginIdentifier(ctx, identity)
 			ctx.Abort()
 		} else {
 			ctx.Next()
@@ -68,9 +71,12 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	}
 }
 
-func (app *App) redirectPluginInvokeByPluginID(ctx *gin.Context, plugin_id plugin_entities.PluginUniqueIdentifier) {
+func (app *App) redirectPluginInvokeByPluginIdentifier(
+	ctx *gin.Context,
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) {
 	// try find the correct node
-	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_id.String())
+	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_unique_identifier.String())
 	if err != nil {
 		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
 		log.Error("fetch plugin available nodes failed: %s", err.Error())

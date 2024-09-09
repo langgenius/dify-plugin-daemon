@@ -58,7 +58,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 	if !app.cluster.IsPluginNoCurrentNode(
 		plugin_entities.PluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier),
 	) {
-		app.redirectPluginInvokeByPluginID(ctx, plugin_entities.PluginUniqueIdentifier(
+		app.redirectPluginInvokeByPluginIdentifier(ctx, plugin_entities.PluginUniqueIdentifier(
 			plugin_installation.PluginUniqueIdentifier,
 		))
 	} else {
