@@ -1,4 +1,4 @@
-package aws_manager
+package serverless
 
 import (
 	"net"
@@ -35,7 +35,7 @@ func Init(config *app.Config) {
 
 	SERVERLESS_CONNECTOR_API_KEY = *config.DifyPluginServerlessConnectorAPIKey
 
-	if err := ping(); err != nil {
+	if err := Ping(); err != nil {
 		log.Panic("Failed to ping serverless connector", err)
 	}
 }

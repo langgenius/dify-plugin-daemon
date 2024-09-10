@@ -86,7 +86,3 @@ func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLif
 		r.AddRestarts()
 	}
 }
-
-func (p *PluginManager) serverlessLifetime(r plugin_entities.PluginServerlessLifetime, onStop func()) {
-	//
-}

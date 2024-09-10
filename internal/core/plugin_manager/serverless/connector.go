@@ -1,4 +1,4 @@
-package aws_manager
+package serverless
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ type LambdaFunction struct {
 }
 
 // Ping the serverless connector, return error if failed
-func ping() error {
+func Ping() error {
 	url, err := url.JoinPath(baseurl.String(), "/ping")
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ var (
 )
 
 // Fetch the lambda function from serverless connector, return error if failed
-func fetchLambda(identity string, checksum string) (*LambdaFunction, error) {
+func FetchLambda(identity string, checksum string) (*LambdaFunction, error) {
 	request := map[string]any{
 		"config": map[string]any{
 			"identity": identity,
@@ -104,7 +104,7 @@ type LaunchAWSLambdaFunctionResponse struct {
 // Launch the lambda function from serverless connector, it will receive the context_tar as the input
 // and build it a docker image, then run it on serverless platform like AWS Lambda
 // it returns a event stream, the caller should consider it as a async operation
-func launchLambda(identity string, checksum string, context_tar io.Reader) (*stream.StreamResponse[LaunchAWSLambdaFunctionResponse], error) {
+func LaunchLambda(identity string, checksum string, context_tar io.Reader) (*stream.StreamResponse[LaunchAWSLambdaFunctionResponse], error) {
 	url, err := url.JoinPath(baseurl.String(), "/v1/lambda/launch")
 	if err != nil {
 		return nil, err

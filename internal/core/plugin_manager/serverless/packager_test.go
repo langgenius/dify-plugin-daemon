@@ -1,4 +1,4 @@
-package aws_manager
+package serverless
 
 import (
 	"archive/tar"
