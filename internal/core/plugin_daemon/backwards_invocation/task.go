@@ -258,7 +258,7 @@ func executeDifyInvocationToolTask(
 		return
 	}
 
-	response.Wrap(func(t tool_entities.ToolResponseChunk) {
+	response.Async(func(t tool_entities.ToolResponseChunk) {
 		handle.WriteResponse("stream", t)
 	})
 }
@@ -273,7 +273,7 @@ func executeDifyInvocationLLMTask(
 		return
 	}
 
-	response.Wrap(func(t model_entities.LLMResultChunk) {
+	response.Async(func(t model_entities.LLMResultChunk) {
 		handle.WriteResponse("stream", t)
 	})
 }
@@ -314,7 +314,7 @@ func executeDifyInvocationTTSTask(
 		return
 	}
 
-	response.Wrap(func(t model_entities.TTSResult) {
+	response.Async(func(t model_entities.TTSResult) {
 		handle.WriteResponse("struct", t)
 	})
 }
@@ -363,7 +363,7 @@ func executeDifyInvocationAppTask(
 
 	request.User = user_id
 
-	response.Wrap(func(t map[string]any) {
+	response.Async(func(t map[string]any) {
 		handle.WriteResponse("stream", t)
 	})
 }

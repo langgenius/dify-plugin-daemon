@@ -40,7 +40,7 @@ func (r *RemotePluginServer) Next() bool {
 
 // Wrap wraps the wrap method of stream response
 func (r *RemotePluginServer) Wrap(f func(*RemotePluginRuntime)) {
-	r.server.response.Wrap(f)
+	r.server.response.Async(f)
 }
 
 // Stop stops the server

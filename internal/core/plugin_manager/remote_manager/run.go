@@ -54,7 +54,7 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		}
 	})
 
-	r.response.Wrap(func(data []byte) {
+	r.response.Async(func(data []byte) {
 		// handle event
 		event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
 		if err != nil {

@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -23,6 +24,10 @@ func MapToStruct[T any](m map[string]any) (*T, error) {
 	err = d.Decode(m)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding map: %s", err)
+	}
+
+	if err := validators.GlobalEntitiesValidator.Struct(s); err != nil {
+		return nil, fmt.Errorf("error validating struct: %s", err)
 	}
 
 	return &s, nil

@@ -83,7 +83,7 @@ func TestStreamGeneratorWrapper(t *testing.T) {
 		response.Close()
 	}()
 
-	response.Wrap(func(t int) {
+	response.Async(func(t int) {
 		nums += 1
 	})
 

@@ -15,8 +15,12 @@ type Stream[T any] struct {
 	closed    int32
 	max       int
 	listening bool
-	onClose   func()
-	err       error
+
+	onClose     []func()
+	beforeClose []func()
+	filter      []func(T) error
+
+	err error
 }
 
 func NewStreamResponse[T any](max int) *Stream[T] {
@@ -27,8 +31,20 @@ func NewStreamResponse[T any](max int) *Stream[T] {
 	}
 }
 
+// Filter filters the stream with a function
+// if the function returns an error, the stream will be closed
+func (r *Stream[T]) Filter(f func(T) error) {
+	r.filter = append(r.filter, f)
+}
+
+// OnClose adds a function to be called when the stream is closed
 func (r *Stream[T]) OnClose(f func()) {
-	r.onClose = f
+	r.onClose = append(r.onClose, f)
+}
+
+// BeforeClose adds a function to be called before the stream is closed
+func (r *Stream[T]) BeforeClose(f func()) {
+	r.beforeClose = append(r.beforeClose, f)
 }
 
 // Next returns true if there are more data to be read
@@ -64,6 +80,14 @@ func (r *Stream[T]) Read() (T, error) {
 
 	if r.q.Len() > 0 {
 		data := r.q.PopFront()
+		for _, f := range r.filter {
+			err := f(data)
+			if err != nil {
+				// close the stream
+				r.Close()
+				return data, err
+			}
+		}
 		return data, nil
 	} else {
 		var data T
@@ -77,8 +101,8 @@ func (r *Stream[T]) Read() (T, error) {
 	}
 }
 
-// Wrap wraps the stream with a new stream, and allows customized operations
-func (r *Stream[T]) Wrap(fn func(T)) error {
+// Async wraps the stream with a new stream, and allows customized operations
+func (r *Stream[T]) Async(fn func(T)) error {
 	if atomic.LoadInt32(&r.closed) == 1 {
 		return errors.New("stream is closed")
 	}
@@ -124,13 +148,18 @@ func (r *Stream[T]) Close() {
 		return
 	}
 
+	for _, f := range r.beforeClose {
+		f()
+	}
+
 	select {
 	case r.sig <- false:
 	default:
 	}
 	close(r.sig)
-	if r.onClose != nil {
-		r.onClose()
+
+	for _, f := range r.onClose {
+		f()
 	}
 }
 
