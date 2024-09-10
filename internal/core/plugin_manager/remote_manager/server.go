@@ -85,7 +85,7 @@ func NewRemotePluginServer(config *app.Config, media_manager *media_manager.Medi
 		config.PluginRemoteInstallingPort,
 	)
 
-	response := stream.NewStreamResponse[*RemotePluginRuntime](
+	response := stream.NewStream[*RemotePluginRuntime](
 		config.PluginRemoteInstallingMaxConn,
 	)
 

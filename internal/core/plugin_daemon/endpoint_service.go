@@ -29,7 +29,7 @@ func InvokeEndpoint(
 
 	status_code := http.StatusContinue
 	headers := &http.Header{}
-	response := stream.NewStreamResponse[[]byte](128)
+	response := stream.NewStream[[]byte](128)
 	response.OnClose(func() {
 		// add close callback, ensure resources are released
 		resp.Close()

@@ -8,7 +8,7 @@ import (
 )
 
 func TestStreamGenerator(t *testing.T) {
-	response := NewStreamResponse[int](512)
+	response := NewStream[int](512)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -50,7 +50,7 @@ func TestStreamGenerator(t *testing.T) {
 }
 
 func TestStreamGeneratorErrorMessage(t *testing.T) {
-	response := NewStreamResponse[int](512)
+	response := NewStream[int](512)
 
 	go func() {
 		for i := 0; i < 10000; i++ {
@@ -72,7 +72,7 @@ func TestStreamGeneratorErrorMessage(t *testing.T) {
 }
 
 func TestStreamGeneratorWrapper(t *testing.T) {
-	response := NewStreamResponse[int](512)
+	response := NewStream[int](512)
 	nums := 0
 
 	go func() {

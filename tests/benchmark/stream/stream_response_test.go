@@ -11,7 +11,7 @@ func BenchmarkStreamResponse(b *testing.B) {
 	b.Run("Read", func(b *testing.B) {
 		wg_started := sync.WaitGroup{}
 		wg_started.Add(8)
-		resp := stream.NewStreamResponse[int](1024)
+		resp := stream.NewStream[int](1024)
 
 		for i := 0; i < 8; i++ {
 			go func() {

@@ -47,6 +47,16 @@ func InvokeTool(
 		}
 	}
 
+	// bind json schema validator
+	bindValidator(response, tool_output_schema)
+
+	return response, nil
+}
+
+func bindValidator(
+	response *stream.Stream[tool_entities.ToolResponseChunk],
+	tool_output_schema plugin_entities.ToolOutputSchema,
+) {
 	// check if the tool_output_schema is valid
 	variables := make(map[string]any)
 
@@ -108,9 +118,6 @@ func InvokeTool(
 			return
 		}
 	})
-
-	return response, nil
-
 }
 
 func ValidateToolCredentials(

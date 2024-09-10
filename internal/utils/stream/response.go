@@ -23,7 +23,7 @@ type Stream[T any] struct {
 	err error
 }
 
-func NewStreamResponse[T any](max int) *Stream[T] {
+func NewStream[T any](max int) *Stream[T] {
 	return &Stream[T]{
 		l:   &sync.Mutex{},
 		sig: make(chan bool),

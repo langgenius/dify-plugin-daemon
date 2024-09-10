@@ -41,7 +41,7 @@ func UploadPlugin(decoder decoder.PluginDecoder) (*stream.Stream[LaunchAWSLambda
 		}
 	} else {
 		// found, return directly
-		response := stream.NewStreamResponse[LaunchAWSLambdaFunctionResponse](2)
+		response := stream.NewStream[LaunchAWSLambdaFunctionResponse](2)
 		response.Write(LaunchAWSLambdaFunctionResponse{
 			Event:   LambdaUrl,
 			Message: function.FunctionURL,

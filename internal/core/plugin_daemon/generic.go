@@ -23,7 +23,7 @@ func genericInvokePlugin[Req any, Rsp any](
 		return nil, errors.New("plugin not found")
 	}
 
-	response := stream.NewStreamResponse[Rsp](response_buffer_size)
+	response := stream.NewStream[Rsp](response_buffer_size)
 
 	listener := runtime.Listen(session.ID)
 	listener.Listen(func(chunk plugin_entities.SessionMessage) {

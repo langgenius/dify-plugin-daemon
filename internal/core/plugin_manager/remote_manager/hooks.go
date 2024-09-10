@@ -60,7 +60,7 @@ func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 		),
 
 		conn:           c,
-		response:       stream.NewStreamResponse[[]byte](512),
+		response:       stream.NewStream[[]byte](512),
 		callbacks:      make(map[string][]func([]byte)),
 		callbacks_lock: &sync.RWMutex{},
 
