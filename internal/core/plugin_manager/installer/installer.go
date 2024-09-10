@@ -5,4 +5,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-type Installer func(decoder decoder.PluginDecoder) (*stream.Stream[string], error)
+type PluginInstallResponse struct {
+	Event string `json:"event"`
+	Data  string `json:"data"`
+}
+
+type Installer func(decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error)

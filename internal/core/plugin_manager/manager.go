@@ -7,6 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/installer"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -39,7 +40,7 @@ var (
 	manager *PluginManager
 )
 
-func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config) {
+func InitManager(cluster *cluster.Cluster, configuration *app.Config) {
 	manager = &PluginManager{
 		cluster:              cluster,
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
@@ -53,6 +54,7 @@ func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config
 
 	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
 		manager.installer = installer.AwsInstaller
+		serverless.Init(configuration)
 	} else if configuration.Platform == app.PLATFORM_LOCAL {
 		manager.installer = installer.LocalInstaller
 	}
@@ -60,7 +62,7 @@ func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config
 	manager.Init(configuration)
 }
 
-func GetGlobalPluginManager() *PluginManager {
+func Manager() *PluginManager {
 	return manager
 }
 

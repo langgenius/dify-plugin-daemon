@@ -18,7 +18,7 @@ func createSession[T any](
 	access_action access_types.PluginAccessAction,
 	cluster_id string,
 ) (*session_manager.Session, error) {
-	runtime := plugin_manager.GetGlobalPluginManager().Get(r.PluginUniqueIdentifier)
+	runtime := plugin_manager.Manager().Get(r.PluginUniqueIdentifier)
 
 	session := session_manager.NewSession(
 		r.TenantId,

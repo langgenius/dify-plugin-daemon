@@ -39,7 +39,7 @@ func Endpoint(
 	}
 
 	// fetch plugin
-	manager := plugin_manager.GetGlobalPluginManager()
+	manager := plugin_manager.Manager()
 	runtime := manager.Get(
 		plugin_entities.PluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier),
 	)

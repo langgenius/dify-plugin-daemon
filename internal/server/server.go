@@ -23,7 +23,7 @@ func (app *App) Run(config *app.Config) {
 	process.Init(config)
 
 	// init plugin daemon
-	plugin_manager.InitGlobalPluginManager(app.cluster, config)
+	plugin_manager.InitManager(app.cluster, config)
 
 	// init persistence
 	persistence.InitPersistence(config)

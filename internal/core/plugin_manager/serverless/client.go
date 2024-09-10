@@ -38,4 +38,6 @@ func Init(config *app.Config) {
 	if err := Ping(); err != nil {
 		log.Panic("Failed to ping serverless connector", err)
 	}
+
+	log.Info("Serverless connector initialized")
 }

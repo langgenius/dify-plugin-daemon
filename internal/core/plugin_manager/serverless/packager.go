@@ -14,18 +14,15 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager/dockerfile"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/tmpfile"
 )
 
 type Packager struct {
-	runtime plugin_entities.PluginLifetime
 	decoder decoder.PluginDecoder
 }
 
-func NewPackager(runtime plugin_entities.PluginLifetime, decoder decoder.PluginDecoder) *Packager {
+func NewPackager(decoder decoder.PluginDecoder) *Packager {
 	return &Packager{
-		runtime: runtime,
 		decoder: decoder,
 	}
 }
@@ -63,6 +60,11 @@ func (d *dockerFileInfo) Sys() any {
 // Pack takes a plugin and packs it into a tar file with dockerfile inside
 // returns a *os.File with the tar file
 func (p *Packager) Pack() (*os.File, error) {
+	declaration, err := p.decoder.Manifest()
+	if err != nil {
+		return nil, err
+	}
+
 	// walk through the plugin directory and add it to a tar file
 	// create a tmpfile
 	tmpfile, cleanup, err := tmpfile.CreateTempFile("plugin-aws-tar-*")
@@ -132,7 +134,7 @@ func (p *Packager) Pack() (*os.File, error) {
 	}
 
 	// add dockerfile
-	dockerfile, err := dockerfile.GenerateDockerfile(p.runtime.Configuration())
+	dockerfile, err := dockerfile.GenerateDockerfile(&declaration)
 	if err != nil {
 		return nil, err
 	}

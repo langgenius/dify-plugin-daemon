@@ -1,12 +1,13 @@
 package serverless
 
 import (
-	"fmt"
 	"os"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
 var (
@@ -14,66 +15,57 @@ var (
 )
 
 // UploadPlugin uploads the plugin to the AWS Lambda
-func UploadPlugin(r *aws_manager.AWSPluginRuntime) error {
-	r.Log("Starting to initialize environment")
-	// check if the plugin has already been initialized, at most 300s
-	if err := cache.Lock(AWS_LAUNCH_LOCK_PREFIX+r.Checksum(), 300*time.Second, 300*time.Second); err != nil {
-		return err
-	}
-	defer cache.Unlock(AWS_LAUNCH_LOCK_PREFIX + r.Checksum())
-	r.Log("Started to initialize environment")
-
-	identity, err := r.Identity()
+// return the lambda url and name
+func UploadPlugin(decoder decoder.PluginDecoder) (*stream.Stream[LaunchAWSLambdaFunctionResponse], error) {
+	checksum, err := checksum.CalculateChecksum(decoder)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	function, err := FetchLambda(identity.String(), r.Checksum())
+
+	// check if the plugin has already been initialized, at most 300s
+	if err := cache.Lock(AWS_LAUNCH_LOCK_PREFIX+checksum, 300*time.Second, 300*time.Second); err != nil {
+		return nil, err
+	}
+	defer cache.Unlock(AWS_LAUNCH_LOCK_PREFIX + checksum)
+
+	manifest, err := decoder.Manifest()
+	if err != nil {
+		return nil, err
+	}
+
+	identity := manifest.Identity()
+	function, err := FetchLambda(identity, checksum)
 	if err != nil {
 		if err != ErrNoLambdaFunction {
-			return err
+			return nil, err
 		}
 	} else {
 		// found, return directly
-		r.LambdaURL = function.FunctionURL
-		r.LambdaName = function.FunctionName
-		r.Log(fmt.Sprintf("Found existing lambda function: %s", r.LambdaName))
-		return nil
+		response := stream.NewStreamResponse[LaunchAWSLambdaFunctionResponse](2)
+		response.Write(LaunchAWSLambdaFunctionResponse{
+			Event:   LambdaUrl,
+			Message: function.FunctionURL,
+		})
+		response.Write(LaunchAWSLambdaFunctionResponse{
+			Event:   Lambda,
+			Message: function.FunctionName,
+		})
+		return response, nil
 	}
 
-	// create it if not found
-	r.Log("Creating new lambda function")
-
 	// create lambda function
-	packager := NewPackager(r, r.Decoder)
+	packager := NewPackager(decoder)
 	context, err := packager.Pack()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer os.Remove(context.Name())
 	defer context.Close()
 
-	response, err := LaunchLambda(identity.String(), r.Checksum(), context)
+	response, err := LaunchLambda(identity, checksum, context)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for response.Next() {
-		response, err := response.Read()
-		if err != nil {
-			return err
-		}
-
-		switch response.Event {
-		case Error:
-			return fmt.Errorf("error: %s", response.Message)
-		case LambdaUrl:
-			r.LambdaURL = response.Message
-		case Lambda:
-			r.LambdaName = response.Message
-		case Info:
-			r.Log(fmt.Sprintf("installing: %s", response.Message))
-		}
-	}
-
-	return nil
+	return response, nil
 }

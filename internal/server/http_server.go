@@ -101,7 +101,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	group.Use(CheckingKey(config.PluginInnerApiKey))
 
 	group.GET("/asset/:id", controllers.GetAsset)
-	group.POST("/install", controllers.InstallPlugin)
+	group.POST("/install", controllers.InstallPlugin(config))
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", controllers.ListPlugins)
 }

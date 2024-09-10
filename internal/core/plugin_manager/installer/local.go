@@ -5,6 +5,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func LocalInstaller(decoder decoder.PluginDecoder) (*stream.Stream[string], error) {
+func LocalInstaller(decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error) {
 	return nil, nil
 }
