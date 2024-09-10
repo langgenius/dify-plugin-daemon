@@ -43,7 +43,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 		}()
 		go func() {
 			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
-				p.localLifetime(rpr)
+				p.fullDuplexLifetime(rpr)
 			})
 		}()
 	}
@@ -94,7 +94,7 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 			}()
 			// delete the plugin from the storage when the plugin is stopped
 			defer p.runningPluginInStorage.Delete(plugin.Runtime.State.AbsolutePath)
-			p.localLifetime(local_plugin_runtime)
+			p.fullDuplexLifetime(local_plugin_runtime)
 		})
 	}
 }

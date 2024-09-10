@@ -75,11 +75,9 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_unique_identifier.String())
 	if err != nil {
 		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
-		log.Error("fetch plugin available nodes failed: %s", err.Error())
 		return
 	} else if len(nodes) == 0 {
 		ctx.AbortWithStatusJSON(404, gin.H{"error": "No available node"})
-		log.Error("no available node")
 		return
 	}
 
