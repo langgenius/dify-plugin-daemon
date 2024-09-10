@@ -53,7 +53,7 @@ func InvokeLLM(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.LLMResultChunk], error) {
+		func() (*stream.Stream[model_entities.LLMResultChunk], error) {
 			return plugin_daemon.InvokeLLM(session, &r.Data)
 		},
 		ctx,
@@ -79,7 +79,7 @@ func InvokeTextEmbedding(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.TextEmbeddingResult], error) {
+		func() (*stream.Stream[model_entities.TextEmbeddingResult], error) {
 			return plugin_daemon.InvokeTextEmbedding(session, &r.Data)
 		},
 		ctx,
@@ -106,7 +106,7 @@ func InvokeRerank(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.RerankResult], error) {
+		func() (*stream.Stream[model_entities.RerankResult], error) {
 			return plugin_daemon.InvokeRerank(session, &r.Data)
 		},
 		ctx,
@@ -133,7 +133,7 @@ func InvokeTTS(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.TTSResult], error) {
+		func() (*stream.Stream[model_entities.TTSResult], error) {
 			return plugin_daemon.InvokeTTS(session, &r.Data)
 		},
 		ctx,
@@ -160,7 +160,7 @@ func InvokeSpeech2Text(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.Speech2TextResult], error) {
+		func() (*stream.Stream[model_entities.Speech2TextResult], error) {
 			return plugin_daemon.InvokeSpeech2Text(session, &r.Data)
 		},
 		ctx,
@@ -187,7 +187,7 @@ func InvokeModeration(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.ModerationResult], error) {
+		func() (*stream.Stream[model_entities.ModerationResult], error) {
 			return plugin_daemon.InvokeModeration(session, &r.Data)
 		},
 		ctx,
@@ -214,7 +214,7 @@ func ValidateProviderCredentials(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.ValidateCredentialsResult], error) {
+		func() (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
 			return plugin_daemon.ValidateProviderCredentials(session, &r.Data)
 		},
 		ctx,
@@ -241,7 +241,7 @@ func ValidateModelCredentials(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[model_entities.ValidateCredentialsResult], error) {
+		func() (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
 			return plugin_daemon.ValidateModelCredentials(session, &r.Data)
 		},
 		ctx,

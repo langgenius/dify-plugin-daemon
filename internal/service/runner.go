@@ -14,7 +14,7 @@ import (
 // baseSSEService is a helper function to handle SSE service
 // it accepts a generator function that returns a stream response to gin context
 func baseSSEService[R any](
-	generator func() (*stream.StreamResponse[R], error),
+	generator func() (*stream.Stream[R], error),
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {

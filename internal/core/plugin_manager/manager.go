@@ -5,6 +5,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/installer"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -30,6 +31,8 @@ type PluginManager struct {
 	// start process lock
 	startProcessLock *lock.HighGranularityLock
 	// serverless runtime
+
+	installer installer.Installer
 }
 
 var (
@@ -47,6 +50,13 @@ func InitGlobalPluginManager(cluster *cluster.Cluster, configuration *app.Config
 		),
 		startProcessLock: lock.NewHighGranularityLock(),
 	}
+
+	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
+		manager.installer = installer.AwsInstaller
+	} else if configuration.Platform == app.PLATFORM_LOCAL {
+		manager.installer = installer.LocalInstaller
+	}
+
 	manager.Init(configuration)
 }
 

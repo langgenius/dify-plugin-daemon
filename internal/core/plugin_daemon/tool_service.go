@@ -11,7 +11,7 @@ func InvokeTool(
 	session *session_manager.Session,
 	request *requests.RequestInvokeTool,
 ) (
-	*stream.StreamResponse[tool_entities.ToolResponseChunk], error,
+	*stream.Stream[tool_entities.ToolResponseChunk], error,
 ) {
 	return genericInvokePlugin[requests.RequestInvokeTool, tool_entities.ToolResponseChunk](
 		session,
@@ -24,7 +24,7 @@ func ValidateToolCredentials(
 	session *session_manager.Session,
 	request *requests.RequestValidateToolCredentials,
 ) (
-	*stream.StreamResponse[tool_entities.ValidateCredentialsResult], error,
+	*stream.Stream[tool_entities.ValidateCredentialsResult], error,
 ) {
 	return genericInvokePlugin[requests.RequestValidateToolCredentials, tool_entities.ValidateCredentialsResult](
 		session,

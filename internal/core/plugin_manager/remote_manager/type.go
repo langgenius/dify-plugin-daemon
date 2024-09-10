@@ -23,7 +23,7 @@ type RemotePluginRuntime struct {
 	closed int32
 
 	// response entity to accept new events
-	response *stream.StreamResponse[[]byte]
+	response *stream.Stream[[]byte]
 
 	// callbacks for each session
 	callbacks      map[string][]func([]byte)

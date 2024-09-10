@@ -104,7 +104,7 @@ type LaunchAWSLambdaFunctionResponse struct {
 // Launch the lambda function from serverless connector, it will receive the context_tar as the input
 // and build it a docker image, then run it on serverless platform like AWS Lambda
 // it returns a event stream, the caller should consider it as a async operation
-func LaunchLambda(identity string, checksum string, context_tar io.Reader) (*stream.StreamResponse[LaunchAWSLambdaFunctionResponse], error) {
+func LaunchLambda(identity string, checksum string, context_tar io.Reader) (*stream.Stream[LaunchAWSLambdaFunctionResponse], error) {
 	url, err := url.JoinPath(baseurl.String(), "/v1/lambda/launch")
 	if err != nil {
 		return nil, err

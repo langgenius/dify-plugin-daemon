@@ -8,7 +8,7 @@ import (
 	"github.com/gammazero/deque"
 )
 
-type StreamResponse[T any] struct {
+type Stream[T any] struct {
 	q         deque.Deque[T]
 	l         *sync.Mutex
 	sig       chan bool
@@ -19,15 +19,15 @@ type StreamResponse[T any] struct {
 	err       error
 }
 
-func NewStreamResponse[T any](max int) *StreamResponse[T] {
-	return &StreamResponse[T]{
+func NewStreamResponse[T any](max int) *Stream[T] {
+	return &Stream[T]{
 		l:   &sync.Mutex{},
 		sig: make(chan bool),
 		max: max,
 	}
 }
 
-func (r *StreamResponse[T]) OnClose(f func()) {
+func (r *Stream[T]) OnClose(f func()) {
 	r.onClose = f
 }
 
@@ -35,7 +35,7 @@ func (r *StreamResponse[T]) OnClose(f func()) {
 // and waits for the next data to be available
 // returns false if the stream is closed
 // NOTE: even if the stream is closed, it will return true if there is data available
-func (r *StreamResponse[T]) Next() bool {
+func (r *Stream[T]) Next() bool {
 	r.l.Lock()
 	if r.closed == 1 && r.q.Len() == 0 && r.err == nil {
 		r.l.Unlock()
@@ -58,7 +58,7 @@ func (r *StreamResponse[T]) Next() bool {
 
 // Read reads buffered data from the stream and
 // it returns error only if the buffer is empty or an error is written to the stream
-func (r *StreamResponse[T]) Read() (T, error) {
+func (r *Stream[T]) Read() (T, error) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
@@ -78,7 +78,7 @@ func (r *StreamResponse[T]) Read() (T, error) {
 }
 
 // Wrap wraps the stream with a new stream, and allows customized operations
-func (r *StreamResponse[T]) Wrap(fn func(T)) error {
+func (r *Stream[T]) Wrap(fn func(T)) error {
 	if atomic.LoadInt32(&r.closed) == 1 {
 		return errors.New("stream is closed")
 	}
@@ -96,7 +96,7 @@ func (r *StreamResponse[T]) Wrap(fn func(T)) error {
 
 // Write writes data to the stream
 // returns error if the buffer is full
-func (r *StreamResponse[T]) Write(data T) error {
+func (r *Stream[T]) Write(data T) error {
 	if atomic.LoadInt32(&r.closed) == 1 {
 		return nil
 	}
@@ -119,7 +119,7 @@ func (r *StreamResponse[T]) Write(data T) error {
 }
 
 // Close closes the stream
-func (r *StreamResponse[T]) Close() {
+func (r *Stream[T]) Close() {
 	if !atomic.CompareAndSwapInt32(&r.closed, 0, 1) {
 		return
 	}
@@ -134,11 +134,11 @@ func (r *StreamResponse[T]) Close() {
 	}
 }
 
-func (r *StreamResponse[T]) IsClosed() bool {
+func (r *Stream[T]) IsClosed() bool {
 	return atomic.LoadInt32(&r.closed) == 1
 }
 
-func (r *StreamResponse[T]) Size() int {
+func (r *Stream[T]) Size() int {
 	r.l.Lock()
 	defer r.l.Unlock()
 
@@ -146,7 +146,7 @@ func (r *StreamResponse[T]) Size() int {
 }
 
 // WriteError writes an error to the stream
-func (r *StreamResponse[T]) WriteError(err error) {
+func (r *Stream[T]) WriteError(err error) {
 	r.l.Lock()
 	defer r.l.Unlock()
 

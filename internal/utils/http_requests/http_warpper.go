@@ -74,7 +74,7 @@ func PatchAndParse[T any](client *http.Client, url string, options ...HttpOption
 	return RequestAndParse[T](client, url, "PATCH", options...)
 }
 
-func RequestAndParseStream[T any](client *http.Client, url string, method string, options ...HttpOptions) (*stream.StreamResponse[T], error) {
+func RequestAndParseStream[T any](client *http.Client, url string, method string, options ...HttpOptions) (*stream.Stream[T], error) {
 	resp, err := Request(client, url, method, options...)
 	if err != nil {
 		return nil, err
@@ -131,14 +131,14 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	return ch, nil
 }
 
-func GetAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.StreamResponse[T], error) {
+func GetAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.Stream[T], error) {
 	return RequestAndParseStream[T](client, url, "GET", options...)
 }
 
-func PostAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.StreamResponse[T], error) {
+func PostAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.Stream[T], error) {
 	return RequestAndParseStream[T](client, url, "POST", options...)
 }
 
-func PutAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.StreamResponse[T], error) {
+func PutAndParseStream[T any](client *http.Client, url string, options ...HttpOptions) (*stream.Stream[T], error) {
 	return RequestAndParseStream[T](client, url, "PUT", options...)
 }

@@ -29,7 +29,7 @@ func InvokeTool(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[tool_entities.ToolResponseChunk], error) {
+		func() (*stream.Stream[tool_entities.ToolResponseChunk], error) {
 			return plugin_daemon.InvokeTool(session, &r.Data)
 		},
 		ctx,
@@ -56,7 +56,7 @@ func ValidateToolCredentials(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.StreamResponse[tool_entities.ValidateCredentialsResult], error) {
+		func() (*stream.Stream[tool_entities.ValidateCredentialsResult], error) {
 			return plugin_daemon.ValidateToolCredentials(session, &r.Data)
 		},
 		ctx,

@@ -19,7 +19,7 @@ func Request[T any](method string, path string, options ...http_requests.HttpOpt
 	return http_requests.RequestAndParse[T](client, difyPath(path), method, options...)
 }
 
-func StreamResponse[T any](method string, path string, options ...http_requests.HttpOptions) (*stream.StreamResponse[T], error) {
+func StreamResponse[T any](method string, path string, options ...http_requests.HttpOptions) (*stream.Stream[T], error) {
 	options = append(
 		options, http_requests.HttpHeader(map[string]string{
 			"X-Inner-Api-Key": PLUGIN_INNER_API_KEY,
@@ -31,7 +31,7 @@ func StreamResponse[T any](method string, path string, options ...http_requests.
 	return http_requests.RequestAndParseStream[T](client, difyPath(path), method, options...)
 }
 
-func InvokeLLM(payload *InvokeLLMRequest) (*stream.StreamResponse[model_entities.LLMResultChunk], error) {
+func InvokeLLM(payload *InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
 	return StreamResponse[model_entities.LLMResultChunk]("POST", "invoke/llm", http_requests.HttpPayloadJson(payload))
 }
 
@@ -43,7 +43,7 @@ func InvokeRerank(payload *InvokeRerankRequest) (*model_entities.RerankResult, e
 	return Request[model_entities.RerankResult]("POST", "invoke/rerank", http_requests.HttpPayloadJson(payload))
 }
 
-func InvokeTTS(payload *InvokeTTSRequest) (*stream.StreamResponse[model_entities.TTSResult], error) {
+func InvokeTTS(payload *InvokeTTSRequest) (*stream.Stream[model_entities.TTSResult], error) {
 	return StreamResponse[model_entities.TTSResult]("POST", "invoke/tts", http_requests.HttpPayloadJson(payload))
 }
 
@@ -55,11 +55,11 @@ func InvokeModeration(payload *InvokeModerationRequest) (*model_entities.Moderat
 	return Request[model_entities.ModerationResult]("POST", "invoke/moderation", http_requests.HttpPayloadJson(payload))
 }
 
-func InvokeTool(payload *InvokeToolRequest) (*stream.StreamResponse[tool_entities.ToolResponseChunk], error) {
+func InvokeTool(payload *InvokeToolRequest) (*stream.Stream[tool_entities.ToolResponseChunk], error) {
 	return StreamResponse[tool_entities.ToolResponseChunk]("POST", "invoke/tool", http_requests.HttpPayloadJson(payload))
 }
 
-func InvokeApp(payload *InvokeAppRequest) (*stream.StreamResponse[map[string]any], error) {
+func InvokeApp(payload *InvokeAppRequest) (*stream.Stream[map[string]any], error) {
 	return StreamResponse[map[string]any]("POST", "invoke/app", http_requests.HttpPayloadJson(payload))
 }
 
