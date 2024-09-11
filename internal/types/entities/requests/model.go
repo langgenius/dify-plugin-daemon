@@ -107,13 +107,25 @@ type RequestValidateModelCredentials struct {
 }
 
 type RequestGetTTSModelVoices struct {
+	Model       string         `json:"model" validate:"required"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Language    string         `json:"language" validate:"omitempty"`
 }
 
 type RequestGetTextEmbeddingNumTokens struct {
+	Model       string         `json:"model" validate:"required"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Texts       []string       `json:"texts" validate:"required,dive"`
 }
 
 type RequestGetLLMNumTokens struct {
+	Model          string                             `json:"model" validate:"required"`
+	Credentials    map[string]any                     `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	PromptMessages []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty,dive"`
+	Tools          []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
 }
 
 type RequestGetAIModelSchema struct {
+	Model       string         `json:"model" validate:"required"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
 }

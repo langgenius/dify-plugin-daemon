@@ -115,9 +115,9 @@ func GetTTSModelVoices(
 	session *session_manager.Session,
 	request *requests.RequestGetTTSModelVoices,
 ) (
-	*stream.Stream[model_entities.TTSModelVoice], error,
+	*stream.Stream[model_entities.GetTTSVoicesResponse], error,
 ) {
-	return genericInvokePlugin[requests.RequestGetTTSModelVoices, model_entities.TTSModelVoice](
+	return genericInvokePlugin[requests.RequestGetTTSModelVoices, model_entities.GetTTSVoicesResponse](
 		session,
 		request,
 		1,

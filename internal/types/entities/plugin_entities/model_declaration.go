@@ -116,10 +116,6 @@ type ModelPriceConfig struct {
 	Currency string           `json:"currency" validate:"required"`
 }
 
-type ModelPricing struct {
-	PricePerUnit float64 `json:"price_per_unit" validate:"required"`
-}
-
 type ModelDeclaration struct {
 	Model           string                         `json:"model" validate:"required,lt=256"`
 	Label           I18nObject                     `json:"label" validate:"required"`
@@ -129,7 +125,7 @@ type ModelDeclaration struct {
 	ModelProperties map[string]any                 `json:"model_properties" validate:"omitempty,dive,is_basic_type"`
 	Deprecated      bool                           `json:"deprecated"`
 	ParameterRules  []ModelParameterRule           `json:"parameter_rules" validate:"omitempty,lte=128,dive,parameter_rule"`
-	PriceConfig     *ModelPriceConfig              `json:"price_config" validate:"omitempty"`
+	PriceConfig     *ModelPriceConfig              `json:"pricing" validate:"omitempty"`
 }
 
 type ModelProviderFormType string

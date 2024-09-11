@@ -243,7 +243,7 @@ func GetTTSModelVoices(
 	defer session.Close()
 
 	baseSSEService(
-		func() (*stream.Stream[model_entities.TTSModelVoice], error) {
+		func() (*stream.Stream[model_entities.GetTTSVoicesResponse], error) {
 			return plugin_daemon.GetTTSModelVoices(session, &r.Data)
 		},
 		ctx,
