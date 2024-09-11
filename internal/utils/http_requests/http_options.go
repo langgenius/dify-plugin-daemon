@@ -50,6 +50,10 @@ func HttpPayloadMultipart(payload map[string]string, files map[string]io.Reader)
 	}}
 }
 
+func HttpRaiseErrorWhenStreamDataNotMatch(raise bool) HttpOptions {
+	return HttpOptions{"raiseErrorWhenStreamDataNotMatch", raise}
+}
+
 func HttpWithDirectReferer() HttpOptions {
 	return HttpOptions{"directReferer", true}
 }

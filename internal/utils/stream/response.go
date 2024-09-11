@@ -103,10 +103,6 @@ func (r *Stream[T]) Read() (T, error) {
 
 // Async wraps the stream with a new stream, and allows customized operations
 func (r *Stream[T]) Async(fn func(T)) error {
-	if atomic.LoadInt32(&r.closed) == 1 {
-		return errors.New("stream is closed")
-	}
-
 	for r.Next() {
 		data, err := r.Read()
 		if err != nil {

@@ -53,9 +53,11 @@ var (
 // Fetch the lambda function from serverless connector, return error if failed
 func FetchLambda(identity string, checksum string) (*LambdaFunction, error) {
 	request := map[string]any{
-		"config": map[string]any{
-			"identity": identity,
-			"checksum": checksum,
+		"plugin": map[string]any{
+			"config": map[string]any{
+				"identity": identity,
+				"checksum": checksum,
+			},
 		},
 	}
 
@@ -127,6 +129,7 @@ func LaunchLambda(identity string, checksum string, context_tar io.Reader) (*str
 				"context": context_tar,
 			},
 		),
+		http_requests.HttpRaiseErrorWhenStreamDataNotMatch(true),
 	)
 
 	if err != nil {

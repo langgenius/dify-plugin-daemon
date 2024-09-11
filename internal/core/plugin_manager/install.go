@@ -1,6 +1,8 @@
 package plugin_manager
 
 import (
+	"fmt"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -48,7 +50,9 @@ func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.Pl
 
 	new_response := stream.NewStream[PluginInstallResponse](128)
 	routine.Submit(func() {
-		defer new_response.Close()
+		defer func() {
+			new_response.Close()
+		}()
 
 		lambda_url := ""
 		lambda_function_name := ""
@@ -125,6 +129,8 @@ func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.Pl
 				lambda_url = r.Message
 			} else if r.Event == serverless.Lambda {
 				lambda_function_name = r.Message
+			} else {
+				new_response.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
 			}
 		})
 	})
