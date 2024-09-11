@@ -183,7 +183,7 @@ func init() {
 }
 
 type ProviderConfig struct {
-	Name        string         `json:"name" validate:"required,gt=0,lt=1024"`
+	Name        string         `json:"name" validate:"omitempty,gt=0,lt=1024"`
 	Type        ConfigType     `json:"type" validate:"required,credential_type"`
 	Scope       *string        `json:"scope" validate:"omitempty,is_scope"`
 	Required    bool           `json:"required"`

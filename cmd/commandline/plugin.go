@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
@@ -31,13 +32,19 @@ var (
 				fmt.Println("Error: plugin_path is required")
 				return
 			}
-			output_path := "./plugin.difypkg"
+			input_path := args[0]
+			// using filename of input_path as output_path if not specified
+			output_path := ""
+
 			if cmd.Flag("output_path") != nil {
 				output_path = cmd.Flag("output_path").Value.String()
+			} else {
+				output_path = filepath.Base(input_path) + ".difypkg"
 			}
-			decoder, err := decoder.NewFSPluginDecoder(args[0])
+
+			decoder, err := decoder.NewFSPluginDecoder(input_path)
 			if err != nil {
-				log.Error("failed to create plugin decoder , plugin path: %s, error: %v", args[0], err)
+				log.Error("failed to create plugin decoder , plugin path: %s, error: %v", input_path, err)
 				return
 			}
 
