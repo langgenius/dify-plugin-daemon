@@ -285,7 +285,7 @@ func GetAIModelSchema(
 	session, err := createSession(
 		r,
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMA,
+		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {

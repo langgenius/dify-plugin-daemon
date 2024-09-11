@@ -24,6 +24,6 @@ const (
 	PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT               PluginAccessAction = "invoke_endpoint"
 	PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES          PluginAccessAction = "get_tts_model_voices"
 	PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS PluginAccessAction = "get_text_embedding_num_tokens"
-	PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMA           PluginAccessAction = "get_ai_model_schema"
+	PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS          PluginAccessAction = "get_ai_model_schemas"
 	PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS            PluginAccessAction = "get_llm_num_tokens"
 )
