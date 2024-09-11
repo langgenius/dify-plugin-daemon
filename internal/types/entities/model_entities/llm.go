@@ -198,3 +198,6 @@ type LLMResultChunkDelta struct {
 	Usage        *LLMUsage     `json:"usage" validate:"omitempty"`
 	FinishReason *string       `json:"finish_reason" validate:"omitempty"`
 }
+
+type LLMGetNumTokensResponse struct {
+}

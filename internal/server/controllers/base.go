@@ -35,7 +35,9 @@ func BindRequest[T any](r *gin.Context, success func(T)) {
 	success(request)
 }
 
-func BindRequestWithPluginUniqueIdentifier[T any](r *gin.Context, success func(T, plugin_entities.PluginUniqueIdentifier)) {
+func BindRequestWithPluginUniqueIdentifier[T any](r *gin.Context, success func(
+	T, plugin_entities.PluginUniqueIdentifier,
+)) {
 	BindRequest(r, func(req T) {
 		plugin_unique_identifier := r.GetHeader(constants.X_PLUGIN_IDENTIFIER)
 		if plugin_unique_identifier == "" {

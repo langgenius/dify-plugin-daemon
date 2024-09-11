@@ -105,3 +105,15 @@ type RequestValidateModelCredentials struct {
 	Model       string                   `json:"model" validate:"required"`
 	Credentials map[string]any           `json:"credentials" validate:"omitempty,dive,is_basic_type"`
 }
+
+type RequestGetTTSModelVoices struct {
+}
+
+type RequestGetTextEmbeddingNumTokens struct {
+}
+
+type RequestGetLLMNumTokens struct {
+}
+
+type RequestGetAIModelSchema struct {
+}

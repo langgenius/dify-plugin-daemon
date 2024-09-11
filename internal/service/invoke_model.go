@@ -224,3 +224,107 @@ func ValidateModelCredentials(
 		max_timeout_seconds,
 	)
 }
+
+func GetTTSModelVoices(
+	r *plugin_entities.InvokePluginRequest[requests.RequestGetTTSModelVoices],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	session, err := createSession(
+		r,
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES,
+		ctx.GetString("cluster_id"),
+	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	defer session.Close()
+
+	baseSSEService(
+		func() (*stream.Stream[model_entities.TTSModelVoice], error) {
+			return plugin_daemon.GetTTSModelVoices(session, &r.Data)
+		},
+		ctx,
+		max_timeout_seconds,
+	)
+}
+
+func GetTextEmbeddingNumTokens(
+	r *plugin_entities.InvokePluginRequest[requests.RequestGetTextEmbeddingNumTokens],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	session, err := createSession(
+		r,
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS,
+		ctx.GetString("cluster_id"),
+	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	defer session.Close()
+
+	baseSSEService(
+		func() (*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error) {
+			return plugin_daemon.GetTextEmbeddingNumTokens(session, &r.Data)
+		},
+		ctx,
+		max_timeout_seconds,
+	)
+}
+
+func GetAIModelSchema(
+	r *plugin_entities.InvokePluginRequest[requests.RequestGetAIModelSchema],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	session, err := createSession(
+		r,
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMA,
+		ctx.GetString("cluster_id"),
+	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	defer session.Close()
+
+	baseSSEService(
+		func() (*stream.Stream[model_entities.GetModelSchemasResponse], error) {
+			return plugin_daemon.GetAIModelSchema(session, &r.Data)
+		},
+		ctx,
+		max_timeout_seconds,
+	)
+}
+
+func GetLLMNumTokens(
+	r *plugin_entities.InvokePluginRequest[requests.RequestGetLLMNumTokens],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	session, err := createSession(
+		r,
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS,
+		ctx.GetString("cluster_id"),
+	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	defer session.Close()
+
+	baseSSEService(
+		func() (*stream.Stream[model_entities.LLMGetNumTokensResponse], error) {
+			return plugin_daemon.GetLLMNumTokens(session, &r.Data)
+		},
+		ctx,
+		max_timeout_seconds,
+	)
+}

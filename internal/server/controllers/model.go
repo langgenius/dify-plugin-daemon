@@ -111,3 +111,55 @@ func ValidateModelCredentials(config *app.Config) gin.HandlerFunc {
 		)
 	}
 }
+
+func GetTTSModelVoices(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetTTSModelVoices]
+
+	return func(c *gin.Context) {
+		BindRequest(
+			c,
+			func(itr request) {
+				service.GetTTSModelVoices(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
+
+func GetTextEmbeddingNumTokens(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetTextEmbeddingNumTokens]
+
+	return func(c *gin.Context) {
+		BindRequest(
+			c,
+			func(itr request) {
+				service.GetTextEmbeddingNumTokens(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
+
+func GetLLMNumTokens(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetLLMNumTokens]
+
+	return func(c *gin.Context) {
+		BindRequest(
+			c,
+			func(itr request) {
+				service.GetLLMNumTokens(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
+
+func GetAIModelSchema(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetAIModelSchema]
+
+	return func(c *gin.Context) {
+		BindRequest(
+			c,
+			func(itr request) {
+				service.GetAIModelSchema(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}

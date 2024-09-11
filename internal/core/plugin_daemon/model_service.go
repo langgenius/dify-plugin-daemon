@@ -110,3 +110,55 @@ func ValidateModelCredentials(
 		1,
 	)
 }
+
+func GetTTSModelVoices(
+	session *session_manager.Session,
+	request *requests.RequestGetTTSModelVoices,
+) (
+	*stream.Stream[model_entities.TTSModelVoice], error,
+) {
+	return genericInvokePlugin[requests.RequestGetTTSModelVoices, model_entities.TTSModelVoice](
+		session,
+		request,
+		1,
+	)
+}
+
+func GetTextEmbeddingNumTokens(
+	session *session_manager.Session,
+	request *requests.RequestGetTextEmbeddingNumTokens,
+) (
+	*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error,
+) {
+	return genericInvokePlugin[requests.RequestGetTextEmbeddingNumTokens, model_entities.GetTextEmbeddingNumTokensResponse](
+		session,
+		request,
+		1,
+	)
+}
+
+func GetLLMNumTokens(
+	session *session_manager.Session,
+	request *requests.RequestGetLLMNumTokens,
+) (
+	*stream.Stream[model_entities.LLMGetNumTokensResponse], error,
+) {
+	return genericInvokePlugin[requests.RequestGetLLMNumTokens, model_entities.LLMGetNumTokensResponse](
+		session,
+		request,
+		1,
+	)
+}
+
+func GetAIModelSchema(
+	session *session_manager.Session,
+	request *requests.RequestGetAIModelSchema,
+) (
+	*stream.Stream[model_entities.GetModelSchemasResponse], error,
+) {
+	return genericInvokePlugin[requests.RequestGetAIModelSchema, model_entities.GetModelSchemasResponse](
+		session,
+		request,
+		1,
+	)
+}

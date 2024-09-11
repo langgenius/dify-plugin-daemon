@@ -6,7 +6,7 @@ type InvokePluginUserIdentity struct {
 }
 
 type BasePluginIdentifier struct {
-	PluginUniqueIdentifier PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required"`
+	PluginUniqueIdentifier PluginUniqueIdentifier `json:"plugin_unique_identifier"`
 }
 
 type InvokePluginRequest[T any] struct {

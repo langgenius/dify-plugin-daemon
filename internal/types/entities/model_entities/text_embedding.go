@@ -17,3 +17,6 @@ type TextEmbeddingResult struct {
 	Embeddings [][]float64    `json:"embeddings" validate:"required,dive"`
 	Usage      EmbeddingUsage `json:"usage" validate:"required"`
 }
+
+type GetTextEmbeddingNumTokensResponse struct {
+}
