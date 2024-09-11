@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"bufio"
 	"errors"
 	"io"
 	"io/fs"
@@ -60,15 +61,55 @@ func (d *FSPluginDecoder) Open() error {
 }
 
 func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error {
-	return filepath.Walk(d.root, func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
+	// dify_ignores is a map[string][]string, the key is the directory, the value is a list of files to ignore
+	dify_ignores := make(map[string][]string)
 
+	return filepath.Walk(d.root, func(path string, info fs.FileInfo, err error) error {
 		// trim the first directory path
 		path = strings.TrimPrefix(path, d.root)
 		// trim / from the beginning
 		path = strings.TrimPrefix(path, "/")
+		p := filepath.Dir(path)
+
+		if info.IsDir() {
+			// try read the .difyignore file if it's the first time to walk this directory
+			if _, ok := dify_ignores[p]; !ok {
+				dify_ignores[p] = make([]string, 0)
+				// read the .difyignore file if it exists
+				ignore_file_path := filepath.Join(d.root, p, ".difyignore")
+				if _, err := os.Stat(ignore_file_path); err == nil {
+					ignore_file, err := os.Open(ignore_file_path)
+					if err != nil {
+						return err
+					}
+
+					scanner := bufio.NewScanner(ignore_file)
+					for scanner.Scan() {
+						line := scanner.Text()
+						if strings.HasPrefix(line, "#") {
+							continue
+						}
+						dify_ignores[p] = append(dify_ignores[p], line)
+					}
+
+					ignore_file.Close()
+				}
+			}
+
+			return nil
+		}
+
+		current_ignore_files := dify_ignores[p]
+		for _, ignore_file := range current_ignore_files {
+			// skip if match
+			matched, err := filepath.Match(ignore_file, info.Name())
+			if err != nil {
+				return err
+			}
+			if matched {
+				return nil
+			}
+		}
 
 		if path == "" {
 			return nil
@@ -78,7 +119,7 @@ func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error
 			return err
 		}
 
-		return fn(info.Name(), filepath.Dir(path))
+		return fn(info.Name(), p)
 	})
 }
 

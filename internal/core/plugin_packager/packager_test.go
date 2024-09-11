@@ -2,6 +2,7 @@ package plugin_packager
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 	"testing"
 
@@ -16,6 +17,12 @@ var manifest []byte
 
 //go:embed neko.yaml
 var neko []byte
+
+//go:embed .difyignore
+var dify_ignore []byte
+
+//go:embed ignored
+var ignored []byte
 
 //go:embed _assets/test.svg
 var test_svg []byte
@@ -43,6 +50,18 @@ func TestPackagerAndVerifier(t *testing.T) {
 		return
 	}
 
+	// create .difyignore
+	if err := os.WriteFile("temp/.difyignore", dify_ignore, 0644); err != nil {
+		t.Errorf("failed to write .difyignore: %s", err.Error())
+		return
+	}
+
+	// create ignored
+	if err := os.WriteFile("temp/ignored", ignored, 0644); err != nil {
+		t.Errorf("failed to write ignored: %s", err.Error())
+		return
+	}
+
 	if err := os.MkdirAll("temp/_assets", 0755); err != nil {
 		t.Errorf("failed to create _assets directory: %s", err.Error())
 		return
@@ -56,6 +75,18 @@ func TestPackagerAndVerifier(t *testing.T) {
 	origin_decoder, err := decoder.NewFSPluginDecoder("temp")
 	if err != nil {
 		t.Errorf("failed to create decoder: %s", err.Error())
+		return
+	}
+
+	// walk
+	err = origin_decoder.Walk(func(filename string, dir string) error {
+		if filename == "ignored" {
+			return fmt.Errorf("should not walk into ignored")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Errorf("failed to walk: %s", err.Error())
 		return
 	}
 
