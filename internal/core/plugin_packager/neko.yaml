@@ -3,6 +3,7 @@ provider:
   settings:
     api_key:
       type: secret-input
+      name: api_key
       required: true
       label:
         en_US: API key
