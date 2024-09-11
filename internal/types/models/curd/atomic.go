@@ -75,7 +75,6 @@ func CreatePlugin(
 			PluginID:               plugin_to_be_returns.PluginID,
 			PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
 			TenantID:               tenant_id,
-			UserID:                 user_id,
 		}
 
 		err = db.Create(installation, tx)
