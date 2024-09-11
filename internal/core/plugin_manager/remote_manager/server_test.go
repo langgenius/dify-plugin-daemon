@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -86,15 +87,17 @@ func TestAcceptConnection(t *testing.T) {
 		return
 	}
 
+	tenant_id := uuid.New().String()
+
 	defer cache.Close()
 	key, err := GetConnectionKey(ConnectionInfo{
-		TenantId: "test",
+		TenantId: tenant_id,
 	})
 	if err != nil {
 		t.Errorf("failed to get connection key: %s", err.Error())
 		return
 	}
-	defer ClearConnectionKey("test")
+	defer ClearConnectionKey(tenant_id)
 
 	server, port := preparePluginServer(t)
 	if server == nil {
@@ -120,7 +123,7 @@ func TestAcceptConnection(t *testing.T) {
 				connection_err = errors.New("plugin name not matched")
 			}
 
-			if runtime.tenant_id != "test" {
+			if runtime.tenant_id != tenant_id {
 				connection_err = errors.New("tenant id not matched")
 			}
 
