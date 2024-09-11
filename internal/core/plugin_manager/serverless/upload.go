@@ -4,7 +4,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -17,7 +16,7 @@ var (
 // UploadPlugin uploads the plugin to the AWS Lambda
 // return the lambda url and name
 func UploadPlugin(decoder decoder.PluginDecoder) (*stream.Stream[LaunchAWSLambdaFunctionResponse], error) {
-	checksum, err := checksum.CalculateChecksum(decoder)
+	checksum, err := decoder.Checksum()
 	if err != nil {
 		return nil, err
 	}

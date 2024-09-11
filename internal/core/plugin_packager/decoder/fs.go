@@ -178,3 +178,11 @@ func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) 
 func (d *FSPluginDecoder) Assets() (map[string][]byte, error) {
 	return d.PluginDecoderHelper.Assets(d)
 }
+
+func (d *FSPluginDecoder) Checksum() (string, error) {
+	return d.PluginDecoderHelper.Checksum(d)
+}
+
+func (d *FSPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifier, error) {
+	return d.PluginDecoderHelper.UniqueIdentity(d)
+}

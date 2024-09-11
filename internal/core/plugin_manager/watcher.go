@@ -12,7 +12,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -173,7 +172,7 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 		return nil, errors.Join(fmt.Errorf("plugin already exists: %s", manifest.Identity()), err)
 	}
 
-	checksum, err := checksum.CalculateChecksum(decoder)
+	checksum, err := decoder.Checksum()
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))
 	}

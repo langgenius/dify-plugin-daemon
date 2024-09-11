@@ -1,15 +1,13 @@
-package checksum
+package decoder
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"path"
 	"slices"
-
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 )
 
-func CalculateChecksum(plugin decoder.PluginDecoder) (string, error) {
+func CalculateChecksum(plugin PluginDecoder) (string, error) {
 	m := map[string][]byte{}
 
 	sha256 := func(data []byte) []byte {

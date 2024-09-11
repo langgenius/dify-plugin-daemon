@@ -52,10 +52,17 @@ type PluginDecoder interface {
 
 	// Assets returns a map of assets, the key is the filename, the value is the content
 	Assets() (map[string][]byte, error)
+
+	// UniqueIdentity returns the unique identity of the plugin
+	UniqueIdentity() (plugin_entities.PluginUniqueIdentifier, error)
+
+	// Checksum returns the checksum of the plugin
+	Checksum() (string, error)
 }
 
 type PluginDecoderHelper struct {
 	pluginDeclaration *plugin_entities.PluginDeclaration
+	checksum          string
 }
 
 func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.PluginDeclaration, error) {
@@ -135,4 +142,34 @@ func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, 
 	}
 
 	return assets, nil
+}
+
+func (p *PluginDecoderHelper) Checksum(decoder PluginDecoder) (string, error) {
+	if p.checksum != "" {
+		return p.checksum, nil
+	}
+
+	var err error
+
+	p.checksum, err = CalculateChecksum(decoder)
+	if err != nil {
+		return "", err
+	}
+
+	return p.checksum, nil
+}
+
+func (p *PluginDecoderHelper) UniqueIdentity(decoder PluginDecoder) (plugin_entities.PluginUniqueIdentifier, error) {
+	manifest, err := decoder.Manifest()
+	if err != nil {
+		return plugin_entities.PluginUniqueIdentifier(""), err
+	}
+
+	identity := manifest.Identity()
+	checksum, err := decoder.Checksum()
+	if err != nil {
+		return plugin_entities.PluginUniqueIdentifier(""), err
+	}
+
+	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s-%s", identity, checksum)), nil
 }

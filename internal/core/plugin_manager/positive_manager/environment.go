@@ -2,12 +2,10 @@ package positive_manager
 
 import (
 	"os"
-
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
 )
 
 func (r *PositivePluginRuntime) calculateChecksum() (string, error) {
-	checksum, err := checksum.CalculateChecksum(r.Decoder)
+	checksum, err := r.Decoder.Checksum()
 	if err != nil {
 		return "", err
 	}

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -103,7 +102,7 @@ var (
 				return
 			}
 
-			checksum, err := checksum.CalculateChecksum(plugin_decoder)
+			checksum, err := plugin_decoder.Checksum()
 			if err != nil {
 				log.Error("failed to calculate checksum, plugin path: %s, error: %v", plugin_path, err)
 				return

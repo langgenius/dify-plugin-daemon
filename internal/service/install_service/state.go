@@ -24,7 +24,6 @@ func InstallPlugin(
 	configuration := runtime.Configuration()
 	plugin, installation, err := curd.CreatePlugin(
 		tenant_id,
-		user_id,
 		identity,
 		runtime.Type(),
 		configuration,

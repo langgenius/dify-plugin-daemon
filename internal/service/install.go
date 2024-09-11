@@ -28,7 +28,7 @@ func InstallPluginFromPkg(c *gin.Context, tenant_id string, dify_pkg_file multip
 
 	baseSSEService(
 		func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
-			return manager.Install(decoder)
+			return manager.Install(tenant_id, decoder)
 		},
 		c,
 		3600,

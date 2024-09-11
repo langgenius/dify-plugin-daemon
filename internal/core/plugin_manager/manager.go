@@ -35,7 +35,7 @@ type PluginManager struct {
 	// serverless runtime
 
 	// Install is a function that installs a plugin to the platform
-	Install func(decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error)
+	Install func(tenant_id string, decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error)
 }
 
 var (

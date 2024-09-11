@@ -15,7 +15,6 @@ import (
 // if the plugin has been created before, return the plugin which has been created before
 func CreatePlugin(
 	tenant_id string,
-	user_id string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	install_type plugin_entities.PluginRuntimeType,
 	declaration *plugin_entities.PluginDeclaration,

@@ -187,3 +187,11 @@ func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error)
 func (z *ZipPluginDecoder) Assets() (map[string][]byte, error) {
 	return z.PluginDecoderHelper.Assets(z)
 }
+
+func (z *ZipPluginDecoder) Checksum() (string, error) {
+	return z.PluginDecoderHelper.Checksum(z)
+}
+
+func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifier, error) {
+	return z.PluginDecoderHelper.UniqueIdentity(z)
+}
