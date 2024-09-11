@@ -9,7 +9,8 @@ import (
 
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
 	identity := strings.Join([]string{r.Configuration().Identity(), r.tenant_id}, ":")
-	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", identity, r.Checksum())), nil
+	checksum, _ := r.Checksum()
+	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", identity, checksum)), nil
 }
 
 func (r *RemotePluginRuntime) Cleanup() {

@@ -7,6 +7,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 func GetAsset(c *gin.Context) {
@@ -21,27 +23,43 @@ func GetAsset(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", asset)
 }
 
-func InstallPlugin(app *app.Config) gin.HandlerFunc {
+func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		dify_pkg_file_header, err := c.FormFile("dify_pkg")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			return
+		}
+
+		tenant_id := c.PostForm("tenant_id")
+		if tenant_id == "" {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Tenant ID is required"))
 			return
 		}
 
 		if dify_pkg_file_header.Size > app.MaxPluginPackageSize {
-			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "File size exceeds the maximum limit"})
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-413, "File size exceeds the maximum limit"))
 			return
 		}
 
 		dify_pkg_file, err := dify_pkg_file_header.Open()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-500, err.Error()))
 			return
 		}
 		defer dify_pkg_file.Close()
 
-		service.InstallPlugin(c, dify_pkg_file)
+		service.InstallPluginFromPkg(c, tenant_id, dify_pkg_file)
+	}
+}
+
+func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		BindRequestWithPluginUniqueIdentifier(c, func(request struct {
+			TenantID string `json:"tenant_id" binding:"required"`
+		}, identifier plugin_entities.PluginUniqueIdentifier) {
+			// TODO
+		})
 	}
 }
 

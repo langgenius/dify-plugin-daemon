@@ -19,8 +19,8 @@ func (r *fakePlugin) InitEnvironment() error {
 	return nil
 }
 
-func (r *fakePlugin) Checksum() string {
-	return ""
+func (r *fakePlugin) Checksum() (string, error) {
+	return "", nil
 }
 
 func (r *fakePlugin) Identity() (plugin_entities.PluginUniqueIdentifier, error) {

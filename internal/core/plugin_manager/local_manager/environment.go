@@ -36,5 +36,9 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 }
 
 func (r *LocalPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
-	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), r.Checksum())), nil
+	checksum, err := r.Checksum()
+	if err != nil {
+		return "", err
+	}
+	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), checksum)), nil
 }

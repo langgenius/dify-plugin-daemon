@@ -5,15 +5,16 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/installer"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
 type PluginManager struct {
@@ -33,7 +34,8 @@ type PluginManager struct {
 	startProcessLock *lock.HighGranularityLock
 	// serverless runtime
 
-	installer installer.Installer
+	// Install is a function that installs a plugin to the platform
+	Install func(decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error)
 }
 
 var (
@@ -53,10 +55,10 @@ func InitManager(cluster *cluster.Cluster, configuration *app.Config) {
 	}
 
 	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
-		manager.installer = installer.AwsInstaller
+		manager.Install = manager.InstallToAWSFromPkg
 		serverless.Init(configuration)
 	} else if configuration.Platform == app.PLATFORM_LOCAL {
-		manager.installer = installer.LocalInstaller
+		manager.Install = manager.InstallToLocal
 	}
 
 	manager.Init(configuration)

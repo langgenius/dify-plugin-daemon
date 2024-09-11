@@ -99,6 +99,6 @@ func (r *RemotePluginRuntime) Wait() (<-chan bool, error) {
 	return r.shutdown_chan, nil
 }
 
-func (r *RemotePluginRuntime) Checksum() string {
-	return r.checksum
+func (r *RemotePluginRuntime) Checksum() (string, error) {
+	return r.checksum, nil
 }

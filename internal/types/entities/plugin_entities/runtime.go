@@ -101,7 +101,7 @@ type (
 		// hashed identity of the plugin
 		HashedIdentity() (string, error)
 		// returns the checksum of the plugin
-		Checksum() string
+		Checksum() (string, error)
 	}
 )
 

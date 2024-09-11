@@ -4,29 +4,27 @@ import (
 	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/checksum"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 )
 
-func (r *PositivePluginRuntime) calculateChecksum() string {
-	plugin_decoder, err := decoder.NewFSPluginDecoder(r.LocalPackagePath)
+func (r *PositivePluginRuntime) calculateChecksum() (string, error) {
+	checksum, err := checksum.CalculateChecksum(r.Decoder)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	checksum, err := checksum.CalculateChecksum(plugin_decoder)
-	if err != nil {
-		return ""
-	}
-
-	return checksum
+	return checksum, nil
 }
 
-func (r *PositivePluginRuntime) Checksum() string {
+func (r *PositivePluginRuntime) Checksum() (string, error) {
 	if r.InnerChecksum == "" {
-		r.InnerChecksum = r.calculateChecksum()
+		checksum, err := r.calculateChecksum()
+		if err != nil {
+			return "", err
+		}
+		r.InnerChecksum = checksum
 	}
 
-	return r.InnerChecksum
+	return r.InnerChecksum, nil
 }
 
 func (r *PositivePluginRuntime) Cleanup() {

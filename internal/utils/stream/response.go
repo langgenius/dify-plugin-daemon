@@ -118,7 +118,7 @@ func (r *Stream[T]) Async(fn func(T)) error {
 	return nil
 }
 
-// Write writes data to the stream
+// Write writes data to the stream,
 // returns error if the buffer is full
 func (r *Stream[T]) Write(data T) error {
 	if atomic.LoadInt32(&r.closed) == 1 {
