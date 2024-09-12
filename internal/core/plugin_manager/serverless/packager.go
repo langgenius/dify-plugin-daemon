@@ -109,7 +109,7 @@ func (p *Packager) Pack() (*os.File, error) {
 		if err != nil {
 			return err
 		}
-		tar_header.Name = filename
+		tar_header.Name = full_filename
 
 		// write tar header
 		if err := tar_writer.WriteHeader(tar_header); err != nil {

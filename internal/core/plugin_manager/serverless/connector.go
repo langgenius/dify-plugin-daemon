@@ -118,8 +118,8 @@ func LaunchLambda(identity string, checksum string, context_tar io.Reader) (*str
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
-		http_requests.HttpReadTimeout(300),
-		http_requests.HttpWriteTimeout(300),
+		http_requests.HttpReadTimeout(240000),
+		http_requests.HttpWriteTimeout(240000),
 		http_requests.HttpPayloadMultipart(
 			map[string]string{
 				"identity": identity,

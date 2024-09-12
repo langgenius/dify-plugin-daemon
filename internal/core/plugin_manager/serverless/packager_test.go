@@ -85,7 +85,7 @@ func TestPackager_Pack(t *testing.T) {
 	dockerfile_found := false
 	requirements_found := false
 	main_py_found := false
-
+	jina_yaml_found := false
 	// Iterate through the files in the tar.gz archive
 	for {
 		header, err := tar_reader.Next()
@@ -103,6 +103,8 @@ func TestPackager_Pack(t *testing.T) {
 			requirements_found = true
 		case "main.py":
 			main_py_found = true
+		case "provider/jina.yaml":
+			jina_yaml_found = true
 		}
 	}
 
@@ -115,5 +117,8 @@ func TestPackager_Pack(t *testing.T) {
 	}
 	if !main_py_found {
 		t.Error("main.py not found in the packed archive")
+	}
+	if !jina_yaml_found {
+		t.Error("jina.yaml not found in the packed archive")
 	}
 }

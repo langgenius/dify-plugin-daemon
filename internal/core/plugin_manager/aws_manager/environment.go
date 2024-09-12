@@ -15,7 +15,7 @@ func (r *AWSPluginRuntime) InitEnvironment() error {
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{
 				Timeout:   5 * time.Second,
-				KeepAlive: 15 * time.Second,
+				KeepAlive: 120 * time.Second,
 			}).Dial,
 			IdleConnTimeout: 120 * time.Second,
 		},

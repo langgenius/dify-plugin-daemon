@@ -26,8 +26,8 @@ func Init(config *app.Config) {
 	client = &http.Client{
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 15 * time.Second,
+				Timeout:   5 * time.Second,   // how long a http connection can be alive before it's closed
+				KeepAlive: 120 * time.Second, // how long a real tcp connection can be idle before it's closed
 			}).Dial,
 			IdleConnTimeout: 120 * time.Second,
 		},
