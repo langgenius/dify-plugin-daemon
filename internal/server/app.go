@@ -12,7 +12,7 @@ type App struct {
 
 	// endpoint handler
 	// customize behavior of endpoint
-	endpoint_handler EndpointHandler
+	endpointHandler EndpointHandler
 
 	// aws transaction handler
 	// accept aws transaction request and forward to the plugin daemon

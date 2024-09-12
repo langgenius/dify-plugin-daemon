@@ -33,13 +33,22 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 
 	url, err := url.JoinPath(r.LambdaURL, "invoke")
 	if err != nil {
+		l.Send(plugin_entities.SessionMessage{
+			Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+			Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
+				Error: fmt.Sprintf("Error creating request: %v", err),
+			}),
+		})
+		l.Close()
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
 		return
 	}
 
+	connect_time := 240 * time.Second
+
 	// create a new http request
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), connect_time)
+	time.AfterFunc(connect_time, cancel)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))
 	if err != nil {
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
@@ -52,30 +61,68 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 	routine.Submit(func() {
 		// remove the session from listeners
 		defer r.listeners.Delete(session_id)
+		defer l.Close()
+		defer l.Send(plugin_entities.SessionMessage{
+			Type: plugin_entities.SESSION_MESSAGE_TYPE_END,
+			Data: []byte(""),
+		})
 
 		response, err := r.client.Do(req)
 		if err != nil {
+			l.Send(plugin_entities.SessionMessage{
+				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
+					Error: "failed to establish connection to plugin",
+				}),
+			})
 			r.Error(fmt.Sprintf("Error sending request to aws lambda: %v", err))
 			return
 		}
 
 		// write to data stream
 		scanner := bufio.NewScanner(response.Body)
-		for scanner.Scan() {
+		session_alive := true
+		for scanner.Scan() && session_alive {
 			bytes := scanner.Bytes()
 			if len(bytes) == 0 {
 				continue
 			}
 
-			data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](bytes)
-			if err != nil {
-				log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
-				continue
-			}
-
-			l.Send(data)
+			plugin_entities.ParsePluginUniversalEvent(
+				bytes,
+				func(session_id string, data []byte) {
+					session_message, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
+					if err != nil {
+						l.Send(plugin_entities.SessionMessage{
+							Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+							Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
+								Error: fmt.Sprintf("failed to parse session message %s, err: %v", bytes, err),
+							}),
+						})
+						session_alive = false
+					}
+					l.Send(session_message)
+				},
+				func() {},
+				func(err string) {
+					l.Send(plugin_entities.SessionMessage{
+						Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+						Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
+							Error: fmt.Sprintf("encountered an error: %v", err),
+						}),
+					})
+				},
+				func(message string) {},
+			)
 		}
 
-		l.Close()
+		if scanner.Err() != nil {
+			l.Send(plugin_entities.SessionMessage{
+				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
+					Error: fmt.Sprintf("failed to read response body: %v", scanner.Err()),
+				}),
+			})
+		}
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 
 	"github.com/google/uuid"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 )
@@ -22,6 +23,8 @@ type Cluster struct {
 	// plugins stores all the plugin life time of the current node
 	plugins     mapping.Map[string, *pluginLifeTime]
 	plugin_lock sync.RWMutex
+
+	manager *plugin_manager.PluginManager
 
 	// nodes stores all the nodes of the cluster
 	nodes mapping.Map[string, node]
@@ -46,11 +49,13 @@ type Cluster struct {
 	notify_cluster_stopped_chan           chan bool
 }
 
-func NewCluster(config *app.Config) *Cluster {
+func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager) *Cluster {
 	return &Cluster{
 		id:        uuid.New().String(),
 		port:      uint16(config.ServerPort),
 		stop_chan: make(chan bool),
+
+		manager: plugin_manager,
 
 		notify_become_master_chan:             make(chan bool),
 		notify_master_gc_chan:                 make(chan bool),

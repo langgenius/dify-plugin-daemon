@@ -171,5 +171,5 @@ func (p *PluginDecoderHelper) UniqueIdentity(decoder PluginDecoder) (plugin_enti
 		return plugin_entities.PluginUniqueIdentifier(""), err
 	}
 
-	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s-%s", identity, checksum)), nil
+	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", identity, checksum)), nil
 }

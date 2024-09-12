@@ -38,7 +38,7 @@ func InvokeEndpoint(
 	for resp.Next() {
 		result, err := resp.Read()
 		if err != nil {
-			resp.Close()
+			response.Close()
 			return http.StatusInternalServerError, nil, nil, err
 		}
 
@@ -55,7 +55,7 @@ func InvokeEndpoint(
 		if result.Result != nil {
 			dehexed, err := hex.DecodeString(*result.Result)
 			if err != nil {
-				resp.Close()
+				response.Close()
 				return http.StatusInternalServerError, nil, nil, err
 			}
 
@@ -77,6 +77,10 @@ func InvokeEndpoint(
 			})
 			break
 		}
+	}
+
+	if resp.IsClosed() {
+		response.Close()
 	}
 
 	return status_code, headers, response, nil

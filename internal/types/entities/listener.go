@@ -27,7 +27,9 @@ func (r *Broadcast[T]) OnClose(f func()) {
 }
 
 func (r *Broadcast[T]) Close() {
-	r.onClose()
+	if r.onClose != nil {
+		r.onClose()
+	}
 }
 
 func (r *Broadcast[T]) Send(data T) {

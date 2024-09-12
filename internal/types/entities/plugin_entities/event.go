@@ -2,12 +2,56 @@ package plugin_entities
 
 import (
 	"encoding/json"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 type PluginUniversalEvent struct {
 	SessionId string          `json:"session_id"`
 	Event     PluginEventType `json:"event"`
 	Data      json.RawMessage `json:"data"`
+}
+
+// ParsePluginUniversalEvent parses bytes into struct contains basic info of a message
+// it's the outermost layer of the protocol
+// error_handler will be called when data is not standard or itself it's an error message
+func ParsePluginUniversalEvent(
+	data []byte,
+	session_handler func(session_id string, data []byte),
+	heartbeat_handler func(),
+	error_handler func(err string),
+	info_handler func(message string),
+) {
+	// handle event
+	event, err := parser.UnmarshalJsonBytes[PluginUniversalEvent](data)
+	if err != nil {
+		error_handler(err.Error())
+		return
+	}
+
+	session_id := event.SessionId
+
+	switch event.Event {
+	case PLUGIN_EVENT_LOG:
+		if event.Event == PLUGIN_EVENT_LOG {
+			log_event, err := parser.UnmarshalJsonBytes[PluginLogEvent](
+				event.Data,
+			)
+			if err != nil {
+				log.Error("unmarshal json failed: %s", err.Error())
+				return
+			}
+
+			info_handler(log_event.Message)
+		}
+	case PLUGIN_EVENT_SESSION:
+		session_handler(session_id, event.Data)
+	case PLUGIN_EVENT_ERROR:
+		error_handler(string(event.Data))
+	case PLUGIN_EVENT_HEARTBEAT:
+		heartbeat_handler()
+	}
 }
 
 type PluginEventType string
@@ -26,8 +70,8 @@ type PluginLogEvent struct {
 }
 
 type SessionMessage struct {
-	Type SESSION_MESSAGE_TYPE `json:"type"`
-	Data json.RawMessage      `json:"data"`
+	Type SESSION_MESSAGE_TYPE `json:"type" validate:"required"`
+	Data json.RawMessage      `json:"data" validate:"required"`
 }
 
 type SESSION_MESSAGE_TYPE string

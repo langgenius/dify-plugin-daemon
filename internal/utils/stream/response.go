@@ -172,6 +172,10 @@ func (r *Stream[T]) Size() int {
 
 // WriteError writes an error to the stream
 func (r *Stream[T]) WriteError(err error) {
+	if atomic.LoadInt32(&r.closed) == 1 {
+		return
+	}
+
 	r.l.Lock()
 	defer r.l.Unlock()
 

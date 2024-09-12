@@ -5,7 +5,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -18,7 +17,7 @@ func genericInvokePlugin[Req any, Rsp any](
 	request *Req,
 	response_buffer_size int,
 ) (*stream.Stream[Rsp], error) {
-	runtime := plugin_manager.Manager().Get(session.PluginUniqueIdentifier)
+	runtime := session.Runtime()
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}

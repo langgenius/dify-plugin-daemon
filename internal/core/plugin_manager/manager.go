@@ -3,7 +3,6 @@ package plugin_manager
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
@@ -20,13 +19,14 @@ import (
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
 
-	cluster *cluster.Cluster
-
 	maxPluginPackageSize int64
 	workingDirectory     string
 
 	// mediaManager is used to manage media files like plugin icons, images, etc.
 	mediaManager *media_manager.MediaManager
+
+	// register plugin
+	pluginRegisters []func(lifetime plugin_entities.PluginLifetime) error
 
 	// running plugin in storage contains relations between plugin packages and their running instances
 	runningPluginInStorage mapping.Map[string, string]
@@ -42,9 +42,8 @@ var (
 	manager *PluginManager
 )
 
-func InitManager(cluster *cluster.Cluster, configuration *app.Config) {
+func NewManager(configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
-		cluster:              cluster,
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
 		workingDirectory:     configuration.PluginWorkingPath,
 		mediaManager: media_manager.NewMediaManager(
@@ -61,7 +60,7 @@ func InitManager(cluster *cluster.Cluster, configuration *app.Config) {
 		manager.Install = manager.InstallToLocal
 	}
 
-	manager.Init(configuration)
+	return manager
 }
 
 func Manager() *PluginManager {

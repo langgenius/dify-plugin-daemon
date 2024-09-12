@@ -6,7 +6,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
@@ -55,41 +54,28 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 	})
 
 	r.response.Async(func(data []byte) {
-		// handle event
-		event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
-		if err != nil {
-			return
-		}
+		plugin_entities.ParsePluginUniversalEvent(
+			data,
+			func(session_id string, data []byte) {
+				r.callbacks_lock.RLock()
+				listeners := r.callbacks[session_id][:]
+				r.callbacks_lock.RUnlock()
 
-		session_id := event.SessionId
-
-		switch event.Event {
-		case plugin_entities.PLUGIN_EVENT_LOG:
-			if event.Event == plugin_entities.PLUGIN_EVENT_LOG {
-				log_event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginLogEvent](
-					event.Data,
-				)
-				if err != nil {
-					log.Error("unmarshal json failed: %s", err.Error())
-					return
+				// handle session event
+				for _, listener := range listeners {
+					listener(data)
 				}
-
-				log.Info("plugin %s: %s", r.Configuration().Identity(), log_event.Message)
-			}
-		case plugin_entities.PLUGIN_EVENT_SESSION:
-			r.callbacks_lock.RLock()
-			listeners := r.callbacks[session_id][:]
-			r.callbacks_lock.RUnlock()
-
-			// handle session event
-			for _, listener := range listeners {
-				listener(event.Data)
-			}
-		case plugin_entities.PLUGIN_EVENT_ERROR:
-			log.Error("plugin %s: %s", r.Configuration().Identity(), event.Data)
-		case plugin_entities.PLUGIN_EVENT_HEARTBEAT:
-			r.last_active_at = time.Now()
-		}
+			},
+			func() {
+				r.last_active_at = time.Now()
+			},
+			func(err string) {
+				log.Error("plugin %s: %s", r.Configuration().Identity(), err)
+			},
+			func(message string) {
+				log.Info("plugin %s: %s", r.Configuration().Identity(), message)
+			},
+		)
 	})
 
 	return exit_error

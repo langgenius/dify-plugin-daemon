@@ -20,7 +20,7 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 	for i := 0; i < nums; i++ {
 		result = append(result, NewCluster(&app.Config{
 			ServerPort: 12121,
-		}))
+		}, nil))
 	}
 
 	log.SetShowLog(false)

@@ -26,7 +26,7 @@ func TestEndpointParams(t *testing.T) {
 	}
 
 	app_pointer := &App{
-		endpoint_handler: handler,
+		endpointHandler: handler,
 	}
 	cancel := app_pointer.server(&app.Config{
 		ServerPort:            port,

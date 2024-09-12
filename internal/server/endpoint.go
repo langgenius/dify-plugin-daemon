@@ -21,8 +21,8 @@ func (app *App) Endpoint() func(c *gin.Context) {
 		hook_id := c.Param("hook_id")
 		path := c.Param("path")
 
-		if app.endpoint_handler != nil {
-			app.endpoint_handler(c, hook_id, path)
+		if app.endpointHandler != nil {
+			app.endpointHandler(c, hook_id, path)
 		} else {
 			app.EndpointHandler(c, hook_id, path)
 		}

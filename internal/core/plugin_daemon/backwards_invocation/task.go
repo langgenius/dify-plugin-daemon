@@ -15,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
+// returns error only if payload is not correct
 func InvokeDify(
 	declaration *plugin_entities.PluginDeclaration,
 	invoke_from access_types.PluginAccessType,

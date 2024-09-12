@@ -25,9 +25,19 @@ func NewAWSTransactionHandler(max_timeout time.Duration) *AWSTransactionHandler 
 }
 
 type awsTransactionWriteCloser struct {
-	gin.ResponseWriter
 	done   chan bool
 	closed int32
+
+	writer func([]byte) (int, error)
+	flush  func()
+}
+
+func (a *awsTransactionWriteCloser) Write(data []byte) (int, error) {
+	return a.writer(data)
+}
+
+func (a *awsTransactionWriteCloser) Flush() {
+	a.flush()
 }
 
 func (w *awsTransactionWriteCloser) Close() error {
@@ -42,50 +52,64 @@ func (h *AWSTransactionHandler) Handle(
 	session_id string,
 ) {
 	writer := &awsTransactionWriteCloser{
-		ResponseWriter: ctx.Writer,
-		done:           make(chan bool),
+		writer: ctx.Writer.Write,
+		flush:  ctx.Writer.Flush,
+		done:   make(chan bool),
 	}
 
 	body := ctx.Request.Body
 	// read at most 6MB
 	bytes, err := io.ReadAll(io.LimitReader(body, 6*1024*1024))
 	if err != nil {
-		writer.WriteHeader(http.StatusBadRequest)
-		writer.Write([]byte(err.Error()))
+		ctx.Writer.WriteHeader(http.StatusBadRequest)
+		ctx.Writer.Write([]byte(err.Error()))
 		return
 	}
 
-	writer.WriteHeader(http.StatusOK)
-	writer.Header().Set("Content-Type", "text/event-stream")
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Writer.Header().Set("Content-Type", "text/event-stream")
 
-	// parse the data
-	data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](bytes)
-	if err != nil {
-		log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
-		writer.WriteHeader(http.StatusBadRequest)
-		writer.Write([]byte(err.Error()))
-		return
-	}
+	plugin_entities.ParsePluginUniversalEvent(
+		bytes,
+		func(session_id string, data []byte) {
+			// parse the data
+			session_message, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
+			if err != nil {
+				ctx.Writer.WriteHeader(http.StatusBadRequest)
+				ctx.Writer.Write([]byte(err.Error()))
+				writer.Close()
+				return
+			}
 
-	session := session_manager.GetSession(session_id)
-	if session == nil {
-		log.Error("session not found: %s", session_id)
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte("session not found"))
-		return
-	}
+			session := session_manager.GetSession(session_id)
+			if session == nil {
+				log.Error("session not found: %s", session_id)
+				ctx.Writer.WriteHeader(http.StatusInternalServerError)
+				ctx.Writer.Write([]byte("session not found"))
+				writer.Close()
+				return
+			}
 
-	aws_response_writer := NewAWSTransactionWriter(session, writer)
+			aws_response_writer := NewAWSTransactionWriter(session, writer)
 
-	if err := backwards_invocation.InvokeDify(
-		session.Declaration,
-		session.InvokeFrom,
-		session,
-		aws_response_writer,
-		data.Data,
-	); err != nil {
-		log.Error("invoke dify failed: %s", err.Error())
-	}
+			if err := backwards_invocation.InvokeDify(
+				session.Declaration,
+				session.InvokeFrom,
+				session,
+				aws_response_writer,
+				session_message.Data,
+			); err != nil {
+				ctx.Writer.WriteHeader(http.StatusInternalServerError)
+				ctx.Writer.Write([]byte("failed to parse request"))
+				writer.Close()
+			}
+		},
+		func() {},
+		func(err string) {
+			log.Warn("invoke dify failed, received errors: %s", err)
+		},
+		func(message string) {}, //log
+	)
 
 	select {
 	case <-writer.done:

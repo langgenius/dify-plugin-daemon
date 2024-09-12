@@ -11,7 +11,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 var (
@@ -77,40 +76,28 @@ func (s *stdioHolder) StartStdout() {
 			continue
 		}
 
-		event, err := parser.UnmarshalJsonBytes[plugin_entities.PluginUniversalEvent](data)
-		if err != nil {
-			// log.Error("unmarshal json failed: %s", err.Error())
-			continue
-		}
-
-		session_id := event.SessionId
-
-		switch event.Event {
-		case plugin_entities.PLUGIN_EVENT_LOG:
-			if event.Event == plugin_entities.PLUGIN_EVENT_LOG {
-				logEvent, err := parser.UnmarshalJsonBytes[plugin_entities.PluginLogEvent](event.Data)
-				if err != nil {
-					log.Error("unmarshal json failed: %s", err.Error())
-					continue
+		plugin_entities.ParsePluginUniversalEvent(
+			data,
+			func(session_id string, data []byte) {
+				for _, listener := range listeners {
+					listener(s.id, data)
 				}
-
-				log.Info("plugin %s: %s", s.plugin_unique_identifier, logEvent.Message)
-			}
-		case plugin_entities.PLUGIN_EVENT_SESSION:
-			for _, listener := range listeners {
-				listener(s.id, event.Data)
-			}
-
-			for listener_session_id, listener := range s.listener {
-				if listener_session_id == session_id {
-					listener(event.Data)
+				for listener_session_id, listener := range s.listener {
+					if listener_session_id == session_id {
+						listener(data)
+					}
 				}
-			}
-		case plugin_entities.PLUGIN_EVENT_ERROR:
-			log.Error("plugin %s: %s", s.plugin_unique_identifier, event.Data)
-		case plugin_entities.PLUGIN_EVENT_HEARTBEAT:
-			s.last_active_at = time.Now()
-		}
+			},
+			func() {
+				s.last_active_at = time.Now()
+			},
+			func(err string) {
+				log.Error("plugin %s: %s", s.plugin_unique_identifier, err)
+			},
+			func(message string) {
+				log.Info("plugin %s: %s", s.plugin_unique_identifier, message)
+			},
+		)
 	}
 }
 

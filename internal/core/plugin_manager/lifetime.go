@@ -7,6 +7,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
+func (p *PluginManager) AddPluginRegisterHandler(handler func(r plugin_entities.PluginLifetime) error) {
+	p.pluginRegisters = append(p.pluginRegisters, handler)
+}
+
 func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLifetime) {
 	configuration := r.Configuration()
 
@@ -19,15 +23,17 @@ func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLif
 	// stop plugin when the plugin reaches the end of its lifetime
 	defer r.Stop()
 
-	// add plugin to cluster
-	err := p.cluster.RegisterPlugin(r)
-	if err != nil {
-		log.Error("add plugin to cluster failed: %s", err.Error())
-		return
+	// register plugin
+	for _, reg := range p.pluginRegisters {
+		err := reg(r)
+		if err != nil {
+			log.Error("add plugin to cluster failed: %s", err.Error())
+			return
+		}
 	}
 
 	// add plugin to manager
-	err = p.Add(r)
+	err := p.Add(r)
 	if err != nil {
 		log.Error("add plugin to manager failed: %s", err.Error())
 		return

@@ -7,17 +7,18 @@ import (
 )
 
 func SetupEndpoint(ctx *gin.Context) {
-	BindRequestWithPluginUniqueIdentifier(ctx, func(
+	BindRequest(ctx, func(
 		request struct {
-			TenantID string         `json:"tenant_id" binding:"required"`
-			UserID   string         `json:"user_id" binding:"required"`
-			Settings map[string]any `json:"settings" binding:"omitempty"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required"`
+			TenantID               string                                 `json:"tenant_id" binding:"required"`
+			UserID                 string                                 `json:"user_id" binding:"required"`
+			Settings               map[string]any                         `json:"settings" binding:"omitempty"`
 		},
-		plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	) {
 		tenant_id := request.TenantID
 		user_id := request.UserID
 		settings := request.Settings
+		plugin_unique_identifier := request.PluginUniqueIdentifier
 
 		ctx.JSON(200, service.SetupEndpoint(
 			tenant_id, user_id, plugin_unique_identifier, settings,

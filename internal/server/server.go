@@ -11,8 +11,6 @@ import (
 )
 
 func (app *App) Run(config *app.Config) {
-	app.cluster = cluster.NewCluster(config)
-
 	// init routine pool
 	routine.InitPool(config.RoutinePoolSize)
 
@@ -22,8 +20,17 @@ func (app *App) Run(config *app.Config) {
 	// init process lifetime
 	process.Init(config)
 
-	// init plugin daemon
-	plugin_manager.InitManager(app.cluster, config)
+	// create manager
+	manager := plugin_manager.NewManager(config)
+
+	// create cluster
+	app.cluster = cluster.NewCluster(config, manager)
+
+	// register plugin lifetime event
+	manager.AddPluginRegisterHandler(app.cluster.RegisterPlugin)
+
+	// init manager
+	manager.Init(config)
 
 	// init persistence
 	persistence.InitPersistence(config)
