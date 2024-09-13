@@ -153,7 +153,7 @@ type PluginDeclaration struct {
 }
 
 var (
-	PluginNameRegex               = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,128}$`)
+	PluginNameRegex               = regexp.MustCompile(`^[a-z0-9_-]{1,128}$`)
 	PluginDeclarationVersionRegex = regexp.MustCompile(`^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$`)
 )
 
