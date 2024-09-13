@@ -1,7 +1,7 @@
 version: 0.0.1
 type: plugin
 author: "Yeuoly"
-name: "Neko"
+name: "neko"
 icon: test.svg
 label:
   en_US: "Neko"
