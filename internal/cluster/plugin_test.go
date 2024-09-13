@@ -59,7 +59,9 @@ func getRandomPluginRuntime() fakePlugin {
 					Type:      plugin_entities.PluginType,
 					Author:    "Yeuoly",
 					CreatedAt: time.Now(),
-					Plugins:   []string{"test"},
+					Plugins: plugin_entities.PluginExtensions{
+						Tools: []string{"test"},
+					},
 				},
 			},
 		},

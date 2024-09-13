@@ -83,37 +83,49 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 
 	// try to load plugins
 	plugins := dec.Plugins
-	for _, plugin := range plugins {
+	for _, tool := range plugins.Tools {
 		// read yaml
-		plugin_yaml, err := decoder.ReadFile(plugin)
+		plugin_yaml, err := decoder.ReadFile(tool)
 		if err != nil {
-			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read plugin file: %s", plugin))
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool))
 		}
 
-		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.GenericProviderDeclaration](plugin_yaml)
+		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolProviderDeclaration](plugin_yaml)
 		if err != nil {
-			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", plugin))
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", tool))
 		}
 
-		switch plugin_dec.Type {
-		case plugin_entities.PROVIDER_TYPE_ENDPOINT:
-			dec.Endpoint, err = parser.MapToStruct[plugin_entities.EndpointProviderDeclaration](plugin_dec.Provider)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert endpoint to struct: %s", plugin))
-			}
-		case plugin_entities.PROVIDER_TYPE_TOOL:
-			dec.Tool, err = parser.MapToStruct[plugin_entities.ToolProviderDeclaration](plugin_dec.Provider)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert tool to struct: %s", plugin))
-			}
-		case plugin_entities.PROVIDER_TYPE_MODEL:
-			dec.Model, err = parser.MapToStruct[plugin_entities.ModelProviderDeclaration](plugin_dec.Provider)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to convert model to struct: %s", plugin))
-			}
-		default:
-			return plugin_entities.PluginDeclaration{}, fmt.Errorf("unknown provider type: %s", plugin_dec.Type)
+		dec.Tool = &plugin_dec
+	}
+
+	for _, endpoint := range plugins.Endpoints {
+		// read yaml
+		plugin_yaml, err := decoder.ReadFile(endpoint)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read endpoint file: %s", endpoint))
 		}
+
+		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.EndpointProviderDeclaration](plugin_yaml)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", endpoint))
+		}
+
+		dec.Endpoint = &plugin_dec
+	}
+
+	for _, model := range plugins.Models {
+		// read yaml
+		plugin_yaml, err := decoder.ReadFile(model)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read model file: %s", model))
+		}
+
+		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.ModelProviderDeclaration](plugin_yaml)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", model))
+		}
+
+		dec.Model = &plugin_dec
 	}
 
 	if err := dec.ManifestValidate(); err != nil {

@@ -14,7 +14,8 @@ resource:
       enabled: true
       llm: true
 plugins:
-  - "provider/jina.yaml"
+  models:
+    - "provider/jina.yaml"
 execution:
   install: install.sh
   launch: launch.sh

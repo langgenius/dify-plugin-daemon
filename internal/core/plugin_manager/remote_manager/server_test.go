@@ -157,8 +157,10 @@ func TestAcceptConnection(t *testing.T) {
 				Memory:     1,
 				Permission: nil,
 			},
-			Plugins: []string{
-				"test",
+			Plugins: plugin_entities.PluginExtensions{
+				Tools: []string{
+					"test",
+				},
 			},
 			Meta: plugin_entities.PluginMeta{
 				Version: "0.0.1",

@@ -38,7 +38,7 @@ func preparePluginDeclaration() PluginDeclaration {
 					},
 				},
 			},
-			Plugins: []string{},
+			Plugins: PluginExtensions{},
 			Meta: PluginMeta{
 				Version: "0.0.1",
 				Arch: []constants.Arch{

@@ -126,6 +126,12 @@ type PluginMeta struct {
 	Runner  PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
 }
 
+type PluginExtensions struct {
+	Tools     []string `json:"tools" yaml:"tools,omitempty" validate:"required,dive,max=128"`
+	Models    []string `json:"models" yaml:"models,omitempty" validate:"required,dive,max=128"`
+	Endpoints []string `json:"endpoints" yaml:"endpoints,omitempty" validate:"required,dive,max=128"`
+}
+
 type PluginDeclarationWithoutAdvancedFields struct {
 	Version   string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
 	Type      DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
@@ -135,7 +141,7 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Label     I18nObject                `json:"label" yaml:"label" validate:"required"`
 	CreatedAt time.Time                 `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
 	Resource  PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
-	Plugins   []string                  `json:"plugins" yaml:"plugins,omitempty" validate:"required,dive,max=128"`
+	Plugins   PluginExtensions          `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
 	Meta      PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
 }
 

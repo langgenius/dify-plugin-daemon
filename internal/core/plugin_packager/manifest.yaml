@@ -16,7 +16,8 @@ resource:
       enabled: true
       llm: true
 plugins:
-  - "neko.yaml"
+  endpoints:
+    - "neko.yaml"
 execution:
   install: install.sh
   launch: launch.sh
