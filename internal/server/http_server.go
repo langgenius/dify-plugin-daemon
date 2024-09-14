@@ -105,4 +105,6 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	group.POST("/install/identifier", controllers.InstallPluginFromIdentifier(config))
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", controllers.ListPlugins)
+	group.GET("/models", controllers.ListModels)
+	group.GET("/tools", controllers.ListTools)
 }

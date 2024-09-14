@@ -68,4 +68,31 @@ func UninstallPlugin(c *gin.Context) {
 }
 
 func ListPlugins(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `form:"tenant_id" binding:"required"`
+		Page     int    `form:"page" binding:"required,min=1"`
+		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
+	}) {
+		c.JSON(http.StatusOK, service.ListPlugins(request.TenantID, request.Page, request.PageSize))
+	})
+}
+
+func ListModels(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `form:"tenant_id" binding:"required"`
+		Page     int    `form:"page" binding:"required,min=1"`
+		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
+	}) {
+		c.JSON(http.StatusOK, service.ListModels(request.TenantID, request.Page, request.PageSize))
+	})
+}
+
+func ListTools(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `form:"tenant_id" binding:"required"`
+		Page     int    `form:"page" binding:"required,min=1"`
+		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
+	}) {
+		c.JSON(http.StatusOK, service.ListTools(request.TenantID, request.Page, request.PageSize))
+	})
 }

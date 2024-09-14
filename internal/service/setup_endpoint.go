@@ -83,68 +83,6 @@ func SetupEndpoint(
 	return entities.NewSuccessResponse(nil)
 }
 
-func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response {
-	endpoints, err := db.GetAll[models.Endpoint](
-		db.Equal("tenant_id", tenant_id),
-		db.OrderBy("created_at", true),
-		db.Page(page, page_size),
-	)
-	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to list endpoints: %v", err))
-	}
-
-	// decrypt settings
-	for i, endpoint := range endpoints {
-		plugin_installation, err := db.GetOne[models.PluginInstallation](
-			db.Equal("plugin_id", endpoint.PluginID),
-			db.Equal("tenant_id", tenant_id),
-		)
-		if err != nil {
-			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
-		}
-
-		plugin, err := db.GetOne[models.Plugin](
-			db.Equal("plugin_unique_identifier", plugin_installation.PluginUniqueIdentifier),
-		)
-		if err != nil {
-			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
-		}
-
-		plugin_declaration, err := plugin.GetDeclaration()
-		if err != nil {
-			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to get plugin declaration: %v", err))
-		}
-
-		if plugin_declaration.Endpoint == nil {
-			return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
-		}
-
-		decrypted_settings, err := dify_invocation.InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
-			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
-				TenantId: tenant_id,
-				UserId:   "",
-				Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
-			},
-			InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
-				Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
-				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
-				Identity:  endpoint.ID,
-				Data:      endpoint.GetSettings(),
-				Config:    plugin_declaration.Endpoint.Settings,
-			},
-		})
-		if err != nil {
-			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
-		}
-
-		endpoint.SetSettings(decrypted_settings)
-
-		endpoints[i] = endpoint
-	}
-
-	return entities.NewSuccessResponse(endpoints)
-}
-
 func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 	endpoint, err := db.GetOne[models.Endpoint](
 		db.Equal("endpoint_id", endpoint_id),

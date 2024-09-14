@@ -63,7 +63,8 @@ func CreatePlugin(
 		// remove exists installation
 		if err := db.DeleteByCondition(
 			models.PluginInstallation{
-				PluginID: plugin_to_be_returns.PluginID,
+				PluginID:    plugin_to_be_returns.PluginID,
+				RuntimeType: string(install_type),
 			},
 			tx,
 		); err != nil {
@@ -74,6 +75,7 @@ func CreatePlugin(
 			PluginID:               plugin_to_be_returns.PluginID,
 			PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
 			TenantID:               tenant_id,
+			RuntimeType:            string(install_type),
 		}
 
 		err = db.Create(installation, tx)
