@@ -135,7 +135,7 @@ type PluginExtensions struct {
 type PluginDeclarationWithoutAdvancedFields struct {
 	Version   string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
 	Type      DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
-	Author    string                    `json:"author" yaml:"author,omitempty" validate:"required,max=128"`
+	Author    string                    `json:"author" yaml:"author,omitempty" validate:"omitempty,max=64"`
 	Name      string                    `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
 	Icon      string                    `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
 	Label     I18nObject                `json:"label" yaml:"label" validate:"required"`
