@@ -49,9 +49,9 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 			reader: bytes.NewReader(raw),
 		}
 
-		identity := plugin_entities.PluginUniqueIdentifier(ctx.Request.Header.Get(constants.X_PLUGIN_IDENTIFIER))
-		if identity == "" {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request"})
+		identity, err := plugin_entities.NewPluginUniqueIdentifier(ctx.Request.Header.Get(constants.X_PLUGIN_IDENTIFIER))
+		if err != nil {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
 			return
 		}
 

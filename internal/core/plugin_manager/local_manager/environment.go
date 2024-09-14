@@ -40,5 +40,5 @@ func (r *LocalPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier,
 	if err != nil {
 		return "", err
 	}
-	return plugin_entities.PluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), checksum)), nil
+	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), checksum))
 }

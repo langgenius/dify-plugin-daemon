@@ -2,6 +2,9 @@ package parser
 
 import "fmt"
 
-func MarshalPluginID(name string, version string) string {
-	return fmt.Sprintf("%s:%s", name, version)
+func MarshalPluginID(author string, name string, version string) string {
+	if author == "" {
+		return fmt.Sprintf("%s:%s", name, version)
+	}
+	return fmt.Sprintf("%s/%s:%s", author, name, version)
 }

@@ -57,9 +57,9 @@ func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
 			TenantID               string                                 `json:"tenant_id" binding:"required"`
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required,plugin_unique_identifier"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required" validate:"plugin_unique_identifier"`
 		}) {
-			service.InstallPluginFromIdentifier(c, request.TenantID, request.PluginUniqueIdentifier)
+			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(c, request.TenantID, request.PluginUniqueIdentifier))
 		})
 	}
 }

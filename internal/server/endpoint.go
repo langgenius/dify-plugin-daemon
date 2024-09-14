@@ -54,13 +54,15 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 		return
 	}
 
+	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid plugin unique identifier"})
+		return
+	}
+
 	// check if plugin exists in current node
-	if !app.cluster.IsPluginNoCurrentNode(
-		plugin_entities.PluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier),
-	) {
-		app.redirectPluginInvokeByPluginIdentifier(ctx, plugin_entities.PluginUniqueIdentifier(
-			plugin_installation.PluginUniqueIdentifier,
-		))
+	if !app.cluster.IsPluginNoCurrentNode(plugin_unique_identifier) {
+		app.redirectPluginInvokeByPluginIdentifier(ctx, plugin_unique_identifier)
 	} else {
 		service.Endpoint(ctx, &endpoint, &plugin_installation, path)
 	}

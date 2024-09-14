@@ -38,11 +38,15 @@ func Endpoint(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 	}
 
+	identifier, err := plugin_entities.NewPluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "Invalid plugin identifier, " + err.Error()})
+		return
+	}
+
 	// fetch plugin
 	manager := plugin_manager.Manager()
-	runtime := manager.Get(
-		plugin_entities.PluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier),
-	)
+	runtime := manager.Get(identifier)
 	if runtime == nil {
 		ctx.JSON(404, gin.H{"error": "plugin not found"})
 		return
@@ -79,7 +83,7 @@ func Endpoint(
 	session := session_manager.NewSession(
 		endpoint.TenantID,
 		"",
-		plugin_entities.PluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier),
+		identifier,
 		ctx.GetString("cluster_id"),
 		access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
