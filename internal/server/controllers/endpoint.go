@@ -9,7 +9,7 @@ import (
 func SetupEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(
 		request struct {
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required,plugin_unique_identifier"`
 			TenantID               string                                 `json:"tenant_id" binding:"required"`
 			UserID                 string                                 `json:"user_id" binding:"required"`
 			Settings               map[string]any                         `json:"settings" binding:"omitempty"`

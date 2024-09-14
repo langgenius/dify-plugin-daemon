@@ -55,10 +55,11 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 
 func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		BindRequestWithPluginUniqueIdentifier(c, func(request struct {
-			TenantID string `json:"tenant_id" binding:"required"`
-		}, identifier plugin_entities.PluginUniqueIdentifier) {
-			// TODO
+		BindRequest(c, func(request struct {
+			TenantID               string                                 `json:"tenant_id" binding:"required"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required,plugin_unique_identifier"`
+		}) {
+			service.InstallPluginFromIdentifier(c, request.TenantID, request.PluginUniqueIdentifier)
 		})
 	}
 }

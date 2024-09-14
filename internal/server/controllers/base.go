@@ -46,6 +46,12 @@ func BindRequestWithPluginUniqueIdentifier[T any](r *gin.Context, success func(
 			return
 		}
 
+		if err := plugin_entities.PluginUniqueIdentifier(plugin_unique_identifier).Validate(); err != nil {
+			resp := entities.NewErrorResponse(-400, err.Error())
+			r.JSON(400, resp)
+			return
+		}
+
 		success(req, plugin_entities.PluginUniqueIdentifier(plugin_unique_identifier))
 	})
 }
