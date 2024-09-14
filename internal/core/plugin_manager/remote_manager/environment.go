@@ -2,15 +2,16 @@ package remote_manager
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
-	identity := strings.Join([]string{r.tenant_id, r.Configuration().Identity()}, "/")
+	// copy a new declaration
+	config := r.Config
+	config.Author = r.tenant_id
 	checksum, _ := r.Checksum()
-	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", identity, checksum))
+	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", config.Identity(), checksum))
 }
 
 func (r *RemotePluginRuntime) Cleanup() {
