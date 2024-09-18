@@ -3,8 +3,11 @@ package decoder
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path"
 	"strings"
 
@@ -194,4 +197,35 @@ func (z *ZipPluginDecoder) Checksum() (string, error) {
 
 func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifier, error) {
 	return z.PluginDecoderHelper.UniqueIdentity(z)
+}
+
+func (z *ZipPluginDecoder) ExtractTo(dst string) error {
+	// copy to working directory
+	if err := z.Walk(func(filename, dir string) error {
+		working_path := path.Join(dst, dir)
+		// check if directory exists
+		if err := os.MkdirAll(working_path, 0755); err != nil {
+			return err
+		}
+
+		bytes, err := z.ReadFile(filename)
+		if err != nil {
+			return err
+		}
+
+		filename = path.Join(working_path, filename)
+
+		// copy file
+		if err := os.WriteFile(filename, bytes, 0644); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		// if error, delete the working directory
+		os.RemoveAll(dst)
+		return errors.Join(fmt.Errorf("copy plugin to working directory error: %v", err), err)
+	}
+
+	return nil
 }

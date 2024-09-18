@@ -184,29 +184,9 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 		return nil, errors.Join(fmt.Errorf("plugin working directory already exists: %s", plugin_working_path), err)
 	}
 
-	// copy to working directory
-	if err := decoder.Walk(func(filename, dir string) error {
-		working_path := path.Join(plugin_working_path, dir)
-		// check if directory exists
-		if err := os.MkdirAll(working_path, 0755); err != nil {
-			return err
-		}
-
-		bytes, err := decoder.ReadFile(filename)
-		if err != nil {
-			return err
-		}
-
-		filename = path.Join(working_path, filename)
-
-		// copy file
-		if err := os.WriteFile(filename, bytes, 0644); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return nil, errors.Join(fmt.Errorf("copy plugin to working directory error: %v", err), err)
+	// extract to working directory
+	if err := decoder.ExtractTo(plugin_working_path); err != nil {
+		return nil, errors.Join(fmt.Errorf("extract plugin to working directory error: %v", err), err)
 	}
 
 	return &pluginRuntimeWithDecoder{
