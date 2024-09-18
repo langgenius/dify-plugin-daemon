@@ -66,7 +66,7 @@ func NewSession(
 	session_lock.Unlock()
 
 	if err := cache.Store(sessionKey(s.ID), s, time.Minute*30); err != nil {
-		log.Error("set session info to cache failed, %s", err)
+		log.SilentError("set session info to cache failed, %s", err)
 	}
 
 	return s

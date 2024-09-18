@@ -228,35 +228,35 @@ func Panic(format string, v ...interface{}) {
 	main_log.Panic(format, true, v...)
 }
 
-func SlientDebug(format string, v ...interface{}) {
+func SilentDebug(format string, v ...interface{}) {
 	if main_log == nil {
 		initlog()
 	}
 	main_log.Debug(format, false, v...)
 }
 
-func SlientInfo(format string, v ...interface{}) {
+func SilentInfo(format string, v ...interface{}) {
 	if main_log == nil {
 		initlog()
 	}
 	main_log.Info(format, false, v...)
 }
 
-func SlientWarn(format string, v ...interface{}) {
+func SilentWarn(format string, v ...interface{}) {
 	if main_log == nil {
 		initlog()
 	}
 	main_log.Warn(format, false, v...)
 }
 
-func SlientError(format string, v ...interface{}) {
+func SilentError(format string, v ...interface{}) {
 	if main_log == nil {
 		initlog()
 	}
 	main_log.Error(format, false, v...)
 }
 
-func SlientPanic(format string, v ...interface{}) {
+func SilentPanic(format string, v ...interface{}) {
 	if main_log == nil {
 		initlog()
 	}

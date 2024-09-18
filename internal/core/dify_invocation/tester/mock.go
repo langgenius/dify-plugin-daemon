@@ -6,6 +6,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
@@ -17,7 +18,7 @@ func NewMockedDifyInvocation() dify_invocation.BackwardsInvocation {
 
 func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
 	stream := stream.NewStream[model_entities.LLMResultChunk](5)
-	go func() {
+	routine.Submit(func() {
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
 			PromptMessages:    payload.PromptMessages,
@@ -90,7 +91,7 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 			},
 		})
 		stream.Close()
-	}()
+	})
 	return stream, nil
 }
 
@@ -128,7 +129,7 @@ func (m *MockedDifyInvocation) InvokeRerank(payload *dify_invocation.InvokeReran
 
 func (m *MockedDifyInvocation) InvokeTTS(payload *dify_invocation.InvokeTTSRequest) (*stream.Stream[model_entities.TTSResult], error) {
 	stream := stream.NewStream[model_entities.TTSResult](5)
-	go func() {
+	routine.Submit(func() {
 		for i := 0; i < 10; i++ {
 			stream.Write(model_entities.TTSResult{
 				Result: "a1b2c3d4",
@@ -136,7 +137,7 @@ func (m *MockedDifyInvocation) InvokeTTS(payload *dify_invocation.InvokeTTSReque
 			time.Sleep(100 * time.Millisecond)
 		}
 		stream.Close()
-	}()
+	})
 	return stream, nil
 }
 
@@ -156,7 +157,7 @@ func (m *MockedDifyInvocation) InvokeModeration(payload *dify_invocation.InvokeM
 
 func (m *MockedDifyInvocation) InvokeTool(payload *dify_invocation.InvokeToolRequest) (*stream.Stream[tool_entities.ToolResponseChunk], error) {
 	stream := stream.NewStream[tool_entities.ToolResponseChunk](5)
-	go func() {
+	routine.Submit(func() {
 		for i := 0; i < 10; i++ {
 			stream.Write(tool_entities.ToolResponseChunk{
 				Type: tool_entities.ToolResponseChunkTypeText,
@@ -167,22 +168,22 @@ func (m *MockedDifyInvocation) InvokeTool(payload *dify_invocation.InvokeToolReq
 			time.Sleep(100 * time.Millisecond)
 		}
 		stream.Close()
-	}()
+	})
 
 	return stream, nil
 }
 
 func (m *MockedDifyInvocation) InvokeApp(payload *dify_invocation.InvokeAppRequest) (*stream.Stream[map[string]any], error) {
 	stream := stream.NewStream[map[string]any](5)
-	go func() {
+	routine.Submit(func() {
 		for i := 0; i < 10; i++ {
 			stream.Write(map[string]any{
-				"text": "hello world",
+				// TODO
 			})
 			time.Sleep(100 * time.Millisecond)
 		}
 		stream.Close()
-	}()
+	})
 	return stream, nil
 }
 
