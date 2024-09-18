@@ -6,11 +6,16 @@ import (
 	"path/filepath"
 	"time"
 
+	_ "embed"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
+
+//go:embed templates/python/icon.svg
+var icon []byte
 
 func InitPlugin() {
 	m := initialize()
@@ -111,6 +116,7 @@ func (m model) createPlugin() {
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Version:   "0.0.1",
 			Type:      plugin_entities.PluginType,
+			Icon:      "icon.svg",
 			Author:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
 			Name:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
 			CreatedAt: time.Now(),
@@ -169,6 +175,20 @@ func (m model) createPlugin() {
 	manifest_file_path := filepath.Join(plugin_dir, "manifest.yaml")
 	if err := os.WriteFile(manifest_file_path, manifest_file, 0o644); err != nil {
 		log.Error("failed to write manifest file: %s", err)
+		return
+	}
+
+	// create _assets directory
+	assets_dir := filepath.Join(plugin_dir, "_assets")
+	if err := os.MkdirAll(assets_dir, 0o755); err != nil {
+		log.Error("failed to create assets directory: %s", err)
+		return
+	}
+
+	// create icon.svg
+	icon_file_path := filepath.Join(assets_dir, "icon.svg")
+	if err := os.WriteFile(icon_file_path, icon, 0o644); err != nil {
+		log.Error("failed to write icon file: %s", err)
 		return
 	}
 

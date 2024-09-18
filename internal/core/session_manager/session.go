@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -22,9 +22,9 @@ var (
 
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
-	ID          string                         `json:"id"`
-	runtime     plugin_entities.PluginLifetime `json:"-"`
-	persistence *persistence.Persistence       `json:"-"`
+	ID                  string                              `json:"id"`
+	runtime             plugin_entities.PluginLifetime      `json:"-"`
+	backwardsInvocation dify_invocation.BackwardsInvocation `json:"-"`
 
 	TenantID               string                                 `json:"tenant_id"`
 	UserID                 string                                 `json:"user_id"`
@@ -47,6 +47,7 @@ func NewSession(
 	invoke_from access_types.PluginAccessType,
 	action access_types.PluginAccessAction,
 	declaration *plugin_entities.PluginDeclaration,
+	backwardsInvocation dify_invocation.BackwardsInvocation,
 ) *Session {
 	s := &Session{
 		ID:                     uuid.New().String(),
@@ -57,6 +58,7 @@ func NewSession(
 		InvokeFrom:             invoke_from,
 		Action:                 action,
 		Declaration:            declaration,
+		backwardsInvocation:    backwardsInvocation,
 	}
 
 	session_lock.Lock()
@@ -108,6 +110,10 @@ func (s *Session) BindRuntime(runtime plugin_entities.PluginLifetime) {
 
 func (s *Session) Runtime() plugin_entities.PluginLifetime {
 	return s.runtime
+}
+
+func (s *Session) BackwardsInvocation() dify_invocation.BackwardsInvocation {
+	return s.backwardsInvocation
 }
 
 type PLUGIN_IN_STREAM_EVENT string

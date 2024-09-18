@@ -61,7 +61,7 @@ func Endpoint(
 	}
 
 	// decrypt settings
-	settings, err := dify_invocation.InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+	settings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: endpoint.TenantID,
 			UserId:   "",
@@ -89,6 +89,7 @@ func Endpoint(
 		access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
 		runtime.Configuration(),
+		manager.BackwardsInvocation(),
 	)
 	defer session.Close()
 
@@ -190,6 +191,11 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to list endpoints: %v", err))
 	}
 
+	manager := plugin_manager.Manager()
+	if manager == nil {
+		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+	}
+
 	// decrypt settings
 	for i, endpoint := range endpoints {
 		plugin_installation, err := db.GetOne[models.PluginInstallation](
@@ -216,7 +222,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 		}
 
-		decrypted_settings, err := dify_invocation.InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+		decrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
 				UserId:   "",

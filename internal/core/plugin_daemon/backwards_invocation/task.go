@@ -34,7 +34,11 @@ func InvokeDify(
 	}
 
 	// prepare invocation arguments
-	request_handle, err := prepareDifyInvocationArguments(session, writer, request)
+	request_handle, err := prepareDifyInvocationArguments(
+		session,
+		writer,
+		request,
+	)
 	if err != nil {
 		return err
 	}
@@ -253,7 +257,7 @@ func executeDifyInvocationToolTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeToolRequest,
 ) {
-	response, err := dify_invocation.InvokeTool(request)
+	response, err := handle.backwardsInvocation.InvokeTool(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke tool failed: %s", err.Error()))
 		return
@@ -268,7 +272,7 @@ func executeDifyInvocationLLMTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeLLMRequest,
 ) {
-	response, err := dify_invocation.InvokeLLM(request)
+	response, err := handle.backwardsInvocation.InvokeLLM(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke llm model failed: %s", err.Error()))
 		return
@@ -283,7 +287,7 @@ func executeDifyInvocationTextEmbeddingTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeTextEmbeddingRequest,
 ) {
-	response, err := dify_invocation.InvokeTextEmbedding(request)
+	response, err := handle.backwardsInvocation.InvokeTextEmbedding(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke text-embedding model failed: %s", err.Error()))
 		return
@@ -296,7 +300,7 @@ func executeDifyInvocationRerankTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeRerankRequest,
 ) {
-	response, err := dify_invocation.InvokeRerank(request)
+	response, err := handle.backwardsInvocation.InvokeRerank(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke rerank model failed: %s", err.Error()))
 		return
@@ -309,7 +313,7 @@ func executeDifyInvocationTTSTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeTTSRequest,
 ) {
-	response, err := dify_invocation.InvokeTTS(request)
+	response, err := handle.backwardsInvocation.InvokeTTS(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke tts model failed: %s", err.Error()))
 		return
@@ -324,7 +328,7 @@ func executeDifyInvocationSpeech2TextTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeSpeech2TextRequest,
 ) {
-	response, err := dify_invocation.InvokeSpeech2Text(request)
+	response, err := handle.backwardsInvocation.InvokeSpeech2Text(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke speech2text model failed: %s", err.Error()))
 		return
@@ -337,7 +341,7 @@ func executeDifyInvocationModerationTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeModerationRequest,
 ) {
-	response, err := dify_invocation.InvokeModeration(request)
+	response, err := handle.backwardsInvocation.InvokeModeration(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke moderation model failed: %s", err.Error()))
 		return
@@ -350,7 +354,7 @@ func executeDifyInvocationAppTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeAppRequest,
 ) {
-	response, err := dify_invocation.InvokeApp(request)
+	response, err := handle.backwardsInvocation.InvokeApp(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke app failed: %s", err.Error()))
 		return

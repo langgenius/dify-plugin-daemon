@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
@@ -18,7 +20,17 @@ func createSession[T any](
 	access_action access_types.PluginAccessAction,
 	cluster_id string,
 ) (*session_manager.Session, error) {
-	runtime := plugin_manager.Manager().Get(r.PluginUniqueIdentifier)
+	manager := plugin_manager.Manager()
+	if manager == nil {
+		return nil, errors.New("failed to get plugin manager")
+	}
+	runtime := manager.Get(r.PluginUniqueIdentifier)
+	if runtime == nil {
+		return nil, errors.New("failed to get plugin runtime")
+	}
+	if runtime == nil {
+		return nil, errors.New("failed to get plugin runtime")
+	}
 
 	session := session_manager.NewSession(
 		r.TenantId,
@@ -28,6 +40,7 @@ func createSession[T any](
 		access_type,
 		access_action,
 		runtime.Configuration(),
+		manager.BackwardsInvocation(),
 	)
 
 	session.BindRuntime(runtime)

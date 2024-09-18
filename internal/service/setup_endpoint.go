@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
@@ -47,8 +48,13 @@ func SetupEndpoint(
 		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 	}
 
+	manager := plugin_manager.Manager()
+	if manager == nil {
+		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+	}
+
 	// encrypt settings
-	encrypted_settings, err := dify_invocation.InvokeEncrypt(
+	encrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(
 		&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,

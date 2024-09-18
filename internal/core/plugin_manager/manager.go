@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
@@ -36,6 +37,9 @@ type PluginManager struct {
 
 	// Install is a function that installs a plugin to the platform
 	Install func(tenant_id string, decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error)
+
+	// backwardsInvocation is a handle to invoke dify
+	backwardsInvocation dify_invocation.BackwardsInvocation
 }
 
 var (
@@ -111,11 +115,13 @@ func (p *PluginManager) Init(configuration *app.Config) {
 		log.Panic("init redis client failed: %s", err.Error())
 	}
 
-	if err := dify_invocation.InitDifyInvocationDaemon(
+	invocation, err := real.InitDifyInvocationDaemon(
 		configuration.PluginInnerApiURL, configuration.PluginInnerApiKey,
-	); err != nil {
+	)
+	if err != nil {
 		log.Panic("init dify invocation daemon failed: %s", err.Error())
 	}
+	p.backwardsInvocation = invocation
 
 	// start local watcher
 	if configuration.Platform == app.PLATFORM_LOCAL {
@@ -124,4 +130,8 @@ func (p *PluginManager) Init(configuration *app.Config) {
 
 	// start remote watcher
 	p.startRemoteWatcher(configuration)
+}
+
+func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocation {
+	return p.backwardsInvocation
 }

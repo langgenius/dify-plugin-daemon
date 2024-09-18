@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -140,6 +142,73 @@ endpoint				- allow plugin to register endpoint`,
 		Short: "",
 		Long:  "Drop permission from plugin, you can find the available permission by running `dify plugin permission`",
 	}
+
+	pluginTestCommand = &cobra.Command{
+		Use:   "test package_path invoke_type invoke_action [-i inputs]",
+		Short: "",
+		Long: "Test runs the given plugin package locally, and you can specify the inputs using json format, if not specified, will use default inputs\n" +
+			"type: invoke type, available values: \n" +
+			"[\n" +
+			"	tool, model, endpoint\n" +
+			"]\n" +
+			"action: invoke action, available values: \n" +
+			"[\n" +
+			"	invoke_tool, validate_tool_credentials, \n" +
+			"	invoke_endpoint\n" +
+			"	invoke_llm, invoke_text_embedding, invoke_rerank, invoke_tts, invoke_speech2text, invoke_moderation, \n" +
+			"	validate_provider_credentials, validate_model_credentials, get_tts_model_voices, \n" +
+			"	get_text_embedding_num_tokens, get_ai_model_schemas, get_llm_num_tokens\n" +
+			"]\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 3 {
+				log.Error("invalid args, please specify package_path, invoke_type, invoke_action")
+				return
+			}
+			// get package path
+			package_path_str := args[0]
+			// get invoke type
+			invoke_type_str := args[1]
+			// get invoke action
+			invoke_action_str := args[2]
+			// get inputs if specified
+			inputs_str := "{}"
+			if len(args) > 3 {
+				inputs_str = args[3]
+			}
+			inputs := map[string]any{}
+			err := json.Unmarshal([]byte(inputs_str), &inputs)
+			if err != nil {
+				log.Error("failed to unmarshal inputs, inputs: %s, error: %v", inputs_str, err)
+				return
+			}
+			// read package file
+			package_file, err := os.ReadFile(package_path_str)
+			if err != nil {
+				log.Error("failed to read package file, package path: %s, error: %v", package_path_str, err)
+				return
+			}
+			// create plugin decoder
+			plugin_decoder, err := decoder.NewZipPluginDecoder(package_file)
+			if err != nil {
+				log.Error("failed to create plugin decoder, package path: %s, error: %v", package_path_str, err)
+				return
+			}
+
+			// get invoke_type and invoke_action
+			invoke_type := access_types.PluginAccessType(invoke_type_str)
+			if !invoke_type.IsValid() {
+				log.Error("invalid invoke type: %s", invoke_type_str)
+				return
+			}
+			invoke_action := access_types.PluginAccessAction(invoke_action_str)
+			if !invoke_action.IsValid() {
+				log.Error("invalid invoke action: %s", invoke_action_str)
+				return
+			}
+
+			fmt.Println(plugin_decoder)
+		},
+	}
 )
 
 func init() {
@@ -147,6 +216,7 @@ func init() {
 	pluginCommand.AddCommand(pluginPackageCommand)
 	pluginCommand.AddCommand(pluginChecksumCommand)
 	pluginCommand.AddCommand(pluginPermissionCommand)
+	pluginCommand.AddCommand(pluginTestCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionAddCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionDropCommand)
 }

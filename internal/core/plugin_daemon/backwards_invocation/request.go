@@ -30,6 +30,9 @@ type BackwardsInvocation struct {
 	// writer is the writer that writes the data to the session
 	// NOTE: write operation will not raise errors
 	writer BackwardsInvocationWriter
+
+	// backwardsInvocation is the backwards invocation that is used to invoke dify
+	backwardsInvocation dify_invocation.BackwardsInvocation
 }
 
 func NewBackwardsInvocation(
@@ -40,11 +43,12 @@ func NewBackwardsInvocation(
 	detailed_request map[string]any,
 ) *BackwardsInvocation {
 	return &BackwardsInvocation{
-		typ:              typ,
-		id:               id,
-		detailed_request: detailed_request,
-		session:          session,
-		writer:           writer,
+		typ:                 typ,
+		id:                  id,
+		detailed_request:    detailed_request,
+		session:             session,
+		writer:              writer,
+		backwardsInvocation: session.BackwardsInvocation(),
 	}
 }
 

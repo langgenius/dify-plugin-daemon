@@ -70,6 +70,8 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	golang.org/x/tools v0.22.0 // indirect
+	golang.org/x/tools/go/pointer v0.1.0-deprecated // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
 

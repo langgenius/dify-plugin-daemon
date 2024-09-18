@@ -1,4 +1,4 @@
-package dify_invocation
+package real
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 )
@@ -17,15 +18,15 @@ func TestEncryptRequired(t *testing.T) {
 		"key": "value",
 	}
 
-	payload := &InvokeEncryptRequest{
-		BaseInvokeDifyRequest: BaseInvokeDifyRequest{
+	payload := &dify_invocation.InvokeEncryptRequest{
+		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: "123",
 			UserId:   "456",
-			Type:     INVOKE_TYPE_ENCRYPT,
+			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
 		},
-		InvokeEncryptSchema: InvokeEncryptSchema{
-			Opt:       ENCRYPT_OPT_ENCRYPT,
-			Namespace: ENCRYPT_NAMESPACE_ENDPOINT,
+		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
+			Opt:       dify_invocation.ENCRYPT_OPT_ENCRYPT,
+			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  "test123",
 			Data:      data,
 			Config: map[string]plugin_entities.ProviderConfig{
@@ -94,19 +95,21 @@ func TestInvokeEncrypt(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	if err := InitDifyInvocationDaemon(fmt.Sprintf("http://localhost:%d", port), "test"); err != nil {
+	i, err := InitDifyInvocationDaemon(fmt.Sprintf("http://localhost:%d", port), "test")
+	if err != nil {
 		t.Errorf("InitDifyInvocationDaemon failed: %v", err)
+		return
 	}
 
-	payload := &InvokeEncryptRequest{
-		BaseInvokeDifyRequest: BaseInvokeDifyRequest{
+	payload := &dify_invocation.InvokeEncryptRequest{
+		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: "123",
 			UserId:   "456",
-			Type:     INVOKE_TYPE_ENCRYPT,
+			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
 		},
-		InvokeEncryptSchema: InvokeEncryptSchema{
-			Opt:       ENCRYPT_OPT_ENCRYPT,
-			Namespace: ENCRYPT_NAMESPACE_ENDPOINT,
+		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
+			Opt:       dify_invocation.ENCRYPT_OPT_ENCRYPT,
+			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  "test123",
 			Data:      map[string]any{"key": "value"},
 			Config: map[string]plugin_entities.ProviderConfig{
@@ -118,7 +121,7 @@ func TestInvokeEncrypt(t *testing.T) {
 		},
 	}
 
-	if encrypted, err := InvokeEncrypt(payload); err != nil {
+	if encrypted, err := i.InvokeEncrypt(payload); err != nil {
 		t.Errorf("InvokeEncrypt failed: %v", err)
 	} else {
 		if encrypted["key"] != "encrypted" {
