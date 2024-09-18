@@ -101,10 +101,10 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	group.Use(CheckingKey(config.PluginInnerApiKey))
 
 	group.GET("/asset/:id", controllers.GetAsset)
-	group.POST("/install/pkg", controllers.InstallPluginFromPkg(config))
-	group.POST("/install/identifier", controllers.InstallPluginFromIdentifier(config))
-	group.POST("/uninstall", controllers.UninstallPlugin)
-	group.GET("/list", controllers.ListPlugins)
-	group.GET("/models", controllers.ListModels)
-	group.GET("/tools", controllers.ListTools)
+	group.POST("/:tenant_id/install/pkg", controllers.InstallPluginFromPkg(config))
+	group.POST("/:tenant_id/install/identifier", controllers.InstallPluginFromIdentifier(config))
+	group.POST("/:tenant_id/uninstall", controllers.UninstallPlugin)
+	group.GET("/:tenant_id/list", controllers.ListPlugins)
+	group.GET("/:tenant_id/models", controllers.ListModels)
+	group.GET("/:tenant_id/tools", controllers.ListTools)
 }

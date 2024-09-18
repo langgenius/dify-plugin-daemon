@@ -31,7 +31,7 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 			return
 		}
 
-		tenant_id := c.PostForm("tenant_id")
+		tenant_id := c.Param("tenant_id")
 		if tenant_id == "" {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Tenant ID is required"))
 			return
@@ -56,7 +56,7 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
-			TenantID               string                                 `json:"tenant_id" binding:"required"`
+			TenantID               string                                 `uri:"tenant_id" binding:"required"`
 			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required" validate:"plugin_unique_identifier"`
 		}) {
 			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(c, request.TenantID, request.PluginUniqueIdentifier))
@@ -69,7 +69,7 @@ func UninstallPlugin(c *gin.Context) {
 
 func ListPlugins(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `form:"tenant_id" binding:"required"`
+		TenantID string `uri:"tenant_id" binding:"required"`
 		Page     int    `form:"page" binding:"required,min=1"`
 		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
 	}) {
@@ -79,7 +79,7 @@ func ListPlugins(c *gin.Context) {
 
 func ListModels(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `form:"tenant_id" binding:"required"`
+		TenantID string `uri:"tenant_id" binding:"required"`
 		Page     int    `form:"page" binding:"required,min=1"`
 		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
 	}) {
@@ -89,7 +89,7 @@ func ListModels(c *gin.Context) {
 
 func ListTools(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `form:"tenant_id" binding:"required"`
+		TenantID string `uri:"tenant_id" binding:"required"`
 		Page     int    `form:"page" binding:"required,min=1"`
 		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
 	}) {

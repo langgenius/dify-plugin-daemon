@@ -10,14 +10,8 @@ import (
 
 func BindRequest[T any](r *gin.Context, success func(T)) {
 	var request T
-	var err error
 
-	context_type := r.GetHeader("Content-Type")
-	if context_type == "application/json" {
-		err = r.ShouldBindJSON(&request)
-	} else {
-		err = r.ShouldBind(&request)
-	}
+	err := r.ShouldBindUri(&request)
 
 	if err != nil {
 		resp := entities.NewErrorResponse(-400, err.Error())
