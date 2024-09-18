@@ -28,9 +28,6 @@ func createSession[T any](
 	if runtime == nil {
 		return nil, errors.New("failed to get plugin runtime")
 	}
-	if runtime == nil {
-		return nil, errors.New("failed to get plugin runtime")
-	}
 
 	session := session_manager.NewSession(
 		r.TenantId,
