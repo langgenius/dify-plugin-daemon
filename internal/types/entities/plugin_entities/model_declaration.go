@@ -203,10 +203,17 @@ type ModelProviderDeclaration struct {
 	Help                     *ModelProviderHelpEntity         `json:"help" yaml:"help,omitempty" validate:"omitempty"`
 	SupportedModelTypes      []ModelType                      `json:"supported_model_types" yaml:"supported_model_types" validate:"required,lte=16,dive,model_type"`
 	ConfigurateMethods       []ModelProviderConfigurateMethod `json:"configurate_methods" yaml:"configurate_methods" validate:"required,lte=16,dive,model_provider_configurate_method"`
-	Models                   []string                         `json:"models" yaml:"models" validate:"required,lte=1024"`
 	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" yaml:"provider_credential_schema,omitempty" validate:"omitempty"`
 	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" yaml:"model_credential_schema,omitempty" validate:"omitempty"`
-	ModelDeclarations        []ModelDeclaration               `json:"model_declarations" yaml:"model_declarations,omitempty"`
+	Position                 *struct {
+		LLM           *[]string `json:"llm,omitempty" yaml:"llm,omitempty"`
+		TextEmbedding *[]string `json:"text_embedding,omitempty" yaml:"text_embedding,omitempty"`
+		Rerank        *[]string `json:"rerank,omitempty" yaml:"rerank,omitempty"`
+		TTS           *[]string `json:"tts,omitempty" yaml:"tts,omitempty"`
+		Speech2text   *[]string `json:"speech2text,omitempty" yaml:"speech2text,omitempty"`
+		Moderation    *[]string `json:"moderation,omitempty" yaml:"moderation,omitempty"`
+	} `json:"position,omitempty" yaml:"position,omitempty"`
+	Models []ModelDeclaration `json:"models" yaml:"model_declarations,omitempty"`
 }
 
 func init() {

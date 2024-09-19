@@ -113,7 +113,7 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 				},
 			},
 		},
-		ModelDeclarations: []plugin_entities.ModelDeclaration{
+		Models: []plugin_entities.ModelDeclaration{
 			{
 				Model: "gpt-4o",
 				Label: plugin_entities.I18nObject{
