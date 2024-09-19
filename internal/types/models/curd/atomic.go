@@ -85,6 +85,53 @@ func CreatePlugin(
 
 		installation_to_be_returns = installation
 
+		// create tool installation
+		if declaration.Tool != nil {
+			tool_installation := &models.ToolInstallation{
+				PluginID:               plugin_to_be_returns.PluginID,
+				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+				Provider:               declaration.Tool.Identity.Name,
+				Declaration:            *declaration.Tool,
+			}
+
+			err := db.Create(tool_installation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// create endpoint installation
+		if declaration.Endpoint != nil {
+			endpoint_installation := &models.EndpointInstallation{
+				PluginID:               plugin_to_be_returns.PluginID,
+				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+				Declaration:            *declaration.Endpoint,
+			}
+
+			err := db.Create(endpoint_installation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// create model installation
+		if declaration.Model != nil {
+			model_installation := &models.AIModelInstallation{
+				PluginID:               plugin_to_be_returns.PluginID,
+				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+				Provider:               declaration.Model.Provider,
+				Declaration:            *declaration.Model,
+			}
+
+			err := db.Create(model_installation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
