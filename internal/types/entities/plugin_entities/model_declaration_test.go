@@ -114,8 +114,6 @@ provider_credential_schema:
       placeholder:
         zh_Hans: 在此输入您的 API Base, 如：https://api.openai.com
         en_US: Enter your API Base, e.g. https://api.openai.com
-models:
-  - plugin/123
     `
 )
 
