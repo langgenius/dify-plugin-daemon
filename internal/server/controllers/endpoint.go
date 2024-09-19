@@ -9,10 +9,10 @@ import (
 func SetupEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(
 		request struct {
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required" validate:"plugin_unique_identifier"`
-			TenantID               string                                 `json:"tenant_id" binding:"required"`
-			UserID                 string                                 `json:"user_id" binding:"required"`
-			Settings               map[string]any                         `json:"settings" binding:"omitempty"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required" validate:"plugin_unique_identifier"`
+			TenantID               string                                 `json:"tenant_id" validate:"required"`
+			UserID                 string                                 `json:"user_id" validate:"required"`
+			Settings               map[string]any                         `json:"settings" validate:"omitempty"`
 		},
 	) {
 		tenant_id := request.TenantID
@@ -28,9 +28,9 @@ func SetupEndpoint(ctx *gin.Context) {
 
 func ListEndpoints(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		TenantID string `form:"tenant_id" binding:"required"`
-		Page     int    `form:"page" binding:"required"`
-		PageSize int    `form:"page_size" binding:"required,max=100"`
+		TenantID string `form:"tenant_id" validate:"required"`
+		Page     int    `form:"page" validate:"required"`
+		PageSize int    `form:"page_size" validate:"required,max=100"`
 	}) {
 		tenant_id := request.TenantID
 		page := request.Page
@@ -42,8 +42,8 @@ func ListEndpoints(ctx *gin.Context) {
 
 func RemoveEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		EndpointID string `json:"endpoint_id" binding:"required"`
-		TenantID   string `json:"tenant_id" binding:"required"`
+		EndpointID string `json:"endpoint_id" validate:"required"`
+		TenantID   string `json:"tenant_id" validate:"required"`
 	}) {
 		endpoint_id := request.EndpointID
 		tenant_id := request.TenantID
@@ -54,8 +54,8 @@ func RemoveEndpoint(ctx *gin.Context) {
 
 func EnableEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		EndpointID string `json:"endpoint_id" binding:"required"`
-		TenantID   string `json:"tenant_id" binding:"required"`
+		EndpointID string `json:"endpoint_id" validate:"required"`
+		TenantID   string `json:"tenant_id" validate:"required"`
 	}) {
 		tenant_id := request.TenantID
 		endpoint_id := request.EndpointID
@@ -66,8 +66,8 @@ func EnableEndpoint(ctx *gin.Context) {
 
 func DisableEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		EndpointID string `json:"endpoint_id" binding:"required"`
-		TenantID   string `json:"tenant_id" binding:"required"`
+		EndpointID string `json:"endpoint_id" validate:"required"`
+		TenantID   string `json:"tenant_id" validate:"required"`
 	}) {
 		tenant_id := request.TenantID
 		endpoint_id := request.EndpointID

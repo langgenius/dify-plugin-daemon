@@ -56,8 +56,8 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
-			TenantID               string                                 `uri:"tenant_id" binding:"required"`
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" binding:"required" validate:"plugin_unique_identifier"`
+			TenantID               string                                 `uri:"tenant_id" validate:"required"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required" validate:"plugin_unique_identifier"`
 		}) {
 			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(c, request.TenantID, request.PluginUniqueIdentifier))
 		})
@@ -69,9 +69,9 @@ func UninstallPlugin(c *gin.Context) {
 
 func ListPlugins(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `uri:"tenant_id" binding:"required"`
-		Page     int    `form:"page" binding:"required,min=1"`
-		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
+		TenantID string `uri:"tenant_id" validate:"required"`
+		Page     int    `form:"page" validate:"required,min=1"`
+		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
 	}) {
 		c.JSON(http.StatusOK, service.ListPlugins(request.TenantID, request.Page, request.PageSize))
 	})
@@ -79,9 +79,9 @@ func ListPlugins(c *gin.Context) {
 
 func ListModels(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `uri:"tenant_id" binding:"required"`
-		Page     int    `form:"page" binding:"required,min=1"`
-		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
+		TenantID string `uri:"tenant_id" validate:"required"`
+		Page     int    `form:"page" validate:"required,min=1"`
+		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
 	}) {
 		c.JSON(http.StatusOK, service.ListModels(request.TenantID, request.Page, request.PageSize))
 	})
@@ -89,9 +89,9 @@ func ListModels(c *gin.Context) {
 
 func ListTools(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `uri:"tenant_id" binding:"required"`
-		Page     int    `form:"page" binding:"required,min=1"`
-		PageSize int    `form:"page_size" binding:"required,min=1,max=256"`
+		TenantID string `uri:"tenant_id" validate:"required"`
+		Page     int    `form:"page" validate:"required,min=1"`
+		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
 	}) {
 		c.JSON(http.StatusOK, service.ListTools(request.TenantID, request.Page, request.PageSize))
 	})

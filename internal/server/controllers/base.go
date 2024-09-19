@@ -10,27 +10,15 @@ import (
 
 func BindRequest[T any](r *gin.Context, success func(T)) {
 	var request T
-	var err error
 
 	if r.Request.Header.Get("Content-Type") == "application/json" {
-		err = r.ShouldBindJSON(&request)
+		r.ShouldBindJSON(&request)
 	} else {
-		err = r.ShouldBind(&request)
-	}
-
-	if err != nil {
-		resp := entities.NewErrorResponse(-400, err.Error())
-		r.JSON(400, resp)
-		return
+		r.ShouldBind(&request)
 	}
 
 	// bind uri
-	err = r.ShouldBindUri(&request)
-	if err != nil {
-		resp := entities.NewErrorResponse(-400, err.Error())
-		r.JSON(400, resp)
-		return
-	}
+	r.ShouldBindUri(&request)
 
 	// validate, we have customized some validators which are not supported by gin binding
 	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
