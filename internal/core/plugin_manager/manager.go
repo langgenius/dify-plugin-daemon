@@ -3,6 +3,7 @@ package plugin_manager
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
@@ -69,7 +70,7 @@ func NewManager(configuration *app.Config) *PluginManager {
 	os.MkdirAll(configuration.PluginWorkingPath, 0755)
 	os.MkdirAll(configuration.PluginStoragePath, 0755)
 	os.MkdirAll(configuration.PluginMediaCachePath, 0755)
-	os.MkdirAll(configuration.ProcessCachingPath, 0755)
+	os.MkdirAll(filepath.Dir(configuration.ProcessCachingPath), 0755)
 
 	return manager
 }

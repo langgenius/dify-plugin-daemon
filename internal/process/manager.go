@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -32,7 +33,7 @@ func subprocesses() []int {
 
 	data, err := os.ReadFile(subprocess_path)
 	if err != nil {
-		if err != os.ErrNotExist {
+		if !strings.Contains(err.Error(), "no such file or directory") {
 			log.Error("Error reading subprocesses file")
 		}
 		return []int{}

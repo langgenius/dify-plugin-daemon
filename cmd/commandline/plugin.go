@@ -149,7 +149,7 @@ endpoint				- allow plugin to register endpoint`,
 	}
 
 	pluginTestCommand = &cobra.Command{
-		Use:   "test package_path invoke_type invoke_action [-i inputs] [-t timeout]",
+		Use:   "test [-i inputs] [-t timeout] package_path invoke_type invoke_action",
 		Short: "",
 		Long: "Test runs the given plugin package locally, and you can specify the inputs using json format, if not specified, will use default inputs\n" +
 			"type: invoke type, available values: \n" +
@@ -252,6 +252,8 @@ func init() {
 	pluginCommand.AddCommand(pluginChecksumCommand)
 	pluginCommand.AddCommand(pluginPermissionCommand)
 	pluginCommand.AddCommand(pluginTestCommand)
+	pluginTestCommand.Flags().StringP("inputs", "i", "", "inputs")
+	pluginTestCommand.Flags().StringP("timeout", "t", "", "timeout")
 	pluginPermissionCommand.AddCommand(pluginPermissionAddCommand)
 	pluginPermissionCommand.AddCommand(pluginPermissionDropCommand)
 }
