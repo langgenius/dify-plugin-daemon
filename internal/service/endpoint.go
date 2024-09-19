@@ -82,16 +82,21 @@ func Endpoint(
 	}
 
 	session := session_manager.NewSession(
-		endpoint.TenantID,
-		"",
-		identifier,
-		ctx.GetString("cluster_id"),
-		access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
-		runtime.Configuration(),
-		manager.BackwardsInvocation(),
+		session_manager.NewSessionPayload{
+			TenantID:               endpoint.TenantID,
+			UserID:                 "",
+			PluginUniqueIdentifier: identifier,
+			ClusterID:              ctx.GetString("cluster_id"),
+			InvokeFrom:             access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
+			Action:                 access_types.PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT,
+			Declaration:            runtime.Configuration(),
+			BackwardsInvocation:    manager.BackwardsInvocation(),
+			IgnoreCache:            false,
+		},
 	)
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	session.BindRuntime(runtime)
 

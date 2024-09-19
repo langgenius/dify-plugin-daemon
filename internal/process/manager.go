@@ -32,7 +32,9 @@ func subprocesses() []int {
 
 	data, err := os.ReadFile(subprocess_path)
 	if err != nil {
-		log.Error("Error reading subprocesses file")
+		if err != os.ErrNotExist {
+			log.Error("Error reading subprocesses file")
+		}
 		return []int{}
 	}
 	nums := bytes.Split(data, []byte("\n"))

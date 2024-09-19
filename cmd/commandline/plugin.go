@@ -8,9 +8,14 @@ import (
 
 	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
+	"github.com/langgenius/dify-plugin-daemon/internal/process"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/spf13/cobra"
 )
 
@@ -144,7 +149,7 @@ endpoint				- allow plugin to register endpoint`,
 	}
 
 	pluginTestCommand = &cobra.Command{
-		Use:   "test package_path invoke_type invoke_action [-i inputs]",
+		Use:   "test package_path invoke_type invoke_action [-i inputs] [-t timeout]",
 		Short: "",
 		Long: "Test runs the given plugin package locally, and you can specify the inputs using json format, if not specified, will use default inputs\n" +
 			"type: invoke type, available values: \n" +
@@ -171,27 +176,19 @@ endpoint				- allow plugin to register endpoint`,
 			// get invoke action
 			invoke_action_str := args[2]
 			// get inputs if specified
-			inputs_str := "{}"
-			if len(args) > 3 {
-				inputs_str = args[3]
-			}
 			inputs := map[string]any{}
-			err := json.Unmarshal([]byte(inputs_str), &inputs)
-			if err != nil {
-				log.Error("failed to unmarshal inputs, inputs: %s, error: %v", inputs_str, err)
-				return
+			if cmd.Flag("inputs") != nil {
+				inputs_str := cmd.Flag("inputs").Value.String()
+				err := json.Unmarshal([]byte(inputs_str), &inputs)
+				if err != nil {
+					log.Error("failed to unmarshal inputs, inputs: %s, error: %v", inputs_str, err)
+					return
+				}
 			}
-			// read package file
-			package_file, err := os.ReadFile(package_path_str)
-			if err != nil {
-				log.Error("failed to read package file, package path: %s, error: %v", package_path_str, err)
-				return
-			}
-			// create plugin decoder
-			plugin_decoder, err := decoder.NewZipPluginDecoder(package_file)
-			if err != nil {
-				log.Error("failed to create plugin decoder, package path: %s, error: %v", package_path_str, err)
-				return
+			// parse flag
+			timeout := ""
+			if cmd.Flag("timeout") != nil {
+				timeout = cmd.Flag("timeout").Value.String()
 			}
 
 			// get invoke_type and invoke_action
@@ -206,7 +203,45 @@ endpoint				- allow plugin to register endpoint`,
 				return
 			}
 
-			fmt.Println(plugin_decoder)
+			// init routine pool
+			routine.InitPool(1024)
+
+			// clean working directory when test finished
+			defer os.RemoveAll("./working")
+
+			// init testing config
+			config := &app.Config{
+				PluginWorkingPath:    "./working/cwd",
+				PluginStoragePath:    "./working/storage",
+				PluginMediaCachePath: "./working/media_cache",
+				ProcessCachingPath:   "./working/subprocesses",
+				Platform:             app.PLATFORM_LOCAL,
+			}
+			config.SetDefault()
+
+			// init plugin manager
+			plugin_manager := plugin_manager.NewManager(config)
+
+			// start to schedule plugin subprocesses
+			process.Init(config)
+
+			// terminate all subprocesses when test finished
+			defer process.TerminateAll()
+
+			response, err := plugin_manager.TestPlugin(package_path_str, inputs, invoke_type, invoke_action, timeout)
+			if err != nil {
+				log.Error("failed to test plugin, package_path: %s, error: %v", package_path_str, err)
+				return
+			}
+
+			for response.Next() {
+				item, err := response.Read()
+				if err != nil {
+					log.Error("failed to read response item, error: %v", err)
+					return
+				}
+				log.Info("%v", parser.MarshalJson(item))
+			}
 		},
 	}
 )

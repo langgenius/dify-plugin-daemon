@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
@@ -26,7 +27,9 @@ func InvokeLLM(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.LLMResultChunk], error) {
@@ -52,7 +55,9 @@ func InvokeTextEmbedding(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.TextEmbeddingResult], error) {
@@ -79,7 +84,9 @@ func InvokeRerank(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.RerankResult], error) {
@@ -106,7 +113,9 @@ func InvokeTTS(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.TTSResult], error) {
@@ -133,7 +142,9 @@ func InvokeSpeech2Text(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.Speech2TextResult], error) {
@@ -160,7 +171,9 @@ func InvokeModeration(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.ModerationResult], error) {
@@ -187,7 +200,9 @@ func ValidateProviderCredentials(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
@@ -214,7 +229,9 @@ func ValidateModelCredentials(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
@@ -240,7 +257,9 @@ func GetTTSModelVoices(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.GetTTSVoicesResponse], error) {
@@ -266,7 +285,9 @@ func GetTextEmbeddingNumTokens(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error) {
@@ -292,7 +313,9 @@ func GetAIModelSchema(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.GetModelSchemasResponse], error) {
@@ -318,7 +341,9 @@ func GetLLMNumTokens(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[model_entities.LLMGetNumTokensResponse], error) {

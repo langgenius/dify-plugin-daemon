@@ -17,7 +17,7 @@ func InvokeEndpoint(
 ) (
 	int, *http.Header, *stream.Stream[[]byte], error,
 ) {
-	resp, err := genericInvokePlugin[requests.RequestInvokeEndpoint, endpoint_entities.EndpointResponseChunk](
+	resp, err := GenericInvokePlugin[requests.RequestInvokeEndpoint, endpoint_entities.EndpointResponseChunk](
 		session,
 		request,
 		128,

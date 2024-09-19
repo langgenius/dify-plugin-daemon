@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -208,12 +209,12 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 			return err
 		}
 
-		bytes, err := z.ReadFile(filename)
+		bytes, err := z.ReadFile(filepath.Join(dir, filename))
 		if err != nil {
 			return err
 		}
 
-		filename = path.Join(working_path, filename)
+		filename = filepath.Join(working_path, filename)
 
 		// copy file
 		if err := os.WriteFile(filename, bytes, 0644); err != nil {

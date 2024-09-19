@@ -30,14 +30,17 @@ func createSession[T any](
 	}
 
 	session := session_manager.NewSession(
-		r.TenantId,
-		r.UserId,
-		r.PluginUniqueIdentifier,
-		cluster_id,
-		access_type,
-		access_action,
-		runtime.Configuration(),
-		manager.BackwardsInvocation(),
+		session_manager.NewSessionPayload{
+			TenantID:               r.TenantId,
+			UserID:                 r.UserId,
+			PluginUniqueIdentifier: r.PluginUniqueIdentifier,
+			ClusterID:              cluster_id,
+			InvokeFrom:             access_type,
+			Action:                 access_action,
+			Declaration:            runtime.Configuration(),
+			BackwardsInvocation:    manager.BackwardsInvocation(),
+			IgnoreCache:            false,
+		},
 	)
 
 	session.BindRuntime(runtime)
@@ -60,7 +63,9 @@ func InvokeTool(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[tool_entities.ToolResponseChunk], error) {
@@ -87,7 +92,9 @@ func ValidateToolCredentials(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	defer session.Close()
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
 
 	baseSSEService(
 		func() (*stream.Stream[tool_entities.ValidateCredentialsResult], error) {

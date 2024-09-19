@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
@@ -58,15 +59,15 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 			continue
 		}
 
-		local_plugin_runtime := &local_manager.LocalPluginRuntime{
-			PluginRuntime: plugin.Runtime,
-			PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-				BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
-				LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
-				WorkingPath:        plugin.Runtime.State.WorkingPath,
-				Decoder:            plugin.Decoder,
-			},
+		local_plugin_runtime := local_manager.NewLocalPluginRuntime()
+		local_plugin_runtime.PluginRuntime = plugin.Runtime
+		local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
+			BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
+			LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
+			WorkingPath:        plugin.Runtime.State.WorkingPath,
+			Decoder:            plugin.Decoder,
 		}
+
 		if err := local_plugin_runtime.RemapAssets(
 			&local_plugin_runtime.Config,
 			assets,
@@ -177,7 +178,11 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))
 	}
 
-	plugin_working_path := path.Join(p.workingDirectory, fmt.Sprintf("%s@%s", manifest.Identity(), checksum))
+	identity := manifest.Identity()
+	// replace : with -
+	identity = strings.ReplaceAll(identity, ":", "-")
+
+	plugin_working_path := path.Join(p.workingDirectory, fmt.Sprintf("%s@%s", identity, checksum))
 
 	// check if working directory exists
 	if _, err := os.Stat(plugin_working_path); err == nil {

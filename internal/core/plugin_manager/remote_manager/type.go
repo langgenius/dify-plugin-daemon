@@ -57,6 +57,11 @@ type RemotePluginRuntime struct {
 
 	// installation id
 	installation_id string
+
+	// wait for started event
+	wait_chan_lock    sync.Mutex
+	wait_started_chan []chan bool
+	wait_stopped_chan []chan bool
 }
 
 // Listen creates a new listener for the given session_id

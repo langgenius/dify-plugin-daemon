@@ -46,6 +46,16 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 
 func (r *LocalPluginRuntime) StartPlugin() error {
 	defer log.Info("plugin %s stopped", r.Config.Identity())
+	defer func() {
+		r.wait_chan_lock.Lock()
+		for _, c := range r.wait_stopped_chan {
+			select {
+			case c <- true:
+			default:
+			}
+		}
+		r.wait_chan_lock.Unlock()
+	}()
 
 	r.init()
 
@@ -128,6 +138,16 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		stdio.StartStderr()
 	})
 
+	// send started event
+	r.wait_chan_lock.Lock()
+	for _, c := range r.wait_started_chan {
+		select {
+		case c <- true:
+		default:
+		}
+	}
+	r.wait_chan_lock.Unlock()
+
 	// wait for plugin to exit
 	err = stdio.Wait()
 	if err != nil {
@@ -146,4 +166,20 @@ func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
 		return nil, errors.New("plugin not started")
 	}
 	return r.wait_chan, nil
+}
+
+func (r *LocalPluginRuntime) WaitStarted() <-chan bool {
+	c := make(chan bool)
+	r.wait_chan_lock.Lock()
+	r.wait_started_chan = append(r.wait_started_chan, c)
+	r.wait_chan_lock.Unlock()
+	return c
+}
+
+func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
+	c := make(chan bool)
+	r.wait_chan_lock.Lock()
+	r.wait_stopped_chan = append(r.wait_stopped_chan, c)
+	r.wait_chan_lock.Unlock()
+	return c
 }

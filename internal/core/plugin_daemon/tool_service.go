@@ -3,7 +3,6 @@ package plugin_daemon
 import (
 	"errors"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
@@ -18,12 +17,12 @@ func InvokeTool(
 ) (
 	*stream.Stream[tool_entities.ToolResponseChunk], error,
 ) {
-	runtime := plugin_manager.Manager().Get(session.PluginUniqueIdentifier)
+	runtime := session.Runtime()
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}
 
-	response, err := genericInvokePlugin[
+	response, err := GenericInvokePlugin[
 		requests.RequestInvokeTool, tool_entities.ToolResponseChunk,
 	](
 		session,
@@ -126,7 +125,7 @@ func ValidateToolCredentials(
 ) (
 	*stream.Stream[tool_entities.ValidateCredentialsResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestValidateToolCredentials, tool_entities.ValidateCredentialsResult](
+	return GenericInvokePlugin[requests.RequestValidateToolCredentials, tool_entities.ValidateCredentialsResult](
 		session,
 		request,
 		1,

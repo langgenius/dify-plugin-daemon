@@ -50,6 +50,10 @@ type (
 		SetScheduledAt(t time.Time)
 		// add restarts to the plugin
 		AddRestarts()
+		// Started
+		WaitStarted() <-chan bool
+		// Stopped
+		WaitStopped() <-chan bool
 	}
 
 	PluginServerlessLifetime interface {

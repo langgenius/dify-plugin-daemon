@@ -1,6 +1,7 @@
 package local_manager
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -21,8 +22,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 	cmd := exec.Command("bash", "-c", "python3 -m venv .venv")
 	cmd.Dir = p.State.WorkingPath
+	b := bytes.NewBuffer(nil)
+	cmd.Stdout = b
+	cmd.Stderr = b
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to create virtual environment: %s", err)
+		return fmt.Errorf("failed to create virtual environment: %s, output: %s", err, b.String())
 	}
 	defer func() {
 		// if init failed, remove the .venv directory
@@ -30,11 +34,6 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 			os.RemoveAll(path.Join(p.State.WorkingPath, ".venv"))
 		}
 	}()
-
-	// wait for the virtual environment to be created
-	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("failed to create virtual environment: %s", err)
-	}
 
 	// try find python interpreter and pip
 	pip_path, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/pip"))
@@ -67,11 +66,8 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	cmd = exec.CommandContext(ctx, pip_path, "install", "-r", requirements_path)
+	cmd = exec.CommandContext(ctx, pip_path, "install", "-r", "requirements.txt")
 	cmd.Dir = p.State.WorkingPath
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to install dependencies: %s", err)
-	}
 
 	// get stdout and stderr
 	stdout, err := cmd.StdoutPipe()
@@ -155,12 +151,8 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 	wg.Wait()
 
-	if err_msg.Len() > 0 {
-		return fmt.Errorf("install failed: %s", err_msg.String())
-	}
-
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("failed to install dependencies: %s", err)
+		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, err_msg.String())
 	}
 
 	success = true

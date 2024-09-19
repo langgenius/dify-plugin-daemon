@@ -8,6 +8,8 @@ import (
 	"github.com/gammazero/deque"
 )
 
+var ErrEmpty = errors.New("no data available")
+
 type Stream[T any] struct {
 	q         deque.Deque[T]
 	l         *sync.Mutex
@@ -97,7 +99,7 @@ func (r *Stream[T]) Read() (T, error) {
 			return data, err
 		}
 
-		return data, errors.New("no data available")
+		return data, ErrEmpty
 	}
 }
 

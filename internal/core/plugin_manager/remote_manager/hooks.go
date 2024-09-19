@@ -113,6 +113,16 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 		}
 	}
 
+	// send stopped event
+	plugin.wait_chan_lock.Lock()
+	for _, c := range plugin.wait_stopped_chan {
+		select {
+		case c <- true:
+		default:
+		}
+	}
+	plugin.wait_chan_lock.Unlock()
+
 	return gnet.None
 }
 
@@ -275,6 +285,16 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			close([]byte("register failed, cannot register\n"))
 			return
 		}
+
+		// send started event
+		runtime.wait_chan_lock.Lock()
+		for _, c := range runtime.wait_started_chan {
+			select {
+			case c <- true:
+			default:
+			}
+		}
+		runtime.wait_chan_lock.Unlock()
 
 		// publish runtime to watcher
 		s.response.Write(runtime)

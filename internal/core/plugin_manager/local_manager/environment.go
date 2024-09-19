@@ -10,7 +10,7 @@ import (
 )
 
 func (r *LocalPluginRuntime) InitEnvironment() error {
-	if _, err := os.Stat(path.Join(r.State.AbsolutePath, ".installed")); err == nil {
+	if _, err := os.Stat(path.Join(r.State.WorkingPath, ".installed")); err == nil {
 		return nil
 	}
 
@@ -26,7 +26,7 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	}
 
 	// create .installed file
-	f, err := os.Create(path.Join(r.State.AbsolutePath, ".installed"))
+	f, err := os.Create(path.Join(r.State.WorkingPath, ".installed"))
 	if err != nil {
 		return err
 	}

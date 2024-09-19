@@ -12,14 +12,14 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func genericInvokePlugin[Req any, Rsp any](
+func GenericInvokePlugin[Req any, Rsp any](
 	session *session_manager.Session,
 	request *Req,
 	response_buffer_size int,
 ) (*stream.Stream[Rsp], error) {
 	runtime := session.Runtime()
 	if runtime == nil {
-		return nil, errors.New("plugin not found")
+		return nil, errors.New("plugin runtime not found")
 	}
 
 	response := stream.NewStream[Rsp](response_buffer_size)

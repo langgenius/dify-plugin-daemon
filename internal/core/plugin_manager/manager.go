@@ -2,6 +2,7 @@ package plugin_manager
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
@@ -63,6 +64,12 @@ func NewManager(configuration *app.Config) *PluginManager {
 	} else if configuration.Platform == app.PLATFORM_LOCAL {
 		manager.Install = manager.InstallToLocal
 	}
+
+	// mkdir
+	os.MkdirAll(configuration.PluginWorkingPath, 0755)
+	os.MkdirAll(configuration.PluginStoragePath, 0755)
+	os.MkdirAll(configuration.PluginMediaCachePath, 0755)
+	os.MkdirAll(configuration.ProcessCachingPath, 0755)
 
 	return manager
 }

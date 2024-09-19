@@ -13,7 +13,7 @@ func InvokeLLM(
 ) (
 	*stream.Stream[model_entities.LLMResultChunk], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeLLM, model_entities.LLMResultChunk](
+	return GenericInvokePlugin[requests.RequestInvokeLLM, model_entities.LLMResultChunk](
 		session,
 		request,
 		512,
@@ -26,7 +26,7 @@ func InvokeTextEmbedding(
 ) (
 	*stream.Stream[model_entities.TextEmbeddingResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeTextEmbedding, model_entities.TextEmbeddingResult](
+	return GenericInvokePlugin[requests.RequestInvokeTextEmbedding, model_entities.TextEmbeddingResult](
 		session,
 		request,
 		1,
@@ -39,7 +39,7 @@ func InvokeRerank(
 ) (
 	*stream.Stream[model_entities.RerankResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeRerank, model_entities.RerankResult](
+	return GenericInvokePlugin[requests.RequestInvokeRerank, model_entities.RerankResult](
 		session,
 		request,
 		1,
@@ -52,7 +52,7 @@ func InvokeTTS(
 ) (
 	*stream.Stream[model_entities.TTSResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeTTS, model_entities.TTSResult](
+	return GenericInvokePlugin[requests.RequestInvokeTTS, model_entities.TTSResult](
 		session,
 		request,
 		1,
@@ -65,7 +65,7 @@ func InvokeSpeech2Text(
 ) (
 	*stream.Stream[model_entities.Speech2TextResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeSpeech2Text, model_entities.Speech2TextResult](
+	return GenericInvokePlugin[requests.RequestInvokeSpeech2Text, model_entities.Speech2TextResult](
 		session,
 		request,
 		1,
@@ -78,7 +78,7 @@ func InvokeModeration(
 ) (
 	*stream.Stream[model_entities.ModerationResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestInvokeModeration, model_entities.ModerationResult](
+	return GenericInvokePlugin[requests.RequestInvokeModeration, model_entities.ModerationResult](
 		session,
 		request,
 		1,
@@ -91,7 +91,7 @@ func ValidateProviderCredentials(
 ) (
 	*stream.Stream[model_entities.ValidateCredentialsResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestValidateProviderCredentials, model_entities.ValidateCredentialsResult](
+	return GenericInvokePlugin[requests.RequestValidateProviderCredentials, model_entities.ValidateCredentialsResult](
 		session,
 		request,
 		1,
@@ -104,7 +104,7 @@ func ValidateModelCredentials(
 ) (
 	*stream.Stream[model_entities.ValidateCredentialsResult], error,
 ) {
-	return genericInvokePlugin[requests.RequestValidateModelCredentials, model_entities.ValidateCredentialsResult](
+	return GenericInvokePlugin[requests.RequestValidateModelCredentials, model_entities.ValidateCredentialsResult](
 		session,
 		request,
 		1,
@@ -117,7 +117,7 @@ func GetTTSModelVoices(
 ) (
 	*stream.Stream[model_entities.GetTTSVoicesResponse], error,
 ) {
-	return genericInvokePlugin[requests.RequestGetTTSModelVoices, model_entities.GetTTSVoicesResponse](
+	return GenericInvokePlugin[requests.RequestGetTTSModelVoices, model_entities.GetTTSVoicesResponse](
 		session,
 		request,
 		1,
@@ -130,7 +130,7 @@ func GetTextEmbeddingNumTokens(
 ) (
 	*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error,
 ) {
-	return genericInvokePlugin[requests.RequestGetTextEmbeddingNumTokens, model_entities.GetTextEmbeddingNumTokensResponse](
+	return GenericInvokePlugin[requests.RequestGetTextEmbeddingNumTokens, model_entities.GetTextEmbeddingNumTokensResponse](
 		session,
 		request,
 		1,
@@ -143,7 +143,7 @@ func GetLLMNumTokens(
 ) (
 	*stream.Stream[model_entities.LLMGetNumTokensResponse], error,
 ) {
-	return genericInvokePlugin[requests.RequestGetLLMNumTokens, model_entities.LLMGetNumTokensResponse](
+	return GenericInvokePlugin[requests.RequestGetLLMNumTokens, model_entities.LLMGetNumTokensResponse](
 		session,
 		request,
 		1,
@@ -156,7 +156,7 @@ func GetAIModelSchema(
 ) (
 	*stream.Stream[model_entities.GetModelSchemasResponse], error,
 ) {
-	return genericInvokePlugin[requests.RequestGetAIModelSchema, model_entities.GetModelSchemasResponse](
+	return GenericInvokePlugin[requests.RequestGetAIModelSchema, model_entities.GetModelSchemasResponse](
 		session,
 		request,
 		1,

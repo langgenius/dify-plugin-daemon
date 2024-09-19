@@ -17,3 +17,21 @@ func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier
 func (r *RemotePluginRuntime) Cleanup() {
 	// no cleanup needed
 }
+
+func (r *RemotePluginRuntime) WaitStarted() <-chan bool {
+	r.wait_chan_lock.Lock()
+	defer r.wait_chan_lock.Unlock()
+
+	ch := make(chan bool)
+	r.wait_started_chan = append(r.wait_started_chan, ch)
+	return ch
+}
+
+func (r *RemotePluginRuntime) WaitStopped() <-chan bool {
+	r.wait_chan_lock.Lock()
+	defer r.wait_chan_lock.Unlock()
+
+	ch := make(chan bool)
+	r.wait_stopped_chan = append(r.wait_stopped_chan, ch)
+	return ch
+}

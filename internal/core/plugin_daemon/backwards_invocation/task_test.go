@@ -42,9 +42,17 @@ func (r *TPluginRuntime) Wait() (<-chan bool, error) {
 
 func getTestSession() *session_manager.Session {
 	return session_manager.NewSession(
-		"", "", plugin_entities.PluginUniqueIdentifier(""), "",
-		access_types.PLUGIN_ACCESS_TYPE_ENDPOINT, access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS, nil,
-		tester.NewMockedDifyInvocation(),
+		session_manager.NewSessionPayload{
+			UserID:                 "test",
+			TenantID:               "test",
+			PluginUniqueIdentifier: plugin_entities.PluginUniqueIdentifier(""),
+			ClusterID:              "test",
+			InvokeFrom:             access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
+			Action:                 access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,
+			Declaration:            nil,
+			BackwardsInvocation:    tester.NewMockedDifyInvocation(),
+			IgnoreCache:            true,
+		},
 	)
 }
 
