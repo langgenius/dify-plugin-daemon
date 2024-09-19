@@ -58,99 +58,27 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 }
 
 func ListTools(tenant_id string, page int, page_size int) *entities.Response {
-	return nil
+	providers, err := db.GetAll[models.ToolInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Page(page, page_size),
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	return entities.NewSuccessResponse(providers)
 }
 
 func ListModels(tenant_id string, page int, page_size int) *entities.Response {
-	providers := make([]plugin_entities.ModelProviderDeclaration, 0)
-	providers = append(providers, plugin_entities.ModelProviderDeclaration{
-		Provider: "openai",
-		Label: plugin_entities.I18nObject{
-			EnUS:   "OpenAI",
-			ZhHans: "OpenAI",
-			JaJp:   "OpenAI",
-			PtBr:   "OpenAI",
-		},
-		Description: &plugin_entities.I18nObject{
-			EnUS:   "OpenAI",
-			ZhHans: "OpenAI",
-			JaJp:   "OpenAI",
-			PtBr:   "OpenAI",
-		},
-		IconSmall: &plugin_entities.I18nObject{
-			EnUS:   "icon_small.svg",
-			ZhHans: "icon_small.svg",
-			JaJp:   "icon_small.svg",
-			PtBr:   "icon_small.svg",
-		},
-		IconLarge: &plugin_entities.I18nObject{
-			EnUS:   "icon_large.svg",
-			ZhHans: "icon_large.svg",
-			JaJp:   "icon_large.svg",
-			PtBr:   "icon_large.svg",
-		},
-		Background: &[]string{"background.svg"}[0],
-		SupportedModelTypes: []plugin_entities.ModelType{
-			plugin_entities.MODEL_TYPE_LLM,
-		},
-		ConfigurateMethods: []plugin_entities.ModelProviderConfigurateMethod{
-			plugin_entities.CONFIGURATE_METHOD_PREDEFINED_MODEL,
-			plugin_entities.CONFIGURATE_METHOD_CUSTOMIZABLE_MODEL,
-		},
-		ProviderCredentialSchema: &plugin_entities.ModelProviderCredentialSchema{
-			CredentialFormSchemas: []plugin_entities.ModelProviderCredentialFormSchema{
-				{
-					Variable: "api_key",
-					Label: plugin_entities.I18nObject{
-						EnUS:   "API Key",
-						ZhHans: "API Key",
-						JaJp:   "API Key",
-						PtBr:   "API Key",
-					},
-					Type:      plugin_entities.FORM_TYPE_SECRET_INPUT,
-					Required:  true,
-					MaxLength: 1024,
-				},
-			},
-		},
-		Models: []plugin_entities.ModelDeclaration{
-			{
-				Model: "gpt-4o",
-				Label: plugin_entities.I18nObject{
-					EnUS:   "GPT-4o",
-					ZhHans: "GPT-4o",
-					JaJp:   "GPT-4o",
-					PtBr:   "GPT-4o",
-				},
-				ModelType: plugin_entities.MODEL_TYPE_LLM,
-				Features: []string{
-					"multi-tool-call",
-				},
-				FetchFrom: plugin_entities.CONFIGURATE_METHOD_PREDEFINED_MODEL,
-				ModelProperties: map[string]any{
-					"mode":         "chat",
-					"context_size": 128000,
-				},
-				ParameterRules: []plugin_entities.ModelParameterRule{
-					{
-						Name: "temperature",
-						Label: &plugin_entities.I18nObject{
-							EnUS:   "Temperature",
-							ZhHans: "温度",
-							JaJp:   "温度",
-							PtBr:   "温度",
-						},
-						Type:      &[]plugin_entities.ModelParameterType{plugin_entities.PARAMETER_TYPE_FLOAT}[0],
-						Required:  true,
-						Min:       &[]float64{0}[0],
-						Max:       &[]float64{1}[0],
-						Default:   &[]any{0.7}[0],
-						Precision: &[]int{2}[0],
-					},
-				},
-			},
-		},
-	})
+	providers, err := db.GetAll[models.AIModelInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Page(page, page_size),
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
 
 	return entities.NewSuccessResponse(providers)
 }
