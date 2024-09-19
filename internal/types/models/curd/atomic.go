@@ -6,7 +6,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"gorm.io/gorm"
 )
 
@@ -40,7 +39,7 @@ func CreatePlugin(
 				PluginUniqueIdentifier: plugin_unique_identifier.String(),
 				InstallType:            install_type,
 				Refers:                 1,
-				Declaration:            parser.MarshalJson(declaration),
+				Declaration:            *declaration,
 			}
 
 			err := db.Create(plugin, tx)
@@ -205,6 +204,35 @@ func DeletePlugin(tenant_id string, plugin_unique_identifier plugin_entities.Plu
 				return err
 			}
 			installation_to_be_returns = &installation
+		}
+
+		// delete tool installation
+		declaration := p.Declaration
+		if declaration.Tool != nil {
+			tool_installation := &models.ToolInstallation{
+				PluginID:               plugin_to_be_returns.PluginID,
+				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+			}
+
+			err := db.DeleteByCondition(&tool_installation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete model installation
+		if declaration.Model != nil {
+			model_installation := &models.AIModelInstallation{
+				PluginID:               plugin_to_be_returns.PluginID,
+				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+			}
+
+			err := db.DeleteByCondition(&model_installation, tx)
+			if err != nil {
+				return err
+			}
 		}
 
 		if plugin_to_be_returns.Refers == 0 {

@@ -55,13 +55,9 @@ func InstallPluginFromIdentifier(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	declaration, err := plugin.GetDeclaration()
-	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
-	}
-
+	declaration := plugin.Declaration
 	// install to this workspace
-	if _, _, err := curd.CreatePlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, declaration); err != nil {
+	if _, _, err := curd.CreatePlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, &declaration); err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 

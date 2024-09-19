@@ -32,14 +32,11 @@ func (p *PluginManager) getServerlessPluginRuntime(
 		return nil, err
 	}
 
-	declaration, err := model.GetDeclaration()
-	if err != nil {
-		return nil, err
-	}
+	declaration := model.Declaration
 
 	// init runtime entity
 	runtime_entity := plugin_entities.PluginRuntime{
-		Config: *declaration,
+		Config: declaration,
 	}
 	runtime_entity.InitState()
 

@@ -218,11 +218,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 		}
 
-		plugin_declaration, err := plugin.GetDeclaration()
-		if err != nil {
-			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to get plugin declaration: %v", err))
-		}
-
+		plugin_declaration := plugin.Declaration
 		if plugin_declaration.Endpoint == nil {
 			return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 		}

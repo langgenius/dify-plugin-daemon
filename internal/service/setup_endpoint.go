@@ -35,11 +35,7 @@ func SetupEndpoint(
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}
 
-	declaration, err := plugin.GetDeclaration()
-	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to get plugin declaration: %v", err))
-	}
-
+	declaration := plugin.Declaration
 	if !declaration.Resource.Permission.AllowRegisterEndpoint() {
 		return entities.NewErrorResponse(-403, "permission denied")
 	}

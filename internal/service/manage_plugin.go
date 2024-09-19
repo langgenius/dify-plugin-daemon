@@ -40,23 +40,18 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			return entities.NewErrorResponse(-500, err.Error())
 		}
 
-		declaration, err := plugin.GetDeclaration()
-		if err != nil {
-			return entities.NewErrorResponse(-500, err.Error())
-		}
-
+		declaration := plugin.Declaration
 		data = append(data, installation{
 			ID:             plugin_installation.ID,
 			Name:           declaration.Name,
 			PluginID:       plugin.ID,
 			InstallationID: plugin_installation.ID,
-			Description:    declaration,
+			Description:    &declaration,
 			RuntimeType:    plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 			Version:        declaration.Version,
 			CreatedAt:      plugin_installation.CreatedAt,
 			UpdatedAt:      plugin_installation.UpdatedAt,
 		})
-
 	}
 
 	return entities.NewSuccessResponse(data)

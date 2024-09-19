@@ -84,8 +84,8 @@ func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.Pl
 						FunctionURL:            lambda_url,
 						FunctionName:           lambda_function_name,
 						PluginUniqueIdentifier: unique_identity.String(),
+						Declaration:            declaration,
 					}
-					serverless_model.SetDeclaration(&declaration)
 					err = db.Create(serverless_model)
 					if err != nil {
 						new_response.Write(PluginInstallResponse{
