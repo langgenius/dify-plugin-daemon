@@ -57,14 +57,28 @@ func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
 			TenantID               string                                 `uri:"tenant_id" validate:"required"`
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required" validate:"plugin_unique_identifier"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 		}) {
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(c, request.TenantID, request.PluginUniqueIdentifier))
+			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(request.TenantID, request.PluginUniqueIdentifier))
 		})
 	}
 }
 
 func UninstallPlugin(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string                                 `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+	}) {
+		c.JSON(http.StatusOK, service.UninstallPlugin(request.TenantID, request.PluginUniqueIdentifier))
+	})
+}
+
+func FetchPluginFromIdentifier(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginFromIdentifier(request.PluginUniqueIdentifier))
+	})
 }
 
 func ListPlugins(c *gin.Context) {

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"io"
 	"mime/multipart"
 
@@ -40,7 +41,6 @@ func InstallPluginFromPkg(c *gin.Context, tenant_id string, dify_pkg_file multip
 }
 
 func InstallPluginFromIdentifier(
-	c *gin.Context,
 	tenant_id string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
@@ -61,5 +61,46 @@ func InstallPluginFromIdentifier(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	return entities.NewSuccessResponse(plugin)
+	return entities.NewSuccessResponse(true)
+}
+
+func FetchPluginFromIdentifier(
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) *entities.Response {
+	_, err := db.GetOne[models.Plugin](
+		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+	)
+	if err == db.ErrDatabaseNotFound {
+		return entities.NewSuccessResponse(false)
+	}
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	return entities.NewSuccessResponse(true)
+}
+
+func UninstallPlugin(
+	tenant_id string,
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) *entities.Response {
+	// Check if the plugin exists for the tenant
+	installation, err := db.GetOne[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+	)
+	if err == db.ErrDatabaseNotFound {
+		return entities.NewErrorResponse(-404, "Plugin not found for this tenant")
+	}
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	// Uninstall the plugin
+	_, err = curd.DeletePlugin(tenant_id, plugin_unique_identifier, installation.ID)
+	if err != nil {
+		return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
+	}
+
+	return entities.NewSuccessResponse(true)
 }

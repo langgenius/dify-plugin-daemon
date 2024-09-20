@@ -103,6 +103,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	group.GET("/asset/:id", controllers.GetAsset)
 	group.POST("/:tenant_id/install/pkg", controllers.InstallPluginFromPkg(config))
 	group.POST("/:tenant_id/install/identifier", controllers.InstallPluginFromIdentifier(config))
+	group.GET("/:tenant_id/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/:tenant_id/uninstall", controllers.UninstallPlugin)
 	group.GET("/:tenant_id/list", controllers.ListPlugins)
 	group.GET("/:tenant_id/models", controllers.ListModels)
