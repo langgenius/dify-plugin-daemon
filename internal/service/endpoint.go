@@ -29,6 +29,11 @@ func Endpoint(
 	plugin_installation *models.PluginInstallation,
 	path string,
 ) {
+	if !endpoint.Enabled {
+		ctx.JSON(404, gin.H{"error": "plugin not found"})
+		return
+	}
+
 	req := ctx.Request.Clone(context.Background())
 	req.URL.Path = path
 
