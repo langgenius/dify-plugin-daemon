@@ -19,7 +19,7 @@ func (app *App) server(config *app.Config) func() {
 	engine.GET("/health/check", controllers.HealthCheck)
 
 	app.pluginInvokeGroup(engine.Group("/plugin"), config)
-	app.remoteDebuggingGroup(engine.Group("/plugin/debugging"), config)
+	app.remoteDebuggingGroup(engine.Group("/plugin/:tenant_id/debugging"), config)
 	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
 	app.endpointManagementGroup(engine.Group("/endpoint"))
