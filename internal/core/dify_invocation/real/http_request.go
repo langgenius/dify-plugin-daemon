@@ -11,7 +11,7 @@ import (
 func Request[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*T, error) {
 	options = append(options,
 		http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Key": i.PLUGIN_INNER_API_KEY,
+			"X-Inner-Api-Key": i.dify_inner_api_key,
 		}),
 		http_requests.HttpWriteTimeout(5000),
 		http_requests.HttpReadTimeout(240000),
@@ -23,7 +23,7 @@ func Request[T any](i *RealBackwardsInvocation, method string, path string, opti
 func StreamResponse[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*stream.Stream[T], error) {
 	options = append(
 		options, http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Key": i.PLUGIN_INNER_API_KEY,
+			"X-Inner-Api-Key": i.dify_inner_api_key,
 		}),
 		http_requests.HttpWriteTimeout(5000),
 		http_requests.HttpReadTimeout(240000),

@@ -6,7 +6,7 @@ import (
 )
 
 type RealBackwardsInvocation struct {
-	PLUGIN_INNER_API_KEY string
-	baseurl              *url.URL
-	client               *http.Client
+	dify_inner_api_key     string
+	dify_inner_api_baseurl *url.URL
+	client                 *http.Client
 }

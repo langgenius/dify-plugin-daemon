@@ -27,9 +27,9 @@ func InitDifyInvocationDaemon(base string, calling_key string) (dify_invocation.
 		},
 	}
 
-	invocation.baseurl = baseurl
+	invocation.dify_inner_api_baseurl = baseurl
 	invocation.client = client
-	invocation.PLUGIN_INNER_API_KEY = calling_key
+	invocation.dify_inner_api_key = calling_key
 
 	return invocation, nil
 }

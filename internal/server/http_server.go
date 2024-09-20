@@ -44,7 +44,7 @@ func (app *App) server(config *app.Config) func() {
 }
 
 func (app *App) pluginInvokeGroup(group *gin.RouterGroup, config *app.Config) {
-	group.Use(CheckingKey(config.PluginInnerApiKey))
+	group.Use(CheckingKey(config.PluginServerApiKey))
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 
@@ -62,7 +62,7 @@ func (app *App) pluginInvokeGroup(group *gin.RouterGroup, config *app.Config) {
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
 	if config.PluginRemoteInstallingEnabled {
-		group.POST("/key", CheckingKey(config.PluginInnerApiKey), controllers.GetRemoteDebuggingKey)
+		group.POST("/key", CheckingKey(config.PluginServerApiKey), controllers.GetRemoteDebuggingKey)
 	}
 }
 
@@ -98,7 +98,7 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 }
 
 func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
-	group.Use(CheckingKey(config.PluginInnerApiKey))
+	group.Use(CheckingKey(config.PluginServerApiKey))
 
 	group.GET("/asset/:id", controllers.GetAsset)
 	group.POST("/:tenant_id/install/pkg", controllers.InstallPluginFromPkg(config))

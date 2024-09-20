@@ -8,9 +8,12 @@ import (
 
 type Config struct {
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
+	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
-	PluginInnerApiKey string `envconfig:"PLUGIN_INNER_API_KEY" validate:"required"`
-	PluginInnerApiURL string `envconfig:"PLUGIN_INNER_API_URL" validate:"required"`
+	PluginServerApiKey string `envconfig:"PLUGIN_SERVER_API_KEY" validate:"required"`
+
+	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
+	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
 	PluginRemoteInstallingHost             string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort             uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
