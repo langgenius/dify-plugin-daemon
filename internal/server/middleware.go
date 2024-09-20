@@ -2,11 +2,11 @@ package server
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -15,9 +15,7 @@ func CheckingKey(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get header X-Api-Key
 		if c.GetHeader(constants.X_API_KEY) != key {
-			fmt.Println(c.GetHeader(constants.X_API_KEY))
-			fmt.Println(key)
-			c.JSON(401, gin.H{"error": "Unauthorized"})
+			c.JSON(200, entities.NewErrorResponse(-401, "Unauthorized"))
 			c.Abort()
 			return
 		}
