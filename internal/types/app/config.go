@@ -10,8 +10,6 @@ type Config struct {
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
-	PluginServerApiKey string `envconfig:"PLUGIN_SERVER_API_KEY" validate:"required"`
-
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 

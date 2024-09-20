@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"os"
 	"path"
+	"path/filepath"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -29,20 +30,25 @@ func NewMediaManager(storage_path string, cache_size uint16) *MediaManager {
 }
 
 // Upload uploads a file to the media manager and returns an identifier
-func (m *MediaManager) Upload(file []byte) (string, error) {
+func (m *MediaManager) Upload(name string, file []byte) (string, error) {
 	// calculate checksum
 	checksum := sha256.Sum256(append(file, []byte(strings.RandomString(10))...))
 
 	id := hex.EncodeToString(checksum[:])
 
+	// get file extension
+	ext := filepath.Ext(name)
+
+	filename := id + ext
+
 	// store locally
-	filePath := path.Join(m.storagePath, id)
+	filePath := path.Join(m.storagePath, filename)
 	err := os.WriteFile(filePath, file, 0o644)
 	if err != nil {
 		return "", err
 	}
 
-	return id, nil
+	return filename, nil
 }
 
 func (m *MediaManager) Get(id string) ([]byte, error) {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,8 @@ func CheckingKey(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get header X-Api-Key
 		if c.GetHeader(constants.X_API_KEY) != key {
+			fmt.Println(c.GetHeader(constants.X_API_KEY))
+			fmt.Println(key)
 			c.JSON(401, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return

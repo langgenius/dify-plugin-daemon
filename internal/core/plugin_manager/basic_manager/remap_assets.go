@@ -22,7 +22,7 @@ func (r *BasicPluginRuntime) RemapAssets(
 			return "", fmt.Errorf("file not found: %s", filename)
 		}
 
-		id, err := r.mediaManager.Upload(file)
+		id, err := r.mediaManager.Upload(filename, file)
 		if err != nil {
 			return "", err
 		}
