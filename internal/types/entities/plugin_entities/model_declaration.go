@@ -184,8 +184,8 @@ type FieldModelSchema struct {
 }
 
 type ModelCredentialSchema struct {
-	Model                  FieldModelSchema                    `json:"model" validate:"required"`
-	CredentialsFormSchemas []ModelProviderCredentialFormSchema `json:"credentials_form_schemas" validate:"omitempty,lte=32,dive"`
+	Model                 FieldModelSchema                    `json:"model" validate:"required"`
+	CredentialFormSchemas []ModelProviderCredentialFormSchema `json:"credential_form_schemas" validate:"omitempty,lte=32,dive"`
 }
 
 type ModelProviderHelpEntity struct {

@@ -1,7 +1,7 @@
 package plugin_entities
 
 type InvokePluginUserIdentity struct {
-	TenantId string `json:"tenant_id" validate:"required"`
+	TenantId string `json:"tenant_id" validate:"required" uri:"tenant_id"`
 	UserId   string `json:"user_id" validate:"required"`
 }
 

@@ -18,12 +18,10 @@ func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
 	engine.GET("/health/check", controllers.HealthCheck)
 
-	app.pluginInvokeGroup(engine.Group("/plugin"), config)
-	app.remoteDebuggingGroup(engine.Group("/plugin/:tenant_id/debugging"), config)
 	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
 	app.endpointManagementGroup(engine.Group("/endpoint"))
-	app.pluginGroup(engine.Group("/plugin"), config)
+	app.pluginGroup(engine.Group("/plugin/:tenant_id"), config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -43,8 +41,16 @@ func (app *App) server(config *app.Config) func() {
 	}
 }
 
-func (app *App) pluginInvokeGroup(group *gin.RouterGroup, config *app.Config) {
+func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	group.Use(CheckingKey(config.ServerKey))
+
+	app.remoteDebuggingGroup(group.Group("/debugging"), config)
+	app.pluginDispatchGroup(group.Group("/dispatch"), config)
+	app.pluginManagementGroup(group.Group("/management"), config)
+	app.pluginAssetGroup(group.Group("/asset"), config)
+}
+
+func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 
@@ -97,15 +103,16 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 	group.POST("/disable", controllers.DisableEndpoint)
 }
 
-func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
-	group.Use(CheckingKey(config.ServerKey))
+func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config) {
+	group.POST("/install/pkg", controllers.InstallPluginFromPkg(config))
+	group.POST("/install/identifier", controllers.InstallPluginFromIdentifier(config))
+	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
+	group.POST("/uninstall", controllers.UninstallPlugin)
+	group.GET("/list", controllers.ListPlugins)
+	group.GET("/models", controllers.ListModels)
+	group.GET("/tools", controllers.ListTools)
+}
 
-	group.GET("/asset/:id", controllers.GetAsset)
-	group.POST("/:tenant_id/install/pkg", controllers.InstallPluginFromPkg(config))
-	group.POST("/:tenant_id/install/identifier", controllers.InstallPluginFromIdentifier(config))
-	group.GET("/:tenant_id/fetch/identifier", controllers.FetchPluginFromIdentifier)
-	group.POST("/:tenant_id/uninstall", controllers.UninstallPlugin)
-	group.GET("/:tenant_id/list", controllers.ListPlugins)
-	group.GET("/:tenant_id/models", controllers.ListModels)
-	group.GET("/:tenant_id/tools", controllers.ListTools)
+func (app *App) pluginAssetGroup(group *gin.RouterGroup, config *app.Config) {
+	group.GET("/:id", controllers.GetAsset)
 }
