@@ -47,7 +47,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	app.remoteDebuggingGroup(group.Group("/debugging"), config)
 	app.pluginDispatchGroup(group.Group("/dispatch"), config)
 	app.pluginManagementGroup(group.Group("/management"), config)
-	app.pluginAssetGroup(group.Group("/asset"), config)
+	app.pluginAssetGroup(group.Group("/asset"))
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
@@ -113,6 +113,6 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/tools", controllers.ListTools)
 }
 
-func (app *App) pluginAssetGroup(group *gin.RouterGroup, config *app.Config) {
+func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
 	group.GET("/:id", controllers.GetAsset)
 }

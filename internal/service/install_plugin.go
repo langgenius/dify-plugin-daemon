@@ -57,7 +57,7 @@ func InstallPluginFromIdentifier(
 
 	declaration := plugin.Declaration
 	// install to this workspace
-	if _, _, err := curd.CreatePlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, &declaration); err != nil {
+	if _, _, err := curd.InstallPlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, &declaration); err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
@@ -97,7 +97,7 @@ func UninstallPlugin(
 	}
 
 	// Uninstall the plugin
-	_, err = curd.DeletePlugin(tenant_id, plugin_unique_identifier, installation.ID)
+	_, err = curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation.ID)
 	if err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
 	}

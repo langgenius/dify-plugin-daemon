@@ -12,7 +12,7 @@ import (
 // Create plugin for a tenant, create plugin if it has never been created before
 // and install it to the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func CreatePlugin(
+func InstallPlugin(
 	tenant_id string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	install_type plugin_entities.PluginRuntimeType,
@@ -150,7 +150,7 @@ type DeletePluginResponse struct {
 // Delete plugin for a tenant, delete the plugin if it has never been created before
 // and uninstall it from the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func DeletePlugin(tenant_id string, plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, installation_id string) (*DeletePluginResponse, error) {
+func UninstallPlugin(tenant_id string, plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, installation_id string) (*DeletePluginResponse, error) {
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 

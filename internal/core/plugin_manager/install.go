@@ -102,7 +102,7 @@ func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.Pl
 					return
 				}
 
-				_, _, err = curd.CreatePlugin(
+				_, _, err = curd.InstallPlugin(
 					tenant_id,
 					unique_identity,
 					plugin_entities.PLUGIN_RUNTIME_TYPE_AWS,

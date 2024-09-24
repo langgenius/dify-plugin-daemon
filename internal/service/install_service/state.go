@@ -22,7 +22,7 @@ func InstallPlugin(
 	}
 
 	configuration := runtime.Configuration()
-	plugin, installation, err := curd.CreatePlugin(
+	plugin, installation, err := curd.InstallPlugin(
 		tenant_id,
 		identity,
 		runtime.Type(),
@@ -43,7 +43,7 @@ func UninstallPlugin(
 	install_type plugin_entities.PluginRuntimeType,
 ) error {
 	// delete the plugin from db
-	_, err := curd.DeletePlugin(tenant_id, plugin_unique_identifier, installation_id)
+	_, err := curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation_id)
 	if err != nil {
 		return err
 	}
