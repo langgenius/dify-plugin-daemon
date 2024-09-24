@@ -241,7 +241,7 @@ func (c *Cluster) autoGCPlugins() error {
 	)
 }
 
-func (c *Cluster) IsPluginNoCurrentNode(identity plugin_entities.PluginUniqueIdentifier) bool {
+func (c *Cluster) IsPluginOnCurrentNode(identity plugin_entities.PluginUniqueIdentifier) bool {
 	_, ok := c.plugins.Load(identity.String())
 	if !ok {
 		if c.manager.Get(identity) == nil {

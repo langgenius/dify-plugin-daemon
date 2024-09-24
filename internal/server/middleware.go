@@ -57,7 +57,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		}
 
 		// check if plugin in current node
-		if !app.cluster.IsPluginNoCurrentNode(
+		if !app.cluster.IsPluginOnCurrentNode(
 			identity,
 		) {
 			app.redirectPluginInvokeByPluginIdentifier(ctx, identity)

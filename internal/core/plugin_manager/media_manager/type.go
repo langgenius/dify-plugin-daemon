@@ -9,7 +9,6 @@ import (
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 )
 
 type MediaManager struct {
@@ -32,7 +31,7 @@ func NewMediaManager(storage_path string, cache_size uint16) *MediaManager {
 // Upload uploads a file to the media manager and returns an identifier
 func (m *MediaManager) Upload(name string, file []byte) (string, error) {
 	// calculate checksum
-	checksum := sha256.Sum256(append(file, []byte(strings.RandomString(10))...))
+	checksum := sha256.Sum256(append(file, []byte(name)...))
 
 	id := hex.EncodeToString(checksum[:])
 

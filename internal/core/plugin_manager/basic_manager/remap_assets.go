@@ -115,9 +115,3 @@ func (r *BasicPluginRuntime) RemapAssets(
 
 	return nil
 }
-
-func (r *BasicPluginRuntime) ClearAssets() {
-	for _, id := range r.assets_ids {
-		r.mediaManager.Delete(id)
-	}
-}

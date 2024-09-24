@@ -101,9 +101,6 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	// close plugin
 	plugin.onDisconnected()
 
-	// clear assets
-	plugin.ClearAssets()
-
 	// uninstall plugin
 	if plugin.assets_transferred {
 		if _mode != _PLUGIN_RUNTIME_MODE_CI {
