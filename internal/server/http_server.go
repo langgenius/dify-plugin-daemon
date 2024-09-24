@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
@@ -108,11 +109,11 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/install/identifier", controllers.InstallPluginFromIdentifier(config))
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/uninstall", controllers.UninstallPlugin)
-	group.GET("/list", controllers.ListPlugins)
-	group.GET("/models", controllers.ListModels)
-	group.GET("/tools", controllers.ListTools)
+	group.GET("/list", gzip.Gzip(gzip.DefaultCompression), controllers.ListPlugins)
+	group.GET("/models", gzip.Gzip(gzip.DefaultCompression), controllers.ListModels)
+	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
-	group.GET("/:id", controllers.GetAsset)
+	group.GET("/:id", gzip.Gzip(gzip.DefaultCompression), controllers.GetAsset)
 }
