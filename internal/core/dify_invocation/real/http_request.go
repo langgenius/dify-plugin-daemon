@@ -1,9 +1,12 @@
 package real
 
 import (
+	"fmt"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
@@ -17,7 +20,16 @@ func Request[T any](i *RealBackwardsInvocation, method string, path string, opti
 		http_requests.HttpReadTimeout(240000),
 	)
 
-	return http_requests.RequestAndParse[T](i.client, i.difyPath(path), method, options...)
+	req, err := http_requests.RequestAndParse[T](i.client, i.difyPath(path), method, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validators.GlobalEntitiesValidator.Struct(req); err != nil {
+		return nil, fmt.Errorf("validate request failed: %s", err.Error())
+	}
+
+	return req, nil
 }
 
 func StreamResponse[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*stream.Stream[T], error) {
@@ -62,6 +74,14 @@ func (i *RealBackwardsInvocation) InvokeTool(payload *dify_invocation.InvokeTool
 
 func (i *RealBackwardsInvocation) InvokeApp(payload *dify_invocation.InvokeAppRequest) (*stream.Stream[map[string]any], error) {
 	return StreamResponse[map[string]any](i, "POST", "invoke/app", http_requests.HttpPayloadJson(payload))
+}
+
+func (i *RealBackwardsInvocation) InvokeParameterExtractor(payload *dify_invocation.InvokeParameterExtractorRequest) (*dify_invocation.InvokeNodeResponse, error) {
+	return Request[dify_invocation.InvokeNodeResponse](i, "POST", "invoke/parameter-extractor", http_requests.HttpPayloadJson(payload))
+}
+
+func (i *RealBackwardsInvocation) InvokeQuestionClassifier(payload *dify_invocation.InvokeQuestionClassifierRequest) (*dify_invocation.InvokeNodeResponse, error) {
+	return Request[dify_invocation.InvokeNodeResponse](i, "POST", "invoke/question-classifier", http_requests.HttpPayloadJson(payload))
 }
 
 func (i *RealBackwardsInvocation) InvokeEncrypt(payload *dify_invocation.InvokeEncryptRequest) (map[string]any, error) {

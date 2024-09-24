@@ -190,3 +190,19 @@ func (m *MockedDifyInvocation) InvokeApp(payload *dify_invocation.InvokeAppReque
 func (m *MockedDifyInvocation) InvokeEncrypt(payload *dify_invocation.InvokeEncryptRequest) (map[string]any, error) {
 	return payload.Data, nil
 }
+
+func (m *MockedDifyInvocation) InvokeParameterExtractor(payload *dify_invocation.InvokeParameterExtractorRequest) (*dify_invocation.InvokeNodeResponse, error) {
+	return &dify_invocation.InvokeNodeResponse{
+		ProcessData: map[string]any{},
+		Outputs:     map[string]any{},
+		Inputs:      map[string]any{},
+	}, nil
+}
+
+func (m *MockedDifyInvocation) InvokeQuestionClassifier(payload *dify_invocation.InvokeQuestionClassifierRequest) (*dify_invocation.InvokeNodeResponse, error) {
+	return &dify_invocation.InvokeNodeResponse{
+		ProcessData: map[string]any{},
+		Outputs:     map[string]any{},
+		Inputs:      map[string]any{},
+	}, nil
+}

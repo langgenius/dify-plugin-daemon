@@ -17,17 +17,18 @@ type BaseInvokeDifyRequest struct {
 type InvokeType string
 
 const (
-	INVOKE_TYPE_LLM            InvokeType = "llm"
-	INVOKE_TYPE_TEXT_EMBEDDING InvokeType = "text_embedding"
-	INVOKE_TYPE_RERANK         InvokeType = "rerank"
-	INVOKE_TYPE_TTS            InvokeType = "tts"
-	INVOKE_TYPE_SPEECH2TEXT    InvokeType = "speech2text"
-	INVOKE_TYPE_MODERATION     InvokeType = "moderation"
-	INVOKE_TYPE_TOOL           InvokeType = "tool"
-	INVOKE_TYPE_NODE           InvokeType = "node"
-	INVOKE_TYPE_APP            InvokeType = "app"
-	INVOKE_TYPE_STORAGE        InvokeType = "storage"
-	INVOKE_TYPE_ENCRYPT        InvokeType = "encrypt"
+	INVOKE_TYPE_LLM                      InvokeType = "llm"
+	INVOKE_TYPE_TEXT_EMBEDDING           InvokeType = "text_embedding"
+	INVOKE_TYPE_RERANK                   InvokeType = "rerank"
+	INVOKE_TYPE_TTS                      InvokeType = "tts"
+	INVOKE_TYPE_SPEECH2TEXT              InvokeType = "speech2text"
+	INVOKE_TYPE_MODERATION               InvokeType = "moderation"
+	INVOKE_TYPE_TOOL                     InvokeType = "tool"
+	INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR InvokeType = "node_parameter_extractor"
+	INVOKE_TYPE_NODE_QUESTION_CLASSIFIER InvokeType = "node_question_classifier"
+	INVOKE_TYPE_APP                      InvokeType = "app"
+	INVOKE_TYPE_STORAGE                  InvokeType = "storage"
+	INVOKE_TYPE_ENCRYPT                  InvokeType = "encrypt"
 )
 
 type InvokeLLMRequest struct {
@@ -105,6 +106,42 @@ type InvokeAppRequest struct {
 	InvokeAppSchema
 }
 
+type ModelConfig struct {
+	Provider         string         `json:"provider" validate:"required"`
+	Name             string         `json:"name" validate:"required"`
+	Mode             string         `json:"mode" validate:"required"`
+	CompletionParams map[string]any `json:"completion_params" validate:"omitempty"`
+}
+
+type InvokeParameterExtractorRequest struct {
+	BaseInvokeDifyRequest
+
+	Parameters []struct {
+		Name        string   `json:"name" validate:"required"`
+		Type        string   `json:"type" validate:"required,oneof=string number bool select array[string] array[number] array[object]"`
+		Options     []string `json:"options" validate:"omitempty"`
+		Description string   `json:"description" validate:"omitempty"`
+		Required    bool     `json:"required" validate:"omitempty"`
+	} `json:"parameters" validate:"required,dive"`
+
+	Model       ModelConfig `json:"model" validate:"required"`
+	Instruction string      `json:"instruction" validate:"omitempty"`
+	Query       string      `json:"query" validate:"required"`
+}
+
+type InvokeQuestionClassifierRequest struct {
+	BaseInvokeDifyRequest
+
+	Classes []struct {
+		ID   string `json:"id" validate:"required"`
+		Name string `json:"name" validate:"required"`
+	} `json:"classes" validate:"required,dive"`
+
+	Model       ModelConfig `json:"model" validate:"required"`
+	Instruction string      `json:"instruction" validate:"omitempty"`
+	Query       string      `json:"query" validate:"required"`
+}
+
 type EncryptOpt string
 
 const (
@@ -171,8 +208,7 @@ type InvokeToolRequest struct {
 }
 
 type InvokeNodeResponse struct {
-	ProcessData      map[string]any `json:"process_data"`
-	Output           map[string]any `json:"output"`
-	Input            map[string]any `json:"input"`
-	EdgeSourceHandle []string       `json:"edge_source_handle"`
+	ProcessData map[string]any `json:"process_data" validate:"required"`
+	Outputs     map[string]any `json:"outputs" validate:"required"`
+	Inputs      map[string]any `json:"inputs" validate:"required"`
 }

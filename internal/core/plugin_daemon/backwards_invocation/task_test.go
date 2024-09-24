@@ -6,39 +6,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
-
-type TPluginRuntime struct {
-	plugin_entities.PluginRuntime
-	positive_manager.PositivePluginRuntime
-}
-
-func (r *TPluginRuntime) InitEnvironment() error {
-	return nil
-}
-
-func (r *TPluginRuntime) Checksum() string {
-	return ""
-}
-
-func (r *TPluginRuntime) Identity() (string, error) {
-	return "", nil
-}
-
-func (r *TPluginRuntime) StartPlugin() error {
-	return nil
-}
-
-func (r *TPluginRuntime) Type() plugin_entities.PluginRuntimeType {
-	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
-}
-
-func (r *TPluginRuntime) Wait() (<-chan bool, error) {
-	return nil, nil
-}
 
 func getTestSession() *session_manager.Session {
 	return session_manager.NewSession(
@@ -125,8 +95,13 @@ func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_node_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_node_request); err != nil {
+	invoke_node_parameter_extractor_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR, "", getTestSession(), nil, nil)
+	if err := checkPermission(&all_permitted_runtime, invoke_node_parameter_extractor_request); err != nil {
+		t.Errorf("checkPermission failed: %s", err.Error())
+	}
+
+	invoke_node_question_classifier_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER, "", getTestSession(), nil, nil)
+	if err := checkPermission(&all_permitted_runtime, invoke_node_question_classifier_request); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
@@ -178,8 +153,13 @@ func TestBackwardsInvocationAllDeniedPermission(t *testing.T) {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_node_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE, "", getTestSession(), nil, nil)
+	invoke_node_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR, "", getTestSession(), nil, nil)
 	if err := checkPermission(&all_denied_runtime, invoke_node_request); err == nil {
+		t.Errorf("checkPermission failed: expected error, got nil")
+	}
+
+	invoke_node_question_classifier_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER, "", getTestSession(), nil, nil)
+	if err := checkPermission(&all_denied_runtime, invoke_node_question_classifier_request); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 

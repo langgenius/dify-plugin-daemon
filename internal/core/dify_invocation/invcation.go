@@ -23,6 +23,10 @@ type BackwardsInvocation interface {
 	InvokeTool(payload *InvokeToolRequest) (*stream.Stream[tool_entities.ToolResponseChunk], error)
 	// InvokeApp
 	InvokeApp(payload *InvokeAppRequest) (*stream.Stream[map[string]any], error)
+	// InvokeParameterExtractor
+	InvokeParameterExtractor(payload *InvokeParameterExtractorRequest) (*InvokeNodeResponse, error)
+	// InvokeQuestionClassifier
+	InvokeQuestionClassifier(payload *InvokeQuestionClassifierRequest) (*InvokeNodeResponse, error)
 	// InvokeEncrypt
 	InvokeEncrypt(payload *InvokeEncryptRequest) (map[string]any, error)
 }

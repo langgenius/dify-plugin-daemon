@@ -109,7 +109,13 @@ var (
 			},
 			"error": "permission denied, you need to enable moderation access in plugin manifest",
 		},
-		dify_invocation.INVOKE_TYPE_NODE: {
+		dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeNode()
+			},
+			"error": "permission denied, you need to enable node access in plugin manifest",
+		},
+		dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER: {
 			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
 				return declaration.Resource.Permission.AllowInvokeNode()
 			},
@@ -204,6 +210,12 @@ var (
 		},
 		dify_invocation.INVOKE_TYPE_APP: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationAppTask)
+		},
+		dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationParameterExtractor)
+		},
+		dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationQuestionClassifier)
 		},
 		dify_invocation.INVOKE_TYPE_STORAGE: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationStorageTask)
@@ -371,6 +383,32 @@ func executeDifyInvocationAppTask(
 	response.Async(func(t map[string]any) {
 		handle.WriteResponse("stream", t)
 	})
+}
+
+func executeDifyInvocationParameterExtractor(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeParameterExtractorRequest,
+) {
+	response, err := handle.backwardsInvocation.InvokeParameterExtractor(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke parameter extractor failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
+}
+
+func executeDifyInvocationQuestionClassifier(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeQuestionClassifierRequest,
+) {
+	response, err := handle.backwardsInvocation.InvokeQuestionClassifier(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke question classifier failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
 }
 
 func executeDifyInvocationStorageTask(
