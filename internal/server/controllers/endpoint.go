@@ -9,8 +9,8 @@ import (
 func SetupEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(
 		request struct {
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required" validate:"plugin_unique_identifier"`
-			TenantID               string                                 `json:"tenant_id" validate:"required"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+			TenantID               string                                 `uri:"tenant_id" validate:"required"`
 			UserID                 string                                 `json:"user_id" validate:"required"`
 			Settings               map[string]any                         `json:"settings" validate:"omitempty"`
 		},
@@ -28,7 +28,7 @@ func SetupEndpoint(ctx *gin.Context) {
 
 func ListEndpoints(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		TenantID string `form:"tenant_id" validate:"required"`
+		TenantID string `uri:"tenant_id" validate:"required"`
 		Page     int    `form:"page" validate:"required"`
 		PageSize int    `form:"page_size" validate:"required,max=100"`
 	}) {
@@ -40,10 +40,26 @@ func ListEndpoints(ctx *gin.Context) {
 	})
 }
 
+func ListPluginEndpoints(ctx *gin.Context) {
+	BindRequest(ctx, func(request struct {
+		TenantID               string                                 `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		Page                   int                                    `form:"page" validate:"required"`
+		PageSize               int                                    `form:"page_size" validate:"required,max=100"`
+	}) {
+		tenant_id := request.TenantID
+		plugin_unique_identifier := request.PluginUniqueIdentifier
+		page := request.Page
+		page_size := request.PageSize
+
+		ctx.JSON(200, service.ListPluginEndpoints(tenant_id, plugin_unique_identifier, page, page_size))
+	})
+}
+
 func RemoveEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		EndpointID string `json:"endpoint_id" validate:"required"`
-		TenantID   string `json:"tenant_id" validate:"required"`
+		TenantID   string `uri:"tenant_id" validate:"required"`
 	}) {
 		endpoint_id := request.EndpointID
 		tenant_id := request.TenantID
@@ -52,10 +68,24 @@ func RemoveEndpoint(ctx *gin.Context) {
 	})
 }
 
+func UpdateEndpoint(ctx *gin.Context) {
+	BindRequest(ctx, func(request struct {
+		EndpointID string         `json:"endpoint_id" validate:"required"`
+		TenantID   string         `uri:"tenant_id" validate:"required"`
+		Settings   map[string]any `json:"settings" validate:"omitempty"`
+	}) {
+		tenant_id := request.TenantID
+		endpoint_id := request.EndpointID
+		settings := request.Settings
+
+		ctx.JSON(200, service.UpdateEndpoint(endpoint_id, tenant_id, settings))
+	})
+}
+
 func EnableEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		EndpointID string `json:"endpoint_id" validate:"required"`
-		TenantID   string `json:"tenant_id" validate:"required"`
+		TenantID   string `uri:"tenant_id" validate:"required"`
 	}) {
 		tenant_id := request.TenantID
 		endpoint_id := request.EndpointID
@@ -67,7 +97,7 @@ func EnableEndpoint(ctx *gin.Context) {
 func DisableEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		EndpointID string `json:"endpoint_id" validate:"required"`
-		TenantID   string `json:"tenant_id" validate:"required"`
+		TenantID   string `uri:"tenant_id" validate:"required"`
 	}) {
 		tenant_id := request.TenantID
 		endpoint_id := request.EndpointID

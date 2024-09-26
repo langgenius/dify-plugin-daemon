@@ -101,3 +101,8 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 
 	return entities.NewSuccessResponse(nil)
 }
+
+func UpdateEndpoint(endpoint_id string, tenant_id string, settings map[string]any) *entities.Response {
+	// TODO
+	return nil
+}

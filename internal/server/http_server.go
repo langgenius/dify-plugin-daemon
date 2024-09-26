@@ -21,7 +21,6 @@ func (app *App) server(config *app.Config) func() {
 
 	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
-	app.endpointManagementGroup(engine.Group("/endpoint"))
 	app.pluginGroup(engine.Group("/plugin/:tenant_id"), config)
 
 	srv := &http.Server{
@@ -48,6 +47,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	app.remoteDebuggingGroup(group.Group("/debugging"), config)
 	app.pluginDispatchGroup(group.Group("/dispatch"), config)
 	app.pluginManagementGroup(group.Group("/management"), config)
+	app.endpointManagementGroup(group.Group("/endpoint"))
 	app.pluginAssetGroup(group.Group("/asset"))
 }
 
@@ -99,7 +99,9 @@ func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app
 func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 	group.POST("/setup", controllers.SetupEndpoint)
 	group.POST("/remove", controllers.RemoveEndpoint)
+	group.POST("/update", controllers.UpdateEndpoint)
 	group.GET("/list", controllers.ListEndpoints)
+	group.GET("/list/plugin", controllers.ListPluginEndpoints)
 	group.POST("/enable", controllers.EnableEndpoint)
 	group.POST("/disable", controllers.DisableEndpoint)
 }

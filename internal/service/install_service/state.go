@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
+	"gorm.io/gorm"
 )
 
 func InstallPlugin(
@@ -81,11 +82,26 @@ func InstallEndpoint(
 		TenantID:  tenant_id,
 		UserID:    user_id,
 		Enabled:   true,
-		ExpiredAt: time.Now().Add(time.Hour * 24 * 365 * 10),
+		ExpiredAt: time.Date(2050, 1, 1, 0, 0, 0, 0, time.UTC),
 		Settings:  string(settings_json),
 	}
 
-	if err := db.Create(&installation); err != nil {
+	if err := db.WithTransaction(func(tx *gorm.DB) error {
+		if err := db.Create(&installation, tx); err != nil {
+			return err
+		}
+
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(models.PluginInstallation{}),
+			db.Equal("plugin_id", installation.PluginID),
+			db.Equal("tenant_id", installation.TenantID),
+			db.Inc(map[string]int{
+				"endpoints_setups": 1,
+				"endpoints_active": 1,
+			}),
+		)
+	}); err != nil {
 		return "", err
 	}
 
@@ -110,15 +126,69 @@ func GetEndpoint(
 
 // uninstalls a plugin from db
 func UninstallEndpoint(endpoint *models.Endpoint) error {
-	return db.Delete(endpoint)
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		if err := db.Delete(endpoint, tx); err != nil {
+			return err
+		}
+
+		// update the plugin installation
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(models.PluginInstallation{}),
+			db.Equal("plugin_id", endpoint.PluginID),
+			db.Equal("tenant_id", endpoint.TenantID),
+			db.Dec(map[string]int{
+				"endpoints_active": 1,
+				"endpoints_setups": 1,
+			}),
+		)
+	})
 }
 
 func EnabledEndpoint(endpoint *models.Endpoint) error {
-	endpoint.Enabled = true
-	return db.Update(endpoint)
+	if endpoint.Enabled {
+		return nil
+	}
+
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint.Enabled = true
+		if err := db.Update(endpoint, tx); err != nil {
+			return err
+		}
+
+		// update the plugin installation
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(models.PluginInstallation{}),
+			db.Equal("plugin_id", endpoint.PluginID),
+			db.Equal("tenant_id", endpoint.TenantID),
+			db.Inc(map[string]int{
+				"endpoints_active": 1,
+			}),
+		)
+	})
 }
 
 func DisabledEndpoint(endpoint *models.Endpoint) error {
-	endpoint.Enabled = false
-	return db.Update(endpoint)
+	if !endpoint.Enabled {
+		return nil
+	}
+
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint.Enabled = false
+		if err := db.Update(endpoint, tx); err != nil {
+			return err
+		}
+
+		// update the plugin installation
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(models.PluginInstallation{}),
+			db.Equal("plugin_id", endpoint.PluginID),
+			db.Equal("tenant_id", endpoint.TenantID),
+			db.Dec(map[string]int{
+				"endpoints_active": 1,
+			}),
+		)
+	})
 }

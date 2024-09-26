@@ -253,3 +253,8 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 
 	return entities.NewSuccessResponse(endpoints)
 }
+
+func ListPluginEndpoints(tenant_id string, plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, page int, page_size int) *entities.Response {
+	// TODO:
+	return nil
+}

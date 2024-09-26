@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"gorm.io/gorm"
@@ -150,15 +151,27 @@ func WithoutBit[T genericComparableConstraint](field string, value T) GenericQue
 	}
 }
 
-func Inc[T genericComparableConstraint](field string, value T) GenericQuery {
+func Inc[T genericComparableConstraint](updates map[string]T) GenericQuery {
 	return func(tx *gorm.DB) *gorm.DB {
-		return tx.UpdateColumn(field, gorm.Expr(fmt.Sprintf("%s + ?", field), value))
+		expressions := make([]string, 0, len(updates))
+		values := make([]interface{}, 0, len(updates))
+		for field, value := range updates {
+			expressions = append(expressions, fmt.Sprintf("%s = %s + ?", field, field))
+			values = append(values, value)
+		}
+		return tx.UpdateColumns(gorm.Expr(strings.Join(expressions, ", "), values...))
 	}
 }
 
-func Dec[T genericComparableConstraint](field string, value T) GenericQuery {
+func Dec[T genericComparableConstraint](updates map[string]T) GenericQuery {
 	return func(tx *gorm.DB) *gorm.DB {
-		return tx.UpdateColumn(field, gorm.Expr(fmt.Sprintf("%s - ?", field), value))
+		expressions := make([]string, 0, len(updates))
+		values := make([]interface{}, 0, len(updates))
+		for field, value := range updates {
+			expressions = append(expressions, fmt.Sprintf("%s = %s - ?", field, field))
+			values = append(values, value)
+		}
+		return tx.UpdateColumns(gorm.Expr(strings.Join(expressions, ", "), values...))
 	}
 }
 
