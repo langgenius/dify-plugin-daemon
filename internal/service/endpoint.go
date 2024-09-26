@@ -150,7 +150,7 @@ func Endpoint(
 	select {
 	case <-ctx.Writer.CloseNotify():
 	case <-done:
-	case <-time.After(30 * time.Second):
+	case <-time.After(240 * time.Second):
 		ctx.JSON(500, gin.H{"error": "killed by timeout"})
 	}
 }
