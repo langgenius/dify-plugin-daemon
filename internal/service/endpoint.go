@@ -247,6 +247,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 		}
 
 		endpoint.SetSettings(decrypted_settings)
+		endpoint.Declaration = plugin_declaration.Endpoint
 
 		endpoints[i] = endpoint
 	}
