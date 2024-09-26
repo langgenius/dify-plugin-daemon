@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
@@ -21,19 +22,29 @@ func Request[T any](i *RealBackwardsInvocation, method string, path string, opti
 		http_requests.HttpReadTimeout(240000),
 	)
 
-	req, err := http_requests.RequestAndParse[T](i.client, i.difyPath(path), method, options...)
+	req, err := http_requests.RequestAndParse[BaseBackwardsInvocationResponse[T]](i.client, i.difyPath(path), method, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := validators.GlobalEntitiesValidator.Struct(req); err != nil {
+	if req.Error != "" {
+		return nil, fmt.Errorf("request failed: %s", req.Error)
+	}
+
+	if req.Data == nil {
+		return nil, fmt.Errorf("data is nil")
+	}
+
+	if err := validators.GlobalEntitiesValidator.Struct(req.Data); err != nil {
 		return nil, fmt.Errorf("validate request failed: %s", err.Error())
 	}
 
-	return req, nil
+	return req.Data, nil
 }
 
-func StreamResponse[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*stream.Stream[T], error) {
+func StreamResponse[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (
+	*stream.Stream[T], error,
+) {
 	options = append(
 		options, http_requests.HttpHeader(map[string]string{
 			"X-Inner-Api-Key": i.dify_inner_api_key,
@@ -42,7 +53,44 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		http_requests.HttpReadTimeout(240000),
 	)
 
-	return http_requests.RequestAndParseStream[T](i.client, i.difyPath(path), method, options...)
+	response, err := http_requests.RequestAndParseStream[BaseBackwardsInvocationResponse[T]](i.client, i.difyPath(path), method, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	new_response := stream.NewStream[T](1024)
+	new_response.OnClose(func() {
+		response.Close()
+	})
+	routine.Submit(func() {
+		defer response.Close()
+		for response.Next() {
+			t, err := response.Read()
+			if err != nil {
+				new_response.WriteError(err)
+				break
+			}
+
+			if t.Error != "" {
+				new_response.WriteError(fmt.Errorf("request failed: %s", t.Error))
+				break
+			}
+
+			if t.Data == nil {
+				new_response.WriteError(fmt.Errorf("data is nil"))
+				break
+			}
+
+			if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
+				new_response.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
+				break
+			}
+
+			new_response.Write(*t.Data)
+		}
+	})
+
+	return new_response, nil
 }
 
 func (i *RealBackwardsInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
@@ -90,10 +138,10 @@ func (i *RealBackwardsInvocation) InvokeEncrypt(payload *dify_invocation.InvokeE
 		return payload.Data, nil
 	}
 
-	data, err := Request[dify_invocation.InvokeEncryptionResponse](i, "POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
+	data, err := Request[map[string]any](i, "POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
 	if err != nil {
 		return nil, err
 	}
 
-	return data.Data, nil
+	return *data, nil
 }
