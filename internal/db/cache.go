@@ -24,7 +24,7 @@ type GetCachePayload[T any] struct {
 }
 
 func joinCacheKey(typename string, pairs []KeyValuePair) string {
-	cache_key := CACHE_PREFIX
+	cache_key := CACHE_PREFIX + ":" + typename
 	for _, kv := range pairs {
 		cache_key += ":" + kv.Key + ":"
 		// convert value to string
