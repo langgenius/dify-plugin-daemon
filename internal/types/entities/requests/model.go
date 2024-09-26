@@ -126,6 +126,8 @@ type RequestGetLLMNumTokens struct {
 }
 
 type RequestGetAIModelSchema struct {
-	Model       string         `json:"model" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Provider    string                   `json:"provider" validate:"required"`
+	ModelType   model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
+	Model       string                   `json:"model" validate:"required"`
+	Credentials map[string]any           `json:"credentials" validate:"omitempty,dive,is_basic_type"`
 }
