@@ -138,10 +138,14 @@ func (i *RealBackwardsInvocation) InvokeEncrypt(payload *dify_invocation.InvokeE
 		return payload.Data, nil
 	}
 
-	data, err := Request[map[string]any](i, "POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
+	type resp struct {
+		Data map[string]any `json:"data"`
+	}
+
+	data, err := Request[resp](i, "POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
 	if err != nil {
 		return nil, err
 	}
 
-	return *data, nil
+	return data.Data, nil
 }
