@@ -215,5 +215,5 @@ type InvokeNodeResponse struct {
 
 type InvokeEncryptionResponse struct {
 	Error string         `json:"error"`
-	Data  map[string]any `json:"data" validate:"required"`
+	Data  map[string]any `json:"data"`
 }
