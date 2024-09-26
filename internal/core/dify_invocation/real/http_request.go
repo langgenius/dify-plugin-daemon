@@ -63,7 +63,7 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		response.Close()
 	})
 	routine.Submit(func() {
-		defer response.Close()
+		defer new_response.Close()
 		for response.Next() {
 			t, err := response.Read()
 			if err != nil {
