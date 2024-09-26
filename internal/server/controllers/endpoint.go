@@ -72,13 +72,15 @@ func UpdateEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		EndpointID string         `json:"endpoint_id" validate:"required"`
 		TenantID   string         `uri:"tenant_id" validate:"required"`
+		UserID     string         `json:"user_id" validate:"required"`
 		Settings   map[string]any `json:"settings" validate:"omitempty"`
 	}) {
 		tenant_id := request.TenantID
+		user_id := request.UserID
 		endpoint_id := request.EndpointID
 		settings := request.Settings
 
-		ctx.JSON(200, service.UpdateEndpoint(endpoint_id, tenant_id, settings))
+		ctx.JSON(200, service.UpdateEndpoint(endpoint_id, tenant_id, user_id, settings))
 	})
 }
 

@@ -63,17 +63,16 @@ func UninstallPlugin(
 }
 
 // setup a plugin to db,
-// returns the endpoint id
 func InstallEndpoint(
 	plugin_id plugin_entities.PluginUniqueIdentifier,
 	installation_id string,
 	tenant_id string,
 	user_id string,
 	settings map[string]any,
-) (string, error) {
+) (*models.Endpoint, error) {
 	settings_json, err := json.Marshal(settings)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	installation := &models.Endpoint{
@@ -102,10 +101,10 @@ func InstallEndpoint(
 			}),
 		)
 	}); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return installation.HookID, nil
+	return installation, nil
 }
 
 func GetEndpoint(
@@ -191,4 +190,15 @@ func DisabledEndpoint(endpoint *models.Endpoint) error {
 			}),
 		)
 	})
+}
+
+func UpdateEndpoint(endpoint *models.Endpoint, settings map[string]any) error {
+	settings_json, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+
+	endpoint.Settings = string(settings_json)
+
+	return db.Update(endpoint, nil)
 }
