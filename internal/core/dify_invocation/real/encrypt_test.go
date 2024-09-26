@@ -76,7 +76,9 @@ func TestInvokeEncrypt(t *testing.T) {
 		http_invoked = true
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"key": "encrypted",
+			"data": map[string]any{
+				"key": "encrypted",
+			},
 		})
 	})
 

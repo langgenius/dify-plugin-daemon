@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
+// Send a request to dify inner api and validate the response
 func Request[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*T, error) {
 	options = append(options,
 		http_requests.HttpHeader(map[string]string{
@@ -89,10 +90,10 @@ func (i *RealBackwardsInvocation) InvokeEncrypt(payload *dify_invocation.InvokeE
 		return payload.Data, nil
 	}
 
-	data, err := Request[map[string]any](i, "POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
+	data, err := Request[dify_invocation.InvokeEncryptionResponse](i, "POST", "invoke/encrypt", http_requests.HttpPayloadJson(payload))
 	if err != nil {
 		return nil, err
 	}
 
-	return *data, nil
+	return data.Data, nil
 }

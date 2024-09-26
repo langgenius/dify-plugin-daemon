@@ -212,3 +212,8 @@ type InvokeNodeResponse struct {
 	Outputs     map[string]any `json:"outputs" validate:"required"`
 	Inputs      map[string]any `json:"inputs" validate:"required"`
 }
+
+type InvokeEncryptionResponse struct {
+	Error string         `json:"error"`
+	Data  map[string]any `json:"data" validate:"required"`
+}
