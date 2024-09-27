@@ -8,6 +8,21 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Set the value with key
+func AutoSet[T any](key string, value T, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	full_type_info := reflect.TypeOf(value)
+	pkg_path := full_type_info.PkgPath()
+	type_name := full_type_info.Name()
+	full_type_name := pkg_path + "." + type_name
+
+	key = serialKey("auto_type", full_type_name, key)
+	return getCmdable(context...).Set(ctx, key, parser.MarshalJson(value), 0).Err()
+}
+
 // Get the value with key
 func AutoGet[T any](key string, context ...redis.Cmdable) (*T, error) {
 	return AutoGetWithGetter(key, func() (*T, error) {
@@ -25,7 +40,9 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 
 	// fetch full type info
 	full_type_info := reflect.TypeOf(result_tmpl)
-	full_type_name := full_type_info.Name()
+	pkg_path := full_type_info.PkgPath()
+	type_name := full_type_info.Name()
+	full_type_name := pkg_path + "." + type_name
 
 	key = serialKey("auto_type", full_type_name, key)
 	val, err := getCmdable(context...).Get(ctx, key).Result()
@@ -46,4 +63,21 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 
 	result, err := parser.UnmarshalJson[T](val)
 	return &result, err
+}
+
+// Delete the value with key
+func AutoDelete[T any](key string, context ...redis.Cmdable) error {
+	if client == nil {
+		return ErrDBNotInit
+	}
+
+	var result_tmpl T
+
+	full_type_info := reflect.TypeOf(result_tmpl)
+	pkg_path := full_type_info.PkgPath()
+	type_name := full_type_info.Name()
+	full_type_name := pkg_path + "." + type_name
+
+	key = serialKey("auto_type", full_type_name, key)
+	return getCmdable(context...).Del(ctx, key).Err()
 }
