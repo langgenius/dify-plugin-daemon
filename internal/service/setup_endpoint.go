@@ -41,6 +41,15 @@ func SetupEndpoint(
 		return entities.NewErrorResponse(-403, "permission denied")
 	}
 
+	if declaration.Endpoint == nil {
+		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
+	}
+
+	// check settings
+	if err := plugin_entities.ValidateProviderConfigs(settings, declaration.Endpoint.Settings); err != nil {
+		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
+	}
+
 	endpoint, err := install_service.InstallEndpoint(
 		plugin_unique_identifier,
 		installation.ID,
@@ -50,10 +59,6 @@ func SetupEndpoint(
 	)
 	if err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to setup endpoint: %v", err))
-	}
-
-	if declaration.Endpoint == nil {
-		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 	}
 
 	manager := plugin_manager.Manager()
@@ -171,6 +176,11 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 		if masked_settings[setting_name] != value {
 			settings[setting_name] = original_settings[setting_name]
 		}
+	}
+
+	// check settings
+	if err := plugin_entities.ValidateProviderConfigs(settings, plugin.Declaration.Endpoint.Settings); err != nil {
+		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
 	}
 
 	// encrypt settings
