@@ -7,7 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 )
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
@@ -35,20 +35,26 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	data := make([]installation, 0, len(plugin_installations))
 
 	for _, plugin_installation := range plugin_installations {
-		plugin, err := cache.Get[models.Plugin](plugin_installation.PluginUniqueIdentifier)
+		plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			plugin_installation.PluginUniqueIdentifier,
+		)
 		if err != nil {
 			return entities.NewErrorResponse(-500, err.Error())
 		}
 
-		declaration := plugin.Declaration
+		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		if err != nil {
+			return entities.NewErrorResponse(-500, err.Error())
+		}
+
 		data = append(data, installation{
 			ID:             plugin_installation.ID,
-			Name:           declaration.Name,
-			PluginID:       plugin.ID,
+			Name:           plugin_declaration.Name,
+			PluginID:       plugin_unique_identifier.PluginID(),
 			InstallationID: plugin_installation.ID,
-			Description:    &declaration,
+			Description:    plugin_declaration,
 			RuntimeType:    plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
-			Version:        declaration.Version,
+			Version:        plugin_declaration.Version,
 			CreatedAt:      plugin_installation.CreatedAt,
 			UpdatedAt:      plugin_installation.UpdatedAt,
 		})

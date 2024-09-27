@@ -100,21 +100,6 @@ func InstallPlugin(
 			}
 		}
 
-		// create endpoint installation
-		if declaration.Endpoint != nil {
-			endpoint_installation := &models.EndpointInstallation{
-				PluginID:               plugin_to_be_returns.PluginID,
-				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
-				TenantID:               tenant_id,
-				Declaration:            *declaration.Endpoint,
-			}
-
-			err := db.Create(endpoint_installation, tx)
-			if err != nil {
-				return err
-			}
-		}
-
 		// create model installation
 		if declaration.Model != nil {
 			model_installation := &models.AIModelInstallation{

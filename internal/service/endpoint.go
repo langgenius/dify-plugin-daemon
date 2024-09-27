@@ -20,6 +20,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
@@ -216,14 +217,18 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
 		}
 
-		plugin, err := db.GetOne[models.Plugin](
-			db.Equal("plugin_unique_identifier", plugin_installation.PluginUniqueIdentifier),
+		plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			plugin_installation.PluginUniqueIdentifier,
 		)
 		if err != nil {
-			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
+			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
 		}
 
-		plugin_declaration := plugin.Declaration
+		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		if err != nil {
+			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to get plugin declaration: %v", err))
+		}
+
 		if plugin_declaration.Endpoint == nil {
 			return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 		}
@@ -256,6 +261,51 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 }
 
 func ListPluginEndpoints(tenant_id string, plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, page int, page_size int) *entities.Response {
-	// TODO:
-	return nil
+	endpoints, err := db.GetAll[models.Endpoint](
+		db.Equal("plugin_id", plugin_unique_identifier.PluginID()),
+		db.Equal("tenant_id", tenant_id),
+		db.OrderBy("created_at", true),
+		db.Page(page, page_size),
+	)
+	if err != nil {
+		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to list endpoints: %v", err))
+	}
+
+	manager := plugin_manager.Manager()
+	if manager == nil {
+		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+	}
+
+	// decrypt settings
+	for i, endpoint := range endpoints {
+		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		if err != nil {
+			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to get plugin declaration: %v", err))
+		}
+
+		decrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
+				TenantId: tenant_id,
+				UserId:   "",
+				Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
+			},
+			InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
+				Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
+				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
+				Identity:  endpoint.ID,
+				Data:      endpoint.GetSettings(),
+				Config:    plugin_declaration.Endpoint.Settings,
+			},
+		})
+		if err != nil {
+			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
+		}
+
+		endpoint.SetSettings(decrypted_settings)
+		endpoint.Declaration = plugin_declaration.Endpoint
+
+		endpoints[i] = endpoint
+	}
+
+	return entities.NewSuccessResponse(endpoints)
 }

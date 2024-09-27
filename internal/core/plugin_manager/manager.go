@@ -112,7 +112,6 @@ func (p *PluginManager) GetAsset(id string) ([]byte, error) {
 }
 
 func (p *PluginManager) Init(configuration *app.Config) {
-	// TODO: init plugin manager
 	log.Info("start plugin manager daemon...")
 
 	// init redis client

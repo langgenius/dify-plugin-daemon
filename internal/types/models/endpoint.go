@@ -7,14 +7,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
-type EndpointInstallation struct {
-	Model
-	TenantID               string                                      `json:"tenant_id" gorm:"column:tenant_id;type:uuid;index;not null"`
-	PluginUniqueIdentifier string                                      `json:"plugin_unique_identifier" gorm:"index;size:127"`
-	PluginID               string                                      `json:"plugin_id" gorm:"index;size:127"`
-	Declaration            plugin_entities.EndpointProviderDeclaration `json:"declaration" gorm:"serializer:json;type:text;size:65535;not null"`
-}
-
 // HookID is a pointer to plugin id and tenant id, using it to identify the endpoint plugin
 type Endpoint struct {
 	Model

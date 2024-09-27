@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 )
 
@@ -29,24 +30,21 @@ func SetupEndpoint(
 	}
 
 	// try get plugin
-	plugin, err := db.GetOne[models.Plugin](
-		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
-	)
+	plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}
 
-	declaration := plugin.Declaration
-	if !declaration.Resource.Permission.AllowRegisterEndpoint() {
+	if !plugin_declaration.Resource.Permission.AllowRegisterEndpoint() {
 		return entities.NewErrorResponse(-403, "permission denied")
 	}
 
-	if declaration.Endpoint == nil {
+	if plugin_declaration.Endpoint == nil {
 		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 	}
 
 	// check settings
-	if err := plugin_entities.ValidateProviderConfigs(settings, declaration.Endpoint.Settings); err != nil {
+	if err := plugin_entities.ValidateProviderConfigs(settings, plugin_declaration.Endpoint.Settings); err != nil {
 		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
 	}
 
@@ -79,7 +77,7 @@ func SetupEndpoint(
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      settings,
-				Config:    declaration.Endpoint.Settings,
+				Config:    plugin_declaration.Endpoint.Settings,
 			},
 		},
 	)
@@ -152,15 +150,20 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
 	}
 
-	// get plugin
-	plugin, err := db.GetOne[models.Plugin](
-		db.Equal("plugin_unique_identifier", installation.PluginUniqueIdentifier),
+	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+		installation.PluginUniqueIdentifier,
 	)
+	if err != nil {
+		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
+	}
+
+	// get plugin
+	plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}
 
-	if plugin.Declaration.Endpoint == nil {
+	if plugin_declaration.Endpoint == nil {
 		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 	}
 
@@ -182,7 +185,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  installation.ID,
 				Data:      endpoint.GetSettings(),
-				Config:    plugin.Declaration.Endpoint.Settings,
+				Config:    plugin_declaration.Endpoint.Settings,
 			},
 		},
 	)
@@ -190,7 +193,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
 	}
 
-	masked_settings := encryption.MaskConfigCredentials(original_settings, plugin.Declaration.Endpoint.Settings)
+	masked_settings := encryption.MaskConfigCredentials(original_settings, plugin_declaration.Endpoint.Settings)
 
 	// check if settings is changed, replace the value is the same as masked_settings
 	for setting_name, value := range settings {
@@ -200,7 +203,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 	}
 
 	// check settings
-	if err := plugin_entities.ValidateProviderConfigs(settings, plugin.Declaration.Endpoint.Settings); err != nil {
+	if err := plugin_entities.ValidateProviderConfigs(settings, plugin_declaration.Endpoint.Settings); err != nil {
 		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
 	}
 
@@ -217,7 +220,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      settings,
-				Config:    plugin.Declaration.Endpoint.Settings,
+				Config:    plugin_declaration.Endpoint.Settings,
 			},
 		},
 	)
