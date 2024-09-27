@@ -200,5 +200,5 @@ func UpdateEndpoint(endpoint *models.Endpoint, settings map[string]any) error {
 
 	endpoint.Settings = string(settings_json)
 
-	return db.Update(endpoint, nil)
+	return db.Update(endpoint)
 }

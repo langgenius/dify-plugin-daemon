@@ -43,7 +43,14 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 		}()
 		go func() {
 			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
-				p.fullDuplexLifetime(rpr)
+				routine.Submit(func() {
+					defer func() {
+						if err := recover(); err != nil {
+							log.Error("plugin runtime error: %v", err)
+						}
+					}()
+					p.fullDuplexLifetime(rpr)
+				})
 			})
 		}()
 	}
