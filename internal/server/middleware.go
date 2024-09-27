@@ -1,13 +1,14 @@
 package server
 
 import (
-	"bytes"
 	"io"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
@@ -24,35 +25,48 @@ func CheckingKey(key string) gin.HandlerFunc {
 	}
 }
 
-type ginContextReader struct {
-	reader *bytes.Reader
-}
+func (app *App) FetchPluginInstallation() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		plugin_id := ctx.Request.Header.Get(constants.X_PLUGIN_ID)
+		if plugin_id == "" {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, plugin_id is required"})
+			return
+		}
 
-func (g *ginContextReader) Read(p []byte) (n int, err error) {
-	return g.reader.Read(p)
-}
+		// fetch plugin installation
+		installation, err := db.GetOne[models.PluginInstallation](
+			db.Equal("plugin_id", plugin_id),
+		)
+		if err != nil {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
+			return
+		}
 
-func (g *ginContextReader) Close() error {
-	return nil
+		identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+		if err != nil {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
+			return
+		}
+
+		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, installation)
+		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
+		ctx.Next()
+	}
 }
 
 // RedirectPluginInvoke redirects the request to the correct cluster node
 func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// get plugin identity
-		raw, err := ctx.GetRawData()
-		if err != nil {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request"})
+		// get plugin unique identifier
+		identity_any, ok := ctx.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
+		if !ok {
+			ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error, plugin unique identifier not found"})
 			return
 		}
 
-		ctx.Request.Body = &ginContextReader{
-			reader: bytes.NewReader(raw),
-		}
-
-		identity, err := plugin_entities.NewPluginUniqueIdentifier(ctx.Request.Header.Get(constants.X_PLUGIN_IDENTIFIER))
-		if err != nil {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
+		identity, ok := identity_any.(plugin_entities.PluginUniqueIdentifier)
+		if !ok {
+			ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error, failed to parse plugin unique identifier"})
 			return
 		}
 
@@ -119,7 +133,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 
 func (app *App) InitClusterID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Set("cluster_id", app.cluster.ID())
+		ctx.Set(constants.CONTEXT_KEY_CLUSTER_ID, app.cluster.ID())
 		ctx.Next()
 	}
 }

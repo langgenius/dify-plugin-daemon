@@ -30,24 +30,27 @@ func BindRequest[T any](r *gin.Context, success func(T)) {
 	success(request)
 }
 
-func BindRequestWithPluginUniqueIdentifier[T any](r *gin.Context, success func(
-	T, plugin_entities.PluginUniqueIdentifier,
+func BindPluginDispatchRequest[T any](r *gin.Context, success func(
+	plugin_entities.InvokePluginRequest[T],
 )) {
-	BindRequest(r, func(req T) {
-		plugin_unique_identifier := r.GetHeader(constants.X_PLUGIN_IDENTIFIER)
-		if plugin_unique_identifier == "" {
+	BindRequest(r, func(req plugin_entities.InvokePluginRequest[T]) {
+		plugin_unique_identifier_any, exists := r.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
+		if !exists {
 			resp := entities.NewErrorResponse(-400, "Plugin unique identifier is required")
 			r.JSON(400, resp)
 			return
 		}
 
-		identifier, err := plugin_entities.NewPluginUniqueIdentifier(plugin_unique_identifier)
-		if err != nil {
-			resp := entities.NewErrorResponse(-400, err.Error())
+		plugin_unique_identifier, ok := plugin_unique_identifier_any.(plugin_entities.PluginUniqueIdentifier)
+		if !ok {
+			resp := entities.NewErrorResponse(-400, "Plugin unique identifier is required")
 			r.JSON(400, resp)
 			return
 		}
 
-		success(req, identifier)
+		// set plugin unique identifier
+		req.UniqueIdentifier = plugin_unique_identifier
+
+		success(req)
 	})
 }

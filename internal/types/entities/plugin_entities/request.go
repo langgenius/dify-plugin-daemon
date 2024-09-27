@@ -6,12 +6,13 @@ type InvokePluginUserIdentity struct {
 }
 
 type BasePluginIdentifier struct {
-	PluginUniqueIdentifier PluginUniqueIdentifier `json:"plugin_unique_identifier"`
+	PluginID string `json:"plugin_id"`
 }
 
 type InvokePluginRequest[T any] struct {
 	InvokePluginUserIdentity
 	BasePluginIdentifier
 
-	Data T `json:"data" validate:"required"`
+	UniqueIdentifier PluginUniqueIdentifier `json:"unique_identifier"`
+	Data             T                      `json:"data" validate:"required"`
 }

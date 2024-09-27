@@ -24,7 +24,10 @@ func createSession[T any](
 	if manager == nil {
 		return nil, errors.New("failed to get plugin manager")
 	}
-	runtime := manager.Get(r.PluginUniqueIdentifier)
+
+	// try fetch plugin identifier from plugin id
+
+	runtime := manager.Get(r.UniqueIdentifier)
 	if runtime == nil {
 		return nil, errors.New("failed to get plugin runtime")
 	}
@@ -33,7 +36,7 @@ func createSession[T any](
 		session_manager.NewSessionPayload{
 			TenantID:               r.TenantId,
 			UserID:                 r.UserId,
-			PluginUniqueIdentifier: r.PluginUniqueIdentifier,
+			PluginUniqueIdentifier: r.UniqueIdentifier,
 			ClusterID:              cluster_id,
 			InvokeFrom:             access_type,
 			Action:                 access_action,

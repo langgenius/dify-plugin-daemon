@@ -12,7 +12,7 @@ func InvokeTool(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeTool]
 
 	return func(c *gin.Context) {
-		BindRequest(
+		BindPluginDispatchRequest(
 			c,
 			func(itr request) {
 				service.InvokeTool(&itr, c, config.PluginMaxExecutionTimeout)
@@ -25,7 +25,7 @@ func ValidateToolCredentials(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestValidateToolCredentials]
 
 	return func(c *gin.Context) {
-		BindRequest(
+		BindPluginDispatchRequest(
 			c,
 			func(itr request) {
 				service.ValidateToolCredentials(&itr, c, config.PluginMaxExecutionTimeout)

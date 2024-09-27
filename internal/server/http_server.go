@@ -52,6 +52,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(app.FetchPluginInstallation())
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 

@@ -54,7 +54,9 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 		return
 	}
 
-	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier)
+	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+		plugin_installation.PluginUniqueIdentifier,
+	)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid plugin unique identifier"})
 		return
