@@ -1,6 +1,8 @@
 package plugin_entities
 
 import (
+	"errors"
+
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -212,4 +214,132 @@ func init() {
 			return t
 		},
 	)
+}
+
+// ValidateProviderConfigs validates the provider configs
+func ValidateProviderConfigs(settings map[string]any, configs map[string]ProviderConfig) error {
+	if len(settings) > 64 {
+		return errors.New("too many setting fields")
+	}
+
+	for config_name, config := range configs {
+		v, ok := settings[config_name]
+		if (!ok || v == nil) && config.Required {
+			return errors.New("missing required setting: " + config_name)
+		}
+
+		if !ok || v == nil {
+			continue
+		}
+
+		// check type
+		switch config.Type {
+		case CONFIG_TYPE_TEXT_INPUT:
+			if _, ok := v.(string); !ok {
+				return errors.New("setting " + config_name + " is not a string")
+			}
+		case CONFIG_TYPE_SECRET_INPUT:
+			if _, ok := v.(string); !ok {
+				return errors.New("setting " + config_name + " is not a string")
+			}
+		case CONFIG_TYPE_SELECT:
+			if _, ok := v.(string); !ok {
+				return errors.New("setting " + config_name + " is not a string")
+			}
+			// check if value is in options
+			found := false
+			for _, option := range config.Options {
+				if v == option.Value {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return errors.New("setting " + config_name + " is not a valid option")
+			}
+		case CONFIG_TYPE_BOOLEAN:
+			if _, ok := v.(bool); !ok {
+				return errors.New("setting " + config_name + " is not a boolean")
+			}
+		case CONFIG_TYPE_APP_SELECTOR:
+			m, ok := v.(map[string]any)
+			if !ok {
+				return errors.New("setting " + config_name + " is not a map")
+			}
+			// check keys
+			if _, ok := m["app_id"]; !ok {
+				return errors.New("setting " + config_name + " is missing app_id")
+			}
+		case CONFIG_TYPE_MODEL_SELECTOR:
+			m, ok := v.(map[string]any)
+			if !ok {
+				return errors.New("setting " + config_name + " is not a map")
+			}
+			// check keys
+			if _, ok := m["provider"]; !ok {
+				return errors.New("setting " + config_name + " is missing provider")
+			}
+			if _, ok := m["model"]; !ok {
+				return errors.New("setting " + config_name + " is missing model")
+			}
+			if _, ok := m["model_type"]; !ok {
+				return errors.New("setting " + config_name + " is missing model_type")
+			}
+			// check scope
+			if config.Scope != nil {
+				switch *config.Scope {
+				case string(MODEL_CONFIG_SCOPE_ALL):
+					// do nothing
+				case string(MODEL_CONFIG_SCOPE_LLM):
+					// completion_params
+					if _, ok := m["completion_params"]; !ok {
+						return errors.New("setting " + config_name + " is missing completion_params")
+					}
+				case string(MODEL_CONFIG_SCOPE_TEXT_EMBEDDING):
+					// do nothing
+				case string(MODEL_CONFIG_SCOPE_RERANK):
+					// score_threshold, top_n
+					if _, ok := m["score_threshold"]; !ok {
+						return errors.New("setting " + config_name + " is missing score_threshold")
+					}
+					if _, ok := m["top_n"]; !ok {
+						return errors.New("setting " + config_name + " is missing top_n")
+					}
+				case string(MODEL_CONFIG_SCOPE_TTS):
+					// voice
+					if _, ok := m["voice"]; !ok {
+						return errors.New("setting " + config_name + " is missing voice")
+					}
+				case string(MODEL_CONFIG_SCOPE_SPEECH2TEXT):
+					// do nothing
+				case string(MODEL_CONFIG_SCOPE_MODERATION):
+					// do nothing
+				case string(MODEL_CONFIG_SCOPE_VISION):
+					// the same as llm
+					if _, ok := m["completion_params"]; !ok {
+						return errors.New("setting " + config_name + " is missing completion_params")
+					}
+				default:
+					return errors.New("setting " + config_name + " is not a valid model config scope")
+				}
+			}
+		case CONFIG_TYPE_TOOL_SELECTOR:
+			m, ok := v.(map[string]any)
+			if !ok {
+				return errors.New("setting " + config_name + " is not a map")
+			}
+			// check keys
+			if _, ok := m["provider"]; !ok {
+				return errors.New("setting " + config_name + " is missing provider")
+			}
+			if _, ok := m["tool"]; !ok {
+				return errors.New("setting " + config_name + " is missing tool")
+			}
+			if _, ok := m["tool_type"]; !ok {
+				return errors.New("setting " + config_name + " is missing tool_type")
+			}
+		}
+	}
+
+	return nil
 }
