@@ -176,12 +176,73 @@ func (m *MockedDifyInvocation) InvokeTool(payload *dify_invocation.InvokeToolReq
 func (m *MockedDifyInvocation) InvokeApp(payload *dify_invocation.InvokeAppRequest) (*stream.Stream[map[string]any], error) {
 	stream := stream.NewStream[map[string]any](5)
 	routine.Submit(func() {
-		for i := 0; i < 10; i++ {
-			stream.Write(map[string]any{
-				// TODO
-			})
-			time.Sleep(100 * time.Millisecond)
-		}
+		stream.Write(map[string]any{
+			"event":           "agent_message",
+			"message_id":      "5ad4cb98-f0c7-4085-b384-88c403be6290",
+			"conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
+			"answer":          "なんで",
+			"created_at":      time.Now().Unix(),
+		})
+		time.Sleep(100 * time.Millisecond)
+		stream.Write(map[string]any{
+			"event":           "agent_message",
+			"message_id":      "5ad4cb98-f0c7-4085-b384-88c403be6290",
+			"conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
+			"answer":          "春日影",
+			"created_at":      time.Now().Unix(),
+		})
+		time.Sleep(100 * time.Millisecond)
+		stream.Write(map[string]any{
+			"event":           "agent_message",
+			"message_id":      "5ad4cb98-f0c7-4085-b384-88c403be6290",
+			"conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
+			"answer":          "やったの",
+			"created_at":      time.Now().Unix(),
+		})
+		time.Sleep(100 * time.Millisecond)
+		stream.Write(map[string]any{
+			"event":           "message_end",
+			"id":              "5e52ce04-874b-4d27-9045-b3bc80def685",
+			"conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
+			"created_at":      time.Now().Unix(),
+			"metadata": map[string]any{
+				"retriever_resources": []map[string]any{
+					{
+						"position":      1,
+						"dataset_id":    "101b4c97-fc2e-463c-90b1-5261a4cdcafb",
+						"dataset_name":  "あなた",
+						"document_id":   "8dd1ad74-0b5f-4175-b735-7d98bbbb4e00",
+						"document_name": "ご自分のことばかりですのね",
+						"score":         0.98457545,
+						"content":       "CRYCHICは壊れてしまいましたわ",
+					},
+				},
+				"usage": map[string]any{
+					"prompt_tokens":         1033,
+					"prompt_unit_price":     "0.001",
+					"prompt_price_unit":     "0.001",
+					"prompt_price":          "0.0010330",
+					"completion_tokens":     135,
+					"completion_unit_price": "0.002",
+					"completion_price_unit": "0.001",
+					"completion_price":      "0.0002700",
+					"total_tokens":          1168,
+					"total_price":           "0.0013030",
+					"currency":              "USD",
+					"latency":               1.381760165997548,
+				},
+			},
+		})
+		time.Sleep(100 * time.Millisecond)
+		stream.Write(map[string]any{
+			"event":           "message_file",
+			"id":              "5e52ce04-874b-4d27-9045-b3bc80def685",
+			"conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
+			"belongs_to":      "assistant",
+			"url":             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+			"created_at":      time.Now().Unix(),
+		})
+		time.Sleep(100 * time.Millisecond)
 		stream.Close()
 	})
 	return stream, nil
@@ -192,17 +253,63 @@ func (m *MockedDifyInvocation) InvokeEncrypt(payload *dify_invocation.InvokeEncr
 }
 
 func (m *MockedDifyInvocation) InvokeParameterExtractor(payload *dify_invocation.InvokeParameterExtractorRequest) (*dify_invocation.InvokeNodeResponse, error) {
-	return &dify_invocation.InvokeNodeResponse{
+	resp := &dify_invocation.InvokeNodeResponse{
 		ProcessData: map[string]any{},
 		Outputs:     map[string]any{},
-		Inputs:      map[string]any{},
-	}, nil
+		Inputs: map[string]any{
+			"query": payload.Query,
+		},
+	}
+
+	for _, parameter := range payload.Parameters {
+		typ := parameter.Type
+		if typ == "string" {
+			resp.Outputs[parameter.Name] = "Never gonna give you up ~"
+		} else if typ == "number" {
+			resp.Outputs[parameter.Name] = 1234567890
+		} else if typ == "bool" {
+			resp.Outputs[parameter.Name] = true
+		} else if typ == "select" {
+			options := parameter.Options
+			if len(options) == 0 {
+				resp.Outputs[parameter.Name] = "Never gonna let you down ~"
+			} else {
+				resp.Outputs[parameter.Name] = options[0]
+			}
+		} else if typ == "array[string]" {
+			resp.Outputs[parameter.Name] = []string{
+				"Never gonna run around and desert you ~",
+				"Never gonna make you cry ~",
+				"Never gonna say goodbye ~",
+				"Never gonna tell a lie and hurt you ~",
+			}
+		} else if typ == "array[number]" {
+			resp.Outputs[parameter.Name] = []int{114, 514, 1919, 810}
+		} else if typ == "array[bool]" {
+			resp.Outputs[parameter.Name] = []bool{true, false, true, false, true, false, true, false, true, false}
+		} else if typ == "array[object]" {
+			resp.Outputs[parameter.Name] = []map[string]any{
+				{
+					"name": "お願い",
+					"age":  55555,
+				},
+				{
+					"name": "何でもするがら",
+					"age":  99999,
+				},
+			}
+		}
+	}
+
+	return resp, nil
 }
 
 func (m *MockedDifyInvocation) InvokeQuestionClassifier(payload *dify_invocation.InvokeQuestionClassifierRequest) (*dify_invocation.InvokeNodeResponse, error) {
 	return &dify_invocation.InvokeNodeResponse{
 		ProcessData: map[string]any{},
-		Outputs:     map[string]any{},
-		Inputs:      map[string]any{},
+		Outputs: map[string]any{
+			"class_name": payload.Classes[0].Name,
+		},
+		Inputs: map[string]any{},
 	}, nil
 }
