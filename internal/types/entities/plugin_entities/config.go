@@ -66,7 +66,7 @@ func isCredentialType(fl validator.FieldLevel) bool {
 }
 
 type ConfigOption struct {
-	Value string     `json:"value" validate:"required"`
+	Value string     `json:"value" validate:"required,lt=128"`
 	Label I18nObject `json:"label" validate:"required"`
 }
 
@@ -190,7 +190,7 @@ type ProviderConfig struct {
 	Scope       *string        `json:"scope" validate:"omitempty,is_scope"`
 	Required    bool           `json:"required"`
 	Default     any            `json:"default" validate:"omitempty,is_basic_type"`
-	Options     []ConfigOption `json:"options" validate:"omitempty,dive"`
+	Options     []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
 	Label       I18nObject     `json:"label" validate:"required"`
 	Helper      *I18nObject    `json:"helper" validate:"omitempty"`
 	URL         *string        `json:"url" validate:"omitempty"`
