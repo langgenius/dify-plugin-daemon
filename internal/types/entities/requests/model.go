@@ -95,39 +95,46 @@ type RequestInvokeModeration struct {
 }
 
 type RequestValidateProviderCredentials struct {
-	Provider    string         `json:"provider" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Credentials
+
+	Provider string `json:"provider" validate:"required"`
 }
 
 type RequestValidateModelCredentials struct {
-	Provider    string                   `json:"provider" validate:"required"`
-	ModelType   model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
-	Model       string                   `json:"model" validate:"required"`
-	Credentials map[string]any           `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	BaseRequestInvokeModel
+	Credentials
+
+	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
 }
 
 type RequestGetTTSModelVoices struct {
-	Model       string         `json:"model" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
-	Language    string         `json:"language" validate:"omitempty"`
+	BaseRequestInvokeModel
+	Credentials
+
+	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type,eq=tts"`
+	Language  string                   `json:"language" validate:"omitempty"`
 }
 
 type RequestGetTextEmbeddingNumTokens struct {
-	Model       string         `json:"model" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
-	Texts       []string       `json:"texts" validate:"required,dive"`
+	BaseRequestInvokeModel
+	Credentials
+
+	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type,eq=text-embedding"`
+	Texts     []string                 `json:"texts" validate:"required,dive"`
 }
 
 type RequestGetLLMNumTokens struct {
-	Model          string                             `json:"model" validate:"required"`
-	Credentials    map[string]any                     `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	BaseRequestInvokeModel
+	Credentials
+
+	ModelType      model_entities.ModelType           `json:"model_type"  validate:"required,model_type,eq=llm"`
 	PromptMessages []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty,dive"`
 	Tools          []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
 }
 
 type RequestGetAIModelSchema struct {
-	Provider    string                   `json:"provider" validate:"required"`
-	ModelType   model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
-	Model       string                   `json:"model" validate:"required"`
-	Credentials map[string]any           `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	BaseRequestInvokeModel
+	Credentials
+
+	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
 }
