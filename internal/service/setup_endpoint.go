@@ -109,6 +109,27 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to remove endpoint: %v", err))
 	}
 
+	manager := plugin_manager.Manager()
+	if manager == nil {
+		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+	}
+
+	// clear credentials cache
+	if _, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
+			TenantId: tenant_id,
+			UserId:   "",
+			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
+		},
+		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
+			Opt:       dify_invocation.ENCRYPT_OPT_CLEAR,
+			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
+			Identity:  endpoint.ID,
+		},
+	}); err != nil {
+		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))
+	}
+
 	return entities.NewSuccessResponse(nil)
 }
 
@@ -207,6 +228,22 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 	// update endpoint
 	if err := install_service.UpdateEndpoint(&endpoint, encrypted_settings); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
+	}
+
+	// clear credentials cache
+	if _, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
+			TenantId: tenant_id,
+			UserId:   user_id,
+			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
+		},
+		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
+			Opt:       dify_invocation.ENCRYPT_OPT_CLEAR,
+			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
+			Identity:  endpoint.ID,
+		},
+	}); err != nil {
+		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))
 	}
 
 	return entities.NewSuccessResponse(nil)

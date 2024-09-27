@@ -147,11 +147,12 @@ type EncryptOpt string
 const (
 	ENCRYPT_OPT_ENCRYPT EncryptOpt = "encrypt"
 	ENCRYPT_OPT_DECRYPT EncryptOpt = "decrypt"
+	ENCRYPT_OPT_CLEAR   EncryptOpt = "clear"
 )
 
 func isEncryptOpt(fl validator.FieldLevel) bool {
 	opt := EncryptOpt(fl.Field().String())
-	return opt == ENCRYPT_OPT_ENCRYPT || opt == ENCRYPT_OPT_DECRYPT
+	return opt == ENCRYPT_OPT_ENCRYPT || opt == ENCRYPT_OPT_DECRYPT || opt == ENCRYPT_OPT_CLEAR
 }
 
 type EncryptNamespace string
