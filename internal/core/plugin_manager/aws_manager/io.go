@@ -36,7 +36,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 		l.Send(plugin_entities.SessionMessage{
 			Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 			Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-				ErrorType: "inner_error",
+				ErrorType: "PluginDaemonInnerError",
 				Message:   fmt.Sprintf("Error creating request: %v", err),
 			}),
 		})
@@ -73,7 +73,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-					ErrorType: "inner_error",
+					ErrorType: "PluginDaemonInnerError",
 					Message:   fmt.Sprintf("Error sending request to aws lambda: %v", err),
 				}),
 			})
@@ -98,7 +98,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 						l.Send(plugin_entities.SessionMessage{
 							Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 							Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-								ErrorType: "inner_error",
+								ErrorType: "PluginDaemonInnerError",
 								Message:   fmt.Sprintf("failed to parse session message %s, err: %v", bytes, err),
 							}),
 						})
@@ -111,7 +111,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 					l.Send(plugin_entities.SessionMessage{
 						Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 						Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-							ErrorType: "inner_error",
+							ErrorType: "PluginDaemonInnerError",
 							Message:   fmt.Sprintf("encountered an error: %v", err),
 						}),
 					})
@@ -124,7 +124,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-					ErrorType: "inner_error",
+					ErrorType: "PluginDaemonInnerError",
 					Message:   fmt.Sprintf("failed to read response body: %v", scanner.Err()),
 				}),
 			})
