@@ -30,7 +30,8 @@ type RequestInvokeLLM struct {
 }
 
 type InvokeTextEmbeddingSchema struct {
-	Texts []string `json:"texts" validate:"required,dive"`
+	Texts     []string `json:"texts" validate:"required,dive"`
+	InputType string   `json:"input_type" validate:"required"`
 }
 
 type RequestInvokeTextEmbedding struct {
