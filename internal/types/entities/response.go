@@ -14,12 +14,16 @@ func NewSuccessResponse(data any) *Response {
 	}
 }
 
-func NewErrorResponse(code int, message string) *Response {
-	return &Response{
+func NewErrorResponse(code int, message string, args ...any) *Response {
+	resp := &Response{
 		Code:    code,
 		Message: message,
 		Data:    nil,
 	}
+	if len(args) > 0 {
+		resp.Data = args[0]
+	}
+	return resp
 }
 
 type GenericResponse[T any] struct {

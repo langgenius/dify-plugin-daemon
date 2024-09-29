@@ -36,7 +36,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 		l.Send(plugin_entities.SessionMessage{
 			Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 			Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-				Error: fmt.Sprintf("Error creating request: %v", err),
+				ErrorType: "inner_error",
+				Message:   fmt.Sprintf("Error creating request: %v", err),
 			}),
 		})
 		l.Close()
@@ -72,7 +73,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-					Error: "failed to establish connection to plugin",
+					ErrorType: "inner_error",
+					Message:   fmt.Sprintf("Error sending request to aws lambda: %v", err),
 				}),
 			})
 			r.Error(fmt.Sprintf("Error sending request to aws lambda: %v", err))
@@ -96,7 +98,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 						l.Send(plugin_entities.SessionMessage{
 							Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 							Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-								Error: fmt.Sprintf("failed to parse session message %s, err: %v", bytes, err),
+								ErrorType: "inner_error",
+								Message:   fmt.Sprintf("failed to parse session message %s, err: %v", bytes, err),
 							}),
 						})
 						session_alive = false
@@ -108,7 +111,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 					l.Send(plugin_entities.SessionMessage{
 						Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 						Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-							Error: fmt.Sprintf("encountered an error: %v", err),
+							ErrorType: "inner_error",
+							Message:   fmt.Sprintf("encountered an error: %v", err),
 						}),
 					})
 				},
@@ -120,7 +124,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-					Error: fmt.Sprintf("failed to read response body: %v", scanner.Err()),
+					ErrorType: "inner_error",
+					Message:   fmt.Sprintf("failed to read response body: %v", scanner.Err()),
 				}),
 			})
 		}

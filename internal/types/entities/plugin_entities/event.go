@@ -83,11 +83,16 @@ const (
 	SESSION_MESSAGE_TYPE_INVOKE SESSION_MESSAGE_TYPE = "invoke"
 )
 
-type PluginResponseChunk struct {
-	Type string          `json:"type"`
-	Data json.RawMessage `json:"data"`
+type ErrorResponse struct {
+	Message   string         `json:"message"`
+	ErrorType string         `json:"error_type"`
+	Args      map[string]any `json:"args" validate:"omitempty,max=10"` // max 10 args
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
+func (e *ErrorResponse) Error() string {
+	return parser.MarshalJson(map[string]any{
+		"message":    e.Message,
+		"error_type": e.ErrorType,
+		"args":       e.Args,
+	})
 }

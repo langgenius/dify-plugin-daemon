@@ -2,6 +2,7 @@ package plugin_daemon
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
@@ -31,14 +32,22 @@ func GenericInvokePlugin[Req any, Rsp any](
 			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
 			if err != nil {
 				log.Error("unmarshal json failed: %s", err.Error())
-				response.WriteError(err)
+				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
+					"error_type": "unmarshal_error",
+					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
+				})))
+				response.Close()
+				return
 			} else {
 				response.Write(chunk)
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
 			// check if the request contains a aws_event_id
 			if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_AWS {
-				response.WriteError(errors.New("aws event is not supported by full duplex"))
+				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
+					"error_type": "aws_event_not_supported",
+					"message":    "aws event is not supported by full duplex",
+				})))
 				response.Close()
 				return
 			}
@@ -49,7 +58,11 @@ func GenericInvokePlugin[Req any, Rsp any](
 				transaction.NewFullDuplexEventWriter(session),
 				chunk.Data,
 			); err != nil {
-				log.Error("invoke dify failed: %s", err.Error())
+				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
+					"error_type": "invoke_dify_error",
+					"message":    fmt.Sprintf("invoke dify failed: %s", err.Error()),
+				})))
+				response.Close()
 				return
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_END:
@@ -59,10 +72,13 @@ func GenericInvokePlugin[Req any, Rsp any](
 			if err != nil {
 				break
 			}
-			response.WriteError(errors.New(e.Error))
+			response.WriteError(errors.New(e.Error()))
 			response.Close()
 		default:
-			response.WriteError(errors.New("unknown stream message type: " + string(chunk.Type)))
+			response.WriteError(errors.New(parser.MarshalJson(map[string]string{
+				"error_type": "unknown_stream_message_type",
+				"message":    "unknown stream message type: " + string(chunk.Type),
+			})))
 			response.Close()
 		}
 	})
