@@ -119,6 +119,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/list", gzip.Gzip(gzip.DefaultCompression), controllers.ListPlugins)
 	group.GET("/models", gzip.Gzip(gzip.DefaultCompression), controllers.ListModels)
 	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
+	group.GET("/tool", gzip.Gzip(gzip.DefaultCompression), controllers.GetTool)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {

@@ -88,3 +88,21 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 
 	return entities.NewSuccessResponse(providers)
 }
+
+func GetTool(tenant_id string, plugin_id string, provider string) *entities.Response {
+	// try get tool
+	tool, err := db.GetOne[models.ToolInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_id", plugin_id),
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	if tool.Provider != provider {
+		return entities.NewErrorResponse(-404, "tool not found")
+	}
+
+	return entities.NewSuccessResponse(tool)
+}
