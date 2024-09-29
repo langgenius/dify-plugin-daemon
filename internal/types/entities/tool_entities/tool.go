@@ -2,6 +2,7 @@ package tool_entities
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
 
@@ -45,4 +46,8 @@ func init() {
 type ToolResponseChunk struct {
 	Type    ToolResponseChunkType `json:"type" validate:"required,is_valid_tool_response_chunk_type"`
 	Message map[string]any        `json:"message"`
+}
+
+type GetToolRuntimeParametersResponse struct {
+	Parameters []plugin_entities.ToolParameter `json:"parameters"`
 }

@@ -19,6 +19,7 @@ type PluginAccessAction string
 const (
 	PLUGIN_ACCESS_ACTION_INVOKE_TOOL                   PluginAccessAction = "invoke_tool"
 	PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS     PluginAccessAction = "validate_tool_credentials"
+	PLUGIN_ACCESS_ACTION_GET_TOOL_RUNTIME_PARAMETERS   PluginAccessAction = "get_tool_runtime_parameters"
 	PLUGIN_ACCESS_ACTION_INVOKE_LLM                    PluginAccessAction = "invoke_llm"
 	PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING         PluginAccessAction = "invoke_text_embedding"
 	PLUGIN_ACCESS_ACTION_INVOKE_RERANK                 PluginAccessAction = "invoke_rerank"
@@ -37,6 +38,7 @@ const (
 func (p PluginAccessAction) IsValid() bool {
 	return p == PLUGIN_ACCESS_ACTION_INVOKE_TOOL ||
 		p == PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS ||
+		p == PLUGIN_ACCESS_ACTION_GET_TOOL_RUNTIME_PARAMETERS ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_LLM ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_RERANK ||

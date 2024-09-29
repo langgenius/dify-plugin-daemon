@@ -107,3 +107,32 @@ func ValidateToolCredentials(
 		max_timeout_seconds,
 	)
 }
+
+func GetToolRuntimeParameters(
+	r *plugin_entities.InvokePluginRequest[requests.RequestGetToolRuntimeParameters],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	// create session
+	session, err := createSession(
+		r,
+		access_types.PLUGIN_ACCESS_TYPE_TOOL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_TOOL_RUNTIME_PARAMETERS,
+		ctx.GetString("cluster_id"),
+	)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	defer session.Close(session_manager.CloseSessionPayload{
+		IgnoreCache: false,
+	})
+
+	baseSSEService(
+		func() (*stream.Stream[tool_entities.GetToolRuntimeParametersResponse], error) {
+			return plugin_daemon.GetToolRuntimeParameters(session, &r.Data)
+		},
+		ctx,
+		max_timeout_seconds,
+	)
+}

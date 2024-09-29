@@ -36,6 +36,18 @@ func ValidateToolCredentials(config *app.Config) gin.HandlerFunc {
 	}
 }
 
+func GetToolRuntimeParameters(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetToolRuntimeParameters]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(
+			c,
+			func(itr request) {
+				service.GetToolRuntimeParameters(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
 func ListTools(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`

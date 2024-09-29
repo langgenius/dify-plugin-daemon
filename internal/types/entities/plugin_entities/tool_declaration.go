@@ -96,10 +96,11 @@ type ToolDescription struct {
 type ToolOutputSchema map[string]any
 
 type ToolDeclaration struct {
-	Identity     ToolIdentity     `json:"identity" validate:"required"`
-	Description  ToolDescription  `json:"description" validate:"required"`
-	Parameters   []ToolParameter  `json:"parameters" validate:"omitempty,dive"`
-	OutputSchema ToolOutputSchema `json:"output_schema" validate:"omitempty,json_schema"`
+	Identity             ToolIdentity     `json:"identity" validate:"required"`
+	Description          ToolDescription  `json:"description" validate:"required"`
+	Parameters           []ToolParameter  `json:"parameters" validate:"omitempty,dive"`
+	OutputSchema         ToolOutputSchema `json:"output_schema" validate:"omitempty,json_schema"`
+	HasRuntimeParameters bool             `json:"has_runtime_parameters"`
 }
 
 func isJSONSchema(fl validator.FieldLevel) bool {

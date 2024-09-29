@@ -131,3 +131,16 @@ func ValidateToolCredentials(
 		1,
 	)
 }
+
+func GetToolRuntimeParameters(
+	session *session_manager.Session,
+	request *requests.RequestGetToolRuntimeParameters,
+) (
+	*stream.Stream[tool_entities.GetToolRuntimeParametersResponse], error,
+) {
+	return GenericInvokePlugin[requests.RequestGetToolRuntimeParameters, tool_entities.GetToolRuntimeParametersResponse](
+		session,
+		request,
+		1,
+	)
+}
