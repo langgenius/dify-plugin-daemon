@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	// mode is only used for testing
 	_mode pluginRuntimeMode
 )
 
