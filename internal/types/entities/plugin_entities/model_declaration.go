@@ -1,12 +1,15 @@
 package plugin_entities
 
 import (
+	"encoding/json"
+
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/shopspring/decimal"
+	"gopkg.in/yaml.v3"
 )
 
 type ModelType string
@@ -75,17 +78,17 @@ func isModelParameterType(fl validator.FieldLevel) bool {
 }
 
 type ModelParameterRule struct {
-	Name        string              `json:"name" validate:"required,lt=256"`
-	UseTemplate *string             `json:"use_template" validate:"omitempty,lt=256"`
-	Label       *I18nObject         `json:"label" validate:"omitempty"`
-	Type        *ModelParameterType `json:"type" validate:"omitempty,model_parameter_type"`
-	Help        *I18nObject         `json:"help" validate:"omitempty"`
-	Required    bool                `json:"required"`
-	Default     *any                `json:"default" validate:"omitempty,is_basic_type"`
-	Min         *float64            `json:"min" validate:"omitempty"`
-	Max         *float64            `json:"max" validate:"omitempty"`
-	Precision   *int                `json:"precision" validate:"omitempty"`
-	Options     []string            `json:"options" validate:"omitempty,dive,lt=256"`
+	Name        string              `json:"name" yaml:"name" validate:"required,lt=256"`
+	UseTemplate *string             `json:"use_template" yaml:"use_template" validate:"omitempty,lt=256"`
+	Label       *I18nObject         `json:"label" yaml:"label" validate:"omitempty"`
+	Type        *ModelParameterType `json:"type" yaml:"type" validate:"omitempty,model_parameter_type"`
+	Help        *I18nObject         `json:"help" yaml:"help" validate:"omitempty"`
+	Required    bool                `json:"required" yaml:"required"`
+	Default     *any                `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Min         *float64            `json:"min" yaml:"min" validate:"omitempty"`
+	Max         *float64            `json:"max" yaml:"max" validate:"omitempty"`
+	Precision   *int                `json:"precision" yaml:"precision" validate:"omitempty"`
+	Options     []string            `json:"options" yaml:"options" validate:"omitempty,dive,lt=256"`
 }
 
 func isParameterRule(fl validator.FieldLevel) bool {
@@ -117,15 +120,15 @@ type ModelPriceConfig struct {
 }
 
 type ModelDeclaration struct {
-	Model           string                         `json:"model" validate:"required,lt=256"`
-	Label           I18nObject                     `json:"label" validate:"required"`
-	ModelType       ModelType                      `json:"model_type" validate:"required,model_type"`
-	Features        []string                       `json:"features" validate:"omitempty,lte=256,dive,lt=256"`
-	FetchFrom       ModelProviderConfigurateMethod `json:"fetch_from" validate:"omitempty,model_provider_configurate_method"`
-	ModelProperties map[string]any                 `json:"model_properties" validate:"omitempty,dive,is_basic_type"`
-	Deprecated      bool                           `json:"deprecated"`
-	ParameterRules  []ModelParameterRule           `json:"parameter_rules" validate:"omitempty,lte=128,dive,parameter_rule"`
-	PriceConfig     *ModelPriceConfig              `json:"pricing" validate:"omitempty"`
+	Model           string                         `json:"model" yaml:"model" validate:"required,lt=256"`
+	Label           I18nObject                     `json:"label" yaml:"label" validate:"required"`
+	ModelType       ModelType                      `json:"model_type" yaml:"model_type" validate:"required,model_type"`
+	Features        []string                       `json:"features" yaml:"features" validate:"omitempty,lte=256,dive,lt=256"`
+	FetchFrom       ModelProviderConfigurateMethod `json:"fetch_from" yaml:"fetch_from" validate:"omitempty,model_provider_configurate_method"`
+	ModelProperties map[string]any                 `json:"model_properties" yaml:"model_properties" validate:"omitempty,dive,is_basic_type"`
+	Deprecated      bool                           `json:"deprecated" yaml:"deprecated"`
+	ParameterRules  []ModelParameterRule           `json:"parameter_rules" yaml:"parameter_rules" validate:"omitempty,lte=128,dive,parameter_rule"`
+	PriceConfig     *ModelPriceConfig              `json:"pricing" yaml:"pricing" validate:"omitempty"`
 }
 
 type ModelProviderFormType string
@@ -193,6 +196,15 @@ type ModelProviderHelpEntity struct {
 	URL   I18nObject `json:"url" validate:"required"`
 }
 
+type ModelPosition struct {
+	LLM           *[]string `json:"llm,omitempty" yaml:"llm,omitempty"`
+	TextEmbedding *[]string `json:"text_embedding,omitempty" yaml:"text_embedding,omitempty"`
+	Rerank        *[]string `json:"rerank,omitempty" yaml:"rerank,omitempty"`
+	TTS           *[]string `json:"tts,omitempty" yaml:"tts,omitempty"`
+	Speech2text   *[]string `json:"speech2text,omitempty" yaml:"speech2text,omitempty"`
+	Moderation    *[]string `json:"moderation,omitempty" yaml:"moderation,omitempty"`
+}
+
 type ModelProviderDeclaration struct {
 	Provider                 string                           `json:"provider" yaml:"provider" validate:"required,lt=256"`
 	Label                    I18nObject                       `json:"label" yaml:"label" validate:"required"`
@@ -205,15 +217,126 @@ type ModelProviderDeclaration struct {
 	ConfigurateMethods       []ModelProviderConfigurateMethod `json:"configurate_methods" yaml:"configurate_methods" validate:"required,lte=16,dive,model_provider_configurate_method"`
 	ProviderCredentialSchema *ModelProviderCredentialSchema   `json:"provider_credential_schema" yaml:"provider_credential_schema,omitempty" validate:"omitempty"`
 	ModelCredentialSchema    *ModelCredentialSchema           `json:"model_credential_schema" yaml:"model_credential_schema,omitempty" validate:"omitempty"`
-	Position                 *struct {
-		LLM           *[]string `json:"llm,omitempty" yaml:"llm,omitempty"`
-		TextEmbedding *[]string `json:"text_embedding,omitempty" yaml:"text_embedding,omitempty"`
-		Rerank        *[]string `json:"rerank,omitempty" yaml:"rerank,omitempty"`
-		TTS           *[]string `json:"tts,omitempty" yaml:"tts,omitempty"`
-		Speech2text   *[]string `json:"speech2text,omitempty" yaml:"speech2text,omitempty"`
-		Moderation    *[]string `json:"moderation,omitempty" yaml:"moderation,omitempty"`
-	} `json:"position,omitempty" yaml:"position,omitempty"`
-	Models []ModelDeclaration `json:"models" yaml:"model_declarations,omitempty"`
+	Position                 *ModelPosition                   `json:"position,omitempty" yaml:"position,omitempty"`
+	Models                   []ModelDeclaration               `json:"models" yaml:"model_declarations,omitempty"`
+	ModelFiles               []string                         `json:"-" yaml:"-"`
+	PositionFiles            map[string]string                `json:"-" yaml:"-"`
+}
+
+func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
+	type alias ModelProviderDeclaration
+
+	var temp struct {
+		alias
+		Models json.RawMessage `json:"models"`
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	*m = ModelProviderDeclaration(temp.alias)
+
+	// unmarshal models into map[string]any
+	var models map[string]any
+	if err := json.Unmarshal(temp.Models, &models); err != nil {
+		// can not unmarshal it into map, so it's a list
+		if err := json.Unmarshal(temp.Models, &m.Models); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	m.PositionFiles = make(map[string]string)
+
+	types := []string{
+		"llm",
+		"text_embedding",
+		"tts",
+		"speech2text",
+		"moderation",
+		"rerank",
+	}
+
+	for _, model_type := range types {
+		model_type_map, ok := models[model_type].(map[string]any)
+		if ok {
+			model_type_position_file, ok := model_type_map["position"]
+			if ok {
+				model_type_position_file_path, ok := model_type_position_file.(string)
+				if ok {
+					m.PositionFiles[model_type] = model_type_position_file_path
+				}
+			}
+
+			model_type_predefined_files, ok := model_type_map["predefined"].([]string)
+			if ok {
+				m.ModelFiles = append(m.ModelFiles, model_type_predefined_files...)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *ModelProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
+	type alias ModelProviderDeclaration
+
+	var temp struct {
+		alias  `yaml:",inline"`
+		Models yaml.Node `yaml:"models"`
+	}
+
+	if err := value.Decode(&temp); err != nil {
+		return err
+	}
+
+	*m = ModelProviderDeclaration(temp.alias)
+
+	// Check if Models is a mapping node
+	if temp.Models.Kind == yaml.MappingNode {
+		m.PositionFiles = make(map[string]string)
+
+		types := []string{
+			"llm",
+			"text_embedding",
+			"tts",
+			"speech2text",
+			"moderation",
+			"rerank",
+		}
+
+		for i := 0; i < len(temp.Models.Content); i += 2 {
+			key := temp.Models.Content[i].Value
+			value := temp.Models.Content[i+1]
+
+			for _, model_type := range types {
+				if key == model_type {
+					if value.Kind == yaml.MappingNode {
+						for j := 0; j < len(value.Content); j += 2 {
+							if value.Content[j].Value == "position" {
+								m.PositionFiles[model_type] = value.Content[j+1].Value
+							} else if value.Content[j].Value == "predefined" {
+								// get content of predefined
+								if value.Content[j+1].Kind == yaml.SequenceNode {
+									for _, file := range value.Content[j+1].Content {
+										m.ModelFiles = append(m.ModelFiles, file.Value)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	} else if temp.Models.Kind == yaml.SequenceNode {
+		if err := temp.Models.Decode(&m.Models); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func init() {

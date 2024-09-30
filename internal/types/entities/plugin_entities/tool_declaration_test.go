@@ -376,6 +376,11 @@ tools:
 		return
 	}
 
+	if len(json_declaration.Tools) != 1 {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for JSON: incorrect Tools length")
+		return
+	}
+
 	yaml_declaration, yaml_err := parser.UnmarshalYamlBytes[ToolProviderDeclaration]([]byte(yaml_data))
 	if yaml_err != nil {
 		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML = %v", yaml_err)
@@ -384,6 +389,11 @@ tools:
 
 	if len(yaml_declaration.CredentialsSchema) != 1 {
 		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML: incorrect CredentialsSchema length")
+		return
+	}
+
+	if len(yaml_declaration.Tools) != 1 {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML: incorrect Tools length")
 		return
 	}
 }

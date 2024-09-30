@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path/filepath"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -90,11 +91,24 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool))
 		}
 
-		// TODO
-
 		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolProviderDeclaration](plugin_yaml)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", tool))
+		}
+
+		// read tools
+		for _, tool_file := range plugin_dec.ToolFiles {
+			tool_file_content, err := decoder.ReadFile(tool_file)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool_file))
+			}
+
+			tool_file_dec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolDeclaration](tool_file_content)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file: %s", tool_file))
+			}
+
+			plugin_dec.Tools = append(plugin_dec.Tools, tool_file_dec)
 		}
 
 		dec.Tool = &plugin_dec
@@ -125,6 +139,136 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		plugin_dec, err := parser.UnmarshalYamlBytes[plugin_entities.ModelProviderDeclaration](plugin_yaml)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", model))
+		}
+
+		// read model position file
+		if plugin_dec.PositionFiles != nil {
+			plugin_dec.Position = &plugin_entities.ModelPosition{}
+
+			llm_file_name, ok := plugin_dec.PositionFiles["llm"]
+			if ok {
+				llm_file, err := decoder.ReadFile(llm_file_name)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read llm position file: %s", llm_file_name))
+				}
+
+				position, err := parser.UnmarshalYamlBytes[[]string](llm_file)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal llm position file: %s", llm_file_name))
+				}
+
+				plugin_dec.Position.LLM = &position
+			}
+
+			text_embedding_file_name, ok := plugin_dec.PositionFiles["text_embedding"]
+			if ok {
+				text_embedding_file, err := decoder.ReadFile(text_embedding_file_name)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read text embedding position file: %s", text_embedding_file_name))
+				}
+
+				position, err := parser.UnmarshalYamlBytes[[]string](text_embedding_file)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal text embedding position file: %s", text_embedding_file_name))
+				}
+
+				plugin_dec.Position.TextEmbedding = &position
+			}
+
+			rerank_file_name, ok := plugin_dec.PositionFiles["rerank"]
+			if ok {
+				rerank_file, err := decoder.ReadFile(rerank_file_name)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read rerank position file: %s", rerank_file_name))
+				}
+
+				position, err := parser.UnmarshalYamlBytes[[]string](rerank_file)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal rerank position file: %s", rerank_file_name))
+				}
+
+				plugin_dec.Position.Rerank = &position
+			}
+
+			tts_file_name, ok := plugin_dec.PositionFiles["tts"]
+			if ok {
+				tts_file, err := decoder.ReadFile(tts_file_name)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tts position file: %s", tts_file_name))
+				}
+
+				position, err := parser.UnmarshalYamlBytes[[]string](tts_file)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tts position file: %s", tts_file_name))
+				}
+
+				plugin_dec.Position.TTS = &position
+			}
+
+			speech2text_file_name, ok := plugin_dec.PositionFiles["speech2text"]
+			if ok {
+				speech2text_file, err := decoder.ReadFile(speech2text_file_name)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read speech2text position file: %s", speech2text_file_name))
+				}
+
+				position, err := parser.UnmarshalYamlBytes[[]string](speech2text_file)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal speech2text position file: %s", speech2text_file_name))
+				}
+
+				plugin_dec.Position.Speech2text = &position
+			}
+
+			moderation_file_name, ok := plugin_dec.PositionFiles["moderation"]
+			if ok {
+				moderation_file, err := decoder.ReadFile(moderation_file_name)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read moderation position file: %s", moderation_file_name))
+				}
+
+				position, err := parser.UnmarshalYamlBytes[[]string](moderation_file)
+				if err != nil {
+					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal moderation position file: %s", moderation_file_name))
+				}
+
+				plugin_dec.Position.Moderation = &position
+			}
+		}
+
+		// read models
+		if err := decoder.Walk(func(filename, dir string) error {
+			model_patterns := plugin_dec.ModelFiles
+			// using glob to match if dir/filename is in models
+			model_file_name := filepath.Join(dir, filename)
+			if strings.HasSuffix(model_file_name, "_position.yaml") {
+				return nil
+			}
+
+			for _, model_pattern := range model_patterns {
+				matched, err := filepath.Match(model_pattern, model_file_name)
+				if err != nil {
+					return err
+				}
+				if matched {
+					// read model file
+					model_file, err := decoder.ReadFile(model_file_name)
+					if err != nil {
+						return err
+					}
+
+					model_dec, err := parser.UnmarshalYamlBytes[plugin_entities.ModelDeclaration](model_file)
+					if err != nil {
+						return err
+					}
+
+					plugin_dec.Models = append(plugin_dec.Models, model_dec)
+				}
+			}
+
+			return nil
+		}); err != nil {
+			return plugin_entities.PluginDeclaration{}, err
 		}
 
 		dec.Model = &plugin_dec

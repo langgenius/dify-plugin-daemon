@@ -171,14 +171,15 @@ type ToolProviderIdentity struct {
 type ToolProviderDeclaration struct {
 	Identity          ToolProviderIdentity `json:"identity" validate:"required"`
 	CredentialsSchema []ProviderConfig     `json:"credentials_schema" validate:"omitempty,dive"`
-	Tools             []ToolDeclaration    `json:"tools" validate:"required,dive"`
+	Tools             []ToolDeclaration    `validate:"required,dive"`
+	ToolFiles         []string             `json:"-"`
 }
 
 func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
 		Identity          ToolProviderIdentity `yaml:"identity"`
 		CredentialsSchema yaml.Node            `yaml:"credentials_schema"`
-		Tools             []ToolDeclaration    `yaml:"tools"`
+		Tools             yaml.Node            `yaml:"tools"`
 	}
 
 	var temp alias
@@ -190,7 +191,6 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 
 	// apply identity
 	t.Identity = temp.Identity
-	t.Tools = temp.Tools
 
 	// check if credentials_schema is a map
 	if temp.CredentialsSchema.Kind != yaml.MappingNode {
@@ -201,7 +201,7 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		}
 		t.CredentialsSchema = credentials_schema
 	} else if temp.CredentialsSchema.Kind == yaml.MappingNode {
-		credentials_schema := make([]ProviderConfig, 0)
+		credentials_schema := make([]ProviderConfig, 0, len(temp.CredentialsSchema.Content)/2)
 		current_key := ""
 		current_value := &ProviderConfig{}
 		for _, item := range temp.CredentialsSchema.Content {
@@ -217,8 +217,21 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 			}
 		}
 		t.CredentialsSchema = credentials_schema
-	} else {
-		return fmt.Errorf("invalid credentials_schema type: %v", temp.CredentialsSchema.Kind)
+	}
+
+	// unmarshal tools
+	if temp.Tools.Kind == yaml.SequenceNode {
+		for _, item := range temp.Tools.Content {
+			if item.Kind == yaml.ScalarNode {
+				t.ToolFiles = append(t.ToolFiles, item.Value)
+			} else if item.Kind == yaml.MappingNode {
+				tool := ToolDeclaration{}
+				if err := item.Decode(&tool); err != nil {
+					return err
+				}
+				t.Tools = append(t.Tools, tool)
+			}
+		}
 	}
 
 	return nil
@@ -229,7 +242,8 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 
 	var temp struct {
 		alias
-		CredentialsSchema json.RawMessage `json:"credentials_schema"`
+		CredentialsSchema json.RawMessage   `json:"credentials_schema"`
+		Tools             []json.RawMessage `json:"tools"`
 	}
 
 	if err := json.Unmarshal(data, &temp); err != nil {
@@ -256,6 +270,17 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("failed to unmarshal credentials_schema as array: %v", err)
 		}
 		t.CredentialsSchema = credentials_schema_array
+	}
+
+	// unmarshal tools
+	for _, item := range temp.Tools {
+		tool := ToolDeclaration{}
+		if err := json.Unmarshal(item, &tool); err != nil {
+			// try to unmarshal it as a string directly
+			t.ToolFiles = append(t.ToolFiles, string(item))
+		} else {
+			t.Tools = append(t.Tools, tool)
+		}
 	}
 
 	return nil
