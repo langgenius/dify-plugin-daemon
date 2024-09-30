@@ -13,15 +13,17 @@ func SetupEndpoint(ctx *gin.Context) {
 			TenantID               string                                 `uri:"tenant_id" validate:"required"`
 			UserID                 string                                 `json:"user_id" validate:"required"`
 			Settings               map[string]any                         `json:"settings" validate:"omitempty"`
+			Name                   string                                 `json:"name" validate:"required"`
 		},
 	) {
 		tenant_id := request.TenantID
 		user_id := request.UserID
 		settings := request.Settings
 		plugin_unique_identifier := request.PluginUniqueIdentifier
+		name := request.Name
 
 		ctx.JSON(200, service.SetupEndpoint(
-			tenant_id, user_id, plugin_unique_identifier, settings,
+			tenant_id, user_id, plugin_unique_identifier, name, settings,
 		))
 	})
 }
@@ -74,13 +76,15 @@ func UpdateEndpoint(ctx *gin.Context) {
 		TenantID   string         `uri:"tenant_id" validate:"required"`
 		UserID     string         `json:"user_id" validate:"required"`
 		Settings   map[string]any `json:"settings" validate:"omitempty"`
+		Name       string         `json:"name" validate:"required"`
 	}) {
 		tenant_id := request.TenantID
 		user_id := request.UserID
 		endpoint_id := request.EndpointID
 		settings := request.Settings
+		name := request.Name
 
-		ctx.JSON(200, service.UpdateEndpoint(endpoint_id, tenant_id, user_id, settings))
+		ctx.JSON(200, service.UpdateEndpoint(endpoint_id, tenant_id, user_id, name, settings))
 	})
 }
 

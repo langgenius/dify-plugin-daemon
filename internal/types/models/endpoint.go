@@ -10,6 +10,7 @@ import (
 // HookID is a pointer to plugin id and tenant id, using it to identify the endpoint plugin
 type Endpoint struct {
 	Model
+	Name        string                                       `json:"name" gorm:"size:127;column:name;default:'default'"`
 	HookID      string                                       `json:"hook_id" gorm:"unique;size:127;column:hook_id"`
 	TenantID    string                                       `json:"tenant_id" gorm:"index;size:64;column:tenant_id"`
 	UserID      string                                       `json:"user_id" gorm:"index;size:64;column:user_id"`

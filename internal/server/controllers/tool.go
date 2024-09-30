@@ -48,6 +48,7 @@ func GetToolRuntimeParameters(config *app.Config) gin.HandlerFunc {
 		)
 	}
 }
+
 func ListTools(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`

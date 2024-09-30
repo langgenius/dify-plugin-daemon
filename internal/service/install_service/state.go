@@ -68,6 +68,7 @@ func InstallEndpoint(
 	installation_id string,
 	tenant_id string,
 	user_id string,
+	name string,
 	settings map[string]any,
 ) (*models.Endpoint, error) {
 	settings_json, err := json.Marshal(settings)
@@ -80,6 +81,7 @@ func InstallEndpoint(
 		PluginID:  plugin_id.PluginID(),
 		TenantID:  tenant_id,
 		UserID:    user_id,
+		Name:      name,
 		Enabled:   true,
 		ExpiredAt: time.Date(2050, 1, 1, 0, 0, 0, 0, time.UTC),
 		Settings:  string(settings_json),
@@ -192,12 +194,13 @@ func DisabledEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
-func UpdateEndpoint(endpoint *models.Endpoint, settings map[string]any) error {
+func UpdateEndpoint(endpoint *models.Endpoint, name string, settings map[string]any) error {
 	settings_json, err := json.Marshal(settings)
 	if err != nil {
 		return err
 	}
 
+	endpoint.Name = name
 	endpoint.Settings = string(settings_json)
 
 	return db.Update(endpoint)

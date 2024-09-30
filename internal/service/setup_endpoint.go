@@ -18,6 +18,7 @@ func SetupEndpoint(
 	tenant_id string,
 	user_id string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	name string,
 	settings map[string]any,
 ) *entities.Response {
 	// try find plugin installation
@@ -53,6 +54,7 @@ func SetupEndpoint(
 		installation.ID,
 		tenant_id,
 		user_id,
+		name,
 		map[string]any{},
 	)
 	if err != nil {
@@ -86,7 +88,7 @@ func SetupEndpoint(
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to encrypt settings: %v", err))
 	}
 
-	if err := install_service.UpdateEndpoint(endpoint, encrypted_settings); err != nil {
+	if err := install_service.UpdateEndpoint(endpoint, name, encrypted_settings); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
 	}
 
@@ -95,7 +97,7 @@ func SetupEndpoint(
 
 func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 	endpoint, err := db.GetOne[models.Endpoint](
-		db.Equal("endpoint_id", endpoint_id),
+		db.Equal("id", endpoint_id),
 		db.Equal("tenant_id", tenant_id),
 	)
 	if err != nil {
@@ -131,7 +133,7 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 	return entities.NewSuccessResponse(nil)
 }
 
-func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settings map[string]any) *entities.Response {
+func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name string, settings map[string]any) *entities.Response {
 	// get endpoint
 	endpoint, err := db.GetOne[models.Endpoint](
 		db.Equal("id", endpoint_id),
@@ -229,7 +231,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, settin
 	}
 
 	// update endpoint
-	if err := install_service.UpdateEndpoint(&endpoint, encrypted_settings); err != nil {
+	if err := install_service.UpdateEndpoint(&endpoint, name, encrypted_settings); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
 	}
 
