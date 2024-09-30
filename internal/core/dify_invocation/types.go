@@ -172,11 +172,11 @@ func init() {
 }
 
 type InvokeEncryptSchema struct {
-	Opt       EncryptOpt                                `json:"opt" validate:"required,encrypt_opt"`
-	Namespace EncryptNamespace                          `json:"namespace" validate:"required,encrypt_namespace"`
-	Identity  string                                    `json:"identity" validate:"required"`
-	Data      map[string]any                            `json:"data" validate:"omitempty"`
-	Config    map[string]plugin_entities.ProviderConfig `json:"config" validate:"omitempty,dive"`
+	Opt       EncryptOpt                       `json:"opt" validate:"required,encrypt_opt"`
+	Namespace EncryptNamespace                 `json:"namespace" validate:"required,encrypt_namespace"`
+	Identity  string                           `json:"identity" validate:"required"`
+	Data      map[string]any                   `json:"data" validate:"omitempty"`
+	Config    []plugin_entities.ProviderConfig `json:"config" validate:"omitempty,dive"`
 }
 
 type InvokeEncryptRequest struct {
@@ -191,11 +191,9 @@ func (r *InvokeEncryptRequest) EncryptRequired(settings map[string]any) bool {
 	}
 
 	// filter out which key needs encrypt
-	for k := range settings {
-		if config, ok := r.Config[k]; ok {
-			if config.Type == plugin_entities.CONFIG_TYPE_SECRET_INPUT {
-				return true
-			}
+	for _, config := range r.Config {
+		if config.Type == plugin_entities.CONFIG_TYPE_SECRET_INPUT {
+			return true
 		}
 	}
 

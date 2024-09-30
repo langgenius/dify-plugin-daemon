@@ -217,12 +217,17 @@ func init() {
 }
 
 // ValidateProviderConfigs validates the provider configs
-func ValidateProviderConfigs(settings map[string]any, configs map[string]ProviderConfig) error {
+func ValidateProviderConfigs(settings map[string]any, configs []ProviderConfig) error {
 	if len(settings) > 64 {
 		return errors.New("too many setting fields")
 	}
 
-	for config_name, config := range configs {
+	configs_map := make(map[string]ProviderConfig)
+	for _, config := range configs {
+		configs_map[config.Name] = config
+	}
+
+	for config_name, config := range configs_map {
 		v, ok := settings[config_name]
 		if (!ok || v == nil) && config.Required {
 			return errors.New("missing required setting: " + config_name)

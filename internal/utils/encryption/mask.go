@@ -8,14 +8,19 @@ import (
 
 func MaskConfigCredentials(
 	credentials map[string]any,
-	provider_config map[string]plugin_entities.ProviderConfig,
+	provider_config []plugin_entities.ProviderConfig,
 ) map[string]any {
 	/*
 		Mask credentials based on provider config
 	*/
+	configs_map := make(map[string]plugin_entities.ProviderConfig)
+	for _, config := range provider_config {
+		configs_map[config.Name] = config
+	}
+
 	copied_credentials := make(map[string]any)
 	for key, value := range credentials {
-		if config, ok := provider_config[key]; ok {
+		if config, ok := configs_map[key]; ok {
 			if config.Type == plugin_entities.CONFIG_TYPE_SECRET_INPUT {
 				if original_value, ok := value.(string); ok {
 					if len(original_value) > 6 {

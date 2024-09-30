@@ -29,8 +29,8 @@ func TestEncryptRequired(t *testing.T) {
 			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  "test123",
 			Data:      data,
-			Config: map[string]plugin_entities.ProviderConfig{
-				"key": {
+			Config: []plugin_entities.ProviderConfig{
+				{
 					Name: "key",
 					Type: plugin_entities.CONFIG_TYPE_SECRET_INPUT,
 				},
@@ -42,9 +42,11 @@ func TestEncryptRequired(t *testing.T) {
 		t.Errorf("EncryptRequired should return true")
 	}
 
-	payload.Config["key"] = plugin_entities.ProviderConfig{
-		Name: "key",
-		Type: plugin_entities.CONFIG_TYPE_TEXT_INPUT,
+	payload.Config = []plugin_entities.ProviderConfig{
+		{
+			Name: "key",
+			Type: plugin_entities.CONFIG_TYPE_TEXT_INPUT,
+		},
 	}
 
 	if payload.EncryptRequired(data) {
@@ -116,8 +118,8 @@ func TestInvokeEncrypt(t *testing.T) {
 			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  "test123",
 			Data:      map[string]any{"key": "value"},
-			Config: map[string]plugin_entities.ProviderConfig{
-				"key": {
+			Config: []plugin_entities.ProviderConfig{
+				{
 					Name: "key",
 					Type: plugin_entities.CONFIG_TYPE_SECRET_INPUT,
 				},
