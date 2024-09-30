@@ -1,6 +1,7 @@
 package plugin_entities
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-playground/locales/en"
@@ -10,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/xeipuuv/gojsonschema"
+	"gopkg.in/yaml.v3"
 )
 
 type ToolIdentity struct {
@@ -170,6 +172,86 @@ type ToolProviderDeclaration struct {
 	Identity          ToolProviderIdentity `json:"identity" validate:"required"`
 	CredentialsSchema []ProviderConfig     `json:"credentials_schema" validate:"omitempty,dive"`
 	Tools             []ToolDeclaration    `json:"tools" validate:"required,dive"`
+}
+
+func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
+	type alias struct {
+		Identity          ToolProviderIdentity `yaml:"identity"`
+		CredentialsSchema yaml.Node            `yaml:"credentials_schema"`
+		Tools             []ToolDeclaration    `yaml:"tools"`
+	}
+
+	var temp alias
+
+	err := value.Decode(&temp)
+	if err != nil {
+		return err
+	}
+
+	// apply identity
+	t.Identity = temp.Identity
+	t.Tools = temp.Tools
+
+	// check if credentials_schema is a map
+	if temp.CredentialsSchema.Kind != yaml.MappingNode {
+		// not a map, convert it into array
+		credentials_schema := make([]ProviderConfig, 0)
+		if err := temp.CredentialsSchema.Decode(&credentials_schema); err != nil {
+			return err
+		}
+		t.CredentialsSchema = credentials_schema
+	} else if temp.CredentialsSchema.Kind == yaml.MappingNode {
+		original_credentials_schema := make(map[string]ProviderConfig)
+		credentials_schema := make([]ProviderConfig, 0)
+		if err := temp.CredentialsSchema.Decode(&original_credentials_schema); err != nil {
+			return err
+		}
+		for _, value := range original_credentials_schema {
+			credentials_schema = append(credentials_schema, value)
+		}
+		t.CredentialsSchema = credentials_schema
+	} else {
+		return fmt.Errorf("invalid credentials_schema type: %v", temp.CredentialsSchema.Kind)
+	}
+
+	return nil
+}
+
+func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
+	type alias ToolProviderDeclaration
+
+	var temp struct {
+		alias
+		CredentialsSchema json.RawMessage `json:"credentials_schema"`
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	*t = ToolProviderDeclaration(temp.alias)
+
+	// Determine the type of CredentialsSchema
+	var raw_message map[string]json.RawMessage
+	if err := json.Unmarshal(temp.CredentialsSchema, &raw_message); err == nil {
+		// It's an object
+		credentials_schema_object := make(map[string]ProviderConfig)
+		if err := json.Unmarshal(temp.CredentialsSchema, &credentials_schema_object); err != nil {
+			return fmt.Errorf("failed to unmarshal credentials_schema as object: %v", err)
+		}
+		for _, value := range credentials_schema_object {
+			t.CredentialsSchema = append(t.CredentialsSchema, value)
+		}
+	} else {
+		// It's likely an array
+		var credentials_schema_array []ProviderConfig
+		if err := json.Unmarshal(temp.CredentialsSchema, &credentials_schema_array); err != nil {
+			return fmt.Errorf("failed to unmarshal credentials_schema as array: %v", err)
+		}
+		t.CredentialsSchema = credentials_schema_array
+	}
+
+	return nil
 }
 
 func init() {

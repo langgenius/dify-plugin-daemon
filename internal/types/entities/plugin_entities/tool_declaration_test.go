@@ -3,10 +3,12 @@ package plugin_entities
 import (
 	"strings"
 	"testing"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 func TestFullFunctionToolProvider_Validate(t *testing.T) {
-	const data = `
+	const json_data = `
 {
 	"identity": {
 		"author": "author",
@@ -104,9 +106,284 @@ func TestFullFunctionToolProvider_Validate(t *testing.T) {
 }
 	`
 
-	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v", err)
+	const yaml_data = `identity:
+  author: author
+  name: name
+  description:
+    en_US: description
+    zh_Hans: 描述
+    pt_BR: descrição
+  icon: icon
+  label:
+    en_US: label
+    zh_Hans: 标签
+    pt_BR: etiqueta
+  tags:
+    - image
+    - videos
+credentials_schema:
+  - name: api_key
+    type: secret-input
+    required: false
+    default: default
+    label:
+      en_US: API Key
+      zh_Hans: API 密钥
+      pt_BR: Chave da API
+    helper:
+      en_US: API Key
+      zh_Hans: API 密钥
+      pt_BR: Chave da API
+    url: https://example.com
+    placeholder:
+      en_US: API Key
+      zh_Hans: API 密钥
+      pt_BR: Chave da API
+tools:
+  - identity:
+      author: author
+      name: tool
+      label:
+        en_US: label
+        zh_Hans: 标签
+        pt_BR: etiqueta
+    description:
+      human:
+        en_US: description
+        zh_Hans: 描述
+        pt_BR: descrição
+      llm: description
+    parameters:
+      - name: parameter
+        type: string
+        label:
+          en_US: label
+          zh_Hans: 标签
+          pt_BR: etiqueta
+        human_description:
+          en_US: description
+          zh_Hans: 描述
+          pt_BR: descrição
+        form: llm
+        required: true
+        default: default
+        options:
+          - value: value
+            label:
+              en_US: label
+              zh_Hans: 标签
+              pt_BR: etiqueta
+    `
+
+	json_declaration, json_err := parser.UnmarshalJsonBytes[ToolProviderDeclaration]([]byte(json_data))
+	if json_err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for JSON = %v", json_err)
+		return
+	}
+
+	if len(json_declaration.CredentialsSchema) != 1 {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for JSON: incorrect CredentialsSchema length")
+		return
+	}
+
+	yaml_declaration, yaml_err := parser.UnmarshalYamlBytes[ToolProviderDeclaration]([]byte(yaml_data))
+	if yaml_err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML = %v", yaml_err)
+		return
+	}
+
+	if len(yaml_declaration.CredentialsSchema) != 1 {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML: incorrect CredentialsSchema length")
+		return
+	}
+}
+
+func TestToolProviderWithMapCredentials_Validate(t *testing.T) {
+	const json_data = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description",
+			"zh_Hans": "描述",
+			"pt_BR": "descrição"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label",
+			"zh_Hans": "标签",
+			"pt_BR": "etiqueta"
+		},
+		"tags": [
+			"image",
+			"videos"
+		]
+	},
+	"credentials_schema": {
+		"api_key": {
+			"type": "secret-input",
+			"required": false,
+			"default": "default",
+			"label": {
+				"en_US": "API Key",
+				"zh_Hans": "API 密钥",
+				"pt_BR": "Chave da API"
+			},
+			"helper": {
+				"en_US": "API Key",
+				"zh_Hans": "API 密钥",
+				"pt_BR": "Chave da API"
+			},
+			"url": "https://example.com",
+			"placeholder": {
+				"en_US": "API Key",
+				"zh_Hans": "API 密钥",
+				"pt_BR": "Chave da API"
+			}
+		}
+	},
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label",
+					"zh_Hans": "标签",
+					"pt_BR": "etiqueta"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description",
+					"zh_Hans": "描述",
+					"pt_BR": "descrição"
+				},
+				"llm": "description"
+			},
+			"parameters": [
+				{
+					"name": "parameter",
+					"type": "string",
+					"label": {
+						"en_US": "label",
+						"zh_Hans": "标签",
+						"pt_BR": "etiqueta"
+					},
+					"human_description": {
+						"en_US": "description",
+						"zh_Hans": "描述",
+						"pt_BR": "descrição"
+					},
+					"form": "llm",
+					"required": true,
+					"default": "default",
+					"options": [
+						{
+							"value": "value",
+							"label": {
+								"en_US": "label",
+								"zh_Hans": "标签",
+								"pt_BR": "etiqueta"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
+	`
+
+	const yaml_data = `identity:
+  author: author
+  name: name
+  description:
+    en_US: description
+    zh_Hans: 描述
+    pt_BR: descrição
+  icon: icon
+  label:
+    en_US: label
+    zh_Hans: 标签
+    pt_BR: etiqueta
+  tags:
+    - image
+    - videos
+credentials_schema:
+  api_key:
+    type: secret-input
+    required: false
+    default: default
+    label:
+      en_US: API Key
+      zh_Hans: API 密钥
+      pt_BR: Chave da API
+    helper:
+      en_US: API Key
+      zh_Hans: API 密钥
+      pt_BR: Chave da API
+    url: https://example.com
+    placeholder:
+      en_US: API Key
+      zh_Hans: API 密钥
+      pt_BR: Chave da API
+tools:
+  - identity:
+      author: author
+      name: tool
+      label:
+        en_US: label
+        zh_Hans: 标签
+        pt_BR: etiqueta
+    description:
+      human:
+        en_US: description
+        zh_Hans: 描述
+        pt_BR: descrição
+      llm: description
+    parameters:
+      - name: parameter
+        type: string
+        label:
+          en_US: label
+          zh_Hans: 标签
+          pt_BR: etiqueta
+        human_description:
+          en_US: description
+          zh_Hans: 描述
+          pt_BR: descrição
+        form: llm
+        required: true
+        default: default
+        options:
+          - value: value
+            label:
+              en_US: label
+              zh_Hans: 标签
+              pt_BR: etiqueta
+    `
+
+	json_declaration, json_err := parser.UnmarshalJsonBytes[ToolProviderDeclaration]([]byte(json_data))
+	if json_err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for JSON = %v", json_err)
+		return
+	}
+
+	if len(json_declaration.CredentialsSchema) != 1 {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for JSON: incorrect CredentialsSchema length")
+		return
+	}
+
+	yaml_declaration, yaml_err := parser.UnmarshalYamlBytes[ToolProviderDeclaration]([]byte(yaml_data))
+	if yaml_err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML = %v", yaml_err)
+		return
+	}
+
+	if len(yaml_declaration.CredentialsSchema) != 1 {
+		t.Errorf("UnmarshalToolProviderConfiguration() error for YAML: incorrect CredentialsSchema length")
 		return
 	}
 }
