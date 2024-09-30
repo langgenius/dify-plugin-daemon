@@ -40,5 +40,5 @@ type EndpointDeclaration struct {
 }
 
 type EndpointProviderDeclaration struct {
-	Settings map[string]ProviderConfig `json:"settings" validate:"omitempty,dive"`
+	Settings []ProviderConfig `json:"settings" validate:"omitempty,dive"`
 }
