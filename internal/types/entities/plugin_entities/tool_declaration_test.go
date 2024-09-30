@@ -1100,7 +1100,46 @@ func TestAppSelectorScopeToolProvider_Validate(t *testing.T) {
 		}
 	],
 	"tools": [
-	
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label",
+					"zh_Hans": "标签",
+					"pt_BR": "etiqueta"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description",
+					"zh_Hans": "描述",
+					"pt_BR": "descrição"
+				},
+				"llm": "description"
+			},
+			"parameters": [
+				{
+					"name": "parameter-app-selector",
+					"label": {
+						"en_US": "label",
+						"zh_Hans": "标签",
+						"pt_BR": "etiqueta"
+					},
+					"human_description": {
+						"en_US": "description",
+						"zh_Hans": "描述",
+						"pt_BR": "descrição"
+					},
+					"type": "app-selector",
+					"form": "llm",
+					"scope": "all",
+					"required": true,
+					"default": "default",
+					"options": []
+				}
+			]
+		}
 	]
 }
 	`

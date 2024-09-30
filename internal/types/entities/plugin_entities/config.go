@@ -123,6 +123,17 @@ func isScope(fl validator.FieldLevel) bool {
 			return false
 		}
 	}
+	if tool_parameter, ok := parent.(ToolParameter); ok {
+		if tool_parameter.Type == TOOL_PARAMETER_TYPE_APP_SELECTOR {
+			return isAppSelectorScope(fl)
+		} else if tool_parameter.Type == TOOL_PARAMETER_TYPE_MODEL_SELECTOR {
+			return isModelConfigScope(fl)
+		} else if tool_parameter.Type == TOOL_PARAMETER_TYPE_TOOL_SELECTOR {
+			return isToolSelectorScope(fl)
+		} else {
+			return false
+		}
+	}
 	return false
 }
 
