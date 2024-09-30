@@ -169,10 +169,10 @@ type ToolProviderIdentity struct {
 }
 
 type ToolProviderDeclaration struct {
-	Identity          ToolProviderIdentity `json:"identity" validate:"required"`
-	CredentialsSchema []ProviderConfig     `json:"credentials_schema" validate:"omitempty,dive"`
-	Tools             []ToolDeclaration    `validate:"required,dive"`
-	ToolFiles         []string             `json:"-"`
+	Identity          ToolProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
+	CredentialsSchema []ProviderConfig     `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
+	Tools             []ToolDeclaration    `json:"tools" yaml:"tools" validate:"required,dive"`
+	ToolFiles         []string             `json:"-" yaml:"-"`
 }
 
 func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
