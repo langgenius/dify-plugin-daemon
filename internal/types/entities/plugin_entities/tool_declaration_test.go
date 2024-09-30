@@ -27,9 +27,9 @@ func TestFullFunctionToolProvider_Validate(t *testing.T) {
 			"videos"
 		]
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "API Key",
+	"credentials_schema": [
+		{
+			"name": "api_key",
 			"type": "secret-input",
 			"required": false,
 			"default": "default",
@@ -50,7 +50,7 @@ func TestFullFunctionToolProvider_Validate(t *testing.T) {
 				"pt_BR": "Chave da API"
 			}
 		}
-	},
+	],
 	"tools": [
 		{
 			"identity": {
@@ -132,9 +132,9 @@ func TestWithoutAuthorToolProvider_Validate(t *testing.T) {
 			"videos"
 		]
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "API Key",
+	"credentials_schema": [
+		{
+			"name": "api_key",
 			"type": "secret-input",
 			"required": false,
 			"default": "default",
@@ -155,7 +155,8 @@ func TestWithoutAuthorToolProvider_Validate(t *testing.T) {
 				"pt_BR": "Chave da API"
 			}
 		}
-	},
+	]
+},
 	"tools": [
 	
 	]
@@ -190,9 +191,10 @@ func TestWithoutNameToolProvider_Validate(t *testing.T) {
 			"videos"
 		]
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "API Key",
+	"credentials_schema": [
+		{
+			"name": "api_key",
+			"type": "secret-input",
 			"type": "secret-input",
 			"required": false,
 			"default": "default",
@@ -213,7 +215,7 @@ func TestWithoutNameToolProvider_Validate(t *testing.T) {
 				"pt_BR": "Chave da API"
 			}
 		}
-	},
+	],
 	"tools": [
 	
 	]
@@ -244,9 +246,9 @@ func TestWithoutDescriptionToolProvider_Validate(t *testing.T) {
 			"videos"
 		]
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "API Key",
+	"credentials_schema": [
+		{
+			"name": "api_key",
 			"type": "secret-input",
 			"required": false,
 			"default": "default",
@@ -267,7 +269,7 @@ func TestWithoutDescriptionToolProvider_Validate(t *testing.T) {
 				"pt_BR": "Chave da API"
 			}
 		}
-	},
+	],
 	"tools": [
 	
 	]
@@ -303,9 +305,9 @@ func TestWrongCredentialTypeToolProvider_Validate(t *testing.T) {
 			"videos"
 		]
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "API Key",
+	"credentials_schema": [
+		{
+			"name": "api_key",
 			"type": "wrong",
 			"required": false,
 			"default": "default",
@@ -326,7 +328,7 @@ func TestWrongCredentialTypeToolProvider_Validate(t *testing.T) {
 				"pt_BR": "Chave da API"
 			}
 		}
-	},
+	],
 	"tools": [
 	
 	]
@@ -362,9 +364,9 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 			"videos"
 		]
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "API Key",
+	"credentials_schema": [
+		{
+			"name": "api_key",
 			"type": "secret-input",
 			"required": false,
 			"default": "default",
@@ -385,7 +387,7 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 				"pt_BR": "Chave da API"
 			}
 		}
-	},
+	],
 	"tools": [
 	
 	]
@@ -418,7 +420,7 @@ func TestWrongToolParameterTypeToolProvider_Validate(t *testing.T) {
 		},
 		"tags": []
 	},
-	"credentials_schema": {},
+	"credentials_schema": [],
 	"tools": [
 		{
 			"identity": {
@@ -489,7 +491,7 @@ func TestWrongToolParameterFormToolProvider_Validate(t *testing.T) {
 		},
 		"tags": []
 	},
-	"credentials_schema": {},
+	"credentials_schema": [],
 	"tools": [
 		{
 			"identity": {
@@ -560,7 +562,7 @@ func TestJSONSchemaTypeToolProvider_Validate(t *testing.T) {
 		},
 		"tags": []
 	},
-	"credentials_schema": {},
+	"credentials_schema": [],
 	"tools": [
 		{
 			"identity": {
@@ -619,7 +621,7 @@ func TestWrongJSONSchemaToolProvider_Validate(t *testing.T) {
 		},
 		"tags": []
 	},
-	"credentials_schema": {},
+	"credentials_schema": [],
 	"tools": [
 		{
 			"identity": {
@@ -678,9 +680,9 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 		},
 		"tags": []
 	},
-	"credentials_schema": {
-		"api_key": {
-			"name": "app-selector",
+	"credentials_schema": [
+		{
+			"name": "api_key",
 			"type": "app-selector",
 			"scope": "wrong",
 			"required": false,
@@ -702,7 +704,7 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 				"pt_BR": "app-selector"
 			}
 		}
-	},
+	],
 	"tools": [
 		{
 			"identity": {
@@ -755,7 +757,7 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 	}
 
 	str := err.Error()
-	if !strings.Contains(str, "api_key") {
+	if !strings.Contains(str, "is_scope") {
 		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
@@ -785,8 +787,8 @@ func TestAppSelectorScopeToolProvider_Validate(t *testing.T) {
 		},
 		"tags": []
 	},
-	"credentials_schema": {
-		"app-selector": {
+	"credentials_schema": [
+		{
 			"name": "app-selector",
 			"type": "app-selector",
 			"scope": "all",
@@ -809,7 +811,7 @@ func TestAppSelectorScopeToolProvider_Validate(t *testing.T) {
 				"pt_BR": "app-selector"
 			}
 		}
-	},
+	],
 	"tools": [
 	
 	]

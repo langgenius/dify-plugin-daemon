@@ -167,9 +167,9 @@ type ToolProviderIdentity struct {
 }
 
 type ToolProviderDeclaration struct {
-	Identity          ToolProviderIdentity      `json:"identity" validate:"required"`
-	CredentialsSchema map[string]ProviderConfig `json:"credentials_schema" validate:"omitempty,dive"`
-	Tools             []ToolDeclaration         `json:"tools" validate:"required,dive"`
+	Identity          ToolProviderIdentity `json:"identity" validate:"required"`
+	CredentialsSchema []ProviderConfig     `json:"credentials_schema" validate:"omitempty,dive"`
+	Tools             []ToolDeclaration    `json:"tools" validate:"required,dive"`
 }
 
 func init() {
