@@ -201,13 +201,20 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		}
 		t.CredentialsSchema = credentials_schema
 	} else if temp.CredentialsSchema.Kind == yaml.MappingNode {
-		original_credentials_schema := make(map[string]ProviderConfig)
 		credentials_schema := make([]ProviderConfig, 0)
-		if err := temp.CredentialsSchema.Decode(&original_credentials_schema); err != nil {
-			return err
-		}
-		for _, value := range original_credentials_schema {
-			credentials_schema = append(credentials_schema, value)
+		current_key := ""
+		current_value := &ProviderConfig{}
+		for _, item := range temp.CredentialsSchema.Content {
+			if item.Kind == yaml.ScalarNode {
+				current_key = item.Value
+			} else if item.Kind == yaml.MappingNode {
+				current_value = &ProviderConfig{}
+				if err := item.Decode(current_value); err != nil {
+					return err
+				}
+				current_value.Name = current_key
+				credentials_schema = append(credentials_schema, *current_value)
+			}
 		}
 		t.CredentialsSchema = credentials_schema
 	} else {
