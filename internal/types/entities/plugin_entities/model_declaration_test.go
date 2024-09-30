@@ -123,7 +123,7 @@ func TestFullFunctionModelProvider_Validate(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = parser.UnmarshalJsonBytes[ModelProviderDeclaration](json_data)
+	_, err = parser.UnmarshalYamlBytes[ModelProviderDeclaration](json_data)
 	if err != nil {
 		t.Errorf("UnmarshalModelProviderConfiguration() error = %v", err)
 	}
