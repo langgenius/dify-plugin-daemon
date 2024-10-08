@@ -177,9 +177,10 @@ type ToolProviderDeclaration struct {
 
 func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
-		Identity          ToolProviderIdentity `yaml:"identity"`
-		CredentialsSchema yaml.Node            `yaml:"credentials_schema"`
-		Tools             yaml.Node            `yaml:"tools"`
+		Identity               ToolProviderIdentity `yaml:"identity"`
+		CredentialsSchema      yaml.Node            `yaml:"credentials_schema"`
+		CredentialsForProvider yaml.Node            `yaml:"credentials_for_provider"`
+		Tools                  yaml.Node            `yaml:"tools"`
 	}
 
 	var temp alias
@@ -187,6 +188,12 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	err := value.Decode(&temp)
 	if err != nil {
 		return err
+	}
+
+	// apply credentials_for_provider to credentials_schema if not exists
+	if (temp.CredentialsSchema.Kind == yaml.ScalarNode && temp.CredentialsSchema.Value == "") ||
+		len(temp.CredentialsSchema.Content) == 0 {
+		temp.CredentialsSchema = temp.CredentialsForProvider
 	}
 
 	// apply identity
@@ -242,12 +249,17 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 
 	var temp struct {
 		alias
-		CredentialsSchema json.RawMessage   `json:"credentials_schema"`
-		Tools             []json.RawMessage `json:"tools"`
+		CredentialsSchema      json.RawMessage   `json:"credentials_schema"`
+		CredentialsForProvider json.RawMessage   `json:"credentials_for_provider"`
+		Tools                  []json.RawMessage `json:"tools"`
 	}
 
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
+	}
+
+	if len(temp.CredentialsSchema) == 0 {
+		temp.CredentialsSchema = temp.CredentialsForProvider
 	}
 
 	*t = ToolProviderDeclaration(temp.alias)
