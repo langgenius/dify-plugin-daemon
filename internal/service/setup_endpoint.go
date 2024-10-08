@@ -92,7 +92,7 @@ func SetupEndpoint(
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
 	}
 
-	return entities.NewSuccessResponse(nil)
+	return entities.NewSuccessResponse(true)
 }
 
 func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
@@ -130,7 +130,7 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))
 	}
 
-	return entities.NewSuccessResponse(nil)
+	return entities.NewSuccessResponse(true)
 }
 
 func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name string, settings map[string]any) *entities.Response {
@@ -186,7 +186,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 				Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  installation.ID,
-				Data:      endpoint.GetSettings(),
+				Data:      endpoint.Settings,
 				Config:    plugin_declaration.Endpoint.Settings,
 			},
 		},
@@ -251,5 +251,5 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))
 	}
 
-	return entities.NewSuccessResponse(nil)
+	return entities.NewSuccessResponse(true)
 }

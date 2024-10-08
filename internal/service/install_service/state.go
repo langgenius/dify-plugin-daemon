@@ -1,7 +1,6 @@
 package install_service
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -71,11 +70,6 @@ func InstallEndpoint(
 	name string,
 	settings map[string]any,
 ) (*models.Endpoint, error) {
-	settings_json, err := json.Marshal(settings)
-	if err != nil {
-		return nil, err
-	}
-
 	installation := &models.Endpoint{
 		HookID:    strings.RandomString(32),
 		PluginID:  plugin_id.PluginID(),
@@ -84,7 +78,7 @@ func InstallEndpoint(
 		Name:      name,
 		Enabled:   true,
 		ExpiredAt: time.Date(2050, 1, 1, 0, 0, 0, 0, time.UTC),
-		Settings:  string(settings_json),
+		Settings:  settings,
 	}
 
 	if err := db.WithTransaction(func(tx *gorm.DB) error {
@@ -195,13 +189,8 @@ func DisabledEndpoint(endpoint *models.Endpoint) error {
 }
 
 func UpdateEndpoint(endpoint *models.Endpoint, name string, settings map[string]any) error {
-	settings_json, err := json.Marshal(settings)
-	if err != nil {
-		return err
-	}
-
 	endpoint.Name = name
-	endpoint.Settings = string(settings_json)
+	endpoint.Settings = settings
 
 	return db.Update(endpoint)
 }

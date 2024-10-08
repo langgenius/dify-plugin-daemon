@@ -77,7 +77,7 @@ func Endpoint(
 			Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
 			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  endpoint.ID,
-			Data:      endpoint.GetSettings(),
+			Data:      endpoint.Settings,
 			Config:    endpoint_declaration.Settings,
 		},
 	})
@@ -171,7 +171,7 @@ func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		return entities.NewErrorResponse(-500, "Failed to enable endpoint")
 	}
 
-	return entities.NewSuccessResponse("success")
+	return entities.NewSuccessResponse(true)
 }
 
 func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
@@ -189,7 +189,7 @@ func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		return entities.NewErrorResponse(-500, "Failed to disable endpoint")
 	}
 
-	return entities.NewSuccessResponse("success")
+	return entities.NewSuccessResponse(true)
 }
 
 func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response {
@@ -243,7 +243,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 				Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
-				Data:      endpoint.GetSettings(),
+				Data:      endpoint.Settings,
 				Config:    plugin_declaration.Endpoint.Settings,
 			},
 		})
@@ -251,7 +251,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
 		}
 
-		endpoint.SetSettings(decrypted_settings)
+		endpoint.Settings = decrypted_settings
 		endpoint.Declaration = plugin_declaration.Endpoint
 
 		endpoints[i] = endpoint
@@ -293,7 +293,7 @@ func ListPluginEndpoints(tenant_id string, plugin_unique_identifier plugin_entit
 				Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
-				Data:      endpoint.GetSettings(),
+				Data:      endpoint.Settings,
 				Config:    plugin_declaration.Endpoint.Settings,
 			},
 		})
@@ -301,7 +301,7 @@ func ListPluginEndpoints(tenant_id string, plugin_unique_identifier plugin_entit
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
 		}
 
-		endpoint.SetSettings(decrypted_settings)
+		endpoint.Settings = decrypted_settings
 		endpoint.Declaration = plugin_declaration.Endpoint
 
 		endpoints[i] = endpoint
