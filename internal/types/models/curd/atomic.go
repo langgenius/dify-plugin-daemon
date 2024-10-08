@@ -24,7 +24,16 @@ func InstallPlugin(
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
-	err := db.WithTransaction(func(tx *gorm.DB) error {
+	// check if already installed
+	_, err := db.GetOne[models.PluginInstallation](
+		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+	)
+
+	if err == nil {
+		return nil, nil, errors.New("plugin already installed")
+	}
+
+	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -8,7 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -16,7 +19,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func InstallPluginFromPkg(c *gin.Context, tenant_id string, dify_pkg_file multipart.File) {
+func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, dify_pkg_file multipart.File) {
 	manager := plugin_manager.Manager()
 
 	plugin_file, err := io.ReadAll(dify_pkg_file)
@@ -29,6 +32,16 @@ func InstallPluginFromPkg(c *gin.Context, tenant_id string, dify_pkg_file multip
 	if err != nil {
 		c.JSON(200, entities.NewErrorResponse(-500, err.Error()))
 		return
+	}
+
+	if config.ForceVerifyingSignature {
+		err := verifier.VerifyPlugin(decoder)
+		if err != nil {
+			c.JSON(200, entities.NewErrorResponse(-500, errors.Join(err, errors.New(
+				"force verification has been enabled, and the plugin you want to install has a bad signature",
+			)).Error()))
+			return
+		}
 	}
 
 	baseSSEService(

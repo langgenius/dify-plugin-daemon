@@ -49,7 +49,7 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 		}
 		defer dify_pkg_file.Close()
 
-		service.InstallPluginFromPkg(c, tenant_id, dify_pkg_file)
+		service.InstallPluginFromPkg(app, c, tenant_id, dify_pkg_file)
 	}
 }
 
