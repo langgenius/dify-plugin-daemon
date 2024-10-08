@@ -99,22 +99,26 @@ func FetchPluginFromIdentifier(
 
 func UninstallPlugin(
 	tenant_id string,
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	plugin_installation_id string,
 ) *entities.Response {
 	// Check if the plugin exists for the tenant
 	installation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
-		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+		db.Equal("id", plugin_installation_id),
 	)
 	if err == db.ErrDatabaseNotFound {
-		return entities.NewErrorResponse(-404, "Plugin not found for this tenant")
+		return entities.NewErrorResponse(-404, "Plugin installation not found for this tenant")
 	}
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
 	// Uninstall the plugin
-	_, err = curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation.ID)
+	_, err = curd.UninstallPlugin(
+		tenant_id,
+		plugin_entities.PluginUniqueIdentifier(installation.PluginUniqueIdentifier),
+		installation.ID,
+	)
 	if err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
 	}

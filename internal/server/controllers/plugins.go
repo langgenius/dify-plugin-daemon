@@ -66,10 +66,10 @@ func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 
 func UninstallPlugin(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID               string                                 `uri:"tenant_id" validate:"required"`
-		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		TenantID             string `uri:"tenant_id" validate:"required"`
+		PluginInstallationID string `json:"plugin_installation_id" validate:"required"`
 	}) {
-		c.JSON(http.StatusOK, service.UninstallPlugin(request.TenantID, request.PluginUniqueIdentifier))
+		c.JSON(http.StatusOK, service.UninstallPlugin(request.TenantID, request.PluginInstallationID))
 	})
 }
 
