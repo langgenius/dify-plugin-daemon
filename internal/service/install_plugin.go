@@ -55,6 +55,10 @@ func InstallPluginFromIdentifier(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
+	if plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+		return entities.NewErrorResponse(-500, "remote plugin not supported")
+	}
+
 	declaration := plugin.Declaration
 	// install to this workspace
 	if _, _, err := curd.InstallPlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, &declaration); err != nil {

@@ -12,15 +12,19 @@ import (
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	type installation struct {
-		ID             string                             `json:"id"`
-		Name           string                             `json:"name"`
-		PluginID       string                             `json:"plugin_id"`
-		InstallationID string                             `json:"installation_id"`
-		Description    *plugin_entities.PluginDeclaration `json:"description"`
-		RuntimeType    plugin_entities.PluginRuntimeType  `json:"runtime_type"`
-		Version        string                             `json:"version"`
-		CreatedAt      time.Time                          `json:"created_at"`
-		UpdatedAt      time.Time                          `json:"updated_at"`
+		ID                     string                             `json:"id"`
+		Name                   string                             `json:"name"`
+		PluginID               string                             `json:"plugin_id"`
+		TenantID               string                             `json:"tenant_id"`
+		PluginUniqueIdentifier string                             `json:"plugin_unique_identifier"`
+		EndpointsActive        int                                `json:"endpoints_active"`
+		EndpointsSetups        int                                `json:"endpoints_setups"`
+		InstallationID         string                             `json:"installation_id"`
+		Declaration            *plugin_entities.PluginDeclaration `json:"declaration"`
+		RuntimeType            plugin_entities.PluginRuntimeType  `json:"runtime_type"`
+		Version                string                             `json:"version"`
+		CreatedAt              time.Time                          `json:"created_at"`
+		UpdatedAt              time.Time                          `json:"updated_at"`
 	}
 
 	plugin_installations, err := db.GetAll[models.PluginInstallation](
@@ -48,15 +52,19 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		}
 
 		data = append(data, installation{
-			ID:             plugin_installation.ID,
-			Name:           plugin_declaration.Name,
-			PluginID:       plugin_unique_identifier.PluginID(),
-			InstallationID: plugin_installation.ID,
-			Description:    plugin_declaration,
-			RuntimeType:    plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
-			Version:        plugin_declaration.Version,
-			CreatedAt:      plugin_installation.CreatedAt,
-			UpdatedAt:      plugin_installation.UpdatedAt,
+			ID:                     plugin_installation.ID,
+			Name:                   plugin_declaration.Name,
+			TenantID:               plugin_installation.TenantID,
+			PluginID:               plugin_unique_identifier.PluginID(),
+			PluginUniqueIdentifier: plugin_unique_identifier.String(),
+			InstallationID:         plugin_installation.ID,
+			Declaration:            plugin_declaration,
+			EndpointsSetups:        plugin_installation.EndpointsSetups,
+			EndpointsActive:        plugin_installation.EndpointsActive,
+			RuntimeType:            plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
+			Version:                plugin_declaration.Version,
+			CreatedAt:              plugin_installation.CreatedAt,
+			UpdatedAt:              plugin_installation.UpdatedAt,
 		})
 	}
 

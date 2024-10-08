@@ -7,12 +7,15 @@ import (
 )
 
 type Config struct {
+	// server
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
+	// dify inner api
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
+	// plugin remote installing
 	PluginRemoteInstallingHost             string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort             uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
 	PluginRemoteInstallingEnabled          bool   `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
@@ -29,14 +32,18 @@ type Config struct {
 
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
+	// platform like local or aws lambda
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
 
+	// routine pool
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
+	// redis
 	RedisHost string `envconfig:"REDIS_HOST" validate:"required"`
 	RedisPort uint16 `envconfig:"REDIS_PORT" validate:"required"`
 	RedisPass string `envconfig:"REDIS_PASS" validate:"required"`
 
+	// database
 	DBUsername string `envconfig:"DB_USERNAME" validate:"required"`
 	DBPassword string `envconfig:"DB_PASSWORD" validate:"required"`
 	DBHost     string `envconfig:"DB_HOST" validate:"required"`
@@ -44,6 +51,7 @@ type Config struct {
 	DBDatabase string `envconfig:"DB_DATABASE" validate:"required"`
 	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
+	// persistence storage
 	PersistenceStorageType        string `envconfig:"PERSISTENCE_STORAGE_TYPE" validate:"required,oneof=local s3"`
 	PersistenceStorageLocalPath   string `envconfig:"PERSISTENCE_STORAGE_LOCAL_PATH"`
 	PersistenceStorageS3Region    string `envconfig:"PERSISTENCE_STORAGE_S3_REGION"`
@@ -51,6 +59,10 @@ type Config struct {
 	PersistenceStorageS3SecretKey string `envconfig:"PERSISTENCE_STORAGE_S3_SECRET_KEY"`
 	PersistenceStorageS3Bucket    string `envconfig:"PERSISTENCE_STORAGE_S3_BUCKET"`
 
+	// force verifying signature for all plugins, not allowing install plugin not signed
+	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
+
+	// lifetime state management
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
 	LifetimeCollectionGCInterval        int `envconfig:"LIFETIME_COLLECTION_GC_INTERVAL" validate:"required"`
 	LifetimeStateGCInterval             int `envconfig:"LIFETIME_STATE_GC_INTERVAL" validate:"required"`
