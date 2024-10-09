@@ -93,6 +93,10 @@ func (e *EndpointProviderDeclaration) UnmarshalJSON(data []byte) error {
 
 	*e = EndpointProviderDeclaration(temp.alias)
 
+	if len(temp.Endpoints) == 0 {
+		return nil
+	}
+
 	var raw_endpoints []json.RawMessage
 	if err := json.Unmarshal(temp.Endpoints, &raw_endpoints); err != nil {
 		return err
