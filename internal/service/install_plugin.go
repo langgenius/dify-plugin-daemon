@@ -19,7 +19,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, dify_pkg_file multipart.File) {
+func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, dify_pkg_file multipart.File, verify_signature bool) {
 	manager := plugin_manager.Manager()
 
 	plugin_file, err := io.ReadAll(dify_pkg_file)
@@ -34,11 +34,11 @@ func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, 
 		return
 	}
 
-	if config.ForceVerifyingSignature {
+	if config.ForceVerifyingSignature || verify_signature {
 		err := verifier.VerifyPlugin(decoder)
 		if err != nil {
 			c.JSON(200, entities.NewErrorResponse(-500, errors.Join(err, errors.New(
-				"force verification has been enabled, and the plugin you want to install has a bad signature",
+				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
 			)).Error()))
 			return
 		}

@@ -42,6 +42,8 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 			return
 		}
 
+		verify_signature := c.PostForm("verify_signature") == "true"
+
 		dify_pkg_file, err := dify_pkg_file_header.Open()
 		if err != nil {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-500, err.Error()))
@@ -49,7 +51,7 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 		}
 		defer dify_pkg_file.Close()
 
-		service.InstallPluginFromPkg(app, c, tenant_id, dify_pkg_file)
+		service.InstallPluginFromPkg(app, c, tenant_id, dify_pkg_file, verify_signature)
 	}
 }
 
