@@ -126,6 +126,23 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", endpoint))
 		}
 
+		// read detailed endpoints
+		endpoints_files := plugin_dec.EndpointFiles
+
+		for _, endpoint_file := range endpoints_files {
+			endpoint_file_content, err := decoder.ReadFile(endpoint_file)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read endpoint file: %s", endpoint_file))
+			}
+
+			endpoint_file_dec, err := parser.UnmarshalYamlBytes[plugin_entities.EndpointDeclaration](endpoint_file_content)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal endpoint file: %s", endpoint_file))
+			}
+
+			plugin_dec.Endpoints = append(plugin_dec.Endpoints, endpoint_file_dec)
+		}
+
 		dec.Endpoint = &plugin_dec
 	}
 
