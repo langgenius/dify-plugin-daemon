@@ -21,6 +21,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
@@ -251,6 +252,9 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
 		}
 
+		// mask settings
+		decrypted_settings = encryption.MaskConfigCredentials(decrypted_settings, plugin_declaration.Endpoint.Settings)
+
 		endpoint.Settings = decrypted_settings
 		endpoint.Declaration = plugin_declaration.Endpoint
 
@@ -317,6 +321,9 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		if err != nil {
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
 		}
+
+		// mask settings
+		decrypted_settings = encryption.MaskConfigCredentials(decrypted_settings, plugin_declaration.Endpoint.Settings)
 
 		endpoint.Settings = decrypted_settings
 		endpoint.Declaration = plugin_declaration.Endpoint
