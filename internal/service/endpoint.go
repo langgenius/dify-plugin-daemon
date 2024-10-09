@@ -260,9 +260,9 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 	return entities.NewSuccessResponse(endpoints)
 }
 
-func ListPluginEndpoints(tenant_id string, plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, page int, page_size int) *entities.Response {
+func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size int) *entities.Response {
 	endpoints, err := db.GetAll[models.Endpoint](
-		db.Equal("plugin_id", plugin_unique_identifier.PluginID()),
+		db.Equal("plugin_id", plugin_id),
 		db.Equal("tenant_id", tenant_id),
 		db.OrderBy("created_at", true),
 		db.Page(page, page_size),
@@ -278,6 +278,23 @@ func ListPluginEndpoints(tenant_id string, plugin_unique_identifier plugin_entit
 
 	// decrypt settings
 	for i, endpoint := range endpoints {
+		// get installation
+		plugin_installation, err := db.GetOne[models.PluginInstallation](
+			db.Equal("plugin_id", plugin_id),
+			db.Equal("tenant_id", tenant_id),
+		)
+		if err != nil {
+			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
+		}
+
+		plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			plugin_installation.PluginUniqueIdentifier,
+		)
+
+		if err != nil {
+			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
+		}
+
 		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
 		if err != nil {
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to get plugin declaration: %v", err))

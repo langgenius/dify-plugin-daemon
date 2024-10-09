@@ -185,7 +185,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 			InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
 				Opt:       dify_invocation.ENCRYPT_OPT_DECRYPT,
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
-				Identity:  installation.ID,
+				Identity:  endpoint.ID,
 				Data:      endpoint.Settings,
 				Config:    plugin_declaration.Endpoint.Settings,
 			},
@@ -199,7 +199,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 
 	// check if settings is changed, replace the value is the same as masked_settings
 	for setting_name, value := range settings {
-		if masked_settings[setting_name] != value {
+		if masked_settings[setting_name] == value {
 			settings[setting_name] = original_settings[setting_name]
 		}
 	}
@@ -246,6 +246,8 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 			Opt:       dify_invocation.ENCRYPT_OPT_CLEAR,
 			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  endpoint.ID,
+			Data:      settings,
+			Config:    plugin_declaration.Endpoint.Settings,
 		},
 	}); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))

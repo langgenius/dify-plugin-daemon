@@ -44,17 +44,17 @@ func ListEndpoints(ctx *gin.Context) {
 
 func ListPluginEndpoints(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
-		TenantID               string                                 `uri:"tenant_id" validate:"required"`
-		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
-		Page                   int                                    `form:"page" validate:"required"`
-		PageSize               int                                    `form:"page_size" validate:"required,max=100"`
+		TenantID string `uri:"tenant_id" validate:"required"`
+		PluginID string `form:"plugin_id" validate:"required"`
+		Page     int    `form:"page" validate:"required"`
+		PageSize int    `form:"page_size" validate:"required,max=100"`
 	}) {
 		tenant_id := request.TenantID
-		plugin_unique_identifier := request.PluginUniqueIdentifier
+		plugin_id := request.PluginID
 		page := request.Page
 		page_size := request.PageSize
 
-		ctx.JSON(200, service.ListPluginEndpoints(tenant_id, plugin_unique_identifier, page, page_size))
+		ctx.JSON(200, service.ListPluginEndpoints(tenant_id, plugin_id, page, page_size))
 	})
 }
 
