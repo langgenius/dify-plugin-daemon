@@ -29,6 +29,9 @@ type ZipPluginDecoder struct {
 
 func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 	reader, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary)))
+	if err != nil {
+		return nil, errors.New(strings.ReplaceAll(err.Error(), "zip", "difypkg"))
+	}
 
 	decoder := &ZipPluginDecoder{
 		reader: reader,
