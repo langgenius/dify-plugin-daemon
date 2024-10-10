@@ -25,6 +25,8 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		Version                string                             `json:"version"`
 		CreatedAt              time.Time                          `json:"created_at"`
 		UpdatedAt              time.Time                          `json:"updated_at"`
+		Source                 string                             `json:"source"`
+		Meta                   map[string]any                     `json:"meta"`
 	}
 
 	plugin_installations, err := db.GetAll[models.PluginInstallation](
@@ -65,6 +67,8 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			Version:                plugin_declaration.Version,
 			CreatedAt:              plugin_installation.CreatedAt,
 			UpdatedAt:              plugin_installation.UpdatedAt,
+			Source:                 plugin_installation.Source,
+			Meta:                   plugin_installation.Meta,
 		})
 	}
 
