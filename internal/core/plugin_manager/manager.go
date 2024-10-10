@@ -38,7 +38,11 @@ type PluginManager struct {
 	// serverless runtime
 
 	// Install is a function that installs a plugin to the platform
-	Install func(tenant_id string, decoder decoder.PluginDecoder) (*stream.Stream[PluginInstallResponse], error)
+	Install func(
+		tenant_id string, decoder decoder.PluginDecoder,
+		source string,
+		meta map[string]any,
+	) (*stream.Stream[PluginInstallResponse], error)
 
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation

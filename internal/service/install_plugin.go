@@ -19,7 +19,15 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, dify_pkg_file multipart.File, verify_signature bool) {
+func InstallPluginFromPkg(
+	config *app.Config,
+	c *gin.Context,
+	tenant_id string,
+	dify_pkg_file multipart.File,
+	verify_signature bool,
+	source string,
+	meta map[string]any,
+) {
 	manager := plugin_manager.Manager()
 
 	plugin_file, err := io.ReadAll(dify_pkg_file)
@@ -46,7 +54,7 @@ func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, 
 
 	baseSSEService(
 		func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
-			return manager.Install(tenant_id, decoder)
+			return manager.Install(tenant_id, decoder, source, meta)
 		},
 		c,
 		3600,
@@ -56,6 +64,8 @@ func InstallPluginFromPkg(config *app.Config, c *gin.Context, tenant_id string, 
 func InstallPluginFromIdentifier(
 	tenant_id string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	source string,
+	meta map[string]any,
 ) *entities.Response {
 	// check if identifier exists
 	plugin, err := db.GetOne[models.Plugin](
@@ -74,7 +84,7 @@ func InstallPluginFromIdentifier(
 
 	declaration := plugin.Declaration
 	// install to this workspace
-	if _, _, err := curd.InstallPlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, &declaration); err != nil {
+	if _, _, err := curd.InstallPlugin(tenant_id, plugin_unique_identifier, plugin.InstallType, &declaration, source, meta); err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 

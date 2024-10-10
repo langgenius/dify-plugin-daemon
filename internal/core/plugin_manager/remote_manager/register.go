@@ -3,7 +3,9 @@ package remote_manager
 import "github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 
 func (plugin *RemotePluginRuntime) Register() error {
-	_, installation, err := install_service.InstallPlugin(plugin.tenant_id, "", plugin)
+	_, installation, err := install_service.InstallPlugin(
+		plugin.tenant_id, "", plugin, "remote", map[string]any{},
+	)
 	if err != nil {
 		return err
 	}

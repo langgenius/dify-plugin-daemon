@@ -15,6 +15,8 @@ func InstallPlugin(
 	tenant_id string,
 	user_id string,
 	runtime plugin_entities.PluginLifetime,
+	source string,
+	meta map[string]any,
 ) (*models.Plugin, *models.PluginInstallation, error) {
 	identity, err := runtime.Identity()
 	if err != nil {
@@ -27,6 +29,8 @@ func InstallPlugin(
 		identity,
 		runtime.Type(),
 		configuration,
+		source,
+		meta,
 	)
 
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 func GetAsset(c *gin.Context) {
@@ -44,14 +45,27 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 
 		verify_signature := c.PostForm("verify_signature") == "true"
 
+		source := c.PostForm("source")
+		if source == "" {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Source is required"))
+			return
+		}
+
+		meta_str := c.PostForm("meta")
+		meta, err := parser.UnmarshalJson[map[string]any](meta_str)
+		if err != nil {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			return
+		}
+
 		dify_pkg_file, err := dify_pkg_file_header.Open()
 		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-500, err.Error()))
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
 			return
 		}
 		defer dify_pkg_file.Close()
 
-		service.InstallPluginFromPkg(app, c, tenant_id, dify_pkg_file, verify_signature)
+		service.InstallPluginFromPkg(app, c, tenant_id, dify_pkg_file, verify_signature, source, meta)
 	}
 }
 
@@ -60,8 +74,15 @@ func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 		BindRequest(c, func(request struct {
 			TenantID               string                                 `uri:"tenant_id" validate:"required"`
 			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+			Source                 string                                 `json:"source" validate:"required"`
+			Meta                   map[string]any                         `json:"meta" validate:"omitempty"`
 		}) {
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(request.TenantID, request.PluginUniqueIdentifier))
+			if request.Meta == nil {
+				request.Meta = map[string]any{}
+			}
+			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(
+				request.TenantID, request.PluginUniqueIdentifier, request.Source, request.Meta,
+			))
 		})
 	}
 }

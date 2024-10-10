@@ -17,6 +17,8 @@ func InstallPlugin(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	install_type plugin_entities.PluginRuntimeType,
 	declaration *plugin_entities.PluginDeclaration,
+	source string,
+	meta map[string]any,
 ) (
 	*models.Plugin, *models.PluginInstallation, error,
 ) {
@@ -84,6 +86,8 @@ func InstallPlugin(
 			PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
 			TenantID:               tenant_id,
 			RuntimeType:            string(install_type),
+			Source:                 source,
+			Meta:                   meta,
 		}
 
 		err = db.Create(installation, tx)

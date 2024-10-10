@@ -27,7 +27,11 @@ type PluginInstallResponse struct {
 }
 
 // InstallToAWSFromPkg installs a plugin to AWS Lambda
-func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.PluginDecoder) (
+func (p *PluginManager) InstallToAWSFromPkg(
+	tenant_id string, decoder decoder.PluginDecoder,
+	source string,
+	meta map[string]any,
+) (
 	*stream.Stream[PluginInstallResponse], error,
 ) {
 	checksum, err := decoder.Checksum()
@@ -107,6 +111,8 @@ func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.Pl
 					unique_identity,
 					plugin_entities.PLUGIN_RUNTIME_TYPE_AWS,
 					&declaration,
+					source,
+					meta,
 				)
 				if err != nil {
 					new_response.Write(PluginInstallResponse{
@@ -139,7 +145,11 @@ func (p *PluginManager) InstallToAWSFromPkg(tenant_id string, decoder decoder.Pl
 }
 
 // InstallToLocal installs a plugin to local
-func (p *PluginManager) InstallToLocal(tenant_id string, decoder decoder.PluginDecoder) (
+func (p *PluginManager) InstallToLocal(
+	tenant_id string, decoder decoder.PluginDecoder,
+	source string,
+	meta map[string]any,
+) (
 	*stream.Stream[PluginInstallResponse], error,
 ) {
 	return nil, nil
