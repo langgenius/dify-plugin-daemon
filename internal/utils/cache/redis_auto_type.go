@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"reflect"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/redis/go-redis/v9"
@@ -20,7 +21,7 @@ func AutoSet[T any](key string, value T, context ...redis.Cmdable) error {
 	full_type_name := pkg_path + "." + type_name
 
 	key = serialKey("auto_type", full_type_name, key)
-	return getCmdable(context...).Set(ctx, key, parser.MarshalJson(value), 0).Err()
+	return getCmdable(context...).Set(ctx, key, parser.MarshalJson(value), time.Minute*30).Err()
 }
 
 // Get the value with key
@@ -53,7 +54,7 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 				return nil, err
 			}
 
-			if err := Store(key, value, 0, context...); err != nil {
+			if err := Store(key, value, time.Minute*30, context...); err != nil {
 				return nil, err
 			}
 			return value, nil
