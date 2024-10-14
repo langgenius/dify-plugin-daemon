@@ -9,7 +9,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 func GetAsset(c *gin.Context) {
@@ -24,7 +23,7 @@ func GetAsset(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", asset)
 }
 
-func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
+func UploadPlugin(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		dify_pkg_file_header, err := c.FormFile("dify_pkg")
 		if err != nil {
@@ -45,19 +44,6 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 
 		verify_signature := c.PostForm("verify_signature") == "true"
 
-		source := c.PostForm("source")
-		if source == "" {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Source is required"))
-			return
-		}
-
-		meta_str := c.PostForm("meta")
-		meta, err := parser.UnmarshalJson[map[string]any](meta_str)
-		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
-			return
-		}
-
 		dify_pkg_file, err := dify_pkg_file_header.Open()
 		if err != nil {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
@@ -65,26 +51,54 @@ func InstallPluginFromPkg(app *app.Config) gin.HandlerFunc {
 		}
 		defer dify_pkg_file.Close()
 
-		service.InstallPluginFromPkg(app, c, tenant_id, dify_pkg_file, verify_signature, source, meta)
+		c.JSON(http.StatusOK, service.UploadPluginFromPkg(app, c, tenant_id, dify_pkg_file, verify_signature))
 	}
 }
 
-func InstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
+func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
-			TenantID               string                                 `uri:"tenant_id" validate:"required"`
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
-			Source                 string                                 `json:"source" validate:"required"`
-			Meta                   map[string]any                         `json:"meta" validate:"omitempty"`
+			TenantID                string                                   `uri:"tenant_id" validate:"required"`
+			PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,dive,plugin_unique_identifier"`
+			Source                  string                                   `json:"source" validate:"required"`
+			Meta                    map[string]any                           `json:"meta" validate:"omitempty"`
 		}) {
 			if request.Meta == nil {
 				request.Meta = map[string]any{}
 			}
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifier(
-				request.TenantID, request.PluginUniqueIdentifier, request.Source, request.Meta,
+			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
+				request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Meta,
 			))
 		})
 	}
+}
+
+func FetchPluginInstallationTasks(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `uri:"tenant_id" validate:"required"`
+		Page     int    `form:"page" validate:"required,min=1"`
+		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginInstallationTasks(request.TenantID, request.Page, request.PageSize))
+	})
+}
+
+func FetchPluginInstallationTask(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `uri:"tenant_id" validate:"required"`
+		TaskID   string `uri:"task_id" validate:"required"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginInstallationTask(request.TenantID, request.TaskID))
+	})
+}
+
+func FetchPluginManifest(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string                                 `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginManifest(request.TenantID, request.PluginUniqueIdentifier))
+	})
 }
 
 func UninstallPlugin(c *gin.Context) {
