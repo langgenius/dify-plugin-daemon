@@ -59,7 +59,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
 			TenantID                string                                   `uri:"tenant_id" validate:"required"`
-			PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,dive,plugin_unique_identifier"`
+			PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=64,dive,plugin_unique_identifier"`
 			Source                  string                                   `json:"source" validate:"required"`
 			Meta                    map[string]any                           `json:"meta" validate:"omitempty"`
 		}) {

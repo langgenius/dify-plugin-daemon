@@ -84,6 +84,7 @@ func autoMigrate() error {
 		models.ServerlessRuntime{},
 		models.ToolInstallation{},
 		models.AIModelInstallation{},
+		models.InstallTask{},
 	)
 }
 

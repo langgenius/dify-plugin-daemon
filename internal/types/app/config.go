@@ -24,11 +24,12 @@ type Config struct {
 
 	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
 
-	PluginStoragePath    string `envconfig:"STORAGE_PLUGIN_PATH" validate:"required"`
-	PluginWorkingPath    string `envconfig:"PLUGIN_WORKING_PATH"`
-	PluginMediaCacheSize uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
-	PluginMediaCachePath string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
-	ProcessCachingPath   string `envconfig:"PROCESS_CACHING_PATH"`
+	PluginStoragePath      string `envconfig:"STORAGE_PLUGIN_PATH" validate:"required"`
+	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`
+	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"`
+	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
+	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
+	ProcessCachingPath     string `envconfig:"PROCESS_CACHING_PATH"`
 
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
@@ -128,8 +129,12 @@ func (c *Config) Validate() error {
 			c.PersistenceStorageS3AccessKey == "" ||
 			c.PersistenceStorageS3SecretKey == "" ||
 			c.PersistenceStorageS3Bucket == "" {
-			return fmt.Errorf("s3 region, access key, secret key, bucket is empty")
+			return fmt.Errorf("s3 region, access key, secret key or bucket is empty")
 		}
+	}
+
+	if c.PluginPackageCachePath == "" {
+		return fmt.Errorf("plugin package cache path is empty")
 	}
 
 	return nil

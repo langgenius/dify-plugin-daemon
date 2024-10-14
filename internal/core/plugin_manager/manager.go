@@ -24,6 +24,7 @@ type PluginManager struct {
 
 	maxPluginPackageSize int64
 	workingDirectory     string
+	packageCachePath     string
 
 	// mediaManager is used to manage media files like plugin icons, images, etc.
 	mediaManager *media_manager.MediaManager
@@ -55,6 +56,7 @@ var (
 func NewManager(configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
+		packageCachePath:     configuration.PluginPackageCachePath,
 		workingDirectory:     configuration.PluginWorkingPath,
 		mediaManager: media_manager.NewMediaManager(
 			configuration.PluginMediaCachePath,
@@ -74,6 +76,7 @@ func NewManager(configuration *app.Config) *PluginManager {
 	os.MkdirAll(configuration.PluginWorkingPath, 0755)
 	os.MkdirAll(configuration.PluginStoragePath, 0755)
 	os.MkdirAll(configuration.PluginMediaCachePath, 0755)
+	os.MkdirAll(configuration.PluginPackageCachePath, 0755)
 	os.MkdirAll(filepath.Dir(configuration.ProcessCachingPath), 0755)
 
 	return manager
@@ -145,4 +148,13 @@ func (p *PluginManager) Init(configuration *app.Config) {
 
 func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocation {
 	return p.backwardsInvocation
+}
+
+func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) error {
+	// save to storage
+	return os.WriteFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()), pkg, 0644)
+}
+
+func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) ([]byte, error) {
+	return os.ReadFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()))
 }

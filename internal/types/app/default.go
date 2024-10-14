@@ -21,6 +21,7 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PluginMediaCachePath, "./storage/assets")
 	setDefaultString(&config.PersistenceStorageLocalPath, "./storage/persistence")
 	setDefaultString(&config.ProcessCachingPath, "./storage/subprocesses")
+	setDefaultString(&config.PluginPackageCachePath, "./storage/plugin_packages")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
