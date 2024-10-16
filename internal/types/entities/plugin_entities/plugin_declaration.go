@@ -133,16 +133,17 @@ type PluginExtensions struct {
 }
 
 type PluginDeclarationWithoutAdvancedFields struct {
-	Version   string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
-	Type      DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
-	Author    string                    `json:"author" yaml:"author,omitempty" validate:"omitempty,max=64"`
-	Name      string                    `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
-	Icon      string                    `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
-	Label     I18nObject                `json:"label" yaml:"label" validate:"required"`
-	CreatedAt time.Time                 `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
-	Resource  PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
-	Plugins   PluginExtensions          `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
-	Meta      PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
+	Version     string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
+	Type        DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
+	Description I18nObject                `json:"description" yaml:"description" validate:"required"`
+	Label       I18nObject                `json:"label" yaml:"label" validate:"required"`
+	Author      string                    `json:"author" yaml:"author,omitempty" validate:"omitempty,max=64"`
+	Name        string                    `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
+	Icon        string                    `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
+	CreatedAt   time.Time                 `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
+	Resource    PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
+	Plugins     PluginExtensions          `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
+	Meta        PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
 }
 
 type PluginDeclaration struct {
@@ -188,6 +189,22 @@ func (p *PluginDeclaration) ManifestValidate() error {
 	return nil
 }
 
+func (p *PluginDeclaration) FillInDefaultValues() {
+	if p.Tool != nil {
+		if p.Tool.Identity.Description == nil {
+			deep_copied_description := p.Description
+			p.Tool.Identity.Description = &deep_copied_description
+		}
+	}
+
+	if p.Model != nil {
+		if p.Model.Description == nil {
+			deep_copied_description := p.Description
+			p.Model.Description = &deep_copied_description
+		}
+	}
+}
+
 func init() {
 	// init validator
 	validators.GlobalEntitiesValidator.RegisterValidation("version", isVersion)
@@ -204,6 +221,8 @@ func UnmarshalPluginDeclarationFromYaml(data []byte) (*PluginDeclaration, error)
 		return nil, err
 	}
 
+	obj.FillInDefaultValues()
+
 	return &obj, nil
 }
 
@@ -216,6 +235,8 @@ func UnmarshalPluginDeclarationFromJSON(data []byte) (*PluginDeclaration, error)
 	if err := validators.GlobalEntitiesValidator.Struct(obj); err != nil {
 		return nil, err
 	}
+
+	obj.FillInDefaultValues()
 
 	return &obj, nil
 }

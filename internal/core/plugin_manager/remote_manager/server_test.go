@@ -146,9 +146,12 @@ func TestAcceptConnection(t *testing.T) {
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Version: "1.0.0",
 			Type:    plugin_entities.PluginType,
-			Author:  "Yeuoly",
-			Name:    "ci_test",
-			Icon:    "test.svg",
+			Description: plugin_entities.I18nObject{
+				EnUS: "test",
+			},
+			Author: "Yeuoly",
+			Name:   "ci_test",
+			Icon:   "test.svg",
 			Label: plugin_entities.I18nObject{
 				EnUS: "ci_test",
 			},
@@ -213,6 +216,7 @@ func TestAcceptConnection(t *testing.T) {
 		return
 	case <-closed_chan:
 		// success
+
 		if !got_connection {
 			t.Errorf("failed to accept connection: %s", msg)
 			return

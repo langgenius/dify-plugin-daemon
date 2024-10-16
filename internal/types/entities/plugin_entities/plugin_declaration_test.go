@@ -13,8 +13,11 @@ func preparePluginDeclaration() PluginDeclaration {
 		PluginDeclarationWithoutAdvancedFields: PluginDeclarationWithoutAdvancedFields{
 			Version: "0.0.1",
 			Type:    PluginType,
-			Name:    "test",
-			Icon:    "test.svg",
+			Description: I18nObject{
+				EnUS: "test",
+			},
+			Name: "test",
+			Icon: "test.svg",
 			Label: I18nObject{
 				EnUS: "test",
 			},

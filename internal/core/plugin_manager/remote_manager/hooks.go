@@ -271,6 +271,10 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			return
 		}
 
+		// fill in default values
+		runtime.Config.FillInDefaultValues()
+
+		// mark assets transferred
 		runtime.assets_transferred = true
 
 		runtime.checksum = runtime.calculateChecksum()

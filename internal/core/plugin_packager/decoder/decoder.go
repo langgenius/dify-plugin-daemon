@@ -291,6 +291,8 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		dec.Model = &plugin_dec
 	}
 
+	dec.FillInDefaultValues()
+
 	if err := dec.ManifestValidate(); err != nil {
 		return plugin_entities.PluginDeclaration{}, err
 	}
