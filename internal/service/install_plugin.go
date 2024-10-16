@@ -1,8 +1,8 @@
 package service
 
 import (
+	"errors"
 	"fmt"
-	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
@@ -50,8 +50,6 @@ func InstallPluginFromIdentifiers(
 			Status:                 models.InstallTaskStatusPending,
 			Message:                "",
 		})
-
-		task.TotalPlugins++
 
 		if err == nil {
 			// already installed by other tenant
@@ -111,11 +109,17 @@ func InstallPluginFromIdentifiers(
 
 					task_pointer := &task
 					var plugin_status *models.InstallTaskPluginStatus
-					for _, plugin := range task.Plugins {
-						if plugin.PluginUniqueIdentifier == plugin_unique_identifier {
-							plugin_status = &plugin
+					for i := range task.Plugins {
+						if task.Plugins[i].PluginUniqueIdentifier == plugin_unique_identifier {
+							plugin_status = &task.Plugins[i]
+							break
 						}
 					}
+
+					if plugin_status == nil {
+						return errors.New("plugin status not found")
+					}
+
 					modifier(task_pointer, plugin_status)
 					return db.Update(task_pointer, tx)
 				}); err != nil {
@@ -193,22 +197,7 @@ func InstallPluginFromIdentifiers(
 	}
 
 	// submit async tasks
-	routine.WithMaxRoutine(3, tasks, func() {
-		time.AfterFunc(time.Second*5, func() {
-			// get task
-			task, err := db.GetOne[models.InstallTask](
-				db.Equal("id", task.ID),
-			)
-			if err != nil {
-				return
-			}
-
-			if task.CompletedPlugins == task.TotalPlugins {
-				// delete task if all plugins are installed successfully
-				db.Delete(&task)
-			}
-		})
-	})
+	routine.WithMaxRoutine(3, tasks)
 
 	return entities.NewSuccessResponse(response)
 }
@@ -243,6 +232,26 @@ func FetchPluginInstallationTask(
 	}
 
 	return entities.NewSuccessResponse(task)
+}
+
+func DeletePluginInstallationTask(
+	tenant_id string,
+	task_id string,
+) *entities.Response {
+	err := db.DeleteByCondition(
+		models.InstallTask{
+			Model: models.Model{
+				ID: task_id,
+			},
+			TenantID: tenant_id,
+		},
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	return entities.NewSuccessResponse(true)
 }
 
 func FetchPluginFromIdentifier(

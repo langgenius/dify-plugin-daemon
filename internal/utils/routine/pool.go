@@ -51,15 +51,10 @@ func WithMaxRoutine(max_routine int, tasks []func(), on_finish ...func()) {
 			Submit(func() {
 				defer wg.Done()
 				current_index := atomic.AddInt32(&task_index, 1)
-
-				if current_index >= int32(len(tasks)) {
-					return
-				}
-
-				for current_index < int32(len(tasks)) {
-					task := tasks[current_index]
+				for current_index <= int32(len(tasks)) {
+					task := tasks[current_index-1]
 					task()
-					current_index++
+					current_index = atomic.AddInt32(&task_index, 1)
 				}
 			})
 		}

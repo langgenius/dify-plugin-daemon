@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -166,5 +167,14 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 }
 
 func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) ([]byte, error) {
-	return os.ReadFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()))
+	file, err := os.ReadFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()))
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, errors.New("plugin package not found, please upload it firstly")
+		}
+		return nil, err
+	}
+
+	return file, nil
 }
