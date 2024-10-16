@@ -163,9 +163,13 @@ const (
 
 func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 	return parser.MarshalJsonBytes(map[string]any{
-		"session_id": s.ID,
-		"event":      event,
-		"data":       data,
+		"session_id":      s.ID,
+		"conversation_id": s.ConversationID,
+		"message_id":      s.MessageID,
+		"app_id":          s.AppID,
+		"endpoint_id":     s.EndpointID,
+		"event":           event,
+		"data":            data,
 	})
 }
 
