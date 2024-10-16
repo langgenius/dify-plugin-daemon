@@ -32,7 +32,8 @@ func InstallPluginFromIdentifiers(
 
 	task := &models.InstallTask{
 		Status:           models.InstallTaskStatusRunning,
-		TotalPlugins:     len(plugins_wait_for_installation),
+		TenantID:         tenant_id,
+		TotalPlugins:     len(plugin_unique_identifiers),
 		CompletedPlugins: 0,
 		Plugins:          []models.InstallTaskPluginStatus{},
 	}
@@ -276,10 +277,15 @@ func UninstallPlugin(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
+	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+	if err != nil {
+		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
+	}
+
 	// Uninstall the plugin
 	_, err = curd.UninstallPlugin(
 		tenant_id,
-		plugin_entities.PluginUniqueIdentifier(installation.PluginUniqueIdentifier),
+		plugin_unique_identifier,
 		installation.ID,
 	)
 	if err != nil {

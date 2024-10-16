@@ -152,7 +152,17 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 
 func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) error {
 	// save to storage
-	return os.WriteFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()), pkg, 0644)
+	pkg_path := filepath.Join(p.packageCachePath, plugin_unique_identifier.String())
+	pkg_dir := filepath.Dir(pkg_path)
+	if err := os.MkdirAll(pkg_dir, 0755); err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(pkg_path, pkg, 0644); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) ([]byte, error) {

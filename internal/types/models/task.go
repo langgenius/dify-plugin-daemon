@@ -21,6 +21,7 @@ type InstallTaskPluginStatus struct {
 type InstallTask struct {
 	Model
 	Status           InstallTaskStatus         `json:"status" gorm:"not null"`
+	TenantID         string                    `json:"tenant_id" gorm:"type:uuid;not null"`
 	TotalPlugins     int                       `json:"total_plugins" gorm:"not null"`
 	CompletedPlugins int                       `json:"completed_plugins" gorm:"not null"`
 	Plugins          []InstallTaskPluginStatus `json:"plugins" gorm:"serializer:json"`

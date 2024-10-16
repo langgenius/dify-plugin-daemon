@@ -86,7 +86,7 @@ func FetchPluginInstallationTasks(c *gin.Context) {
 func FetchPluginInstallationTask(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`
-		TaskID   string `uri:"task_id" validate:"required"`
+		TaskID   string `uri:"id" validate:"required"`
 	}) {
 		c.JSON(http.StatusOK, service.FetchPluginInstallationTask(request.TenantID, request.TaskID))
 	})
