@@ -33,6 +33,12 @@ type Session struct {
 	InvokeFrom             access_types.PluginAccessType          `json:"invoke_from"`
 	Action                 access_types.PluginAccessAction        `json:"action"`
 	Declaration            *plugin_entities.PluginDeclaration     `json:"declaration"`
+
+	// information about incoming request
+	ConversationID *string `json:"conversation_id"`
+	MessageID      *string `json:"message_id"`
+	AppID          *string `json:"app_id"`
+	EndpointID     *string `json:"endpoint_id"`
 }
 
 func sessionKey(id string) string {
@@ -49,6 +55,10 @@ type NewSessionPayload struct {
 	Declaration            *plugin_entities.PluginDeclaration     `json:"declaration"`
 	BackwardsInvocation    dify_invocation.BackwardsInvocation    `json:"backwards_invocation"`
 	IgnoreCache            bool                                   `json:"ignore_cache"`
+	ConversationID         *string                                `json:"conversation_id"`
+	MessageID              *string                                `json:"message_id"`
+	AppID                  *string                                `json:"app_id"`
+	EndpointID             *string                                `json:"endpoint_id"`
 }
 
 func NewSession(payload NewSessionPayload) *Session {
@@ -62,6 +72,10 @@ func NewSession(payload NewSessionPayload) *Session {
 		Action:                 payload.Action,
 		Declaration:            payload.Declaration,
 		backwardsInvocation:    payload.BackwardsInvocation,
+		ConversationID:         payload.ConversationID,
+		MessageID:              payload.MessageID,
+		AppID:                  payload.AppID,
+		EndpointID:             payload.EndpointID,
 	}
 
 	session_lock.Lock()

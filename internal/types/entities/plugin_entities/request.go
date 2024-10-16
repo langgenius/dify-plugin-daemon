@@ -14,5 +14,10 @@ type InvokePluginRequest[T any] struct {
 	BasePluginIdentifier
 
 	UniqueIdentifier PluginUniqueIdentifier `json:"unique_identifier"`
-	Data             T                      `json:"data" validate:"required"`
+	ConversationID   *string                `json:"conversation_id"`
+	MessageID        *string                `json:"message_id"`
+	AppID            *string                `json:"app_id"`
+	EndpointID       *string                `json:"endpoint_id"`
+
+	Data T `json:"data" validate:"required"`
 }

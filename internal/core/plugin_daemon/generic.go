@@ -102,7 +102,15 @@ func getInvokePluginMap(
 	session *session_manager.Session,
 	request any,
 ) map[string]any {
-	req := getBasicPluginAccessMap(session.UserID, session.InvokeFrom, session.Action)
+	req := getBasicPluginAccessMap(
+		session.UserID,
+		session.InvokeFrom,
+		session.Action,
+		session.ConversationID,
+		session.MessageID,
+		session.AppID,
+		session.EndpointID,
+	)
 	for k, v := range parser.StructToMap(request) {
 		req[k] = v
 	}

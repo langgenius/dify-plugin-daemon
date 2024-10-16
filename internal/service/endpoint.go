@@ -99,6 +99,7 @@ func Endpoint(
 			Declaration:            runtime.Configuration(),
 			BackwardsInvocation:    manager.BackwardsInvocation(),
 			IgnoreCache:            false,
+			EndpointID:             &endpoint.ID,
 		},
 	)
 	defer session.Close(session_manager.CloseSessionPayload{
