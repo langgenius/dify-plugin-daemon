@@ -74,9 +74,9 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest
-            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }}
-            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }}
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest-${{ env.PLATFORM_PAIR }}
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }}-${{ env.PLATFORM_PAIR }}
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }}-${{ env.PLATFORM_PAIR }}
           cache-from: type=gha,scope=${{ matrix.service_name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service_name }}
 
@@ -104,15 +104,18 @@ jobs:
       - name: Create and push manifest
         run: |
           docker manifest create ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest \
-            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest-linux-amd64 \
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest-linux-arm64
           docker manifest push ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-latest
 
           docker manifest create ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }} \
-            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }}
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }}-linux-amd64 \
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }}-linux-arm64
           docker manifest push ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ github.sha }}
 
           docker manifest create ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }} \
-            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }}
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }}-linux-amd64 \
+            ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }}-linux-arm64
           docker manifest push ${{ env.DIFY_DAEMON_IMAGE_NAME }}:${{ matrix.scope }}-${{ env.BRANCH_NAME }}
 
       - name: Inspect images
