@@ -83,7 +83,7 @@ jobs:
   create-manifest:
     needs: build
     runs-on: ubuntu-latest
-    if: github.repository == 'langgenius/dify'
+    if: github.repository == 'langgenius/dify-plugin-daemon'
     strategy:
       matrix:
         scope: [serverless, local]
