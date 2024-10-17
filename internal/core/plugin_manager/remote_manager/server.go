@@ -102,6 +102,8 @@ func NewRemotePluginServer(config *app.Config, media_manager *media_manager.Medi
 		plugins_lock: &sync.RWMutex{},
 
 		shutdown_chan: make(chan bool),
+
+		max_conn: int32(config.PluginRemoteInstallingMaxConn),
 	}
 
 	manager := &RemotePluginServer{
