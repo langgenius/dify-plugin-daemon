@@ -22,7 +22,6 @@ jobs:
     runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'ubuntu-latest' }}
     if: github.repository == 'langgenius/dify-plugin-daemon'
     strategy:
-      fail-fast: false
       matrix:
         include:
           - service_name: "build-serverless-daemon-amd64"
@@ -86,7 +85,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'langgenius/dify'
     strategy:
-      fail-fast: false
       matrix:
         scope: [serverless, local]
     steps:
