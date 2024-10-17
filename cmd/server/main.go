@@ -11,12 +11,10 @@ import (
 func main() {
 	var config app.Config
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Panic("Error loading .env file")
-	}
+	// load env
+	godotenv.Load()
 
-	err = envconfig.Process("", &config)
+	err := envconfig.Process("", &config)
 	if err != nil {
 		log.Panic("Error processing environment variables")
 	}
