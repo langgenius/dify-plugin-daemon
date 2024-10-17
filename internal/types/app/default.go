@@ -18,6 +18,7 @@ func (config *Config) SetDefault() {
 	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBool(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
+	setDefaultString(&config.PluginStoragePath, "./storage/plugin")
 	setDefaultString(&config.PluginMediaCachePath, "./storage/assets")
 	setDefaultString(&config.PersistenceStorageLocalPath, "./storage/persistence")
 	setDefaultString(&config.ProcessCachingPath, "./storage/subprocesses")

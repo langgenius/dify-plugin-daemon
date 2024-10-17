@@ -45,6 +45,9 @@ type DifyServer struct {
 	plugins_lock *sync.RWMutex
 
 	shutdown_chan chan bool
+
+	max_conn     int32
+	current_conn int32
 }
 
 func (s *DifyServer) OnBoot(c gnet.Engine) (action gnet.Action) {
@@ -99,6 +102,10 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	delete(s.plugins, c.Fd())
 	s.plugins_lock.Unlock()
 
+	if plugin == nil {
+		return gnet.None
+	}
+
 	// close plugin
 	plugin.onDisconnected()
 
@@ -108,6 +115,9 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 			if err := plugin.Unregister(); err != nil {
 				log.Error("unregister plugin failed, error: %v", err)
 			}
+
+			// decrease current connection
+			atomic.AddInt32(&s.current_conn, -1)
 		}
 	}
 
@@ -268,6 +278,12 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		if err := runtime.RemapAssets(&runtime.Config, files); err != nil {
 			log.Error("assets remap failed, error: %v", err)
 			close([]byte("assets remap failed, invalid assets data, cannot remap\n"))
+			return
+		}
+
+		atomic.AddInt32(&s.current_conn, 1)
+		if atomic.LoadInt32(&s.current_conn) > int32(s.max_conn) {
+			close([]byte("server is busy now, please try again later\n"))
 			return
 		}
 
