@@ -29,4 +29,6 @@ type BackwardsInvocation interface {
 	InvokeQuestionClassifier(payload *InvokeQuestionClassifierRequest) (*InvokeNodeResponse, error)
 	// InvokeEncrypt
 	InvokeEncrypt(payload *InvokeEncryptRequest) (map[string]any, error)
+	// InvokeSummary
+	InvokeSummary(payload *InvokeSummaryRequest) (*InvokeSummaryResponse, error)
 }

@@ -149,3 +149,7 @@ func (i *RealBackwardsInvocation) InvokeEncrypt(payload *dify_invocation.InvokeE
 
 	return data.Data, nil
 }
+
+func (i *RealBackwardsInvocation) InvokeSummary(payload *dify_invocation.InvokeSummaryRequest) (*dify_invocation.InvokeSummaryResponse, error) {
+	return Request[dify_invocation.InvokeSummaryResponse](i, "POST", "invoke/summary", http_requests.HttpPayloadJson(payload))
+}

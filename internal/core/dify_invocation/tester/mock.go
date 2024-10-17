@@ -313,3 +313,9 @@ func (m *MockedDifyInvocation) InvokeQuestionClassifier(payload *dify_invocation
 		Inputs: map[string]any{},
 	}, nil
 }
+
+func (m *MockedDifyInvocation) InvokeSummary(payload *dify_invocation.InvokeSummaryRequest) (*dify_invocation.InvokeSummaryResponse, error) {
+	return &dify_invocation.InvokeSummaryResponse{
+		Summary: payload.Text,
+	}, nil
+}

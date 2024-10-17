@@ -29,6 +29,7 @@ const (
 	INVOKE_TYPE_APP                      InvokeType = "app"
 	INVOKE_TYPE_STORAGE                  InvokeType = "storage"
 	INVOKE_TYPE_ENCRYPT                  InvokeType = "encrypt"
+	INVOKE_TYPE_SUMMARY                  InvokeType = "summary"
 )
 
 type InvokeLLMRequest struct {
@@ -215,4 +216,18 @@ type InvokeNodeResponse struct {
 type InvokeEncryptionResponse struct {
 	Error string         `json:"error"`
 	Data  map[string]any `json:"data"`
+}
+
+type InvokeSummarySchema struct {
+	Text        string `json:"text" validate:"required"`
+	Instruction string `json:"instruction" validate:"omitempty"`
+}
+
+type InvokeSummaryRequest struct {
+	BaseInvokeDifyRequest
+	InvokeSummarySchema
+}
+
+type InvokeSummaryResponse struct {
+	Summary string `json:"summary"`
 }

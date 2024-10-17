@@ -131,6 +131,12 @@ var (
 			},
 			"error": "permission denied, you need to enable storage access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_SUMMARY: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeLLM()
+			},
+			"error": "permission denied, you need to enable llm access in plugin manifest",
+		},
 	}
 )
 
@@ -217,6 +223,9 @@ var (
 		},
 		dify_invocation.INVOKE_TYPE_STORAGE: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationStorageTask)
+		},
+		dify_invocation.INVOKE_TYPE_SUMMARY: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationSummaryTask)
 		},
 	}
 )
@@ -491,4 +500,17 @@ func executeDifyInvocationStorageTask(
 			"data": "ok",
 		})
 	}
+}
+
+func executeDifyInvocationSummaryTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeSummaryRequest,
+) {
+	response, err := handle.backwardsInvocation.InvokeSummary(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke summary failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
 }
