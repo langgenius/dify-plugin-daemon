@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -32,9 +31,13 @@ func UploadPluginFromPkg(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
+	manifest, err := decoder.Manifest()
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
 	if config.ForceVerifyingSignature || verify_signature {
-		err := verifier.VerifyPlugin(decoder)
-		if err != nil {
+		if !manifest.Verified {
 			return entities.NewErrorResponse(-500, errors.Join(err, errors.New(
 				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
 			)).Error())

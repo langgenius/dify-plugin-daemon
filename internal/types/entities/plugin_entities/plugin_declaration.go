@@ -148,6 +148,7 @@ type PluginDeclarationWithoutAdvancedFields struct {
 
 type PluginDeclaration struct {
 	PluginDeclarationWithoutAdvancedFields `yaml:",inline"`
+	Verified                               bool                         `json:"verified" yaml:"verified"`
 	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
 	Model                                  *ModelProviderDeclaration    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
 	Tool                                   *ToolProviderDeclaration     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`

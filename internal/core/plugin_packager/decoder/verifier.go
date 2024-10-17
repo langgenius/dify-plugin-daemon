@@ -1,4 +1,4 @@
-package verifier
+package decoder
 
 import (
 	"bytes"
@@ -8,13 +8,12 @@ import (
 	"strconv"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/license/public_key"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 )
 
 // VerifyPlugin is a function that verifies the signature of a plugin
 // It takes a plugin decoder and verifies the signature
-func VerifyPlugin(decoder decoder.PluginDecoder) error {
+func VerifyPlugin(decoder PluginDecoder) error {
 	// load public key
 	public_key, err := encryption.LoadPublicKey(public_key.PUBLIC_KEY)
 	if err != nil {

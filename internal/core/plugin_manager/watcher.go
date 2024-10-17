@@ -14,7 +14,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -210,7 +209,7 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 				AbsolutePath: plugin_path,
 				WorkingPath:  plugin_working_path,
 				ActiveAt:     nil,
-				Verified:     verifier.VerifyPlugin(decoder) == nil,
+				Verified:     manifest.Verified,
 			},
 		},
 		Decoder: decoder,

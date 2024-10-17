@@ -9,7 +9,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/signer"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 )
 
 //go:embed manifest.yaml
@@ -137,7 +136,7 @@ func TestPackagerAndVerifier(t *testing.T) {
 	}
 
 	// verify
-	err = verifier.VerifyPlugin(signed_decoder)
+	err = decoder.VerifyPlugin(signed_decoder)
 	if err != nil {
 		t.Errorf("failed to verify: %s", err.Error())
 		return
@@ -200,7 +199,7 @@ func TestWrongSign(t *testing.T) {
 	}
 
 	// verify
-	err = verifier.VerifyPlugin(signed_decoder)
+	err = decoder.VerifyPlugin(signed_decoder)
 	if err == nil {
 		t.Errorf("should fail to verify")
 		return
