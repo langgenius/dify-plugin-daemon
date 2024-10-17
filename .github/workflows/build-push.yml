@@ -27,22 +27,18 @@ jobs:
           - service_name: "build-serverless-daemon-amd64"
             image_name_env: "DIFY_DAEMON_IMAGE_NAME"
             platform: linux/amd64
-            dockerfile: "docker/serverless/Dockerfile"
             scope: serverless
           - service_name: "build-serverless-daemon-arm64"
             image_name_env: "DIFY_DAEMON_IMAGE_NAME"
             platform: linux/arm64
-            dockerfile: "docker/serverless/Dockerfile"
             scope: serverless
           - service_name: "build-local-daemon-amd64"
             image_name_env: "DIFY_DAEMON_IMAGE_NAME"
             platform: linux/amd64
-            dockerfile: "docker/local/Dockerfile"
             scope: local
           - service_name: "build-local-daemon-arm64"
             image_name_env: "DIFY_DAEMON_IMAGE_NAME"
             platform: linux/arm64
-            dockerfile: "docker/local/Dockerfile"
             scope: local
     steps:
       - name: Checkout code
