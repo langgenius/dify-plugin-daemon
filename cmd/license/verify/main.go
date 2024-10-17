@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/verifier"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
@@ -31,13 +30,13 @@ func main() {
 	}
 
 	// decode
-	decoder, err := decoder.NewZipPluginDecoder(plugin)
+	decoder_instance, err := decoder.NewZipPluginDecoder(plugin)
 	if err != nil {
 		log.Panic("failed to create plugin decoder , plugin path: %s, error: %v", in_path, err)
 	}
 
 	// sign plugin
-	err = verifier.VerifyPlugin(decoder)
+	err = decoder.VerifyPlugin(decoder_instance)
 	if err != nil {
 		log.Panic("failed to verify plugin %v", err)
 	}
