@@ -20,12 +20,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
-func (p *PluginManager) startLocalWatcher(config *app.Config) {
+func (p *PluginManager) startLocalWatcher() {
 	go func() {
-		log.Info("start to handle new plugins in path: %s", config.PluginStoragePath)
-		p.handleNewLocalPlugins(config)
+		log.Info("start to handle new plugins in path: %s", p.pluginStoragePath)
+		p.handleNewLocalPlugins()
 		for range time.NewTicker(time.Second * 30).C {
-			p.handleNewLocalPlugins(config)
+			p.handleNewLocalPlugins()
 		}
 	}()
 }
@@ -55,96 +55,116 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	}
 }
 
-func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
+func (p *PluginManager) handleNewLocalPlugins() {
 	// load local plugins firstly
-	for plugin := range p.loadNewLocalPlugins(config.PluginStoragePath) {
-		// get assets
-		assets, err := plugin.Decoder.Assets()
-		if err != nil {
-			log.Error("get plugin assets error: %v", err)
-			continue
-		}
-
-		local_plugin_runtime := local_manager.NewLocalPluginRuntime()
-		local_plugin_runtime.PluginRuntime = plugin.Runtime
-		local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
-			BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
-			LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
-			WorkingPath:        plugin.Runtime.State.WorkingPath,
-			Decoder:            plugin.Decoder,
-		}
-
-		if err := local_plugin_runtime.RemapAssets(
-			&local_plugin_runtime.Config,
-			assets,
-		); err != nil {
-			log.Error("remap plugin assets error: %v", err)
-			continue
-		}
-
-		identity, err := local_plugin_runtime.Identity()
-		if err != nil {
-			log.Error("get plugin identity error: %v", err)
-			continue
-		}
-
-		// store the plugin in the storage, avoid duplicate loading
-		p.runningPluginInStorage.Store(plugin.Runtime.State.AbsolutePath, identity.String())
-
-		// local plugin
-		routine.Submit(func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Error("plugin runtime error: %v", r)
-				}
-			}()
-			// delete the plugin from the storage when the plugin is stopped
-			defer p.runningPluginInStorage.Delete(plugin.Runtime.State.AbsolutePath)
-			p.fullDuplexLifetime(local_plugin_runtime)
-		})
+	plugins, err := os.ReadDir(p.pluginStoragePath)
+	if err != nil {
+		log.Error("no plugin found in path: %s", p.pluginStoragePath)
 	}
+
+	for _, plugin := range plugins {
+		if !plugin.IsDir() {
+			abs_path := path.Join(p.pluginStoragePath, plugin.Name())
+			_, err := p.launchLocal(abs_path)
+			if err != nil {
+				log.Error("launch local plugin failed: %s", err.Error())
+			}
+		}
+	}
+}
+
+func (p *PluginManager) launchLocal(plugin_package_path string) (plugin_entities.PluginFullDuplexLifetime, error) {
+	plugin, err := p.getLocalPluginRuntime(plugin_package_path)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := plugin.decoder.UniqueIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	// lock launch process
+	p.localPluginLaunchingLock.Lock(identity.String())
+	defer p.localPluginLaunchingLock.Unlock(identity.String())
+
+	// check if the plugin is already running
+	if _, ok := p.m.Load(identity.String()); ok {
+		lifetime, ok := p.Get(identity).(plugin_entities.PluginFullDuplexLifetime)
+		if !ok {
+			return nil, fmt.Errorf("plugin runtime not found")
+		}
+		return lifetime, nil
+	}
+
+	// extract plugin
+	decoder, ok := plugin.decoder.(*decoder.ZipPluginDecoder)
+	if !ok {
+		return nil, fmt.Errorf("plugin decoder is not a zip decoder")
+	}
+
+	if err := decoder.ExtractTo(plugin.runtime.State.WorkingPath); err != nil {
+		return nil, errors.Join(err, fmt.Errorf("extract plugin to working directory error"))
+	}
+
+	success := false
+	failed := func(message string) error {
+		if !success {
+			os.RemoveAll(plugin.runtime.State.WorkingPath)
+		}
+		return errors.New(message)
+	}
+
+	// get assets
+	assets, err := plugin.decoder.Assets()
+	if err != nil {
+		return nil, failed(err.Error())
+	}
+
+	local_plugin_runtime := local_manager.NewLocalPluginRuntime()
+	local_plugin_runtime.PluginRuntime = plugin.runtime
+	local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
+		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
+		LocalPackagePath:   plugin.runtime.State.AbsolutePath,
+		WorkingPath:        plugin.runtime.State.WorkingPath,
+		Decoder:            plugin.decoder,
+	}
+
+	if err := local_plugin_runtime.RemapAssets(
+		&local_plugin_runtime.Config,
+		assets,
+	); err != nil {
+		return nil, failed(errors.Join(err, fmt.Errorf("remap plugin assets error")).Error())
+	}
+
+	// add plugin to manager
+	err = p.Add(local_plugin_runtime)
+	if err != nil {
+		return nil, failed(errors.Join(err, fmt.Errorf("add plugin to manager failed")).Error())
+	}
+
+	success = true
+
+	// local plugin
+	routine.Submit(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Error("plugin runtime panic: %v", r)
+			}
+		}()
+		p.fullDuplexLifetime(local_plugin_runtime)
+	})
+
+	return local_plugin_runtime, nil
 }
 
 type pluginRuntimeWithDecoder struct {
-	Runtime plugin_entities.PluginRuntime
-	Decoder decoder.PluginDecoder
+	runtime plugin_entities.PluginRuntime
+	decoder decoder.PluginDecoder
 }
 
-// chan should be closed after using that
-func (p *PluginManager) loadNewLocalPlugins(root_path string) <-chan *pluginRuntimeWithDecoder {
-	ch := make(chan *pluginRuntimeWithDecoder)
-
-	plugins, err := os.ReadDir(root_path)
-	if err != nil {
-		log.Error("no plugin found in path: %s", root_path)
-		close(ch)
-		return ch
-	}
-
-	routine.Submit(func() {
-		for _, plugin := range plugins {
-			if !plugin.IsDir() {
-				abs_path := path.Join(root_path, plugin.Name())
-				if _, ok := p.runningPluginInStorage.Load(abs_path); ok {
-					// if the plugin is already running, skip it
-					continue
-				}
-
-				plugin, err := p.loadPlugin(abs_path)
-				if err != nil {
-					log.Error("load plugin error: %v", err)
-					continue
-				}
-				ch <- plugin
-			}
-		}
-		close(ch)
-	})
-
-	return ch
-}
-
-func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecoder, error) {
+// extract plugin from package to working directory
+func (p *PluginManager) getLocalPluginRuntime(plugin_path string) (*pluginRuntimeWithDecoder, error) {
 	pack, err := os.Open(plugin_path)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("open plugin package error"))
@@ -195,13 +215,8 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 		return nil, errors.Join(fmt.Errorf("plugin working directory already exists: %s", plugin_working_path), err)
 	}
 
-	// extract to working directory
-	if err := decoder.ExtractTo(plugin_working_path); err != nil {
-		return nil, errors.Join(fmt.Errorf("extract plugin to working directory error: %v", err), err)
-	}
-
 	return &pluginRuntimeWithDecoder{
-		Runtime: plugin_entities.PluginRuntime{
+		runtime: plugin_entities.PluginRuntime{
 			Config: manifest,
 			State: plugin_entities.PluginRuntimeState{
 				Status:       plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
@@ -212,6 +227,6 @@ func (p *PluginManager) loadPlugin(plugin_path string) (*pluginRuntimeWithDecode
 				Verified:     manifest.Verified,
 			},
 		},
-		Decoder: decoder,
+		decoder: decoder,
 	}, nil
 }

@@ -13,22 +13,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-type PluginInstallEvent string
-
-const (
-	PluginInstallEventInfo  PluginInstallEvent = "info"
-	PluginInstallEventDone  PluginInstallEvent = "done"
-	PluginInstallEventError PluginInstallEvent = "error"
-)
-
-type PluginInstallResponse struct {
-	Event PluginInstallEvent `json:"event"`
-	Data  string             `json:"data"`
-}
-
 // InstallToAWSFromPkg installs a plugin to AWS Lambda
 func (p *PluginManager) InstallToAWSFromPkg(
-	tenant_id string, decoder decoder.PluginDecoder,
+	tenant_id string,
+	decoder decoder.PluginDecoder,
 	source string,
 	meta map[string]any,
 ) (
@@ -142,15 +130,4 @@ func (p *PluginManager) InstallToAWSFromPkg(
 	})
 
 	return new_response, nil
-}
-
-// InstallToLocal installs a plugin to local
-func (p *PluginManager) InstallToLocal(
-	tenant_id string, decoder decoder.PluginDecoder,
-	source string,
-	meta map[string]any,
-) (
-	*stream.Stream[PluginInstallResponse], error,
-) {
-	return nil, nil
 }

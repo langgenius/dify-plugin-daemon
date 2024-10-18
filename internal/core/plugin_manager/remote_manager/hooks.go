@@ -68,7 +68,8 @@ func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 		callbacks:      make(map[string][]func([]byte)),
 		callbacks_lock: &sync.RWMutex{},
 
-		shutdown_chan: make(chan bool),
+		shutdown_chan:      make(chan bool),
+		wait_launched_chan: make(chan error),
 
 		alive: true,
 	}
@@ -131,6 +132,11 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	}
 	plugin.wait_chan_lock.Unlock()
 
+	// recycle launched chan, avoid memory leak
+	plugin.wait_launched_chan_once.Do(func() {
+		close(plugin.wait_launched_chan)
+	})
+
 	return gnet.None
 }
 
@@ -172,7 +178,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		return
 	}
 
-	close := func(message []byte) {
+	close_conn := func(message []byte) {
 		if atomic.CompareAndSwapInt32(&runtime.closed, 0, 1) {
 			runtime.conn.Write(message)
 			runtime.conn.Close()
@@ -185,12 +191,12 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		info, err := GetConnectionInfo(key)
 		if err == cache.ErrNotFound {
 			// close connection if handshake failed
-			close([]byte("handshake failed, invalid key\n"))
+			close_conn([]byte("handshake failed, invalid key\n"))
 			runtime.handshake_failed = true
 			return
 		} else if err != nil {
 			// close connection if handshake failed
-			close([]byte("internal error\n"))
+			close_conn([]byte("internal error\n"))
 			return
 		}
 
@@ -203,7 +209,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		declaration, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](message)
 		if err != nil {
 			// close connection if handshake failed
-			close([]byte("handshake failed, invalid plugin declaration\n"))
+			close_conn([]byte("handshake failed, invalid plugin declaration\n"))
 			return
 		}
 
@@ -215,7 +221,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderDeclaration](message)
 		if err != nil {
 			log.Error("tools register failed, error: %v", err)
-			close([]byte("tools register failed, invalid tools declaration\n"))
+			close_conn([]byte("tools register failed, invalid tools declaration\n"))
 			return
 		}
 
@@ -230,7 +236,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderDeclaration](message)
 		if err != nil {
 			log.Error("models register failed, error: %v", err)
-			close([]byte("models register failed, invalid models declaration\n"))
+			close_conn([]byte("models register failed, invalid models declaration\n"))
 			return
 		}
 
@@ -245,7 +251,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		endpoints, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.EndpointProviderDeclaration](message)
 		if err != nil {
 			log.Error("endpoints register failed, error: %v", err)
-			close([]byte("endpoints register failed, invalid endpoints declaration\n"))
+			close_conn([]byte("endpoints register failed, invalid endpoints declaration\n"))
 			return
 		}
 
@@ -260,7 +266,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		assets, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.RemoteAssetPayload](message)
 		if err != nil {
 			log.Error("assets register failed, error: %v", err)
-			close([]byte("assets register failed, invalid assets declaration\n"))
+			close_conn([]byte("assets register failed, invalid assets declaration\n"))
 			return
 		}
 
@@ -269,7 +275,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			files[asset.Filename], err = hex.DecodeString(asset.Data)
 			if err != nil {
 				log.Error("assets decode failed, error: %v", err)
-				close([]byte("assets decode failed, invalid assets data, cannot decode file\n"))
+				close_conn([]byte("assets decode failed, invalid assets data, cannot decode file\n"))
 				return
 			}
 		}
@@ -277,13 +283,13 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// remap assets
 		if err := runtime.RemapAssets(&runtime.Config, files); err != nil {
 			log.Error("assets remap failed, error: %v", err)
-			close([]byte("assets remap failed, invalid assets data, cannot remap\n"))
+			close_conn([]byte("assets remap failed, invalid assets data, cannot remap\n"))
 			return
 		}
 
 		atomic.AddInt32(&s.current_conn, 1)
 		if atomic.LoadInt32(&s.current_conn) > int32(s.max_conn) {
-			close([]byte("server is busy now, please try again later\n"))
+			close_conn([]byte("server is busy now, please try again later\n"))
 			return
 		}
 
@@ -300,7 +306,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// trigger registration event
 		if err := runtime.Register(); err != nil {
 			log.Error("register failed, error: %v", err)
-			close([]byte("register failed, cannot register\n"))
+			close_conn([]byte("register failed, cannot register\n"))
 			return
 		}
 
@@ -313,6 +319,11 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			}
 		}
 		runtime.wait_chan_lock.Unlock()
+
+		// notify launched
+		runtime.wait_launched_chan_once.Do(func() {
+			close(runtime.wait_launched_chan)
+		})
 
 		// publish runtime to watcher
 		s.response.Write(runtime)

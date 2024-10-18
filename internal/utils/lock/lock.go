@@ -10,18 +10,18 @@ type mutex struct {
 	count int32
 }
 
-type HighGranularityLock struct {
+type GranularityLock struct {
 	m map[string]*mutex
 	l sync.Mutex
 }
 
-func NewHighGranularityLock() *HighGranularityLock {
-	return &HighGranularityLock{
+func NewGranularityLock() *GranularityLock {
+	return &GranularityLock{
 		m: make(map[string]*mutex),
 	}
 }
 
-func (l *HighGranularityLock) Lock(key string) {
+func (l *GranularityLock) Lock(key string) {
 	l.l.Lock()
 	var m *mutex
 	var ok bool
@@ -36,7 +36,19 @@ func (l *HighGranularityLock) Lock(key string) {
 	m.Lock()
 }
 
-func (l *HighGranularityLock) Unlock(key string) {
+func (l *GranularityLock) TryLock(key string) bool {
+	l.l.Lock()
+	m, ok := l.m[key]
+	if !ok {
+		return false
+	}
+
+	locked := m.TryLock()
+	l.l.Unlock()
+	return locked
+}
+
+func (l *GranularityLock) Unlock(key string) {
 	l.l.Lock()
 	m, ok := l.m[key]
 	if !ok {

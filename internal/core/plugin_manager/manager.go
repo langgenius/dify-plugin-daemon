@@ -9,23 +9,28 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
 
+	// max size of a plugin package
 	maxPluginPackageSize int64
-	workingDirectory     string
-	packageCachePath     string
+
+	// where the plugin finally running
+	workingDirectory string
+
+	// where the plugin uploaded but not installed
+	packageCachePath string
+
+	// where the plugin finally installed but not running
+	pluginStoragePath string
 
 	// mediaManager is used to manage media files like plugin icons, images, etc.
 	mediaManager *media_manager.MediaManager
@@ -33,18 +38,8 @@ type PluginManager struct {
 	// register plugin
 	pluginRegisters []func(lifetime plugin_entities.PluginLifetime) error
 
-	// running plugin in storage contains relations between plugin packages and their running instances
-	runningPluginInStorage mapping.Map[string, string]
-	// start process lock
-	startProcessLock *lock.HighGranularityLock
-	// serverless runtime
-
-	// Install is a function that installs a plugin to the platform
-	Install func(
-		tenant_id string, decoder decoder.PluginDecoder,
-		source string,
-		meta map[string]any,
-	) (*stream.Stream[PluginInstallResponse], error)
+	// localPluginLaunchingLock is a lock to launch local plugins
+	localPluginLaunchingLock *lock.GranularityLock
 
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
@@ -58,19 +53,13 @@ func NewManager(configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
 		packageCachePath:     configuration.PluginPackageCachePath,
+		pluginStoragePath:    configuration.PluginStoragePath,
 		workingDirectory:     configuration.PluginWorkingPath,
 		mediaManager: media_manager.NewMediaManager(
 			configuration.PluginMediaCachePath,
 			configuration.PluginMediaCacheSize,
 		),
-		startProcessLock: lock.NewHighGranularityLock(),
-	}
-
-	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
-		manager.Install = manager.InstallToAWSFromPkg
-		serverless.Init(configuration)
-	} else if configuration.Platform == app.PLATFORM_LOCAL {
-		manager.Install = manager.InstallToLocal
+		localPluginLaunchingLock: lock.NewGranularityLock(),
 	}
 
 	// mkdir
@@ -119,7 +108,7 @@ func (p *PluginManager) GetAsset(id string) ([]byte, error) {
 	return p.mediaManager.Get(id)
 }
 
-func (p *PluginManager) Init(configuration *app.Config) {
+func (p *PluginManager) Launch(configuration *app.Config) {
 	log.Info("start plugin manager daemon...")
 
 	// init redis client
@@ -130,7 +119,7 @@ func (p *PluginManager) Init(configuration *app.Config) {
 		log.Panic("init redis client failed: %s", err.Error())
 	}
 
-	invocation, err := real.InitDifyInvocationDaemon(
+	invocation, err := real.NewDifyInvocationDaemon(
 		configuration.DifyInnerApiURL, configuration.DifyInnerApiKey,
 	)
 	if err != nil {
@@ -140,7 +129,7 @@ func (p *PluginManager) Init(configuration *app.Config) {
 
 	// start local watcher
 	if configuration.Platform == app.PLATFORM_LOCAL {
-		p.startLocalWatcher(configuration)
+		p.startLocalWatcher()
 	}
 
 	// start remote watcher
@@ -177,4 +166,8 @@ func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.Plug
 	}
 
 	return file, nil
+}
+
+func (p *PluginManager) GetPackagePath(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (string, error) {
+	return filepath.Join(p.packageCachePath, plugin_unique_identifier.String()), nil
 }

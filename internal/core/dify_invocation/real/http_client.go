@@ -9,7 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 )
 
-func InitDifyInvocationDaemon(base string, calling_key string) (dify_invocation.BackwardsInvocation, error) {
+func NewDifyInvocationDaemon(base string, calling_key string) (dify_invocation.BackwardsInvocation, error) {
 	var err error
 	invocation := &RealBackwardsInvocation{}
 	baseurl, err := url.Parse(base)

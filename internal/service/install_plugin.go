@@ -3,20 +3,24 @@ package service
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"gorm.io/gorm"
 )
 
 func InstallPluginFromIdentifiers(
+	config *app.Config,
 	tenant_id string,
 	plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier,
 	source string,
@@ -90,7 +94,6 @@ func InstallPluginFromIdentifiers(
 	}
 
 	response.TaskID = task.ID
-
 	manager := plugin_manager.Manager()
 
 	tasks := []func(){}
@@ -127,17 +130,7 @@ func InstallPluginFromIdentifiers(
 				}
 			}
 
-			pkg, err := manager.GetPackage(plugin_unique_identifier)
-			if err != nil {
-				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-					task.Status = models.InstallTaskStatusFailed
-					plugin.Status = models.InstallTaskStatusFailed
-					plugin.Message = err.Error()
-				})
-				return
-			}
-
-			decoder, err := decoder.NewZipPluginDecoder(pkg)
+			pkg_path, err := manager.GetPackagePath(plugin_unique_identifier)
 			if err != nil {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed
@@ -152,7 +145,42 @@ func InstallPluginFromIdentifiers(
 				plugin.Message = "Installing"
 			})
 
-			stream, err := manager.Install(tenant_id, decoder, source, meta)
+			var stream *stream.Stream[plugin_manager.PluginInstallResponse]
+			if config.Platform == app.PLATFORM_AWS_LAMBDA {
+				var zip_decoder *decoder.ZipPluginDecoder
+				var pkg_file []byte
+
+				pkg_file, err = os.ReadFile(pkg_path)
+				if err != nil {
+					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+						task.Status = models.InstallTaskStatusFailed
+						plugin.Status = models.InstallTaskStatusFailed
+						plugin.Message = "Failed to read plugin package"
+					})
+					return
+				}
+
+				zip_decoder, err = decoder.NewZipPluginDecoder(pkg_file)
+				if err != nil {
+					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+						task.Status = models.InstallTaskStatusFailed
+						plugin.Status = models.InstallTaskStatusFailed
+						plugin.Message = err.Error()
+					})
+					return
+				}
+				stream, err = manager.InstallToAWSFromPkg(tenant_id, zip_decoder, source, meta)
+			} else if config.Platform == app.PLATFORM_LOCAL {
+				stream, err = manager.InstallToLocal(tenant_id, pkg_path, plugin_unique_identifier, source, meta)
+			} else {
+				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+					task.Status = models.InstallTaskStatusFailed
+					plugin.Status = models.InstallTaskStatusFailed
+					plugin.Message = "Unsupported platform"
+				})
+				return
+			}
+
 			if err != nil {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed

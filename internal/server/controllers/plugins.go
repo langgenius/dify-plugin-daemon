@@ -67,7 +67,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 				request.Meta = map[string]any{}
 			}
 			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
-				request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Meta,
+				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Meta,
 			))
 		})
 	}

@@ -24,24 +24,24 @@ func (p *PluginManager) TestPlugin(
 	timeout string,
 ) (*stream.Stream[any], error) {
 	// launch plugin runtime
-	plugin, err := p.loadPlugin(path)
+	plugin, err := p.getLocalPluginRuntime(path)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to load plugin"))
 	}
 
 	// get assets
-	assets, err := plugin.Decoder.Assets()
+	assets, err := plugin.decoder.Assets()
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get assets"))
 	}
 
 	local_plugin_runtime := local_manager.NewLocalPluginRuntime()
-	local_plugin_runtime.PluginRuntime = plugin.Runtime
+	local_plugin_runtime.PluginRuntime = plugin.runtime
 	local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
 		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
-		LocalPackagePath:   plugin.Runtime.State.AbsolutePath,
-		WorkingPath:        plugin.Runtime.State.WorkingPath,
-		Decoder:            plugin.Decoder,
+		LocalPackagePath:   plugin.runtime.State.AbsolutePath,
+		WorkingPath:        plugin.runtime.State.WorkingPath,
+		Decoder:            plugin.decoder,
 	}
 	if err := local_plugin_runtime.RemapAssets(
 		&local_plugin_runtime.Config,
@@ -66,7 +66,6 @@ func (p *PluginManager) TestPlugin(
 			}
 		}()
 		// delete the plugin from the storage when the plugin is stopped
-		defer p.runningPluginInStorage.Delete(plugin.Runtime.State.AbsolutePath)
 		p.fullDuplexLifetime(local_plugin_runtime)
 	})
 
@@ -94,7 +93,7 @@ func (p *PluginManager) TestPlugin(
 			ClusterID:              "test-cluster",
 			InvokeFrom:             access_type,
 			Action:                 access_action,
-			Declaration:            plugin.Runtime.Configuration(),
+			Declaration:            plugin.runtime.Configuration(),
 			BackwardsInvocation:    manager.BackwardsInvocation(),
 			IgnoreCache:            true,
 		},

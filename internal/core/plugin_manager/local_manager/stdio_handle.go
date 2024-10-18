@@ -64,7 +64,7 @@ func (s *stdioHolder) Stop() {
 	stdio_holder.Delete(s.id)
 }
 
-func (s *stdioHolder) StartStdout() {
+func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 	s.started = true
 	s.last_active_at = time.Now()
 	defer s.Stop()
@@ -90,6 +90,8 @@ func (s *stdioHolder) StartStdout() {
 			},
 			func() {
 				s.last_active_at = time.Now()
+				// notify launched
+				notify_heartbeat()
 			},
 			func(err string) {
 				log.Error("plugin %s: %s", s.plugin_unique_identifier, err)

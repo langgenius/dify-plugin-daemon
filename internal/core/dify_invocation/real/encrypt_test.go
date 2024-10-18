@@ -101,7 +101,7 @@ func TestInvokeEncrypt(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	i, err := InitDifyInvocationDaemon(fmt.Sprintf("http://localhost:%d", port), "test")
+	i, err := NewDifyInvocationDaemon(fmt.Sprintf("http://localhost:%d", port), "test")
 	if err != nil {
 		t.Errorf("InitDifyInvocationDaemon failed: %v", err)
 		return

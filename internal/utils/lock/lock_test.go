@@ -7,7 +7,7 @@ import (
 )
 
 func TestHighGranularityLock(t *testing.T) {
-	l := NewHighGranularityLock()
+	l := NewGranularityLock()
 
 	data := []int{}
 	add := func(key int) {

@@ -30,7 +30,7 @@ func (app *App) Run(config *app.Config) {
 	manager.AddPluginRegisterHandler(app.cluster.RegisterPlugin)
 
 	// init manager
-	manager.Init(config)
+	manager.Launch(config)
 
 	// init persistence
 	persistence.InitPersistence(config)

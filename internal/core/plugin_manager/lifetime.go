@@ -32,54 +32,40 @@ func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLif
 		}
 	}
 
-	// add plugin to manager
-	err := p.Add(r)
-	if err != nil {
-		log.Error("add plugin to manager failed: %s", err.Error())
-		return
-	}
-
 	start_failed_times := 0
 
 	// remove lifetime state after plugin if it has been stopped
 	defer r.TriggerStop()
 
-	for !r.Stopped() {
+	// try at most 3 times to init environment
+	for i := 0; i < 3; i++ {
 		if err := r.InitEnvironment(); err != nil {
 			log.Error("init environment failed: %s, retry in 30s", err.Error())
-			time.Sleep(30 * time.Second)
 			if start_failed_times == 3 {
 				log.Error(
 					"init environment failed 3 times, plugin %s has been stopped",
 					configuration.Identity(),
 				)
-				break
+				return
 			}
+			time.Sleep(30 * time.Second)
 			start_failed_times++
 			continue
 		}
+	}
 
-		start_failed_times = 0
+	// init environment successfully
+	// once succeed, we consider the plugin is installed successfully
+	for !r.Stopped() {
 		// start plugin
 		if err := r.StartPlugin(); err != nil {
 			if r.Stopped() {
+				// plugin has been stopped, exit
 				break
 			}
-			log.Error("start plugin failed: %s, retry in 30s", err.Error())
-			time.Sleep(30 * time.Second)
-			if start_failed_times == 3 {
-				log.Error(
-					"start plugin failed 3 times, plugin %s has been stopped",
-					configuration.Identity(),
-				)
-				break
-			}
-
-			start_failed_times++
-			continue
 		}
 
-		// wait for plugin to stop
+		// wait for plugin to stop normally
 		c, err := r.Wait()
 		if err == nil {
 			<-c
