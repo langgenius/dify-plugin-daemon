@@ -54,6 +54,8 @@ func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLif
 		}
 	}
 
+	// TODO: launched will only be triggered when calling StartPlugin
+
 	// init environment successfully
 	// once succeed, we consider the plugin is installed successfully
 	for !r.Stopped() {

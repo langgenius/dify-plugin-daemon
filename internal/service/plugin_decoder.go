@@ -54,7 +54,10 @@ func UploadPluginFromPkg(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	return entities.NewSuccessResponse(plugin_unique_identifier)
+	return entities.NewSuccessResponse(map[string]any{
+		"unique_identifier": plugin_unique_identifier,
+		"manifest":          manifest,
+	})
 }
 
 func FetchPluginManifest(
