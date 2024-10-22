@@ -2,6 +2,7 @@ package remote_manager
 
 import (
 	"encoding/hex"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -266,7 +267,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		assets, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.RemoteAssetPayload](message)
 		if err != nil {
 			log.Error("assets register failed, error: %v", err)
-			close_conn([]byte("assets register failed, invalid assets declaration\n"))
+			close_conn([]byte(fmt.Sprintf("assets register failed, invalid assets declaration: %v\n", err)))
 			return
 		}
 
@@ -275,7 +276,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			files[asset.Filename], err = hex.DecodeString(asset.Data)
 			if err != nil {
 				log.Error("assets decode failed, error: %v", err)
-				close_conn([]byte("assets decode failed, invalid assets data, cannot decode file\n"))
+				close_conn([]byte(fmt.Sprintf("assets decode failed, invalid assets data, cannot decode file: %v\n", err)))
 				return
 			}
 		}
@@ -283,7 +284,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		// remap assets
 		if err := runtime.RemapAssets(&runtime.Config, files); err != nil {
 			log.Error("assets remap failed, error: %v", err)
-			close_conn([]byte("assets remap failed, invalid assets data, cannot remap\n"))
+			close_conn([]byte(fmt.Sprintf("assets remap failed, invalid assets data, cannot remap: %v\n", err)))
 			return
 		}
 

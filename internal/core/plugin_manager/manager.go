@@ -76,18 +76,6 @@ func Manager() *PluginManager {
 	return manager
 }
 
-func (p *PluginManager) Add(
-	plugin plugin_entities.PluginLifetime,
-) error {
-	identity, err := plugin.Identity()
-	if err != nil {
-		return err
-	}
-
-	p.m.Store(identity.String(), plugin)
-	return nil
-}
-
 func (p *PluginManager) Get(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) plugin_entities.PluginLifetime {

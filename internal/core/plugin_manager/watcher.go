@@ -137,12 +137,6 @@ func (p *PluginManager) launchLocal(plugin_package_path string) (plugin_entities
 		return nil, failed(errors.Join(err, fmt.Errorf("remap plugin assets error")).Error())
 	}
 
-	// add plugin to manager
-	err = p.Add(local_plugin_runtime)
-	if err != nil {
-		return nil, failed(errors.Join(err, fmt.Errorf("add plugin to manager failed")).Error())
-	}
-
 	success = true
 
 	// local plugin

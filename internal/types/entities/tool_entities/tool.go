@@ -46,6 +46,7 @@ func init() {
 type ToolResponseChunk struct {
 	Type    ToolResponseChunkType `json:"type" validate:"required,is_valid_tool_response_chunk_type"`
 	Message map[string]any        `json:"message"`
+	Meta    map[string]any        `json:"meta"`
 }
 
 type GetToolRuntimeParametersResponse struct {

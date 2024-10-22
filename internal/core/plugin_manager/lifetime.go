@@ -12,6 +12,15 @@ func (p *PluginManager) AddPluginRegisterHandler(handler func(r plugin_entities.
 }
 
 func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLifetime) {
+	identifier, err := r.Identity()
+	if err != nil {
+		log.Error("get plugin identity failed: %s", err.Error())
+		return
+	}
+
+	p.m.Store(identifier.String(), r)
+	defer p.m.Delete(identifier.String())
+
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
