@@ -144,6 +144,7 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Resource    PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins     PluginExtensions          `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
 	Meta        PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
+	Tags        []PluginTag               `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
 }
 
 type PluginDeclaration struct {
@@ -195,6 +196,10 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 		if p.Tool.Identity.Description == nil {
 			deep_copied_description := p.Description
 			p.Tool.Identity.Description = &deep_copied_description
+		}
+
+		if len(p.Tool.Identity.Tags) == 0 {
+			p.Tool.Identity.Tags = p.Tags
 		}
 	}
 

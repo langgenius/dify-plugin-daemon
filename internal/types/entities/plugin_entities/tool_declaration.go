@@ -114,46 +114,46 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("json_schema", isJSONSchema)
 }
 
-type ToolLabel string
+type PluginTag string
 
 const (
-	TOOL_LABEL_SEARCH        ToolLabel = "search"
-	TOOL_LABEL_IMAGE         ToolLabel = "image"
-	TOOL_LABEL_VIDEOS        ToolLabel = "videos"
-	TOOL_LABEL_WEATHER       ToolLabel = "weather"
-	TOOL_LABEL_FINANCE       ToolLabel = "finance"
-	TOOL_LABEL_DESIGN        ToolLabel = "design"
-	TOOL_LABEL_TRAVEL        ToolLabel = "travel"
-	TOOL_LABEL_SOCIAL        ToolLabel = "social"
-	TOOL_LABEL_NEWS          ToolLabel = "news"
-	TOOL_LABEL_MEDICAL       ToolLabel = "medical"
-	TOOL_LABEL_PRODUCTIVITY  ToolLabel = "productivity"
-	TOOL_LABEL_EDUCATION     ToolLabel = "education"
-	TOOL_LABEL_BUSINESS      ToolLabel = "business"
-	TOOL_LABEL_ENTERTAINMENT ToolLabel = "entertainment"
-	TOOL_LABEL_UTILITIES     ToolLabel = "utilities"
-	TOOL_LABEL_OTHER         ToolLabel = "other"
+	PLUGIN_TAG_SEARCH        PluginTag = "search"
+	PLUGIN_TAG_IMAGE         PluginTag = "image"
+	PLUGIN_TAG_VIDEOS        PluginTag = "videos"
+	PLUGIN_TAG_WEATHER       PluginTag = "weather"
+	PLUGIN_TAG_FINANCE       PluginTag = "finance"
+	PLUGIN_TAG_DESIGN        PluginTag = "design"
+	PLUGIN_TAG_TRAVEL        PluginTag = "travel"
+	PLUGIN_TAG_SOCIAL        PluginTag = "social"
+	PLUGIN_TAG_NEWS          PluginTag = "news"
+	PLUGIN_TAG_MEDICAL       PluginTag = "medical"
+	PLUGIN_TAG_PRODUCTIVITY  PluginTag = "productivity"
+	PLUGIN_TAG_EDUCATION     PluginTag = "education"
+	PLUGIN_TAG_BUSINESS      PluginTag = "business"
+	PLUGIN_TAG_ENTERTAINMENT PluginTag = "entertainment"
+	PLUGIN_TAG_UTILITIES     PluginTag = "utilities"
+	PLUGIN_TAG_OTHER         PluginTag = "other"
 )
 
-func isToolLabel(fl validator.FieldLevel) bool {
+func isPluginTag(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
 	switch value {
-	case string(TOOL_LABEL_SEARCH),
-		string(TOOL_LABEL_IMAGE),
-		string(TOOL_LABEL_VIDEOS),
-		string(TOOL_LABEL_WEATHER),
-		string(TOOL_LABEL_FINANCE),
-		string(TOOL_LABEL_DESIGN),
-		string(TOOL_LABEL_TRAVEL),
-		string(TOOL_LABEL_SOCIAL),
-		string(TOOL_LABEL_NEWS),
-		string(TOOL_LABEL_MEDICAL),
-		string(TOOL_LABEL_PRODUCTIVITY),
-		string(TOOL_LABEL_EDUCATION),
-		string(TOOL_LABEL_BUSINESS),
-		string(TOOL_LABEL_ENTERTAINMENT),
-		string(TOOL_LABEL_UTILITIES),
-		string(TOOL_LABEL_OTHER):
+	case string(PLUGIN_TAG_SEARCH),
+		string(PLUGIN_TAG_IMAGE),
+		string(PLUGIN_TAG_VIDEOS),
+		string(PLUGIN_TAG_WEATHER),
+		string(PLUGIN_TAG_FINANCE),
+		string(PLUGIN_TAG_DESIGN),
+		string(PLUGIN_TAG_TRAVEL),
+		string(PLUGIN_TAG_SOCIAL),
+		string(PLUGIN_TAG_NEWS),
+		string(PLUGIN_TAG_MEDICAL),
+		string(PLUGIN_TAG_PRODUCTIVITY),
+		string(PLUGIN_TAG_EDUCATION),
+		string(PLUGIN_TAG_BUSINESS),
+		string(PLUGIN_TAG_ENTERTAINMENT),
+		string(PLUGIN_TAG_UTILITIES),
+		string(PLUGIN_TAG_OTHER):
 		return true
 	}
 	return false
@@ -165,7 +165,7 @@ type ToolProviderIdentity struct {
 	Description *I18nObject `json:"description" validate:"omitempty"`
 	Icon        string      `json:"icon" validate:"required"`
 	Label       I18nObject  `json:"label" validate:"required"`
-	Tags        []ToolLabel `json:"tags" validate:"required,dive,tool_label"`
+	Tags        []PluginTag `json:"tags" validate:"required,dive,plugin_tag"`
 }
 
 type ToolProviderDeclaration struct {
@@ -332,15 +332,15 @@ func init() {
 		},
 	)
 
-	validators.GlobalEntitiesValidator.RegisterValidation("tool_label", isToolLabel)
+	validators.GlobalEntitiesValidator.RegisterValidation("plugin_tag", isPluginTag)
 	validators.GlobalEntitiesValidator.RegisterTranslation(
-		"tool_label",
+		"plugin_tag",
 		translator,
 		func(ut ut.Translator) error {
-			return ut.Add("tool_label", "{0} is not a valid tool label", true)
+			return ut.Add("plugin_tag", "{0} is not a valid tool label", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("tool_label", fe.Field())
+			t, _ := ut.T("plugin_tag", fe.Field())
 			return t
 		},
 	)
