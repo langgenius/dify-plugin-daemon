@@ -43,7 +43,7 @@ type Config struct {
 	// redis
 	RedisHost string `envconfig:"REDIS_HOST" validate:"required"`
 	RedisPort uint16 `envconfig:"REDIS_PORT" validate:"required"`
-	RedisPass string `envconfig:"REDIS_PASS" validate:"required"`
+	RedisPass string `envconfig:"REDIS_PASSWORD" validate:"required"`
 
 	// database
 	DBUsername string `envconfig:"DB_USERNAME" validate:"required"`
