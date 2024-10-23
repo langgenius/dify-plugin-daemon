@@ -16,6 +16,8 @@ FROM alpine:latest
 
 COPY --from=builder /app/main /app/main
 
+WORKDIR /app
+
 ENV PLATFORM=aws_lambda
 ENV GIN_MODE=release
 

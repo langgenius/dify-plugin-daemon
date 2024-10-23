@@ -2,7 +2,6 @@ package dify_invocation
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/app_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
@@ -69,13 +68,12 @@ type InvokeModerationRequest struct {
 }
 
 type InvokeAppSchema struct {
-	AppId          string                  `json:"app_id" validate:"required"`
-	Inputs         map[string]any          `json:"inputs" validate:"omitempty"`
-	Query          string                  `json:"query" validate:"omitempty"`
-	ResponseMode   string                  `json:"response_mode"`
-	ConversationId string                  `json:"conversation_id"`
-	User           string                  `json:"user" validate:"omitempty"`
-	Files          []*app_entities.FileVar `json:"files" validate:"omitempty,dive"`
+	AppId          string         `json:"app_id" validate:"required"`
+	Inputs         map[string]any `json:"inputs" validate:"omitempty"`
+	Query          string         `json:"query" validate:"omitempty"`
+	ResponseMode   string         `json:"response_mode"`
+	ConversationId string         `json:"conversation_id"`
+	User           string         `json:"user" validate:"omitempty"`
 }
 
 type StorageOpt string
