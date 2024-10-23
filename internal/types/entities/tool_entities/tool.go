@@ -12,6 +12,7 @@ const (
 	ToolResponseChunkTypeText      ToolResponseChunkType = "text"
 	ToolResponseChunkTypeFile      ToolResponseChunkType = "file"
 	ToolResponseChunkTypeBlob      ToolResponseChunkType = "blob"
+	ToolResponseChunkTypeBlobChunk ToolResponseChunkType = "blob_chunk"
 	ToolResponseChunkTypeJson      ToolResponseChunkType = "json"
 	ToolResponseChunkTypeLink      ToolResponseChunkType = "link"
 	ToolResponseChunkTypeImage     ToolResponseChunkType = "image"
@@ -25,6 +26,7 @@ func IsValidToolResponseChunkType(fl validator.FieldLevel) bool {
 	case ToolResponseChunkTypeText,
 		ToolResponseChunkTypeFile,
 		ToolResponseChunkTypeBlob,
+		ToolResponseChunkTypeBlobChunk,
 		ToolResponseChunkTypeJson,
 		ToolResponseChunkTypeLink,
 		ToolResponseChunkTypeImage,
