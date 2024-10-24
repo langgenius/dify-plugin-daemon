@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -118,6 +119,11 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	// start local watcher
 	if configuration.Platform == app.PLATFORM_LOCAL {
 		p.startLocalWatcher()
+	}
+
+	// launch serverless connector
+	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
+		serverless.Init(configuration)
 	}
 
 	// start remote watcher
