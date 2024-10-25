@@ -31,32 +31,28 @@ func UploadPluginFromPkg(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	manifest, err := decoder.Manifest()
-	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
-	}
-
-	if config.ForceVerifyingSignature || verify_signature {
-		if !manifest.Verified {
-			return entities.NewErrorResponse(-500, errors.Join(err, errors.New(
-				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
-			)).Error())
-		}
-	}
-
 	plugin_unique_identifier, err := decoder.UniqueIdentity()
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
 	manager := plugin_manager.Manager()
-	if err := manager.SavePackage(plugin_unique_identifier, plugin_file); err != nil {
+	declaration, err := manager.SavePackage(plugin_unique_identifier, plugin_file)
+	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	if config.ForceVerifyingSignature || verify_signature {
+		if !declaration.Verified {
+			return entities.NewErrorResponse(-500, errors.Join(err, errors.New(
+				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
+			)).Error())
+		}
 	}
 
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": plugin_unique_identifier,
-		"manifest":          manifest,
+		"manifest":          declaration,
 	})
 }
 

@@ -138,61 +138,66 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 	return p.backwardsInvocation
 }
 
-func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) error {
+func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) (
+	*plugin_entities.PluginDeclaration, error,
+) {
 	// save to storage
 	pkg_path := filepath.Join(p.packageCachePath, plugin_unique_identifier.String())
 	pkg_dir := filepath.Dir(pkg_path)
 	if err := os.MkdirAll(pkg_dir, 0755); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := os.WriteFile(pkg_path, pkg, 0644); err != nil {
-		return err
+		return nil, err
 	}
 
 	// try to decode the package
 	package_decoder, err := decoder.NewZipPluginDecoder(pkg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// get the declaration
 	declaration, err := package_decoder.Manifest()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// get the assets
 	assets, err := package_decoder.Assets()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// remap the assets
 	_, err = p.mediaManager.RemapAssets(&declaration, assets)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	unique_identifier, err := package_decoder.UniqueIdentity()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// create plugin if not exists
 	if _, err := db.GetOne[models.PluginDeclaration](
 		db.Equal("plugin_unique_identifier", unique_identifier.String()),
 	); err == db.ErrDatabaseNotFound {
-		return db.Create(&models.PluginDeclaration{
+		err = db.Create(&models.PluginDeclaration{
 			PluginUniqueIdentifier: unique_identifier.String(),
 			PluginID:               unique_identifier.PluginID(),
 			Declaration:            declaration,
 		})
+		if err != nil {
+			return nil, err
+		}
 	} else if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &declaration, nil
 }
 
 func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) ([]byte, error) {
