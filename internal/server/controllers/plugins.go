@@ -55,6 +55,27 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 	}
 }
 
+func UpgradePlugin(app *app.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		BindRequest(c, func(request struct {
+			TenantID                       string                                 `uri:"tenant_id" validate:"required"`
+			OriginalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"original_plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+			NewPluginUniqueIdentifier      plugin_entities.PluginUniqueIdentifier `json:"new_plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+			Source                         string                                 `json:"source" validate:"required"`
+			Meta                           map[string]any                         `json:"meta" validate:"omitempty"`
+		}) {
+			c.JSON(http.StatusOK, service.UpgradePlugin(
+				app,
+				request.TenantID,
+				request.Source,
+				request.Meta,
+				request.OriginalPluginUniqueIdentifier,
+				request.NewPluginUniqueIdentifier,
+			))
+		})
+	}
+}
+
 func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {

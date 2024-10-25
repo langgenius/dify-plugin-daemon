@@ -80,6 +80,7 @@ func autoMigrate() error {
 	return DifyPluginDB.AutoMigrate(
 		models.Plugin{},
 		models.PluginInstallation{},
+		models.PluginDeclaration{},
 		models.Endpoint{},
 		models.ServerlessRuntime{},
 		models.ToolInstallation{},

@@ -18,19 +18,26 @@ import (
 	"gorm.io/gorm"
 )
 
-func InstallPluginFromIdentifiers(
+type InstallPluginResponse struct {
+	AllInstalled bool   `json:"all_installed"`
+	TaskID       string `json:"task_id"`
+}
+
+type InstallPluginOnDoneHandler func(
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	declaration *plugin_entities.PluginDeclaration,
+) error
+
+func InstallPluginRuntimeToTenant(
 	config *app.Config,
 	tenant_id string,
 	plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier,
 	source string,
 	meta map[string]any,
-) *entities.Response {
-	var response struct {
-		AllInstalled bool   `json:"all_installed"`
-		TaskID       string `json:"task_id"`
-	}
+	on_done InstallPluginOnDoneHandler, // since installing plugin is a async task, we need to call it asynchronously
+) (*InstallPluginResponse, error) {
+	response := &InstallPluginResponse{}
 
-	// TODO: create installation task and dispatch to workers
 	plugins_wait_for_installation := []plugin_entities.PluginUniqueIdentifier{}
 
 	task := &models.InstallTask{
@@ -65,7 +72,7 @@ func InstallPluginFromIdentifiers(
 				source,
 				meta,
 			); err != nil {
-				return entities.NewErrorResponse(-500, err.Error())
+				return nil, err
 			}
 
 			task.CompletedPlugins++
@@ -75,7 +82,7 @@ func InstallPluginFromIdentifiers(
 		}
 
 		if err != db.ErrDatabaseNotFound {
-			return entities.NewErrorResponse(-500, err.Error())
+			return nil, err
 		}
 
 		plugins_wait_for_installation = append(plugins_wait_for_installation, plugin_unique_identifier)
@@ -84,12 +91,12 @@ func InstallPluginFromIdentifiers(
 	if len(plugins_wait_for_installation) == 0 {
 		response.AllInstalled = true
 		response.TaskID = ""
-		return entities.NewSuccessResponse(response)
+		return response, nil
 	}
 
 	err := db.Create(task)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return nil, err
 	}
 
 	response.TaskID = task.ID
@@ -97,6 +104,14 @@ func InstallPluginFromIdentifiers(
 
 	tasks := []func(){}
 	for _, plugin_unique_identifier := range plugins_wait_for_installation {
+		// copy the variable to avoid race condition
+		plugin_unique_identifier := plugin_unique_identifier
+
+		declaration, err := manager.GetDeclaration(plugin_unique_identifier)
+		if err != nil {
+			return nil, err
+		}
+
 		tasks = append(tasks, func() {
 			updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
 				if err := db.WithTransaction(func(tx *gorm.DB) error {
@@ -173,9 +188,9 @@ func InstallPluginFromIdentifiers(
 					})
 					return
 				}
-				stream, err = manager.InstallToAWSFromPkg(tenant_id, zip_decoder, source, meta)
+				stream, err = manager.InstallToAWSFromPkg(zip_decoder, source, meta)
 			} else if config.Platform == app.PLATFORM_LOCAL {
-				stream, err = manager.InstallToLocal(tenant_id, pkg_path, plugin_unique_identifier, source, meta)
+				stream, err = manager.InstallToLocal(pkg_path, plugin_unique_identifier, source, meta)
 			} else {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed
@@ -213,6 +228,17 @@ func InstallPluginFromIdentifiers(
 					})
 					return
 				}
+
+				if message.Event == plugin_manager.PluginInstallEventDone {
+					if err := on_done(plugin_unique_identifier, declaration); err != nil {
+						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+							task.Status = models.InstallTaskStatusFailed
+							plugin.Status = models.InstallTaskStatusFailed
+							plugin.Message = "Failed to create plugin"
+						})
+						return
+					}
+				}
 			}
 
 			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
@@ -230,6 +256,97 @@ func InstallPluginFromIdentifiers(
 
 	// submit async tasks
 	routine.WithMaxRoutine(3, tasks)
+
+	return response, nil
+}
+
+func InstallPluginFromIdentifiers(
+	config *app.Config,
+	tenant_id string,
+	plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier,
+	source string,
+	meta map[string]any,
+) *entities.Response {
+	response, err := InstallPluginRuntimeToTenant(config, tenant_id, plugin_unique_identifiers, source, meta, func(
+		plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+		declaration *plugin_entities.PluginDeclaration,
+	) error {
+		_, _, err := curd.InstallPlugin(
+			tenant_id,
+			plugin_unique_identifier,
+			plugin_entities.PLUGIN_RUNTIME_TYPE_AWS,
+			declaration,
+			source,
+			meta,
+		)
+		return err
+	})
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	return entities.NewSuccessResponse(response)
+}
+
+func UpgradePlugin(
+	config *app.Config,
+	tenant_id string,
+	source string,
+	meta map[string]any,
+	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) *entities.Response {
+	if original_plugin_unique_identifier == new_plugin_unique_identifier {
+		return entities.NewErrorResponse(-400, "original and new plugin unique identifier are the same")
+	}
+
+	// uninstall the original plugin
+	installation, err := db.GetOne[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
+		db.Equal("source", source),
+	)
+
+	if err == db.ErrDatabaseNotFound {
+		return entities.NewErrorResponse(-404, "Plugin installation not found for this tenant")
+	}
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	// install the new plugin runtime
+	response, err := InstallPluginRuntimeToTenant(
+		config,
+		tenant_id,
+		[]plugin_entities.PluginUniqueIdentifier{new_plugin_unique_identifier},
+		source,
+		meta,
+		func(
+			plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+			declaration *plugin_entities.PluginDeclaration,
+		) error {
+			// uninstall the original plugin
+			err = curd.UpgradePlugin(
+				tenant_id,
+				original_plugin_unique_identifier,
+				new_plugin_unique_identifier,
+				declaration,
+				plugin_entities.PluginRuntimeType(installation.RuntimeType),
+				source,
+				meta,
+			)
+
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
 
 	return entities.NewSuccessResponse(response)
 }

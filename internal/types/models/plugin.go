@@ -31,3 +31,10 @@ type ServerlessRuntime struct {
 	Declaration            plugin_entities.PluginDeclaration `json:"declaration" gorm:"serializer:json;type:text;size:65535"`
 	Checksum               string                            `json:"checksum" gorm:"size:127;index"`
 }
+
+type PluginDeclaration struct {
+	Model
+	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"size:127;unique"`
+	PluginID               string                            `json:"plugin_id" gorm:"size:127;index"`
+	Declaration            plugin_entities.PluginDeclaration `json:"declaration" gorm:"serializer:json;type:text;size:65535"`
+}

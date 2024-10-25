@@ -148,7 +148,11 @@ type DeletePluginResponse struct {
 // Delete plugin for a tenant, delete the plugin if it has never been created before
 // and uninstall it from the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
-func UninstallPlugin(tenant_id string, plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, installation_id string) (*DeletePluginResponse, error) {
+func UninstallPlugin(
+	tenant_id string,
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	installation_id string,
+) (*DeletePluginResponse, error) {
 	var plugin_to_be_returns *models.Plugin
 	var installation_to_be_returns *models.PluginInstallation
 
@@ -252,4 +256,91 @@ func UninstallPlugin(tenant_id string, plugin_unique_identifier plugin_entities.
 		Installation:    installation_to_be_returns,
 		IsPluginDeleted: plugin_to_be_returns.Refers == 0,
 	}, nil
+}
+
+// Upgrade plugin for a tenant, upgrade the plugin if it has been created before
+// and uninstall the original plugin and install the new plugin, but keep the original installation information
+// like endpoint_setups, etc.
+func UpgradePlugin(
+	tenant_id string,
+	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	new_declaration *plugin_entities.PluginDeclaration,
+	install_type plugin_entities.PluginRuntimeType,
+	source string,
+	meta map[string]any,
+) error {
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		installation, err := db.GetOne[models.PluginInstallation](
+			db.WithTransactionContext(tx),
+			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+
+		if err == db.ErrDatabaseNotFound {
+			return errors.New("plugin has not been installed")
+		} else if err != nil {
+			return err
+		}
+
+		// check if the new plugin has existed
+		plugin, err := db.GetOne[models.Plugin](
+			db.WithTransactionContext(tx),
+			db.Equal("plugin_unique_identifier", new_plugin_unique_identifier.String()),
+		)
+
+		if err == db.ErrDatabaseNotFound {
+			// create new plugin
+			plugin = models.Plugin{
+				PluginID:               new_plugin_unique_identifier.PluginID(),
+				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
+				InstallType:            install_type,
+				Refers:                 0,
+				Declaration:            *new_declaration,
+				ManifestType:           plugin_entities.PluginType,
+			}
+
+			err := db.Create(&plugin, tx)
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+
+		// update exists installation
+		installation.PluginUniqueIdentifier = new_plugin_unique_identifier.String()
+		installation.Meta = meta
+		err = db.Update(installation, tx)
+		if err != nil {
+			return err
+		}
+
+		// decrease the refers of the original plugin
+		err = db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(&models.Plugin{}),
+			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
+			db.Inc(map[string]int{"refers": -1}),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		// increase the refers of the new plugin
+		err = db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(&models.Plugin{}),
+			db.Equal("plugin_unique_identifier", new_plugin_unique_identifier.String()),
+			db.Inc(map[string]int{"refers": 1}),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

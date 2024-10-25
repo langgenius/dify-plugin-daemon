@@ -6,16 +6,13 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
 // InstallToAWSFromPkg installs a plugin to AWS Lambda
 func (p *PluginManager) InstallToAWSFromPkg(
-	tenant_id string,
 	decoder decoder.PluginDecoder,
 	source string,
 	meta map[string]any,
@@ -90,22 +87,6 @@ func (p *PluginManager) InstallToAWSFromPkg(
 					new_response.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  "Failed to check if the plugin is already installed",
-					})
-					return
-				}
-
-				_, _, err = curd.InstallPlugin(
-					tenant_id,
-					unique_identity,
-					plugin_entities.PLUGIN_RUNTIME_TYPE_AWS,
-					&declaration,
-					source,
-					meta,
-				)
-				if err != nil {
-					new_response.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
-						Data:  "Failed to create plugin",
 					})
 					return
 				}

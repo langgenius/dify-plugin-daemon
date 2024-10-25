@@ -10,9 +10,13 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
@@ -146,6 +150,36 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 		return err
 	}
 
+	// try to decode the package
+	package_decoder, err := decoder.NewZipPluginDecoder(pkg)
+	if err != nil {
+		return err
+	}
+
+	// get the declaration
+	declaration, err := package_decoder.Manifest()
+	if err != nil {
+		return err
+	}
+
+	unique_identifier, err := package_decoder.UniqueIdentity()
+	if err != nil {
+		return err
+	}
+
+	// create plugin if not exists
+	if _, err := db.GetOne[models.PluginDeclaration](
+		db.Equal("plugin_unique_identifier", unique_identifier.String()),
+	); err == db.ErrDatabaseNotFound {
+		return db.Create(&models.PluginDeclaration{
+			PluginUniqueIdentifier: unique_identifier.String(),
+			PluginID:               unique_identifier.PluginID(),
+			Declaration:            declaration,
+		})
+	} else if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -164,4 +198,10 @@ func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.Plug
 
 func (p *PluginManager) GetPackagePath(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (string, error) {
 	return filepath.Join(p.packageCachePath, plugin_unique_identifier.String()), nil
+}
+
+func (p *PluginManager) GetDeclaration(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (
+	*plugin_entities.PluginDeclaration, error,
+) {
+	return helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
 }

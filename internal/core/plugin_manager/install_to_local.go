@@ -13,7 +13,6 @@ import (
 
 // InstallToLocal installs a plugin to local
 func (p *PluginManager) InstallToLocal(
-	tenant_id string,
 	plugin_path string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	source string,

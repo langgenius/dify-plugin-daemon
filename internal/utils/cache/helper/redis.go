@@ -11,6 +11,17 @@ func CombinedGetPluginDeclaration(plugin_unique_identifier plugin_entities.Plugi
 	return cache.AutoGetWithGetter(
 		plugin_unique_identifier.String(),
 		func() (*plugin_entities.PluginDeclaration, error) {
+			declaration, err := db.GetOne[models.PluginDeclaration](
+				db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+			)
+			if err != nil && err != db.ErrDatabaseNotFound {
+				return nil, err
+			}
+
+			if err == nil {
+				return &declaration.Declaration, nil
+			}
+
 			model, err := db.GetOne[models.Plugin](
 				db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 			)
