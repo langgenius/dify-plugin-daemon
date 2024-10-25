@@ -162,6 +162,18 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 		return err
 	}
 
+	// get the assets
+	assets, err := package_decoder.Assets()
+	if err != nil {
+		return err
+	}
+
+	// remap the assets
+	_, err = p.mediaManager.RemapAssets(&declaration, assets)
+	if err != nil {
+		return err
+	}
+
 	unique_identifier, err := package_decoder.UniqueIdentity()
 	if err != nil {
 		return err
