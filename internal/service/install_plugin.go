@@ -300,6 +300,10 @@ func UpgradePlugin(
 		return entities.NewErrorResponse(-400, "original and new plugin unique identifier are the same")
 	}
 
+	if original_plugin_unique_identifier.PluginID() != new_plugin_unique_identifier.PluginID() {
+		return entities.NewErrorResponse(-400, "original and new plugin id are different")
+	}
+
 	// uninstall the original plugin
 	installation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
