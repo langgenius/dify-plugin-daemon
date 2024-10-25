@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -106,6 +105,11 @@ func InstallPluginFromIdentifiers(
 						db.Equal("id", task.ID),
 						db.WLock(), // write lock, multiple tasks can't update the same task
 					)
+
+					if err == db.ErrDatabaseNotFound {
+						return nil
+					}
+
 					if err != nil {
 						return err
 					}
@@ -120,7 +124,7 @@ func InstallPluginFromIdentifiers(
 					}
 
 					if plugin_status == nil {
-						return errors.New("plugin status not found")
+						return nil
 					}
 
 					modifier(task_pointer, plugin_status)
@@ -274,6 +278,41 @@ func DeletePluginInstallationTask(
 			TenantID: tenant_id,
 		},
 	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	return entities.NewSuccessResponse(true)
+}
+
+func DeletePluginInstallationItemFromTask(
+	tenant_id string,
+	task_id string,
+	identifier plugin_entities.PluginUniqueIdentifier,
+) *entities.Response {
+	item, err := db.GetOne[models.InstallTask](
+		db.Equal("task_id", task_id),
+		db.Equal("tenant_id", tenant_id),
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	plugins := []models.InstallTaskPluginStatus{}
+	for _, plugin := range item.Plugins {
+		if plugin.PluginUniqueIdentifier != identifier {
+			plugins = append(plugins, plugin)
+		}
+	}
+
+	if len(plugins) == 0 {
+		err = db.Delete(&item)
+	} else {
+		item.Plugins = plugins
+		err = db.Update(&item)
+	}
 
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
