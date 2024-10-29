@@ -17,10 +17,15 @@ import (
 )
 
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
+	// check if virtual environment exists
+	if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv")); err == nil {
+		return nil
+	}
+
 	// execute init command, create a virtual environment
 	success := false
 
-	cmd := exec.Command("bash", "-c", "python3 -m venv .venv")
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("%s -m venv .venv", p.default_python_interpreter_path))
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b

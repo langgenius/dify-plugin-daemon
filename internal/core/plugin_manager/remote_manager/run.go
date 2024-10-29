@@ -88,7 +88,3 @@ func (r *RemotePluginRuntime) Wait() (<-chan bool, error) {
 func (r *RemotePluginRuntime) Checksum() (string, error) {
 	return r.checksum, nil
 }
-
-func (r *RemotePluginRuntime) WaitLaunched() <-chan error {
-	return r.wait_launched_chan
-}

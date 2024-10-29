@@ -26,6 +26,10 @@ func (p *PluginManager) InstallToLocal(
 	}
 	defer plugin_file.Close()
 	installed_file_path := filepath.Join(p.pluginStoragePath, plugin_unique_identifier.String())
+	dir_path := filepath.Dir(installed_file_path)
+	if err := os.MkdirAll(dir_path, 0755); err != nil {
+		return nil, err
+	}
 	installed_file, err := os.Create(installed_file_path)
 	if err != nil {
 		return nil, err
@@ -36,7 +40,7 @@ func (p *PluginManager) InstallToLocal(
 		return nil, err
 	}
 
-	runtime, err := p.launchLocal(installed_file_path)
+	runtime, launched_chan, err := p.launchLocal(installed_file_path)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +70,7 @@ func (p *PluginManager) InstallToLocal(
 				})
 				runtime.Stop()
 				return
-			case err := <-runtime.WaitLaunched():
+			case <-launched_chan:
 				// launched
 				if err != nil {
 					response.Write(PluginInstallResponse{

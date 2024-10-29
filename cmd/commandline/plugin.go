@@ -220,7 +220,7 @@ endpoint				- allow plugin to register endpoint`,
 			config.SetDefault()
 
 			// init plugin manager
-			plugin_manager := plugin_manager.NewManager(config)
+			plugin_manager := plugin_manager.InitGlobalManager(config)
 
 			// start to schedule plugin subprocesses
 			process.Init(config)

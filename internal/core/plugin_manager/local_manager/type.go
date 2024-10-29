@@ -15,17 +15,18 @@ type LocalPluginRuntime struct {
 	io_identity string
 
 	// python interpreter path, currently only support python
-	python_interpreter_path string
+	python_interpreter_path         string
+	default_python_interpreter_path string
 
-	wait_chan_lock          sync.Mutex
-	wait_started_chan       []chan bool
-	wait_stopped_chan       []chan bool
-	wait_launched_chan      chan error
-	wait_launched_chan_once sync.Once
+	wait_chan_lock    sync.Mutex
+	wait_started_chan []chan bool
+	wait_stopped_chan []chan bool
 }
 
-func NewLocalPluginRuntime() *LocalPluginRuntime {
+func NewLocalPluginRuntime(
+	python_interpreter_path string,
+) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
-		wait_launched_chan: make(chan error),
+		default_python_interpreter_path: python_interpreter_path,
 	}
 }

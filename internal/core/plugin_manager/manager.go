@@ -48,13 +48,16 @@ type PluginManager struct {
 
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
+
+	// python interpreter path
+	pythonInterpreterPath string
 }
 
 var (
 	manager *PluginManager
 )
 
-func NewManager(configuration *app.Config) *PluginManager {
+func InitGlobalManager(configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
 		packageCachePath:     configuration.PluginPackageCachePath,
@@ -65,6 +68,7 @@ func NewManager(configuration *app.Config) *PluginManager {
 			configuration.PluginMediaCacheSize,
 		),
 		localPluginLaunchingLock: lock.NewGranularityLock(),
+		pythonInterpreterPath:    configuration.PythonInterpreterPath,
 	}
 
 	// mkdir

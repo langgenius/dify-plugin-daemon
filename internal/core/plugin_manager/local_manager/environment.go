@@ -10,10 +10,6 @@ import (
 )
 
 func (r *LocalPluginRuntime) InitEnvironment() error {
-	if _, err := os.Stat(path.Join(r.State.WorkingPath, ".installed")); err == nil {
-		return nil
-	}
-
 	var err error
 	if r.Config.Meta.Runner.Language == constants.Python {
 		err = r.InitPythonEnvironment()

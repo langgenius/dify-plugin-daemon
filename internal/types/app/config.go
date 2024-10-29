@@ -77,6 +77,8 @@ type Config struct {
 	MaxPluginPackageSize int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 
 	MaxAWSLambdaTransactionTimeout int `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
+
+	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
 }
 
 func (c *Config) Validate() error {

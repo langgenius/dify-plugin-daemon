@@ -27,17 +27,6 @@ func (r *LocalPluginRuntime) gc() {
 	}
 }
 
-// init initializes the LocalPluginRuntime
-func (r *LocalPluginRuntime) init() {
-	// reset wait chan
-	r.wait_chan = make(chan bool)
-	// reset wait launched chan
-	r.wait_launched_chan_once = sync.Once{}
-	r.wait_launched_chan = make(chan error)
-
-	r.SetLaunching()
-}
-
 // Type returns the runtime type of the plugin
 func (r *LocalPluginRuntime) Type() plugin_entities.PluginRuntimeType {
 	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
@@ -68,18 +57,13 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		r.wait_chan_lock.Unlock()
 	}()
 
-	r.init()
+	// reset wait chan
+	r.wait_chan = make(chan bool)
+	// reset wait launched chan
 
 	// start plugin
 	e, err := r.getCmd()
 	if err != nil {
-		r.wait_launched_chan_once.Do(func() {
-			select {
-			case r.wait_launched_chan <- err:
-			default:
-			}
-			close(r.wait_launched_chan)
-		})
 		return err
 	}
 
@@ -91,24 +75,11 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// ensure all subprocess are killed when parent process exits, especially on Golang debugger
 	process.WrapProcess(e)
 
-	// notify launched, notify error if any
-	notify_launched := func(err error) {
-		r.wait_launched_chan_once.Do(func() {
-			select {
-			case r.wait_launched_chan <- err:
-			default:
-			}
-			close(r.wait_launched_chan)
-		})
-	}
-
 	// get writer
 	stdin, err := e.StdinPipe()
 	if err != nil {
 		r.SetRestarting()
-		err = fmt.Errorf("get stdin pipe failed: %s", err.Error())
-		notify_launched(err)
-		return err
+		return fmt.Errorf("get stdin pipe failed: %s", err.Error())
 	}
 	defer stdin.Close()
 
@@ -116,9 +87,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	stdout, err := e.StdoutPipe()
 	if err != nil {
 		r.SetRestarting()
-		err = fmt.Errorf("get stdout pipe failed: %s", err.Error())
-		notify_launched(err)
-		return err
+		return fmt.Errorf("get stdout pipe failed: %s", err.Error())
 	}
 	defer stdout.Close()
 
@@ -126,17 +95,13 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	stderr, err := e.StderrPipe()
 	if err != nil {
 		r.SetRestarting()
-		err = fmt.Errorf("get stderr pipe failed: %s", err.Error())
-		notify_launched(err)
-		return err
+		return fmt.Errorf("get stderr pipe failed: %s", err.Error())
 	}
 	defer stderr.Close()
 
 	if err := e.Start(); err != nil {
 		r.SetRestarting()
-		err = fmt.Errorf("start plugin failed: %s", err.Error())
-		notify_launched(err)
-		return err
+		return fmt.Errorf("start plugin failed: %s", err.Error())
 	}
 
 	// add to subprocess manager
@@ -150,11 +115,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 			r.SetRestarting()
 			log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
 		}
-
-		// close wait launched chan
-		r.wait_launched_chan_once.Do(func() {
-			close(r.wait_launched_chan)
-		})
 
 		r.gc()
 	}()
@@ -173,12 +133,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// listen to plugin stdout
 	routine.Submit(func() {
 		defer wg.Done()
-		stdio.StartStdout(func() {
-			// get heartbeat, notify launched
-			r.wait_launched_chan_once.Do(func() {
-				close(r.wait_launched_chan)
-			})
-		})
+		stdio.StartStdout(func() {})
 	})
 
 	// listen to plugin stderr
@@ -233,9 +188,4 @@ func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
 	r.wait_stopped_chan = append(r.wait_stopped_chan, c)
 	r.wait_chan_lock.Unlock()
 	return c
-}
-
-// WaitLaunched returns a channel that will receive an error if the plugin fails to launch
-func (r *LocalPluginRuntime) WaitLaunched() <-chan error {
-	return r.wait_launched_chan
 }

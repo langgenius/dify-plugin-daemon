@@ -54,8 +54,6 @@ type (
 		WaitStarted() <-chan bool
 		// Stopped
 		WaitStopped() <-chan bool
-		// Launched
-		WaitLaunched() <-chan error
 	}
 
 	PluginServerlessLifetime interface {

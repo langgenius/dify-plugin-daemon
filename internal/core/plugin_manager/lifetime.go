@@ -11,16 +11,7 @@ func (p *PluginManager) AddPluginRegisterHandler(handler func(r plugin_entities.
 	p.pluginRegisters = append(p.pluginRegisters, handler)
 }
 
-func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLifetime) {
-	identifier, err := r.Identity()
-	if err != nil {
-		log.Error("get plugin identity failed: %s", err.Error())
-		return
-	}
-
-	p.m.Store(identifier.String(), r)
-	defer p.m.Delete(identifier.String())
-
+func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLifetime, launched_chan chan error) {
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
@@ -41,29 +32,24 @@ func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLif
 		}
 	}
 
-	start_failed_times := 0
-
 	// remove lifetime state after plugin if it has been stopped
 	defer r.TriggerStop()
 
-	// try at most 3 times to init environment
-	for i := 0; i < 3; i++ {
+	// try to init environment until succeed
+	for {
+		log.Info("init environment for plugin %s", configuration.Identity())
 		if err := r.InitEnvironment(); err != nil {
 			log.Error("init environment failed: %s, retry in 30s", err.Error())
-			if start_failed_times == 3 {
-				log.Error(
-					"init environment failed 3 times, plugin %s has been stopped",
-					configuration.Identity(),
-				)
-				return
-			}
 			time.Sleep(30 * time.Second)
-			start_failed_times++
 			continue
 		}
+		break
 	}
 
-	// TODO: launched will only be triggered when calling StartPlugin
+	// notify launched
+	if launched_chan != nil {
+		close(launched_chan)
+	}
 
 	// init environment successfully
 	// once succeed, we consider the plugin is installed successfully

@@ -21,7 +21,7 @@ func (app *App) Run(config *app.Config) {
 	process.Init(config)
 
 	// create manager
-	manager := plugin_manager.NewManager(config)
+	manager := plugin_manager.InitGlobalManager(config)
 
 	// create cluster
 	app.cluster = cluster.NewCluster(config, manager)
