@@ -66,3 +66,17 @@ func WithMaxRoutine(max_routine int, tasks []func(), on_finish ...func()) {
 		}
 	})
 }
+
+type PoolStatus struct {
+	Free  int `json:"free"`
+	Busy  int `json:"busy"`
+	Total int `json:"total"`
+}
+
+func FetchRoutineStatus() *PoolStatus {
+	return &PoolStatus{
+		Free:  p.Free(),
+		Busy:  p.Running(),
+		Total: p.Cap(),
+	}
+}
