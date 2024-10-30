@@ -29,6 +29,7 @@ func InstallPlugin(
 	// check if already installed
 	_, err := db.GetOne[models.PluginInstallation](
 		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+		db.Equal("tenant_id", tenant_id),
 	)
 
 	if err == nil {
@@ -75,6 +76,7 @@ func InstallPlugin(
 			models.PluginInstallation{
 				PluginID:    plugin_to_be_returns.PluginID,
 				RuntimeType: string(install_type),
+				TenantID:    tenant_id,
 			},
 			tx,
 		); err != nil {
