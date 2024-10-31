@@ -47,11 +47,18 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 		}()
 		go func() {
 			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
+				identity, err := rpr.Identity()
+				if err != nil {
+					log.Error("get remote plugin identity failed: %s", err.Error())
+					return
+				}
+				p.m.Store(identity.String(), rpr)
 				routine.Submit(func() {
 					defer func() {
 						if err := recover(); err != nil {
 							log.Error("plugin runtime error: %v", err)
 						}
+						p.m.Delete(identity.String())
 					}()
 					p.fullDuplexLifetime(rpr, nil)
 				})
