@@ -35,18 +35,25 @@ func (p *PluginManager) startLocalWatcher() {
 	}()
 }
 
+func (p *PluginManager) initRemotePluginServer(config *app.Config) {
+	if p.remotePluginServer != nil {
+		return
+	}
+	p.remotePluginServer = remote_manager.NewRemotePluginServer(config, p.mediaManager)
+}
+
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	// launch TCP debugging server if enabled
 	if config.PluginRemoteInstallingEnabled {
-		server := remote_manager.NewRemotePluginServer(config, p.mediaManager)
+		p.initRemotePluginServer(config)
 		go func() {
-			err := server.Launch()
+			err := p.remotePluginServer.Launch()
 			if err != nil {
 				log.Error("start remote plugin server failed: %s", err.Error())
 			}
 		}()
 		go func() {
-			server.Wrap(func(rpr *remote_manager.RemotePluginRuntime) {
+			p.remotePluginServer.Wrap(func(rpr plugin_entities.PluginFullDuplexLifetime) {
 				identity, err := rpr.Identity()
 				if err != nil {
 					log.Error("get remote plugin identity failed: %s", err.Error())

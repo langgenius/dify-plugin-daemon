@@ -40,7 +40,7 @@ type DifyServer struct {
 	num_loops int
 
 	// read new connections
-	response *stream.Stream[*RemotePluginRuntime]
+	response *stream.Stream[plugin_entities.PluginFullDuplexLifetime]
 
 	plugins      map[int]*RemotePluginRuntime
 	plugins_lock *sync.RWMutex

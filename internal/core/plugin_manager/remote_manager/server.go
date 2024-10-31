@@ -10,6 +10,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/panjf2000/gnet/v2"
 
@@ -20,8 +21,16 @@ type RemotePluginServer struct {
 	server *DifyServer
 }
 
+type RemotePluginServerInterface interface {
+	Read() (plugin_entities.PluginFullDuplexLifetime, error)
+	Next() bool
+	Wrap(f func(plugin_entities.PluginFullDuplexLifetime))
+	Stop() error
+	Launch() error
+}
+
 // continue accepting new connections
-func (r *RemotePluginServer) Read() (*RemotePluginRuntime, error) {
+func (r *RemotePluginServer) Read() (plugin_entities.PluginFullDuplexLifetime, error) {
 	if r.server.response == nil {
 		return nil, errors.New("plugin server not started")
 	}
@@ -39,7 +48,7 @@ func (r *RemotePluginServer) Next() bool {
 }
 
 // Wrap wraps the wrap method of stream response
-func (r *RemotePluginServer) Wrap(f func(*RemotePluginRuntime)) {
+func (r *RemotePluginServer) Wrap(f func(plugin_entities.PluginFullDuplexLifetime)) {
 	r.server.response.Async(f)
 }
 
@@ -85,7 +94,7 @@ func NewRemotePluginServer(config *app.Config, media_manager *media_manager.Medi
 		config.PluginRemoteInstallingPort,
 	)
 
-	response := stream.NewStream[*RemotePluginRuntime](
+	response := stream.NewStream[plugin_entities.PluginFullDuplexLifetime](
 		config.PluginRemoteInstallingMaxConn,
 	)
 

@@ -119,11 +119,14 @@ func TestAcceptConnection(t *testing.T) {
 				return
 			}
 
-			if runtime.Config.Name != "ci_test" {
+			remote_runtime := runtime.(*RemotePluginRuntime)
+
+			config := remote_runtime.Configuration()
+			if config.Name != "ci_test" {
 				connection_err = errors.New("plugin name not matched")
 			}
 
-			if runtime.tenant_id != tenant_id {
+			if remote_runtime.tenant_id != tenant_id {
 				connection_err = errors.New("tenant id not matched")
 			}
 
