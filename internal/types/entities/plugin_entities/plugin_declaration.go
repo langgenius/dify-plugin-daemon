@@ -1,6 +1,7 @@
 package plugin_entities
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"time"
@@ -196,12 +197,40 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Tags        []PluginTag               `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
 }
 
+func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {
+	type alias PluginDeclarationWithoutAdvancedFields
+
+	var temp struct {
+		alias
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	*p = PluginDeclarationWithoutAdvancedFields(temp.alias)
+
+	if p.Tags == nil {
+		p.Tags = []PluginTag{}
+	}
+
+	return nil
+}
+
 type PluginDeclaration struct {
 	PluginDeclarationWithoutAdvancedFields `yaml:",inline"`
 	Verified                               bool                         `json:"verified" yaml:"verified"`
 	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
 	Model                                  *ModelProviderDeclaration    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
 	Tool                                   *ToolProviderDeclaration     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+}
+
+func (p *PluginDeclaration) MarshalJSON() ([]byte, error) {
+	// TODO: performance issue, need a better way to do this
+	c := *p
+	c.FillInDefaultValues()
+	type alias PluginDeclaration
+	return json.Marshal(alias(c))
 }
 
 var (
