@@ -287,6 +287,10 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 			p.Model.Description = &deep_copied_description
 		}
 	}
+
+	if p.Tags == nil {
+		p.Tags = []PluginTag{}
+	}
 }
 
 func init() {
