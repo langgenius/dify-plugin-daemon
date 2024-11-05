@@ -157,7 +157,7 @@ func (s *stdioHolder) Wait() error {
 		select {
 		case <-ticker.C:
 			// check heartbeat
-			if time.Since(s.last_active_at) > 20*time.Second {
+			if time.Since(s.last_active_at) > 60*time.Second {
 				return plugin_errors.ErrPluginNotActive
 			}
 		case <-s.health_chan:

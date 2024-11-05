@@ -180,6 +180,16 @@ func (p *PluginManager) launchLocal(plugin_package_path string) (
 			}
 			p.m.Delete(identity.String())
 		}()
+
+		// add max launching lock to prevent too many plugins launching at the same time
+		p.maxLaunchingLock <- true
+		routine.Submit(func() {
+			// wait for plugin launched
+			<-launched_chan
+			// release max launching lock
+			<-p.maxLaunchingLock
+		})
+
 		p.fullDuplexLifetime(local_plugin_runtime, launched_chan)
 	})
 

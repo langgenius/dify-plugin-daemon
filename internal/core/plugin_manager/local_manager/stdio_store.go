@@ -69,7 +69,6 @@ func OnError(id string, session_id string, listener func([]byte)) {
 			holder.error_listener[session_id] = listener
 		}
 	}
-
 }
 
 func RemoveStdioListener(id string, listener string) {

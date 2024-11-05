@@ -55,6 +55,9 @@ type PluginManager struct {
 
 	// remote plugin server
 	remotePluginServer remote_manager.RemotePluginServerInterface
+
+	// max launching lock to prevent too many plugins launching at the same time
+	maxLaunchingLock chan bool
 }
 
 var (
@@ -72,6 +75,7 @@ func InitGlobalManager(configuration *app.Config) *PluginManager {
 			configuration.PluginMediaCacheSize,
 		),
 		localPluginLaunchingLock: lock.NewGranularityLock(),
+		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
 		pythonInterpreterPath:    configuration.PythonInterpreterPath,
 	}
 
