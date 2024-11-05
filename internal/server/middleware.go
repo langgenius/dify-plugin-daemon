@@ -33,8 +33,15 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
+		tenant_id := ctx.Param("tenant_id")
+		if tenant_id == "" {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, tenant_id is required"})
+			return
+		}
+
 		// fetch plugin installation
 		installation, err := db.GetOne[models.PluginInstallation](
+			db.Equal("tenant_id", tenant_id),
 			db.Equal("plugin_id", plugin_id),
 		)
 		if err != nil {
