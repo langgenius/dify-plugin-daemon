@@ -198,17 +198,16 @@ type PluginDeclarationWithoutAdvancedFields struct {
 }
 
 func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {
-	type alias PluginDeclarationWithoutAdvancedFields
-
-	var temp struct {
-		alias
+	type Alias PluginDeclarationWithoutAdvancedFields
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(p),
 	}
 
-	if err := json.Unmarshal(data, &temp); err != nil {
+	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-
-	*p = PluginDeclarationWithoutAdvancedFields(temp.alias)
 
 	if p.Tags == nil {
 		p.Tags = []PluginTag{}
@@ -223,6 +222,33 @@ type PluginDeclaration struct {
 	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
 	Model                                  *ModelProviderDeclaration    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
 	Tool                                   *ToolProviderDeclaration     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+}
+
+func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
+	// First unmarshal the embedded struct
+	if err := json.Unmarshal(data, &p.PluginDeclarationWithoutAdvancedFields); err != nil {
+		return err
+	}
+
+	// Then unmarshal the remaining fields
+	type PluginExtra struct {
+		Verified bool                         `json:"verified"`
+		Endpoint *EndpointProviderDeclaration `json:"endpoint,omitempty"`
+		Model    *ModelProviderDeclaration    `json:"model,omitempty"`
+		Tool     *ToolProviderDeclaration     `json:"tool,omitempty"`
+	}
+
+	var extra PluginExtra
+	if err := json.Unmarshal(data, &extra); err != nil {
+		return err
+	}
+
+	p.Verified = extra.Verified
+	p.Endpoint = extra.Endpoint
+	p.Model = extra.Model
+	p.Tool = extra.Tool
+
+	return nil
 }
 
 func (p *PluginDeclaration) MarshalJSON() ([]byte, error) {

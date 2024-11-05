@@ -22,6 +22,8 @@ func UnmarshalJsonBytes[T any](data []byte) (T, error) {
 	typ := reflect.TypeOf(result)
 	if typ.Kind() == reflect.Map {
 		return result, nil
+	} else if typ.Kind() == reflect.String {
+		return result, nil
 	}
 
 	if err := validators.GlobalEntitiesValidator.Struct(&result); err != nil {

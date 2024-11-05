@@ -1,6 +1,7 @@
 package remote_manager
 
 import (
+	"bytes"
 	"sync"
 	"time"
 
@@ -35,9 +36,15 @@ type RemotePluginRuntime struct {
 	// heartbeat
 	last_active_at time.Time
 
+	assets       map[string]*bytes.Buffer
+	assets_bytes int64
+
 	// hand shake process completed
 	handshake        bool
 	handshake_failed bool
+
+	// initialized, wether registration transferred
+	initialized bool
 
 	// registration transferred
 	registration_transferred bool
