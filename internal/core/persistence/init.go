@@ -22,11 +22,13 @@ func InitPersistence(config *app.Config) {
 		}
 
 		persistence = &Persistence{
-			storage: s3,
+			storage:          s3,
+			max_storage_size: config.PersistenceStorageMaxSize,
 		}
 	} else if config.PersistenceStorageType == "local" {
 		persistence = &Persistence{
-			storage: NewLocalWrapper(config.PersistenceStorageLocalPath),
+			storage:          NewLocalWrapper(config.PersistenceStorageLocalPath),
+			max_storage_size: config.PersistenceStorageMaxSize,
 		}
 	} else {
 		log.Panic("Invalid persistence storage type: %s", config.PersistenceStorageType)

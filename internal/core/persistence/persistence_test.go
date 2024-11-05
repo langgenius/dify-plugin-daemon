@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
@@ -17,14 +18,25 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	}
 	defer cache.Close()
 
+	db.Init(&app.Config{
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
+	})
+	defer db.Close()
+
 	InitPersistence(&app.Config{
 		PersistenceStorageType:      "local",
 		PersistenceStorageLocalPath: "./persistence_storage",
+		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
 	})
 
 	key := strings.RandomString(10)
 
-	if err := persistence.Save("tenant_id", "plugin_checksum", key, []byte("data")); err != nil {
+	if err := persistence.Save("tenant_id", "plugin_checksum", -1, key, []byte("data")); err != nil {
 		t.Fatalf("Failed to save data: %v", err)
 	}
 
@@ -64,15 +76,25 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
+	db.Init(&app.Config{
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
+	})
+	defer db.Close()
 
 	InitPersistence(&app.Config{
 		PersistenceStorageType:      "local",
 		PersistenceStorageLocalPath: "./persistence_storage",
+		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
 	})
 
 	key := strings.RandomString(65)
 
-	if err := persistence.Save("tenant_id", "plugin_checksum", key, []byte("data")); err == nil {
+	if err := persistence.Save("tenant_id", "plugin_checksum", -1, key, []byte("data")); err == nil {
 		t.Fatalf("Expected error, got nil")
 	}
 }
@@ -83,15 +105,25 @@ func TestPersistenceDelete(t *testing.T) {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
+	db.Init(&app.Config{
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
+	})
+	defer db.Close()
 
 	InitPersistence(&app.Config{
 		PersistenceStorageType:      "local",
 		PersistenceStorageLocalPath: "./persistence_storage",
+		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
 	})
 
 	key := strings.RandomString(10)
 
-	if err := persistence.Save("tenant_id", "plugin_checksum", key, []byte("data")); err != nil {
+	if err := persistence.Save("tenant_id", "plugin_checksum", -1, key, []byte("data")); err != nil {
 		t.Fatalf("Failed to save data: %v", err)
 	}
 

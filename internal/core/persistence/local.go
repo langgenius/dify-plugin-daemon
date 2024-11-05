@@ -44,3 +44,12 @@ func (l *LocalWrapper) Delete(tenant_id string, plugin_checksum string, key stri
 	file_path := l.getFilePath(tenant_id, plugin_checksum, key)
 	return os.Remove(file_path)
 }
+
+func (l *LocalWrapper) StateSize(tenant_id string, plugin_checksum string, key string) (int64, error) {
+	file_path := l.getFilePath(tenant_id, plugin_checksum, key)
+	info, err := os.Stat(file_path)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size(), nil
+}

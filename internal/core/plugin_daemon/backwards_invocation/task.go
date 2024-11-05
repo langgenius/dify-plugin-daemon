@@ -482,7 +482,32 @@ func executeDifyInvocationStorageTask(
 			return
 		}
 
-		if err := persistence.Save(tenant_id, plugin_id.PluginID(), request.Key, data); err != nil {
+		session := handle.session
+		if session == nil {
+			handle.WriteError(fmt.Errorf("session not found"))
+			return
+		}
+
+		declaration := session.Declaration
+		if declaration == nil {
+			handle.WriteError(fmt.Errorf("declaration not found"))
+			return
+		}
+
+		resource := declaration.Resource.Permission
+		if resource == nil {
+			handle.WriteError(fmt.Errorf("resource not found"))
+			return
+		}
+
+		max_storage_size := int64(-1)
+
+		storage := resource.Storage
+		if storage != nil {
+			max_storage_size = int64(storage.Size)
+		}
+
+		if err := persistence.Save(tenant_id, plugin_id.PluginID(), max_storage_size, request.Key, data); err != nil {
 			handle.WriteError(fmt.Errorf("save data failed: %s", err.Error()))
 			return
 		}

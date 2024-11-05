@@ -60,6 +60,7 @@ type Config struct {
 	PersistenceStorageS3AccessKey string `envconfig:"PERSISTENCE_STORAGE_S3_ACCESS_KEY"`
 	PersistenceStorageS3SecretKey string `envconfig:"PERSISTENCE_STORAGE_S3_SECRET_KEY"`
 	PersistenceStorageS3Bucket    string `envconfig:"PERSISTENCE_STORAGE_S3_BUCKET"`
+	PersistenceStorageMaxSize     int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
 	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`

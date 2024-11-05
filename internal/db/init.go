@@ -86,6 +86,7 @@ func autoMigrate() error {
 		models.ToolInstallation{},
 		models.AIModelInstallation{},
 		models.InstallTask{},
+		models.TenantStorage{},
 	)
 }
 
