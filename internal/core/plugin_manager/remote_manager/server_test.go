@@ -145,7 +145,7 @@ func TestAcceptConnection(t *testing.T) {
 	}
 
 	// send handshake
-	handle_shake_message := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
+	plugin_manifest := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Version: "1.0.0",
 			Type:    plugin_entities.PluginType,
@@ -181,20 +181,48 @@ func TestAcceptConnection(t *testing.T) {
 			},
 		},
 	})
-	conn.Write([]byte(key))
-	conn.Write([]byte("\n"))
-	conn.Write(handle_shake_message)
-	conn.Write([]byte("\n"))
-	conn.Write([]byte("[]\n")) // transfer tool
-	conn.Write([]byte("[]\n")) // transfer model
-	conn.Write([]byte("[]\n")) // transfer endpoint
-	conn.Write(parser.MarshalJsonBytes([]plugin_entities.RemoteAssetPayload{
-		{
+
+	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
+		Type: plugin_entities.REGISTER_EVENT_TYPE_HAND_SHAKE,
+		Data: parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterHandshake{
+			Key: key,
+		}),
+	})) // transfer connection key
+	conn.Write([]byte("\n\n"))
+	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
+		Type: plugin_entities.REGISTER_EVENT_TYPE_MANIFEST_DECLARATION,
+		Data: plugin_manifest,
+	})) // transfer manifest declaration
+	conn.Write([]byte("\n\n"))
+	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
+		Type: plugin_entities.REGISTER_EVENT_TYPE_ENDPOINT_DECLARATION,
+		Data: parser.MarshalJsonBytes([]plugin_entities.EndpointProviderDeclaration{
+			{
+				Settings: []plugin_entities.ProviderConfig{},
+				Endpoints: []plugin_entities.EndpointDeclaration{
+					{
+						Path:   "/duck/<app_id>",
+						Method: "GET",
+					},
+				},
+			},
+		}),
+	})) // transfer endpoint declaration
+	conn.Write([]byte("\n\n"))
+	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
+		Type: plugin_entities.REGISTER_EVENT_TYPE_ASSET_CHUNK,
+		Data: parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterAssetChunk{
 			Filename: "test.svg",
-			Data:     "a2a2",
-		},
-	}))
-	conn.Write([]byte("\n"))
+			Data:     "AAAA", // base64 encoded data
+			End:      true,
+		}),
+	})) // transfer asset chunk
+	conn.Write([]byte("\n\n"))
+	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
+		Type: plugin_entities.REGISTER_EVENT_TYPE_END,
+		Data: []byte("{}"),
+	})) // init process end
+	conn.Write([]byte("\n\n"))
 	closed_chan := make(chan bool)
 
 	msg := ""

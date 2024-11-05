@@ -208,7 +208,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			key, err := parser.UnmarshalJsonBytes[plugin_entities.RemotePluginRegisterHandshake](register_payload.Data)
 			if err != nil {
 				// close connection if handshake failed
-				close_conn([]byte("handshake failed, invalid key\n"))
+				close_conn([]byte("handshake failed, invalid handshake message\n"))
 				runtime.handshake_failed = true
 				return
 			}
