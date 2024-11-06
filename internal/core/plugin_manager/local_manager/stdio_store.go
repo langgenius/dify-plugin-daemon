@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func PutStdioIo(
+func registerStdioHandler(
 	plugin_unique_identifier string, writer io.WriteCloser,
 	reader io.ReadCloser, err_reader io.ReadCloser,
 ) *stdioHolder {
@@ -21,15 +21,15 @@ func PutStdioIo(
 		id:                       id,
 		l:                        &sync.Mutex{},
 
-		health_chan_lock: &sync.Mutex{},
-		health_chan:      make(chan bool),
+		wait_controller_chan_lock: &sync.Mutex{},
+		waiting_controller_chan:   make(chan bool),
 	}
 
 	stdio_holder.Store(id, holder)
 	return holder
 }
 
-func Get(id string) *stdioHolder {
+func getStdioHandler(id string) *stdioHolder {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			return holder
@@ -39,11 +39,11 @@ func Get(id string) *stdioHolder {
 	return nil
 }
 
-func RemoveStdio(id string) {
+func removeStdioHandler(id string) {
 	stdio_holder.Delete(id)
 }
 
-func OnStdioEvent(id string, session_id string, listener func([]byte)) {
+func setupStdioEventListener(id string, session_id string, listener func([]byte)) {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
@@ -71,7 +71,7 @@ func OnError(id string, session_id string, listener func([]byte)) {
 	}
 }
 
-func RemoveStdioListener(id string, listener string) {
+func removeStdioHandlerListener(id string, listener string) {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
@@ -88,7 +88,7 @@ func OnGlobalEvent(listener func(string, []byte)) {
 	listeners[uuid.New().String()] = listener
 }
 
-func WriteToStdio(id string, data []byte) error {
+func writeToStdioHandler(id string, data []byte) error {
 	if v, ok := stdio_holder.Load(id); ok {
 		if holder, ok := v.(*stdioHolder); ok {
 			_, err := holder.writer.Write(data)

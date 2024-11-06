@@ -28,6 +28,7 @@ func (p *PluginManager) startLocalWatcher() {
 		p.handleNewLocalPlugins()
 		for range time.NewTicker(time.Second * 30).C {
 			p.handleNewLocalPlugins()
+			p.removeUninstalledLocalPlugins()
 		}
 	}()
 }
@@ -90,6 +91,11 @@ func (p *PluginManager) handleNewLocalPlugins() {
 	if err != nil {
 		log.Error("walk through plugins failed: %s", err.Error())
 	}
+}
+
+// an async function to remove uninstalled local plugins
+func (p *PluginManager) removeUninstalledLocalPlugins() {
+	// TODO: implement
 }
 
 func (p *PluginManager) launchLocal(plugin_package_path string) (

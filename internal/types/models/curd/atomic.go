@@ -142,8 +142,11 @@ func InstallPlugin(
 }
 
 type DeletePluginResponse struct {
-	Plugin          *models.Plugin
-	Installation    *models.PluginInstallation
+	Plugin       *models.Plugin
+	Installation *models.PluginInstallation
+
+	// whether the refers of the plugin has been decreased to 0
+	// which means the whole plugin has been uninstalled, not just the installation
 	IsPluginDeleted bool
 }
 

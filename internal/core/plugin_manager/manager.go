@@ -212,7 +212,9 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 	return &declaration, nil
 }
 
-func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) ([]byte, error) {
+func (p *PluginManager) GetPackage(
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) ([]byte, error) {
 	file, err := os.ReadFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()))
 
 	if err != nil {
@@ -225,11 +227,15 @@ func (p *PluginManager) GetPackage(plugin_unique_identifier plugin_entities.Plug
 	return file, nil
 }
 
-func (p *PluginManager) GetPackagePath(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (string, error) {
+func (p *PluginManager) GetPackagePath(
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) (string, error) {
 	return filepath.Join(p.packageCachePath, plugin_unique_identifier.String()), nil
 }
 
-func (p *PluginManager) GetDeclaration(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (
+func (p *PluginManager) GetDeclaration(
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+) (
 	*plugin_entities.PluginDeclaration, error,
 ) {
 	return helper.CombinedGetPluginDeclaration(plugin_unique_identifier)

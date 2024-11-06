@@ -17,7 +17,7 @@ import (
 // gc performs garbage collection for the LocalPluginRuntime
 func (r *LocalPluginRuntime) gc() {
 	if r.io_identity != "" {
-		RemoveStdio(r.io_identity)
+		removeStdioHandler(r.io_identity)
 	}
 
 	if r.wait_chan != nil {
@@ -109,12 +109,14 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 		r.gc()
 	}()
+
+	// ensure the plugin process is killed after the plugin exits
 	defer e.Process.Kill()
 
 	log.Info("plugin %s started", r.Config.Identity())
 
 	// setup stdio
-	stdio := PutStdioIo(r.Config.Identity(), stdin, stdout, stderr)
+	stdio := registerStdioHandler(r.Config.Identity(), stdin, stdout, stderr)
 	r.io_identity = stdio.GetID()
 	defer stdio.Stop()
 
@@ -179,4 +181,16 @@ func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
 	r.wait_stopped_chan = append(r.wait_stopped_chan, c)
 	r.wait_chan_lock.Unlock()
 	return c
+}
+
+// Stop stops the plugin
+func (r *LocalPluginRuntime) Stop() {
+	// inherit from PluginRuntime
+	r.PluginRuntime.Stop()
+
+	// get stdio
+	stdio := getStdioHandler(r.io_identity)
+	if stdio != nil {
+		stdio.Stop()
+	}
 }

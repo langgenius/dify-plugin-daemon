@@ -30,13 +30,17 @@ type stdioHolder struct {
 	error_listener           map[string]func([]byte)
 	started                  bool
 
+	// error message container
 	err_message                 string
 	last_err_message_updated_at time.Time
 
-	health_chan        chan bool
-	health_chan_closed bool
-	health_chan_lock   *sync.Mutex
-	last_active_at     time.Time
+	// waiting controller channel to notify the exit signal to the Wait() function
+	waiting_controller_chan        chan bool
+	waiting_controller_chan_closed bool
+	wait_controller_chan_lock      *sync.Mutex
+
+	// the last time the plugin sent a heartbeat
+	last_active_at time.Time
 }
 
 func (s *stdioHolder) Error() error {
@@ -49,21 +53,26 @@ func (s *stdioHolder) Error() error {
 	return nil
 }
 
+// Stop stops the stdio, of course, it will shutdown the plugin asynchronously
+// by closing a channel to notify the `Wait()` function to exit
 func (s *stdioHolder) Stop() {
 	s.writer.Close()
 	s.reader.Close()
 	s.err_reader.Close()
 
-	s.health_chan_lock.Lock()
-	if !s.health_chan_closed {
-		close(s.health_chan)
-		s.health_chan_closed = true
+	s.wait_controller_chan_lock.Lock()
+	if !s.waiting_controller_chan_closed {
+		close(s.waiting_controller_chan)
+		s.waiting_controller_chan_closed = true
 	}
-	s.health_chan_lock.Unlock()
+	s.wait_controller_chan_lock.Unlock()
 
 	stdio_holder.Delete(s.id)
 }
 
+// StartStdout starts to read the stdout of the plugin
+// it will notify the heartbeat function when the plugin is active
+// and parse the stdout data to trigger corresponding listeners
 func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 	s.started = true
 	s.last_active_at = time.Now()
@@ -103,6 +112,8 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 	}
 }
 
+// WriteError writes the error message to the stdio holder
+// it will keep the last 1024 bytes of the error message
 func (s *stdioHolder) WriteError(msg string) {
 	const MAX_ERR_MSG_LEN = 1024
 	reduce := len(msg) + len(s.err_message) - MAX_ERR_MSG_LEN
@@ -118,6 +129,8 @@ func (s *stdioHolder) WriteError(msg string) {
 	s.last_err_message_updated_at = time.Now()
 }
 
+// StartStderr starts to read the stderr of the plugin
+// it will write the error message to the stdio holder
 func (s *stdioHolder) StartStderr() {
 	for {
 		buf := make([]byte, 1024)
@@ -135,32 +148,35 @@ func (s *stdioHolder) StartStderr() {
 	}
 }
 
+// Wait waits for the plugin to exit
+// it will return an error if the plugin is not active
+// you can also call `Stop()` to stop the waiting process
 func (s *stdioHolder) Wait() error {
-	s.health_chan_lock.Lock()
-	if s.health_chan_closed {
-		s.health_chan_lock.Unlock()
+	s.wait_controller_chan_lock.Lock()
+	if s.waiting_controller_chan_closed {
+		s.wait_controller_chan_lock.Unlock()
 		return errors.New("you need to start the health check before waiting")
 	}
-	s.health_chan_lock.Unlock()
+	s.wait_controller_chan_lock.Unlock()
 
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	// check status of plugin every 5 seconds
 	for {
-		s.health_chan_lock.Lock()
-		if s.health_chan_closed {
-			s.health_chan_lock.Unlock()
+		s.wait_controller_chan_lock.Lock()
+		if s.waiting_controller_chan_closed {
+			s.wait_controller_chan_lock.Unlock()
 			break
 		}
-		s.health_chan_lock.Unlock()
+		s.wait_controller_chan_lock.Unlock()
 		select {
 		case <-ticker.C:
 			// check heartbeat
 			if time.Since(s.last_active_at) > 60*time.Second {
 				return plugin_errors.ErrPluginNotActive
 			}
-		case <-s.health_chan:
+		case <-s.waiting_controller_chan:
 			// closed
 			return s.Error()
 		}
@@ -169,6 +185,7 @@ func (s *stdioHolder) Wait() error {
 	return nil
 }
 
+// GetID returns the id of the stdio holder
 func (s *stdioHolder) GetID() string {
 	return s.id
 }

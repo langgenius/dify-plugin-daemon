@@ -10,9 +10,9 @@ import (
 func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
 	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
-		RemoveStdioListener(r.io_identity, session_id)
+		removeStdioHandlerListener(r.io_identity, session_id)
 	})
-	OnStdioEvent(r.io_identity, session_id, func(b []byte) {
+	setupStdioEventListener(r.io_identity, session_id, func(b []byte) {
 		// unmarshal the session message
 		data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](b)
 		if err != nil {
@@ -26,5 +26,5 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 }
 
 func (r *LocalPluginRuntime) Write(session_id string, data []byte) {
-	WriteToStdio(r.io_identity, append(data, '\n'))
+	writeToStdioHandler(r.io_identity, append(data, '\n'))
 }

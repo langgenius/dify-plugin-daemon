@@ -480,13 +480,26 @@ func UninstallPlugin(
 	}
 
 	// Uninstall the plugin
-	_, err = curd.UninstallPlugin(
+	delete_response, err := curd.UninstallPlugin(
 		tenant_id,
 		plugin_unique_identifier,
 		installation.ID,
 	)
 	if err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
+	}
+
+	if delete_response.IsPluginDeleted {
+		// delete the plugin if no installation left
+		manager := plugin_manager.Manager()
+		if delete_response.Installation.RuntimeType == string(
+			plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+		) {
+			err = manager.UninstallFromLocal(plugin_unique_identifier)
+			if err != nil {
+				return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
+			}
+		}
 	}
 
 	return entities.NewSuccessResponse(true)
