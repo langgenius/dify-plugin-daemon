@@ -64,6 +64,7 @@ func initialize() model {
 	m.subMenuSeq = []subMenuKey{
 		SUB_MENU_KEY_PROFILE,
 		SUB_MENU_KEY_LANGUAGE,
+		SUB_MENU_KEY_CATEGORY,
 		SUB_MENU_KEY_PERMISSION,
 	}
 

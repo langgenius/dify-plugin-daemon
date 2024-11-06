@@ -54,8 +54,8 @@ func Endpoint(
 
 	// fetch plugin
 	manager := plugin_manager.Manager()
-	runtime := manager.Get(identifier)
-	if runtime == nil {
+	runtime, err := manager.Get(identifier)
+	if err != nil {
 		ctx.JSON(404, gin.H{"error": "plugin not found"})
 		return
 	}

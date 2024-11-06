@@ -78,10 +78,8 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		}
 
 		// check if plugin in current node
-		if !app.cluster.IsPluginOnCurrentNode(
-			identity,
-		) {
-			app.redirectPluginInvokeByPluginIdentifier(ctx, identity)
+		if ok, original_error := app.cluster.IsPluginOnCurrentNode(identity); !ok {
+			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, original_error)
 			ctx.Abort()
 		} else {
 			ctx.Next()
@@ -92,14 +90,21 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 func (app *App) redirectPluginInvokeByPluginIdentifier(
 	ctx *gin.Context,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	original_error error,
 ) {
 	// try find the correct node
 	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_unique_identifier.String())
 	if err != nil {
-		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
+		ctx.AbortWithStatusJSON(
+			500,
+			gin.H{"error": "Internal server error, " + original_error.Error() + ", " + err.Error()},
+		)
 		return
 	} else if len(nodes) == 0 {
-		ctx.AbortWithStatusJSON(404, gin.H{"error": "No available node"})
+		ctx.AbortWithStatusJSON(
+			404,
+			gin.H{"error": "No available node, " + original_error.Error()},
+		)
 		return
 	}
 

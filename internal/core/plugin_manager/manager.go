@@ -95,18 +95,18 @@ func Manager() *PluginManager {
 
 func (p *PluginManager) Get(
 	identity plugin_entities.PluginUniqueIdentifier,
-) plugin_entities.PluginLifetime {
+) (plugin_entities.PluginLifetime, error) {
 	if v, ok := p.m.Load(identity.String()); ok {
-		return v
+		return v, nil
 	}
 
 	// check if plugin is a serverless runtime
 	plugin_session_interface, err := p.getServerlessPluginRuntime(identity)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return plugin_session_interface
+	return plugin_session_interface, nil
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {

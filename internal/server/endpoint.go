@@ -63,8 +63,8 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 	}
 
 	// check if plugin exists in current node
-	if !app.cluster.IsPluginOnCurrentNode(plugin_unique_identifier) {
-		app.redirectPluginInvokeByPluginIdentifier(ctx, plugin_unique_identifier)
+	if ok, original_error := app.cluster.IsPluginOnCurrentNode(plugin_unique_identifier); !ok {
+		app.redirectPluginInvokeByPluginIdentifier(ctx, plugin_unique_identifier, original_error)
 	} else {
 		service.Endpoint(ctx, &endpoint, &plugin_installation, path)
 	}
