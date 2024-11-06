@@ -20,6 +20,6 @@ func (p *PluginManager) UninstallFromLocal(identity plugin_entities.PluginUnique
 		// no runtime to shutdown, already uninstalled
 		return nil
 	}
-	runtime.Shutdown()
+	runtime.Stop()
 	return nil
 }
