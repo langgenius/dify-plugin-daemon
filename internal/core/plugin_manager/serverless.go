@@ -66,7 +66,7 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 		p.getServerlessRuntimeCacheKey(identity),
 	)
 	if err != nil && err != cache.ErrNotFound {
-		return nil, errors.New("plugin not found")
+		return nil, errors.New("unexpected error occurred during fetch serverless runtime cache")
 	}
 
 	if err == cache.ErrNotFound {
@@ -75,7 +75,7 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 		)
 
 		if err == db.ErrDatabaseNotFound {
-			return nil, errors.New("plugin not found")
+			return nil, fmt.Errorf("plugin not found: %s", identity.String())
 		}
 
 		if err != nil {
