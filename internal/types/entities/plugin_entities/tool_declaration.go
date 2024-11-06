@@ -15,14 +15,14 @@ import (
 )
 
 type ToolIdentity struct {
-	Author string     `json:"author" validate:"required"`
-	Name   string     `json:"name" validate:"required"`
-	Label  I18nObject `json:"label" validate:"required"`
+	Author string     `json:"author" yaml:"author" validate:"required"`
+	Name   string     `json:"name" yaml:"name" validate:"required"`
+	Label  I18nObject `json:"label" yaml:"label" validate:"required"`
 }
 
 type ToolParameterOption struct {
-	Value string     `json:"value" validate:"required"`
-	Label I18nObject `json:"label" validate:"required"`
+	Value string     `json:"value" yaml:"value" validate:"required"`
+	Label I18nObject `json:"label" yaml:"label" validate:"required"`
 }
 
 type ToolParameterType string
@@ -76,18 +76,18 @@ func isToolParameterForm(fl validator.FieldLevel) bool {
 }
 
 type ToolParameter struct {
-	Name             string                `json:"name" validate:"required,gt=0,lt=1024"`
-	Label            I18nObject            `json:"label" validate:"required"`
-	HumanDescription I18nObject            `json:"human_description" validate:"required"`
-	Type             ToolParameterType     `json:"type" validate:"required,tool_parameter_type"`
-	Scope            *string               `json:"scope" validate:"omitempty,is_scope"`
-	Form             ToolParameterForm     `json:"form" validate:"required,tool_parameter_form"`
-	LLMDescription   string                `json:"llm_description" validate:"omitempty"`
-	Required         bool                  `json:"required" validate:"required"`
-	Default          any                   `json:"default" validate:"omitempty,is_basic_type"`
-	Min              *float64              `json:"min" validate:"omitempty"`
-	Max              *float64              `json:"max" validate:"omitempty"`
-	Options          []ToolParameterOption `json:"options" validate:"omitempty,dive"`
+	Name             string                `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
+	Label            I18nObject            `json:"label" yaml:"label" validate:"required"`
+	HumanDescription I18nObject            `json:"human_description" yaml:"human_description" validate:"required"`
+	Type             ToolParameterType     `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
+	Scope            *string               `json:"scope" yaml:"scope" validate:"omitempty,is_scope"`
+	Form             ToolParameterForm     `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
+	LLMDescription   string                `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
+	Required         bool                  `json:"required" yaml:"required" validate:"required"`
+	Default          any                   `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Min              *float64              `json:"min" yaml:"min" validate:"omitempty"`
+	Max              *float64              `json:"max" yaml:"max" validate:"omitempty"`
+	Options          []ToolParameterOption `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type ToolDescription struct {
@@ -98,11 +98,11 @@ type ToolDescription struct {
 type ToolOutputSchema map[string]any
 
 type ToolDeclaration struct {
-	Identity             ToolIdentity     `json:"identity" validate:"required"`
-	Description          ToolDescription  `json:"description" validate:"required"`
-	Parameters           []ToolParameter  `json:"parameters" validate:"omitempty,dive"`
-	OutputSchema         ToolOutputSchema `json:"output_schema" validate:"omitempty,json_schema"`
-	HasRuntimeParameters bool             `json:"has_runtime_parameters"`
+	Identity             ToolIdentity     `json:"identity" yaml:"identity" validate:"required"`
+	Description          ToolDescription  `json:"description" yaml:"description" validate:"required"`
+	Parameters           []ToolParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
+	OutputSchema         ToolOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
+	HasRuntimeParameters bool             `json:"has_runtime_parameters" yaml:"has_runtime_parameters"`
 }
 
 func isJSONSchema(fl validator.FieldLevel) bool {
