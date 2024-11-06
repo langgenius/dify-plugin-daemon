@@ -39,6 +39,7 @@ type subMenuKey string
 const (
 	SUB_MENU_KEY_PROFILE    subMenuKey = "profile"
 	SUB_MENU_KEY_LANGUAGE   subMenuKey = "language"
+	SUB_MENU_KEY_CATEGORY   subMenuKey = "category"
 	SUB_MENU_KEY_PERMISSION subMenuKey = "permission"
 )
 
@@ -55,6 +56,7 @@ func initialize() model {
 	m.subMenus = map[subMenuKey]subMenu{
 		SUB_MENU_KEY_PROFILE:    newProfile(),
 		SUB_MENU_KEY_LANGUAGE:   newLanguage(),
+		SUB_MENU_KEY_CATEGORY:   newCategory(),
 		SUB_MENU_KEY_PERMISSION: newPermission(),
 	}
 	m.currentSubMenu = SUB_MENU_KEY_PROFILE
@@ -114,11 +116,14 @@ func (m model) createPlugin() {
 
 	manifest := &plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
-			Version:   "0.0.1",
-			Type:      plugin_entities.PluginType,
-			Icon:      "icon.svg",
-			Author:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
-			Name:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+			Version: "0.0.1",
+			Type:    plugin_entities.PluginType,
+			Icon:    "icon.svg",
+			Author:  m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
+			Name:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+			Description: plugin_entities.I18nObject{
+				EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Description(),
+			},
 			CreatedAt: time.Now(),
 			Resource: plugin_entities.PluginResourceRequirement{
 				Memory:     1024 * 1024 * 256, // 256MB
@@ -128,6 +133,11 @@ func (m model) createPlugin() {
 				EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
 			},
 		},
+	}
+
+	category_string := m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category()
+	if category_string == "tool" {
+		manifest.Plugins.Tools = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
 	manifest.Meta = plugin_entities.PluginMeta{
@@ -192,7 +202,12 @@ func (m model) createPlugin() {
 		return
 	}
 
-	err = createPythonEnvironment(plugin_dir, manifest.Meta.Runner.Entrypoint)
+	err = createPythonEnvironment(
+		plugin_dir,
+		manifest.Meta.Runner.Entrypoint,
+		manifest,
+		m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category(),
+	)
 	if err != nil {
 		log.Error("failed to create python environment: %s", err)
 		return

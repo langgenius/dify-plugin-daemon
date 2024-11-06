@@ -1,0 +1,17 @@
+identity:
+  author: {{author}}
+  name: {{plugin_name}}
+  label:
+    en_US: {{plugin_name}}
+    zh_Hans: {{plugin_name}}
+    pt_BR: {{plugin_name}}
+  description:
+    en_US: {{plugin_description}}
+    zh_Hans: {{plugin_description}}
+    pt_BR: {{plugin_description}}
+  icon: icon.svg
+tools:
+  - tools/{{plugin_name}}.yaml
+extra:
+  python:
+    source: provider/{{plugin_name}}.py

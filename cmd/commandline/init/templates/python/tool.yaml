@@ -1,0 +1,30 @@
+identity:
+  name: {{plugin_name}}
+  author: {{author}}
+  label:
+    en_US: {{plugin_name}}
+    zh_Hans: {{plugin_name}}
+    pt_BR: {{plugin_name}}
+description:
+  human:
+    en_US: {{plugin_description}}
+    zh_Hans: {{plugin_description}}
+    pt_BR: {{plugin_description}}
+  llm: {{plugin_description}}
+parameters:
+  - name: query
+    type: string
+    required: true
+    label:
+      en_US: Query string
+      zh_Hans: 查询语句
+      pt_BR: Query string
+    human_description:
+      en_US: {{plugin_description}}
+      zh_Hans: {{plugin_description}}
+      pt_BR: {{plugin_description}}
+    llm_description: {{plugin_description}}
+    form: llm
+extra:
+  python:
+    source: tools/{{plugin_name}}.py

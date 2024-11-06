@@ -27,8 +27,13 @@ func newProfile() profile {
 	author.CharLimit = 128
 	author.Prompt = "Author (press Enter to next step): "
 
+	description := ti.New()
+	description.Placeholder = "Description"
+	description.CharLimit = 1024
+	description.Prompt = "Description (press Enter to next step): "
+
 	return profile{
-		inputs: []ti.Model{name, author},
+		inputs: []ti.Model{name, author, description},
 	}
 }
 
@@ -40,8 +45,12 @@ func (p profile) Author() string {
 	return p.inputs[1].Value()
 }
 
+func (p profile) Description() string {
+	return p.inputs[2].Value()
+}
+
 func (p profile) View() string {
-	s := fmt.Sprintf("Edit profile of the plugin\n%s\n%s\n", p.inputs[0].View(), p.inputs[1].View())
+	s := fmt.Sprintf("Edit profile of the plugin\n%s\n%s\n%s\n", p.inputs[0].View(), p.inputs[1].View(), p.inputs[2].View())
 	if p.warning != "" {
 		s += fmt.Sprintf("\033[31m%s\033[0m\n", p.warning)
 	}
@@ -50,7 +59,7 @@ func (p profile) View() string {
 
 func (p *profile) checkRule() bool {
 	if p.inputs[p.cursor].Value() == "" {
-		p.warning = "Name and author cannot be empty"
+		p.warning = "Name, author and description cannot be empty"
 		return false
 	} else if p.cursor == 0 && !plugin_entities.PluginNameRegex.MatchString(p.inputs[p.cursor].Value()) {
 		p.warning = "Plugin name must be 1-128 characters long, and can only contain letters, numbers, dashes and underscores"
