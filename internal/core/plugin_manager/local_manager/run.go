@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/process"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -71,10 +70,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// add env INSTALL_METHOD=local
 	e.Env = append(e.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
 
-	// NOTE: subprocess will be taken care of by subprocess manager
-	// ensure all subprocess are killed when parent process exits, especially on Golang debugger
-	process.WrapProcess(e)
-
 	// get writer
 	stdin, err := e.StdinPipe()
 	if err != nil {
@@ -103,10 +98,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		r.SetRestarting()
 		return fmt.Errorf("start plugin failed: %s", err.Error())
 	}
-
-	// add to subprocess manager
-	process.NewProcess(e)
-	defer process.RemoveProcess(e)
 
 	defer func() {
 		// wait for plugin to exit

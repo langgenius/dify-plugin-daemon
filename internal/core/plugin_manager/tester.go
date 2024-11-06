@@ -66,7 +66,7 @@ func (p *PluginManager) TestPlugin(
 			}
 		}()
 		// delete the plugin from the storage when the plugin is stopped
-		p.fullDuplexLifetime(local_plugin_runtime, nil)
+		p.fullDuplexLifecycle(local_plugin_runtime, nil)
 	})
 
 	// wait for the plugin to start

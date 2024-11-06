@@ -15,7 +15,10 @@ type LocalPluginRuntime struct {
 	io_identity string
 
 	// python interpreter path, currently only support python
-	python_interpreter_path         string
+	python_interpreter_path string
+
+	// to create a new python virtual environment, we need a default python interpreter
+	// by using its venv module
 	default_python_interpreter_path string
 
 	wait_chan_lock    sync.Mutex

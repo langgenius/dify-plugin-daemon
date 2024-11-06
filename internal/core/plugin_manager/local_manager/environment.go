@@ -2,8 +2,6 @@ package local_manager
 
 import (
 	"fmt"
-	"os"
-	"path"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -20,13 +18,6 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	if err != nil {
 		return err
 	}
-
-	// create .installed file
-	f, err := os.Create(path.Join(r.State.WorkingPath, ".installed"))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
 
 	return nil
 }

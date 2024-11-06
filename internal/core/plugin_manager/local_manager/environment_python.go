@@ -19,6 +19,12 @@ import (
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// check if virtual environment exists
 	if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv")); err == nil {
+		// setup python interpreter path
+		python_path, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+		if err != nil {
+			return fmt.Errorf("failed to find python: %s", err)
+		}
+		p.python_interpreter_path = python_path
 		return nil
 	}
 

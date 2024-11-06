@@ -5,7 +5,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/process"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -16,9 +15,6 @@ func (app *App) Run(config *app.Config) {
 
 	// init db
 	db.Init(config)
-
-	// init process lifetime
-	process.Init(config)
 
 	// create manager
 	manager := plugin_manager.InitGlobalManager(config)

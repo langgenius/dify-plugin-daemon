@@ -11,7 +11,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
-	"github.com/langgenius/dify-plugin-daemon/internal/process"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -221,12 +220,6 @@ endpoint				- allow plugin to register endpoint`,
 
 			// init plugin manager
 			plugin_manager := plugin_manager.InitGlobalManager(config)
-
-			// start to schedule plugin subprocesses
-			process.Init(config)
-
-			// terminate all subprocesses when test finished
-			defer process.TerminateAll()
 
 			response, err := plugin_manager.TestPlugin(package_path_str, inputs, invoke_type, invoke_action, timeout)
 			if err != nil {

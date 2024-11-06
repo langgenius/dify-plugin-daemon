@@ -24,9 +24,6 @@ import (
 
 func (p *PluginManager) startLocalWatcher() {
 	go func() {
-		// delete all plugins in working directory
-		os.RemoveAll(p.workingDirectory)
-
 		log.Info("start to handle new plugins in path: %s", p.pluginStoragePath)
 		p.handleNewLocalPlugins()
 		for range time.NewTicker(time.Second * 30).C {
@@ -67,7 +64,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 						}
 						p.m.Delete(identity.String())
 					}()
-					p.fullDuplexLifetime(rpr, nil)
+					p.fullDuplexLifecycle(rpr, nil)
 				})
 			})
 		}()
@@ -132,8 +129,11 @@ func (p *PluginManager) launchLocal(plugin_package_path string) (
 		return nil, nil, fmt.Errorf("plugin decoder is not a zip decoder")
 	}
 
-	if err := decoder.ExtractTo(plugin.runtime.State.WorkingPath); err != nil {
-		return nil, nil, errors.Join(err, fmt.Errorf("extract plugin to working directory error"))
+	// check if the working directory exists, if not, create it, otherwise, launch it directly
+	if _, err := os.Stat(plugin.runtime.State.WorkingPath); err != nil {
+		if err := decoder.ExtractTo(plugin.runtime.State.WorkingPath); err != nil {
+			return nil, nil, errors.Join(err, fmt.Errorf("extract plugin to working directory error"))
+		}
 	}
 
 	success := false
@@ -190,7 +190,7 @@ func (p *PluginManager) launchLocal(plugin_package_path string) (
 			<-p.maxLaunchingLock
 		})
 
-		p.fullDuplexLifetime(local_plugin_runtime, launched_chan)
+		p.fullDuplexLifecycle(local_plugin_runtime, launched_chan)
 	})
 
 	return local_plugin_runtime, launched_chan, nil

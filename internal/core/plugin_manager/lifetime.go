@@ -11,7 +11,7 @@ func (p *PluginManager) AddPluginRegisterHandler(handler func(r plugin_entities.
 	p.pluginRegisters = append(p.pluginRegisters, handler)
 }
 
-func (p *PluginManager) fullDuplexLifetime(r plugin_entities.PluginFullDuplexLifetime, launched_chan chan error) {
+func (p *PluginManager) fullDuplexLifecycle(r plugin_entities.PluginFullDuplexLifetime, launched_chan chan error) {
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
