@@ -95,7 +95,22 @@ func (p *PluginManager) handleNewLocalPlugins() {
 
 // an async function to remove uninstalled local plugins
 func (p *PluginManager) removeUninstalledLocalPlugins() {
-	// TODO: implement
+	// read all local plugin runtimes
+	p.m.Range(func(key string, value plugin_entities.PluginLifetime) bool {
+		// try to convert to local runtime
+		runtime, ok := value.(*local_manager.LocalPluginRuntime)
+		if !ok {
+			return true
+		}
+
+		// check if plugin is deleted, stop it if so
+		plugin_path := filepath.Join(p.pluginStoragePath, key)
+		if _, err := os.Stat(plugin_path); os.IsNotExist(err) {
+			runtime.Stop()
+		}
+
+		return true
+	})
 }
 
 func (p *PluginManager) launchLocal(plugin_package_path string) (
