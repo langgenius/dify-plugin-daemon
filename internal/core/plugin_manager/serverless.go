@@ -1,7 +1,6 @@
 package plugin_manager
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -66,7 +65,7 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 		p.getServerlessRuntimeCacheKey(identity),
 	)
 	if err != nil && err != cache.ErrNotFound {
-		return nil, errors.New("unexpected error occurred during fetch serverless runtime cache")
+		return nil, fmt.Errorf("unexpected error occurred during fetch serverless runtime cache: %v", err)
 	}
 
 	if err == cache.ErrNotFound {
