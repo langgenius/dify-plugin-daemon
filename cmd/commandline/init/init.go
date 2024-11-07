@@ -167,7 +167,7 @@ func (m model) createPlugin() {
 	case constants.Python:
 		manifest.Meta.Runner.Entrypoint = "main"
 		manifest.Meta.Runner.Language = constants.Python
-		manifest.Meta.Runner.Version = "3.10"
+		manifest.Meta.Runner.Version = "3.12"
 	default:
 		log.Error("unsupported language: %s", m.subMenus[SUB_MENU_KEY_LANGUAGE].(language).Language())
 		return
