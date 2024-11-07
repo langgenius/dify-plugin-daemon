@@ -130,6 +130,18 @@ type ToolProviderDeclaration struct {
 	ToolFiles         []string             `json:"-" yaml:"-"`
 }
 
+func (t *ToolProviderDeclaration) MarshalJSON() ([]byte, error) {
+	type alias ToolProviderDeclaration
+	p := alias(*t)
+	if p.CredentialsSchema == nil {
+		p.CredentialsSchema = []ProviderConfig{}
+	}
+	if p.Tools == nil {
+		p.Tools = []ToolDeclaration{}
+	}
+	return json.Marshal(p)
+}
+
 func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
 		Identity               ToolProviderIdentity `yaml:"identity"`
@@ -196,6 +208,14 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		}
 	}
 
+	if t.CredentialsSchema == nil {
+		t.CredentialsSchema = []ProviderConfig{}
+	}
+
+	if t.Tools == nil {
+		t.Tools = []ToolDeclaration{}
+	}
+
 	return nil
 }
 
@@ -248,6 +268,14 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 		} else {
 			t.Tools = append(t.Tools, tool)
 		}
+	}
+
+	if t.CredentialsSchema == nil {
+		t.CredentialsSchema = []ProviderConfig{}
+	}
+
+	if t.Tools == nil {
+		t.Tools = []ToolDeclaration{}
 	}
 
 	return nil
