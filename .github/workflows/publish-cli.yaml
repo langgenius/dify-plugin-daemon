@@ -16,22 +16,14 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            target: linux-amd64
           - platform: linux/arm64
-            target: linux-arm64
-          - platform: linux/amd64
-            target: darwin-amd64
-          - platform: linux/arm64
-            target: darwin-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Transform platform
         run: |
-          GOOS=$(echo "${{ matrix.target }}" | cut -d '-' -f 1)
-          echo "GOOS=$GOOS" >> $GITHUB_ENV
-          GOARCH=$(echo "${{ matrix.target }}" | cut -d '-' -f 2)
+          GOARCH=$(echo "${{ matrix.platform }}" | cut -d '/' -f 2)
           echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
       - name: Set up Go
@@ -42,10 +34,14 @@ jobs:
       - name: Build CLI
         run: |
           go mod tidy
-          GOOS=${{ env.GOOS }} GOARCH=${{ env.GOARCH }} go build -o dify-plugin-${{ env.GOOS }}-${{ env.GOARCH }} ./cmd/commandline
+          GOOS=windows GOARCH=${{ env.GOARCH }} go build -o dify-plugin-windows-${{ env.GOARCH }} ./cmd/commandline
+          GOOS=darwin GOARCH=${{ env.GOARCH }} go build -o dify-plugin-darwin-${{ env.GOARCH }} ./cmd/commandline
+          GOOS=linux GOARCH=${{ env.GOARCH }} go build -o dify-plugin-linux-${{ env.GOARCH }} ./cmd/commandline
 
       - name: Publish CLI
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-${{ env.GOOS }}-${{ env.GOARCH }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-${{ env.GOARCH }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-${{ env.GOARCH }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-${{ env.GOARCH }} --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
