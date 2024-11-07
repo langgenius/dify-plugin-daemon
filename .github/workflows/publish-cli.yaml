@@ -29,11 +29,9 @@ jobs:
 
       - name: Transform platform
         run: |
-          PLATFORM_TRANSFORMED=$(echo "${{ matrix.platform }}" | tr '/' '-')
-          echo "PLATFORM_TRANSFORMED=$PLATFORM_TRANSFORMED" >> $GITHUB_ENV
-          GOOS=$(echo "${{ matrix.platform }}" | cut -d '/' -f 1)
+          GOOS=$(echo "${{ matrix.target }}" | cut -d '-' -f 1)
           echo "GOOS=$GOOS" >> $GITHUB_ENV
-          GOARCH=$(echo "${{ matrix.platform }}" | cut -d '/' -f 2)
+          GOARCH=$(echo "${{ matrix.target }}" | cut -d '-' -f 2)
           echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
       - name: Set up Go
