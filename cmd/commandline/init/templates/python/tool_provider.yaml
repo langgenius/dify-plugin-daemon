@@ -1,17 +1,17 @@
 identity:
-  author: {{author}}
-  name: {{plugin_name}}
+  author: {{ .Author }}
+  name: {{ .PluginName }}
   label:
-    en_US: {{plugin_name}}
-    zh_Hans: {{plugin_name}}
-    pt_BR: {{plugin_name}}
+    en_US: {{ .PluginName }}
+    zh_Hans: {{ .PluginName }}
+    pt_BR: {{ .PluginName }}
   description:
-    en_US: {{plugin_description}}
-    zh_Hans: {{plugin_description}}
-    pt_BR: {{plugin_description}}
+    en_US: {{ .PluginDescription }}
+    zh_Hans: {{ .PluginDescription }}
+    pt_BR: {{ .PluginDescription }}
   icon: icon.svg
 tools:
-  - tools/{{plugin_name}}.yaml
+  - tools/{{ .PluginName }}.yaml
 extra:
   python:
-    source: provider/{{plugin_name}}.py
+    source: provider/{{ .PluginName }}.py

@@ -1,16 +1,16 @@
 identity:
-  name: {{plugin_name}}
-  author: {{author}}
+  name: {{ .PluginName }}
+  author: {{ .Author }}
   label:
-    en_US: {{plugin_name}}
-    zh_Hans: {{plugin_name}}
-    pt_BR: {{plugin_name}}
+    en_US: {{ .PluginName }}
+    zh_Hans: {{ .PluginName }}
+    pt_BR: {{ .PluginName }}
 description:
   human:
-    en_US: {{plugin_description}}
-    zh_Hans: {{plugin_description}}
-    pt_BR: {{plugin_description}}
-  llm: {{plugin_description}}
+    en_US: {{ .PluginDescription }}
+    zh_Hans: {{ .PluginDescription }}
+    pt_BR: {{ .PluginDescription }}
+  llm: {{ .PluginDescription }}
 parameters:
   - name: query
     type: string
@@ -20,11 +20,11 @@ parameters:
       zh_Hans: 查询语句
       pt_BR: Query string
     human_description:
-      en_US: {{plugin_description}}
-      zh_Hans: {{plugin_description}}
-      pt_BR: {{plugin_description}}
-    llm_description: {{plugin_description}}
+      en_US: {{ .PluginDescription }}
+      zh_Hans: {{ .PluginDescription }}
+      pt_BR: {{ .PluginDescription }}
+    llm_description: {{ .PluginDescription }}
     form: llm
 extra:
   python:
-    source: tools/{{plugin_name}}.py
+    source: tools/{{ .PluginName }}.py

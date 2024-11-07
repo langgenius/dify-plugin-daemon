@@ -1,0 +1,5 @@
+path: "/uwu/{{ .PluginName }}/uwu"
+method: "GET"
+extra:
+  python:
+    source: "endpoints/{{ .PluginName }}.py"

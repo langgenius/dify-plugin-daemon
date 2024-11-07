@@ -12,7 +12,12 @@ type category struct {
 
 var categories = []string{
 	"tool",
-	"model",
+	"llm",
+	"text-embedding",
+	"rerank",
+	"tts",
+	"speech2text",
+	"moderation",
 	"extension",
 }
 
@@ -56,11 +61,6 @@ func (c category) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 				c.cursor = 0
 			}
 		case "enter":
-			if c.cursor != 0 {
-				c.cursor = 0
-				return c, SUB_MENU_EVENT_NONE, nil
-			}
-
 			return c, SUB_MENU_EVENT_NEXT, nil
 		}
 	}

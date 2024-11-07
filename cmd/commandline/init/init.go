@@ -141,6 +141,19 @@ func (m model) createPlugin() {
 		manifest.Plugins.Tools = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
+	if category_string == "llm" ||
+		category_string == "text-embedding" ||
+		category_string == "speech2text" ||
+		category_string == "moderation" ||
+		category_string == "rerank" ||
+		category_string == "tts" {
+		manifest.Plugins.Models = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
+	}
+
+	if category_string == "extension" {
+		manifest.Plugins.Endpoints = []string{fmt.Sprintf("group/%s.yaml", manifest.Name)}
+	}
+
 	manifest.Meta = plugin_entities.PluginMeta{
 		Version: "0.0.1",
 		Arch: []constants.Arch{

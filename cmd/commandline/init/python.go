@@ -1,13 +1,16 @@
 package init
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 )
 
 //go:embed templates/python/main.py
@@ -27,6 +30,87 @@ var PYTHON_TOOL_PY_TEMPLATE []byte
 
 //go:embed templates/python/tool_provider.py
 var PYTHON_TOOL_PROVIDER_PY_TEMPLATE []byte
+
+//go:embed templates/python/model_provider.py
+var PYTHON_MODEL_PROVIDER_PY_TEMPLATE []byte
+
+//go:embed templates/python/model_provider.yaml
+var PYTHON_MODEL_PROVIDER_TEMPLATE []byte
+
+//go:embed templates/python/llm.py
+var PYTHON_LLM_TEMPLATE []byte
+
+//go:embed templates/python/llm.yaml
+var PYTHON_LLM_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/text-embedding.py
+var PYTHON_TEXT_EMBEDDING_TEMPLATE []byte
+
+//go:embed templates/python/text-embedding.yaml
+var PYTHON_TEXT_EMBEDDING_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/rerank.py
+var PYTHON_RERANK_TEMPLATE []byte
+
+//go:embed templates/python/rerank.yaml
+var PYTHON_RERANK_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/tts.py
+var PYTHON_TTS_TEMPLATE []byte
+
+//go:embed templates/python/tts.yaml
+var PYTHON_TTS_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/speech2text.py
+var PYTHON_SPEECH2TEXT_TEMPLATE []byte
+
+//go:embed templates/python/speech2text.yaml
+var PYTHON_SPEECH2TEXT_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/moderation.py
+var PYTHON_MODERATION_TEMPLATE []byte
+
+//go:embed templates/python/moderation.yaml
+var PYTHON_MODERATION_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/endpoint_group.yaml
+var PYTHON_ENDPOINT_GROUP_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/endpoint.py
+var PYTHON_ENDPOINT_TEMPLATE []byte
+
+//go:embed templates/python/endpoint.yaml
+var PYTHON_ENDPOINT_MANIFEST_TEMPLATE []byte
+
+func renderTemplate(
+	original_template []byte, manifest *plugin_entities.PluginDeclaration, supported_model_types []string,
+) (string, error) {
+	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
+		"SnakeToCamel": parser.SnakeToCamel,
+		"HasSubstring": func(substring string, haystack []string) bool {
+			return strings.Find(haystack, substring)
+		},
+	}).Parse(string(original_template)))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]interface{}{
+		"PluginName":          manifest.Name,
+		"Author":              manifest.Author,
+		"PluginDescription":   manifest.Description.EnUS,
+		"SupportedModelTypes": supported_model_types,
+	}); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func writeFile(path string, content string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(content), 0o644)
+}
 
 func createPythonEnvironment(
 	root string, entrypoint string, manifest *plugin_entities.PluginDeclaration, category string,
@@ -54,88 +138,56 @@ func createPythonEnvironment(
 		}
 	}
 
-	return nil
-}
+	if category == "extension" {
+		if err := createPythonEndpointGroup(root, manifest); err != nil {
+			return err
+		}
 
-func createPythonTool(root string, manifest *plugin_entities.PluginDeclaration) error {
-	// create the tool
-	tool_dir := filepath.Join(root, "tools")
-	if err := os.MkdirAll(tool_dir, 0o755); err != nil {
-		return err
-	}
-	// replace the plugin name/author/description in the template
-	tool_file_content := strings.ReplaceAll(
-		string(PYTHON_TOOL_PY_TEMPLATE), "{{plugin_name}}", manifest.Name,
-	)
-	tool_file_content = strings.ReplaceAll(
-		tool_file_content, "{{author}}", manifest.Author,
-	)
-	tool_file_content = strings.ReplaceAll(
-		tool_file_content, "{{plugin_description}}", manifest.Description.EnUS,
-	)
-	tool_file_path := filepath.Join(tool_dir, fmt.Sprintf("%s.py", manifest.Name))
-	if err := os.WriteFile(tool_file_path, []byte(tool_file_content), 0o644); err != nil {
-		return err
+		if err := createPythonEndpoint(root, manifest); err != nil {
+			return err
+		}
 	}
 
-	// create the tool manifest
-	tool_manifest_file_path := filepath.Join(tool_dir, fmt.Sprintf("%s.yaml", manifest.Name))
-	if err := os.WriteFile(tool_manifest_file_path, PYTHON_TOOL_TEMPLATE, 0o644); err != nil {
-		return err
-	}
-	tool_manifest_file_content := strings.ReplaceAll(
-		string(PYTHON_TOOL_TEMPLATE), "{{plugin_name}}", manifest.Name,
-	)
-	tool_manifest_file_content = strings.ReplaceAll(
-		tool_manifest_file_content, "{{author}}", manifest.Author,
-	)
-	tool_manifest_file_content = strings.ReplaceAll(
-		tool_manifest_file_content, "{{plugin_description}}", manifest.Description.EnUS,
-	)
-	if err := os.WriteFile(tool_manifest_file_path, []byte(tool_manifest_file_content), 0o644); err != nil {
-		return err
+	if category == "llm" || category == "text-embedding" || category == "speech2text" || category == "moderation" || category == "rerank" || category == "tts" {
+		if err := createPythonModelProvider(root, manifest, []string{category}); err != nil {
+			return err
+		}
 	}
 
-	return nil
-}
-
-func createPythonToolProvider(root string, manifest *plugin_entities.PluginDeclaration) error {
-	// create the tool provider
-	tool_provider_dir := filepath.Join(root, "provider")
-	if err := os.MkdirAll(tool_provider_dir, 0o755); err != nil {
-		return err
-	}
-	// replace the plugin name/author/description in the template
-	tool_provider_file_content := strings.ReplaceAll(
-		string(PYTHON_TOOL_PROVIDER_PY_TEMPLATE), "{{plugin_name}}", manifest.Name,
-	)
-	tool_provider_file_content = strings.ReplaceAll(
-		tool_provider_file_content, "{{author}}", manifest.Author,
-	)
-	tool_provider_file_content = strings.ReplaceAll(
-		tool_provider_file_content, "{{plugin_description}}", manifest.Description.EnUS,
-	)
-	tool_provider_file_path := filepath.Join(tool_provider_dir, fmt.Sprintf("%s.py", manifest.Name))
-	if err := os.WriteFile(tool_provider_file_path, []byte(tool_provider_file_content), 0o644); err != nil {
-		return err
+	if category == "llm" {
+		if err := createPythonLLM(root, manifest); err != nil {
+			return err
+		}
 	}
 
-	// create the tool provider manifest
-	tool_provider_manifest_file_path := filepath.Join(tool_provider_dir, fmt.Sprintf("%s.yaml", manifest.Name))
-	if err := os.WriteFile(tool_provider_manifest_file_path, PYTHON_TOOL_PROVIDER_TEMPLATE, 0o644); err != nil {
-		return err
+	if category == "text-embedding" {
+		if err := createPythonTextEmbedding(root, manifest); err != nil {
+			return err
+		}
 	}
-	tool_provider_manifest_file_content := strings.ReplaceAll(
-		string(PYTHON_TOOL_PROVIDER_TEMPLATE), "{{plugin_name}}", manifest.Name,
-	)
-	tool_provider_manifest_file_content = strings.ReplaceAll(
-		tool_provider_manifest_file_content, "{{author}}", manifest.Author,
-	)
-	tool_provider_manifest_file_content = strings.ReplaceAll(
-		tool_provider_manifest_file_content, "{{plugin_description}}", manifest.Description.EnUS,
-	)
-	if err := os.WriteFile(tool_provider_manifest_file_path, []byte(tool_provider_manifest_file_content), 0o644); err != nil {
-		return err
+
+	if category == "speech2text" {
+		if err := createPythonSpeech2Text(root, manifest); err != nil {
+			return err
+		}
+	}
+
+	if category == "moderation" {
+		if err := createPythonModeration(root, manifest); err != nil {
+			return err
+		}
+	}
+
+	if category == "rerank" {
+		if err := createPythonRerank(root, manifest); err != nil {
+			return err
+		}
+	}
+
+	if category == "tts" {
+		if err := createPythonTTS(root, manifest); err != nil {
+			return err
+		}
 	}
 
 	return nil
