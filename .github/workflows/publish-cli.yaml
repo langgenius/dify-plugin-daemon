@@ -16,7 +16,13 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
+            target: linux-amd64
           - platform: linux/arm64
+            target: linux-arm64
+          - platform: linux/amd64
+            target: darwin-amd64
+          - platform: linux/arm64
+            target: darwin-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -25,6 +31,10 @@ jobs:
         run: |
           PLATFORM_TRANSFORMED=$(echo "${{ matrix.platform }}" | tr '/' '-')
           echo "PLATFORM_TRANSFORMED=$PLATFORM_TRANSFORMED" >> $GITHUB_ENV
+          GOOS=$(echo "${{ matrix.platform }}" | cut -d '/' -f 1)
+          echo "GOOS=$GOOS" >> $GITHUB_ENV
+          GOARCH=$(echo "${{ matrix.platform }}" | cut -d '/' -f 2)
+          echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -34,10 +44,10 @@ jobs:
       - name: Build CLI
         run: |
           go mod tidy
-          go build -o dify-plugin-${{ env.PLATFORM_TRANSFORMED }} ./cmd/commandline
+          GOOS=${{ env.GOOS }} GOARCH=${{ env.GOARCH }} go build -o dify-plugin-${{ env.GOOS }}-${{ env.GOARCH }} ./cmd/commandline
 
       - name: Publish CLI
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-${{ env.PLATFORM_TRANSFORMED }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-${{ env.GOOS }}-${{ env.GOARCH }} --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
