@@ -117,7 +117,7 @@ func init() {
 type ToolProviderIdentity struct {
 	Author      string      `json:"author" validate:"required"`
 	Name        string      `json:"name" validate:"required"`
-	Description *I18nObject `json:"description" validate:"omitempty"`
+	Description I18nObject  `json:"description"`
 	Icon        string      `json:"icon" validate:"required"`
 	Label       I18nObject  `json:"label" validate:"required"`
 	Tags        []PluginTag `json:"tags" validate:"required,dive,plugin_tag"`

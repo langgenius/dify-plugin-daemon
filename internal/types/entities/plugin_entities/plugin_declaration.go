@@ -298,9 +298,8 @@ func (p *PluginDeclaration) ManifestValidate() error {
 
 func (p *PluginDeclaration) FillInDefaultValues() {
 	if p.Tool != nil {
-		if p.Tool.Identity.Description == nil {
-			deep_copied_description := p.Description
-			p.Tool.Identity.Description = &deep_copied_description
+		if p.Tool.Identity.Description.EnUS == "" {
+			p.Tool.Identity.Description = p.Description
 		}
 
 		if len(p.Tool.Identity.Tags) == 0 {
