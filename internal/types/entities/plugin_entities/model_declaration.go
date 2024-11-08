@@ -428,6 +428,46 @@ type ModelProviderFormOption struct {
 	ShowOn []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
 }
 
+func (m *ModelProviderFormOption) UnmarshalJSON(data []byte) error {
+	// avoid show_on to be nil
+	type Alias ModelProviderFormOption
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(m),
+	}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	if m.ShowOn == nil {
+		m.ShowOn = []ModelProviderFormShowOnObject{}
+	}
+
+	return nil
+}
+
+func (m *ModelProviderFormOption) UnmarshalYAML(value *yaml.Node) error {
+	// avoid show_on to be nil
+	type Alias ModelProviderFormOption
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(m),
+	}
+
+	if err := value.Decode(&aux); err != nil {
+		return err
+	}
+
+	if m.ShowOn == nil {
+		m.ShowOn = []ModelProviderFormShowOnObject{}
+	}
+
+	return nil
+}
+
 type ModelProviderCredentialFormSchema struct {
 	Variable    string                          `json:"variable" yaml:"variable" validate:"required,lt=256"`
 	Label       I18nObject                      `json:"label" yaml:"label" validate:"required"`
@@ -438,6 +478,54 @@ type ModelProviderCredentialFormSchema struct {
 	Placeholder *I18nObject                     `json:"placeholder" yaml:"placeholder" validate:"omitempty"`
 	MaxLength   int                             `json:"max_length" yaml:"max_length"`
 	ShowOn      []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
+}
+
+func (m *ModelProviderCredentialFormSchema) UnmarshalJSON(data []byte) error {
+	type Alias ModelProviderCredentialFormSchema
+
+	temp := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(m),
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if m.ShowOn == nil {
+		m.ShowOn = []ModelProviderFormShowOnObject{}
+	}
+
+	if m.Options == nil {
+		m.Options = []ModelProviderFormOption{}
+	}
+
+	return nil
+}
+
+func (m *ModelProviderCredentialFormSchema) UnmarshalYAML(value *yaml.Node) error {
+	type Alias ModelProviderCredentialFormSchema
+
+	temp := &struct {
+		*Alias `yaml:",inline"`
+	}{
+		Alias: (*Alias)(m),
+	}
+
+	if err := value.Decode(&temp); err != nil {
+		return err
+	}
+
+	if m.ShowOn == nil {
+		m.ShowOn = []ModelProviderFormShowOnObject{}
+	}
+
+	if m.Options == nil {
+		m.Options = []ModelProviderFormOption{}
+	}
+
+	return nil
 }
 
 type ModelProviderCredentialSchema struct {
