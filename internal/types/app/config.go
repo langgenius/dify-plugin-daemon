@@ -63,8 +63,8 @@ type Config struct {
 	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	// persistence storage
-	PersistenceStorageLocalPath string `envconfig:"PERSISTENCE_STORAGE_LOCAL_PATH"`
-	PersistenceStorageMaxSize   int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
+	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`
+	PersistenceStorageMaxSize int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
 	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`

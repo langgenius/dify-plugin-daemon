@@ -7,17 +7,19 @@ import (
 )
 
 type wrapper struct {
-	oss oss.OSS
+	oss                      oss.OSS
+	persistence_storage_path string
 }
 
-func NewWrapper(oss oss.OSS) *wrapper {
+func NewWrapper(oss oss.OSS, persistence_storage_path string) *wrapper {
 	return &wrapper{
-		oss: oss,
+		oss:                      oss,
+		persistence_storage_path: persistence_storage_path,
 	}
 }
 
 func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key string) string {
-	return path.Join(tenant_id, plugin_checksum, key)
+	return path.Join(s.persistence_storage_path, tenant_id, plugin_checksum, key)
 }
 
 func (s *wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {

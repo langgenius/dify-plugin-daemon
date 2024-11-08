@@ -31,8 +31,8 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	oss := local.NewLocalStorage("./storage")
 
 	InitPersistence(oss, &app.Config{
-		PersistenceStorageLocalPath: "./persistence_storage",
-		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
+		PersistenceStoragePath:    "./persistence_storage",
+		PersistenceStorageMaxSize: 1024 * 1024 * 1024,
 	})
 
 	key := strings.RandomString(10)
@@ -88,8 +88,8 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 	defer db.Close()
 
 	InitPersistence(local.NewLocalStorage("./storage"), &app.Config{
-		PersistenceStorageLocalPath: "./persistence_storage",
-		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
+		PersistenceStoragePath:    "./persistence_storage",
+		PersistenceStorageMaxSize: 1024 * 1024 * 1024,
 	})
 
 	key := strings.RandomString(65)
@@ -118,8 +118,8 @@ func TestPersistenceDelete(t *testing.T) {
 	oss := local.NewLocalStorage("./storage")
 
 	InitPersistence(oss, &app.Config{
-		PersistenceStorageLocalPath: "./persistence_storage",
-		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
+		PersistenceStoragePath:    "./persistence_storage",
+		PersistenceStorageMaxSize: 1024 * 1024 * 1024,
 	})
 
 	key := strings.RandomString(10)

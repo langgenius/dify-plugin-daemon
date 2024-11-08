@@ -12,7 +12,7 @@ var (
 
 func InitPersistence(oss oss.OSS, config *app.Config) {
 	persistence = &Persistence{
-		storage:          NewWrapper(oss),
+		storage:          NewWrapper(oss, config.PersistenceStoragePath),
 		max_storage_size: config.PersistenceStorageMaxSize,
 	}
 

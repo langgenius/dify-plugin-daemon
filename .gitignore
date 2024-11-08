@@ -10,3 +10,4 @@ __pycache__
 media-cache
 subprocesses
 working
+cwd/
