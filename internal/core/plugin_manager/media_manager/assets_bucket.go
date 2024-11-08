@@ -3,7 +3,6 @@ package media_manager
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -38,7 +37,7 @@ func (m *MediaBucket) Upload(name string, file []byte) (string, error) {
 
 	// store locally
 	filePath := path.Join(m.mediaPath, filename)
-	err := os.WriteFile(filePath, file, 0o644)
+	err := m.oss.Save(filePath, file)
 	if err != nil {
 		return "", err
 	}
@@ -55,12 +54,7 @@ func (m *MediaBucket) Get(id string) ([]byte, error) {
 
 	// check if id is in storage
 	filePath := path.Join(m.mediaPath, id)
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, err
-	}
-
-	// read file
-	file, err := os.ReadFile(filePath)
+	file, err := m.oss.Load(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -77,5 +71,5 @@ func (m *MediaBucket) Delete(id string) error {
 
 	// delete from storage
 	filePath := path.Join(m.mediaPath, id)
-	return os.Remove(filePath)
+	return m.oss.Delete(filePath)
 }
