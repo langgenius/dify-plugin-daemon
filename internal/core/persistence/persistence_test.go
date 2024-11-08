@@ -2,10 +2,10 @@ package persistence
 
 import (
 	"encoding/hex"
-	"os"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
@@ -28,8 +28,9 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	})
 	defer db.Close()
 
-	InitPersistence(&app.Config{
-		PersistenceStorageType:      "local",
+	oss := local.NewLocalStorage("./storage")
+
+	InitPersistence(oss, &app.Config{
 		PersistenceStorageLocalPath: "./persistence_storage",
 		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
 	})
@@ -50,7 +51,7 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	}
 
 	// check if the file exists
-	if _, err := os.Stat("./persistence_storage/tenant_id/plugin_checksum/" + key); os.IsNotExist(err) {
+	if _, err := oss.Load("./tenant_id/plugin_checksum/" + key); err != nil {
 		t.Fatalf("File not found: %v", err)
 	}
 
@@ -86,8 +87,7 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 	})
 	defer db.Close()
 
-	InitPersistence(&app.Config{
-		PersistenceStorageType:      "local",
+	InitPersistence(local.NewLocalStorage("./storage"), &app.Config{
 		PersistenceStorageLocalPath: "./persistence_storage",
 		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
 	})
@@ -115,8 +115,9 @@ func TestPersistenceDelete(t *testing.T) {
 	})
 	defer db.Close()
 
-	InitPersistence(&app.Config{
-		PersistenceStorageType:      "local",
+	oss := local.NewLocalStorage("./storage")
+
+	InitPersistence(oss, &app.Config{
 		PersistenceStorageLocalPath: "./persistence_storage",
 		PersistenceStorageMaxSize:   1024 * 1024 * 1024,
 	})
@@ -132,7 +133,7 @@ func TestPersistenceDelete(t *testing.T) {
 	}
 
 	// check if the file exists
-	if _, err := os.Stat("./persistence_storage/tenant_id/plugin_checksum/" + key); !os.IsNotExist(err) {
+	if _, err := oss.Load("./tenant_id/plugin_checksum/" + key); err == nil {
 		t.Fatalf("File not deleted: %v", err)
 	}
 

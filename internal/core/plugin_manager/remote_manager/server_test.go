@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -39,13 +40,15 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 		return nil, 0
 	}
 
+	oss := local.NewLocalStorage("./storage")
+
 	// start plugin server
 	return NewRemotePluginServer(&app.Config{
 		PluginRemoteInstallingHost:             "0.0.0.0",
 		PluginRemoteInstallingPort:             port,
 		PluginRemoteInstallingMaxConn:          1,
 		PluginRemoteInstallServerEventLoopNums: 8,
-	}, media_manager.NewMediaManager("./storage/assets", 10)), port
+	}, media_manager.NewAssetsBucket(oss, "./assets", 10)), port
 }
 
 // TestLaunchAndClosePluginServer tests the launch and close of the plugin server

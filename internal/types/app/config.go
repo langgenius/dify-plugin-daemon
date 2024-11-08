@@ -15,6 +15,14 @@ type Config struct {
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
+	AWSAccessKey string `envconfig:"AWS_ACCESS_KEY"`
+	AWSSecretKey string `envconfig:"AWS_SECRET_KEY"`
+	AWSRegion    string `envconfig:"AWS_REGION"`
+
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3"`
+	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
+	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
+
 	// plugin remote installing
 	PluginRemoteInstallingHost                string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort                uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
@@ -25,12 +33,13 @@ type Config struct {
 
 	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
 
-	PluginStoragePath      string `envconfig:"STORAGE_PLUGIN_PATH" validate:"required"`
-	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`
-	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"`
+	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
-	ProcessCachingPath     string `envconfig:"PROCESS_CACHING_PATH"`
+	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
+	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
+
+	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"`
 
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
@@ -54,13 +63,8 @@ type Config struct {
 	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	// persistence storage
-	PersistenceStorageType        string `envconfig:"PERSISTENCE_STORAGE_TYPE" validate:"required,oneof=local s3"`
-	PersistenceStorageLocalPath   string `envconfig:"PERSISTENCE_STORAGE_LOCAL_PATH"`
-	PersistenceStorageS3Region    string `envconfig:"PERSISTENCE_STORAGE_S3_REGION"`
-	PersistenceStorageS3AccessKey string `envconfig:"PERSISTENCE_STORAGE_S3_ACCESS_KEY"`
-	PersistenceStorageS3SecretKey string `envconfig:"PERSISTENCE_STORAGE_S3_SECRET_KEY"`
-	PersistenceStorageS3Bucket    string `envconfig:"PERSISTENCE_STORAGE_S3_BUCKET"`
-	PersistenceStorageMaxSize     int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
+	PersistenceStorageLocalPath string `envconfig:"PERSISTENCE_STORAGE_LOCAL_PATH"`
+	PersistenceStorageMaxSize   int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
 	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
@@ -128,17 +132,18 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid platform")
 	}
 
-	if c.PersistenceStorageType == "s3" {
-		if c.PersistenceStorageS3Region == "" ||
-			c.PersistenceStorageS3AccessKey == "" ||
-			c.PersistenceStorageS3SecretKey == "" ||
-			c.PersistenceStorageS3Bucket == "" {
-			return fmt.Errorf("s3 region, access key, secret key or bucket is empty")
-		}
-	}
-
 	if c.PluginPackageCachePath == "" {
 		return fmt.Errorf("plugin package cache path is empty")
+	}
+
+	if c.PluginStorageType == "aws_s3" {
+		if c.PluginStorageOSSBucket == "" {
+			return fmt.Errorf("plugin storage bucket is empty")
+		}
+
+		if c.AWSAccessKey == "" || c.AWSSecretKey == "" || c.AWSRegion == "" {
+			return fmt.Errorf("aws access key, secret key or region is empty")
+		}
 	}
 
 	return nil

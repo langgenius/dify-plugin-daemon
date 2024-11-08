@@ -28,7 +28,7 @@ type DifyServer struct {
 
 	engine gnet.Engine
 
-	mediaManager *media_manager.MediaManager
+	mediaManager *media_manager.MediaBucket
 
 	// listening address
 	addr string

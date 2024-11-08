@@ -3,8 +3,6 @@ package plugin_manager
 import (
 	"errors"
 	"fmt"
-	"io"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -37,7 +35,7 @@ func (p *PluginManager) initRemotePluginServer(config *app.Config) {
 	if p.remotePluginServer != nil {
 		return
 	}
-	p.remotePluginServer = remote_manager.NewRemotePluginServer(config, p.mediaManager)
+	p.remotePluginServer = remote_manager.NewRemotePluginServer(config, p.mediaBucket)
 }
 
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {
@@ -74,22 +72,17 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 
 func (p *PluginManager) handleNewLocalPlugins() {
 	// walk through all plugins
-	err := filepath.WalkDir(p.pluginStoragePath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() {
-			_, _, err := p.launchLocal(path)
-			if err != nil {
-				log.Error("launch local plugin failed: %s", err.Error())
-			}
-		}
-
-		return nil
-	})
-
+	plugins, err := p.installedBucket.List()
 	if err != nil {
-		log.Error("walk through plugins failed: %s", err.Error())
+		log.Error("list installed plugins failed: %s", err.Error())
+		return
+	}
+
+	for _, plugin := range plugins {
+		_, _, err := p.launchLocal(plugin)
+		if err != nil {
+			log.Error("launch local plugin failed: %s", err.Error())
+		}
 	}
 }
 
@@ -113,10 +106,10 @@ func (p *PluginManager) removeUninstalledLocalPlugins() {
 	})
 }
 
-func (p *PluginManager) launchLocal(plugin_package_path string) (
+func (p *PluginManager) launchLocal(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (
 	plugin_entities.PluginFullDuplexLifetime, <-chan error, error,
 ) {
-	plugin, err := p.getLocalPluginRuntime(plugin_package_path)
+	plugin, err := p.getLocalPluginRuntime(plugin_unique_identifier)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,8 +167,7 @@ func (p *PluginManager) launchLocal(plugin_package_path string) (
 	local_plugin_runtime := local_manager.NewLocalPluginRuntime(p.pythonInterpreterPath)
 	local_plugin_runtime.PluginRuntime = plugin.runtime
 	local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
-		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
-		LocalPackagePath:   plugin.runtime.State.AbsolutePath,
+		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
 		WorkingPath:        plugin.runtime.State.WorkingPath,
 		Decoder:            plugin.decoder,
 	}
@@ -223,26 +215,13 @@ type pluginRuntimeWithDecoder struct {
 }
 
 // extract plugin from package to working directory
-func (p *PluginManager) getLocalPluginRuntime(plugin_path string) (
+func (p *PluginManager) getLocalPluginRuntime(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (
 	*pluginRuntimeWithDecoder,
 	error,
 ) {
-	pack, err := os.Open(plugin_path)
+	plugin_zip, err := p.installedBucket.Get(plugin_unique_identifier)
 	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("open plugin package error"))
-	}
-	defer pack.Close()
-
-	if info, err := pack.Stat(); err != nil {
-		return nil, errors.Join(err, fmt.Errorf("get plugin package info error"))
-	} else if info.Size() > p.maxPluginPackageSize {
-		log.Error("plugin package size is too large: %d", info.Size())
-		return nil, errors.Join(err, fmt.Errorf("plugin package size is too large"))
-	}
-
-	plugin_zip, err := io.ReadAll(pack)
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("read plugin package error"))
+		return nil, errors.Join(err, fmt.Errorf("get plugin package error"))
 	}
 
 	decoder, err := decoder.NewZipPluginDecoder(plugin_zip)
@@ -268,12 +247,11 @@ func (p *PluginManager) getLocalPluginRuntime(plugin_path string) (
 		runtime: plugin_entities.PluginRuntime{
 			Config: manifest,
 			State: plugin_entities.PluginRuntimeState{
-				Status:       plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
-				Restarts:     0,
-				AbsolutePath: plugin_path,
-				WorkingPath:  plugin_working_path,
-				ActiveAt:     nil,
-				Verified:     manifest.Verified,
+				Status:      plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
+				Restarts:    0,
+				ActiveAt:    nil,
+				Verified:    manifest.Verified,
+				WorkingPath: plugin_working_path,
 			},
 		},
 		decoder: decoder,

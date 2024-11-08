@@ -1,9 +1,6 @@
 package plugin_manager
 
 import (
-	"io"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -13,34 +10,23 @@ import (
 
 // InstallToLocal installs a plugin to local
 func (p *PluginManager) InstallToLocal(
-	plugin_path string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	source string,
 	meta map[string]any,
 ) (
 	*stream.Stream[PluginInstallResponse], error,
 ) {
-	plugin_file, err := os.Open(plugin_path)
+	package_file, err := p.packageBucket.Get(plugin_unique_identifier.String())
 	if err != nil {
 		return nil, err
 	}
-	defer plugin_file.Close()
-	installed_file_path := filepath.Join(p.pluginStoragePath, plugin_unique_identifier.String())
-	dir_path := filepath.Dir(installed_file_path)
-	if err := os.MkdirAll(dir_path, 0755); err != nil {
-		return nil, err
-	}
-	installed_file, err := os.Create(installed_file_path)
+
+	err = p.installedBucket.Save(plugin_unique_identifier, package_file)
 	if err != nil {
 		return nil, err
 	}
-	defer installed_file.Close()
 
-	if _, err := io.Copy(installed_file, plugin_file); err != nil {
-		return nil, err
-	}
-
-	runtime, launched_chan, err := p.launchLocal(installed_file_path)
+	runtime, launched_chan, err := p.launchLocal(plugin_unique_identifier)
 	if err != nil {
 		return nil, err
 	}

@@ -87,7 +87,7 @@ func (r *RemotePluginServer) Launch() error {
 }
 
 // NewRemotePluginServer creates a new RemotePluginServer
-func NewRemotePluginServer(config *app.Config, media_manager *media_manager.MediaManager) *RemotePluginServer {
+func NewRemotePluginServer(config *app.Config, media_manager *media_manager.MediaBucket) *RemotePluginServer {
 	addr := fmt.Sprintf(
 		"tcp://%s:%d",
 		config.PluginRemoteInstallingHost,

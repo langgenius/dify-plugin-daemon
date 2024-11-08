@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
@@ -149,16 +148,6 @@ func InstallPluginRuntimeToTenant(
 				}
 			}
 
-			pkg_path, err := manager.GetPackagePath(plugin_unique_identifier)
-			if err != nil {
-				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-					task.Status = models.InstallTaskStatusFailed
-					plugin.Status = models.InstallTaskStatusFailed
-					plugin.Message = err.Error()
-				})
-				return
-			}
-
 			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 				plugin.Status = models.InstallTaskStatusRunning
 				plugin.Message = "Installing"
@@ -169,7 +158,7 @@ func InstallPluginRuntimeToTenant(
 				var zip_decoder *decoder.ZipPluginDecoder
 				var pkg_file []byte
 
-				pkg_file, err = os.ReadFile(pkg_path)
+				pkg_file, err = manager.GetPackage(plugin_unique_identifier)
 				if err != nil {
 					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 						task.Status = models.InstallTaskStatusFailed
@@ -190,7 +179,7 @@ func InstallPluginRuntimeToTenant(
 				}
 				stream, err = manager.InstallToAWSFromPkg(zip_decoder, source, meta)
 			} else if config.Platform == app.PLATFORM_LOCAL {
-				stream, err = manager.InstallToLocal(pkg_path, plugin_unique_identifier, source, meta)
+				stream, err = manager.InstallToLocal(plugin_unique_identifier, source, meta)
 			} else {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed

@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -32,14 +33,17 @@ type PluginManager struct {
 	// where the plugin finally running
 	workingDirectory string
 
-	// where the plugin uploaded but not installed
-	packageCachePath string
-
 	// where the plugin finally installed but not running
 	pluginStoragePath string
 
-	// mediaManager is used to manage media files like plugin icons, images, etc.
-	mediaManager *media_manager.MediaManager
+	// mediaBucket is used to manage media files like plugin icons, images, etc.
+	mediaBucket *media_manager.MediaBucket
+
+	// packageBucket is used to manage plugin packages, all the packages uploaded by users will be saved here
+	packageBucket *media_manager.PackageBucket
+
+	// installedBucket is used to manage installed plugins, all the installed plugins will be saved here
+	installedBucket *media_manager.InstalledBucket
 
 	// register plugin
 	pluginRegisters []func(lifetime plugin_entities.PluginLifetime) error
@@ -64,15 +68,23 @@ var (
 	manager *PluginManager
 )
 
-func InitGlobalManager(configuration *app.Config) *PluginManager {
+func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
-		packageCachePath:     configuration.PluginPackageCachePath,
-		pluginStoragePath:    configuration.PluginStoragePath,
+		pluginStoragePath:    configuration.PluginInstalledPath,
 		workingDirectory:     configuration.PluginWorkingPath,
-		mediaManager: media_manager.NewMediaManager(
+		mediaBucket: media_manager.NewAssetsBucket(
+			oss,
 			configuration.PluginMediaCachePath,
 			configuration.PluginMediaCacheSize,
+		),
+		packageBucket: media_manager.NewPackageBucket(
+			oss,
+			configuration.PluginPackageCachePath,
+		),
+		installedBucket: media_manager.NewInstalledBucket(
+			oss,
+			configuration.PluginInstalledPath,
 		),
 		localPluginLaunchingLock: lock.NewGranularityLock(),
 		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
@@ -81,7 +93,7 @@ func InitGlobalManager(configuration *app.Config) *PluginManager {
 
 	// mkdir
 	os.MkdirAll(configuration.PluginWorkingPath, 0755)
-	os.MkdirAll(configuration.PluginStoragePath, 0755)
+	os.MkdirAll(configuration.PluginInstalledPath, 0755)
 	os.MkdirAll(configuration.PluginMediaCachePath, 0755)
 	os.MkdirAll(configuration.PluginPackageCachePath, 0755)
 	os.MkdirAll(filepath.Dir(configuration.ProcessCachingPath), 0755)
@@ -110,7 +122,7 @@ func (p *PluginManager) Get(
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {
-	return p.mediaManager.Get(id)
+	return p.mediaBucket.Get(id)
 }
 
 func (p *PluginManager) Launch(configuration *app.Config) {
@@ -154,13 +166,8 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 	*plugin_entities.PluginDeclaration, error,
 ) {
 	// save to storage
-	pkg_path := filepath.Join(p.packageCachePath, plugin_unique_identifier.String())
-	pkg_dir := filepath.Dir(pkg_path)
-	if err := os.MkdirAll(pkg_dir, 0755); err != nil {
-		return nil, err
-	}
-
-	if err := os.WriteFile(pkg_path, pkg, 0644); err != nil {
+	err := p.packageBucket.Save(plugin_unique_identifier.String(), pkg)
+	if err != nil {
 		return nil, err
 	}
 
@@ -183,7 +190,7 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 	}
 
 	// remap the assets
-	_, err = p.mediaManager.RemapAssets(&declaration, assets)
+	_, err = p.mediaBucket.RemapAssets(&declaration, assets)
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +222,7 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 func (p *PluginManager) GetPackage(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 ) ([]byte, error) {
-	file, err := os.ReadFile(filepath.Join(p.packageCachePath, plugin_unique_identifier.String()))
-
+	file, err := p.packageBucket.Get(plugin_unique_identifier.String())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, errors.New("plugin package not found, please upload it firstly")
@@ -225,12 +231,6 @@ func (p *PluginManager) GetPackage(
 	}
 
 	return file, nil
-}
-
-func (p *PluginManager) GetPackagePath(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-) (string, error) {
-	return filepath.Join(p.packageCachePath, plugin_unique_identifier.String()), nil
 }
 
 func (p *PluginManager) GetDeclaration(

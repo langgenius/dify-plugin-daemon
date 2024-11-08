@@ -210,15 +210,14 @@ const (
 )
 
 type PluginRuntimeState struct {
-	Restarts     int        `json:"restarts"`
-	Status       string     `json:"status"`
-	AbsolutePath string     `json:"absolute_path"`
-	WorkingPath  string     `json:"working_path"`
-	ActiveAt     *time.Time `json:"active_at"`
-	StoppedAt    *time.Time `json:"stopped_at"`
-	Verified     bool       `json:"verified"`
-	ScheduledAt  *time.Time `json:"scheduled_at"`
-	Logs         []string   `json:"logs"`
+	Restarts    int        `json:"restarts"`
+	Status      string     `json:"status"`
+	WorkingPath string     `json:"working_path"`
+	ActiveAt    *time.Time `json:"active_at"`
+	StoppedAt   *time.Time `json:"stopped_at"`
+	Verified    bool       `json:"verified"`
+	ScheduledAt *time.Time `json:"scheduled_at"`
+	Logs        []string   `json:"logs"`
 }
 
 func (s *PluginRuntimeState) Hash() (uint64, error) {

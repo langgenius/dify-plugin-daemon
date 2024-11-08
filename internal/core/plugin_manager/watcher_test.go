@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -108,7 +109,8 @@ func TestRemotePluginWatcherPluginStoredToManager(t *testing.T) {
 	config := &app.Config{}
 	config.SetDefault()
 	routine.InitPool(1024)
-	pm := InitGlobalManager(&app.Config{})
+	oss := local.NewLocalStorage("./storage")
+	pm := InitGlobalManager(oss, &app.Config{})
 	pm.remotePluginServer = &fakeRemotePluginServer{}
 	pm.startRemoteWatcher(config)
 

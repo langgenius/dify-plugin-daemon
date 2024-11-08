@@ -5,9 +5,36 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/s3"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
+
+func initOSS(config *app.Config) oss.OSS {
+	// init oss
+	var oss oss.OSS
+	var err error
+	if config.PluginStorageType == "aws_s3" {
+		oss, err = s3.NewAWSS3Storage(
+			config.AWSAccessKey,
+			config.AWSSecretKey,
+			config.AWSRegion,
+			config.PluginStorageOSSBucket,
+		)
+		if err != nil {
+			log.Panic("Failed to create aws s3 storage: %s", err)
+		}
+	} else if config.PluginStorageType == "local" {
+		oss = local.NewLocalStorage(config.PluginStorageLocalRoot)
+	} else {
+		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
+	}
+
+	return oss
+}
 
 func (app *App) Run(config *app.Config) {
 	// init routine pool
@@ -16,8 +43,11 @@ func (app *App) Run(config *app.Config) {
 	// init db
 	db.Init(config)
 
+	// init oss
+	oss := initOSS(config)
+
 	// create manager
-	manager := plugin_manager.InitGlobalManager(config)
+	manager := plugin_manager.InitGlobalManager(oss, config)
 
 	// create cluster
 	app.cluster = cluster.NewCluster(config, manager)
@@ -29,7 +59,7 @@ func (app *App) Run(config *app.Config) {
 	manager.Launch(config)
 
 	// init persistence
-	persistence.InitPersistence(config)
+	persistence.InitPersistence(oss, config)
 
 	// launch cluster
 	app.cluster.Launch()

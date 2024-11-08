@@ -42,7 +42,7 @@ func (p *PluginManager) getServerlessPluginRuntime(
 	// convert to plugin runtime
 	plugin_runtime := aws_manager.AWSPluginRuntime{
 		PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-			BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaManager),
+			BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
 			InnerChecksum:      model.Checksum,
 		},
 		PluginRuntime: runtime_entity,

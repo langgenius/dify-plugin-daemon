@@ -8,28 +8,24 @@ import (
 	"path/filepath"
 
 	lru "github.com/hashicorp/golang-lru/v2"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 )
 
-type MediaManager struct {
-	storagePath string
-	cache       *lru.Cache[string, []byte]
+type MediaBucket struct {
+	oss       oss.OSS
+	cache     *lru.Cache[string, []byte]
+	mediaPath string
 }
 
-func NewMediaManager(storage_path string, cache_size uint16) *MediaManager {
-	// mkdir -p storage_path
-	if err := os.MkdirAll(storage_path, 0o755); err != nil {
-		log.Error("Failed to create storage path: %s", err)
-	}
-
+func NewAssetsBucket(oss oss.OSS, media_path string, cache_size uint16) *MediaBucket {
 	// lru.New only raises error when cache_size is a negative number, which is impossible
 	cache, _ := lru.New[string, []byte](int(cache_size))
 
-	return &MediaManager{storagePath: storage_path, cache: cache}
+	return &MediaBucket{oss: oss, cache: cache, mediaPath: media_path}
 }
 
 // Upload uploads a file to the media manager and returns an identifier
-func (m *MediaManager) Upload(name string, file []byte) (string, error) {
+func (m *MediaBucket) Upload(name string, file []byte) (string, error) {
 	// calculate checksum
 	checksum := sha256.Sum256(append(file, []byte(name)...))
 
@@ -41,7 +37,7 @@ func (m *MediaManager) Upload(name string, file []byte) (string, error) {
 	filename := id + ext
 
 	// store locally
-	filePath := path.Join(m.storagePath, filename)
+	filePath := path.Join(m.mediaPath, filename)
 	err := os.WriteFile(filePath, file, 0o644)
 	if err != nil {
 		return "", err
@@ -50,7 +46,7 @@ func (m *MediaManager) Upload(name string, file []byte) (string, error) {
 	return filename, nil
 }
 
-func (m *MediaManager) Get(id string) ([]byte, error) {
+func (m *MediaBucket) Get(id string) ([]byte, error) {
 	// check if id is in cache
 	data, ok := m.cache.Get(id)
 	if ok {
@@ -58,7 +54,7 @@ func (m *MediaManager) Get(id string) ([]byte, error) {
 	}
 
 	// check if id is in storage
-	filePath := path.Join(m.storagePath, id)
+	filePath := path.Join(m.mediaPath, id)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return nil, err
 	}
@@ -75,11 +71,11 @@ func (m *MediaManager) Get(id string) ([]byte, error) {
 	return file, nil
 }
 
-func (m *MediaManager) Delete(id string) error {
+func (m *MediaBucket) Delete(id string) error {
 	// delete from cache
 	m.cache.Remove(id)
 
 	// delete from storage
-	filepath := path.Join(m.storagePath, id)
-	return os.Remove(filepath)
+	filePath := path.Join(m.mediaPath, id)
+	return os.Remove(filePath)
 }

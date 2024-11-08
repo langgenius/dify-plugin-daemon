@@ -6,7 +6,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
-func (m *MediaManager) RemapAssets(declaration *plugin_entities.PluginDeclaration, assets map[string][]byte) ([]string, error) {
+func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration, assets map[string][]byte) ([]string, error) {
 	remapped_asset_ids := make(map[string]string)
 	assets_ids := []string{}
 	remap := func(filename string) (string, error) {

@@ -7,12 +7,11 @@ import (
 
 func TestRuntimeStateHash(t *testing.T) {
 	state := PluginRuntimeState{
-		Restarts:     0,
-		Status:       PLUGIN_RUNTIME_STATUS_PENDING,
-		AbsolutePath: "aaa",
-		ActiveAt:     &[]time.Time{time.Now()}[0],
-		StoppedAt:    &[]time.Time{time.Now()}[0],
-		Verified:     true,
+		Restarts:  0,
+		Status:    PLUGIN_RUNTIME_STATUS_PENDING,
+		ActiveAt:  &[]time.Time{time.Now()}[0],
+		StoppedAt: &[]time.Time{time.Now()}[0],
+		Verified:  true,
 	}
 
 	hash, err := state.Hash()

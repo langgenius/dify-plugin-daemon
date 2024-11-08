@@ -8,8 +8,7 @@ import (
 type PositivePluginRuntime struct {
 	basic_manager.BasicPluginRuntime
 
-	LocalPackagePath string
-	WorkingPath      string
+	WorkingPath string
 	// plugin decoder used to manage the plugin
 	Decoder decoder.PluginDecoder
 

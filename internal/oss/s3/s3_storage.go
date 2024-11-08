@@ -14,12 +14,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
-type S3Storage struct {
+type AWSS3Storage struct {
 	bucket string
 	client *s3.Client
 }
 
-func NewS3Storage(ak string, sk string, region string, bucket string) (oss.OSS, error) {
+func NewAWSS3Storage(ak string, sk string, region string, bucket string) (oss.OSS, error) {
 	c, err := config.LoadDefaultConfig(
 		context.TODO(),
 		config.WithRegion(region),
@@ -48,10 +48,10 @@ func NewS3Storage(ak string, sk string, region string, bucket string) (oss.OSS, 
 		}
 	}
 
-	return &S3Storage{bucket: bucket, client: client}, nil
+	return &AWSS3Storage{bucket: bucket, client: client}, nil
 }
 
-func (s *S3Storage) Save(key string, data []byte) error {
+func (s *AWSS3Storage) Save(key string, data []byte) error {
 	_, err := s.client.PutObject(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -60,7 +60,7 @@ func (s *S3Storage) Save(key string, data []byte) error {
 	return err
 }
 
-func (s *S3Storage) Load(key string) ([]byte, error) {
+func (s *AWSS3Storage) Load(key string) ([]byte, error) {
 	resp, err := s.client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -72,7 +72,7 @@ func (s *S3Storage) Load(key string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func (s *S3Storage) Exists(key string) (bool, error) {
+func (s *AWSS3Storage) Exists(key string) (bool, error) {
 	_, err := s.client.HeadObject(context.TODO(), &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -80,7 +80,7 @@ func (s *S3Storage) Exists(key string) (bool, error) {
 	return err == nil, nil
 }
 
-func (s *S3Storage) Delete(key string) error {
+func (s *AWSS3Storage) Delete(key string) error {
 	_, err := s.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -88,8 +88,8 @@ func (s *S3Storage) Delete(key string) error {
 	return err
 }
 
-func (s *S3Storage) List(prefix string) ([]string, error) {
-	var keys []string
+func (s *AWSS3Storage) List(prefix string) ([]oss.OSSPath, error) {
+	var keys []oss.OSSPath
 	input := &s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
 		Prefix: aws.String(prefix),
@@ -102,14 +102,17 @@ func (s *S3Storage) List(prefix string) ([]string, error) {
 			return nil, err
 		}
 		for _, obj := range page.Contents {
-			keys = append(keys, *obj.Key)
+			keys = append(keys, oss.OSSPath{
+				Path:  *obj.Key,
+				IsDir: false,
+			})
 		}
 	}
 
 	return keys, nil
 }
 
-func (s *S3Storage) State(key string) (oss.OSSState, error) {
+func (s *AWSS3Storage) State(key string) (oss.OSSState, error) {
 	resp, err := s.client.HeadObject(context.TODO(), &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
