@@ -271,10 +271,21 @@ func InstallPluginFromIdentifiers(
 		plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 		declaration *plugin_entities.PluginDeclaration,
 	) error {
+		runtime_type := plugin_entities.PluginRuntimeType("")
+
+		switch config.Platform {
+		case app.PLATFORM_AWS_LAMBDA:
+			runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+		case app.PLATFORM_LOCAL:
+			runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+		default:
+			return fmt.Errorf("unsupported platform: %s", config.Platform)
+		}
+
 		_, _, err := curd.InstallPlugin(
 			tenant_id,
 			plugin_unique_identifier,
-			plugin_entities.PLUGIN_RUNTIME_TYPE_AWS,
+			runtime_type,
 			declaration,
 			source,
 			meta,
