@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -102,8 +103,12 @@ func (s *AWSS3Storage) List(prefix string) ([]oss.OSSPath, error) {
 			return nil, err
 		}
 		for _, obj := range page.Contents {
+			// remove prefix
+			key := strings.TrimPrefix(*obj.Key, prefix)
+			// remove leading slash
+			key = strings.TrimPrefix(key, "/")
 			keys = append(keys, oss.OSSPath{
-				Path:  *obj.Key,
+				Path:  key,
 				IsDir: false,
 			})
 		}

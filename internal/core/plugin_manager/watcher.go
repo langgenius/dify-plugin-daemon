@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -96,9 +95,20 @@ func (p *PluginManager) removeUninstalledLocalPlugins() {
 			return true
 		}
 
+		plugin_unique_identifier, err := runtime.Identity()
+		if err != nil {
+			log.Error("get plugin identity failed: %s", err.Error())
+			return true
+		}
+
 		// check if plugin is deleted, stop it if so
-		plugin_path := filepath.Join(p.pluginStoragePath, key)
-		if _, err := os.Stat(plugin_path); os.IsNotExist(err) {
+		exists, err := p.installedBucket.Exists(plugin_unique_identifier)
+		if err != nil {
+			log.Error("check if plugin is deleted failed: %s", err.Error())
+			return true
+		}
+
+		if !exists {
 			runtime.Stop()
 		}
 
