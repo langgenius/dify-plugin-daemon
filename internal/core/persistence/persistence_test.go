@@ -51,7 +51,7 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	}
 
 	// check if the file exists
-	if _, err := oss.Load("./tenant_id/plugin_checksum/" + key); err != nil {
+	if _, err := oss.Load("./persistence_storage/tenant_id/plugin_checksum/" + key); err != nil {
 		t.Fatalf("File not found: %v", err)
 	}
 
@@ -133,7 +133,7 @@ func TestPersistenceDelete(t *testing.T) {
 	}
 
 	// check if the file exists
-	if _, err := oss.Load("./tenant_id/plugin_checksum/" + key); err == nil {
+	if _, err := oss.Load("./persistence_storage/tenant_id/plugin_checksum/" + key); err == nil {
 		t.Fatalf("File not deleted: %v", err)
 	}
 
