@@ -328,10 +328,10 @@ func isParameterRule(fl validator.FieldLevel) bool {
 }
 
 type ModelPriceConfig struct {
-	Input    decimal.Decimal  `json:"input" validate:"required"`
-	Output   *decimal.Decimal `json:"output" validate:"omitempty"`
-	Unit     decimal.Decimal  `json:"unit" validate:"required"`
-	Currency string           `json:"currency" validate:"required"`
+	Input    decimal.Decimal  `json:"input" yaml:"input" validate:"required"`
+	Output   *decimal.Decimal `json:"output" yaml:"output" validate:"omitempty"`
+	Unit     decimal.Decimal  `json:"unit" yaml:"unit" validate:"required"`
+	Currency string           `json:"currency" yaml:"currency" validate:"required"`
 }
 
 type ModelDeclaration struct {
@@ -418,45 +418,45 @@ func isModelProviderFormType(fl validator.FieldLevel) bool {
 }
 
 type ModelProviderFormShowOnObject struct {
-	Variable string `json:"variable" validate:"required,lt=256"`
-	Value    string `json:"value" validate:"required,lt=256"`
+	Variable string `json:"variable" yaml:"variable" validate:"required,lt=256"`
+	Value    string `json:"value" yaml:"value" validate:"required,lt=256"`
 }
 
 type ModelProviderFormOption struct {
-	Label  I18nObject                      `json:"label" validate:"required"`
-	Value  string                          `json:"value" validate:"required,lt=256"`
-	ShowOn []ModelProviderFormShowOnObject `json:"show_on" validate:"omitempty,lte=16,dive"`
+	Label  I18nObject                      `json:"label" yaml:"label" validate:"required"`
+	Value  string                          `json:"value" yaml:"value" validate:"required,lt=256"`
+	ShowOn []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
 }
 
 type ModelProviderCredentialFormSchema struct {
-	Variable    string                          `json:"variable" validate:"required,lt=256"`
-	Label       I18nObject                      `json:"label" validate:"required"`
-	Type        ModelProviderFormType           `json:"type" validate:"required,model_provider_form_type"`
-	Required    bool                            `json:"required"`
-	Default     *string                         `json:"default" validate:"omitempty,lt=256"`
-	Options     []ModelProviderFormOption       `json:"options" validate:"omitempty,lte=128,dive"`
-	Placeholder *I18nObject                     `json:"placeholder" validate:"omitempty"`
-	MaxLength   int                             `json:"max_length"`
-	ShowOn      []ModelProviderFormShowOnObject `json:"show_on" validate:"omitempty,lte=16,dive"`
+	Variable    string                          `json:"variable" yaml:"variable" validate:"required,lt=256"`
+	Label       I18nObject                      `json:"label" yaml:"label" validate:"required"`
+	Type        ModelProviderFormType           `json:"type" yaml:"type" validate:"required,model_provider_form_type"`
+	Required    bool                            `json:"required" yaml:"required"`
+	Default     *string                         `json:"default" yaml:"default" validate:"omitempty,lt=256"`
+	Options     []ModelProviderFormOption       `json:"options" yaml:"options" validate:"omitempty,lte=128,dive"`
+	Placeholder *I18nObject                     `json:"placeholder" yaml:"placeholder" validate:"omitempty"`
+	MaxLength   int                             `json:"max_length" yaml:"max_length"`
+	ShowOn      []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
 }
 
 type ModelProviderCredentialSchema struct {
-	CredentialFormSchemas []ModelProviderCredentialFormSchema `json:"credential_form_schemas" validate:"omitempty,lte=32,dive"`
+	CredentialFormSchemas []ModelProviderCredentialFormSchema `json:"credential_form_schemas" yaml:"credential_form_schemas" validate:"omitempty,lte=32,dive"`
 }
 
 type FieldModelSchema struct {
-	Label       I18nObject  `json:"label" validate:"required"`
-	Placeholder *I18nObject `json:"placeholder" validate:"omitempty"`
+	Label       I18nObject  `json:"label" yaml:"label" validate:"required"`
+	Placeholder *I18nObject `json:"placeholder" yaml:"placeholder" validate:"omitempty"`
 }
 
 type ModelCredentialSchema struct {
-	Model                 FieldModelSchema                    `json:"model" validate:"required"`
-	CredentialFormSchemas []ModelProviderCredentialFormSchema `json:"credential_form_schemas" validate:"omitempty,lte=32,dive"`
+	Model                 FieldModelSchema                    `json:"model" yaml:"model" validate:"required"`
+	CredentialFormSchemas []ModelProviderCredentialFormSchema `json:"credential_form_schemas" yaml:"credential_form_schemas" validate:"omitempty,lte=32,dive"`
 }
 
 type ModelProviderHelpEntity struct {
-	Title I18nObject `json:"title" validate:"required"`
-	URL   I18nObject `json:"url" validate:"required"`
+	Title I18nObject `json:"title" yaml:"title" validate:"required"`
+	URL   I18nObject `json:"url" yaml:"url" validate:"required"`
 }
 
 type ModelPosition struct {
