@@ -11,7 +11,7 @@ type LocalPluginRuntime struct {
 	positive_manager.PositivePluginRuntime
 	plugin_entities.PluginRuntime
 
-	wait_chan   chan bool
+	waitChan    chan bool
 	io_identity string
 
 	// python interpreter path, currently only support python
@@ -21,9 +21,11 @@ type LocalPluginRuntime struct {
 	// by using its venv module
 	default_python_interpreter_path string
 
-	wait_chan_lock    sync.Mutex
+	waitChanLock      sync.Mutex
 	wait_started_chan []chan bool
-	wait_stopped_chan []chan bool
+	waitStoppedChan   []chan bool
+
+	isNotFirstStart bool
 }
 
 func NewLocalPluginRuntime(
