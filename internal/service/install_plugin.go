@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -48,6 +49,12 @@ func InstallPluginRuntimeToTenant(
 	}
 
 	for i, plugin_unique_identifier := range plugin_unique_identifiers {
+		// fetch plugin declaration first, before installing, we need to ensure pkg is uploaded
+		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		if err != nil {
+			return nil, err
+		}
+
 		// check if plugin is already installed
 		plugin, err := db.GetOne[models.Plugin](
 			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
@@ -57,8 +64,8 @@ func InstallPluginRuntimeToTenant(
 			PluginUniqueIdentifier: plugin_unique_identifier,
 			PluginID:               plugin_unique_identifier.PluginID(),
 			Status:                 models.InstallTaskStatusPending,
-			Labels:                 plugin.Declaration.Label,
-			Icon:                   plugin.Declaration.Icon,
+			Icon:                   plugin_declaration.Icon,
+			Labels:                 plugin_declaration.Label,
 			Message:                "",
 		})
 
