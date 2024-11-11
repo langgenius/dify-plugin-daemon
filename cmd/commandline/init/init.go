@@ -214,6 +214,12 @@ func (m model) createPlugin() {
 		return
 	}
 
+	// create .env.example
+	if err := writeFile(filepath.Join(plugin_dir, ".env.example"), string(ENV_EXAMPLE)); err != nil {
+		log.Error("failed to write .env.example file: %s", err)
+		return
+	}
+
 	err = createPythonEnvironment(
 		plugin_dir,
 		manifest.Meta.Runner.Entrypoint,

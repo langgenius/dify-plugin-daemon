@@ -6,3 +6,6 @@ import (
 
 //go:embed templates/README.md
 var README []byte
+
+//go:embed templates/.env.example
+var ENV_EXAMPLE []byte
