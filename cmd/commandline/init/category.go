@@ -6,6 +6,31 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	// Colors
+	RESET = "\033[0m"
+	BOLD  = "\033[1m"
+
+	// Foreground colors
+	GREEN  = "\033[32m"
+	YELLOW = "\033[33m"
+	BLUE   = "\033[34m"
+)
+
+const PLUGIN_GUIDE = `But before starting, you need some basic knowledge about the Plugin types, Plugin supports to extend the following abilities in Dify:
+` + "\n" + BOLD + `- Tool` + RESET + `: ` + GREEN + `Tool Providers like Google Search, Stable Diffusion, etc. it can be used to perform a specific task.` + RESET + `
+` + BOLD + `- Model` + RESET + `: ` + GREEN + `Model Providers like OpenAI, Anthropic, etc. you can use their models to enhance the AI capabilities.` + RESET + `
+` + BOLD + `- Endpoint` + RESET + `: ` + GREEN + `Like Service API in Dify and Ingress in Kubernetes, you can extend a http service as an endpoint and control its logics using your own code.` + RESET + `
+
+Based on the ability you want to extend, we have divided the Plugin into three types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, and ` + BOLD + `Extension` + RESET + `.
+
+` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `It's a tool provider, but not only limited to tools, you can implement a endpoint there, for example, you need both ` + BLUE + `Sending Message` + RESET + YELLOW + ` and ` + BLUE + `Receiving Message` + RESET + YELLOW + ` if you are building a Discord Bot, ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` are both required.` + RESET + `
+` + BOLD + `- Model` + RESET + `: ` + YELLOW + `Just a model provider, extending others is not allowed.` + RESET + `
+` + BOLD + `- Extension` + RESET + `: ` + YELLOW + `Other times, you may only need a simple http service to extend the functionalities, ` + BOLD + `Extension` + RESET + YELLOW + ` is the right choice for you.` + RESET + `
+` + `
+What's more, we have provided the template for you, you can choose one of them below:
+`
+
 type category struct {
 	cursor int
 }
@@ -33,7 +58,8 @@ func (c category) Category() string {
 }
 
 func (c category) View() string {
-	s := "Select the type of plugin you want to create\n"
+	s := "Select the type of plugin you want to create, and press `Enter` to continue\n"
+	s += PLUGIN_GUIDE
 	for i, category := range categories {
 		if i == c.cursor {
 			s += fmt.Sprintf("\033[32m-> %s\033[0m\n", category)

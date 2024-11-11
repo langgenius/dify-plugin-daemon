@@ -12,6 +12,14 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
+type PluginCategory string
+
+const (
+	PLUGIN_CATEGORY_TOOL      PluginCategory = "tool"
+	PLUGIN_CATEGORY_MODEL     PluginCategory = "model"
+	PLUGIN_CATEGORY_EXTENSION PluginCategory = "extension"
+)
+
 type DifyManifestType string
 
 const (
@@ -222,6 +230,16 @@ type PluginDeclaration struct {
 	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
 	Model                                  *ModelProviderDeclaration    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
 	Tool                                   *ToolProviderDeclaration     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+}
+
+func (p *PluginDeclaration) Category() PluginCategory {
+	if p.Tool != nil {
+		return PLUGIN_CATEGORY_TOOL
+	}
+	if p.Model != nil {
+		return PLUGIN_CATEGORY_MODEL
+	}
+	return PLUGIN_CATEGORY_EXTENSION
 }
 
 func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {

@@ -191,28 +191,26 @@ func (m model) createPlugin() {
 	}
 
 	plugin_dir := filepath.Join(cwd, manifest.Name)
-	if err := os.MkdirAll(plugin_dir, 0o755); err != nil {
-		log.Error("failed to create plugin directory: %s", err)
-		return
-	}
 
-	manifest_file_path := filepath.Join(plugin_dir, "manifest.yaml")
-	if err := os.WriteFile(manifest_file_path, manifest_file, 0o644); err != nil {
+	if err := writeFile(filepath.Join(plugin_dir, "manifest.yaml"), string(manifest_file)); err != nil {
 		log.Error("failed to write manifest file: %s", err)
 		return
 	}
 
-	// create _assets directory
-	assets_dir := filepath.Join(plugin_dir, "_assets")
-	if err := os.MkdirAll(assets_dir, 0o755); err != nil {
-		log.Error("failed to create assets directory: %s", err)
+	// create icon.svg
+	if err := writeFile(filepath.Join(plugin_dir, "_assets", "icon.svg"), string(icon)); err != nil {
+		log.Error("failed to write icon file: %s", err)
 		return
 	}
 
-	// create icon.svg
-	icon_file_path := filepath.Join(assets_dir, "icon.svg")
-	if err := os.WriteFile(icon_file_path, icon, 0o644); err != nil {
-		log.Error("failed to write icon file: %s", err)
+	// create README.md
+	readme, err := renderTemplate(README, manifest, []string{})
+	if err != nil {
+		log.Error("failed to render README template: %s", err)
+		return
+	}
+	if err := writeFile(filepath.Join(plugin_dir, "README.md"), readme); err != nil {
+		log.Error("failed to write README file: %s", err)
 		return
 	}
 
@@ -229,5 +227,5 @@ func (m model) createPlugin() {
 
 	success = true
 
-	log.Info("plugin %s created successfully", manifest.Name)
+	log.Info("plugin %s created successfully, you can refer to `%s/GUIDE.md` for more information about how to develop it", manifest.Name, manifest.Name)
 }

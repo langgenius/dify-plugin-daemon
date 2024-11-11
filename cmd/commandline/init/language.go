@@ -28,7 +28,9 @@ func (l language) Language() constants.Language {
 }
 
 func (l language) View() string {
-	s := "Select the language you want to use for plugin development\n"
+	s := `Select the language you want to use for plugin development, and press ` + GREEN + `Enter` + RESET + ` to continue, 
+BTW, you need Python 3.10+ to develop the Plugin if you choose Python.
+`
 	for i, language := range languages {
 		if i == l.cursor {
 			s += fmt.Sprintf("\033[32m-> %s\033[0m\n", language)

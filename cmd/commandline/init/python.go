@@ -82,6 +82,9 @@ var PYTHON_ENDPOINT_TEMPLATE []byte
 //go:embed templates/python/endpoint.yaml
 var PYTHON_ENDPOINT_MANIFEST_TEMPLATE []byte
 
+//go:embed templates/python/GUIDE.md
+var PYTHON_GUIDE []byte
+
 func renderTemplate(
 	original_template []byte, manifest *plugin_entities.PluginDeclaration, supported_model_types []string,
 ) (string, error) {
@@ -98,6 +101,9 @@ func renderTemplate(
 		"Author":              manifest.Author,
 		"PluginDescription":   manifest.Description.EnUS,
 		"SupportedModelTypes": supported_model_types,
+		"Version":             manifest.Version,
+		"Date":                manifest.CreatedAt,
+		"Category":            manifest.Category(),
 	}); err != nil {
 		return "", err
 	}
@@ -115,7 +121,14 @@ func writeFile(path string, content string) error {
 func createPythonEnvironment(
 	root string, entrypoint string, manifest *plugin_entities.PluginDeclaration, category string,
 ) error {
-	// TODO: enhance to use template renderer
+	guide, err := renderTemplate(PYTHON_GUIDE, manifest, []string{})
+	if err != nil {
+		return err
+	}
+
+	if err := writeFile(filepath.Join(root, "GUIDE.md"), guide); err != nil {
+		return err
+	}
 
 	// create the python environment
 	entrypoint_file_path := filepath.Join(root, fmt.Sprintf("%s.py", entrypoint))

@@ -62,29 +62,29 @@ func (p permission) View() string {
 	s := "Configure the permissions of the plugin, use up and down to navigate, enter to select, after selection, press right to move to the next menu\n"
 	s += "Backwards Invocation:\n"
 	s += "Tools:\n"
-	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("tool.enabled"), checked(p.permission.AllowInvokeTool()))
+	s += fmt.Sprintf("  %sEnabled: %v %s You can invoke tools inside Dify if it's enabled %s\n", cursor("tool.enabled"), checked(p.permission.AllowInvokeTool()), YELLOW, RESET)
 	s += "Models:\n"
-	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("model.enabled"), checked(p.permission.AllowInvokeModel()))
-	s += fmt.Sprintf("  %sLLM: %v\n", cursor("model.llm"), checked(p.permission.AllowInvokeLLM()))
-	s += fmt.Sprintf("  %sText Embedding: %v\n", cursor("model.text_embedding"), checked(p.permission.AllowInvokeTextEmbedding()))
-	s += fmt.Sprintf("  %sRerank: %v\n", cursor("model.rerank"), checked(p.permission.AllowInvokeRerank()))
-	s += fmt.Sprintf("  %sTTS: %v\n", cursor("model.tts"), checked(p.permission.AllowInvokeTTS()))
-	s += fmt.Sprintf("  %sSpeech2Text: %v\n", cursor("model.speech2text"), checked(p.permission.AllowInvokeSpeech2Text()))
-	s += fmt.Sprintf("  %sModeration: %v\n", cursor("model.moderation"), checked(p.permission.AllowInvokeModeration()))
+	s += fmt.Sprintf("  %sEnabled: %v %s You can invoke models inside Dify if it's enabled %s\n", cursor("model.enabled"), checked(p.permission.AllowInvokeModel()), YELLOW, RESET)
+	s += fmt.Sprintf("  %sLLM: %v %s You can invoke LLM models inside Dify if it's enabled %s\n", cursor("model.llm"), checked(p.permission.AllowInvokeLLM()), YELLOW, RESET)
+	s += fmt.Sprintf("  %sText Embedding: %v %s You can invoke text embedding models inside Dify if it's enabled %s\n", cursor("model.text_embedding"), checked(p.permission.AllowInvokeTextEmbedding()), YELLOW, RESET)
+	s += fmt.Sprintf("  %sRerank: %v %s You can invoke rerank models inside Dify if it's enabled %s\n", cursor("model.rerank"), checked(p.permission.AllowInvokeRerank()), YELLOW, RESET)
+	s += fmt.Sprintf("  %sTTS: %v %s You can invoke TTS models inside Dify if it's enabled %s\n", cursor("model.tts"), checked(p.permission.AllowInvokeTTS()), YELLOW, RESET)
+	s += fmt.Sprintf("  %sSpeech2Text: %v %s You can invoke speech2text models inside Dify if it's enabled %s\n", cursor("model.speech2text"), checked(p.permission.AllowInvokeSpeech2Text()), YELLOW, RESET)
+	s += fmt.Sprintf("  %sModeration: %v %s You can invoke moderation models inside Dify if it's enabled %s\n", cursor("model.moderation"), checked(p.permission.AllowInvokeModeration()), YELLOW, RESET)
 	s += "Apps:\n"
-	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("app.enabled"), checked(p.permission.AllowInvokeApp()))
+	s += fmt.Sprintf("  %sEnabled: %v %s Ability to invoke apps like BasicChat/ChatFlow/Agent/Workflow etc. %s\n", cursor("app.enabled"), checked(p.permission.AllowInvokeApp()), YELLOW, RESET)
 	s += "Resources:\n"
 	s += "Storage:\n"
-	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("storage.enabled"), checked(p.permission.AllowInvokeStorage()))
+	s += fmt.Sprintf("  %sEnabled: %v %s Persistence storage for the plugin %s\n", cursor("storage.enabled"), checked(p.permission.AllowInvokeStorage()), YELLOW, RESET)
 
 	if p.permission.AllowInvokeStorage() {
 		s += fmt.Sprintf("  %sSize: %v\n", cursor("storage.size"), p.storageSizeEditor.View())
 	} else {
-		s += fmt.Sprintf("  %sSize: %v\n", cursor("storage.size"), "N/A")
+		s += fmt.Sprintf("  %sSize: %v %s The maximum size of the storage %s\n", cursor("storage.size"), "N/A", YELLOW, RESET)
 	}
 
 	s += "Endpoints:\n"
-	s += fmt.Sprintf("  %sEnabled: %v\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegisterEndpoint()))
+	s += fmt.Sprintf("  %sEnabled: %v %s Ability to register endpoints %s\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegisterEndpoint()), YELLOW, RESET)
 	return s
 }
 
