@@ -155,7 +155,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	wg.Wait()
 
 	// plugin has exited
-	r.SetPending()
 	return nil
 }
 
