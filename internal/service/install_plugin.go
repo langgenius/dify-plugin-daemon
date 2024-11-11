@@ -57,6 +57,8 @@ func InstallPluginRuntimeToTenant(
 			PluginUniqueIdentifier: plugin_unique_identifier,
 			PluginID:               plugin_unique_identifier.PluginID(),
 			Status:                 models.InstallTaskStatusPending,
+			Labels:                 plugin.Declaration.Label,
+			Icon:                   plugin.Declaration.Icon,
 			Message:                "",
 		})
 
