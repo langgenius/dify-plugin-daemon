@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 )
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
@@ -73,6 +74,68 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	return entities.NewSuccessResponse(data)
+}
+
+// Using plugin_ids to fetch plugin installations
+func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *entities.Response {
+	if len(plugin_ids) == 0 {
+		return entities.NewSuccessResponse([]models.PluginInstallation{})
+	}
+
+	plugin_installations, err := db.GetAll[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.InArray("plugin_id", strings.Map(plugin_ids, func(id string) any { return id })),
+		db.Page(1, 256), // TODO: pagination
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	return entities.NewSuccessResponse(plugin_installations)
+}
+
+// check which plugin is missing
+func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier) *entities.Response {
+	result := make([]plugin_entities.PluginUniqueIdentifier, 0, len(plugin_unique_identifiers))
+
+	if len(plugin_unique_identifiers) == 0 {
+		return entities.NewSuccessResponse(result)
+	}
+
+	installed, err := db.GetAll[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.InArray(
+			"plugin_unique_identifier",
+			strings.Map(
+				plugin_unique_identifiers,
+				func(id plugin_entities.PluginUniqueIdentifier) any {
+					return id.String()
+				},
+			),
+		),
+	)
+
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	// check which plugin is missing
+	for _, plugin_unique_identifier := range plugin_unique_identifiers {
+		found := false
+		for _, installed_plugin := range installed {
+			if installed_plugin.PluginUniqueIdentifier == plugin_unique_identifier.String() {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			result = append(result, plugin_unique_identifier)
+		}
+	}
+
+	return entities.NewSuccessResponse(result)
 }
 
 func ListTools(tenant_id string, page int, page_size int) *entities.Response {

@@ -167,3 +167,21 @@ func ListPlugins(c *gin.Context) {
 		c.JSON(http.StatusOK, service.ListPlugins(request.TenantID, request.Page, request.PageSize))
 	})
 }
+
+func BatchFetchPluginInstallationByIDs(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID  string   `uri:"tenant_id" validate:"required"`
+		PluginIDs []string `json:"plugin_ids" validate:"required,max=256"`
+	}) {
+		c.JSON(http.StatusOK, service.BatchFetchPluginInstallationByIDs(request.TenantID, request.PluginIDs))
+	})
+}
+
+func FetchMissingPluginInstallations(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID                string                                   `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=256,dive,plugin_unique_identifier"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
+	})
+}

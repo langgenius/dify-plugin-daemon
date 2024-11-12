@@ -124,6 +124,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", gzip.Gzip(gzip.DefaultCompression), controllers.ListPlugins)
+	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)
+	group.POST("/installation/missing", controllers.FetchMissingPluginInstallations)
 	group.GET("/models", gzip.Gzip(gzip.DefaultCompression), controllers.ListModels)
 	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
 	group.GET("/tool", gzip.Gzip(gzip.DefaultCompression), controllers.GetTool)
