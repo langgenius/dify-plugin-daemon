@@ -15,14 +15,14 @@ type Cluster struct {
 	id string
 
 	// i_am_master is the flag to indicate whether the current node is the master node
-	i_am_master bool
+	iAmMaster bool
 
 	// main http port of the current node
 	port uint16
 
 	// plugins stores all the plugin life time of the current node
-	plugins     mapping.Map[string, *pluginLifeTime]
-	plugin_lock sync.RWMutex
+	plugins    mapping.Map[string, *pluginLifeTime]
+	pluginLock sync.RWMutex
 
 	manager *plugin_manager.PluginManager
 
@@ -30,43 +30,43 @@ type Cluster struct {
 	nodes mapping.Map[string, node]
 
 	// signals for waiting for the cluster to stop
-	stop_chan chan bool
-	stopped   int32
+	stopChan chan bool
+	stopped  int32
 
-	is_in_auto_gc_nodes   int32
-	is_in_auto_gc_plugins int32
+	isInAutoGcNodes   int32
+	isInAutoGcPlugins int32
 
 	// channels to notify cluster event
-	notify_become_master_chan             chan bool
-	notify_master_gc_chan                 chan bool
-	notify_master_gc_completed_chan       chan bool
-	notify_voting_chan                    chan bool
-	notify_voting_completed_chan          chan bool
-	notify_plugin_schedule_chan           chan bool
-	notify_plugin_schedule_completed_chan chan bool
-	notify_node_update_chan               chan bool
-	notify_node_update_completed_chan     chan bool
-	notify_cluster_stopped_chan           chan bool
+	notifyBecomeMasterChan            chan bool
+	notifyMasterGcChan                chan bool
+	notifyMasterGcCompletedChan       chan bool
+	notifyVotingChan                  chan bool
+	notifyVotingCompletedChan         chan bool
+	notifyPluginScheduleChan          chan bool
+	notifyPluginScheduleCompletedChan chan bool
+	notifyNodeUpdateChan              chan bool
+	notifyNodeUpdateCompletedChan     chan bool
+	notifyClusterStoppedChan          chan bool
 }
 
 func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager) *Cluster {
 	return &Cluster{
-		id:        uuid.New().String(),
-		port:      uint16(config.ServerPort),
-		stop_chan: make(chan bool),
+		id:       uuid.New().String(),
+		port:     uint16(config.ServerPort),
+		stopChan: make(chan bool),
 
 		manager: plugin_manager,
 
-		notify_become_master_chan:             make(chan bool),
-		notify_master_gc_chan:                 make(chan bool),
-		notify_master_gc_completed_chan:       make(chan bool),
-		notify_voting_chan:                    make(chan bool),
-		notify_voting_completed_chan:          make(chan bool),
-		notify_plugin_schedule_chan:           make(chan bool),
-		notify_plugin_schedule_completed_chan: make(chan bool),
-		notify_node_update_chan:               make(chan bool),
-		notify_node_update_completed_chan:     make(chan bool),
-		notify_cluster_stopped_chan:           make(chan bool),
+		notifyBecomeMasterChan:            make(chan bool),
+		notifyMasterGcChan:                make(chan bool),
+		notifyMasterGcCompletedChan:       make(chan bool),
+		notifyVotingChan:                  make(chan bool),
+		notifyVotingCompletedChan:         make(chan bool),
+		notifyPluginScheduleChan:          make(chan bool),
+		notifyPluginScheduleCompletedChan: make(chan bool),
+		notifyNodeUpdateChan:              make(chan bool),
+		notifyNodeUpdateCompletedChan:     make(chan bool),
+		notifyClusterStoppedChan:          make(chan bool),
 	}
 }
 
@@ -76,7 +76,7 @@ func (c *Cluster) Launch() {
 
 func (c *Cluster) Close() error {
 	if atomic.CompareAndSwapInt32(&c.stopped, 0, 1) {
-		close(c.stop_chan)
+		close(c.stopChan)
 	}
 
 	return nil
@@ -93,7 +93,7 @@ func (c *Cluster) notifyBecomeMaster() {
 	}
 
 	select {
-	case c.notify_become_master_chan <- true:
+	case c.notifyBecomeMasterChan <- true:
 	default:
 	}
 }
@@ -103,7 +103,7 @@ func (c *Cluster) NotifyBecomeMaster() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_become_master_chan
+	return c.notifyBecomeMasterChan
 }
 
 // trigger for master gc event
@@ -113,7 +113,7 @@ func (c *Cluster) notifyMasterGC() {
 	}
 
 	select {
-	case c.notify_master_gc_chan <- true:
+	case c.notifyMasterGcChan <- true:
 	default:
 	}
 }
@@ -125,7 +125,7 @@ func (c *Cluster) notifyMasterGCCompleted() {
 	}
 
 	select {
-	case c.notify_master_gc_completed_chan <- true:
+	case c.notifyMasterGcCompletedChan <- true:
 	default:
 	}
 }
@@ -137,7 +137,7 @@ func (c *Cluster) notifyVoting() {
 	}
 
 	select {
-	case c.notify_voting_chan <- true:
+	case c.notifyVotingChan <- true:
 	default:
 	}
 }
@@ -149,7 +149,7 @@ func (c *Cluster) notifyVotingCompleted() {
 	}
 
 	select {
-	case c.notify_voting_completed_chan <- true:
+	case c.notifyVotingCompletedChan <- true:
 	default:
 	}
 }
@@ -161,7 +161,7 @@ func (c *Cluster) notifyPluginSchedule() {
 	}
 
 	select {
-	case c.notify_plugin_schedule_chan <- true:
+	case c.notifyPluginScheduleChan <- true:
 	default:
 	}
 }
@@ -173,7 +173,7 @@ func (c *Cluster) notifyPluginScheduleCompleted() {
 	}
 
 	select {
-	case c.notify_plugin_schedule_completed_chan <- true:
+	case c.notifyPluginScheduleCompletedChan <- true:
 	default:
 	}
 }
@@ -185,7 +185,7 @@ func (c *Cluster) notifyNodeUpdate() {
 	}
 
 	select {
-	case c.notify_node_update_chan <- true:
+	case c.notifyNodeUpdateChan <- true:
 	default:
 	}
 }
@@ -197,7 +197,7 @@ func (c *Cluster) notifyNodeUpdateCompleted() {
 	}
 
 	select {
-	case c.notify_node_update_completed_chan <- true:
+	case c.notifyNodeUpdateCompletedChan <- true:
 	default:
 	}
 }
@@ -205,7 +205,7 @@ func (c *Cluster) notifyNodeUpdateCompleted() {
 // trigger for cluster stopped event
 func (c *Cluster) notifyClusterStopped() {
 	select {
-	case c.notify_cluster_stopped_chan <- true:
+	case c.notifyClusterStoppedChan <- true:
 	default:
 	}
 }
@@ -215,7 +215,7 @@ func (c *Cluster) NotifyMasterGC() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_master_gc_chan
+	return c.notifyMasterGcChan
 }
 
 // receive the master gc completed event
@@ -223,7 +223,7 @@ func (c *Cluster) NotifyMasterGCCompleted() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_master_gc_completed_chan
+	return c.notifyMasterGcCompletedChan
 }
 
 // receive the voting event
@@ -231,7 +231,7 @@ func (c *Cluster) NotifyVoting() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_voting_chan
+	return c.notifyVotingChan
 }
 
 // receive the voting completed event
@@ -239,7 +239,7 @@ func (c *Cluster) NotifyVotingCompleted() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_voting_completed_chan
+	return c.notifyVotingCompletedChan
 }
 
 // receive the plugin schedule event
@@ -247,7 +247,7 @@ func (c *Cluster) NotifyPluginSchedule() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_plugin_schedule_chan
+	return c.notifyPluginScheduleChan
 }
 
 // receive the plugin schedule completed event
@@ -255,7 +255,7 @@ func (c *Cluster) NotifyPluginScheduleCompleted() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_plugin_schedule_completed_chan
+	return c.notifyPluginScheduleCompletedChan
 }
 
 // receive the node update event
@@ -263,7 +263,7 @@ func (c *Cluster) NotifyNodeUpdate() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_node_update_chan
+	return c.notifyNodeUpdateChan
 }
 
 // receive the node update completed event
@@ -271,10 +271,10 @@ func (c *Cluster) NotifyNodeUpdateCompleted() <-chan bool {
 	if atomic.LoadInt32(&c.stopped) == 1 {
 		return nil
 	}
-	return c.notify_node_update_completed_chan
+	return c.notifyNodeUpdateCompletedChan
 }
 
 // receive the cluster stopped event
 func (c *Cluster) NotifyClusterStopped() <-chan bool {
-	return c.notify_cluster_stopped_chan
+	return c.notifyClusterStoppedChan
 }

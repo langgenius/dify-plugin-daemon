@@ -95,14 +95,14 @@ func (p *PluginManager) removeUninstalledLocalPlugins() {
 			return true
 		}
 
-		plugin_unique_identifier, err := runtime.Identity()
+		pluginUniqueIdentifier, err := runtime.Identity()
 		if err != nil {
 			log.Error("get plugin identity failed: %s", err.Error())
 			return true
 		}
 
 		// check if plugin is deleted, stop it if so
-		exists, err := p.installedBucket.Exists(plugin_unique_identifier)
+		exists, err := p.installedBucket.Exists(pluginUniqueIdentifier)
 		if err != nil {
 			log.Error("check if plugin is deleted failed: %s", err.Error())
 			return true
@@ -116,10 +116,10 @@ func (p *PluginManager) removeUninstalledLocalPlugins() {
 	})
 }
 
-func (p *PluginManager) launchLocal(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (
+func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) (
 	plugin_entities.PluginFullDuplexLifetime, <-chan error, error,
 ) {
-	plugin, err := p.getLocalPluginRuntime(plugin_unique_identifier)
+	plugin, err := p.getLocalPluginRuntime(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,16 +174,16 @@ func (p *PluginManager) launchLocal(plugin_unique_identifier plugin_entities.Plu
 		return nil, nil, failed(err.Error())
 	}
 
-	local_plugin_runtime := local_manager.NewLocalPluginRuntime(p.pythonInterpreterPath)
-	local_plugin_runtime.PluginRuntime = plugin.runtime
-	local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
+	localPluginRuntime := local_manager.NewLocalPluginRuntime(p.pythonInterpreterPath)
+	localPluginRuntime.PluginRuntime = plugin.runtime
+	localPluginRuntime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
 		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
 		WorkingPath:        plugin.runtime.State.WorkingPath,
 		Decoder:            plugin.decoder,
 	}
 
-	if err := local_plugin_runtime.RemapAssets(
-		&local_plugin_runtime.Config,
+	if err := localPluginRuntime.RemapAssets(
+		&localPluginRuntime.Config,
 		assets,
 	); err != nil {
 		return nil, nil, failed(errors.Join(err, fmt.Errorf("remap plugin assets error")).Error())
@@ -191,9 +191,9 @@ func (p *PluginManager) launchLocal(plugin_unique_identifier plugin_entities.Plu
 
 	success = true
 
-	p.m.Store(identity.String(), local_plugin_runtime)
+	p.m.Store(identity.String(), localPluginRuntime)
 
-	launched_chan := make(chan error)
+	launchedChan := make(chan error)
 
 	// local plugin
 	routine.Submit(func() {
@@ -208,15 +208,15 @@ func (p *PluginManager) launchLocal(plugin_unique_identifier plugin_entities.Plu
 		p.maxLaunchingLock <- true
 		routine.Submit(func() {
 			// wait for plugin launched
-			<-launched_chan
+			<-launchedChan
 			// release max launching lock
 			<-p.maxLaunchingLock
 		})
 
-		p.fullDuplexLifecycle(local_plugin_runtime, launched_chan)
+		p.fullDuplexLifecycle(localPluginRuntime, launchedChan)
 	})
 
-	return local_plugin_runtime, launched_chan, nil
+	return localPluginRuntime, launchedChan, nil
 }
 
 type pluginRuntimeWithDecoder struct {
@@ -225,16 +225,16 @@ type pluginRuntimeWithDecoder struct {
 }
 
 // extract plugin from package to working directory
-func (p *PluginManager) getLocalPluginRuntime(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier) (
+func (p *PluginManager) getLocalPluginRuntime(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) (
 	*pluginRuntimeWithDecoder,
 	error,
 ) {
-	plugin_zip, err := p.installedBucket.Get(plugin_unique_identifier)
+	pluginZip, err := p.installedBucket.Get(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("get plugin package error"))
 	}
 
-	decoder, err := decoder.NewZipPluginDecoder(plugin_zip)
+	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
 	}
@@ -252,7 +252,7 @@ func (p *PluginManager) getLocalPluginRuntime(plugin_unique_identifier plugin_en
 
 	identity := manifest.Identity()
 	identity = strings.ReplaceAll(identity, ":", "-")
-	plugin_working_path := path.Join(p.workingDirectory, fmt.Sprintf("%s@%s", identity, checksum))
+	pluginWorkingPath := path.Join(p.workingDirectory, fmt.Sprintf("%s@%s", identity, checksum))
 	return &pluginRuntimeWithDecoder{
 		runtime: plugin_entities.PluginRuntime{
 			Config: manifest,
@@ -261,7 +261,7 @@ func (p *PluginManager) getLocalPluginRuntime(plugin_unique_identifier plugin_en
 				Restarts:    0,
 				ActiveAt:    nil,
 				Verified:    manifest.Verified,
-				WorkingPath: plugin_working_path,
+				WorkingPath: pluginWorkingPath,
 			},
 		},
 		decoder: decoder,

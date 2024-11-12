@@ -30,7 +30,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		Meta                   map[string]any                     `json:"meta"`
 	}
 
-	plugin_installations, err := db.GetAll[models.PluginInstallation](
+	pluginInstallations, err := db.GetAll[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Page(page, page_size),
 	)
@@ -39,33 +39,33 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	data := make([]installation, 0, len(plugin_installations))
+	data := make([]installation, 0, len(pluginInstallations))
 
-	for _, plugin_installation := range plugin_installations {
-		plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+	for _, plugin_installation := range pluginInstallations {
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
 			plugin_installation.PluginUniqueIdentifier,
 		)
 		if err != nil {
 			return entities.NewErrorResponse(-500, err.Error())
 		}
 
-		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
 		if err != nil {
 			return entities.NewErrorResponse(-500, err.Error())
 		}
 
 		data = append(data, installation{
 			ID:                     plugin_installation.ID,
-			Name:                   plugin_declaration.Name,
+			Name:                   pluginDeclaration.Name,
 			TenantID:               plugin_installation.TenantID,
-			PluginID:               plugin_unique_identifier.PluginID(),
-			PluginUniqueIdentifier: plugin_unique_identifier.String(),
+			PluginID:               pluginUniqueIdentifier.PluginID(),
+			PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
 			InstallationID:         plugin_installation.ID,
-			Declaration:            plugin_declaration,
+			Declaration:            pluginDeclaration,
 			EndpointsSetups:        plugin_installation.EndpointsSetups,
 			EndpointsActive:        plugin_installation.EndpointsActive,
 			RuntimeType:            plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
-			Version:                plugin_declaration.Version,
+			Version:                pluginDeclaration.Version,
 			CreatedAt:              plugin_installation.CreatedAt,
 			UpdatedAt:              plugin_installation.UpdatedAt,
 			Source:                 plugin_installation.Source,
@@ -82,7 +82,7 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 		return entities.NewSuccessResponse([]models.PluginInstallation{})
 	}
 
-	plugin_installations, err := db.GetAll[models.PluginInstallation](
+	pluginInstallations, err := db.GetAll[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.InArray("plugin_id", strings.Map(plugin_ids, func(id string) any { return id })),
 		db.Page(1, 256), // TODO: pagination
@@ -92,7 +92,7 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	return entities.NewSuccessResponse(plugin_installations)
+	return entities.NewSuccessResponse(pluginInstallations)
 }
 
 // check which plugin is missing
@@ -121,17 +121,17 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 	}
 
 	// check which plugin is missing
-	for _, plugin_unique_identifier := range plugin_unique_identifiers {
+	for _, pluginUniqueIdentifier := range plugin_unique_identifiers {
 		found := false
 		for _, installed_plugin := range installed {
-			if installed_plugin.PluginUniqueIdentifier == plugin_unique_identifier.String() {
+			if installed_plugin.PluginUniqueIdentifier == pluginUniqueIdentifier.String() {
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			result = append(result, plugin_unique_identifier)
+			result = append(result, pluginUniqueIdentifier)
 		}
 	}
 

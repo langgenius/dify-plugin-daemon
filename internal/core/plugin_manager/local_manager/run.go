@@ -16,8 +16,8 @@ import (
 
 // gc performs garbage collection for the LocalPluginRuntime
 func (r *LocalPluginRuntime) gc() {
-	if r.io_identity != "" {
-		removeStdioHandler(r.io_identity)
+	if r.ioIdentity != "" {
+		removeStdioHandler(r.ioIdentity)
 	}
 
 	if r.waitChan != nil {
@@ -34,7 +34,7 @@ func (r *LocalPluginRuntime) Type() plugin_entities.PluginRuntimeType {
 // getCmd prepares the exec.Cmd for the plugin based on its language
 func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 	if r.Config.Meta.Runner.Language == constants.Python {
-		cmd := exec.Command(r.python_interpreter_path, "-m", r.Config.Meta.Runner.Entrypoint)
+		cmd := exec.Command(r.pythonInterpreterPath, "-m", r.Config.Meta.Runner.Entrypoint)
 		cmd.Dir = r.State.WorkingPath
 		return cmd, nil
 	}
@@ -119,7 +119,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	// setup stdio
 	stdio := registerStdioHandler(r.Config.Identity(), stdin, stdout, stderr)
-	r.io_identity = stdio.GetID()
+	r.ioIdentity = stdio.GetID()
 	defer stdio.Stop()
 
 	wg := sync.WaitGroup{}
@@ -139,7 +139,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	// send started event
 	r.waitChanLock.Lock()
-	for _, c := range r.wait_started_chan {
+	for _, c := range r.waitStartedChan {
 		select {
 		case c <- true:
 		default:
@@ -170,7 +170,7 @@ func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
 func (r *LocalPluginRuntime) WaitStarted() <-chan bool {
 	c := make(chan bool)
 	r.waitChanLock.Lock()
-	r.wait_started_chan = append(r.wait_started_chan, c)
+	r.waitStartedChan = append(r.waitStartedChan, c)
 	r.waitChanLock.Unlock()
 	return c
 }
@@ -190,7 +190,7 @@ func (r *LocalPluginRuntime) Stop() {
 	r.PluginRuntime.Stop()
 
 	// get stdio
-	stdio := getStdioHandler(r.io_identity)
+	stdio := getStdioHandler(r.ioIdentity)
 	if stdio != nil {
 		stdio.Stop()
 	}

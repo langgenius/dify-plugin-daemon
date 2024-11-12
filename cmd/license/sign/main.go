@@ -32,13 +32,13 @@ func main() {
 	}
 
 	// sign plugin
-	plugin_file, err := signer.SignPlugin(plugin)
+	pluginFile, err := signer.SignPlugin(plugin)
 	if err != nil {
 		log.Panic("failed to sign plugin %v", err)
 	}
 
 	// write signature
-	err = os.WriteFile(out_path, plugin_file, 0644)
+	err = os.WriteFile(out_path, pluginFile, 0644)
 	if err != nil {
 		log.Panic("failed to write plugin file %v", err)
 	}

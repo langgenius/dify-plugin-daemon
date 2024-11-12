@@ -228,11 +228,11 @@ func (m *ModelParameterRule) TransformTemplate() error {
 	// if use_template is not empty, transform to use default value
 	if m.UseTemplate != nil && *m.UseTemplate != "" {
 		// get the value of use_template
-		use_template_value := m.UseTemplate
+		useTemplateValue := m.UseTemplate
 		// get the template
-		template, ok := PARAMETER_RULE_TEMPLATE[DefaultParameterName(*use_template_value)]
+		template, ok := PARAMETER_RULE_TEMPLATE[DefaultParameterName(*useTemplateValue)]
 		if !ok {
-			return fmt.Errorf("use_template %s not found", *use_template_value)
+			return fmt.Errorf("use_template %s not found", *useTemplateValue)
 		}
 		// transform to default value
 		if m.Label == nil {
@@ -309,9 +309,9 @@ func (m *ModelParameterRule) UnmarshalYAML(value *yaml.Node) error {
 func isParameterRule(fl validator.FieldLevel) bool {
 	// if use_template is empty, then label, type should be required
 	// try get the value of use_template
-	use_template_handle := fl.Field().FieldByName("UseTemplate")
+	useTemplateHandle := fl.Field().FieldByName("UseTemplate")
 	// check if use_template is null pointer
-	if use_template_handle.IsNil() {
+	if useTemplateHandle.IsNil() {
 		// label and type should be required
 		// try get the value of label
 		if fl.Field().FieldByName("Label").IsNil() {
@@ -619,19 +619,19 @@ func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
 	}
 
 	for _, model_type := range types {
-		model_type_map, ok := models[model_type].(map[string]any)
+		modelTypeMap, ok := models[model_type].(map[string]any)
 		if ok {
-			model_type_position_file, ok := model_type_map["position"]
+			modelTypePositionFile, ok := modelTypeMap["position"]
 			if ok {
-				model_type_position_file_path, ok := model_type_position_file.(string)
+				modelTypePositionFilePath, ok := modelTypePositionFile.(string)
 				if ok {
-					m.PositionFiles[model_type] = model_type_position_file_path
+					m.PositionFiles[model_type] = modelTypePositionFilePath
 				}
 			}
 
-			model_type_predefined_files, ok := model_type_map["predefined"].([]string)
+			modelTypePredefinedFiles, ok := modelTypeMap["predefined"].([]string)
 			if ok {
-				m.ModelFiles = append(m.ModelFiles, model_type_predefined_files...)
+				m.ModelFiles = append(m.ModelFiles, modelTypePredefinedFiles...)
 			}
 		}
 	}

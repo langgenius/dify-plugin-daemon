@@ -71,14 +71,14 @@ func TestPackagerAndVerifier(t *testing.T) {
 		return
 	}
 
-	origin_decoder, err := decoder.NewFSPluginDecoder("temp")
+	originDecoder, err := decoder.NewFSPluginDecoder("temp")
 	if err != nil {
 		t.Errorf("failed to create decoder: %s", err.Error())
 		return
 	}
 
 	// walk
-	err = origin_decoder.Walk(func(filename string, dir string) error {
+	err = originDecoder.Walk(func(filename string, dir string) error {
 		if filename == "ignored" {
 			return fmt.Errorf("should not walk into ignored")
 		}
@@ -90,7 +90,7 @@ func TestPackagerAndVerifier(t *testing.T) {
 	}
 
 	// check assets
-	assets, err := origin_decoder.Assets()
+	assets, err := originDecoder.Assets()
 	if err != nil {
 		t.Errorf("failed to get assets: %s", err.Error())
 		return
@@ -101,7 +101,7 @@ func TestPackagerAndVerifier(t *testing.T) {
 		return
 	}
 
-	packager := packager.NewPackager(origin_decoder)
+	packager := packager.NewPackager(originDecoder)
 
 	// pack
 	zip, err := packager.Pack()
@@ -117,14 +117,14 @@ func TestPackagerAndVerifier(t *testing.T) {
 		return
 	}
 
-	signed_decoder, err := decoder.NewZipPluginDecoder(signed)
+	signedDecoder, err := decoder.NewZipPluginDecoder(signed)
 	if err != nil {
 		t.Errorf("failed to create zip decoder: %s", err.Error())
 		return
 	}
 
 	// check assets
-	assets, err = signed_decoder.Assets()
+	assets, err = signedDecoder.Assets()
 	if err != nil {
 		t.Errorf("failed to get assets: %s", err.Error())
 		return
@@ -136,7 +136,7 @@ func TestPackagerAndVerifier(t *testing.T) {
 	}
 
 	// verify
-	err = decoder.VerifyPlugin(signed_decoder)
+	err = decoder.VerifyPlugin(signedDecoder)
 	if err != nil {
 		t.Errorf("failed to verify: %s", err.Error())
 		return
@@ -165,13 +165,13 @@ func TestWrongSign(t *testing.T) {
 		return
 	}
 
-	origin_decoder, err := decoder.NewFSPluginDecoder("temp")
+	originDecoder, err := decoder.NewFSPluginDecoder("temp")
 	if err != nil {
 		t.Errorf("failed to create decoder: %s", err.Error())
 		return
 	}
 
-	packager := packager.NewPackager(origin_decoder)
+	packager := packager.NewPackager(originDecoder)
 
 	// pack
 	zip, err := packager.Pack()
@@ -192,14 +192,14 @@ func TestWrongSign(t *testing.T) {
 	signed[len(signed)-2] = 0
 
 	// create a new decoder
-	signed_decoder, err := decoder.NewZipPluginDecoder(signed)
+	signedDecoder, err := decoder.NewZipPluginDecoder(signed)
 	if err != nil {
 		t.Errorf("failed to create zip decoder: %s", err.Error())
 		return
 	}
 
 	// verify
-	err = decoder.VerifyPlugin(signed_decoder)
+	err = decoder.VerifyPlugin(signedDecoder)
 	if err == nil {
 		t.Errorf("should fail to verify")
 		return

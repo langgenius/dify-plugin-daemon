@@ -9,11 +9,11 @@ func (r *BasicPluginRuntime) RemapAssets(
 	declaration *plugin_entities.PluginDeclaration,
 	assets map[string][]byte,
 ) error {
-	assets_ids, err := r.mediaManager.RemapAssets(declaration, assets)
+	assetsIds, err := r.mediaManager.RemapAssets(declaration, assets)
 	if err != nil {
 		return err
 	}
 
-	r.assets_ids = assets_ids
+	r.assetsIds = assetsIds
 	return nil
 }

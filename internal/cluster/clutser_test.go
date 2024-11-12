@@ -88,7 +88,7 @@ func TestMultipleClusterLifetime(t *testing.T) {
 	case <-clusters[2].NotifyBecomeMaster():
 	}
 
-	has_master := false
+	hasMaster := false
 
 	for _, cluster := range clusters {
 		_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
@@ -98,16 +98,16 @@ func TestMultipleClusterLifetime(t *testing.T) {
 		}
 
 		if cluster.IsMaster() {
-			if has_master {
+			if hasMaster {
 				t.Errorf("multiple master")
 				return
 			} else {
-				has_master = true
+				hasMaster = true
 			}
 		}
 	}
 
-	if !has_master {
+	if !hasMaster {
 		t.Errorf("no master")
 	}
 }
@@ -128,25 +128,25 @@ func TestClusterSubstituteMaster(t *testing.T) {
 	}
 
 	// close the master
-	original_master_id := ""
+	originalMasterId := ""
 	for _, cluster := range clusters {
 		if cluster.IsMaster() {
 			cluster.Close()
-			original_master_id = cluster.id
+			originalMasterId = cluster.id
 			break
 		}
 	}
-	if original_master_id == "" {
+	if originalMasterId == "" {
 		t.Errorf("no master")
 		return
 	}
 
 	time.Sleep(MASTER_LOCK_EXPIRED_TIME + time.Second)
 
-	has_master := false
+	hasMaster := false
 
 	for _, cluster := range clusters {
-		if cluster.id == original_master_id {
+		if cluster.id == originalMasterId {
 			continue
 		}
 		_, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, cluster.id)
@@ -156,16 +156,16 @@ func TestClusterSubstituteMaster(t *testing.T) {
 		}
 
 		if cluster.IsMaster() {
-			if has_master {
+			if hasMaster {
 				t.Errorf("multiple substitute master")
 				return
 			} else {
-				has_master = true
+				hasMaster = true
 			}
 		}
 	}
 
-	if !has_master {
+	if !hasMaster {
 		t.Errorf("no substitute master")
 	}
 }
@@ -186,10 +186,10 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 	}
 
 	// randomly close a slave node to close
-	slave_node_id := ""
+	slaveNodeId := ""
 	for _, cluster := range clusters {
 		if !cluster.IsMaster() {
-			slave_node_id = cluster.id
+			slaveNodeId = cluster.id
 			cluster.Close()
 			// wait for the cluster to close
 			<-cluster.NotifyClusterStopped()
@@ -202,7 +202,7 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 		}
 	}
 
-	if slave_node_id == "" {
+	if slaveNodeId == "" {
 		t.Errorf("no slave node")
 		return
 	}
@@ -210,7 +210,7 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 	// wait for master gc task
 	time.Sleep(NODE_DISCONNECTED_TIMEOUT*2 + time.Second)
 
-	_, err = cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, slave_node_id)
+	_, err = cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, slaveNodeId)
 	if err == nil {
 		t.Errorf("slave node is not collected by master gc automatically")
 		return

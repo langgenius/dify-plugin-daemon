@@ -34,27 +34,27 @@ func (p *PluginManager) getServerlessPluginRuntime(
 	declaration := model.Declaration
 
 	// init runtime entity
-	runtime_entity := plugin_entities.PluginRuntime{
+	runtimeEntity := plugin_entities.PluginRuntime{
 		Config: declaration,
 	}
-	runtime_entity.InitState()
+	runtimeEntity.InitState()
 
 	// convert to plugin runtime
-	plugin_runtime := aws_manager.AWSPluginRuntime{
+	pluginRuntime := aws_manager.AWSPluginRuntime{
 		PositivePluginRuntime: positive_manager.PositivePluginRuntime{
 			BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
 			InnerChecksum:      model.Checksum,
 		},
-		PluginRuntime: runtime_entity,
+		PluginRuntime: runtimeEntity,
 		LambdaURL:     model.FunctionURL,
 		LambdaName:    model.FunctionName,
 	}
 
-	if err := plugin_runtime.InitEnvironment(); err != nil {
+	if err := pluginRuntime.InitEnvironment(); err != nil {
 		return nil, err
 	}
 
-	return &plugin_runtime, nil
+	return &pluginRuntime, nil
 }
 
 func (p *PluginManager) getServerlessPluginRuntimeModel(
@@ -69,7 +69,7 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 	}
 
 	if err == cache.ErrNotFound {
-		runtime_model, err := db.GetOne[models.ServerlessRuntime](
+		runtimeModel, err := db.GetOne[models.ServerlessRuntime](
 			db.Equal("plugin_unique_identifier", identity.String()),
 		)
 
@@ -81,8 +81,8 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 			return nil, fmt.Errorf("failed to load serverless runtime from db: %v", err)
 		}
 
-		cache.Store(p.getServerlessRuntimeCacheKey(identity), runtime_model, time.Minute*30)
-		runtime = &runtime_model
+		cache.Store(p.getServerlessRuntimeCacheKey(identity), runtimeModel, time.Minute*30)
+		runtime = &runtimeModel
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to load serverless runtime from cache: %v", err)
 	}

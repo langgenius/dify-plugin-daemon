@@ -327,8 +327,8 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 
 	if p.Model != nil {
 		if p.Model.Description == nil {
-			deep_copied_description := p.Description
-			p.Model.Description = &deep_copied_description
+			deepCopiedDescription := p.Description
+			p.Model.Description = &deepCopiedDescription
 		}
 	}
 

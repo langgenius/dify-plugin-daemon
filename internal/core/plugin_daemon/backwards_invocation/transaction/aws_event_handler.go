@@ -15,12 +15,12 @@ import (
 )
 
 type AWSTransactionHandler struct {
-	max_timeout time.Duration
+	maxTimeout time.Duration
 }
 
-func NewAWSTransactionHandler(max_timeout time.Duration) *AWSTransactionHandler {
+func NewAWSTransactionHandler(maxTimeout time.Duration) *AWSTransactionHandler {
 	return &AWSTransactionHandler{
-		max_timeout: max_timeout,
+		maxTimeout: maxTimeout,
 	}
 }
 
@@ -73,7 +73,7 @@ func (h *AWSTransactionHandler) Handle(
 		bytes,
 		func(session_id string, data []byte) {
 			// parse the data
-			session_message, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
+			sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
 				ctx.Writer.Write([]byte(err.Error()))
@@ -92,14 +92,14 @@ func (h *AWSTransactionHandler) Handle(
 				return
 			}
 
-			aws_response_writer := NewAWSTransactionWriter(session, writer)
+			awsResponseWriter := NewAWSTransactionWriter(session, writer)
 
 			if err := backwards_invocation.InvokeDify(
 				session.Declaration,
 				session.InvokeFrom,
 				session,
-				aws_response_writer,
-				session_message.Data,
+				awsResponseWriter,
+				sessionMessage.Data,
 			); err != nil {
 				ctx.Writer.WriteHeader(http.StatusInternalServerError)
 				ctx.Writer.Write([]byte("failed to parse request"))
@@ -116,7 +116,7 @@ func (h *AWSTransactionHandler) Handle(
 	select {
 	case <-writer.done:
 		return
-	case <-time.After(h.max_timeout):
+	case <-time.After(h.maxTimeout):
 		return
 	}
 }

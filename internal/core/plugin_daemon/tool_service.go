@@ -37,22 +37,22 @@ func InvokeTool(
 		return nil, err
 	}
 
-	tool_declaration := runtime.Configuration().Tool
-	if tool_declaration == nil {
+	toolDeclaration := runtime.Configuration().Tool
+	if toolDeclaration == nil {
 		return nil, errors.New("tool declaration not found")
 	}
 
-	var tool_output_schema plugin_entities.ToolOutputSchema
-	for _, v := range tool_declaration.Tools {
+	var toolOutputSchema plugin_entities.ToolOutputSchema
+	for _, v := range toolDeclaration.Tools {
 		if v.Identity.Name == request.Tool {
-			tool_output_schema = v.OutputSchema
+			toolOutputSchema = v.OutputSchema
 		}
 	}
 
-	new_response := stream.NewStream[tool_entities.ToolResponseChunk](128)
+	newResponse := stream.NewStream[tool_entities.ToolResponseChunk](128)
 	routine.Submit(func() {
 		files := make(map[string]*bytes.Buffer)
-		defer new_response.Close()
+		defer newResponse.Close()
 
 		for response.Next() {
 			item, err := response.Read()
@@ -66,13 +66,13 @@ func InvokeTool(
 					continue
 				}
 
-				total_length, ok := item.Message["total_length"].(float64)
+				totalLength, ok := item.Message["total_length"].(float64)
 				if !ok {
 					continue
 				}
 
 				// convert total_length to int
-				total_length_int := int(total_length)
+				totalLengthInt := int(totalLength)
 
 				blob, ok := item.Message["blob"].(string)
 				if !ok {
@@ -85,11 +85,11 @@ func InvokeTool(
 				}
 
 				if _, ok := files[id]; !ok {
-					files[id] = bytes.NewBuffer(make([]byte, 0, total_length_int))
+					files[id] = bytes.NewBuffer(make([]byte, 0, totalLengthInt))
 				}
 
 				if end {
-					new_response.Write(tool_entities.ToolResponseChunk{
+					newResponse.Write(tool_entities.ToolResponseChunk{
 						Type: tool_entities.ToolResponseChunkTypeBlob,
 						Message: map[string]any{
 							"blob": files[id].Bytes(), // bytes will be encoded to base64 finally
@@ -100,45 +100,45 @@ func InvokeTool(
 					if files[id].Len() > 15*1024*1024 {
 						// delete the file if it is too large
 						delete(files, id)
-						new_response.WriteError(errors.New("file is too large"))
+						newResponse.WriteError(errors.New("file is too large"))
 						return
 					} else {
 						// decode the blob using base64
 						decoded, err := base64.StdEncoding.DecodeString(blob)
 						if err != nil {
-							new_response.WriteError(err)
+							newResponse.WriteError(err)
 							return
 						}
 						if len(decoded) > 8192 {
 							// single chunk is too large, raises error
-							new_response.WriteError(errors.New("single file chunk is too large"))
+							newResponse.WriteError(errors.New("single file chunk is too large"))
 							return
 						}
 						files[id].Write(decoded)
 					}
 				}
 			} else {
-				new_response.Write(item)
+				newResponse.Write(item)
 			}
 		}
 	})
 
 	// bind json schema validator
-	bindValidator(response, tool_output_schema)
+	bindValidator(response, toolOutputSchema)
 
-	return new_response, nil
+	return newResponse, nil
 }
 
 func bindValidator(
 	response *stream.Stream[tool_entities.ToolResponseChunk],
-	tool_output_schema plugin_entities.ToolOutputSchema,
+	toolOutputSchema plugin_entities.ToolOutputSchema,
 ) {
 	// check if the tool_output_schema is valid
 	variables := make(map[string]any)
 
 	response.Filter(func(trc tool_entities.ToolResponseChunk) error {
 		if trc.Type == tool_entities.ToolResponseChunkTypeVariable {
-			variable_name, ok := trc.Message["variable_name"].(string)
+			variableName, ok := trc.Message["variable_name"].(string)
 			if !ok {
 				return errors.New("variable name is not a string")
 			}
@@ -149,25 +149,25 @@ func bindValidator(
 
 			if stream {
 				// ensure variable_value is a string
-				variable_value, ok := trc.Message["variable_value"].(string)
+				variableValue, ok := trc.Message["variable_value"].(string)
 				if !ok {
 					return errors.New("variable value is not a string")
 				}
 
 				// create it if not exists
-				if _, ok := variables[variable_name]; !ok {
-					variables[variable_name] = ""
+				if _, ok := variables[variableName]; !ok {
+					variables[variableName] = ""
 				}
 
-				original_value, ok := variables[variable_name].(string)
+				originalValue, ok := variables[variableName].(string)
 				if !ok {
 					return errors.New("variable value is not a string")
 				}
 
 				// add the variable value to the variable
-				variables[variable_name] = original_value + variable_value
+				variables[variableName] = originalValue + variableValue
 			} else {
-				variables[variable_name] = trc.Message["variable_value"]
+				variables[variableName] = trc.Message["variable_value"]
 			}
 		}
 
@@ -176,7 +176,7 @@ func bindValidator(
 
 	response.BeforeClose(func() {
 		// validate the variables
-		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(tool_output_schema))
+		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(toolOutputSchema))
 		if err != nil {
 			response.WriteError(err)
 			return

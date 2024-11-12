@@ -8,21 +8,21 @@ import (
 )
 
 func createPythonTool(root string, manifest *plugin_entities.PluginDeclaration) error {
-	tool_file_content, err := renderTemplate(PYTHON_TOOL_PY_TEMPLATE, manifest, []string{""})
+	toolFileContent, err := renderTemplate(PYTHON_TOOL_PY_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	tool_file_path := filepath.Join(root, "tools", fmt.Sprintf("%s.py", manifest.Name))
-	if err := writeFile(tool_file_path, tool_file_content); err != nil {
+	toolFilePath := filepath.Join(root, "tools", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(toolFilePath, toolFileContent); err != nil {
 		return err
 	}
 
-	tool_manifest_file_path := filepath.Join(root, "tools", fmt.Sprintf("%s.yaml", manifest.Name))
-	tool_manifest_file_content, err := renderTemplate(PYTHON_TOOL_TEMPLATE, manifest, []string{""})
+	toolManifestFilePath := filepath.Join(root, "tools", fmt.Sprintf("%s.yaml", manifest.Name))
+	toolManifestFileContent, err := renderTemplate(PYTHON_TOOL_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	if err := writeFile(tool_manifest_file_path, tool_manifest_file_content); err != nil {
+	if err := writeFile(toolManifestFilePath, toolManifestFileContent); err != nil {
 		return err
 	}
 
@@ -30,21 +30,21 @@ func createPythonTool(root string, manifest *plugin_entities.PluginDeclaration) 
 }
 
 func createPythonToolProvider(root string, manifest *plugin_entities.PluginDeclaration) error {
-	tool_provider_file_content, err := renderTemplate(PYTHON_TOOL_PROVIDER_PY_TEMPLATE, manifest, []string{""})
+	toolProviderFileContent, err := renderTemplate(PYTHON_TOOL_PROVIDER_PY_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	tool_provider_file_path := filepath.Join(root, "provider", fmt.Sprintf("%s.py", manifest.Name))
-	if err := writeFile(tool_provider_file_path, tool_provider_file_content); err != nil {
+	toolProviderFilePath := filepath.Join(root, "provider", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(toolProviderFilePath, toolProviderFileContent); err != nil {
 		return err
 	}
 
-	tool_provider_manifest_file_content, err := renderTemplate(PYTHON_TOOL_PROVIDER_TEMPLATE, manifest, []string{""})
+	toolProviderManifestFileContent, err := renderTemplate(PYTHON_TOOL_PROVIDER_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	tool_provider_manifest_file_path := filepath.Join(root, "provider", fmt.Sprintf("%s.yaml", manifest.Name))
-	if err := writeFile(tool_provider_manifest_file_path, tool_provider_manifest_file_content); err != nil {
+	toolProviderManifestFilePath := filepath.Join(root, "provider", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(toolProviderManifestFilePath, toolProviderManifestFileContent); err != nil {
 		return err
 	}
 
@@ -52,12 +52,12 @@ func createPythonToolProvider(root string, manifest *plugin_entities.PluginDecla
 }
 
 func createPythonEndpointGroup(root string, manifest *plugin_entities.PluginDeclaration) error {
-	endpoint_group_file_content, err := renderTemplate(PYTHON_ENDPOINT_GROUP_MANIFEST_TEMPLATE, manifest, []string{""})
+	endpointGroupFileContent, err := renderTemplate(PYTHON_ENDPOINT_GROUP_MANIFEST_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	endpoint_group_file_path := filepath.Join(root, "group", fmt.Sprintf("%s.yaml", manifest.Name))
-	if err := writeFile(endpoint_group_file_path, endpoint_group_file_content); err != nil {
+	endpointGroupFilePath := filepath.Join(root, "group", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(endpointGroupFilePath, endpointGroupFileContent); err != nil {
 		return err
 	}
 
@@ -65,21 +65,21 @@ func createPythonEndpointGroup(root string, manifest *plugin_entities.PluginDecl
 }
 
 func createPythonEndpoint(root string, manifest *plugin_entities.PluginDeclaration) error {
-	endpoint_file_content, err := renderTemplate(PYTHON_ENDPOINT_MANIFEST_TEMPLATE, manifest, []string{""})
+	endpointFileContent, err := renderTemplate(PYTHON_ENDPOINT_MANIFEST_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	endpoint_file_path := filepath.Join(root, "endpoints", fmt.Sprintf("%s.yaml", manifest.Name))
-	if err := writeFile(endpoint_file_path, endpoint_file_content); err != nil {
+	endpointFilePath := filepath.Join(root, "endpoints", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(endpointFilePath, endpointFileContent); err != nil {
 		return err
 	}
 
-	endpoint_py_file_content, err := renderTemplate(PYTHON_ENDPOINT_TEMPLATE, manifest, []string{""})
+	endpointPyFileContent, err := renderTemplate(PYTHON_ENDPOINT_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
-	endpoint_py_file_path := filepath.Join(root, "endpoints", fmt.Sprintf("%s.py", manifest.Name))
-	if err := writeFile(endpoint_py_file_path, endpoint_py_file_content); err != nil {
+	endpointPyFilePath := filepath.Join(root, "endpoints", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(endpointPyFilePath, endpointPyFileContent); err != nil {
 		return err
 	}
 
@@ -87,21 +87,21 @@ func createPythonEndpoint(root string, manifest *plugin_entities.PluginDeclarati
 }
 
 func createPythonLLM(root string, manifest *plugin_entities.PluginDeclaration) error {
-	llm_file_content, err := renderTemplate(PYTHON_LLM_MANIFEST_TEMPLATE, manifest, []string{"llm"})
+	llmFileContent, err := renderTemplate(PYTHON_LLM_MANIFEST_TEMPLATE, manifest, []string{"llm"})
 	if err != nil {
 		return err
 	}
-	llm_file_path := filepath.Join(root, "models", "llm", "llm.yaml")
-	if err := writeFile(llm_file_path, llm_file_content); err != nil {
+	llmFilePath := filepath.Join(root, "models", "llm", "llm.yaml")
+	if err := writeFile(llmFilePath, llmFileContent); err != nil {
 		return err
 	}
 
-	llm_py_file_content, err := renderTemplate(PYTHON_LLM_TEMPLATE, manifest, []string{"llm"})
+	llmPyFileContent, err := renderTemplate(PYTHON_LLM_TEMPLATE, manifest, []string{"llm"})
 	if err != nil {
 		return err
 	}
-	llm_py_file_path := filepath.Join(root, "models", "llm", "llm.py")
-	if err := writeFile(llm_py_file_path, llm_py_file_content); err != nil {
+	llmPyFilePath := filepath.Join(root, "models", "llm", "llm.py")
+	if err := writeFile(llmPyFilePath, llmPyFileContent); err != nil {
 		return err
 	}
 
@@ -109,21 +109,21 @@ func createPythonLLM(root string, manifest *plugin_entities.PluginDeclaration) e
 }
 
 func createPythonTextEmbedding(root string, manifest *plugin_entities.PluginDeclaration) error {
-	text_embedding_file_content, err := renderTemplate(PYTHON_TEXT_EMBEDDING_MANIFEST_TEMPLATE, manifest, []string{"text_embedding"})
+	textEmbeddingFileContent, err := renderTemplate(PYTHON_TEXT_EMBEDDING_MANIFEST_TEMPLATE, manifest, []string{"text_embedding"})
 	if err != nil {
 		return err
 	}
-	text_embedding_file_path := filepath.Join(root, "models", "text_embedding", "text_embedding.yaml")
-	if err := writeFile(text_embedding_file_path, text_embedding_file_content); err != nil {
+	textEmbeddingFilePath := filepath.Join(root, "models", "text_embedding", "text_embedding.yaml")
+	if err := writeFile(textEmbeddingFilePath, textEmbeddingFileContent); err != nil {
 		return err
 	}
 
-	text_embedding_py_file_content, err := renderTemplate(PYTHON_TEXT_EMBEDDING_TEMPLATE, manifest, []string{"text_embedding"})
+	textEmbeddingPyFileContent, err := renderTemplate(PYTHON_TEXT_EMBEDDING_TEMPLATE, manifest, []string{"text_embedding"})
 	if err != nil {
 		return err
 	}
-	text_embedding_py_file_path := filepath.Join(root, "models", "text_embedding", "text_embedding.py")
-	if err := writeFile(text_embedding_py_file_path, text_embedding_py_file_content); err != nil {
+	textEmbeddingPyFilePath := filepath.Join(root, "models", "text_embedding", "text_embedding.py")
+	if err := writeFile(textEmbeddingPyFilePath, textEmbeddingPyFileContent); err != nil {
 		return err
 	}
 
@@ -131,21 +131,21 @@ func createPythonTextEmbedding(root string, manifest *plugin_entities.PluginDecl
 }
 
 func createPythonRerank(root string, manifest *plugin_entities.PluginDeclaration) error {
-	rerank_file_content, err := renderTemplate(PYTHON_RERANK_MANIFEST_TEMPLATE, manifest, []string{"rerank"})
+	rerankFileContent, err := renderTemplate(PYTHON_RERANK_MANIFEST_TEMPLATE, manifest, []string{"rerank"})
 	if err != nil {
 		return err
 	}
-	rerank_file_path := filepath.Join(root, "models", "rerank", "rerank.yaml")
-	if err := writeFile(rerank_file_path, rerank_file_content); err != nil {
+	rerankFilePath := filepath.Join(root, "models", "rerank", "rerank.yaml")
+	if err := writeFile(rerankFilePath, rerankFileContent); err != nil {
 		return err
 	}
 
-	rerank_py_file_content, err := renderTemplate(PYTHON_RERANK_TEMPLATE, manifest, []string{"rerank"})
+	rerankPyFileContent, err := renderTemplate(PYTHON_RERANK_TEMPLATE, manifest, []string{"rerank"})
 	if err != nil {
 		return err
 	}
-	rerank_py_file_path := filepath.Join(root, "models", "rerank", "rerank.py")
-	if err := writeFile(rerank_py_file_path, rerank_py_file_content); err != nil {
+	rerankPyFilePath := filepath.Join(root, "models", "rerank", "rerank.py")
+	if err := writeFile(rerankPyFilePath, rerankPyFileContent); err != nil {
 		return err
 	}
 
@@ -153,21 +153,21 @@ func createPythonRerank(root string, manifest *plugin_entities.PluginDeclaration
 }
 
 func createPythonTTS(root string, manifest *plugin_entities.PluginDeclaration) error {
-	tts_file_content, err := renderTemplate(PYTHON_TTS_MANIFEST_TEMPLATE, manifest, []string{"tts"})
+	ttsFileContent, err := renderTemplate(PYTHON_TTS_MANIFEST_TEMPLATE, manifest, []string{"tts"})
 	if err != nil {
 		return err
 	}
-	tts_file_path := filepath.Join(root, "models", "tts", "tts.yaml")
-	if err := writeFile(tts_file_path, tts_file_content); err != nil {
+	ttsFilePath := filepath.Join(root, "models", "tts", "tts.yaml")
+	if err := writeFile(ttsFilePath, ttsFileContent); err != nil {
 		return err
 	}
 
-	tts_py_file_content, err := renderTemplate(PYTHON_TTS_TEMPLATE, manifest, []string{"tts"})
+	ttsPyFileContent, err := renderTemplate(PYTHON_TTS_TEMPLATE, manifest, []string{"tts"})
 	if err != nil {
 		return err
 	}
-	tts_py_file_path := filepath.Join(root, "models", "tts", "tts.py")
-	if err := writeFile(tts_py_file_path, tts_py_file_content); err != nil {
+	ttsPyFilePath := filepath.Join(root, "models", "tts", "tts.py")
+	if err := writeFile(ttsPyFilePath, ttsPyFileContent); err != nil {
 		return err
 	}
 
@@ -175,21 +175,21 @@ func createPythonTTS(root string, manifest *plugin_entities.PluginDeclaration) e
 }
 
 func createPythonSpeech2Text(root string, manifest *plugin_entities.PluginDeclaration) error {
-	speech2text_file_content, err := renderTemplate(PYTHON_SPEECH2TEXT_MANIFEST_TEMPLATE, manifest, []string{"speech2text"})
+	speech2textFileContent, err := renderTemplate(PYTHON_SPEECH2TEXT_MANIFEST_TEMPLATE, manifest, []string{"speech2text"})
 	if err != nil {
 		return err
 	}
-	speech2text_file_path := filepath.Join(root, "models", "speech2text", "speech2text.yaml")
-	if err := writeFile(speech2text_file_path, speech2text_file_content); err != nil {
+	speech2textFilePath := filepath.Join(root, "models", "speech2text", "speech2text.yaml")
+	if err := writeFile(speech2textFilePath, speech2textFileContent); err != nil {
 		return err
 	}
 
-	speech2text_py_file_content, err := renderTemplate(PYTHON_SPEECH2TEXT_TEMPLATE, manifest, []string{"speech2text"})
+	speech2textPyFileContent, err := renderTemplate(PYTHON_SPEECH2TEXT_TEMPLATE, manifest, []string{"speech2text"})
 	if err != nil {
 		return err
 	}
-	speech2text_py_file_path := filepath.Join(root, "models", "speech2text", "speech2text.py")
-	if err := writeFile(speech2text_py_file_path, speech2text_py_file_content); err != nil {
+	speech2textPyFilePath := filepath.Join(root, "models", "speech2text", "speech2text.py")
+	if err := writeFile(speech2textPyFilePath, speech2textPyFileContent); err != nil {
 		return err
 	}
 
@@ -197,21 +197,21 @@ func createPythonSpeech2Text(root string, manifest *plugin_entities.PluginDeclar
 }
 
 func createPythonModeration(root string, manifest *plugin_entities.PluginDeclaration) error {
-	moderation_file_content, err := renderTemplate(PYTHON_MODERATION_MANIFEST_TEMPLATE, manifest, []string{"moderation"})
+	moderationFileContent, err := renderTemplate(PYTHON_MODERATION_MANIFEST_TEMPLATE, manifest, []string{"moderation"})
 	if err != nil {
 		return err
 	}
-	moderation_file_path := filepath.Join(root, "models", "moderation", "moderation.yaml")
-	if err := writeFile(moderation_file_path, moderation_file_content); err != nil {
+	moderationFilePath := filepath.Join(root, "models", "moderation", "moderation.yaml")
+	if err := writeFile(moderationFilePath, moderationFileContent); err != nil {
 		return err
 	}
 
-	moderation_py_file_content, err := renderTemplate(PYTHON_MODERATION_TEMPLATE, manifest, []string{"moderation"})
+	moderationPyFileContent, err := renderTemplate(PYTHON_MODERATION_TEMPLATE, manifest, []string{"moderation"})
 	if err != nil {
 		return err
 	}
-	moderation_py_file_path := filepath.Join(root, "models", "moderation", "moderation.py")
-	if err := writeFile(moderation_py_file_path, moderation_py_file_content); err != nil {
+	moderationPyFilePath := filepath.Join(root, "models", "moderation", "moderation.py")
+	if err := writeFile(moderationPyFilePath, moderationPyFileContent); err != nil {
 		return err
 	}
 
@@ -219,21 +219,21 @@ func createPythonModeration(root string, manifest *plugin_entities.PluginDeclara
 }
 
 func createPythonModelProvider(root string, manifest *plugin_entities.PluginDeclaration, supported_model_types []string) error {
-	provider_file_content, err := renderTemplate(PYTHON_MODEL_PROVIDER_PY_TEMPLATE, manifest, supported_model_types)
+	providerFileContent, err := renderTemplate(PYTHON_MODEL_PROVIDER_PY_TEMPLATE, manifest, supported_model_types)
 	if err != nil {
 		return err
 	}
-	provider_file_path := filepath.Join(root, "provider", fmt.Sprintf("%s.py", manifest.Name))
-	if err := writeFile(provider_file_path, provider_file_content); err != nil {
+	providerFilePath := filepath.Join(root, "provider", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(providerFilePath, providerFileContent); err != nil {
 		return err
 	}
 
-	provider_manifest_file_content, err := renderTemplate(PYTHON_MODEL_PROVIDER_TEMPLATE, manifest, supported_model_types)
+	providerManifestFileContent, err := renderTemplate(PYTHON_MODEL_PROVIDER_TEMPLATE, manifest, supported_model_types)
 	if err != nil {
 		return err
 	}
-	provider_manifest_file_path := filepath.Join(root, "provider", fmt.Sprintf("%s.yaml", manifest.Name))
-	if err := writeFile(provider_manifest_file_path, provider_manifest_file_content); err != nil {
+	providerManifestFilePath := filepath.Join(root, "provider", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(providerManifestFilePath, providerManifestFileContent); err != nil {
 		return err
 	}
 

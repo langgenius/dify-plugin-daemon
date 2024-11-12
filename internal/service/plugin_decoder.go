@@ -21,23 +21,23 @@ func UploadPluginFromPkg(
 	dify_pkg_file multipart.File,
 	verify_signature bool,
 ) *entities.Response {
-	plugin_file, err := io.ReadAll(dify_pkg_file)
+	pluginFile, err := io.ReadAll(dify_pkg_file)
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	decoder, err := decoder.NewZipPluginDecoder(plugin_file)
+	decoder, err := decoder.NewZipPluginDecoder(pluginFile)
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	plugin_unique_identifier, err := decoder.UniqueIdentity()
+	pluginUniqueIdentifier, err := decoder.UniqueIdentity()
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
 	manager := plugin_manager.Manager()
-	declaration, err := manager.SavePackage(plugin_unique_identifier, plugin_file)
+	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile)
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
@@ -51,22 +51,22 @@ func UploadPluginFromPkg(
 	}
 
 	return entities.NewSuccessResponse(map[string]any{
-		"unique_identifier": plugin_unique_identifier,
+		"unique_identifier": pluginUniqueIdentifier,
 		"manifest":          declaration,
 	})
 }
 
 func FetchPluginManifest(
 	tenant_id string,
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
 	type ManifestCache struct {
 		Declaration plugin_entities.PluginDeclaration `json:"declaration"`
 	}
 
-	plugin_manifest_cache, err := cache.AutoGetWithGetter(plugin_unique_identifier.String(), func() (*ManifestCache, error) {
+	pluginManifestCache, err := cache.AutoGetWithGetter(pluginUniqueIdentifier.String(), func() (*ManifestCache, error) {
 		manager := plugin_manager.Manager()
-		pkg, err := manager.GetPackage(plugin_unique_identifier)
+		pkg, err := manager.GetPackage(pluginUniqueIdentifier)
 		if err != nil {
 			return nil, err
 		}
@@ -88,5 +88,5 @@ func FetchPluginManifest(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	return entities.NewSuccessResponse(plugin_manifest_cache)
+	return entities.NewSuccessResponse(pluginManifestCache)
 }

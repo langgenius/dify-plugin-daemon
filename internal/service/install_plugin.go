@@ -24,7 +24,7 @@ type InstallPluginResponse struct {
 }
 
 type InstallPluginOnDoneHandler func(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	declaration *plugin_entities.PluginDeclaration,
 ) error
 
@@ -48,24 +48,24 @@ func InstallPluginRuntimeToTenant(
 		Plugins:          []models.InstallTaskPluginStatus{},
 	}
 
-	for i, plugin_unique_identifier := range plugin_unique_identifiers {
+	for i, pluginUniqueIdentifier := range plugin_unique_identifiers {
 		// fetch plugin declaration first, before installing, we need to ensure pkg is uploaded
-		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
 		if err != nil {
 			return nil, err
 		}
 
 		// check if plugin is already installed
 		_, err = db.GetOne[models.Plugin](
-			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 		)
 
 		task.Plugins = append(task.Plugins, models.InstallTaskPluginStatus{
-			PluginUniqueIdentifier: plugin_unique_identifier,
-			PluginID:               plugin_unique_identifier.PluginID(),
+			PluginUniqueIdentifier: pluginUniqueIdentifier,
+			PluginID:               pluginUniqueIdentifier.PluginID(),
 			Status:                 models.InstallTaskStatusPending,
-			Icon:                   plugin_declaration.Icon,
-			Labels:                 plugin_declaration.Label,
+			Icon:                   pluginDeclaration.Icon,
+			Labels:                 pluginDeclaration.Label,
 			Message:                "",
 		})
 
@@ -73,7 +73,7 @@ func InstallPluginRuntimeToTenant(
 			task.CompletedPlugins++
 			task.Plugins[i].Status = models.InstallTaskStatusSuccess
 			task.Plugins[i].Message = "Installed"
-			onDone(plugin_unique_identifier, plugin_declaration)
+			onDone(pluginUniqueIdentifier, pluginDeclaration)
 			continue
 		}
 
@@ -81,7 +81,7 @@ func InstallPluginRuntimeToTenant(
 			return nil, err
 		}
 
-		pluginsWaitForInstallation = append(pluginsWaitForInstallation, plugin_unique_identifier)
+		pluginsWaitForInstallation = append(pluginsWaitForInstallation, pluginUniqueIdentifier)
 	}
 
 	if len(pluginsWaitForInstallation) == 0 {
@@ -99,11 +99,11 @@ func InstallPluginRuntimeToTenant(
 	manager := plugin_manager.Manager()
 
 	tasks := []func(){}
-	for _, plugin_unique_identifier := range pluginsWaitForInstallation {
+	for _, pluginUniqueIdentifier := range pluginsWaitForInstallation {
 		// copy the variable to avoid race condition
-		plugin_unique_identifier := plugin_unique_identifier
+		pluginUniqueIdentifier := pluginUniqueIdentifier
 
-		declaration, err := manager.GetDeclaration(plugin_unique_identifier)
+		declaration, err := manager.GetDeclaration(pluginUniqueIdentifier)
 		if err != nil {
 			return nil, err
 		}
@@ -125,21 +125,21 @@ func InstallPluginRuntimeToTenant(
 						return err
 					}
 
-					task_pointer := &task
-					var plugin_status *models.InstallTaskPluginStatus
+					taskPointer := &task
+					var pluginStatus *models.InstallTaskPluginStatus
 					for i := range task.Plugins {
-						if task.Plugins[i].PluginUniqueIdentifier == plugin_unique_identifier {
-							plugin_status = &task.Plugins[i]
+						if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
+							pluginStatus = &task.Plugins[i]
 							break
 						}
 					}
 
-					if plugin_status == nil {
+					if pluginStatus == nil {
 						return nil
 					}
 
-					modifier(task_pointer, plugin_status)
-					return db.Update(task_pointer, tx)
+					modifier(taskPointer, pluginStatus)
+					return db.Update(taskPointer, tx)
 				}); err != nil {
 					log.Error("failed to update install task status %s", err.Error())
 				}
@@ -152,10 +152,10 @@ func InstallPluginRuntimeToTenant(
 
 			var stream *stream.Stream[plugin_manager.PluginInstallResponse]
 			if config.Platform == app.PLATFORM_AWS_LAMBDA {
-				var zip_decoder *decoder.ZipPluginDecoder
-				var pkg_file []byte
+				var zipDecoder *decoder.ZipPluginDecoder
+				var pkgFile []byte
 
-				pkg_file, err = manager.GetPackage(plugin_unique_identifier)
+				pkgFile, err = manager.GetPackage(pluginUniqueIdentifier)
 				if err != nil {
 					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 						task.Status = models.InstallTaskStatusFailed
@@ -165,7 +165,7 @@ func InstallPluginRuntimeToTenant(
 					return
 				}
 
-				zip_decoder, err = decoder.NewZipPluginDecoder(pkg_file)
+				zipDecoder, err = decoder.NewZipPluginDecoder(pkgFile)
 				if err != nil {
 					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 						task.Status = models.InstallTaskStatusFailed
@@ -174,9 +174,9 @@ func InstallPluginRuntimeToTenant(
 					})
 					return
 				}
-				stream, err = manager.InstallToAWSFromPkg(zip_decoder, source, meta)
+				stream, err = manager.InstallToAWSFromPkg(zipDecoder, source, meta)
 			} else if config.Platform == app.PLATFORM_LOCAL {
-				stream, err = manager.InstallToLocal(plugin_unique_identifier, source, meta)
+				stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, meta)
 			} else {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed
@@ -216,7 +216,7 @@ func InstallPluginRuntimeToTenant(
 				}
 
 				if message.Event == plugin_manager.PluginInstallEventDone {
-					if err := onDone(plugin_unique_identifier, declaration); err != nil {
+					if err := onDone(pluginUniqueIdentifier, declaration); err != nil {
 						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 							task.Status = models.InstallTaskStatusFailed
 							plugin.Status = models.InstallTaskStatusFailed
@@ -260,24 +260,24 @@ func InstallPluginFromIdentifiers(
 		source,
 		meta,
 		func(
-			plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 			declaration *plugin_entities.PluginDeclaration,
 		) error {
-			runtime_type := plugin_entities.PluginRuntimeType("")
+			runtimeType := plugin_entities.PluginRuntimeType("")
 
 			switch config.Platform {
 			case app.PLATFORM_AWS_LAMBDA:
-				runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
 			case app.PLATFORM_LOCAL:
-				runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 			default:
 				return fmt.Errorf("unsupported platform: %s", config.Platform)
 			}
 
 			_, _, err := curd.InstallPlugin(
 				tenant_id,
-				plugin_unique_identifier,
-				runtime_type,
+				pluginUniqueIdentifier,
+				runtimeType,
 				declaration,
 				source,
 				meta,
@@ -330,11 +330,11 @@ func UpgradePlugin(
 		source,
 		meta,
 		func(
-			plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 			declaration *plugin_entities.PluginDeclaration,
 		) error {
 			// uninstall the original plugin
-			upgrade_response, err := curd.UpgradePlugin(
+			upgradeResponse, err := curd.UpgradePlugin(
 				tenant_id,
 				original_plugin_unique_identifier,
 				new_plugin_unique_identifier,
@@ -348,14 +348,14 @@ func UpgradePlugin(
 				return err
 			}
 
-			if upgrade_response.IsOriginalPluginDeleted {
+			if upgradeResponse.IsOriginalPluginDeleted {
 				// delete the plugin if no installation left
 				manager := plugin_manager.Manager()
-				if string(upgrade_response.DeletedPlugin.InstallType) == string(
+				if string(upgradeResponse.DeletedPlugin.InstallType) == string(
 					plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
 				) {
 					err = manager.UninstallFromLocal(
-						plugin_entities.PluginUniqueIdentifier(upgrade_response.DeletedPlugin.PluginUniqueIdentifier),
+						plugin_entities.PluginUniqueIdentifier(upgradeResponse.DeletedPlugin.PluginUniqueIdentifier),
 					)
 					if err != nil {
 						return err
@@ -461,10 +461,10 @@ func DeletePluginInstallationItemFromTask(
 }
 
 func FetchPluginFromIdentifier(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
 	_, err := db.GetOne[models.Plugin](
-		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 	)
 	if err == db.ErrDatabaseNotFound {
 		return entities.NewSuccessResponse(false)
@@ -492,28 +492,28 @@ func UninstallPlugin(
 		return entities.NewErrorResponse(-500, err.Error())
 	}
 
-	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
 	if err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
 	}
 
 	// Uninstall the plugin
-	delete_response, err := curd.UninstallPlugin(
+	deleteResponse, err := curd.UninstallPlugin(
 		tenant_id,
-		plugin_unique_identifier,
+		pluginUniqueIdentifier,
 		installation.ID,
 	)
 	if err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
 	}
 
-	if delete_response.IsPluginDeleted {
+	if deleteResponse.IsPluginDeleted {
 		// delete the plugin if no installation left
 		manager := plugin_manager.Manager()
-		if delete_response.Installation.RuntimeType == string(
+		if deleteResponse.Installation.RuntimeType == string(
 			plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
 		) {
-			err = manager.UninstallFromLocal(plugin_unique_identifier)
+			err = manager.UninstallFromLocal(pluginUniqueIdentifier)
 			if err != nil {
 				return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
 			}

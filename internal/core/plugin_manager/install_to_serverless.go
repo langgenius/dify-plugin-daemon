@@ -27,7 +27,7 @@ func (p *PluginManager) InstallToAWSFromPkg(
 	if err != nil {
 		return nil, err
 	}
-	unique_identity, err := decoder.UniqueIdentity()
+	uniqueIdentity, err := decoder.UniqueIdentity()
 	if err != nil {
 		return nil, err
 	}
@@ -37,24 +37,24 @@ func (p *PluginManager) InstallToAWSFromPkg(
 		return nil, err
 	}
 
-	new_response := stream.NewStream[PluginInstallResponse](128)
+	newResponse := stream.NewStream[PluginInstallResponse](128)
 	routine.Submit(func() {
 		defer func() {
-			new_response.Close()
+			newResponse.Close()
 		}()
 
-		lambda_url := ""
-		lambda_function_name := ""
+		lambdaUrl := ""
+		lambdaFunctionName := ""
 
 		response.Async(func(r serverless.LaunchAWSLambdaFunctionResponse) {
 			if r.Event == serverless.Info {
-				new_response.Write(PluginInstallResponse{
+				newResponse.Write(PluginInstallResponse{
 					Event: PluginInstallEventInfo,
 					Data:  "Installing...",
 				})
 			} else if r.Event == serverless.Done {
-				if lambda_url == "" || lambda_function_name == "" {
-					new_response.Write(PluginInstallResponse{
+				if lambdaUrl == "" || lambdaFunctionName == "" {
+					newResponse.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  "Internal server error, failed to get lambda url or function name",
 					})
@@ -67,48 +67,48 @@ func (p *PluginManager) InstallToAWSFromPkg(
 				)
 				if err == db.ErrDatabaseNotFound {
 					// create a new serverless runtime
-					serverless_model := &models.ServerlessRuntime{
+					serverlessModel := &models.ServerlessRuntime{
 						Checksum:               checksum,
 						Type:                   models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA,
-						FunctionURL:            lambda_url,
-						FunctionName:           lambda_function_name,
-						PluginUniqueIdentifier: unique_identity.String(),
+						FunctionURL:            lambdaUrl,
+						FunctionName:           lambdaFunctionName,
+						PluginUniqueIdentifier: uniqueIdentity.String(),
 						Declaration:            declaration,
 					}
-					err = db.Create(serverless_model)
+					err = db.Create(serverlessModel)
 					if err != nil {
-						new_response.Write(PluginInstallResponse{
+						newResponse.Write(PluginInstallResponse{
 							Event: PluginInstallEventError,
 							Data:  "Failed to create serverless runtime",
 						})
 						return
 					}
 				} else if err != nil {
-					new_response.Write(PluginInstallResponse{
+					newResponse.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  "Failed to check if the plugin is already installed",
 					})
 					return
 				}
 
-				new_response.Write(PluginInstallResponse{
+				newResponse.Write(PluginInstallResponse{
 					Event: PluginInstallEventDone,
 					Data:  "Installed",
 				})
 			} else if r.Event == serverless.Error {
-				new_response.Write(PluginInstallResponse{
+				newResponse.Write(PluginInstallResponse{
 					Event: PluginInstallEventError,
 					Data:  "Internal server error",
 				})
 			} else if r.Event == serverless.LambdaUrl {
-				lambda_url = r.Message
+				lambdaUrl = r.Message
 			} else if r.Event == serverless.Lambda {
-				lambda_function_name = r.Message
+				lambdaFunctionName = r.Message
 			} else {
-				new_response.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
+				newResponse.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
 			}
 		})
 	})
 
-	return new_response, nil
+	return newResponse, nil
 }

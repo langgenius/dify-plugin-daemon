@@ -14,24 +14,24 @@ import (
 // - Yeuoly
 
 // EndpointHandler is a function type that can be used to handle endpoint requests
-type EndpointHandler func(ctx *gin.Context, hook_id string, path string)
+type EndpointHandler func(ctx *gin.Context, hookId string, path string)
 
 func (app *App) Endpoint() func(c *gin.Context) {
 	return func(c *gin.Context) {
-		hook_id := c.Param("hook_id")
+		hookId := c.Param("hook_id")
 		path := c.Param("path")
 
 		if app.endpointHandler != nil {
-			app.endpointHandler(c, hook_id, path)
+			app.endpointHandler(c, hookId, path)
 		} else {
-			app.EndpointHandler(c, hook_id, path)
+			app.EndpointHandler(c, hookId, path)
 		}
 	}
 }
 
-func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
+func (app *App) EndpointHandler(ctx *gin.Context, hookId string, path string) {
 	endpoint, err := db.GetOne[models.Endpoint](
-		db.Equal("hook_id", hook_id),
+		db.Equal("hook_id", hookId),
 	)
 	if err == db.ErrDatabaseNotFound {
 		ctx.JSON(404, gin.H{"error": "endpoint not found"})
@@ -45,7 +45,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 	}
 
 	// get plugin installation
-	plugin_installation, err := db.GetOne[models.PluginInstallation](
+	pluginInstallation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("plugin_id", endpoint.PluginID),
 		db.Equal("tenant_id", endpoint.TenantID),
 	)
@@ -54,8 +54,8 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 		return
 	}
 
-	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
-		plugin_installation.PluginUniqueIdentifier,
+	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
+		pluginInstallation.PluginUniqueIdentifier,
 	)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid plugin unique identifier"})
@@ -63,9 +63,9 @@ func (app *App) EndpointHandler(ctx *gin.Context, hook_id string, path string) {
 	}
 
 	// check if plugin exists in current node
-	if ok, original_error := app.cluster.IsPluginOnCurrentNode(plugin_unique_identifier); !ok {
-		app.redirectPluginInvokeByPluginIdentifier(ctx, plugin_unique_identifier, original_error)
+	if ok, originalError := app.cluster.IsPluginOnCurrentNode(pluginUniqueIdentifier); !ok {
+		app.redirectPluginInvokeByPluginIdentifier(ctx, pluginUniqueIdentifier, originalError)
 	} else {
-		service.Endpoint(ctx, &endpoint, &plugin_installation, path)
+		service.Endpoint(ctx, &endpoint, &pluginInstallation, path)
 	}
 }

@@ -16,8 +16,8 @@ import (
 
 func parseJsonBody(resp *http.Response, ret interface{}) error {
 	defer resp.Body.Close()
-	json_decoder := json.NewDecoder(resp.Body)
-	return json_decoder.Decode(ret)
+	jsonDecoder := json.NewDecoder(resp.Body)
+	return jsonDecoder.Decode(ret)
 }
 
 func RequestAndParse[T any](client *http.Client, url string, method string, options ...HttpOptions) (*T, error) {
@@ -34,14 +34,14 @@ func RequestAndParse[T any](client *http.Client, url string, method string, opti
 	}
 
 	// get read timeout
-	read_timeout := int64(60000)
+	readTimeout := int64(60000)
 	for _, option := range options {
 		if option.Type == "read_timeout" {
-			read_timeout = option.Value.(int64)
+			readTimeout = option.Value.(int64)
 			break
 		}
 	}
-	time.AfterFunc(time.Millisecond*time.Duration(read_timeout), func() {
+	time.AfterFunc(time.Millisecond*time.Duration(readTimeout), func() {
 		// close the response body if timeout
 		resp.Body.Close()
 	})
@@ -82,30 +82,30 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
-		error_text, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, error_text)
+		errorText, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, errorText)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
-		error_text, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, error_text)
+		errorText, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, errorText)
 	}
 
 	ch := stream.NewStream[T](1024)
 
 	// get read timeout
-	read_timeout := int64(60000)
-	raise_error_when_stream_data_not_match := false
+	readTimeout := int64(60000)
+	raiseErrorWhenStreamDataNotMatch := false
 	for _, option := range options {
 		if option.Type == "read_timeout" {
-			read_timeout = option.Value.(int64)
+			readTimeout = option.Value.(int64)
 			break
 		} else if option.Type == "raiseErrorWhenStreamDataNotMatch" {
-			raise_error_when_stream_data_not_match = option.Value.(bool)
+			raiseErrorWhenStreamDataNotMatch = option.Value.(bool)
 		}
 	}
-	time.AfterFunc(time.Millisecond*time.Duration(read_timeout), func() {
+	time.AfterFunc(time.Millisecond*time.Duration(readTimeout), func() {
 		// close the response body if timeout
 		resp.Body.Close()
 	})
@@ -128,7 +128,7 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			// unmarshal
 			t, err := parser.UnmarshalJsonBytes[T](data)
 			if err != nil {
-				if raise_error_when_stream_data_not_match {
+				if raiseErrorWhenStreamDataNotMatch {
 					ch.WriteError(err)
 					break
 				}

@@ -20,18 +20,18 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// check if virtual environment exists
 	if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv")); err == nil {
 		// setup python interpreter path
-		python_path, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+		pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
 		if err != nil {
 			return fmt.Errorf("failed to find python: %s", err)
 		}
-		p.python_interpreter_path = python_path
+		p.pythonInterpreterPath = pythonPath
 		return nil
 	}
 
 	// execute init command, create a virtual environment
 	success := false
 
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("%s -m venv .venv", p.default_python_interpreter_path))
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("%s -m venv .venv", p.defaultPythonInterpreterPath))
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b
@@ -47,29 +47,29 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	}()
 
 	// try find python interpreter and pip
-	pip_path, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/pip"))
+	pipPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/pip"))
 	if err != nil {
 		return fmt.Errorf("failed to find pip: %s", err)
 	}
 
-	python_path, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
 	if err != nil {
 		return fmt.Errorf("failed to find python: %s", err)
 	}
 
-	if _, err := os.Stat(pip_path); err != nil {
+	if _, err := os.Stat(pipPath); err != nil {
 		return fmt.Errorf("failed to find pip: %s", err)
 	}
 
-	if _, err := os.Stat(python_path); err != nil {
+	if _, err := os.Stat(pythonPath); err != nil {
 		return fmt.Errorf("failed to find python: %s", err)
 	}
 
-	p.python_interpreter_path = python_path
+	p.pythonInterpreterPath = pythonPath
 
 	// try find requirements.txt
-	requirements_path := path.Join(p.State.WorkingPath, "requirements.txt")
-	if _, err := os.Stat(requirements_path); err != nil {
+	requirementsPath := path.Join(p.State.WorkingPath, "requirements.txt")
+	if _, err := os.Stat(requirementsPath); err != nil {
 		return fmt.Errorf("failed to find requirements.txt: %s", err)
 	}
 
@@ -77,7 +77,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	cmd = exec.CommandContext(ctx, pip_path, "install", "-r", "requirements.txt")
+	cmd = exec.CommandContext(ctx, pipPath, "install", "-r", "requirements.txt")
 	cmd.Dir = p.State.WorkingPath
 
 	// get stdout and stderr
@@ -107,7 +107,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	last_active_at := time.Now()
+	lastActiveAt := time.Now()
 
 	routine.Submit(func() {
 		defer wg.Done()
@@ -119,7 +119,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 				break
 			}
 			log.Info("installing %s - %s", p.Config.Identity(), string(buf[:n]))
-			last_active_at = time.Now()
+			lastActiveAt = time.Now()
 		}
 	})
 
@@ -130,7 +130,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		for {
 			n, err := stderr.Read(buf)
 			if err != nil && err != os.ErrClosed {
-				last_active_at = time.Now()
+				lastActiveAt = time.Now()
 				err_msg.WriteString(string(buf[:n]))
 				break
 			} else if err == os.ErrClosed {
@@ -139,7 +139,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 			if n > 0 {
 				err_msg.WriteString(string(buf[:n]))
-				last_active_at = time.Now()
+				lastActiveAt = time.Now()
 			}
 		}
 	})
@@ -152,7 +152,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 				break
 			}
 
-			if time.Since(last_active_at) > 60*time.Second {
+			if time.Since(lastActiveAt) > 60*time.Second {
 				cmd.Process.Kill()
 				err_msg.WriteString("init process exited due to long time no activity")
 				break

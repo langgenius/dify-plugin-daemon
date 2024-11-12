@@ -8,21 +8,21 @@ import (
 )
 
 func registerStdioHandler(
-	plugin_unique_identifier string, writer io.WriteCloser,
+	pluginUniqueIdentifier string, writer io.WriteCloser,
 	reader io.ReadCloser, err_reader io.ReadCloser,
 ) *stdioHolder {
 	id := uuid.New().String()
 
 	holder := &stdioHolder{
-		plugin_unique_identifier: plugin_unique_identifier,
-		writer:                   writer,
-		reader:                   reader,
-		err_reader:               err_reader,
-		id:                       id,
-		l:                        &sync.Mutex{},
+		pluginUniqueIdentifier: pluginUniqueIdentifier,
+		writer:                 writer,
+		reader:                 reader,
+		errReader:              err_reader,
+		id:                     id,
+		l:                      &sync.Mutex{},
 
-		wait_controller_chan_lock: &sync.Mutex{},
-		waiting_controller_chan:   make(chan bool),
+		waitControllerChanLock: &sync.Mutex{},
+		waitingControllerChan:  make(chan bool),
 	}
 
 	stdio_holder.Store(id, holder)
@@ -62,11 +62,11 @@ func OnError(id string, session_id string, listener func([]byte)) {
 		if holder, ok := v.(*stdioHolder); ok {
 			holder.l.Lock()
 			defer holder.l.Unlock()
-			if holder.error_listener == nil {
-				holder.error_listener = map[string]func([]byte){}
+			if holder.errorListener == nil {
+				holder.errorListener = map[string]func([]byte){}
 			}
 
-			holder.error_listener[session_id] = listener
+			holder.errorListener[session_id] = listener
 		}
 	}
 }
@@ -77,7 +77,7 @@ func removeStdioHandlerListener(id string, listener string) {
 			holder.l.Lock()
 			defer holder.l.Unlock()
 			delete(holder.listener, listener)
-			delete(holder.error_listener, listener)
+			delete(holder.errorListener, listener)
 		}
 	}
 }

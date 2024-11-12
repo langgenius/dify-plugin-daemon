@@ -8,8 +8,8 @@ import (
 func HandleAWSPluginTransaction(handler *transaction.AWSTransactionHandler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get session id from the context
-		session_id := c.Request.Header.Get("Dify-Plugin-Session-ID")
+		sessionId := c.Request.Header.Get("Dify-Plugin-Session-ID")
 
-		handler.Handle(c, session_id)
+		handler.Handle(c, sessionId)
 	}
 }

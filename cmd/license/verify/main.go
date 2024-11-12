@@ -30,13 +30,13 @@ func main() {
 	}
 
 	// decode
-	decoder_instance, err := decoder.NewZipPluginDecoder(plugin)
+	decoderInstance, err := decoder.NewZipPluginDecoder(plugin)
 	if err != nil {
 		log.Panic("failed to create plugin decoder , plugin path: %s, error: %v", in_path, err)
 	}
 
 	// sign plugin
-	err = decoder.VerifyPlugin(decoder_instance)
+	err = decoder.VerifyPlugin(decoderInstance)
 	if err != nil {
 		log.Panic("failed to verify plugin %v", err)
 	}

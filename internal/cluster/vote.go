@@ -15,13 +15,13 @@ import (
 func (c *Cluster) voteAddresses() error {
 	c.notifyVoting()
 	defer c.notifyVotingCompleted()
-	var total_errors error
-	add_error := func(err error) {
+	var totalErrors error
+	addError := func(err error) {
 		if err != nil {
-			if total_errors == nil {
-				total_errors = err
+			if totalErrors == nil {
+				totalErrors = err
 			} else {
-				total_errors = errors.Join(total_errors, err)
+				totalErrors = errors.Join(totalErrors, err)
 			}
 		}
 	}
@@ -32,14 +32,14 @@ func (c *Cluster) voteAddresses() error {
 		return nil
 	}
 
-	for node_id, node_status := range nodes {
+	for node_id, nodeStatus := range nodes {
 		if node_id == c.id {
 			continue
 		}
 
 		// vote for ips
-		ips_voting := make(map[string]bool)
-		for _, addr := range node_status.Addresses {
+		ipsVoting := make(map[string]bool)
+		for _, addr := range nodeStatus.Addresses {
 			// skip ips which have already been voted by current node in the last 5 minutes
 			for _, vote := range addr.Votes {
 				if vote.NodeID == c.id {
@@ -51,41 +51,41 @@ func (c *Cluster) voteAddresses() error {
 				}
 			}
 
-			ips_voting[addr.fullAddress()] = c.voteAddress(addr) == nil
+			ipsVoting[addr.fullAddress()] = c.voteAddress(addr) == nil
 		}
 
 		// lock the node status
 		if err := c.LockNodeStatus(node_id); err != nil {
-			add_error(err)
+			addError(err)
 			c.UnlockNodeStatus(node_id)
 			continue
 		}
 
 		// get the node status again
-		node_status, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, node_id)
+		nodeStatus, err := cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, node_id)
 		if err != nil {
-			add_error(err)
+			addError(err)
 			c.UnlockNodeStatus(node_id)
 			continue
 		}
 
 		// update the node status
-		for i, ip := range node_status.Addresses {
+		for i, ip := range nodeStatus.Addresses {
 			// update voting time
-			if success, ok := ips_voting[ip.fullAddress()]; ok {
+			if success, ok := ipsVoting[ip.fullAddress()]; ok {
 				// check if the ip has already voted
-				already_voted := false
+				alreadyVoted := false
 				for j, vote := range ip.Votes {
 					if vote.NodeID == c.id {
-						node_status.Addresses[i].Votes[j].VotedAt = time.Now().Unix()
-						node_status.Addresses[i].Votes[j].Failed = !success
-						already_voted = true
+						nodeStatus.Addresses[i].Votes[j].VotedAt = time.Now().Unix()
+						nodeStatus.Addresses[i].Votes[j].Failed = !success
+						alreadyVoted = true
 						break
 					}
 				}
 				// add a new vote
-				if !already_voted {
-					node_status.Addresses[i].Votes = append(node_status.Addresses[i].Votes, vote{
+				if !alreadyVoted {
+					nodeStatus.Addresses[i].Votes = append(nodeStatus.Addresses[i].Votes, vote{
 						NodeID:  c.id,
 						VotedAt: time.Now().Unix(),
 						Failed:  !success,
@@ -95,17 +95,17 @@ func (c *Cluster) voteAddresses() error {
 		}
 
 		// sync the node status
-		if err := cache.SetMapOneField(CLUSTER_STATUS_HASH_MAP_KEY, node_id, node_status); err != nil {
-			add_error(err)
+		if err := cache.SetMapOneField(CLUSTER_STATUS_HASH_MAP_KEY, node_id, nodeStatus); err != nil {
+			addError(err)
 		}
 
 		// unlock the node status
 		if err := c.UnlockNodeStatus(node_id); err != nil {
-			add_error(err)
+			addError(err)
 		}
 	}
 
-	return total_errors
+	return totalErrors
 }
 
 func (c *Cluster) voteAddress(addr address) error {
@@ -113,14 +113,14 @@ func (c *Cluster) voteAddress(addr address) error {
 		Status string `json:"status"`
 	}
 
-	healthcheck_endpoint, err := url.JoinPath(fmt.Sprintf("http://%s:%d", addr.Ip, addr.Port), "health/check")
+	healthcheckEndpoint, err := url.JoinPath(fmt.Sprintf("http://%s:%d", addr.Ip, addr.Port), "health/check")
 	if err != nil {
 		return err
 	}
 
 	resp, err := http_requests.GetAndParse[healthcheck](
 		http.DefaultClient,
-		healthcheck_endpoint,
+		healthcheckEndpoint,
 		http_requests.HttpWriteTimeout(500),
 		http_requests.HttpReadTimeout(500),
 	)
@@ -136,11 +136,11 @@ func (c *Cluster) voteAddress(addr address) error {
 	return nil
 }
 
-func (c *Cluster) SortIps(node_status node) []address {
+func (c *Cluster) SortIps(nodeStatus node) []address {
 	// sort by votes
-	sort.Slice(node_status.Addresses, func(i, j int) bool {
-		return len(node_status.Addresses[i].Votes) > len(node_status.Addresses[j].Votes)
+	sort.Slice(nodeStatus.Addresses, func(i, j int) bool {
+		return len(nodeStatus.Addresses[i].Votes) > len(nodeStatus.Addresses[j].Votes)
 	})
 
-	return node_status.Addresses
+	return nodeStatus.Addresses
 }

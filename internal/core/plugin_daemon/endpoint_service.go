@@ -27,7 +27,7 @@ func InvokeEndpoint(
 		return http.StatusInternalServerError, nil, nil, err
 	}
 
-	status_code := http.StatusContinue
+	statusCode := http.StatusContinue
 	headers := &http.Header{}
 	response := stream.NewStream[[]byte](128)
 	response.OnClose(func() {
@@ -43,7 +43,7 @@ func InvokeEndpoint(
 		}
 
 		if result.Status != nil {
-			status_code = int(*result.Status)
+			statusCode = int(*result.Status)
 		}
 
 		if result.Headers != nil {
@@ -83,5 +83,5 @@ func InvokeEndpoint(
 		response.Close()
 	}
 
-	return status_code, headers, response, nil
+	return statusCode, headers, response, nil
 }

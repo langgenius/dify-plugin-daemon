@@ -48,14 +48,14 @@ func TestConnectionKey(t *testing.T) {
 		return
 	}
 
-	connection_info, err := GetConnectionInfo(key)
+	connectionInfo, err := GetConnectionInfo(key)
 	if err != nil {
 		t.Errorf("get connection info failed: %v", err)
 		return
 	}
 
-	if connection_info.TenantId != "abc" {
-		t.Errorf("connection info is not the same: %v", connection_info)
+	if connectionInfo.TenantId != "abc" {
+		t.Errorf("connection info is not the same: %v", connectionInfo)
 		return
 	}
 }

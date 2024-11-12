@@ -51,32 +51,32 @@ func (c *Cluster) clusterLifetime() {
 		}
 		c.notifyClusterStopped()
 
-		close(c.notify_cluster_stopped_chan)
-		close(c.notify_become_master_chan)
-		close(c.notify_master_gc_chan)
-		close(c.notify_master_gc_completed_chan)
-		close(c.notify_voting_chan)
-		close(c.notify_voting_completed_chan)
-		close(c.notify_plugin_schedule_chan)
-		close(c.notify_plugin_schedule_completed_chan)
-		close(c.notify_node_update_chan)
-		close(c.notify_node_update_completed_chan)
+		close(c.notifyClusterStoppedChan)
+		close(c.notifyBecomeMasterChan)
+		close(c.notifyMasterGcChan)
+		close(c.notifyMasterGcCompletedChan)
+		close(c.notifyVotingChan)
+		close(c.notifyVotingCompletedChan)
+		close(c.notifyPluginScheduleChan)
+		close(c.notifyPluginScheduleCompletedChan)
+		close(c.notifyNodeUpdateChan)
+		close(c.notifyNodeUpdateCompletedChan)
 	}()
 
-	ticker_lock_master := time.NewTicker(MASTER_LOCKING_INTERVAL)
-	defer ticker_lock_master.Stop()
+	tickerLockMaster := time.NewTicker(MASTER_LOCKING_INTERVAL)
+	defer tickerLockMaster.Stop()
 
-	ticker_update_node_status := time.NewTicker(UPDATE_NODE_STATUS_INTERVAL)
-	defer ticker_update_node_status.Stop()
+	tickerUpdateNodeStatus := time.NewTicker(UPDATE_NODE_STATUS_INTERVAL)
+	defer tickerUpdateNodeStatus.Stop()
 
-	master_gc_ticker := time.NewTicker(MASTER_GC_INTERVAL)
-	defer master_gc_ticker.Stop()
+	masterGcTicker := time.NewTicker(MASTER_GC_INTERVAL)
+	defer masterGcTicker.Stop()
 
-	node_vote_ticker := time.NewTicker(NODE_VOTE_INTERVAL)
-	defer node_vote_ticker.Stop()
+	nodeVoteTicker := time.NewTicker(NODE_VOTE_INTERVAL)
+	defer nodeVoteTicker.Stop()
 
-	plugin_scheduler_ticker := time.NewTicker(PLUGIN_SCHEDULER_INTERVAL)
-	defer plugin_scheduler_ticker.Stop()
+	pluginSchedulerTicker := time.NewTicker(PLUGIN_SCHEDULER_INTERVAL)
+	defer pluginSchedulerTicker.Stop()
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling
 	routine.Submit(func() {
@@ -95,23 +95,23 @@ func (c *Cluster) clusterLifetime() {
 		}
 	})
 
-	new_node_chan, cancel := cache.Subscribe[newNodeEvent](CLUSTER_NEW_NODE_CHANNEL)
+	newNodeChan, cancel := cache.Subscribe[newNodeEvent](CLUSTER_NEW_NODE_CHANNEL)
 	defer cancel()
 
 	for {
 		select {
-		case <-ticker_lock_master.C:
-			if !c.i_am_master {
+		case <-tickerLockMaster.C:
+			if !c.iAmMaster {
 				// try lock the slot
 				if success, err := c.lockMaster(); err != nil {
 					log.Error("failed to lock the slot to be the master of the cluster: %s", err.Error())
 				} else if success {
-					c.i_am_master = true
+					c.iAmMaster = true
 					log.Info("current node has become the master of the cluster")
 					c.notifyBecomeMaster()
 				} else {
-					if c.i_am_master {
-						c.i_am_master = false
+					if c.iAmMaster {
+						c.iAmMaster = false
 						log.Info("current node has released the master slot")
 					}
 				}
@@ -121,12 +121,12 @@ func (c *Cluster) clusterLifetime() {
 					log.Error("failed to update the master: %s", err.Error())
 				}
 			}
-		case <-ticker_update_node_status.C:
+		case <-tickerUpdateNodeStatus.C:
 			if err := c.updateNodeStatus(); err != nil {
 				log.Error("failed to update the status of the node: %s", err.Error())
 			}
-		case <-master_gc_ticker.C:
-			if c.i_am_master {
+		case <-masterGcTicker.C:
+			if c.iAmMaster {
 				c.notifyMasterGC()
 				if err := c.autoGCNodes(); err != nil {
 					log.Error("failed to gc the nodes have already deactivated: %s", err.Error())
@@ -136,22 +136,22 @@ func (c *Cluster) clusterLifetime() {
 				}
 				c.notifyMasterGCCompleted()
 			}
-		case <-node_vote_ticker.C:
+		case <-nodeVoteTicker.C:
 			if err := c.voteAddresses(); err != nil {
 				log.Error("failed to vote the ips of the nodes: %s", err.Error())
 			}
-		case _, ok := <-new_node_chan:
+		case _, ok := <-newNodeChan:
 			if ok {
 				// vote for the new node
 				if err := c.voteAddresses(); err != nil {
 					log.Error("failed to vote the ips of the nodes: %s", err.Error())
 				}
 			}
-		case <-plugin_scheduler_ticker.C:
+		case <-pluginSchedulerTicker.C:
 			if err := c.schedulePlugins(); err != nil {
 				log.Error("failed to schedule the plugins: %s", err.Error())
 			}
-		case <-c.stop_chan:
+		case <-c.stopChan:
 			return
 		}
 	}

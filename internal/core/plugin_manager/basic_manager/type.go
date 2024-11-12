@@ -5,7 +5,7 @@ import "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/me
 type BasicPluginRuntime struct {
 	mediaManager *media_manager.MediaBucket
 
-	assets_ids []string
+	assetsIds []string
 }
 
 func NewBasicPluginRuntime(mediaManager *media_manager.MediaBucket) BasicPluginRuntime {

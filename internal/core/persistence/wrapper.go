@@ -7,41 +7,41 @@ import (
 )
 
 type wrapper struct {
-	oss                      oss.OSS
-	persistence_storage_path string
+	oss                    oss.OSS
+	persistenceStoragePath string
 }
 
-func NewWrapper(oss oss.OSS, persistence_storage_path string) *wrapper {
+func NewWrapper(oss oss.OSS, persistenceStoragePath string) *wrapper {
 	return &wrapper{
-		oss:                      oss,
-		persistence_storage_path: persistence_storage_path,
+		oss:                    oss,
+		persistenceStoragePath: persistenceStoragePath,
 	}
 }
 
 func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key string) string {
-	return path.Join(s.persistence_storage_path, tenant_id, plugin_checksum, key)
+	return path.Join(s.persistenceStoragePath, tenant_id, plugin_checksum, key)
 }
 
 func (s *wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
 	// save to s3
-	file_path := s.getFilePath(tenant_id, plugin_checksum, key)
-	return s.oss.Save(file_path, data)
+	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	return s.oss.Save(filePath, data)
 }
 
 func (s *wrapper) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
 	// load from s3
-	file_path := s.getFilePath(tenant_id, plugin_checksum, key)
-	return s.oss.Load(file_path)
+	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	return s.oss.Load(filePath)
 }
 
 func (s *wrapper) Delete(tenant_id string, plugin_checksum string, key string) error {
-	file_path := s.getFilePath(tenant_id, plugin_checksum, key)
-	return s.oss.Delete(file_path)
+	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	return s.oss.Delete(filePath)
 }
 
 func (s *wrapper) StateSize(tenant_id string, plugin_checksum string, key string) (int64, error) {
-	file_path := s.getFilePath(tenant_id, plugin_checksum, key)
-	state, err := s.oss.State(file_path)
+	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	state, err := s.oss.State(filePath)
 	if err != nil {
 		return 0, err
 	}

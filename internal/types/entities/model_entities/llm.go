@@ -59,12 +59,12 @@ type PromptMessage struct {
 func isPromptMessageContent(fl validator.FieldLevel) bool {
 	// only allow string or []PromptMessageContent
 	value := fl.Field().Interface()
-	switch value_type := value.(type) {
+	switch valueType := value.(type) {
 	case string:
 		return true
 	case []PromptMessageContent:
 		// validate the content
-		for _, content := range value_type {
+		for _, content := range valueType {
 			if err := validators.GlobalEntitiesValidator.Struct(content); err != nil {
 				return false
 			}
@@ -149,14 +149,14 @@ func (p *PromptMessage) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	if tool_calls, ok := raw["tool_calls"]; ok {
-		if err := json.Unmarshal(tool_calls, &p.ToolCalls); err != nil {
+	if toolCalls, ok := raw["tool_calls"]; ok {
+		if err := json.Unmarshal(toolCalls, &p.ToolCalls); err != nil {
 			return err
 		}
 	}
 
-	if tool_call_id, ok := raw["tool_call_id"]; ok {
-		if err := json.Unmarshal(tool_call_id, &p.ToolCallId); err != nil {
+	if toolCallId, ok := raw["tool_call_id"]; ok {
+		if err := json.Unmarshal(toolCallId, &p.ToolCallId); err != nil {
 			return err
 		}
 	}

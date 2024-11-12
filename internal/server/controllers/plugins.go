@@ -12,8 +12,8 @@ import (
 )
 
 func GetAsset(c *gin.Context) {
-	plugin_manager := plugin_manager.Manager()
-	asset, err := plugin_manager.GetAsset(c.Param("id"))
+	pluginManager := plugin_manager.Manager()
+	asset, err := pluginManager.GetAsset(c.Param("id"))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -25,33 +25,33 @@ func GetAsset(c *gin.Context) {
 
 func UploadPlugin(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		dify_pkg_file_header, err := c.FormFile("dify_pkg")
+		difyPkgFileHeader, err := c.FormFile("dify_pkg")
 		if err != nil {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
 			return
 		}
 
-		tenant_id := c.Param("tenant_id")
-		if tenant_id == "" {
+		tenantId := c.Param("tenant_id")
+		if tenantId == "" {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Tenant ID is required"))
 			return
 		}
 
-		if dify_pkg_file_header.Size > app.MaxPluginPackageSize {
+		if difyPkgFileHeader.Size > app.MaxPluginPackageSize {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-413, "File size exceeds the maximum limit"))
 			return
 		}
 
-		verify_signature := c.PostForm("verify_signature") == "true"
+		verifySignature := c.PostForm("verify_signature") == "true"
 
-		dify_pkg_file, err := dify_pkg_file_header.Open()
+		difyPkgFile, err := difyPkgFileHeader.Open()
 		if err != nil {
 			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
 			return
 		}
-		defer dify_pkg_file.Close()
+		defer difyPkgFile.Close()
 
-		c.JSON(http.StatusOK, service.UploadPluginFromPkg(app, c, tenant_id, dify_pkg_file, verify_signature))
+		c.JSON(http.StatusOK, service.UploadPluginFromPkg(app, c, tenantId, difyPkgFile, verifySignature))
 	}
 }
 

@@ -32,7 +32,7 @@ func InvokeDify(
 	}
 
 	// prepare invocation arguments
-	request_handle, err := prepareDifyInvocationArguments(
+	requestHandle, err := prepareDifyInvocationArguments(
 		session,
 		writer,
 		request,
@@ -42,22 +42,22 @@ func InvokeDify(
 	}
 
 	if invoke_from == access_types.PLUGIN_ACCESS_TYPE_MODEL {
-		request_handle.WriteError(fmt.Errorf("you can not invoke dify from %s", invoke_from))
-		request_handle.EndResponse()
+		requestHandle.WriteError(fmt.Errorf("you can not invoke dify from %s", invoke_from))
+		requestHandle.EndResponse()
 		return nil
 	}
 
 	// check permission
-	if err := checkPermission(declaration, request_handle); err != nil {
-		request_handle.WriteError(err)
-		request_handle.EndResponse()
+	if err := checkPermission(declaration, requestHandle); err != nil {
+		requestHandle.WriteError(err)
+		requestHandle.EndResponse()
 		return nil
 	}
 
 	// dispatch invocation task
 	routine.Submit(func() {
-		dispatchDifyInvocationTask(request_handle)
-		defer request_handle.EndResponse()
+		dispatchDifyInvocationTask(requestHandle)
+		defer requestHandle.EndResponse()
 	})
 
 	return nil
@@ -140,18 +140,18 @@ var (
 	}
 )
 
-func checkPermission(runtime *plugin_entities.PluginDeclaration, request_handle *BackwardsInvocation) error {
-	permission, ok := permissionMapping[request_handle.Type()]
+func checkPermission(runtime *plugin_entities.PluginDeclaration, requestHandle *BackwardsInvocation) error {
+	permission, ok := permissionMapping[requestHandle.Type()]
 	if !ok {
-		return fmt.Errorf("unsupported invoke type: %s", request_handle.Type())
+		return fmt.Errorf("unsupported invoke type: %s", requestHandle.Type())
 	}
 
-	permission_func, ok := permission["func"].(func(runtime *plugin_entities.PluginDeclaration) bool)
+	permissionFunc, ok := permission["func"].(func(runtime *plugin_entities.PluginDeclaration) bool)
 	if !ok {
-		return fmt.Errorf("permission function not found: %s", request_handle.Type())
+		return fmt.Errorf("permission function not found: %s", requestHandle.Type())
 	}
 
-	if !permission_func(runtime) {
+	if !permissionFunc(runtime) {
 		return fmt.Errorf(permission["error"].(string))
 	}
 
@@ -169,23 +169,23 @@ func prepareDifyInvocationArguments(
 	}
 
 	// get request id
-	backwards_request_id, ok := request["backwards_request_id"].(string)
+	backwardsRequestId, ok := request["backwards_request_id"].(string)
 	if !ok {
 		return nil, fmt.Errorf("invoke request missing request_id: %s", request)
 	}
 
 	// get request
-	detailed_request, ok := request["request"].(map[string]any)
+	detailedRequest, ok := request["request"].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("invoke request missing request: %s", request)
 	}
 
 	return NewBackwardsInvocation(
 		BackwardsInvocationType(typ),
-		backwards_request_id,
+		backwardsRequestId,
 		session,
 		writer,
-		detailed_request,
+		detailedRequest,
 	), nil
 }
 
@@ -246,21 +246,21 @@ func genericDispatchTask[T any](
 }
 
 func dispatchDifyInvocationTask(handle *BackwardsInvocation) {
-	request_data := handle.RequestData()
-	tenant_id, err := handle.TenantID()
+	requestData := handle.RequestData()
+	tenantId, err := handle.TenantID()
 	if err != nil {
 		handle.WriteError(fmt.Errorf("get tenant id failed: %s", err.Error()))
 		return
 	}
-	request_data["tenant_id"] = tenant_id
-	user_id, err := handle.UserID()
+	requestData["tenant_id"] = tenantId
+	userId, err := handle.UserID()
 	if err != nil {
 		handle.WriteError(fmt.Errorf("get user id failed: %s", err.Error()))
 		return
 	}
-	request_data["user_id"] = user_id
+	requestData["user_id"] = userId
 	typ := handle.Type()
-	request_data["type"] = typ
+	requestData["type"] = typ
 
 	for t, v := range dispatchMapping {
 		if t == handle.Type() {
@@ -397,13 +397,13 @@ func executeDifyInvocationAppTask(
 		return
 	}
 
-	user_id, err := handle.UserID()
+	userId, err := handle.UserID()
 	if err != nil {
 		handle.WriteError(fmt.Errorf("get user id failed: %s", err.Error()))
 		return
 	}
 
-	request.User = user_id
+	request.User = userId
 
 	for response.Next() {
 		value, err := response.Read()
@@ -457,16 +457,16 @@ func executeDifyInvocationStorageTask(
 		return
 	}
 
-	tenant_id, err := handle.TenantID()
+	tenantId, err := handle.TenantID()
 	if err != nil {
 		handle.WriteError(fmt.Errorf("get tenant id failed: %s", err.Error()))
 		return
 	}
 
-	plugin_id := handle.session.PluginUniqueIdentifier
+	pluginId := handle.session.PluginUniqueIdentifier
 
 	if request.Opt == dify_invocation.STORAGE_OPT_GET {
-		data, err := persistence.Load(tenant_id, plugin_id.PluginID(), request.Key)
+		data, err := persistence.Load(tenantId, pluginId.PluginID(), request.Key)
 		if err != nil {
 			handle.WriteError(fmt.Errorf("load data failed: %s", err.Error()))
 			return
@@ -500,14 +500,14 @@ func executeDifyInvocationStorageTask(
 			return
 		}
 
-		max_storage_size := int64(-1)
+		maxStorageSize := int64(-1)
 
 		storage := resource.Storage
 		if storage != nil {
-			max_storage_size = int64(storage.Size)
+			maxStorageSize = int64(storage.Size)
 		}
 
-		if err := persistence.Save(tenant_id, plugin_id.PluginID(), max_storage_size, request.Key, data); err != nil {
+		if err := persistence.Save(tenantId, pluginId.PluginID(), maxStorageSize, request.Key, data); err != nil {
 			handle.WriteError(fmt.Errorf("save data failed: %s", err.Error()))
 			return
 		}
@@ -516,7 +516,7 @@ func executeDifyInvocationStorageTask(
 			"data": "ok",
 		})
 	} else if request.Opt == dify_invocation.STORAGE_OPT_DEL {
-		if err := persistence.Delete(tenant_id, plugin_id.PluginID(), request.Key); err != nil {
+		if err := persistence.Delete(tenantId, pluginId.PluginID(), request.Key); err != nil {
 			handle.WriteError(fmt.Errorf("delete data failed: %s", err.Error()))
 			return
 		}

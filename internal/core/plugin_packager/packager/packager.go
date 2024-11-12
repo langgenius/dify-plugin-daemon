@@ -26,22 +26,22 @@ func (p *Packager) Pack() ([]byte, error) {
 		return nil, err
 	}
 
-	zip_buffer := new(bytes.Buffer)
-	zip_writer := zip.NewWriter(zip_buffer)
+	zipBuffer := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(zipBuffer)
 
 	err = p.decoder.Walk(func(filename, dir string) error {
-		full_path := filepath.Join(dir, filename)
-		file, err := p.decoder.ReadFile(full_path)
+		fullPath := filepath.Join(dir, filename)
+		file, err := p.decoder.ReadFile(fullPath)
 		if err != nil {
 			return err
 		}
 
-		zip_file, err := zip_writer.Create(full_path)
+		zipFile, err := zipWriter.Create(fullPath)
 		if err != nil {
 			return err
 		}
 
-		_, err = zip_file.Write(file)
+		_, err = zipFile.Write(file)
 		if err != nil {
 			return err
 		}
@@ -53,10 +53,10 @@ func (p *Packager) Pack() ([]byte, error) {
 		return nil, err
 	}
 
-	err = zip_writer.Close()
+	err = zipWriter.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	return zip_buffer.Bytes(), nil
+	return zipBuffer.Bytes(), nil
 }

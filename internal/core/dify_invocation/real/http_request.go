@@ -16,7 +16,7 @@ import (
 func Request[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*T, error) {
 	options = append(options,
 		http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Key": i.dify_inner_api_key,
+			"X-Inner-Api-Key": i.difyInnerApiKey,
 		}),
 		http_requests.HttpWriteTimeout(5000),
 		http_requests.HttpReadTimeout(240000),
@@ -47,7 +47,7 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 ) {
 	options = append(
 		options, http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Key": i.dify_inner_api_key,
+			"X-Inner-Api-Key": i.difyInnerApiKey,
 		}),
 		http_requests.HttpWriteTimeout(5000),
 		http_requests.HttpReadTimeout(240000),
@@ -58,39 +58,39 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		return nil, err
 	}
 
-	new_response := stream.NewStream[T](1024)
-	new_response.OnClose(func() {
+	newResponse := stream.NewStream[T](1024)
+	newResponse.OnClose(func() {
 		response.Close()
 	})
 	routine.Submit(func() {
-		defer new_response.Close()
+		defer newResponse.Close()
 		for response.Next() {
 			t, err := response.Read()
 			if err != nil {
-				new_response.WriteError(err)
+				newResponse.WriteError(err)
 				break
 			}
 
 			if t.Error != "" {
-				new_response.WriteError(fmt.Errorf("request failed: %s", t.Error))
+				newResponse.WriteError(fmt.Errorf("request failed: %s", t.Error))
 				break
 			}
 
 			if t.Data == nil {
-				new_response.WriteError(fmt.Errorf("data is nil"))
+				newResponse.WriteError(fmt.Errorf("data is nil"))
 				break
 			}
 
 			if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
-				new_response.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
+				newResponse.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
 				break
 			}
 
-			new_response.Write(*t.Data)
+			newResponse.Write(*t.Data)
 		}
 	})
 
-	return new_response, nil
+	return newResponse, nil
 }
 
 func (i *RealBackwardsInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {

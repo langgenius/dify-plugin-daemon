@@ -79,54 +79,54 @@ func (p *Packager) Pack() (*os.File, error) {
 		}
 	}()
 
-	gzip_writer, err := gzip.NewWriterLevel(tmpfile, gzip.BestCompression)
+	gzipWriter, err := gzip.NewWriterLevel(tmpfile, gzip.BestCompression)
 	if err != nil {
 		return nil, err
 	}
-	defer gzip_writer.Close()
+	defer gzipWriter.Close()
 
-	tar_writer := tar.NewWriter(gzip_writer)
-	defer tar_writer.Close()
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
 
 	if err := p.decoder.Walk(func(filename, dir string) error {
 		if strings.ToLower(filename) == "dockerfile" {
 			return errors.New("dockerfile is not allowed to be in the plugin directory")
 		}
 
-		full_filename := path.Join(dir, filename)
+		fullFilename := path.Join(dir, filename)
 
-		state, err := p.decoder.Stat(full_filename)
+		state, err := p.decoder.Stat(fullFilename)
 		if err != nil {
 			return err
 		}
 
 		if state.Size() > 1024*1024*10 {
 			// 10MB, 1 single file is too large
-			return fmt.Errorf("file size is too large: %s, max 10MB", full_filename)
+			return fmt.Errorf("file size is too large: %s, max 10MB", fullFilename)
 		}
 
-		tar_header, err := tar.FileInfoHeader(state, full_filename)
+		tarHeader, err := tar.FileInfoHeader(state, fullFilename)
 		if err != nil {
 			return err
 		}
-		tar_header.Name = full_filename
+		tarHeader.Name = fullFilename
 
 		// write tar header
-		if err := tar_writer.WriteHeader(tar_header); err != nil {
+		if err := tarWriter.WriteHeader(tarHeader); err != nil {
 			return err
 		}
 
 		// write file content
-		file_reader, err := p.decoder.FileReader(full_filename)
+		fileReader, err := p.decoder.FileReader(fullFilename)
 		if err != nil {
 			return err
 		}
-		if _, err := io.Copy(tar_writer, file_reader); err != nil {
-			file_reader.Close()
+		if _, err := io.Copy(tarWriter, fileReader); err != nil {
+			fileReader.Close()
 			return err
 		}
 		// release resources
-		file_reader.Close()
+		fileReader.Close()
 
 		return nil
 	}); err != nil {
@@ -139,7 +139,7 @@ func (p *Packager) Pack() (*os.File, error) {
 		return nil, err
 	}
 
-	tar_header, err := tar.FileInfoHeader(&dockerFileInfo{
+	tarHeader, err := tar.FileInfoHeader(&dockerFileInfo{
 		size: int64(len(dockerfile)),
 	}, "Dockerfile")
 	if err != nil {
@@ -147,17 +147,17 @@ func (p *Packager) Pack() (*os.File, error) {
 	}
 
 	// create a fake dockerfile stat
-	if err := tar_writer.WriteHeader(tar_header); err != nil {
+	if err := tarWriter.WriteHeader(tarHeader); err != nil {
 		return nil, err
 	}
 
-	if _, err := tar_writer.Write([]byte(dockerfile)); err != nil {
+	if _, err := tarWriter.Write([]byte(dockerfile)); err != nil {
 		return nil, err
 	}
 
 	// close writers to flush data
-	tar_writer.Close()
-	gzip_writer.Close()
+	tarWriter.Close()
+	gzipWriter.Close()
 
 	tmpfile.Seek(0, io.SeekStart)
 

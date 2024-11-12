@@ -43,49 +43,49 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		`
 	)
 
-	prompt_message, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(system_message))
+	promptMessage, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(system_message))
 	if err != nil {
 		t.Error(err)
 	}
-	if prompt_message.Role != "system" {
+	if promptMessage.Role != "system" {
 		t.Error("role is not system")
 	}
 
-	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(user_message))
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(user_message))
 	if err != nil {
 		t.Error(err)
 	}
-	if prompt_message.Role != "user" {
+	if promptMessage.Role != "user" {
 		t.Error("role is not user")
 	}
 
-	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(assistant_message))
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(assistant_message))
 	if err != nil {
 		t.Error(err)
 	}
-	if prompt_message.Role != "assistant" {
+	if promptMessage.Role != "assistant" {
 		t.Error("role is not assistant")
 	}
 
-	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(image_message))
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(image_message))
 	if err != nil {
 		t.Error(err)
 	}
-	if prompt_message.Role != "user" {
+	if promptMessage.Role != "user" {
 		t.Error("role is not user")
 	}
-	if prompt_message.Content.([]PromptMessageContent)[0].Type != "image" {
+	if promptMessage.Content.([]PromptMessageContent)[0].Type != "image" {
 		t.Error("type is not image")
 	}
 
-	prompt_message, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(tool_message))
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(tool_message))
 	if err != nil {
 		t.Error(err)
 	}
-	if prompt_message.Role != "tool" {
+	if promptMessage.Role != "tool" {
 		t.Error("role is not tool")
 	}
-	if prompt_message.ToolCallId != "123" {
+	if promptMessage.ToolCallId != "123" {
 		t.Error("tool call id is not 123")
 	}
 }

@@ -45,11 +45,11 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 		return
 	}
 
-	connect_time := 240 * time.Second
+	connectTime := 240 * time.Second
 
 	// create a new http request
-	ctx, cancel := context.WithTimeout(context.Background(), connect_time)
-	time.AfterFunc(connect_time, cancel)
+	ctx, cancel := context.WithTimeout(context.Background(), connectTime)
+	time.AfterFunc(connectTime, cancel)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))
 	if err != nil {
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
@@ -83,8 +83,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 
 		// write to data stream
 		scanner := bufio.NewScanner(response.Body)
-		session_alive := true
-		for scanner.Scan() && session_alive {
+		sessionAlive := true
+		for scanner.Scan() && sessionAlive {
 			bytes := scanner.Bytes()
 			if len(bytes) == 0 {
 				continue
@@ -93,7 +93,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 			plugin_entities.ParsePluginUniversalEvent(
 				bytes,
 				func(session_id string, data []byte) {
-					session_message, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
+					sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 					if err != nil {
 						l.Send(plugin_entities.SessionMessage{
 							Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
@@ -102,9 +102,9 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 								Message:   fmt.Sprintf("failed to parse session message %s, err: %v", bytes, err),
 							}),
 						})
-						session_alive = false
+						sessionAlive = false
 					}
-					l.Send(session_message)
+					l.Send(sessionMessage)
 				},
 				func() {},
 				func(err string) {

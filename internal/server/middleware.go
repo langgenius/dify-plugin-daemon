@@ -27,22 +27,22 @@ func CheckingKey(key string) gin.HandlerFunc {
 
 func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		plugin_id := ctx.Request.Header.Get(constants.X_PLUGIN_ID)
-		if plugin_id == "" {
+		pluginId := ctx.Request.Header.Get(constants.X_PLUGIN_ID)
+		if pluginId == "" {
 			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, plugin_id is required"})
 			return
 		}
 
-		tenant_id := ctx.Param("tenant_id")
-		if tenant_id == "" {
+		tenantId := ctx.Param("tenant_id")
+		if tenantId == "" {
 			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, tenant_id is required"})
 			return
 		}
 
 		// fetch plugin installation
 		installation, err := db.GetOne[models.PluginInstallation](
-			db.Equal("tenant_id", tenant_id),
-			db.Equal("plugin_id", plugin_id),
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
 		)
 		if err != nil {
 			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
@@ -65,21 +65,21 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// get plugin unique identifier
-		identity_any, ok := ctx.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
+		identityAny, ok := ctx.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
 		if !ok {
 			ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error, plugin unique identifier not found"})
 			return
 		}
 
-		identity, ok := identity_any.(plugin_entities.PluginUniqueIdentifier)
+		identity, ok := identityAny.(plugin_entities.PluginUniqueIdentifier)
 		if !ok {
 			ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error, failed to parse plugin unique identifier"})
 			return
 		}
 
 		// check if plugin in current node
-		if ok, original_error := app.cluster.IsPluginOnCurrentNode(identity); !ok {
-			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, original_error)
+		if ok, originalError := app.cluster.IsPluginOnCurrentNode(identity); !ok {
+			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, originalError)
 			ctx.Abort()
 		} else {
 			ctx.Next()
@@ -90,27 +90,27 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 func (app *App) redirectPluginInvokeByPluginIdentifier(
 	ctx *gin.Context,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	original_error error,
+	originalError error,
 ) {
 	// try find the correct node
 	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_unique_identifier.String())
 	if err != nil {
 		ctx.AbortWithStatusJSON(
 			500,
-			gin.H{"error": "Internal server error, " + original_error.Error() + ", " + err.Error()},
+			gin.H{"error": "Internal server error, " + originalError.Error() + ", " + err.Error()},
 		)
 		return
 	} else if len(nodes) == 0 {
 		ctx.AbortWithStatusJSON(
 			404,
-			gin.H{"error": "No available node, " + original_error.Error()},
+			gin.H{"error": "No available node, " + originalError.Error()},
 		)
 		return
 	}
 
 	// redirect to the correct node
-	node_id := nodes[0]
-	status_code, header, body, err := app.cluster.RedirectRequest(node_id, ctx.Request)
+	nodeId := nodes[0]
+	statusCode, header, body, err := app.cluster.RedirectRequest(nodeId, ctx.Request)
 	if err != nil {
 		log.Error("redirect request failed: %s", err.Error())
 		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
@@ -118,7 +118,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	}
 
 	// set status code
-	ctx.Writer.WriteHeader(status_code)
+	ctx.Writer.WriteHeader(statusCode)
 
 	// set header
 	for key, values := range header {

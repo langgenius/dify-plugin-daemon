@@ -4,12 +4,12 @@ import "github.com/langgenius/dify-plugin-daemon/internal/service/install_servic
 
 func (plugin *RemotePluginRuntime) Register() error {
 	_, installation, err := install_service.InstallPlugin(
-		plugin.tenant_id, "", plugin, "remote", map[string]any{},
+		plugin.tenantId, "", plugin, "remote", map[string]any{},
 	)
 	if err != nil {
 		return err
 	}
-	plugin.installation_id = installation.ID
+	plugin.installationId = installation.ID
 	return nil
 }
 
@@ -19,8 +19,8 @@ func (plugin *RemotePluginRuntime) Unregister() error {
 		return err
 	}
 	return install_service.UninstallPlugin(
-		plugin.tenant_id,
-		plugin.installation_id,
+		plugin.tenantId,
+		plugin.installationId,
 		identity,
 		plugin.Type(),
 	)

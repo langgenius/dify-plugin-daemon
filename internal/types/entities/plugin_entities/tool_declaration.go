@@ -169,28 +169,28 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	// check if credentials_schema is a map
 	if temp.CredentialsSchema.Kind != yaml.MappingNode {
 		// not a map, convert it into array
-		credentials_schema := make([]ProviderConfig, 0)
-		if err := temp.CredentialsSchema.Decode(&credentials_schema); err != nil {
+		credentialsSchema := make([]ProviderConfig, 0)
+		if err := temp.CredentialsSchema.Decode(&credentialsSchema); err != nil {
 			return err
 		}
-		t.CredentialsSchema = credentials_schema
+		t.CredentialsSchema = credentialsSchema
 	} else if temp.CredentialsSchema.Kind == yaml.MappingNode {
-		credentials_schema := make([]ProviderConfig, 0, len(temp.CredentialsSchema.Content)/2)
-		current_key := ""
-		current_value := &ProviderConfig{}
+		credentialsSchema := make([]ProviderConfig, 0, len(temp.CredentialsSchema.Content)/2)
+		currentKey := ""
+		currentValue := &ProviderConfig{}
 		for _, item := range temp.CredentialsSchema.Content {
 			if item.Kind == yaml.ScalarNode {
-				current_key = item.Value
+				currentKey = item.Value
 			} else if item.Kind == yaml.MappingNode {
-				current_value = &ProviderConfig{}
-				if err := item.Decode(current_value); err != nil {
+				currentValue = &ProviderConfig{}
+				if err := item.Decode(currentValue); err != nil {
 					return err
 				}
-				current_value.Name = current_key
-				credentials_schema = append(credentials_schema, *current_value)
+				currentValue.Name = currentKey
+				credentialsSchema = append(credentialsSchema, *currentValue)
 			}
 		}
-		t.CredentialsSchema = credentials_schema
+		t.CredentialsSchema = credentialsSchema
 	}
 
 	// unmarshal tools
@@ -243,11 +243,11 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 	var raw_message map[string]json.RawMessage
 	if err := json.Unmarshal(temp.CredentialsSchema, &raw_message); err == nil {
 		// It's an object
-		credentials_schema_object := make(map[string]ProviderConfig)
-		if err := json.Unmarshal(temp.CredentialsSchema, &credentials_schema_object); err != nil {
+		credentialsSchemaObject := make(map[string]ProviderConfig)
+		if err := json.Unmarshal(temp.CredentialsSchema, &credentialsSchemaObject); err != nil {
 			return fmt.Errorf("failed to unmarshal credentials_schema as object: %v", err)
 		}
-		for _, value := range credentials_schema_object {
+		for _, value := range credentialsSchemaObject {
 			t.CredentialsSchema = append(t.CredentialsSchema, value)
 		}
 	} else {

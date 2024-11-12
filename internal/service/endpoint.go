@@ -28,7 +28,7 @@ import (
 func Endpoint(
 	ctx *gin.Context,
 	endpoint *models.Endpoint,
-	plugin_installation *models.PluginInstallation,
+	pluginInstallation *models.PluginInstallation,
 	path string,
 ) {
 	if !endpoint.Enabled {
@@ -46,7 +46,7 @@ func Endpoint(
 		ctx.JSON(500, gin.H{"error": err.Error()})
 	}
 
-	identifier, err := plugin_entities.NewPluginUniqueIdentifier(plugin_installation.PluginUniqueIdentifier)
+	identifier, err := plugin_entities.NewPluginUniqueIdentifier(pluginInstallation.PluginUniqueIdentifier)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "Invalid plugin identifier, " + err.Error()})
 		return
@@ -61,8 +61,8 @@ func Endpoint(
 	}
 
 	// fetch endpoint declaration
-	endpoint_declaration := runtime.Configuration().Endpoint
-	if endpoint_declaration == nil {
+	endpointDeclaration := runtime.Configuration().Endpoint
+	if endpointDeclaration == nil {
 		ctx.JSON(404, gin.H{"error": "endpoint declaration not found"})
 		return
 	}
@@ -79,7 +79,7 @@ func Endpoint(
 			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  endpoint.ID,
 			Data:      endpoint.Settings,
-			Config:    endpoint_declaration.Settings,
+			Config:    endpointDeclaration.Settings,
 		},
 	})
 
@@ -108,7 +108,7 @@ func Endpoint(
 
 	session.BindRuntime(runtime)
 
-	status_code, headers, response, err := plugin_daemon.InvokeEndpoint(
+	statusCode, headers, response, err := plugin_daemon.InvokeEndpoint(
 		session, &requests.RequestInvokeEndpoint{
 			RawHttpRequest: hex.EncodeToString(buffer.Bytes()),
 			Settings:       settings,
@@ -123,7 +123,7 @@ func Endpoint(
 	done := make(chan bool)
 	closed := new(int32)
 
-	ctx.Status(status_code)
+	ctx.Status(statusCode)
 	for k, v := range *headers {
 		if len(v) > 0 {
 			ctx.Writer.Header().Set(k, v[0])
@@ -211,7 +211,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 
 	// decrypt settings
 	for i, endpoint := range endpoints {
-		plugin_installation, err := db.GetOne[models.PluginInstallation](
+		pluginInstallation, err := db.GetOne[models.PluginInstallation](
 			db.Equal("plugin_id", endpoint.PluginID),
 			db.Equal("tenant_id", tenant_id),
 		)
@@ -219,23 +219,23 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
 		}
 
-		plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
-			plugin_installation.PluginUniqueIdentifier,
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			pluginInstallation.PluginUniqueIdentifier,
 		)
 		if err != nil {
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
 		}
 
-		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
 		if err != nil {
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to get plugin declaration: %v", err))
 		}
 
-		if plugin_declaration.Endpoint == nil {
+		if pluginDeclaration.Endpoint == nil {
 			return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 		}
 
-		decrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
 				UserId:   "",
@@ -246,7 +246,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      endpoint.Settings,
-				Config:    plugin_declaration.Endpoint.Settings,
+				Config:    pluginDeclaration.Endpoint.Settings,
 			},
 		})
 		if err != nil {
@@ -254,10 +254,10 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 		}
 
 		// mask settings
-		decrypted_settings = encryption.MaskConfigCredentials(decrypted_settings, plugin_declaration.Endpoint.Settings)
+		decryptedSettings = encryption.MaskConfigCredentials(decryptedSettings, pluginDeclaration.Endpoint.Settings)
 
-		endpoint.Settings = decrypted_settings
-		endpoint.Declaration = plugin_declaration.Endpoint
+		endpoint.Settings = decryptedSettings
+		endpoint.Declaration = pluginDeclaration.Endpoint
 
 		endpoints[i] = endpoint
 	}
@@ -284,7 +284,7 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 	// decrypt settings
 	for i, endpoint := range endpoints {
 		// get installation
-		plugin_installation, err := db.GetOne[models.PluginInstallation](
+		pluginInstallation, err := db.GetOne[models.PluginInstallation](
 			db.Equal("plugin_id", plugin_id),
 			db.Equal("tenant_id", tenant_id),
 		)
@@ -292,20 +292,20 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
 		}
 
-		plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
-			plugin_installation.PluginUniqueIdentifier,
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			pluginInstallation.PluginUniqueIdentifier,
 		)
 
 		if err != nil {
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
 		}
 
-		plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
 		if err != nil {
 			return entities.NewErrorResponse(-500, fmt.Sprintf("failed to get plugin declaration: %v", err))
 		}
 
-		decrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
+		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
 				UserId:   "",
@@ -316,7 +316,7 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      endpoint.Settings,
-				Config:    plugin_declaration.Endpoint.Settings,
+				Config:    pluginDeclaration.Endpoint.Settings,
 			},
 		})
 		if err != nil {
@@ -324,10 +324,10 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		}
 
 		// mask settings
-		decrypted_settings = encryption.MaskConfigCredentials(decrypted_settings, plugin_declaration.Endpoint.Settings)
+		decryptedSettings = encryption.MaskConfigCredentials(decryptedSettings, pluginDeclaration.Endpoint.Settings)
 
-		endpoint.Settings = decrypted_settings
-		endpoint.Declaration = plugin_declaration.Endpoint
+		endpoint.Settings = decryptedSettings
+		endpoint.Declaration = pluginDeclaration.Endpoint
 
 		endpoints[i] = endpoint
 	}

@@ -24,13 +24,13 @@ type GetCachePayload[T any] struct {
 }
 
 func joinCacheKey(typename string, pairs []KeyValuePair) string {
-	cache_key := CACHE_PREFIX + ":" + typename
+	cacheKey := CACHE_PREFIX + ":" + typename
 	for _, kv := range pairs {
-		cache_key += ":" + kv.Key + ":"
+		cacheKey += ":" + kv.Key + ":"
 		// convert value to string
-		cache_key += fmt.Sprintf("%v", kv.Val)
+		cacheKey += fmt.Sprintf("%v", kv.Val)
 	}
-	return cache_key
+	return cacheKey
 }
 
 func GetCache[T any](p *GetCachePayload[T]) (*T, error) {
@@ -38,10 +38,10 @@ func GetCache[T any](p *GetCachePayload[T]) (*T, error) {
 	typename := reflect.TypeOf(t).String()
 
 	// join cache key
-	cache_key := joinCacheKey(typename, p.CacheKey)
+	cacheKey := joinCacheKey(typename, p.CacheKey)
 
 	// get cache
-	val, err := cache.Get[T](cache_key)
+	val, err := cache.Get[T](cacheKey)
 	if err == nil {
 		return val, nil
 	}
@@ -54,7 +54,7 @@ func GetCache[T any](p *GetCachePayload[T]) (*T, error) {
 		}
 
 		// set cache
-		err = cache.Store(cache_key, val, CACHE_EXPIRE_TIME)
+		err = cache.Store(cacheKey, val, CACHE_EXPIRE_TIME)
 		if err != nil {
 			return nil, err
 		}
@@ -75,10 +75,10 @@ func DeleteCache[T any](p *DeleteCachePayload[T]) error {
 	typename := reflect.TypeOf(t).String()
 
 	// join cache key
-	cache_key := joinCacheKey(typename, p.CacheKey)
+	cacheKey := joinCacheKey(typename, p.CacheKey)
 
 	// delete cache
-	err := cache.Del(cache_key)
+	err := cache.Del(cacheKey)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func UpdateCache[T any](p *UpdateCachePayload[T]) error {
 	typename := reflect.TypeOf(t).String()
 
 	// join cache key
-	cache_key := joinCacheKey(typename, p.CacheKey)
+	cacheKey := joinCacheKey(typename, p.CacheKey)
 
 	err := p.Update()
 	if err != nil {
@@ -109,7 +109,7 @@ func UpdateCache[T any](p *UpdateCachePayload[T]) error {
 	}
 
 	// delete cache
-	err = cache.Del(cache_key)
+	err = cache.Del(cacheKey)
 	if err != nil {
 		return err
 	}

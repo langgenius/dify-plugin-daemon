@@ -76,7 +76,7 @@ func (r *RemotePluginServer) Launch() error {
 
 	err := gnet.Run(
 		r.server, r.server.addr, gnet.WithMulticore(r.server.multicore),
-		gnet.WithNumEventLoop(r.server.num_loops),
+		gnet.WithNumEventLoop(r.server.numLoops),
 	)
 
 	if err != nil {
@@ -104,15 +104,15 @@ func NewRemotePluginServer(config *app.Config, media_manager *media_manager.Medi
 		addr:         addr,
 		port:         config.PluginRemoteInstallingPort,
 		multicore:    multicore,
-		num_loops:    config.PluginRemoteInstallServerEventLoopNums,
+		numLoops:     config.PluginRemoteInstallServerEventLoopNums,
 		response:     response,
 
-		plugins:      make(map[int]*RemotePluginRuntime),
-		plugins_lock: &sync.RWMutex{},
+		plugins:     make(map[int]*RemotePluginRuntime),
+		pluginsLock: &sync.RWMutex{},
 
-		shutdown_chan: make(chan bool),
+		shutdownChan: make(chan bool),
 
-		max_conn: int32(config.PluginRemoteInstallingMaxConn),
+		maxConn: int32(config.PluginRemoteInstallingMaxConn),
 	}
 
 	manager := &RemotePluginServer{

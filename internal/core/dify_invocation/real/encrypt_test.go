@@ -63,7 +63,7 @@ func TestInvokeEncrypt(t *testing.T) {
 		t.Errorf("GetRandomPort failed: %v", err)
 	}
 
-	http_invoked := false
+	httpInvoked := false
 
 	server.POST("/inner/api/invoke/encrypt", func(ctx *gin.Context) {
 		data := make(map[string]any)
@@ -75,7 +75,7 @@ func TestInvokeEncrypt(t *testing.T) {
 			t.Errorf("data[key] should be `value`, but got %v", data["data"].(map[string]any)["key"])
 		}
 
-		http_invoked = true
+		httpInvoked = true
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"data": map[string]any{
@@ -135,7 +135,7 @@ func TestInvokeEncrypt(t *testing.T) {
 		}
 	}
 
-	if !http_invoked {
+	if !httpInvoked {
 		t.Errorf("http_invoked should be true")
 	}
 }

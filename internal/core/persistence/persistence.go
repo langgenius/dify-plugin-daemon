@@ -11,7 +11,7 @@ import (
 )
 
 type Persistence struct {
-	max_storage_size int64
+	maxStorageSize int64
 
 	storage PersistenceStorage
 }
@@ -24,27 +24,27 @@ func (c *Persistence) getCacheKey(tenant_id string, plugin_id string, key string
 	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenant_id, plugin_id, key)
 }
 
-func (c *Persistence) Save(tenant_id string, plugin_id string, max_size int64, key string, data []byte) error {
+func (c *Persistence) Save(tenant_id string, plugin_id string, maxSize int64, key string, data []byte) error {
 	if len(key) > 64 {
 		return fmt.Errorf("key length must be less than 64 characters")
 	}
 
-	if max_size == -1 {
-		max_size = c.max_storage_size
+	if maxSize == -1 {
+		maxSize = c.maxStorageSize
 	}
 
 	if err := c.storage.Save(tenant_id, plugin_id, key, data); err != nil {
 		return err
 	}
 
-	allocated_size := int64(len(data))
+	allocatedSize := int64(len(data))
 
 	storage, err := db.GetOne[models.TenantStorage](
 		db.Equal("tenant_id", tenant_id),
 		db.Equal("plugin_id", plugin_id),
 	)
 	if err != nil {
-		if allocated_size > c.max_storage_size || allocated_size > max_size {
+		if allocatedSize > c.maxStorageSize || allocatedSize > maxSize {
 			return fmt.Errorf("allocated size is greater than max storage size")
 		}
 
@@ -52,7 +52,7 @@ func (c *Persistence) Save(tenant_id string, plugin_id string, max_size int64, k
 			storage = models.TenantStorage{
 				TenantID: tenant_id,
 				PluginID: plugin_id,
-				Size:     allocated_size,
+				Size:     allocatedSize,
 			}
 			if err := db.Create(&storage); err != nil {
 				return err
@@ -61,7 +61,7 @@ func (c *Persistence) Save(tenant_id string, plugin_id string, max_size int64, k
 			return err
 		}
 	} else {
-		if allocated_size+storage.Size > max_size || allocated_size+storage.Size > c.max_storage_size {
+		if allocatedSize+storage.Size > maxSize || allocatedSize+storage.Size > c.maxStorageSize {
 			return fmt.Errorf("allocated size is greater than max storage size")
 		}
 
@@ -69,7 +69,7 @@ func (c *Persistence) Save(tenant_id string, plugin_id string, max_size int64, k
 			db.Model(&models.TenantStorage{}),
 			db.Equal("tenant_id", tenant_id),
 			db.Equal("plugin_id", plugin_id),
-			db.Inc(map[string]int64{"size": allocated_size}),
+			db.Inc(map[string]int64{"size": allocatedSize}),
 		)
 		if err != nil {
 			return err

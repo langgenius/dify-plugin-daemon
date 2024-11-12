@@ -59,19 +59,19 @@ func TestLaunchAndClosePluginServer(t *testing.T) {
 		return
 	}
 
-	done_chan := make(chan error)
+	doneChan := make(chan error)
 
 	go func() {
 		err := server.Launch()
 		if err != nil {
-			done_chan <- err
+			doneChan <- err
 		}
 	}()
 
 	timer := time.NewTimer(time.Second * 5)
 
 	select {
-	case err := <-done_chan:
+	case err := <-doneChan:
 		t.Errorf("failed to launch plugin server: %s", err.Error())
 		return
 	case <-timer.C:
@@ -90,17 +90,17 @@ func TestAcceptConnection(t *testing.T) {
 		return
 	}
 
-	tenant_id := uuid.New().String()
+	tenantId := uuid.New().String()
 
 	defer cache.Close()
 	key, err := GetConnectionKey(ConnectionInfo{
-		TenantId: tenant_id,
+		TenantId: tenantId,
 	})
 	if err != nil {
 		t.Errorf("failed to get connection key: %s", err.Error())
 		return
 	}
-	defer ClearConnectionKey(tenant_id)
+	defer ClearConnectionKey(tenantId)
 
 	server, port := preparePluginServer(t)
 	if server == nil {
@@ -111,8 +111,8 @@ func TestAcceptConnection(t *testing.T) {
 		server.Launch()
 	}()
 
-	got_connection := false
-	var connection_err error
+	gotConnection := false
+	var connectionErr error
 
 	go func() {
 		for server.Next() {
@@ -122,18 +122,18 @@ func TestAcceptConnection(t *testing.T) {
 				return
 			}
 
-			remote_runtime := runtime.(*RemotePluginRuntime)
+			remoteRuntime := runtime.(*RemotePluginRuntime)
 
-			config := remote_runtime.Configuration()
+			config := remoteRuntime.Configuration()
 			if config.Name != "ci_test" {
-				connection_err = errors.New("plugin name not matched")
+				connectionErr = errors.New("plugin name not matched")
 			}
 
-			if remote_runtime.tenant_id != tenant_id {
-				connection_err = errors.New("tenant id not matched")
+			if remoteRuntime.tenantId != tenantId {
+				connectionErr = errors.New("tenant id not matched")
 			}
 
-			got_connection = true
+			gotConnection = true
 			runtime.Stop()
 		}
 	}()
@@ -148,7 +148,7 @@ func TestAcceptConnection(t *testing.T) {
 	}
 
 	// send handshake
-	plugin_manifest := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
+	pluginManifest := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Version: "1.0.0",
 			Type:    plugin_entities.PluginType,
@@ -194,7 +194,7 @@ func TestAcceptConnection(t *testing.T) {
 	conn.Write([]byte("\n\n"))
 	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
 		Type: plugin_entities.REGISTER_EVENT_TYPE_MANIFEST_DECLARATION,
-		Data: plugin_manifest,
+		Data: pluginManifest,
 	})) // transfer manifest declaration
 	conn.Write([]byte("\n\n"))
 	conn.Write(parser.MarshalJsonBytes(plugin_entities.RemotePluginRegisterPayload{
@@ -226,7 +226,7 @@ func TestAcceptConnection(t *testing.T) {
 		Data: []byte("{}"),
 	})) // init process end
 	conn.Write([]byte("\n\n"))
-	closed_chan := make(chan bool)
+	closedChan := make(chan bool)
 
 	msg := ""
 
@@ -240,7 +240,7 @@ func TestAcceptConnection(t *testing.T) {
 			}
 			msg += string(buffer[:n])
 		}
-		close(closed_chan)
+		close(closedChan)
 	}()
 
 	select {
@@ -248,15 +248,15 @@ func TestAcceptConnection(t *testing.T) {
 		// connection not closed
 		t.Errorf("connection not closed normally")
 		return
-	case <-closed_chan:
+	case <-closedChan:
 		// success
 
-		if !got_connection {
+		if !gotConnection {
 			t.Errorf("failed to accept connection: %s", msg)
 			return
 		}
-		if connection_err != nil {
-			t.Errorf("failed to accept connection: %s", connection_err.Error())
+		if connectionErr != nil {
+			t.Errorf("failed to accept connection: %s", connectionErr.Error())
 			return
 		}
 		return
@@ -295,7 +295,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 		return
 	}
 
-	closed_chan := make(chan bool)
+	closedChan := make(chan bool)
 
 	go func() {
 		// block here to accept messages until the connection is closed
@@ -306,7 +306,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 				break
 			}
 		}
-		close(closed_chan)
+		close(closedChan)
 	}()
 
 	select {
@@ -314,7 +314,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 		// connection not closed due to no handshake
 		t.Errorf("connection not closed normally")
 		return
-	case <-closed_chan:
+	case <-closedChan:
 		// success
 		return
 	}
@@ -361,8 +361,8 @@ func TestIncorrectHandshake(t *testing.T) {
 	// send incorrect handshake
 	conn.Write([]byte("hello world\n"))
 
-	closed_chan := make(chan bool)
-	hand_shake_failed := false
+	closedChan := make(chan bool)
+	handShakeFailed := false
 
 	go func() {
 		// block here to accept messages until the connection is closed
@@ -373,12 +373,12 @@ func TestIncorrectHandshake(t *testing.T) {
 				break
 			} else {
 				if strings.Contains(string(buffer), "handshake failed") {
-					hand_shake_failed = true
+					handShakeFailed = true
 				}
 			}
 		}
 
-		close(closed_chan)
+		close(closedChan)
 	}()
 
 	select {
@@ -386,8 +386,8 @@ func TestIncorrectHandshake(t *testing.T) {
 		// connection not closed
 		t.Errorf("connection not closed normally")
 		return
-	case <-closed_chan:
-		if !hand_shake_failed {
+	case <-closedChan:
+		if !handShakeFailed {
 			t.Errorf("failed to detect incorrect handshake")
 			return
 		}

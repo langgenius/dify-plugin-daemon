@@ -23,10 +23,10 @@ func baseSSEService[R any](
 	writer.Header().Set("Content-Type", "text/event-stream")
 
 	done := make(chan bool)
-	done_closed := new(int32)
+	doneClosed := new(int32)
 	closed := new(int32)
 
-	write_data := func(data interface{}) {
+	writeData := func(data interface{}) {
 		if atomic.LoadInt32(closed) == 1 {
 			return
 		}
@@ -36,25 +36,25 @@ func baseSSEService[R any](
 		writer.Flush()
 	}
 
-	plugin_daemon_response, err := generator()
+	pluginDaemonResponse, err := generator()
 
 	if err != nil {
-		write_data(entities.NewErrorResponse(-500, err.Error()))
+		writeData(entities.NewErrorResponse(-500, err.Error()))
 		close(done)
 		return
 	}
 
 	routine.Submit(func() {
-		for plugin_daemon_response.Next() {
-			chunk, err := plugin_daemon_response.Read()
+		for pluginDaemonResponse.Next() {
+			chunk, err := pluginDaemonResponse.Read()
 			if err != nil {
-				write_data(entities.NewErrorResponse(-500, err.Error()))
+				writeData(entities.NewErrorResponse(-500, err.Error()))
 				break
 			}
-			write_data(entities.NewSuccessResponse(chunk))
+			writeData(entities.NewSuccessResponse(chunk))
 		}
 
-		if atomic.CompareAndSwapInt32(done_closed, 0, 1) {
+		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
 			close(done)
 		}
 	})
@@ -68,13 +68,13 @@ func baseSSEService[R any](
 
 	select {
 	case <-writer.CloseNotify():
-		plugin_daemon_response.Close()
+		pluginDaemonResponse.Close()
 		return
 	case <-done:
 		return
 	case <-timer.C:
-		write_data(entities.NewErrorResponse(-500, "killed by timeout"))
-		if atomic.CompareAndSwapInt32(done_closed, 0, 1) {
+		writeData(entities.NewErrorResponse(-500, "killed by timeout"))
+		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
 			close(done)
 		}
 		return

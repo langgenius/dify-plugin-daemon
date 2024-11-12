@@ -59,52 +59,52 @@ func preparePluginDeclaration() PluginDeclaration {
 
 func TestPluginDeclarationFullTest(t *testing.T) {
 	declaration := preparePluginDeclaration()
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
 	// unmarshal
-	new_declaration, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	newDeclaration, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err != nil {
 		t.Errorf("failed to unmarshal declaration: %s", err.Error())
 		return
 	}
 
-	if new_declaration.Version != declaration.Version {
+	if newDeclaration.Version != declaration.Version {
 		t.Errorf("version not equal")
 		return
 	}
-	if new_declaration.Type != declaration.Type {
+	if newDeclaration.Type != declaration.Type {
 		t.Errorf("type not equal")
 		return
 	}
-	if new_declaration.Name != declaration.Name {
+	if newDeclaration.Name != declaration.Name {
 		t.Errorf("name not equal")
 		return
 	}
-	if new_declaration.Author != declaration.Author {
+	if newDeclaration.Author != declaration.Author {
 		t.Errorf("author not equal")
 		return
 	}
-	if new_declaration.Resource.Memory != declaration.Resource.Memory {
+	if newDeclaration.Resource.Memory != declaration.Resource.Memory {
 		t.Errorf("memory not equal")
 		return
 	}
 
-	if new_declaration.Resource.Permission == nil {
+	if newDeclaration.Resource.Permission == nil {
 		t.Errorf("permission is nil")
 		return
 	}
 
-	if new_declaration.Resource.Permission.Tool == nil {
+	if newDeclaration.Resource.Permission.Tool == nil {
 		t.Errorf("tool permission is nil")
 		return
 	}
 
-	if new_declaration.Resource.Permission.Node == nil {
+	if newDeclaration.Resource.Permission.Node == nil {
 		t.Errorf("node permission is nil")
 		return
 	}
 
-	if new_declaration.Resource.Permission.Storage == nil {
+	if newDeclaration.Resource.Permission.Storage == nil {
 		t.Errorf("storage permission is nil")
 		return
 	}
@@ -113,9 +113,9 @@ func TestPluginDeclarationFullTest(t *testing.T) {
 func TestPluginDeclarationIncorrectVersion(t *testing.T) {
 	declaration := preparePluginDeclaration()
 	declaration.Version = "1"
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
-	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate version")
 		return
@@ -125,9 +125,9 @@ func TestPluginDeclarationIncorrectVersion(t *testing.T) {
 func TestPluginUnsupportedLanguage(t *testing.T) {
 	declaration := preparePluginDeclaration()
 	declaration.Meta.Runner.Language = "test"
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
-	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate language")
 		return
@@ -137,9 +137,9 @@ func TestPluginUnsupportedLanguage(t *testing.T) {
 func TestPluginUnsupportedArch(t *testing.T) {
 	declaration := preparePluginDeclaration()
 	declaration.Meta.Arch[0] = constants.Arch("test")
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
-	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate arch")
 		return
@@ -149,18 +149,18 @@ func TestPluginUnsupportedArch(t *testing.T) {
 func TestPluginStorageSizeTooSmallOrTooLarge(t *testing.T) {
 	declaration := preparePluginDeclaration()
 	declaration.Resource.Permission.Storage.Size = 1023
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
-	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate storage size")
 		return
 	}
 
 	declaration.Resource.Permission.Storage.Size = 1073741825
-	declaration_bytes = parser.MarshalJsonBytes(declaration)
+	declarationBytes = parser.MarshalJsonBytes(declaration)
 
-	_, err = parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err = parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate storage size")
 		return
@@ -170,9 +170,9 @@ func TestPluginStorageSizeTooSmallOrTooLarge(t *testing.T) {
 func TestPluginDeclarationIncorrectType(t *testing.T) {
 	declaration := preparePluginDeclaration()
 	declaration.Type = "test"
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
-	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate type")
 		return
@@ -182,9 +182,9 @@ func TestPluginDeclarationIncorrectType(t *testing.T) {
 func TestPluginDeclarationIncorrectName(t *testing.T) {
 	declaration := preparePluginDeclaration()
 	declaration.Name = ""
-	declaration_bytes := parser.MarshalJsonBytes(declaration)
+	declarationBytes := parser.MarshalJsonBytes(declaration)
 
-	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declaration_bytes)
+	_, err := parser.UnmarshalJsonBytes[PluginDeclaration](declarationBytes)
 	if err == nil {
 		t.Errorf("failed to validate name")
 		return

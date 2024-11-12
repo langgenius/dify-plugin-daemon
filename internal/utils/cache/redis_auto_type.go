@@ -15,12 +15,12 @@ func AutoSet[T any](key string, value T, context ...redis.Cmdable) error {
 		return ErrDBNotInit
 	}
 
-	full_type_info := reflect.TypeOf(value)
-	pkg_path := full_type_info.PkgPath()
-	type_name := full_type_info.Name()
-	full_type_name := pkg_path + "." + type_name
+	fullTypeInfo := reflect.TypeOf(value)
+	pkgPath := fullTypeInfo.PkgPath()
+	typeName := fullTypeInfo.Name()
+	fullTypeName := pkgPath + "." + typeName
 
-	key = serialKey("auto_type", full_type_name, key)
+	key = serialKey("auto_type", fullTypeName, key)
 	return getCmdable(context...).Set(ctx, key, parser.MarshalJson(value), time.Minute*30).Err()
 }
 
@@ -40,12 +40,12 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 	var result_tmpl T
 
 	// fetch full type info
-	full_type_info := reflect.TypeOf(result_tmpl)
-	pkg_path := full_type_info.PkgPath()
-	type_name := full_type_info.Name()
-	full_type_name := pkg_path + "." + type_name
+	fullTypeInfo := reflect.TypeOf(result_tmpl)
+	pkgPath := fullTypeInfo.PkgPath()
+	typeName := fullTypeInfo.Name()
+	fullTypeName := pkgPath + "." + typeName
 
-	key = serialKey("auto_type", full_type_name, key)
+	key = serialKey("auto_type", fullTypeName, key)
 	val, err := getCmdable(context...).Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -74,11 +74,11 @@ func AutoDelete[T any](key string, context ...redis.Cmdable) error {
 
 	var result_tmpl T
 
-	full_type_info := reflect.TypeOf(result_tmpl)
-	pkg_path := full_type_info.PkgPath()
-	type_name := full_type_info.Name()
-	full_type_name := pkg_path + "." + type_name
+	fullTypeInfo := reflect.TypeOf(result_tmpl)
+	pkgPath := fullTypeInfo.PkgPath()
+	typeName := fullTypeInfo.Name()
+	fullTypeName := pkgPath + "." + typeName
 
-	key = serialKey("auto_type", full_type_name, key)
+	key = serialKey("auto_type", fullTypeName, key)
 	return getCmdable(context...).Del(ctx, key).Err()
 }

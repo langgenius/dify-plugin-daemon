@@ -83,22 +83,22 @@ func TestRedirectTraffic(t *testing.T) {
 		}()
 	}
 
-	node1_recv_reqs := make(chan struct{})
-	node1_recv_correct_reqs := make(chan struct{})
-	defer close(node1_recv_reqs)
-	defer close(node1_recv_correct_reqs)
+	node1RecvReqs := make(chan struct{})
+	node1RecvCorrectReqs := make(chan struct{})
+	defer close(node1RecvReqs)
+	defer close(node1RecvCorrectReqs)
 
 	// create 2 simulated servers
 	servers, err := createSimulationSevers(2, func(i int, c *gin.Engine) {
 		c.GET("/plugin/invoke/tool", func(c *gin.Context) {
 			if i == 0 {
 				// redirect to node 1
-				status_code, headers, reader, err := cluster[i].RedirectRequest(cluster[1].id, c.Request)
+				statusCode, headers, reader, err := cluster[i].RedirectRequest(cluster[1].id, c.Request)
 				if err != nil {
 					c.String(http.StatusInternalServerError, err.Error())
 					return
 				}
-				c.Status(status_code)
+				c.Status(statusCode)
 				for k, v := range headers {
 					for _, vv := range v {
 						c.Header(k, vv)
@@ -107,7 +107,7 @@ func TestRedirectTraffic(t *testing.T) {
 				io.Copy(c.Writer, reader)
 			} else {
 				c.String(http.StatusOK, "ok")
-				node1_recv_reqs <- struct{}{}
+				node1RecvReqs <- struct{}{}
 			}
 		})
 		c.GET("/health/check", func(c *gin.Context) {
@@ -158,21 +158,21 @@ func TestRedirectTraffic(t *testing.T) {
 				t.Error(err)
 			}
 			if string(content) == "ok" {
-				node1_recv_correct_reqs <- struct{}{}
+				node1RecvCorrectReqs <- struct{}{}
 			}
 		}
 	}()
 
 	// check if node 1 received the request
-	recv_count := 0
-	correct_count := 0
+	recvCount := 0
+	correctCount := 0
 	for {
 		select {
-		case <-node1_recv_reqs:
-			recv_count++
-		case <-node1_recv_correct_reqs:
-			correct_count++
-			if correct_count == 10 {
+		case <-node1RecvReqs:
+			recvCount++
+		case <-node1RecvCorrectReqs:
+			correctCount++
+			if correctCount == 10 {
 				return
 			}
 		case <-time.After(5 * time.Second):

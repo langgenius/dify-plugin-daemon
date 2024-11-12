@@ -27,35 +27,35 @@ type RemotePluginRuntime struct {
 	response *stream.Stream[[]byte]
 
 	// callbacks for each session
-	callbacks      map[string][]func([]byte)
-	callbacks_lock *sync.RWMutex
+	callbacks     map[string][]func([]byte)
+	callbacksLock *sync.RWMutex
 
 	// channel to notify all waiting routines
-	shutdown_chan chan bool
+	shutdownChan chan bool
 
 	// heartbeat
-	last_active_at time.Time
+	lastActiveAt time.Time
 
-	assets       map[string]*bytes.Buffer
-	assets_bytes int64
+	assets      map[string]*bytes.Buffer
+	assetsBytes int64
 
 	// hand shake process completed
-	handshake        bool
-	handshake_failed bool
+	handshake       bool
+	handshakeFailed bool
 
 	// initialized, wether registration transferred
 	initialized bool
 
 	// registration transferred
-	registration_transferred bool
+	registrationTransferred bool
 
-	tools_registration_transferred     bool
-	models_registration_transferred    bool
-	endpoints_registration_transferred bool
-	assets_transferred                 bool
+	toolsRegistrationTransferred     bool
+	modelsRegistrationTransferred    bool
+	endpointsRegistrationTransferred bool
+	assetsTransferred                bool
 
 	// tenant id
-	tenant_id string
+	tenantId string
 
 	alive bool
 
@@ -63,37 +63,37 @@ type RemotePluginRuntime struct {
 	checksum string
 
 	// installation id
-	installation_id string
+	installationId string
 
 	// wait for started event
-	wait_chan_lock          sync.Mutex
-	wait_started_chan       []chan bool
-	wait_stopped_chan       []chan bool
-	wait_launched_chan      chan error
-	wait_launched_chan_once sync.Once
+	waitChanLock         sync.Mutex
+	waitStartedChan      []chan bool
+	waitStoppedChan      []chan bool
+	waitLaunchedChan     chan error
+	waitLaunchedChanOnce sync.Once
 }
 
 // Listen creates a new listener for the given session_id
 // session id is an unique identifier for a request
 func (r *RemotePluginRuntime) addCallback(session_id string, fn func([]byte)) {
-	r.callbacks_lock.Lock()
+	r.callbacksLock.Lock()
 	if _, ok := r.callbacks[session_id]; !ok {
 		r.callbacks[session_id] = make([]func([]byte), 0)
 	}
 	r.callbacks[session_id] = append(r.callbacks[session_id], fn)
-	r.callbacks_lock.Unlock()
+	r.callbacksLock.Unlock()
 }
 
 // removeCallback removes the listener for the given session_id
 func (r *RemotePluginRuntime) removeCallback(session_id string) {
-	r.callbacks_lock.Lock()
+	r.callbacksLock.Lock()
 	delete(r.callbacks, session_id)
-	r.callbacks_lock.Unlock()
+	r.callbacksLock.Unlock()
 }
 
 func (r *RemotePluginRuntime) onDisconnected() {
 	// close shutdown channel to notify all waiting routines
-	close(r.shutdown_chan)
+	close(r.shutdownChan)
 
 	// close response to stop current plugin
 	r.response.Close()

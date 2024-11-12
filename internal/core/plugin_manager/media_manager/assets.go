@@ -7,10 +7,10 @@ import (
 )
 
 func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration, assets map[string][]byte) ([]string, error) {
-	remapped_asset_ids := make(map[string]string)
-	assets_ids := []string{}
+	remappedAssetIds := make(map[string]string)
+	assetsIds := []string{}
 	remap := func(filename string) (string, error) {
-		if id, ok := remapped_asset_ids[filename]; ok {
+		if id, ok := remappedAssetIds[filename]; ok {
 			return id, nil
 		}
 
@@ -24,9 +24,9 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 			return "", err
 		}
 
-		assets_ids = append(assets_ids, id)
+		assetsIds = append(assetsIds, id)
 
-		remapped_asset_ids[filename] = id
+		remappedAssetIds[filename] = id
 		return id, nil
 	}
 
@@ -110,5 +110,5 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		}
 	}
 
-	return assets_ids, nil
+	return assetsIds, nil
 }

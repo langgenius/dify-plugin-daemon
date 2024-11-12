@@ -111,24 +111,24 @@ func isToolSelectorScope(fl validator.FieldLevel) bool {
 func isScope(fl validator.FieldLevel) bool {
 	// get parent and check if it's a provider config
 	parent := fl.Parent().Interface()
-	if provider_config, ok := parent.(ProviderConfig); ok {
+	if providerConfig, ok := parent.(ProviderConfig); ok {
 		// check config type
-		if provider_config.Type == CONFIG_TYPE_APP_SELECTOR {
+		if providerConfig.Type == CONFIG_TYPE_APP_SELECTOR {
 			return isAppSelectorScope(fl)
-		} else if provider_config.Type == CONFIG_TYPE_MODEL_SELECTOR {
+		} else if providerConfig.Type == CONFIG_TYPE_MODEL_SELECTOR {
 			return isModelConfigScope(fl)
-		} else if provider_config.Type == CONFIG_TYPE_TOOL_SELECTOR {
+		} else if providerConfig.Type == CONFIG_TYPE_TOOL_SELECTOR {
 			return isToolSelectorScope(fl)
 		} else {
 			return false
 		}
 	}
-	if tool_parameter, ok := parent.(ToolParameter); ok {
-		if tool_parameter.Type == TOOL_PARAMETER_TYPE_APP_SELECTOR {
+	if toolParameter, ok := parent.(ToolParameter); ok {
+		if toolParameter.Type == TOOL_PARAMETER_TYPE_APP_SELECTOR {
 			return isAppSelectorScope(fl)
-		} else if tool_parameter.Type == TOOL_PARAMETER_TYPE_MODEL_SELECTOR {
+		} else if toolParameter.Type == TOOL_PARAMETER_TYPE_MODEL_SELECTOR {
 			return isModelConfigScope(fl)
-		} else if tool_parameter.Type == TOOL_PARAMETER_TYPE_TOOL_SELECTOR {
+		} else if toolParameter.Type == TOOL_PARAMETER_TYPE_TOOL_SELECTOR {
 			return isToolSelectorScope(fl)
 		} else {
 			return false
@@ -233,12 +233,12 @@ func ValidateProviderConfigs(settings map[string]any, configs []ProviderConfig) 
 		return errors.New("too many setting fields")
 	}
 
-	configs_map := make(map[string]ProviderConfig)
+	configsMap := make(map[string]ProviderConfig)
 	for _, config := range configs {
-		configs_map[config.Name] = config
+		configsMap[config.Name] = config
 	}
 
-	for config_name, config := range configs_map {
+	for config_name, config := range configsMap {
 		v, ok := settings[config_name]
 		if (!ok || v == nil) && config.Required {
 			return errors.New("missing required setting: " + config_name)

@@ -69,8 +69,8 @@ func AESDecrypt(aesKey []byte, data []byte) ([]byte, error) {
 }
 
 func LoadPrivateKey(data []byte) (*rsa.PrivateKey, error) {
-	private_key_block, rest := pem.Decode(data)
-	if private_key_block == nil || private_key_block.Type != "RSA PRIVATE KEY" {
+	privateKeyBlock, rest := pem.Decode(data)
+	if privateKeyBlock == nil || privateKeyBlock.Type != "RSA PRIVATE KEY" {
 		return nil, errors.New("failed to decode PEM block containing private key")
 	}
 
@@ -78,17 +78,17 @@ func LoadPrivateKey(data []byte) (*rsa.PrivateKey, error) {
 		return nil, errors.New("extra data included in the PEM block")
 	}
 
-	private_key, err := x509.ParsePKCS1PrivateKey(private_key_block.Bytes)
+	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return private_key, nil
+	return privateKey, nil
 }
 
 func LoadPublicKey(data []byte) (*rsa.PublicKey, error) {
-	public_key_block, rest := pem.Decode(data)
-	if public_key_block == nil || public_key_block.Type != "RSA PUBLIC KEY" {
+	publicKeyBlock, rest := pem.Decode(data)
+	if publicKeyBlock == nil || publicKeyBlock.Type != "RSA PUBLIC KEY" {
 		return nil, errors.New("failed to decode PEM block containing public key")
 	}
 
@@ -96,10 +96,10 @@ func LoadPublicKey(data []byte) (*rsa.PublicKey, error) {
 		return nil, errors.New("extra data included in the PEM block")
 	}
 
-	public_key, err := x509.ParsePKCS1PublicKey(public_key_block.Bytes)
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return public_key, nil
+	return publicKey, nil
 }

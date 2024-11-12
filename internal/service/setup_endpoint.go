@@ -17,40 +17,40 @@ import (
 func SetupEndpoint(
 	tenant_id string,
 	user_id string,
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	name string,
 	settings map[string]any,
 ) *entities.Response {
 	// try find plugin installation
 	installation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
-		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 	)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
 	}
 
 	// try get plugin
-	plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+	pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}
 
-	if !plugin_declaration.Resource.Permission.AllowRegisterEndpoint() {
+	if !pluginDeclaration.Resource.Permission.AllowRegisterEndpoint() {
 		return entities.NewErrorResponse(-403, "permission denied")
 	}
 
-	if plugin_declaration.Endpoint == nil {
+	if pluginDeclaration.Endpoint == nil {
 		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 	}
 
 	// check settings
-	if err := plugin_entities.ValidateProviderConfigs(settings, plugin_declaration.Endpoint.Settings); err != nil {
+	if err := plugin_entities.ValidateProviderConfigs(settings, pluginDeclaration.Endpoint.Settings); err != nil {
 		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
 	}
 
 	endpoint, err := install_service.InstallEndpoint(
-		plugin_unique_identifier,
+		pluginUniqueIdentifier,
 		installation.ID,
 		tenant_id,
 		user_id,
@@ -67,7 +67,7 @@ func SetupEndpoint(
 	}
 
 	// encrypt settings
-	encrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(
+	encryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(
 		&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
@@ -79,7 +79,7 @@ func SetupEndpoint(
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      settings,
-				Config:    plugin_declaration.Endpoint.Settings,
+				Config:    pluginDeclaration.Endpoint.Settings,
 			},
 		},
 	)
@@ -88,7 +88,7 @@ func SetupEndpoint(
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to encrypt settings: %v", err))
 	}
 
-	if err := install_service.UpdateEndpoint(endpoint, name, encrypted_settings); err != nil {
+	if err := install_service.UpdateEndpoint(endpoint, name, encryptedSettings); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
 	}
 
@@ -152,7 +152,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
 	}
 
-	plugin_unique_identifier, err := plugin_entities.NewPluginUniqueIdentifier(
+	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
 		installation.PluginUniqueIdentifier,
 	)
 	if err != nil {
@@ -160,12 +160,12 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 	}
 
 	// get plugin
-	plugin_declaration, err := helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+	pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}
 
-	if plugin_declaration.Endpoint == nil {
+	if pluginDeclaration.Endpoint == nil {
 		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
 	}
 
@@ -175,7 +175,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		return entities.NewErrorResponse(-500, "failed to get plugin manager")
 	}
 
-	original_settings, err := manager.BackwardsInvocation().InvokeEncrypt(
+	originalSettings, err := manager.BackwardsInvocation().InvokeEncrypt(
 		&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
@@ -187,7 +187,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      endpoint.Settings,
-				Config:    plugin_declaration.Endpoint.Settings,
+				Config:    pluginDeclaration.Endpoint.Settings,
 			},
 		},
 	)
@@ -195,22 +195,22 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
 	}
 
-	masked_settings := encryption.MaskConfigCredentials(original_settings, plugin_declaration.Endpoint.Settings)
+	maskedSettings := encryption.MaskConfigCredentials(originalSettings, pluginDeclaration.Endpoint.Settings)
 
 	// check if settings is changed, replace the value is the same as masked_settings
 	for setting_name, value := range settings {
-		if masked_settings[setting_name] == value {
-			settings[setting_name] = original_settings[setting_name]
+		if maskedSettings[setting_name] == value {
+			settings[setting_name] = originalSettings[setting_name]
 		}
 	}
 
 	// check settings
-	if err := plugin_entities.ValidateProviderConfigs(settings, plugin_declaration.Endpoint.Settings); err != nil {
+	if err := plugin_entities.ValidateProviderConfigs(settings, pluginDeclaration.Endpoint.Settings); err != nil {
 		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
 	}
 
 	// encrypt settings
-	encrypted_settings, err := manager.BackwardsInvocation().InvokeEncrypt(
+	encryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(
 		&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
@@ -222,7 +222,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 				Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 				Identity:  endpoint.ID,
 				Data:      settings,
-				Config:    plugin_declaration.Endpoint.Settings,
+				Config:    pluginDeclaration.Endpoint.Settings,
 			},
 		},
 	)
@@ -231,7 +231,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 	}
 
 	// update endpoint
-	if err := install_service.UpdateEndpoint(&endpoint, name, encrypted_settings); err != nil {
+	if err := install_service.UpdateEndpoint(&endpoint, name, encryptedSettings); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
 	}
 
@@ -247,7 +247,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 			Namespace: dify_invocation.ENCRYPT_NAMESPACE_ENDPOINT,
 			Identity:  endpoint.ID,
 			Data:      settings,
-			Config:    plugin_declaration.Endpoint.Settings,
+			Config:    pluginDeclaration.Endpoint.Settings,
 		},
 	}); err != nil {
 		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))

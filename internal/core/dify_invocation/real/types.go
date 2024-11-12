@@ -6,9 +6,9 @@ import (
 )
 
 type RealBackwardsInvocation struct {
-	dify_inner_api_key     string
-	dify_inner_api_baseurl *url.URL
-	client                 *http.Client
+	difyInnerApiKey     string
+	difyInnerApiBaseurl *url.URL
+	client              *http.Client
 }
 
 type BaseBackwardsInvocationResponse[T any] struct {

@@ -136,21 +136,21 @@ func (m model) createPlugin() {
 		},
 	}
 
-	category_string := m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category()
-	if category_string == "tool" {
+	categoryString := m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category()
+	if categoryString == "tool" {
 		manifest.Plugins.Tools = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
-	if category_string == "llm" ||
-		category_string == "text-embedding" ||
-		category_string == "speech2text" ||
-		category_string == "moderation" ||
-		category_string == "rerank" ||
-		category_string == "tts" {
+	if categoryString == "llm" ||
+		categoryString == "text-embedding" ||
+		categoryString == "speech2text" ||
+		categoryString == "moderation" ||
+		categoryString == "rerank" ||
+		categoryString == "tts" {
 		manifest.Plugins.Models = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
-	if category_string == "extension" {
+	if categoryString == "extension" {
 		manifest.Plugins.Endpoints = []string{fmt.Sprintf("group/%s.yaml", manifest.Name)}
 	}
 
@@ -182,7 +182,7 @@ func (m model) createPlugin() {
 	}
 	defer clear()
 
-	manifest_file := marshalYamlBytes(manifest)
+	manifestFile := marshalYamlBytes(manifest)
 	// create the plugin directory
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -190,15 +190,15 @@ func (m model) createPlugin() {
 		return
 	}
 
-	plugin_dir := filepath.Join(cwd, manifest.Name)
+	pluginDir := filepath.Join(cwd, manifest.Name)
 
-	if err := writeFile(filepath.Join(plugin_dir, "manifest.yaml"), string(manifest_file)); err != nil {
+	if err := writeFile(filepath.Join(pluginDir, "manifest.yaml"), string(manifestFile)); err != nil {
 		log.Error("failed to write manifest file: %s", err)
 		return
 	}
 
 	// create icon.svg
-	if err := writeFile(filepath.Join(plugin_dir, "_assets", "icon.svg"), string(icon)); err != nil {
+	if err := writeFile(filepath.Join(pluginDir, "_assets", "icon.svg"), string(icon)); err != nil {
 		log.Error("failed to write icon file: %s", err)
 		return
 	}
@@ -209,19 +209,19 @@ func (m model) createPlugin() {
 		log.Error("failed to render README template: %s", err)
 		return
 	}
-	if err := writeFile(filepath.Join(plugin_dir, "README.md"), readme); err != nil {
+	if err := writeFile(filepath.Join(pluginDir, "README.md"), readme); err != nil {
 		log.Error("failed to write README file: %s", err)
 		return
 	}
 
 	// create .env.example
-	if err := writeFile(filepath.Join(plugin_dir, ".env.example"), string(ENV_EXAMPLE)); err != nil {
+	if err := writeFile(filepath.Join(pluginDir, ".env.example"), string(ENV_EXAMPLE)); err != nil {
 		log.Error("failed to write .env.example file: %s", err)
 		return
 	}
 
 	err = createPythonEnvironment(
-		plugin_dir,
+		pluginDir,
 		manifest.Meta.Runner.Entrypoint,
 		manifest,
 		m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category(),

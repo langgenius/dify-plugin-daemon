@@ -26,7 +26,7 @@ import (
 // It takes a plugin as a stream of bytes and signs it with RSA-4096
 func SignPlugin(plugin []byte) ([]byte, error) {
 	// load private key
-	private_key, err := encryption.LoadPrivateKey(private_key.PRIVATE_KEY)
+	privateKey, err := encryption.LoadPrivateKey(private_key.PRIVATE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -37,10 +37,10 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 	}
 
 	// create a new zip writer
-	zip_buffer := new(bytes.Buffer)
-	zip_writer := zip.NewWriter(zip_buffer)
+	zipBuffer := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(zipBuffer)
 
-	defer zip_writer.Close()
+	defer zipWriter.Close()
 	// store temporary hash
 	data := new(bytes.Buffer)
 	// read one by one
@@ -59,12 +59,12 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 		data.Write(hashed)
 
 		// create a new file in the zip writer
-		file_writer, err := zip_writer.Create(path.Join(dir, filename))
+		fileWriter, err := zipWriter.Create(path.Join(dir, filename))
 		if err != nil {
 			return err
 		}
 
-		_, err = io.Copy(file_writer, bytes.NewReader(file))
+		_, err = io.Copy(fileWriter, bytes.NewReader(file))
 		if err != nil {
 			return err
 		}
@@ -80,13 +80,13 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 	ct := time.Now().Unix()
 
 	// convert time to bytes
-	time_string := strconv.FormatInt(ct, 10)
+	timeString := strconv.FormatInt(ct, 10)
 
 	// write the time into data
-	data.Write([]byte(time_string))
+	data.Write([]byte(timeString))
 
 	// sign the data
-	signature, err := encryption.RSASign(private_key, data.Bytes())
+	signature, err := encryption.RSASign(privateKey, data.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -98,16 +98,16 @@ func SignPlugin(plugin []byte) ([]byte, error) {
 	})
 
 	// write signature
-	err = zip_writer.SetComment(comments)
+	err = zipWriter.SetComment(comments)
 	if err != nil {
 		return nil, err
 	}
 
 	// close the zip writer
-	err = zip_writer.Close()
+	err = zipWriter.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	return zip_buffer.Bytes(), nil
+	return zipBuffer.Bytes(), nil
 }

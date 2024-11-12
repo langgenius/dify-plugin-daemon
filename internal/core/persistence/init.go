@@ -12,8 +12,8 @@ var (
 
 func InitPersistence(oss oss.OSS, config *app.Config) {
 	persistence = &Persistence{
-		storage:          NewWrapper(oss, config.PersistenceStoragePath),
-		max_storage_size: config.PersistenceStorageMaxSize,
+		storage:        NewWrapper(oss, config.PersistenceStoragePath),
+		maxStorageSize: config.PersistenceStorageMaxSize,
 	}
 
 	log.Info("Persistence initialized")

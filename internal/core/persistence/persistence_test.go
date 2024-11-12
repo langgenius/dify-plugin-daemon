@@ -56,18 +56,18 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	}
 
 	// check if cache is updated
-	cache_data, err := cache.GetString("persistence:cache:tenant_id:plugin_checksum:" + key)
+	cacheData, err := cache.GetString("persistence:cache:tenant_id:plugin_checksum:" + key)
 	if err != nil {
 		t.Fatalf("Failed to get cache data: %v", err)
 	}
 
-	cache_data_bytes, err := hex.DecodeString(cache_data)
+	cacheDataBytes, err := hex.DecodeString(cacheData)
 	if err != nil {
 		t.Fatalf("Failed to decode cache data: %v", err)
 	}
 
-	if string(cache_data_bytes) != "data" {
-		t.Fatalf("Cache data mismatch: %s", cache_data)
+	if string(cacheDataBytes) != "data" {
+		t.Fatalf("Cache data mismatch: %s", cacheData)
 	}
 }
 

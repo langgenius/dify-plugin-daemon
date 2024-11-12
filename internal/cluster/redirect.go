@@ -23,7 +23,7 @@ func (c *Cluster) RedirectRequest(
 	ip := ips[0]
 
 	// create a new request
-	redirected_request, err := http.NewRequest(
+	redirectedRequest, err := http.NewRequest(
 		request.Method,
 		"http://"+ip.fullAddress()+request.URL.Path,
 		request.Body,
@@ -36,12 +36,12 @@ func (c *Cluster) RedirectRequest(
 	// copy headers
 	for key, values := range request.Header {
 		for _, value := range values {
-			redirected_request.Header.Add(key, value)
+			redirectedRequest.Header.Add(key, value)
 		}
 	}
 
 	client := http.DefaultClient
-	resp, err := client.Do(redirected_request)
+	resp, err := client.Do(redirectedRequest)
 
 	if err != nil {
 		return 0, nil, nil, err

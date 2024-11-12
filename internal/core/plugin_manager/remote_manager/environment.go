@@ -9,7 +9,7 @@ import (
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
 	// copy a new declaration
 	config := r.Config
-	config.Author = r.tenant_id
+	config.Author = r.tenantId
 	checksum, _ := r.Checksum()
 	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", config.Identity(), checksum))
 }
@@ -19,19 +19,19 @@ func (r *RemotePluginRuntime) Cleanup() {
 }
 
 func (r *RemotePluginRuntime) WaitStarted() <-chan bool {
-	r.wait_chan_lock.Lock()
-	defer r.wait_chan_lock.Unlock()
+	r.waitChanLock.Lock()
+	defer r.waitChanLock.Unlock()
 
 	ch := make(chan bool)
-	r.wait_started_chan = append(r.wait_started_chan, ch)
+	r.waitStartedChan = append(r.waitStartedChan, ch)
 	return ch
 }
 
 func (r *RemotePluginRuntime) WaitStopped() <-chan bool {
-	r.wait_chan_lock.Lock()
-	defer r.wait_chan_lock.Unlock()
+	r.waitChanLock.Lock()
+	defer r.waitChanLock.Unlock()
 
 	ch := make(chan bool)
-	r.wait_stopped_chan = append(r.wait_stopped_chan, ch)
+	r.waitStoppedChan = append(r.waitStoppedChan, ch)
 	return ch
 }

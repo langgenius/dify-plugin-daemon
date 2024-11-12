@@ -17,18 +17,18 @@ func TestEndpointParams(t *testing.T) {
 		return
 	}
 
-	global_hook_id := ""
-	global_hook_path := ""
+	globalHookId := ""
+	globalHookPath := ""
 
 	handler := func(ctx *gin.Context, hook_id string, path string) {
-		global_hook_id = hook_id
-		global_hook_path = path
+		globalHookId = hook_id
+		globalHookPath = path
 	}
 
-	app_pointer := &App{
+	appPointer := &App{
 		endpointHandler: handler,
 	}
-	cancel := app_pointer.server(&app.Config{
+	cancel := appPointer.server(&app.Config{
 		ServerPort:            port,
 		PluginEndpointEnabled: true,
 	})
@@ -47,13 +47,13 @@ func TestEndpointParams(t *testing.T) {
 		return
 	}
 
-	if global_hook_id != "1111" {
-		t.Errorf("hook id not match: %s", global_hook_id)
+	if globalHookId != "1111" {
+		t.Errorf("hook id not match: %s", globalHookId)
 		return
 	}
 
-	if global_hook_path != "/v1/chat/completions" {
-		t.Errorf("hook path not match: %s", global_hook_path)
+	if globalHookPath != "/v1/chat/completions" {
+		t.Errorf("hook path not match: %s", globalHookPath)
 		return
 	}
 }

@@ -15,7 +15,7 @@ import (
 // It takes a plugin decoder and verifies the signature
 func VerifyPlugin(decoder PluginDecoder) error {
 	// load public key
-	public_key, err := encryption.LoadPublicKey(public_key.PUBLIC_KEY)
+	publicKey, err := encryption.LoadPublicKey(public_key.PUBLIC_KEY)
 	if err != nil {
 		return err
 	}
@@ -48,20 +48,20 @@ func VerifyPlugin(decoder PluginDecoder) error {
 	}
 
 	// get the time
-	created_at, err := decoder.CreateTime()
+	createdAt, err := decoder.CreateTime()
 	if err != nil {
 		return err
 	}
 
 	// write the time into data
-	data.Write([]byte(strconv.FormatInt(created_at, 10)))
+	data.Write([]byte(strconv.FormatInt(createdAt, 10)))
 
-	sig_bytes, err := base64.StdEncoding.DecodeString(signature)
+	sigBytes, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
 		return err
 	}
 
 	// verify signature
-	err = encryption.VerifySign(public_key, data.Bytes(), sig_bytes)
+	err = encryption.VerifySign(publicKey, data.Bytes(), sigBytes)
 	return err
 }

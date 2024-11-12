@@ -81,7 +81,7 @@ func (l *Log) writeLog(level string, format string, stdout bool, v ...interface{
 	//write log
 	format = fmt.Sprintf("["+level+"]"+format, v...)
 
-	if show_log && stdout {
+	if showLog && stdout {
 		if level == "DEBUG" {
 			logger.Output(4, LOG_LEVEL_DEBUG_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "INFO" {
@@ -172,93 +172,93 @@ func init() {
 
 func initlog() {
 	var err error
-	main_log, err = NewLog("./logs")
+	mainLog, err = NewLog("./logs")
 	if err != nil {
 		panic(err)
 	}
 }
 
-var main_log *Log // wapper of go_log
-var show_log bool = true
+var mainLog *Log // wapper of go_log
+var showLog bool = true
 var logger = go_log.New(os.Stdout, "", go_log.Ldate|go_log.Ltime|go_log.Lshortfile)
 
 func SetShowLog(show bool) {
-	show_log = show
+	showLog = show
 }
 
 func SetLogLevel(level int) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.SetLogLevel(level)
+	mainLog.SetLogLevel(level)
 }
 
 func Debug(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Debug(format, true, v...)
+	mainLog.Debug(format, true, v...)
 }
 
 func Info(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Info(format, true, v...)
+	mainLog.Info(format, true, v...)
 }
 
 func Warn(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Warn(format, true, v...)
+	mainLog.Warn(format, true, v...)
 }
 
 func Error(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Error(format, true, v...)
+	mainLog.Error(format, true, v...)
 }
 
 func Panic(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Panic(format, true, v...)
+	mainLog.Panic(format, true, v...)
 }
 
 func SilentDebug(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Debug(format, false, v...)
+	mainLog.Debug(format, false, v...)
 }
 
 func SilentInfo(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Info(format, false, v...)
+	mainLog.Info(format, false, v...)
 }
 
 func SilentWarn(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Warn(format, false, v...)
+	mainLog.Warn(format, false, v...)
 }
 
 func SilentError(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Error(format, false, v...)
+	mainLog.Error(format, false, v...)
 }
 
 func SilentPanic(format string, v ...interface{}) {
-	if main_log == nil {
+	if mainLog == nil {
 		initlog()
 	}
-	main_log.Panic(format, false, v...)
+	mainLog.Panic(format, false, v...)
 }

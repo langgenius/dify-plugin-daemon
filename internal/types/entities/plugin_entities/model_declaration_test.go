@@ -15,12 +15,12 @@ func parse_yaml_to_json(data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	json_data, err := json.Marshal(obj)
+	jsonData, err := json.Marshal(obj)
 	if err != nil {
 		return nil, err
 	}
 
-	return json_data, nil
+	return jsonData, nil
 }
 
 func TestFullFunctionModelProvider_Validate(t *testing.T) {
@@ -117,12 +117,12 @@ func TestFullFunctionModelProvider_Validate(t *testing.T) {
             en_US: Enter your API Base, e.g. https://api.openai.com
         `
 	)
-	json_data, err := parse_yaml_to_json([]byte(model_provider_template))
+	jsonData, err := parse_yaml_to_json([]byte(model_provider_template))
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = parser.UnmarshalYamlBytes[ModelProviderDeclaration](json_data)
+	_, err = parser.UnmarshalYamlBytes[ModelProviderDeclaration](jsonData)
 	if err != nil {
 		t.Errorf("UnmarshalModelProviderConfiguration() error = %v", err)
 	}
@@ -136,9 +136,9 @@ use_template: temperature
 `
 	)
 
-	yaml_data := []byte(model_parameter_rule_template)
+	yamlData := []byte(model_parameter_rule_template)
 
-	model, err := parser.UnmarshalYamlBytes[ModelParameterRule](yaml_data)
+	model, err := parser.UnmarshalYamlBytes[ModelParameterRule](yamlData)
 	if err != nil {
 		t.Errorf("UnmarshalModelParameterRule() error = %v", err)
 		return
@@ -163,9 +163,9 @@ func TestModelParameterRule_UseTemplateJSON(t *testing.T) {
 		model_parameter_rule_template = `{"name": "temperature", "use_template": "temperature"}`
 	)
 
-	json_data := []byte(model_parameter_rule_template)
+	jsonData := []byte(model_parameter_rule_template)
 
-	model, err := parser.UnmarshalJsonBytes[ModelParameterRule](json_data)
+	model, err := parser.UnmarshalJsonBytes[ModelParameterRule](jsonData)
 	if err != nil {
 		t.Errorf("UnmarshalModelParameterRule() error = %v", err)
 	}

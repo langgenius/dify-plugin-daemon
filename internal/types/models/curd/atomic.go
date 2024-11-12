@@ -23,8 +23,8 @@ func InstallPlugin(
 	*models.Plugin, *models.PluginInstallation, error,
 ) {
 
-	var plugin_to_be_returns *models.Plugin
-	var installation_to_be_returns *models.PluginInstallation
+	var pluginToBeReturns *models.Plugin
+	var installationToBeReturns *models.PluginInstallation
 
 	// check if already installed
 	_, err := db.GetOne[models.PluginInstallation](
@@ -59,7 +59,7 @@ func InstallPlugin(
 				return err
 			}
 
-			plugin_to_be_returns = plugin
+			pluginToBeReturns = plugin
 		} else if err != nil {
 			return err
 		} else {
@@ -68,13 +68,13 @@ func InstallPlugin(
 			if err != nil {
 				return err
 			}
-			plugin_to_be_returns = &p
+			pluginToBeReturns = &p
 		}
 
 		// remove exists installation
 		if err := db.DeleteByCondition(
 			models.PluginInstallation{
-				PluginID:    plugin_to_be_returns.PluginID,
+				PluginID:    pluginToBeReturns.PluginID,
 				RuntimeType: string(install_type),
 				TenantID:    tenant_id,
 			},
@@ -84,8 +84,8 @@ func InstallPlugin(
 		}
 
 		installation := &models.PluginInstallation{
-			PluginID:               plugin_to_be_returns.PluginID,
-			PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+			PluginID:               pluginToBeReturns.PluginID,
+			PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 			TenantID:               tenant_id,
 			RuntimeType:            string(install_type),
 			Source:                 source,
@@ -97,19 +97,19 @@ func InstallPlugin(
 			return err
 		}
 
-		installation_to_be_returns = installation
+		installationToBeReturns = installation
 
 		// create tool installation
 		if declaration.Tool != nil {
-			tool_installation := &models.ToolInstallation{
-				PluginID:               plugin_to_be_returns.PluginID,
-				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+			toolInstallation := &models.ToolInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 				Provider:               declaration.Tool.Identity.Name,
 				Declaration:            *declaration.Tool,
 			}
 
-			err := db.Create(tool_installation, tx)
+			err := db.Create(toolInstallation, tx)
 			if err != nil {
 				return err
 			}
@@ -117,15 +117,15 @@ func InstallPlugin(
 
 		// create model installation
 		if declaration.Model != nil {
-			model_installation := &models.AIModelInstallation{
-				PluginID:               plugin_to_be_returns.PluginID,
-				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+			modelInstallation := &models.AIModelInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 				Provider:               declaration.Model.Provider,
 				Declaration:            *declaration.Model,
 			}
 
-			err := db.Create(model_installation, tx)
+			err := db.Create(modelInstallation, tx)
 			if err != nil {
 				return err
 			}
@@ -138,7 +138,7 @@ func InstallPlugin(
 		return nil, nil, err
 	}
 
-	return plugin_to_be_returns, installation_to_be_returns, nil
+	return pluginToBeReturns, installationToBeReturns, nil
 }
 
 type DeletePluginResponse struct {
@@ -158,8 +158,8 @@ func UninstallPlugin(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	installation_id string,
 ) (*DeletePluginResponse, error) {
-	var plugin_to_be_returns *models.Plugin
-	var installation_to_be_returns *models.PluginInstallation
+	var pluginToBeReturns *models.Plugin
+	var installationToBeReturns *models.PluginInstallation
 
 	_, err := db.GetOne[models.PluginInstallation](
 		db.Equal("id", installation_id),
@@ -192,7 +192,7 @@ func UninstallPlugin(
 			if err != nil {
 				return err
 			}
-			plugin_to_be_returns = &p
+			pluginToBeReturns = &p
 		}
 
 		installation, err := db.GetOne[models.PluginInstallation](
@@ -210,19 +210,19 @@ func UninstallPlugin(
 			if err != nil {
 				return err
 			}
-			installation_to_be_returns = &installation
+			installationToBeReturns = &installation
 		}
 
 		// delete tool installation
 		declaration := p.Declaration
 		if declaration.Tool != nil {
-			tool_installation := &models.ToolInstallation{
-				PluginID:               plugin_to_be_returns.PluginID,
-				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+			toolInstallation := &models.ToolInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 			}
 
-			err := db.DeleteByCondition(&tool_installation, tx)
+			err := db.DeleteByCondition(&toolInstallation, tx)
 			if err != nil {
 				return err
 			}
@@ -230,20 +230,20 @@ func UninstallPlugin(
 
 		// delete model installation
 		if declaration.Model != nil {
-			model_installation := &models.AIModelInstallation{
-				PluginID:               plugin_to_be_returns.PluginID,
-				PluginUniqueIdentifier: plugin_to_be_returns.PluginUniqueIdentifier,
+			modelInstallation := &models.AIModelInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 			}
 
-			err := db.DeleteByCondition(&model_installation, tx)
+			err := db.DeleteByCondition(&modelInstallation, tx)
 			if err != nil {
 				return err
 			}
 		}
 
-		if plugin_to_be_returns.Refers == 0 {
-			err := db.Delete(&plugin_to_be_returns, tx)
+		if pluginToBeReturns.Refers == 0 {
+			err := db.Delete(&pluginToBeReturns, tx)
 			if err != nil {
 				return err
 			}
@@ -257,9 +257,9 @@ func UninstallPlugin(
 	}
 
 	return &DeletePluginResponse{
-		Plugin:          plugin_to_be_returns,
-		Installation:    installation_to_be_returns,
-		IsPluginDeleted: plugin_to_be_returns.Refers == 0,
+		Plugin:          pluginToBeReturns,
+		Installation:    installationToBeReturns,
+		IsPluginDeleted: pluginToBeReturns.Refers == 0,
 	}, nil
 }
 
@@ -345,18 +345,18 @@ func UpgradePlugin(
 		}
 
 		// delete the original plugin if the refers is 0
-		original_plugin, err := db.GetOne[models.Plugin](
+		originalPlugin, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
 		)
 
-		if err == nil && original_plugin.Refers == 0 {
-			err := db.Delete(&original_plugin, tx)
+		if err == nil && originalPlugin.Refers == 0 {
+			err := db.Delete(&originalPlugin, tx)
 			if err != nil {
 				return err
 			}
 			response.IsOriginalPluginDeleted = true
-			response.DeletedPlugin = &original_plugin
+			response.DeletedPlugin = &originalPlugin
 		} else if err != nil {
 			return err
 		}

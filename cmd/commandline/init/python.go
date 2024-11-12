@@ -131,13 +131,13 @@ func createPythonEnvironment(
 	}
 
 	// create the python environment
-	entrypoint_file_path := filepath.Join(root, fmt.Sprintf("%s.py", entrypoint))
-	if err := os.WriteFile(entrypoint_file_path, PYTHON_ENTRYPOINT_TEMPLATE, 0o644); err != nil {
+	entrypointFilePath := filepath.Join(root, fmt.Sprintf("%s.py", entrypoint))
+	if err := os.WriteFile(entrypointFilePath, PYTHON_ENTRYPOINT_TEMPLATE, 0o644); err != nil {
 		return err
 	}
 
-	requirements_file_path := filepath.Join(root, "requirements.txt")
-	if err := os.WriteFile(requirements_file_path, PYTHON_REQUIREMENTS_TEMPLATE, 0o644); err != nil {
+	requirementsFilePath := filepath.Join(root, "requirements.txt")
+	if err := os.WriteFile(requirementsFilePath, PYTHON_REQUIREMENTS_TEMPLATE, 0o644); err != nil {
 		return err
 	}
 

@@ -62,7 +62,7 @@ func (d *FSPluginDecoder) Open() error {
 
 func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error {
 	// dify_ignores is a map[string][]string, the key is the directory, the value is a list of files to ignore
-	dify_ignores := make(map[string][]string)
+	difyIgnores := make(map[string][]string)
 
 	return filepath.Walk(d.root, func(path string, info fs.FileInfo, err error) error {
 		// trim the first directory path
@@ -73,36 +73,36 @@ func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error
 
 		if info.IsDir() {
 			// try read the .difyignore file if it's the first time to walk this directory
-			if _, ok := dify_ignores[p]; !ok {
-				dify_ignores[p] = make([]string, 0)
+			if _, ok := difyIgnores[p]; !ok {
+				difyIgnores[p] = make([]string, 0)
 				// read the .difyignore file if it exists
-				ignore_file_path := filepath.Join(d.root, p, ".difyignore")
-				if _, err := os.Stat(ignore_file_path); err == nil {
-					ignore_file, err := os.Open(ignore_file_path)
+				ignoreFilePath := filepath.Join(d.root, p, ".difyignore")
+				if _, err := os.Stat(ignoreFilePath); err == nil {
+					ignoreFile, err := os.Open(ignoreFilePath)
 					if err != nil {
 						return err
 					}
 
-					scanner := bufio.NewScanner(ignore_file)
+					scanner := bufio.NewScanner(ignoreFile)
 					for scanner.Scan() {
 						line := scanner.Text()
 						if strings.HasPrefix(line, "#") {
 							continue
 						}
-						dify_ignores[p] = append(dify_ignores[p], line)
+						difyIgnores[p] = append(difyIgnores[p], line)
 					}
 
-					ignore_file.Close()
+					ignoreFile.Close()
 				}
 			}
 
 			return nil
 		}
 
-		current_ignore_files := dify_ignores[p]
-		for _, ignore_file := range current_ignore_files {
+		currentIgnoreFiles := difyIgnores[p]
+		for _, ignoreFile := range currentIgnoreFiles {
 			// skip if match
-			matched, err := filepath.Match(ignore_file, info.Name())
+			matched, err := filepath.Match(ignoreFile, info.Name())
 			if err != nil {
 				return err
 			}
@@ -144,11 +144,11 @@ func (d *FSPluginDecoder) ReadDir(dirname string) ([]string, error) {
 				return err
 			}
 			if !info.IsDir() {
-				rel_path, err := filepath.Rel(d.root, path)
+				relPath, err := filepath.Rel(d.root, path)
 				if err != nil {
 					return err
 				}
-				files = append(files, rel_path)
+				files = append(files, relPath)
 			}
 			return nil
 		},

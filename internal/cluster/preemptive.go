@@ -37,15 +37,15 @@ const (
 //   - bool: true if the slot is locked by the node
 //   - error: error if any
 func (c *Cluster) lockMaster() (bool, error) {
-	var final_error error
+	var finalError error
 
 	for i := 0; i < 3; i++ {
 		if success, err := cache.SetNX(PREEMPTION_LOCK_KEY, c.id, MASTER_LOCK_EXPIRED_TIME); err != nil {
 			// try again
-			if final_error == nil {
-				final_error = err
+			if finalError == nil {
+				finalError = err
 			} else {
-				final_error = errors.Join(final_error, err)
+				finalError = errors.Join(finalError, err)
 			}
 		} else if !success {
 			return false, nil
@@ -54,7 +54,7 @@ func (c *Cluster) lockMaster() (bool, error) {
 		}
 	}
 
-	return false, final_error
+	return false, finalError
 }
 
 // update master

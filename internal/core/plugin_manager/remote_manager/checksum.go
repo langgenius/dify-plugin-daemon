@@ -15,6 +15,6 @@ func (m *RemotePluginRuntime) calculateChecksum() string {
 	buffer := bytes.Buffer{}
 	binary.Write(&buffer, binary.BigEndian, parser.MarshalJsonBytes(configuration))
 	hash := sha256.New()
-	hash.Write(append(buffer.Bytes(), []byte(m.tenant_id)...))
+	hash.Write(append(buffer.Bytes(), []byte(m.tenantId)...))
 	return hex.EncodeToString(hash.Sum(nil))
 }

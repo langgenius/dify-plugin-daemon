@@ -36,13 +36,13 @@ func TestPackager_Pack(t *testing.T) {
 			os.MkdirAll(filepath.Join(tmpDir, path), 0755)
 		} else {
 			// copy the file
-			origin_file, err := test_plugin.Open(path)
+			originFile, err := test_plugin.Open(path)
 			if err != nil {
 				return err
 			}
-			defer origin_file.Close()
+			defer originFile.Close()
 
-			content, err := io.ReadAll(origin_file)
+			content, err := io.ReadAll(originFile)
 			if err != nil {
 				return err
 			}
@@ -73,22 +73,22 @@ func TestPackager_Pack(t *testing.T) {
 		os.Remove(f.Name())
 	}()
 
-	gzip_reader, err := gzip.NewReader(f)
+	gzipReader, err := gzip.NewReader(f)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer gzip_reader.Close()
+	defer gzipReader.Close()
 
 	// Create a new tar reader
-	tar_reader := tar.NewReader(gzip_reader)
+	tarReader := tar.NewReader(gzipReader)
 
-	dockerfile_found := false
-	requirements_found := false
-	main_py_found := false
-	jina_yaml_found := false
+	dockerfileFound := false
+	requirementsFound := false
+	mainPyFound := false
+	jinaYamlFound := false
 	// Iterate through the files in the tar.gz archive
 	for {
-		header, err := tar_reader.Next()
+		header, err := tarReader.Next()
 		if err == io.EOF {
 			break // End of archive
 		}
@@ -98,27 +98,27 @@ func TestPackager_Pack(t *testing.T) {
 
 		switch header.Name {
 		case "Dockerfile":
-			dockerfile_found = true
+			dockerfileFound = true
 		case "requirements.txt":
-			requirements_found = true
+			requirementsFound = true
 		case "main.py":
-			main_py_found = true
+			mainPyFound = true
 		case "provider/jina.yaml":
-			jina_yaml_found = true
+			jinaYamlFound = true
 		}
 	}
 
 	// Check if all required files are present
-	if !dockerfile_found {
+	if !dockerfileFound {
 		t.Error("Dockerfile not found in the packed archive")
 	}
-	if !requirements_found {
+	if !requirementsFound {
 		t.Error("requirements.txt not found in the packed archive")
 	}
-	if !main_py_found {
+	if !mainPyFound {
 		t.Error("main.py not found in the packed archive")
 	}
-	if !jina_yaml_found {
+	if !jinaYamlFound {
 		t.Error("jina.yaml not found in the packed archive")
 	}
 }

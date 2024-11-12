@@ -18,7 +18,7 @@ type PluginUniversalEvent struct {
 // error_handler will be called when data is not standard or itself it's an error message
 func ParsePluginUniversalEvent(
 	data []byte,
-	session_handler func(session_id string, data []byte),
+	session_handler func(sessionId string, data []byte),
 	heartbeat_handler func(),
 	error_handler func(err string),
 	info_handler func(message string),
@@ -30,12 +30,12 @@ func ParsePluginUniversalEvent(
 		return
 	}
 
-	session_id := event.SessionId
+	sessionId := event.SessionId
 
 	switch event.Event {
 	case PLUGIN_EVENT_LOG:
 		if event.Event == PLUGIN_EVENT_LOG {
-			log_event, err := parser.UnmarshalJsonBytes[PluginLogEvent](
+			logEvent, err := parser.UnmarshalJsonBytes[PluginLogEvent](
 				event.Data,
 			)
 			if err != nil {
@@ -43,10 +43,10 @@ func ParsePluginUniversalEvent(
 				return
 			}
 
-			info_handler(log_event.Message)
+			info_handler(logEvent.Message)
 		}
 	case PLUGIN_EVENT_SESSION:
-		session_handler(session_id, event.Data)
+		session_handler(sessionId, event.Data)
 	case PLUGIN_EVENT_ERROR:
 		error_handler(string(event.Data))
 	case PLUGIN_EVENT_HEARTBEAT:

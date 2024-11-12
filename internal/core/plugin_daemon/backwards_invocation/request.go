@@ -22,10 +22,10 @@ type BackwardsInvocationWriter interface {
 //
 // That's why it has a writer, for different transaction, the writer is unique
 type BackwardsInvocation struct {
-	typ              BackwardsInvocationType
-	id               string
-	detailed_request map[string]any
-	session          *session_manager.Session
+	typ             BackwardsInvocationType
+	id              string
+	detailedRequest map[string]any
+	session         *session_manager.Session
 
 	// writer is the writer that writes the data to the session
 	// NOTE: write operation will not raise errors
@@ -40,12 +40,12 @@ func NewBackwardsInvocation(
 	id string,
 	session *session_manager.Session,
 	writer BackwardsInvocationWriter,
-	detailed_request map[string]any,
+	detailedRequest map[string]any,
 ) *BackwardsInvocation {
 	return &BackwardsInvocation{
 		typ:                 typ,
 		id:                  id,
-		detailed_request:    detailed_request,
+		detailedRequest:     detailedRequest,
 		session:             session,
 		writer:              writer,
 		backwardsInvocation: session.BackwardsInvocation(),
@@ -83,7 +83,7 @@ func (bi *BackwardsInvocation) Type() BackwardsInvocationType {
 }
 
 func (bi *BackwardsInvocation) RequestData() map[string]any {
-	return bi.detailed_request
+	return bi.detailedRequest
 }
 
 func (bi *BackwardsInvocation) TenantID() (string, error) {

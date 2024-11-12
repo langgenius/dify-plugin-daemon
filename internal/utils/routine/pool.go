@@ -33,28 +33,28 @@ func Submit(f func()) {
 	p.Submit(f)
 }
 
-func WithMaxRoutine(max_routine int, tasks []func(), on_finish ...func()) {
-	if max_routine <= 0 {
-		max_routine = 1
+func WithMaxRoutine(maxRoutine int, tasks []func(), on_finish ...func()) {
+	if maxRoutine <= 0 {
+		maxRoutine = 1
 	}
 
-	if max_routine > len(tasks) {
-		max_routine = len(tasks)
+	if maxRoutine > len(tasks) {
+		maxRoutine = len(tasks)
 	}
 
 	Submit(func() {
 		wg := sync.WaitGroup{}
-		task_index := int32(0)
+		taskIndex := int32(0)
 
-		for i := 0; i < max_routine; i++ {
+		for i := 0; i < maxRoutine; i++ {
 			wg.Add(1)
 			Submit(func() {
 				defer wg.Done()
-				current_index := atomic.AddInt32(&task_index, 1)
-				for current_index <= int32(len(tasks)) {
-					task := tasks[current_index-1]
+				currentIndex := atomic.AddInt32(&taskIndex, 1)
+				for currentIndex <= int32(len(tasks)) {
+					task := tasks[currentIndex-1]
 					task()
-					current_index = atomic.AddInt32(&task_index, 1)
+					currentIndex = atomic.AddInt32(&taskIndex, 1)
 				}
 			})
 		}

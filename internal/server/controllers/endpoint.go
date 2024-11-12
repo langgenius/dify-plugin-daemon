@@ -16,14 +16,14 @@ func SetupEndpoint(ctx *gin.Context) {
 			Name                   string                                 `json:"name" validate:"required"`
 		},
 	) {
-		tenant_id := request.TenantID
-		user_id := request.UserID
+		tenantId := request.TenantID
+		userId := request.UserID
 		settings := request.Settings
-		plugin_unique_identifier := request.PluginUniqueIdentifier
+		pluginUniqueIdentifier := request.PluginUniqueIdentifier
 		name := request.Name
 
 		ctx.JSON(200, service.SetupEndpoint(
-			tenant_id, user_id, plugin_unique_identifier, name, settings,
+			tenantId, userId, pluginUniqueIdentifier, name, settings,
 		))
 	})
 }
@@ -34,11 +34,11 @@ func ListEndpoints(ctx *gin.Context) {
 		Page     int    `form:"page" validate:"required"`
 		PageSize int    `form:"page_size" validate:"required,max=100"`
 	}) {
-		tenant_id := request.TenantID
+		tenantId := request.TenantID
 		page := request.Page
-		page_size := request.PageSize
+		pageSize := request.PageSize
 
-		ctx.JSON(200, service.ListEndpoints(tenant_id, page, page_size))
+		ctx.JSON(200, service.ListEndpoints(tenantId, page, pageSize))
 	})
 }
 
@@ -49,12 +49,12 @@ func ListPluginEndpoints(ctx *gin.Context) {
 		Page     int    `form:"page" validate:"required"`
 		PageSize int    `form:"page_size" validate:"required,max=100"`
 	}) {
-		tenant_id := request.TenantID
-		plugin_id := request.PluginID
+		tenantId := request.TenantID
+		pluginId := request.PluginID
 		page := request.Page
-		page_size := request.PageSize
+		pageSize := request.PageSize
 
-		ctx.JSON(200, service.ListPluginEndpoints(tenant_id, plugin_id, page, page_size))
+		ctx.JSON(200, service.ListPluginEndpoints(tenantId, pluginId, page, pageSize))
 	})
 }
 
@@ -63,10 +63,10 @@ func RemoveEndpoint(ctx *gin.Context) {
 		EndpointID string `json:"endpoint_id" validate:"required"`
 		TenantID   string `uri:"tenant_id" validate:"required"`
 	}) {
-		endpoint_id := request.EndpointID
-		tenant_id := request.TenantID
+		endpointId := request.EndpointID
+		tenantId := request.TenantID
 
-		ctx.JSON(200, service.RemoveEndpoint(endpoint_id, tenant_id))
+		ctx.JSON(200, service.RemoveEndpoint(endpointId, tenantId))
 	})
 }
 
@@ -78,13 +78,13 @@ func UpdateEndpoint(ctx *gin.Context) {
 		Settings   map[string]any `json:"settings" validate:"omitempty"`
 		Name       string         `json:"name" validate:"required"`
 	}) {
-		tenant_id := request.TenantID
-		user_id := request.UserID
-		endpoint_id := request.EndpointID
+		tenantId := request.TenantID
+		userId := request.UserID
+		endpointId := request.EndpointID
 		settings := request.Settings
 		name := request.Name
 
-		ctx.JSON(200, service.UpdateEndpoint(endpoint_id, tenant_id, user_id, name, settings))
+		ctx.JSON(200, service.UpdateEndpoint(endpointId, tenantId, userId, name, settings))
 	})
 }
 
@@ -93,10 +93,10 @@ func EnableEndpoint(ctx *gin.Context) {
 		EndpointID string `json:"endpoint_id" validate:"required"`
 		TenantID   string `uri:"tenant_id" validate:"required"`
 	}) {
-		tenant_id := request.TenantID
-		endpoint_id := request.EndpointID
+		tenantId := request.TenantID
+		endpointId := request.EndpointID
 
-		ctx.JSON(200, service.EnableEndpoint(endpoint_id, tenant_id))
+		ctx.JSON(200, service.EnableEndpoint(endpointId, tenantId))
 	})
 }
 
@@ -105,9 +105,9 @@ func DisableEndpoint(ctx *gin.Context) {
 		EndpointID string `json:"endpoint_id" validate:"required"`
 		TenantID   string `uri:"tenant_id" validate:"required"`
 	}) {
-		tenant_id := request.TenantID
-		endpoint_id := request.EndpointID
+		tenantId := request.TenantID
+		endpointId := request.EndpointID
 
-		ctx.JSON(200, service.DisableEndpoint(endpoint_id, tenant_id))
+		ctx.JSON(200, service.DisableEndpoint(endpointId, tenantId))
 	})
 }

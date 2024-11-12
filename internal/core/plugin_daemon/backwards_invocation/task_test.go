@@ -27,7 +27,7 @@ func getTestSession() *session_manager.Session {
 }
 
 func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
-	all_permitted_runtime := plugin_entities.PluginDeclaration{
+	allPermittedRuntime := plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Resource: plugin_entities.PluginResourceRequirement{
 				Permission: &plugin_entities.PluginPermissionRequirement{
@@ -54,117 +54,117 @@ func TestBackwardsInvocationAllPermittedPermission(t *testing.T) {
 		},
 	}
 
-	invoke_llm_request := NewBackwardsInvocation(
+	invokeLlmRequest := NewBackwardsInvocation(
 		dify_invocation.INVOKE_TYPE_LLM,
 		"test",
 		getTestSession(),
 		nil,
 		nil,
 	)
-	if err := checkPermission(&all_permitted_runtime, invoke_llm_request); err != nil {
+	if err := checkPermission(&allPermittedRuntime, invokeLlmRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_text_embedding_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_text_embedding_request); err != nil {
+	invokeTextEmbeddingRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeTextEmbeddingRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_rerank_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_RERANK, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_rerank_request); err != nil {
+	invokeRerankRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_RERANK, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeRerankRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_tts_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TTS, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_tts_request); err != nil {
+	invokeTtsRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TTS, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeTtsRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_speech2text_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_SPEECH2TEXT, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_speech2text_request); err != nil {
+	invokeSpeech2textRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_SPEECH2TEXT, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeSpeech2textRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_moderation_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_MODERATION, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_moderation_request); err != nil {
+	invokeModerationRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_MODERATION, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeModerationRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_tool_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TOOL, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_tool_request); err != nil {
+	invokeToolRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TOOL, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeToolRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_node_parameter_extractor_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_node_parameter_extractor_request); err != nil {
+	invokeNodeParameterExtractorRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeNodeParameterExtractorRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_node_question_classifier_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_node_question_classifier_request); err != nil {
+	invokeNodeQuestionClassifierRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeNodeQuestionClassifierRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 
-	invoke_app_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_APP, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_permitted_runtime, invoke_app_request); err != nil {
+	invokeAppRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_APP, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allPermittedRuntime, invokeAppRequest); err != nil {
 		t.Errorf("checkPermission failed: %s", err.Error())
 	}
 }
 
 func TestBackwardsInvocationAllDeniedPermission(t *testing.T) {
-	all_denied_runtime := plugin_entities.PluginDeclaration{
+	allDeniedRuntime := plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Resource: plugin_entities.PluginResourceRequirement{},
 		},
 	}
 
-	invoke_llm_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_LLM, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_llm_request); err == nil {
+	invokeLlmRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_LLM, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeLlmRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_text_embedding_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_text_embedding_request); err == nil {
+	invokeTextEmbeddingRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeTextEmbeddingRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_rerank_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_RERANK, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_rerank_request); err == nil {
+	invokeRerankRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_RERANK, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeRerankRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_tts_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TTS, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_tts_request); err == nil {
+	invokeTtsRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TTS, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeTtsRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_speech2text_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_SPEECH2TEXT, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_speech2text_request); err == nil {
+	invokeSpeech2textRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_SPEECH2TEXT, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeSpeech2textRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_moderation_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_MODERATION, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_moderation_request); err == nil {
+	invokeModerationRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_MODERATION, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeModerationRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_tool_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TOOL, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_tool_request); err == nil {
+	invokeToolRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_TOOL, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeToolRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_node_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_node_request); err == nil {
+	invokeNodeRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_PARAMETER_EXTRACTOR, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeNodeRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_node_question_classifier_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_node_question_classifier_request); err == nil {
+	invokeNodeQuestionClassifierRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_NODE_QUESTION_CLASSIFIER, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeNodeQuestionClassifierRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 
-	invoke_app_request := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_APP, "", getTestSession(), nil, nil)
-	if err := checkPermission(&all_denied_runtime, invoke_app_request); err == nil {
+	invokeAppRequest := NewBackwardsInvocation(dify_invocation.INVOKE_TYPE_APP, "", getTestSession(), nil, nil)
+	if err := checkPermission(&allDeniedRuntime, invokeAppRequest); err == nil {
 		t.Errorf("checkPermission failed: expected error, got nil")
 	}
 }

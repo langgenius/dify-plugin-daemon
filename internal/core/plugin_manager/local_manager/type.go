@@ -11,27 +11,27 @@ type LocalPluginRuntime struct {
 	positive_manager.PositivePluginRuntime
 	plugin_entities.PluginRuntime
 
-	waitChan    chan bool
-	io_identity string
+	waitChan   chan bool
+	ioIdentity string
 
 	// python interpreter path, currently only support python
-	python_interpreter_path string
+	pythonInterpreterPath string
 
 	// to create a new python virtual environment, we need a default python interpreter
 	// by using its venv module
-	default_python_interpreter_path string
+	defaultPythonInterpreterPath string
 
-	waitChanLock      sync.Mutex
-	wait_started_chan []chan bool
-	waitStoppedChan   []chan bool
+	waitChanLock    sync.Mutex
+	waitStartedChan []chan bool
+	waitStoppedChan []chan bool
 
 	isNotFirstStart bool
 }
 
 func NewLocalPluginRuntime(
-	python_interpreter_path string,
+	pythonInterpreterPath string,
 ) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
-		default_python_interpreter_path: python_interpreter_path,
+		defaultPythonInterpreterPath: pythonInterpreterPath,
 	}
 }

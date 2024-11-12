@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	init_pkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
+	initPkg "github.com/langgenius/dify-plugin-daemon/cmd/commandline/init"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -18,7 +18,7 @@ var (
 		Short: "Init",
 		Long:  "Init",
 		Run: func(c *cobra.Command, args []string) {
-			init_pkg.InitPlugin()
+			initPkg.InitPlugin()
 		},
 	}
 
@@ -31,37 +31,37 @@ var (
 				fmt.Println("Error: plugin_path is required")
 				return
 			}
-			input_path := args[0]
+			inputPath := args[0]
 			// using filename of input_path as output_path if not specified
-			output_path := ""
+			outputPath := ""
 
 			if cmd.Flag("output_path") != nil {
-				output_path = cmd.Flag("output_path").Value.String()
+				outputPath = cmd.Flag("output_path").Value.String()
 			} else {
-				output_path = filepath.Base(input_path) + ".difypkg"
+				outputPath = filepath.Base(inputPath) + ".difypkg"
 			}
 
-			decoder, err := decoder.NewFSPluginDecoder(input_path)
+			decoder, err := decoder.NewFSPluginDecoder(inputPath)
 			if err != nil {
-				log.Error("failed to create plugin decoder , plugin path: %s, error: %v", input_path, err)
+				log.Error("failed to create plugin decoder , plugin path: %s, error: %v", inputPath, err)
 				return
 			}
 
 			packager := packager.NewPackager(decoder)
-			zip_file, err := packager.Pack()
+			zipFile, err := packager.Pack()
 
 			if err != nil {
 				log.Error("failed to package plugin %v", err)
 				return
 			}
 
-			err = os.WriteFile(output_path, zip_file, 0644)
+			err = os.WriteFile(outputPath, zipFile, 0644)
 			if err != nil {
 				log.Error("failed to write package file %v", err)
 				return
 			}
 
-			log.Info("plugin packaged successfully, output path: %s", output_path)
+			log.Info("plugin packaged successfully, output path: %s", outputPath)
 		},
 	}
 
@@ -75,36 +75,36 @@ var (
 				return
 			}
 
-			plugin_path := args[0]
-			var plugin_decoder decoder.PluginDecoder
-			if stat, err := os.Stat(plugin_path); err == nil {
+			pluginPath := args[0]
+			var pluginDecoder decoder.PluginDecoder
+			if stat, err := os.Stat(pluginPath); err == nil {
 				if stat.IsDir() {
-					plugin_decoder, err = decoder.NewFSPluginDecoder(plugin_path)
+					pluginDecoder, err = decoder.NewFSPluginDecoder(pluginPath)
 					if err != nil {
-						log.Error("failed to create plugin decoder, plugin path: %s, error: %v", plugin_path, err)
+						log.Error("failed to create plugin decoder, plugin path: %s, error: %v", pluginPath, err)
 						return
 					}
 				} else {
-					bytes, err := os.ReadFile(plugin_path)
+					bytes, err := os.ReadFile(pluginPath)
 					if err != nil {
-						log.Error("failed to read plugin file, plugin path: %s, error: %v", plugin_path, err)
+						log.Error("failed to read plugin file, plugin path: %s, error: %v", pluginPath, err)
 						return
 					}
 
-					plugin_decoder, err = decoder.NewZipPluginDecoder(bytes)
+					pluginDecoder, err = decoder.NewZipPluginDecoder(bytes)
 					if err != nil {
-						log.Error("failed to create plugin decoder, plugin path: %s, error: %v", plugin_path, err)
+						log.Error("failed to create plugin decoder, plugin path: %s, error: %v", pluginPath, err)
 						return
 					}
 				}
 			} else {
-				log.Error("failed to get plugin file info, plugin path: %s, error: %v", plugin_path, err)
+				log.Error("failed to get plugin file info, plugin path: %s, error: %v", pluginPath, err)
 				return
 			}
 
-			checksum, err := plugin_decoder.Checksum()
+			checksum, err := pluginDecoder.Checksum()
 			if err != nil {
-				log.Error("failed to calculate checksum, plugin path: %s, error: %v", plugin_path, err)
+				log.Error("failed to calculate checksum, plugin path: %s, error: %v", pluginPath, err)
 				return
 			}
 

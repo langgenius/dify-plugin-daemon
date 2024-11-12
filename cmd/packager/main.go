@@ -32,13 +32,13 @@ func main() {
 	}
 
 	packager := packager.NewPackager(decoder)
-	zip_file, err := packager.Pack()
+	zipFile, err := packager.Pack()
 
 	if err != nil {
 		log.Panic("failed to package plugin %v", err)
 	}
 
-	err = os.WriteFile(out_path, zip_file, 0644)
+	err = os.WriteFile(out_path, zipFile, 0644)
 	if err != nil {
 		log.Panic("failed to write package file %v", err)
 	}

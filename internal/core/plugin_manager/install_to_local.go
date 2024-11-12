@@ -16,17 +16,17 @@ func (p *PluginManager) InstallToLocal(
 ) (
 	*stream.Stream[PluginInstallResponse], error,
 ) {
-	package_file, err := p.packageBucket.Get(plugin_unique_identifier.String())
+	packageFile, err := p.packageBucket.Get(plugin_unique_identifier.String())
 	if err != nil {
 		return nil, err
 	}
 
-	err = p.installedBucket.Save(plugin_unique_identifier, package_file)
+	err = p.installedBucket.Save(plugin_unique_identifier, packageFile)
 	if err != nil {
 		return nil, err
 	}
 
-	runtime, launched_chan, err := p.launchLocal(plugin_unique_identifier)
+	runtime, launchedChan, err := p.launchLocal(plugin_unique_identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (p *PluginManager) InstallToLocal(
 				})
 				runtime.Stop()
 				return
-			case <-launched_chan:
+			case <-launchedChan:
 				// launched
 				if err != nil {
 					response.Write(PluginInstallResponse{

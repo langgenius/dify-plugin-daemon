@@ -23,8 +23,8 @@ type ZipPluginDecoder struct {
 	reader *zip.Reader
 	err    error
 
-	sig         string
-	create_time int64
+	sig        string
+	createTime int64
 }
 
 func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
@@ -114,10 +114,10 @@ func (z *ZipPluginDecoder) ReadDir(dirname string) ([]string, error) {
 	}
 
 	files := make([]string, 0)
-	dir_name_with_slash := strings.TrimSuffix(dirname, "/") + "/"
+	dirNameWithSlash := strings.TrimSuffix(dirname, "/") + "/"
 
 	for _, file := range z.reader.File {
-		if strings.HasPrefix(file.Name, dir_name_with_slash) {
+		if strings.HasPrefix(file.Name, dirNameWithSlash) {
 			files = append(files, file.Name)
 		}
 	}
@@ -134,21 +134,19 @@ func (z *ZipPluginDecoder) decode() error {
 		return z.err
 	}
 
-	type signatureData struct {
+	signatureData, err := parser.UnmarshalJson[struct {
 		Signature string `json:"signature"`
 		Time      int64  `json:"time"`
-	}
-
-	signature_data, err := parser.UnmarshalJson[signatureData](z.reader.Comment)
+	}](z.reader.Comment)
 	if err != nil {
 		return err
 	}
 
-	plugin_sig := signature_data.Signature
-	plugin_time := signature_data.Time
+	pluginSig := signatureData.Signature
+	pluginTime := signatureData.Time
 
-	z.sig = plugin_sig
-	z.create_time = plugin_time
+	z.sig = pluginSig
+	z.createTime = pluginTime
 
 	return nil
 }
@@ -171,8 +169,8 @@ func (z *ZipPluginDecoder) Signature() (string, error) {
 }
 
 func (z *ZipPluginDecoder) CreateTime() (int64, error) {
-	if z.create_time != 0 {
-		return z.create_time, nil
+	if z.createTime != 0 {
+		return z.createTime, nil
 	}
 
 	if z.reader == nil {
@@ -184,7 +182,7 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 		return 0, err
 	}
 
-	return z.create_time, nil
+	return z.createTime, nil
 }
 
 func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
@@ -206,9 +204,9 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	// copy to working directory
 	if err := z.Walk(func(filename, dir string) error {
-		working_path := path.Join(dst, dir)
+		workingPath := path.Join(dst, dir)
 		// check if directory exists
-		if err := os.MkdirAll(working_path, 0755); err != nil {
+		if err := os.MkdirAll(workingPath, 0755); err != nil {
 			return err
 		}
 
@@ -217,7 +215,7 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 			return err
 		}
 
-		filename = filepath.Join(working_path, filename)
+		filename = filepath.Join(workingPath, filename)
 
 		// copy file
 		if err := os.WriteFile(filename, bytes, 0644); err != nil {

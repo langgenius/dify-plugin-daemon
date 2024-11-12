@@ -105,12 +105,12 @@ func (p *PluginManager) Get(
 	}
 
 	// check if plugin is a serverless runtime
-	plugin_session_interface, err := p.getServerlessPluginRuntime(identity)
+	pluginSessionInterface, err := p.getServerlessPluginRuntime(identity)
 	if err != nil {
 		return nil, err
 	}
 
-	return plugin_session_interface, nil
+	return pluginSessionInterface, nil
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {
@@ -164,19 +164,19 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 	}
 
 	// try to decode the package
-	package_decoder, err := decoder.NewZipPluginDecoder(pkg)
+	packageDecoder, err := decoder.NewZipPluginDecoder(pkg)
 	if err != nil {
 		return nil, err
 	}
 
 	// get the declaration
-	declaration, err := package_decoder.Manifest()
+	declaration, err := packageDecoder.Manifest()
 	if err != nil {
 		return nil, err
 	}
 
 	// get the assets
-	assets, err := package_decoder.Assets()
+	assets, err := packageDecoder.Assets()
 	if err != nil {
 		return nil, err
 	}
@@ -187,18 +187,18 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 		return nil, err
 	}
 
-	unique_identifier, err := package_decoder.UniqueIdentity()
+	uniqueIdentifier, err := packageDecoder.UniqueIdentity()
 	if err != nil {
 		return nil, err
 	}
 
 	// create plugin if not exists
 	if _, err := db.GetOne[models.PluginDeclaration](
-		db.Equal("plugin_unique_identifier", unique_identifier.String()),
+		db.Equal("plugin_unique_identifier", uniqueIdentifier.String()),
 	); err == db.ErrDatabaseNotFound {
 		err = db.Create(&models.PluginDeclaration{
-			PluginUniqueIdentifier: unique_identifier.String(),
-			PluginID:               unique_identifier.PluginID(),
+			PluginUniqueIdentifier: uniqueIdentifier.String(),
+			PluginID:               uniqueIdentifier.PluginID(),
 			Declaration:            declaration,
 		})
 		if err != nil {

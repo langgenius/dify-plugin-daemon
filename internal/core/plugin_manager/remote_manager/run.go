@@ -30,24 +30,24 @@ func (r *RemotePluginRuntime) Type() plugin_entities.PluginRuntimeType {
 }
 
 func (r *RemotePluginRuntime) StartPlugin() error {
-	var exit_error error
+	var exitError error
 
 	// handle heartbeat
 	routine.Submit(func() {
-		r.last_active_at = time.Now()
+		r.lastActiveAt = time.Now()
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ticker.C:
-				if time.Since(r.last_active_at) > 20*time.Second {
+				if time.Since(r.lastActiveAt) > 20*time.Second {
 					// kill this connection
 					r.conn.Close()
-					exit_error = plugin_errors.ErrPluginNotActive
+					exitError = plugin_errors.ErrPluginNotActive
 					return
 				}
-			case <-r.shutdown_chan:
+			case <-r.shutdownChan:
 				return
 			}
 		}
@@ -57,9 +57,9 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
 			func(session_id string, data []byte) {
-				r.callbacks_lock.RLock()
+				r.callbacksLock.RLock()
 				listeners := r.callbacks[session_id][:]
-				r.callbacks_lock.RUnlock()
+				r.callbacksLock.RUnlock()
 
 				// handle session event
 				for _, listener := range listeners {
@@ -67,7 +67,7 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 				}
 			},
 			func() {
-				r.last_active_at = time.Now()
+				r.lastActiveAt = time.Now()
 			},
 			func(err string) {
 				log.Error("plugin %s: %s", r.Configuration().Identity(), err)
@@ -78,11 +78,11 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		)
 	})
 
-	return exit_error
+	return exitError
 }
 
 func (r *RemotePluginRuntime) Wait() (<-chan bool, error) {
-	return r.shutdown_chan, nil
+	return r.shutdownChan, nil
 }
 
 func (r *RemotePluginRuntime) Checksum() (string, error) {

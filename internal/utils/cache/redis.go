@@ -288,7 +288,7 @@ func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdab
 	cursor := uint64(0)
 
 	for {
-		keys, new_cursor, err := getCmdable(context...).Scan(ctx, cursor, match, 32).Result()
+		keys, newCursor, err := getCmdable(context...).Scan(ctx, cursor, match, 32).Result()
 		if err != nil {
 			return err
 		}
@@ -297,11 +297,11 @@ func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdab
 			return err
 		}
 
-		if new_cursor == 0 {
+		if newCursor == 0 {
 			break
 		}
 
-		cursor = new_cursor
+		cursor = newCursor
 	}
 
 	return nil
@@ -335,7 +335,7 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 	cursor := uint64(0)
 
 	for {
-		kvs, new_cursor, err := getCmdable(context...).
+		kvs, newCursor, err := getCmdable(context...).
 			HScan(ctx, serialKey(key), cursor, match, 32).
 			Result()
 
@@ -357,11 +357,11 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 			return err
 		}
 
-		if new_cursor == 0 {
+		if newCursor == 0 {
 			break
 		}
 
-		cursor = new_cursor
+		cursor = newCursor
 	}
 
 	return nil
@@ -382,7 +382,7 @@ var (
 
 // Lock key, expire time takes responsibility for expiration time
 // try_lock_timeout takes responsibility for the timeout of trying to lock
-func Lock(key string, expire time.Duration, try_lock_timeout time.Duration, context ...redis.Cmdable) error {
+func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
@@ -397,8 +397,8 @@ func Lock(key string, expire time.Duration, try_lock_timeout time.Duration, cont
 			return nil
 		}
 
-		try_lock_timeout -= LOCK_DURATION
-		if try_lock_timeout <= 0 {
+		tryLockTimeout -= LOCK_DURATION
+		if tryLockTimeout <= 0 {
 			return ErrLockTimeout
 		}
 	}
@@ -453,11 +453,11 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 func Subscribe[T any](channel string) (<-chan T, func()) {
 	pubsub := client.Subscribe(ctx, channel)
 	ch := make(chan T)
-	connection_established := make(chan bool)
+	connectionEstablished := make(chan bool)
 
 	go func() {
 		defer close(ch)
-		defer close(connection_established)
+		defer close(connectionEstablished)
 
 		alive := true
 		for alive {
@@ -468,7 +468,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 			}
 			switch data := iface.(type) {
 			case *redis.Subscription:
-				connection_established <- true
+				connectionEstablished <- true
 			case *redis.Message:
 				v, err := parser.UnmarshalJson[T](data.Payload)
 				if err != nil {
@@ -484,7 +484,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 	}()
 
 	// wait for the connection to be established
-	<-connection_established
+	<-connectionEstablished
 
 	return ch, func() {
 		pubsub.Close()
