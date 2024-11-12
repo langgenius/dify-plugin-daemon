@@ -34,11 +34,11 @@ func InstallPluginRuntimeToTenant(
 	plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier,
 	source string,
 	meta map[string]any,
-	on_done InstallPluginOnDoneHandler, // since installing plugin is a async task, we need to call it asynchronously
+	onDone InstallPluginOnDoneHandler, // since installing plugin is a async task, we need to call it asynchronously
 ) (*InstallPluginResponse, error) {
 	response := &InstallPluginResponse{}
 
-	plugins_wait_for_installation := []plugin_entities.PluginUniqueIdentifier{}
+	pluginsWaitForInstallation := []plugin_entities.PluginUniqueIdentifier{}
 
 	task := &models.InstallTask{
 		Status:           models.InstallTaskStatusRunning,
@@ -56,7 +56,7 @@ func InstallPluginRuntimeToTenant(
 		}
 
 		// check if plugin is already installed
-		plugin, err := db.GetOne[models.Plugin](
+		_, err = db.GetOne[models.Plugin](
 			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 		)
 
@@ -70,22 +70,10 @@ func InstallPluginRuntimeToTenant(
 		})
 
 		if err == nil {
-			// already installed by other tenant
-			declaration := plugin.Declaration
-			if _, _, err := curd.InstallPlugin(
-				tenant_id,
-				plugin_unique_identifier,
-				plugin.InstallType,
-				&declaration,
-				source,
-				meta,
-			); err != nil {
-				return nil, err
-			}
-
 			task.CompletedPlugins++
 			task.Plugins[i].Status = models.InstallTaskStatusSuccess
 			task.Plugins[i].Message = "Installed"
+			onDone(plugin_unique_identifier, plugin_declaration)
 			continue
 		}
 
@@ -93,10 +81,10 @@ func InstallPluginRuntimeToTenant(
 			return nil, err
 		}
 
-		plugins_wait_for_installation = append(plugins_wait_for_installation, plugin_unique_identifier)
+		pluginsWaitForInstallation = append(pluginsWaitForInstallation, plugin_unique_identifier)
 	}
 
-	if len(plugins_wait_for_installation) == 0 {
+	if len(pluginsWaitForInstallation) == 0 {
 		response.AllInstalled = true
 		response.TaskID = ""
 		return response, nil
@@ -111,7 +99,7 @@ func InstallPluginRuntimeToTenant(
 	manager := plugin_manager.Manager()
 
 	tasks := []func(){}
-	for _, plugin_unique_identifier := range plugins_wait_for_installation {
+	for _, plugin_unique_identifier := range pluginsWaitForInstallation {
 		// copy the variable to avoid race condition
 		plugin_unique_identifier := plugin_unique_identifier
 
@@ -228,7 +216,7 @@ func InstallPluginRuntimeToTenant(
 				}
 
 				if message.Event == plugin_manager.PluginInstallEventDone {
-					if err := on_done(plugin_unique_identifier, declaration); err != nil {
+					if err := onDone(plugin_unique_identifier, declaration); err != nil {
 						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 							task.Status = models.InstallTaskStatusFailed
 							plugin.Status = models.InstallTaskStatusFailed
@@ -265,31 +253,37 @@ func InstallPluginFromIdentifiers(
 	source string,
 	meta map[string]any,
 ) *entities.Response {
-	response, err := InstallPluginRuntimeToTenant(config, tenant_id, plugin_unique_identifiers, source, meta, func(
-		plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-		declaration *plugin_entities.PluginDeclaration,
-	) error {
-		runtime_type := plugin_entities.PluginRuntimeType("")
+	response, err := InstallPluginRuntimeToTenant(
+		config,
+		tenant_id,
+		plugin_unique_identifiers,
+		source,
+		meta,
+		func(
+			plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+			declaration *plugin_entities.PluginDeclaration,
+		) error {
+			runtime_type := plugin_entities.PluginRuntimeType("")
 
-		switch config.Platform {
-		case app.PLATFORM_AWS_LAMBDA:
-			runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
-		case app.PLATFORM_LOCAL:
-			runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
-		default:
-			return fmt.Errorf("unsupported platform: %s", config.Platform)
-		}
+			switch config.Platform {
+			case app.PLATFORM_AWS_LAMBDA:
+				runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+			case app.PLATFORM_LOCAL:
+				runtime_type = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+			default:
+				return fmt.Errorf("unsupported platform: %s", config.Platform)
+			}
 
-		_, _, err := curd.InstallPlugin(
-			tenant_id,
-			plugin_unique_identifier,
-			runtime_type,
-			declaration,
-			source,
-			meta,
-		)
-		return err
-	})
+			_, _, err := curd.InstallPlugin(
+				tenant_id,
+				plugin_unique_identifier,
+				runtime_type,
+				declaration,
+				source,
+				meta,
+			)
+			return err
+		})
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
 	}
@@ -340,7 +334,7 @@ func UpgradePlugin(
 			declaration *plugin_entities.PluginDeclaration,
 		) error {
 			// uninstall the original plugin
-			err = curd.UpgradePlugin(
+			upgrade_response, err := curd.UpgradePlugin(
 				tenant_id,
 				original_plugin_unique_identifier,
 				new_plugin_unique_identifier,
@@ -352,6 +346,21 @@ func UpgradePlugin(
 
 			if err != nil {
 				return err
+			}
+
+			if upgrade_response.IsOriginalPluginDeleted {
+				// delete the plugin if no installation left
+				manager := plugin_manager.Manager()
+				if string(upgrade_response.DeletedPlugin.InstallType) == string(
+					plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+				) {
+					err = manager.UninstallFromLocal(
+						plugin_entities.PluginUniqueIdentifier(upgrade_response.DeletedPlugin.PluginUniqueIdentifier),
+					)
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			return nil

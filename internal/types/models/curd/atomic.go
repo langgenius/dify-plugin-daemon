@@ -263,6 +263,14 @@ func UninstallPlugin(
 	}, nil
 }
 
+type UpgradePluginResponse struct {
+	// whether the original plugin has been deleted
+	IsOriginalPluginDeleted bool
+
+	// the deleted plugin
+	DeletedPlugin *models.Plugin
+}
+
 // Upgrade plugin for a tenant, upgrade the plugin if it has been created before
 // and uninstall the original plugin and install the new plugin, but keep the original installation information
 // like endpoint_setups, etc.
@@ -274,8 +282,10 @@ func UpgradePlugin(
 	install_type plugin_entities.PluginRuntimeType,
 	source string,
 	meta map[string]any,
-) error {
-	return db.WithTransaction(func(tx *gorm.DB) error {
+) (*UpgradePluginResponse, error) {
+	var response UpgradePluginResponse
+
+	err := db.WithTransaction(func(tx *gorm.DB) error {
 		installation, err := db.GetOne[models.PluginInstallation](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
@@ -334,6 +344,23 @@ func UpgradePlugin(
 			return err
 		}
 
+		// delete the original plugin if the refers is 0
+		original_plugin, err := db.GetOne[models.Plugin](
+			db.WithTransactionContext(tx),
+			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
+		)
+
+		if err == nil && original_plugin.Refers == 0 {
+			err := db.Delete(&original_plugin, tx)
+			if err != nil {
+				return err
+			}
+			response.IsOriginalPluginDeleted = true
+			response.DeletedPlugin = &original_plugin
+		} else if err != nil {
+			return err
+		}
+
 		// increase the refers of the new plugin
 		err = db.Run(
 			db.WithTransactionContext(tx),
@@ -348,4 +375,10 @@ func UpgradePlugin(
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
