@@ -39,8 +39,6 @@ type Config struct {
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
 
-	ProcessCachingPath string `envconfig:"PROCESS_CACHING_PATH"`
-
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
 	// platform like local or aws lambda
@@ -123,10 +121,6 @@ func (c *Config) Validate() error {
 	} else if c.Platform == PLATFORM_LOCAL {
 		if c.PluginWorkingPath == "" {
 			return fmt.Errorf("plugin working path is empty")
-		}
-
-		if c.ProcessCachingPath == "" {
-			return fmt.Errorf("process caching path is empty")
 		}
 	} else {
 		return fmt.Errorf("invalid platform")

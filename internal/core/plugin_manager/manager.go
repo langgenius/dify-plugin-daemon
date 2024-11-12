@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
@@ -90,13 +89,6 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
 		pythonInterpreterPath:    configuration.PythonInterpreterPath,
 	}
-
-	// mkdir
-	os.MkdirAll(configuration.PluginWorkingPath, 0755)
-	os.MkdirAll(configuration.PluginInstalledPath, 0755)
-	os.MkdirAll(configuration.PluginMediaCachePath, 0755)
-	os.MkdirAll(configuration.PluginPackageCachePath, 0755)
-	os.MkdirAll(filepath.Dir(configuration.ProcessCachingPath), 0755)
 
 	return manager
 }
