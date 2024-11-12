@@ -20,12 +20,12 @@ func (config *Config) SetDefault() {
 	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBool(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
-	setDefaultString(&config.PluginStorageLocalRoot, "./storage")
-	setDefaultString(&config.PluginInstalledPath, "./plugin")
-	setDefaultString(&config.PluginMediaCachePath, "./assets")
-	setDefaultString(&config.PersistenceStoragePath, "./persistence")
+	setDefaultString(&config.PluginStorageLocalRoot, "storage")
+	setDefaultString(&config.PluginInstalledPath, "plugin")
+	setDefaultString(&config.PluginMediaCachePath, "assets")
+	setDefaultString(&config.PersistenceStoragePath, "persistence")
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
-	setDefaultString(&config.PluginPackageCachePath, "./plugin_packages")
+	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
 }
 

@@ -90,6 +90,11 @@ func (s *AWSS3Storage) Delete(key string) error {
 }
 
 func (s *AWSS3Storage) List(prefix string) ([]oss.OSSPath, error) {
+	// append a slash to the prefix if it doesn't end with one
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+
 	var keys []oss.OSSPath
 	input := &s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),

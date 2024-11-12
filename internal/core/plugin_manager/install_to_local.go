@@ -26,7 +26,7 @@ func (p *PluginManager) InstallToLocal(
 		return nil, err
 	}
 
-	runtime, launchedChan, err := p.launchLocal(plugin_unique_identifier)
+	runtime, launchedChan, errChan, err := p.launchLocal(plugin_unique_identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,9 @@ func (p *PluginManager) InstallToLocal(
 				})
 				runtime.Stop()
 				return
-			case <-launchedChan:
-				// launched
+			case err := <-errChan:
 				if err != nil {
+					// if error occurs, stop the plugin
 					response.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  err.Error(),
@@ -66,6 +66,7 @@ func (p *PluginManager) InstallToLocal(
 					runtime.Stop()
 					return
 				}
+			case <-launchedChan:
 				response.Write(PluginInstallResponse{
 					Event: PluginInstallEventDone,
 					Data:  "Installed",

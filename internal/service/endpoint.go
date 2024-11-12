@@ -216,7 +216,15 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			db.Equal("tenant_id", tenant_id),
 		)
 		if err != nil {
-			return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
+			// use empty settings and declaration for uninstalled plugins
+			endpoint.Settings = map[string]any{}
+			endpoint.Declaration = &plugin_entities.EndpointProviderDeclaration{
+				Settings:      []plugin_entities.ProviderConfig{},
+				Endpoints:     []plugin_entities.EndpointDeclaration{},
+				EndpointFiles: []string{},
+			}
+			endpoints[i] = endpoint
+			continue
 		}
 
 		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(

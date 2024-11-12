@@ -1,6 +1,8 @@
 package plugin_manager
 
 import (
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -11,7 +13,11 @@ func (p *PluginManager) AddPluginRegisterHandler(handler func(r plugin_entities.
 	p.pluginRegisters = append(p.pluginRegisters, handler)
 }
 
-func (p *PluginManager) fullDuplexLifecycle(r plugin_entities.PluginFullDuplexLifetime, launched_chan chan error) {
+func (p *PluginManager) fullDuplexLifecycle(
+	r plugin_entities.PluginFullDuplexLifetime,
+	launchedChan chan bool,
+	errChan chan error,
+) {
 	configuration := r.Configuration()
 
 	log.Info("new plugin logged in: %s", configuration.Identity())
@@ -36,20 +42,54 @@ func (p *PluginManager) fullDuplexLifecycle(r plugin_entities.PluginFullDuplexLi
 	defer r.TriggerStop()
 
 	// try to init environment until succeed
-	for {
+	failedTimes := 0
+
+	// only notify launched once
+	once := sync.Once{}
+
+	for !r.Stopped() {
+		// notify launched if failed too many times
+		if failedTimes > 3 {
+			once.Do(func() {
+				if errChan != nil {
+					errChan <- fmt.Errorf(
+						"init environment for plugin %s failed too many times, "+
+							"you should consider the package is corrupted or your network is unstable",
+						configuration.Identity(),
+					)
+					close(errChan)
+				}
+
+				if launchedChan != nil {
+					close(launchedChan)
+				}
+			})
+		}
+
 		log.Info("init environment for plugin %s", configuration.Identity())
 		if err := r.InitEnvironment(); err != nil {
+			if r.Stopped() {
+				// plugin has been stopped, exit
+				break
+			}
 			log.Error("init environment failed: %s, retry in 30s", err.Error())
 			time.Sleep(30 * time.Second)
+			failedTimes++
 			continue
 		}
 		break
 	}
 
 	// notify launched
-	if launched_chan != nil {
-		close(launched_chan)
-	}
+	once.Do(func() {
+		if launchedChan != nil {
+			close(launchedChan)
+		}
+
+		if errChan != nil {
+			close(errChan)
+		}
+	})
 
 	// init environment successfully
 	// once succeed, we consider the plugin is installed successfully
