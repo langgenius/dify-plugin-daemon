@@ -13,124 +13,124 @@ func TestGithubDependencyPatternRegex(t *testing.T) {
 		// Valid patterns
 		{
 			name:     "basic version pattern",
-			input:    "owner/repo/1.0.0/manifest.json",
+			input:    "owner/repo:1.0.0/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with patch",
-			input:    "owner/repo/1.0.1/manifest.yaml",
+			input:    "owner/repo:1.0.1/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with pre-release",
-			input:    "owner/repo/1.0.0-beta/manifest.json",
+			input:    "owner/repo:1.0.0-beta/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with x pattern",
-			input:    "owner/repo/1.x.x/manifest.json",
+			input:    "owner/repo:1.x.x/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with X pattern",
-			input:    "owner/repo/1.X.X/manifest.json",
+			input:    "owner/repo:1.X.X/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with mixed x pattern",
-			input:    "owner/repo/1.2.x/manifest.json",
+			input:    "owner/repo:1.2.x/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with tilde",
-			input:    "owner/repo/~1.0.0/manifest.json",
+			input:    "owner/repo:~1.0.0/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version with caret",
-			input:    "owner/repo/^1.0.0/manifest.json",
+			input:    "owner/repo:^1.0.0/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "version range",
-			input:    "owner/repo/1.0.0-2.0.0/manifest.json",
+			input:    "owner/repo:1.0.0-2.0.0/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "complex owner and repo names",
-			input:    "complex-owner/complex-repo-name/1.0.0/manifest.json",
+			input:    "complex-owner/complex-repo-name:1.0.0/manifest.yaml",
 			expected: true,
 		},
 		{
 			name:     "underscore in names",
-			input:    "owner_name/repo_name/1.0.0/manifest.json",
+			input:    "owner_name/repo_name:1.0.0/manifest.yaml",
 			expected: true,
 		},
 
 		// Invalid patterns
 		{
 			name:     "four digit version",
-			input:    "owner/repo/1.0.0.1/manifest.json",
+			input:    "owner/repo:1.0.0.1/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "empty owner",
-			input:    "/repo/1.0.0/manifest.json",
+			input:    "/repo:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "empty repo",
-			input:    "owner//1.0.0/manifest.json",
+			input:    "owner//1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "invalid version format",
-			input:    "owner/repo/1.0/manifest.json",
+			input:    "owner/repo:1.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "missing manifest file",
-			input:    "owner/repo/1.0.0/",
+			input:    "owner/repo:1.0.0/",
 			expected: false,
 		},
 		{
 			name:     "uppercase in owner",
-			input:    "Owner/repo/1.0.0/manifest.json",
+			input:    "Owner/repo:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "uppercase in repo",
-			input:    "owner/Repo/1.0.0/manifest.json",
+			input:    "owner/Repo:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "invalid characters in owner",
-			input:    "owner@/repo/1.0.0/manifest.json",
+			input:    "owner@/repo:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "invalid characters in repo",
-			input:    "owner/repo#/1.0.0/manifest.json",
+			input:    "owner/repo#:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "too long owner name",
-			input:    "ownerwithaverylongnamethatshouldnotbeallowedinthiscaseownerwithaverylongnamethatshouldnotbeallowedinthiscase/repo/1.0.0/manifest.json",
+			input:    "ownerwithaverylongnamethatshouldnotbeallowedinthiscaseownerwithaverylongnamethatshouldnotbeallowedinthiscase/repo:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "too long repo name",
-			input:    "owner/repowithavrepowithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirementsrepowithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirementserylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirements/1.0.0/manifest.json",
+			input:    "owner/repowithavrepowithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirementsrepowithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirementserylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirements:1.0.0/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "invalid version range format",
-			input:    "owner/repo/1.0.0-/manifest.json",
+			input:    "owner/repo:1.0.0-/manifest.yaml",
 			expected: false,
 		},
 		{
 			name:     "invalid pre-release format",
-			input:    "owner/repo/1.0.0-toolongprerelease/manifest.json",
+			input:    "owner/repo:1.0.0-toolongprerelease/manifest.yaml",
 			expected: false,
 		},
 	}

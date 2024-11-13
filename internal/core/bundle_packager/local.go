@@ -19,7 +19,7 @@ type LocalBundlePackager struct {
 
 func NewLocalBundlePackager(path string) (BundlePackager, error) {
 	// try read manifest file
-	manifestFile, err := os.Open(filepath.Join(path, "manifest.json"))
+	manifestFile, err := os.Open(filepath.Join(path, "manifest.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,8 @@ func NewLocalBundlePackager(path string) (BundlePackager, error) {
 			return err
 		}
 
-		assetName := strings.TrimPrefix(filePath, path+"/_assets/")
+		prefix := filepath.Join(path, "_assets")
+		assetName := strings.TrimPrefix(filePath, prefix)
 		packager.assets[assetName] = bytes.NewBuffer(assetBytes)
 
 		return nil

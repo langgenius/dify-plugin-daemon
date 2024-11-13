@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"gopkg.in/yaml.v3"
 )
 
 type DependencyType string
@@ -23,10 +24,56 @@ type Dependency struct {
 	Value any            `json:"value" yaml:"value" validate:"required"`
 }
 
+func (d *Dependency) UnmarshalYAML(node *yaml.Node) error {
+	// try convert Value to GithubDependency, MarketplaceDependency, PackageDependency
+	type alias struct {
+		Type  DependencyType `json:"type" yaml:"type" validate:"required,oneof=github marketplace package"`
+		Value yaml.Node      `json:"value" yaml:"value" validate:"required"`
+	}
+
+	var a alias
+	if err := node.Decode(&a); err != nil {
+		return err
+	}
+
+	d.Type = a.Type
+
+	// try convert Value to GithubDependency, MarketplaceDependency, PackageDependency
+	switch d.Type {
+	case DEPENDENCY_TYPE_GITHUB:
+		var value GithubDependency
+		if err := a.Value.Decode(&value); err != nil {
+			return err
+		}
+		d.Value = value
+	case DEPENDENCY_TYPE_MARKETPLACE:
+		var value MarketplaceDependency
+		if err := a.Value.Decode(&value); err != nil {
+			return err
+		}
+		d.Value = value
+	case DEPENDENCY_TYPE_PACKAGE:
+		var value PackageDependency
+		if err := a.Value.Decode(&value); err != nil {
+			return err
+		}
+		d.Value = value
+	}
+
+	return nil
+}
+
 type GithubRepoPattern string
 
 func (p GithubRepoPattern) Split() []string {
-	return strings.Split(string(p), "/")
+	split := strings.Split(string(p), ":")
+	// split again by "/"
+	splits := []string{}
+	for _, s := range split {
+		splits = append(splits, strings.Split(s, "/")...)
+	}
+
+	return splits
 }
 
 func (p GithubRepoPattern) Repo() string {
@@ -75,7 +122,14 @@ func NewMarketplacePattern(pattern string) (MarketplacePattern, error) {
 }
 
 func (p MarketplacePattern) Split() []string {
-	return strings.Split(string(p), "/")
+	split := strings.Split(string(p), ":")
+	// split again by "/"
+	splits := []string{}
+	for _, s := range split {
+		splits = append(splits, strings.Split(s, "/")...)
+	}
+
+	return splits
 }
 
 func (p MarketplacePattern) Organization() string {
@@ -114,7 +168,7 @@ var (
 		manifest_entities.VERSION_PATTERN,
 		manifest_entities.VERSION_PATTERN,
 	)
-	GITHUB_DEPENDENCY_PATTERN = fmt.Sprintf(`^[a-z0-9_-]{1,64}/[a-z0-9_-]{1,128}/%s/[^/]+$`, GITHUB_VERSION_PATTERN)
+	GITHUB_DEPENDENCY_PATTERN = fmt.Sprintf(`^[a-z0-9_-]{1,64}/[a-z0-9_-]{1,128}:%s/[^/]+$`, GITHUB_VERSION_PATTERN)
 
 	MARKETPLACE_VERSION_PATTERN = fmt.Sprintf(
 		`([~^]?%s|%s(\.%s){2}|%s-%s)`,
@@ -124,7 +178,7 @@ var (
 		manifest_entities.VERSION_PATTERN,
 		manifest_entities.VERSION_PATTERN,
 	)
-	MARKETPLACE_DEPENDENCY_PATTERN = fmt.Sprintf(`^[a-z0-9_-]{1,64}/[a-z0-9_-]{1,128}/%s$`, MARKETPLACE_VERSION_PATTERN)
+	MARKETPLACE_DEPENDENCY_PATTERN = fmt.Sprintf(`^[a-z0-9_-]{1,64}/[a-z0-9_-]{1,128}:%s$`, MARKETPLACE_VERSION_PATTERN)
 )
 
 var (

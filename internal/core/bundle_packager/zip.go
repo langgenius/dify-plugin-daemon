@@ -36,7 +36,7 @@ func NewZipBundlePackager(path string) (BundlePackager, error) {
 	}
 
 	// try read manifest file
-	manifestFile, err := zipReader.Open("manifest.json")
+	manifestFile, err := zipReader.Open("manifest.yaml")
 	if err != nil {
 		return nil, err
 	}

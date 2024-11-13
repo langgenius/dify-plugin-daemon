@@ -139,24 +139,36 @@ func init() {
 	bundleCommand.AddCommand(bundlePackageCommand)
 	bundleCommand.AddCommand(bundleAnalyzeCommand)
 
-	bundleAppendDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
-	bundleAppendDependencyCommand.MarkFlagRequired("bundle_path")
-
 	bundleAppendGithubDependencyCommand.Flags().StringP("repo_pattern", "r", "", "github repo pattern")
+	bundleAppendGithubDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
 	bundleAppendGithubDependencyCommand.MarkFlagRequired("repo_pattern")
+	bundleAppendGithubDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleAppendMarketplaceDependencyCommand.Flags().StringP("marketplace_pattern", "m", "", "marketplace pattern")
+	bundleAppendMarketplaceDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
 	bundleAppendMarketplaceDependencyCommand.MarkFlagRequired("marketplace_pattern")
+	bundleAppendMarketplaceDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleAppendPackageDependencyCommand.Flags().StringP("package_path", "p", "", "path to the package")
+	bundleAppendPackageDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
 	bundleAppendPackageDependencyCommand.MarkFlagRequired("package_path")
+	bundleAppendPackageDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleRemoveDependencyCommand.Flags().StringP("index", "i", "", "index of the dependency")
+	bundleRemoveDependencyCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
 	bundleRemoveDependencyCommand.MarkFlagRequired("index")
+	bundleRemoveDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleBumpVersionCommand.Flags().StringP("target_version", "t", "", "target version")
+	bundleBumpVersionCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
 	bundleBumpVersionCommand.MarkFlagRequired("target_version")
+	bundleBumpVersionCommand.MarkFlagRequired("bundle_path")
 
 	bundlePackageCommand.Flags().StringP("output_path", "o", "", "output path")
+	bundlePackageCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
 	bundlePackageCommand.MarkFlagRequired("output_path")
+	bundlePackageCommand.MarkFlagRequired("bundle_path")
+
+	bundleAnalyzeCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
+	bundleAnalyzeCommand.MarkFlagRequired("bundle_path")
 }

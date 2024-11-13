@@ -140,6 +140,11 @@ func ListDependencies(bundlePath string) {
 		return
 	}
 
+	if len(dependencies) == 0 {
+		log.Info("No dependencies found")
+		return
+	}
+
 	for i, dependency := range dependencies {
 		log.Info("========== Dependency %d ==========", i)
 		if dependency.Type == bundle_entities.DEPENDENCY_TYPE_GITHUB {
