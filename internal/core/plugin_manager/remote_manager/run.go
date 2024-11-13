@@ -41,8 +41,8 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		for {
 			select {
 			case <-ticker.C:
-				if time.Since(r.lastActiveAt) > 20*time.Second {
-					// kill this connection
+				if time.Since(r.lastActiveAt) > 60*time.Second {
+					// kill this connection if it's not active for a long time
 					r.conn.Close()
 					exitError = plugin_errors.ErrPluginNotActive
 					return
