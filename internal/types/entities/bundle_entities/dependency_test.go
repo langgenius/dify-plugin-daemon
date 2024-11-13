@@ -145,3 +145,102 @@ func TestGithubDependencyPatternRegex(t *testing.T) {
 		})
 	}
 }
+
+func TestMarketplacePattern(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "valid pattern with exact version",
+			input:    "owner/plugin:1.0.0",
+			expected: true,
+		},
+		{
+			name:     "valid pattern with caret version",
+			input:    "owner/plugin:^1.0.0",
+			expected: true,
+		},
+		{
+			name:     "valid pattern with tilde version",
+			input:    "owner/plugin:~1.0.0",
+			expected: true,
+		},
+		{
+			name:     "valid pattern with x version",
+			input:    "owner/plugin:1.x.x",
+			expected: true,
+		},
+		{
+			name:     "valid pattern with version range",
+			input:    "owner/plugin:1.0.0-2.0.0",
+			expected: true,
+		},
+		{
+			name:     "valid pattern with pre-release",
+			input:    "owner/plugin:1.0.0-beta",
+			expected: true,
+		},
+		{
+			name:     "invalid pattern without version",
+			input:    "owner/plugin",
+			expected: false,
+		},
+		{
+			name:     "invalid pattern with empty version",
+			input:    "owner/plugin:",
+			expected: false,
+		},
+		{
+			name:     "uppercase in owner",
+			input:    "Owner/plugin:1.0.0",
+			expected: false,
+		},
+		{
+			name:     "uppercase in plugin",
+			input:    "owner/Plugin:1.0.0",
+			expected: false,
+		},
+		{
+			name:     "invalid characters in owner",
+			input:    "owner@/plugin:1.0.0",
+			expected: false,
+		},
+		{
+			name:     "invalid characters in plugin",
+			input:    "owner/plugin#:1.0.0",
+			expected: false,
+		},
+		{
+			name:     "too long owner name",
+			input:    "ownerwithaverylongnamethatshouldnotbeallowedinthiscaseownerwithaverylongnamethatshouldnotbeallowedinthiscase/plugin:1.0.0",
+			expected: false,
+		},
+		{
+			name:     "too long plugin name",
+			input:    "owner/pluginwithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirementspluginwithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirementspluginwithaverylongnamethatshouldnotbeallowedinthiscaseandshouldbeshorterthanspecifiedintherequirements:1.0.0",
+			expected: false,
+		},
+		{
+			name:     "invalid version range format",
+			input:    "owner/plugin:1.0.0-",
+			expected: false,
+		},
+		{
+			name:     "invalid pre-release format",
+			input:    "owner/plugin:1.0.0-toolongprerelease",
+			expected: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := MARKETPLACE_PATTERN_REGEX_COMPILED.MatchString(testCase.input)
+			if result != testCase.expected {
+				t.Errorf("Test case '%s' failed: input '%s' expected %v but got %v, pattern: %s",
+					testCase.name, testCase.input, testCase.expected, result, MARKETPLACE_PATTERN_REGEX_COMPILED.String())
+			}
+		})
+	}
+}
