@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
@@ -18,12 +19,6 @@ const (
 	PLUGIN_CATEGORY_TOOL      PluginCategory = "tool"
 	PLUGIN_CATEGORY_MODEL     PluginCategory = "model"
 	PLUGIN_CATEGORY_EXTENSION PluginCategory = "extension"
-)
-
-type DifyManifestType string
-
-const (
-	PluginType DifyManifestType = "plugin"
 )
 
 type PluginTag string
@@ -191,18 +186,18 @@ type PluginExtensions struct {
 }
 
 type PluginDeclarationWithoutAdvancedFields struct {
-	Version     string                    `json:"version" yaml:"version,omitempty" validate:"required,version"`
-	Type        DifyManifestType          `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
-	Description I18nObject                `json:"description" yaml:"description" validate:"required"`
-	Label       I18nObject                `json:"label" yaml:"label" validate:"required"`
-	Author      string                    `json:"author" yaml:"author,omitempty" validate:"omitempty,max=64"`
-	Name        string                    `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
-	Icon        string                    `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
-	CreatedAt   time.Time                 `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
-	Resource    PluginResourceRequirement `json:"resource" yaml:"resource,omitempty" validate:"required"`
-	Plugins     PluginExtensions          `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
-	Meta        PluginMeta                `json:"meta" yaml:"meta,omitempty" validate:"required"`
-	Tags        []PluginTag               `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
+	Version     manifest_entities.Version          `json:"version" yaml:"version,omitempty" validate:"required,version"`
+	Type        manifest_entities.DifyManifestType `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
+	Description I18nObject                         `json:"description" yaml:"description" validate:"required"`
+	Label       I18nObject                         `json:"label" yaml:"label" validate:"required"`
+	Author      string                             `json:"author" yaml:"author,omitempty" validate:"omitempty,max=64"`
+	Name        string                             `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
+	Icon        string                             `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
+	CreatedAt   time.Time                          `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
+	Resource    PluginResourceRequirement          `json:"resource" yaml:"resource,omitempty" validate:"required"`
+	Plugins     PluginExtensions                   `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
+	Meta        PluginMeta                         `json:"meta" yaml:"meta,omitempty" validate:"required"`
+	Tags        []PluginTag                        `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
 }
 
 func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {
@@ -278,16 +273,9 @@ func (p *PluginDeclaration) MarshalJSON() ([]byte, error) {
 }
 
 var (
-	PluginNameRegex               = regexp.MustCompile(`^[a-z0-9_-]{1,128}$`)
-	AuthorRegex                   = regexp.MustCompile(`^[a-z0-9_-]{1,64}$`)
-	PluginDeclarationVersionRegex = regexp.MustCompile(`^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$`)
+	PluginNameRegex = regexp.MustCompile(`^[a-z0-9_-]{1,128}$`)
+	AuthorRegex     = regexp.MustCompile(`^[a-z0-9_-]{1,64}$`)
 )
-
-func isVersion(fl validator.FieldLevel) bool {
-	// version format must be like x.x.x, at least 2 digits and most 5 digits, and it can be ends with a letter
-	value := fl.Field().String()
-	return PluginDeclarationVersionRegex.MatchString(value)
-}
 
 func isPluginName(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
@@ -295,7 +283,7 @@ func isPluginName(fl validator.FieldLevel) bool {
 }
 
 func (p *PluginDeclaration) Identity() string {
-	return parser.MarshalPluginID(p.Author, p.Name, p.Version)
+	return parser.MarshalPluginID(p.Author, p.Name, p.Version.String())
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {
@@ -339,7 +327,6 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 
 func init() {
 	// init validator
-	validators.GlobalEntitiesValidator.RegisterValidation("version", isVersion)
 	validators.GlobalEntitiesValidator.RegisterValidation("plugin_name", isPluginName)
 }
 

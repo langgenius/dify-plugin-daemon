@@ -14,6 +14,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
@@ -151,7 +152,7 @@ func TestAcceptConnection(t *testing.T) {
 	pluginManifest := parser.MarshalJsonBytes(&plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
 			Version: "1.0.0",
-			Type:    plugin_entities.PluginType,
+			Type:    manifest_entities.PluginType,
 			Description: plugin_entities.I18nObject{
 				EnUS: "test",
 			},

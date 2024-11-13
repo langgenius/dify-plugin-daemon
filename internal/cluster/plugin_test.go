@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
@@ -56,7 +57,7 @@ func getRandomPluginRuntime() fakePlugin {
 						EnUS: "label",
 					},
 					Version:   "0.0.1",
-					Type:      plugin_entities.PluginType,
+					Type:      manifest_entities.PluginType,
 					Author:    "Yeuoly",
 					CreatedAt: time.Now(),
 					Plugins: plugin_entities.PluginExtensions{

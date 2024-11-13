@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -70,7 +71,7 @@ func getRandomPluginRuntime() *fakePlugin {
 						EnUS: "label",
 					},
 					Version:   "0.0.1",
-					Type:      plugin_entities.PluginType,
+					Type:      manifest_entities.PluginType,
 					Author:    "Yeuoly",
 					CreatedAt: time.Now(),
 					Plugins: plugin_entities.PluginExtensions{

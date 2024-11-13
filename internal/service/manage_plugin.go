@@ -5,6 +5,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
@@ -23,7 +24,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		InstallationID         string                             `json:"installation_id"`
 		Declaration            *plugin_entities.PluginDeclaration `json:"declaration"`
 		RuntimeType            plugin_entities.PluginRuntimeType  `json:"runtime_type"`
-		Version                string                             `json:"version"`
+		Version                manifest_entities.Version          `json:"version"`
 		CreatedAt              time.Time                          `json:"created_at"`
 		UpdatedAt              time.Time                          `json:"updated_at"`
 		Source                 string                             `json:"source"`

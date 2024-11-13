@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"gorm.io/gorm"
@@ -313,7 +314,7 @@ func UpgradePlugin(
 				InstallType:            install_type,
 				Refers:                 0,
 				Declaration:            *new_declaration,
-				ManifestType:           plugin_entities.PluginType,
+				ManifestType:           manifest_entities.PluginType,
 			}
 
 			err := db.Create(&plugin, tx)

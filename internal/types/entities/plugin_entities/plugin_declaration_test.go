@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -12,7 +13,7 @@ func preparePluginDeclaration() PluginDeclaration {
 	return PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: PluginDeclarationWithoutAdvancedFields{
 			Version: "0.0.1",
-			Type:    PluginType,
+			Type:    manifest_entities.PluginType,
 			Description: I18nObject{
 				EnUS: "test",
 			},

@@ -10,6 +10,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -117,8 +118,8 @@ func (m model) createPlugin() {
 
 	manifest := &plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
-			Version: "0.0.1",
-			Type:    plugin_entities.PluginType,
+			Version: manifest_entities.Version("0.0.1"),
+			Type:    manifest_entities.PluginType,
 			Icon:    "icon.svg",
 			Author:  m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
 			Name:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),

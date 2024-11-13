@@ -22,6 +22,12 @@ var (
 		Short: "Plugin",
 		Long:  "Plugin related commands",
 	}
+
+	bundleCommand = &cobra.Command{
+		Use:   "bundle",
+		Short: "Bundle",
+		Long:  "Bundle related commands",
+	}
 )
 
 func init() {
@@ -29,6 +35,7 @@ func init() {
 
 	rootCommand.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dify.yaml)")
 	rootCommand.AddCommand(pluginCommand)
+	rootCommand.AddCommand(bundleCommand)
 }
 
 func initConfig() {
