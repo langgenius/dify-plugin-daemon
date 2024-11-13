@@ -40,7 +40,7 @@ func CombinedGetPluginDeclaration(
 			} else {
 				// try to fetch the declaration from plugin if it's remote
 				plugin, err := db.GetOne[models.Plugin](
-					db.Equal("unique_identifier", plugin_unique_identifier.String()),
+					db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 					db.Equal("install_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE)),
 					db.Equal("tenant_id", tenant_id),
 				)
