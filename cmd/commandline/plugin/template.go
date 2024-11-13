@@ -1,4 +1,4 @@
-package init
+package plugin
 
 import (
 	_ "embed"
