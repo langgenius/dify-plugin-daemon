@@ -18,7 +18,6 @@ func CombinedGetPluginDeclaration(
 		strings.Join(
 			[]string{
 				string(runtime_type),
-				tenant_id,
 				plugin_unique_identifier.String(),
 			},
 			":",
@@ -42,7 +41,6 @@ func CombinedGetPluginDeclaration(
 				plugin, err := db.GetOne[models.Plugin](
 					db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 					db.Equal("install_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE)),
-					db.Equal("tenant_id", tenant_id),
 				)
 				if err != nil && err != db.ErrDatabaseNotFound {
 					return nil, err
