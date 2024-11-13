@@ -227,8 +227,12 @@ func (p *PluginManager) GetPackage(
 
 func (p *PluginManager) GetDeclaration(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	tenant_id string,
+	runtime_type plugin_entities.PluginRuntimeType,
 ) (
 	*plugin_entities.PluginDeclaration, error,
 ) {
-	return helper.CombinedGetPluginDeclaration(plugin_unique_identifier)
+	return helper.CombinedGetPluginDeclaration(
+		plugin_unique_identifier, tenant_id, runtime_type,
+	)
 }

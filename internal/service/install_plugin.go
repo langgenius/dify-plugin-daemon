@@ -37,8 +37,16 @@ func InstallPluginRuntimeToTenant(
 	onDone InstallPluginOnDoneHandler, // since installing plugin is a async task, we need to call it asynchronously
 ) (*InstallPluginResponse, error) {
 	response := &InstallPluginResponse{}
-
 	pluginsWaitForInstallation := []plugin_entities.PluginUniqueIdentifier{}
+
+	runtimeType := plugin_entities.PluginRuntimeType("")
+	if config.Platform == app.PLATFORM_AWS_LAMBDA {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+	} else if config.Platform == app.PLATFORM_LOCAL {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	} else {
+		return nil, fmt.Errorf("unsupported platform: %s", config.Platform)
+	}
 
 	task := &models.InstallTask{
 		Status:           models.InstallTaskStatusRunning,
@@ -50,7 +58,11 @@ func InstallPluginRuntimeToTenant(
 
 	for i, pluginUniqueIdentifier := range plugin_unique_identifiers {
 		// fetch plugin declaration first, before installing, we need to ensure pkg is uploaded
-		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			tenant_id,
+			runtimeType,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +115,11 @@ func InstallPluginRuntimeToTenant(
 		// copy the variable to avoid race condition
 		pluginUniqueIdentifier := pluginUniqueIdentifier
 
-		declaration, err := manager.GetDeclaration(pluginUniqueIdentifier)
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			tenant_id,
+			runtimeType,
+		)
 		if err != nil {
 			return nil, err
 		}

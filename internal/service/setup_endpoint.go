@@ -31,7 +31,11 @@ func SetupEndpoint(
 	}
 
 	// try get plugin
-	pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
+	pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+		pluginUniqueIdentifier,
+		tenant_id,
+		plugin_entities.PluginRuntimeType(installation.RuntimeType),
+	)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}
@@ -160,7 +164,11 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 	}
 
 	// get plugin
-	pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
+	pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+		pluginUniqueIdentifier,
+		tenant_id,
+		plugin_entities.PluginRuntimeType(installation.RuntimeType),
+	)
 	if err != nil {
 		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
 	}

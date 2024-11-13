@@ -49,7 +49,11 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			return entities.NewErrorResponse(-500, err.Error())
 		}
 
-		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(pluginUniqueIdentifier)
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			tenant_id,
+			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
+		)
 		if err != nil {
 			return entities.NewErrorResponse(-500, err.Error())
 		}
