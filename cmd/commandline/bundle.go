@@ -1,15 +1,21 @@
 package main
 
 import (
+	"strconv"
+
+	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/bundle"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/spf13/cobra"
 )
 
 var (
 	bundleCreateCommand = &cobra.Command{
-		Use:   "create",
+		Use:   "init",
 		Short: "Create a bundle",
 		Long:  "Create a bundle",
 		Run: func(c *cobra.Command, args []string) {
+			bundle.InitBundle()
 		},
 	}
 
@@ -32,6 +38,14 @@ var (
 		Short: "Append a github dependency",
 		Long:  "Append a github dependency",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			repoPattern := c.Flag("repo_pattern").Value.String()
+			githubPattern, err := bundle_entities.NewGithubRepoPattern(repoPattern)
+			if err != nil {
+				log.Error("Invalid github repo pattern: %v", err)
+				return
+			}
+			bundle.AddGithubDependency(bundlePath, githubPattern)
 		},
 	}
 
@@ -40,6 +54,14 @@ var (
 		Short: "Append a marketplace dependency",
 		Long:  "Append a marketplace dependency",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			marketplacePatternString := c.Flag("marketplace_pattern").Value.String()
+			marketplacePattern, err := bundle_entities.NewMarketplacePattern(marketplacePatternString)
+			if err != nil {
+				log.Error("Invalid marketplace pattern: %v", err)
+				return
+			}
+			bundle.AddMarketplaceDependency(bundlePath, marketplacePattern)
 		},
 	}
 
@@ -48,6 +70,9 @@ var (
 		Short: "Append a local package dependency",
 		Long:  "Append a local package dependency",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			packagePath := c.Flag("package_path").Value.String()
+			bundle.AddPackageDependency(bundlePath, packagePath)
 		},
 	}
 
@@ -64,6 +89,14 @@ var (
 		Short: "Remove a dependency",
 		Long:  "Remove a dependency",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			index := c.Flag("index").Value.String()
+			indexInt, err := strconv.Atoi(index)
+			if err != nil {
+				log.Error("Invalid index: %v", err)
+				return
+			}
+			bundle.RemoveDependency(bundlePath, indexInt)
 		},
 	}
 
@@ -82,6 +115,14 @@ var (
 		Run: func(c *cobra.Command, args []string) {
 		},
 	}
+
+	bundlePackageCommand = &cobra.Command{
+		Use:   "package",
+		Short: "Package the bundle",
+		Long:  "Package the bundle",
+		Run: func(c *cobra.Command, args []string) {
+		},
+	}
 )
 
 func init() {
@@ -94,7 +135,7 @@ func init() {
 	bundleCommand.AddCommand(bundleRegenerateCommand)
 	bundleCommand.AddCommand(bundleBumpVersionCommand)
 	bundleCommand.AddCommand(bundleListDependenciesCommand)
-
+	bundleCommand.AddCommand(bundlePackageCommand)
 	bundleCommand.AddCommand(bundleAnalyzeCommand)
 
 	bundleAppendDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")

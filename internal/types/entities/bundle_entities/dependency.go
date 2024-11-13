@@ -23,7 +23,22 @@ type Dependency struct {
 }
 
 type GithubRepoPattern string
+
+func NewGithubRepoPattern(pattern string) (GithubRepoPattern, error) {
+	if !GITHUB_DEPENDENCY_PATTERN_REGEX_COMPILED.MatchString(pattern) {
+		return "", fmt.Errorf("invalid github repo pattern")
+	}
+	return GithubRepoPattern(pattern), nil
+}
+
 type MarketplacePattern string
+
+func NewMarketplacePattern(pattern string) (MarketplacePattern, error) {
+	if !MARKETPLACE_PATTERN_REGEX_COMPILED.MatchString(pattern) {
+		return "", fmt.Errorf("invalid marketplace pattern")
+	}
+	return MarketplacePattern(pattern), nil
+}
 
 var (
 	GITHUB_VERSION_PATTERN = fmt.Sprintf(

@@ -118,22 +118,18 @@ func (m model) createPlugin() {
 
 	manifest := &plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
-			Version: manifest_entities.Version("0.0.1"),
-			Type:    manifest_entities.PluginType,
-			Icon:    "icon.svg",
-			Author:  m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
-			Name:    m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
-			Description: plugin_entities.I18nObject{
-				EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Description(),
-			},
-			CreatedAt: time.Now(),
+			Version:     manifest_entities.Version("0.0.1"),
+			Type:        manifest_entities.PluginType,
+			Icon:        "icon.svg",
+			Author:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
+			Name:        m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
+			Description: plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Description()),
+			CreatedAt:   time.Now(),
 			Resource: plugin_entities.PluginResourceRequirement{
 				Memory:     1024 * 1024 * 256, // 256MB
 				Permission: &permission,
 			},
-			Label: plugin_entities.I18nObject{
-				EnUS: m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
-			},
+			Label: plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name()),
 		},
 	}
 

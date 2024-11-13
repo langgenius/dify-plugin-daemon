@@ -13,6 +13,15 @@ type I18nObject struct {
 	PtBr   string `json:"pt_BR,omitempty" yaml:"pt_BR,omitempty" validate:"lt=1024"`
 }
 
+func NewI18nObject(def string) I18nObject {
+	return I18nObject{
+		EnUS:   def,
+		ZhHans: def,
+		JaJp:   def,
+		PtBr:   def,
+	}
+}
+
 func isBasicType(fl validator.FieldLevel) bool {
 	// allowed int, string, bool, float64
 	switch fl.Field().Kind() {
