@@ -24,6 +24,8 @@ var (
 		Short: "List all dependencies",
 		Long:  "List all dependencies",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			bundle.ListDependencies(bundlePath)
 		},
 	}
 
@@ -81,6 +83,8 @@ var (
 		Short: "Regenerate the bundle",
 		Long:  "Regenerate the bundle",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			bundle.RegenerateBundle(bundlePath)
 		},
 	}
 
@@ -105,14 +109,9 @@ var (
 		Short: "Bump the version of the bundle",
 		Long:  "Bump the version of the bundle",
 		Run: func(c *cobra.Command, args []string) {
-		},
-	}
-
-	bundleListDependenciesCommand = &cobra.Command{
-		Use:   "list",
-		Short: "List all dependencies",
-		Long:  "List all dependencies",
-		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			targetVersion := c.Flag("target_version").Value.String()
+			bundle.BumpVersion(bundlePath, targetVersion)
 		},
 	}
 
@@ -121,6 +120,9 @@ var (
 		Short: "Package the bundle",
 		Long:  "Package the bundle",
 		Run: func(c *cobra.Command, args []string) {
+			bundlePath := c.Flag("bundle_path").Value.String()
+			outputPath := c.Flag("output_path").Value.String()
+			bundle.PackageBundle(bundlePath, outputPath)
 		},
 	}
 )
@@ -134,7 +136,6 @@ func init() {
 	bundleCommand.AddCommand(bundleRemoveDependencyCommand)
 	bundleCommand.AddCommand(bundleRegenerateCommand)
 	bundleCommand.AddCommand(bundleBumpVersionCommand)
-	bundleCommand.AddCommand(bundleListDependenciesCommand)
 	bundleCommand.AddCommand(bundlePackageCommand)
 	bundleCommand.AddCommand(bundleAnalyzeCommand)
 
@@ -149,4 +150,13 @@ func init() {
 
 	bundleAppendPackageDependencyCommand.Flags().StringP("package_path", "p", "", "path to the package")
 	bundleAppendPackageDependencyCommand.MarkFlagRequired("package_path")
+
+	bundleRemoveDependencyCommand.Flags().StringP("index", "i", "", "index of the dependency")
+	bundleRemoveDependencyCommand.MarkFlagRequired("index")
+
+	bundleBumpVersionCommand.Flags().StringP("target_version", "t", "", "target version")
+	bundleBumpVersionCommand.MarkFlagRequired("target_version")
+
+	bundlePackageCommand.Flags().StringP("output_path", "o", "", "output path")
+	bundlePackageCommand.MarkFlagRequired("output_path")
 }

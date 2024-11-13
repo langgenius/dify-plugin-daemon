@@ -3,6 +3,7 @@ package bundle_entities
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
@@ -24,6 +25,39 @@ type Dependency struct {
 
 type GithubRepoPattern string
 
+func (p GithubRepoPattern) Split() []string {
+	return strings.Split(string(p), "/")
+}
+
+func (p GithubRepoPattern) Repo() string {
+	split := p.Split()
+	if len(split) < 3 {
+		return ""
+	}
+
+	organization, repo := split[0], split[1]
+
+	return fmt.Sprintf("https://github.com/%s/%s", organization, repo)
+}
+
+func (p GithubRepoPattern) Release() string {
+	split := p.Split()
+	if len(split) < 3 {
+		return ""
+	}
+
+	return split[2]
+}
+
+func (p GithubRepoPattern) Asset() string {
+	split := p.Split()
+	if len(split) < 4 {
+		return ""
+	}
+
+	return split[3]
+}
+
 func NewGithubRepoPattern(pattern string) (GithubRepoPattern, error) {
 	if !GITHUB_DEPENDENCY_PATTERN_REGEX_COMPILED.MatchString(pattern) {
 		return "", fmt.Errorf("invalid github repo pattern")
@@ -38,6 +72,37 @@ func NewMarketplacePattern(pattern string) (MarketplacePattern, error) {
 		return "", fmt.Errorf("invalid marketplace pattern")
 	}
 	return MarketplacePattern(pattern), nil
+}
+
+func (p MarketplacePattern) Split() []string {
+	return strings.Split(string(p), "/")
+}
+
+func (p MarketplacePattern) Organization() string {
+	split := p.Split()
+	if len(split) < 1 {
+		return ""
+	}
+
+	return split[0]
+}
+
+func (p MarketplacePattern) Plugin() string {
+	split := p.Split()
+	if len(split) < 2 {
+		return ""
+	}
+
+	return split[1]
+}
+
+func (p MarketplacePattern) Version() string {
+	split := p.Split()
+	if len(split) < 3 {
+		return ""
+	}
+
+	return split[2]
 }
 
 var (

@@ -1,6 +1,7 @@
 package manifest_entities
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/go-playground/validator/v10"
@@ -8,6 +9,13 @@ import (
 )
 
 type Version string
+
+func NewVersion(version string) (Version, error) {
+	if !PluginDeclarationVersionRegex.MatchString(version) {
+		return "", fmt.Errorf("invalid version")
+	}
+	return Version(version), nil
+}
 
 func (v Version) String() string {
 	return string(v)
