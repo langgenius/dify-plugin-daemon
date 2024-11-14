@@ -187,6 +187,11 @@ func ListDependencies(bundlePath string) {
 			}
 
 			log.Info("Dependency Type: Package, Path: %s", packageDependency.Path)
+			if asset, err := packager.FetchAsset(packageDependency.Path); err != nil {
+				log.Error("Package %s not found", packageDependency.Path)
+			} else {
+				log.Info("Package %s: %d bytes", packageDependency.Path, len(asset))
+			}
 		}
 	}
 }

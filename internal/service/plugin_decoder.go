@@ -62,10 +62,15 @@ func UploadPluginBundle(
 	config *app.Config,
 	c *gin.Context,
 	tenant_id string,
-	dify_bundle_file *multipart.FileHeader,
+	dify_bundle_file multipart.File,
 	verify_signature bool,
 ) *entities.Response {
-	packager, err := bundle_packager.NewZipBundlePackager(dify_bundle_file.Filename)
+	bundleFile, err := io.ReadAll(dify_bundle_file)
+	if err != nil {
+		return entities.NewErrorResponse(-500, err.Error())
+	}
+
+	packager, err := bundle_packager.NewMemoryZipBundlePackager(bundleFile)
 	if err != nil {
 		return entities.NewErrorResponse(-500, errors.Join(err, errors.New("failed to create bundle packager")).Error())
 	}
@@ -87,12 +92,14 @@ func UploadPluginBundle(
 					"type": "github",
 					"value": map[string]any{
 						"repo_address": dep.RepoPattern.Repo(),
-						"github_repo":  dep.RepoPattern.GithubRepo(),
+						"repo":         dep.RepoPattern.GithubRepo(),
 						"release":      dep.RepoPattern.Release(),
 						"packages":     dep.RepoPattern.Asset(),
 					},
 				})
-			} else if dep, ok := dependency.Value.(bundle_entities.MarketplaceDependency); ok {
+			}
+		} else if dependency.Type == bundle_entities.DEPENDENCY_TYPE_MARKETPLACE {
+			if dep, ok := dependency.Value.(bundle_entities.MarketplaceDependency); ok {
 				result = append(result, map[string]any{
 					"type": "marketplace",
 					"value": map[string]any{
@@ -101,33 +108,35 @@ func UploadPluginBundle(
 						"version":      dep.MarketplacePattern.Version(),
 					},
 				})
-			} else if dep, ok := dependency.Value.(bundle_entities.PackageDependency); ok {
+			}
+		} else if dependency.Type == bundle_entities.DEPENDENCY_TYPE_PACKAGE {
+			if dep, ok := dependency.Value.(bundle_entities.PackageDependency); ok {
 				// fetch package
 				path := dep.Path
 				if asset, err := packager.FetchAsset(path); err != nil {
-					return entities.NewErrorResponse(-500, errors.Join(err, errors.New("failed to fetch package")).Error())
+					return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to fetch package from bundle"), err).Error())
 				} else {
 					// decode and save
 					decoder, err := decoder.NewZipPluginDecoder(asset)
 					if err != nil {
-						return entities.NewErrorResponse(-500, err.Error())
+						return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to create package decoder"), err).Error())
 					}
 
 					pluginUniqueIdentifier, err := decoder.UniqueIdentity()
 					if err != nil {
-						return entities.NewErrorResponse(-500, err.Error())
+						return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to get package unique identifier"), err).Error())
 					}
 
 					declaration, err := manager.SavePackage(pluginUniqueIdentifier, asset)
 					if err != nil {
-						return entities.NewErrorResponse(-500, err.Error())
+						return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to save package"), err).Error())
 					}
 
 					if config.ForceVerifyingSignature || verify_signature {
 						if !declaration.Verified {
-							return entities.NewErrorResponse(-500, errors.Join(err, errors.New(
+							return entities.NewErrorResponse(-500, errors.Join(errors.New(
 								"plugin verification has been enabled, and the plugin you want to install has a bad signature",
-							)).Error())
+							), err).Error())
 						}
 					}
 

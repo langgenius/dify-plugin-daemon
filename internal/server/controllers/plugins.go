@@ -76,7 +76,14 @@ func UploadBundle(app *app.Config) gin.HandlerFunc {
 
 		verifySignature := c.PostForm("verify_signature") == "true"
 
-		c.JSON(http.StatusOK, service.UploadPluginBundle(app, c, tenantId, difyBundleFileHeader, verifySignature))
+		difyBundleFile, err := difyBundleFileHeader.Open()
+		if err != nil {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			return
+		}
+		defer difyBundleFile.Close()
+
+		c.JSON(http.StatusOK, service.UploadPluginBundle(app, c, tenantId, difyBundleFile, verifySignature))
 	}
 }
 

@@ -57,6 +57,8 @@ func NewLocalBundlePackager(path string) (BundlePackager, error) {
 
 		prefix := filepath.Join(path, "_assets")
 		assetName := strings.TrimPrefix(filePath, prefix)
+		// trim slash
+		assetName = strings.Trim(assetName, "/")
 		packager.assets[assetName] = bytes.NewBuffer(assetBytes)
 
 		return nil

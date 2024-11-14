@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
@@ -41,7 +42,7 @@ func (p *GenericBundlePackager) Export() ([]byte, error) {
 
 	// write the assets
 	for name, asset := range p.assets {
-		assetFile, err := zipWriter.Create(name)
+		assetFile, err := zipWriter.Create(filepath.Join("_assets", name))
 		if err != nil {
 			return nil, err
 		}
