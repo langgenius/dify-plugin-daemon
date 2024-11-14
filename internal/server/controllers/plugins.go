@@ -51,7 +51,32 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 		}
 		defer difyPkgFile.Close()
 
-		c.JSON(http.StatusOK, service.UploadPluginFromPkg(app, c, tenantId, difyPkgFile, verifySignature))
+		c.JSON(http.StatusOK, service.UploadPluginPkg(app, c, tenantId, difyPkgFile, verifySignature))
+	}
+}
+
+func UploadBundle(app *app.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		difyBundleFileHeader, err := c.FormFile("dify_bundle")
+		if err != nil {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			return
+		}
+
+		tenantId := c.Param("tenant_id")
+		if tenantId == "" {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Tenant ID is required"))
+			return
+		}
+
+		if difyBundleFileHeader.Size > app.MaxBundlePackageSize {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-413, "File size exceeds the maximum limit"))
+			return
+		}
+
+		verifySignature := c.PostForm("verify_signature") == "true"
+
+		c.JSON(http.StatusOK, service.UploadPluginBundle(app, c, tenantId, difyBundleFileHeader, verifySignature))
 	}
 }
 

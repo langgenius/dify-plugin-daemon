@@ -146,3 +146,12 @@ func (p *GenericBundlePackager) Remove(index int) error {
 func (p *GenericBundlePackager) BumpVersion(target manifest_entities.Version) {
 	p.bundle.Version = target
 }
+
+func (p *GenericBundlePackager) FetchAsset(path string) ([]byte, error) {
+	asset, ok := p.assets[path]
+	if !ok {
+		return nil, errors.New("asset not found")
+	}
+
+	return asset.Bytes(), nil
+}

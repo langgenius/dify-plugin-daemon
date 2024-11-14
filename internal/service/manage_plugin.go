@@ -119,6 +119,7 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 				},
 			),
 		),
+		db.Page(1, 256), // TODO: pagination
 	)
 
 	if err != nil {

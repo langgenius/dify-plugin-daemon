@@ -87,6 +87,15 @@ func (p GithubRepoPattern) Repo() string {
 	return fmt.Sprintf("https://github.com/%s/%s", organization, repo)
 }
 
+func (p GithubRepoPattern) GithubRepo() string {
+	split := p.Split()
+	if len(split) < 3 {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/%s", split[0], split[1])
+}
+
 func (p GithubRepoPattern) Release() string {
 	split := p.Split()
 	if len(split) < 3 {

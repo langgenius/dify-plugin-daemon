@@ -113,7 +113,8 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 }
 
 func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config) {
-	group.POST("/install/upload", controllers.UploadPlugin(config))
+	group.POST("/install/upload/pkg", controllers.UploadPlugin(config))
+	group.POST("/install/upload/bundle", controllers.UploadBundle(config))
 	group.POST("/install/identifiers", controllers.InstallPluginFromIdentifiers(config))
 	group.POST("/install/upgrade", controllers.UpgradePlugin(config))
 	group.GET("/install/tasks/:id", controllers.FetchPluginInstallationTask)
