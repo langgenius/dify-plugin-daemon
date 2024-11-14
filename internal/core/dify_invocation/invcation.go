@@ -31,4 +31,6 @@ type BackwardsInvocation interface {
 	InvokeEncrypt(payload *InvokeEncryptRequest) (map[string]any, error)
 	// InvokeSummary
 	InvokeSummary(payload *InvokeSummaryRequest) (*InvokeSummaryResponse, error)
+	// UploadFile
+	UploadFile(payload *UploadFileRequest) (*UploadFileResponse, error)
 }

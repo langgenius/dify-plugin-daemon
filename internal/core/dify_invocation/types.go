@@ -29,6 +29,7 @@ const (
 	INVOKE_TYPE_STORAGE                  InvokeType = "storage"
 	INVOKE_TYPE_ENCRYPT                  InvokeType = "encrypt"
 	INVOKE_TYPE_SUMMARY                  InvokeType = "summary"
+	INVOKE_TYPE_UPLOAD_FILE              InvokeType = "upload_file"
 )
 
 type InvokeLLMRequest struct {
@@ -228,4 +229,14 @@ type InvokeSummaryRequest struct {
 
 type InvokeSummaryResponse struct {
 	Summary string `json:"summary"`
+}
+
+type UploadFileRequest struct {
+	BaseInvokeDifyRequest
+	Filename string `json:"filename" validate:"required"`
+	MimeType string `json:"mimetype" validate:"required"`
+}
+
+type UploadFileResponse struct {
+	URL string `json:"url"`
 }

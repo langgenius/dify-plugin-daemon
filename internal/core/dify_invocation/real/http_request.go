@@ -153,3 +153,7 @@ func (i *RealBackwardsInvocation) InvokeEncrypt(payload *dify_invocation.InvokeE
 func (i *RealBackwardsInvocation) InvokeSummary(payload *dify_invocation.InvokeSummaryRequest) (*dify_invocation.InvokeSummaryResponse, error) {
 	return Request[dify_invocation.InvokeSummaryResponse](i, "POST", "invoke/summary", http_requests.HttpPayloadJson(payload))
 }
+
+func (i *RealBackwardsInvocation) UploadFile(payload *dify_invocation.UploadFileRequest) (*dify_invocation.UploadFileResponse, error) {
+	return Request[dify_invocation.UploadFileResponse](i, "POST", "upload/file/request", http_requests.HttpPayloadJson(payload))
+}

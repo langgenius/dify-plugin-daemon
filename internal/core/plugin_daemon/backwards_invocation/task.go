@@ -137,6 +137,12 @@ var (
 			},
 			"error": "permission denied, you need to enable llm access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_UPLOAD_FILE: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return true
+			},
+			"error": "permission denied, you need to enable storage access in plugin manifest",
+		},
 	}
 )
 
@@ -226,6 +232,9 @@ var (
 		},
 		dify_invocation.INVOKE_TYPE_SUMMARY: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationSummaryTask)
+		},
+		dify_invocation.INVOKE_TYPE_UPLOAD_FILE: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationUploadFileTask)
 		},
 	}
 )
@@ -534,6 +543,19 @@ func executeDifyInvocationSummaryTask(
 	response, err := handle.backwardsInvocation.InvokeSummary(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke summary failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
+}
+
+func executeDifyInvocationUploadFileTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.UploadFileRequest,
+) {
+	response, err := handle.backwardsInvocation.UploadFile(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("upload file failed: %s", err.Error()))
 		return
 	}
 

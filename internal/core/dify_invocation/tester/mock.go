@@ -319,3 +319,9 @@ func (m *MockedDifyInvocation) InvokeSummary(payload *dify_invocation.InvokeSumm
 		Summary: payload.Text,
 	}, nil
 }
+
+func (m *MockedDifyInvocation) UploadFile(payload *dify_invocation.UploadFileRequest) (*dify_invocation.UploadFileResponse, error) {
+	return &dify_invocation.UploadFileResponse{
+		URL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+	}, nil
+}
