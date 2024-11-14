@@ -155,7 +155,21 @@ func InstallPluginRuntimeToTenant(
 					}
 
 					modifier(taskPointer, pluginStatus)
-					return db.Update(taskPointer, tx)
+
+					successes := 0
+					for _, plugin := range taskPointer.Plugins {
+						if plugin.Status == models.InstallTaskStatusSuccess {
+							successes++
+						}
+					}
+
+					// delete the task if all plugins are installed successfully,
+					// otherwise update the task status
+					if successes == len(taskPointer.Plugins) {
+						return db.Delete(taskPointer, tx)
+					} else {
+						return db.Update(taskPointer, tx)
+					}
 				}); err != nil {
 					log.Error("failed to update install task status %s", err.Error())
 				}
@@ -446,28 +460,42 @@ func DeletePluginInstallationItemFromTask(
 	task_id string,
 	identifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
-	item, err := db.GetOne[models.InstallTask](
-		db.Equal("task_id", task_id),
-		db.Equal("tenant_id", tenant_id),
-	)
+	err := db.WithTransaction(func(tx *gorm.DB) error {
+		item, err := db.GetOne[models.InstallTask](
+			db.WithTransactionContext(tx),
+			db.Equal("task_id", task_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
 
-	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
-	}
-
-	plugins := []models.InstallTaskPluginStatus{}
-	for _, plugin := range item.Plugins {
-		if plugin.PluginUniqueIdentifier != identifier {
-			plugins = append(plugins, plugin)
+		if err != nil {
+			return err
 		}
-	}
 
-	if len(plugins) == 0 {
-		err = db.Delete(&item)
-	} else {
-		item.Plugins = plugins
-		err = db.Update(&item)
-	}
+		plugins := []models.InstallTaskPluginStatus{}
+		for _, plugin := range item.Plugins {
+			if plugin.PluginUniqueIdentifier != identifier {
+				plugins = append(plugins, plugin)
+			}
+		}
+
+		successes := 0
+		for _, plugin := range plugins {
+			if plugin.Status == models.InstallTaskStatusSuccess {
+				successes++
+			}
+		}
+
+		if len(plugins) == successes {
+			// delete the task if all plugins are installed successfully
+			err = db.Delete(&item, tx)
+		} else {
+			item.Plugins = plugins
+			err = db.Update(&item, tx)
+		}
+
+		return err
+	})
 
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
