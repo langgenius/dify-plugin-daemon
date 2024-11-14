@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
 
@@ -38,13 +39,13 @@ func (p PluginUniqueIdentifier) PluginID() string {
 	return p.String()
 }
 
-func (p PluginUniqueIdentifier) Version() string {
+func (p PluginUniqueIdentifier) Version() manifest_entities.Version {
 	// extract version part from the string
 	split := strings.Split(p.String(), "@")
 	if len(split) == 2 {
 		split = strings.Split(split[0], ":")
 		if len(split) == 2 {
-			return split[1]
+			return manifest_entities.Version(split[1])
 		}
 	}
 	return ""
