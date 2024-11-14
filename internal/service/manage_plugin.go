@@ -29,6 +29,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		CreatedAt              time.Time                          `json:"created_at"`
 		UpdatedAt              time.Time                          `json:"updated_at"`
 		Source                 string                             `json:"source"`
+		Checksum               string                             `json:"checksum"`
 		Meta                   map[string]any                     `json:"meta"`
 	}
 
@@ -76,6 +77,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			UpdatedAt:              plugin_installation.UpdatedAt,
 			Source:                 plugin_installation.Source,
 			Meta:                   plugin_installation.Meta,
+			Checksum:               pluginUniqueIdentifier.Checksum(),
 		})
 	}
 
