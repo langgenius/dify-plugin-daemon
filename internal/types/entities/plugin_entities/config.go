@@ -18,7 +18,7 @@ const (
 	CONFIG_TYPE_BOOLEAN        ConfigType = BOOLEAN
 	CONFIG_TYPE_MODEL_SELECTOR ConfigType = MODEL_SELECTOR
 	CONFIG_TYPE_APP_SELECTOR   ConfigType = APP_SELECTOR
-	CONFIG_TYPE_TOOL_SELECTOR  ConfigType = TOOL_SELECTOR
+	// CONFIG_TYPE_TOOL_SELECTOR  ConfigType = TOOL_SELECTOR
 )
 
 type ModelConfigScope string
@@ -117,22 +117,26 @@ func isScope(fl validator.FieldLevel) bool {
 			return isAppSelectorScope(fl)
 		} else if providerConfig.Type == CONFIG_TYPE_MODEL_SELECTOR {
 			return isModelConfigScope(fl)
-		} else if providerConfig.Type == CONFIG_TYPE_TOOL_SELECTOR {
-			return isToolSelectorScope(fl)
 		} else {
 			return false
 		}
+
+		//else if providerConfig.Type == CONFIG_TYPE_TOOL_SELECTOR {
+		//return isToolSelectorScope(fl)
+		//}
 	}
 	if toolParameter, ok := parent.(ToolParameter); ok {
 		if toolParameter.Type == TOOL_PARAMETER_TYPE_APP_SELECTOR {
 			return isAppSelectorScope(fl)
 		} else if toolParameter.Type == TOOL_PARAMETER_TYPE_MODEL_SELECTOR {
 			return isModelConfigScope(fl)
-		} else if toolParameter.Type == TOOL_PARAMETER_TYPE_TOOL_SELECTOR {
-			return isToolSelectorScope(fl)
 		} else {
 			return false
 		}
+
+		// else if toolParameter.Type == TOOL_PARAMETER_TYPE_TOOL_SELECTOR {
+		// 	return isToolSelectorScope(fl)
+		// }
 	}
 	return false
 }
@@ -339,21 +343,21 @@ func ValidateProviderConfigs(settings map[string]any, configs []ProviderConfig) 
 					return errors.New("setting " + config_name + " is not a valid model config scope")
 				}
 			}
-		case CONFIG_TYPE_TOOL_SELECTOR:
-			m, ok := v.(map[string]any)
-			if !ok {
-				return errors.New("setting " + config_name + " is not a map")
-			}
-			// check keys
-			if _, ok := m["provider"]; !ok {
-				return errors.New("setting " + config_name + " is missing provider")
-			}
-			if _, ok := m["tool"]; !ok {
-				return errors.New("setting " + config_name + " is missing tool")
-			}
-			if _, ok := m["tool_type"]; !ok {
-				return errors.New("setting " + config_name + " is missing tool_type")
-			}
+			// case CONFIG_TYPE_TOOL_SELECTOR:
+			// 	m, ok := v.(map[string]any)
+			// 	if !ok {
+			// 		return errors.New("setting " + config_name + " is not a map")
+			// 	}
+			// 	// check keys
+			// 	if _, ok := m["provider"]; !ok {
+			// 		return errors.New("setting " + config_name + " is missing provider")
+			// 	}
+			// 	if _, ok := m["tool"]; !ok {
+			// 		return errors.New("setting " + config_name + " is missing tool")
+			// 	}
+			// 	if _, ok := m["tool_type"]; !ok {
+			// 		return errors.New("setting " + config_name + " is missing tool_type")
+			// 	}
 		}
 	}
 

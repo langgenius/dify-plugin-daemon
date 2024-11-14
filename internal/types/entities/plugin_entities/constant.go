@@ -10,5 +10,5 @@ const (
 	BOOLEAN        = "boolean"
 	APP_SELECTOR   = "app-selector"
 	MODEL_SELECTOR = "model-selector"
-	TOOL_SELECTOR  = "tool-selector"
+	// TOOL_SELECTOR  = "tool-selector"
 )
