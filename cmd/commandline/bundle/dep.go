@@ -66,6 +66,11 @@ func AddPackageDependency(bundlePath string, path string) {
 		return
 	}
 
+	if err := packager.Save(); err != nil {
+		log.Error("Failed to save bundle packager: %v", err)
+		return
+	}
+
 	log.Info("Successfully added package dependency")
 }
 
@@ -100,6 +105,11 @@ func RemoveDependency(bundlePath string, index int) {
 
 	if err := packager.Remove(index); err != nil {
 		log.Error("Failed to remove dependency: %v", err)
+		return
+	}
+
+	if err := packager.Save(); err != nil {
+		log.Error("Failed to save bundle packager: %v", err)
 		return
 	}
 
