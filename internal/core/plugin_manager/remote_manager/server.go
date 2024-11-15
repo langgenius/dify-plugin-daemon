@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
@@ -83,7 +86,19 @@ func (r *RemotePluginServer) Launch() error {
 		r.Stop()
 	}
 
+	go r.collectShutdownSignal()
+
 	return err
+}
+
+func (s *RemotePluginServer) collectShutdownSignal() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+
+	<-c
+
+	// shutdown server
+	s.Stop()
 }
 
 // NewRemotePluginServer creates a new RemotePluginServer
