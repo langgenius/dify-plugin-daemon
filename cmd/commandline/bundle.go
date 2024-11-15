@@ -134,7 +134,7 @@ var (
 			// using filename of input_path as output_path if not specified
 			outputPath := ""
 
-			if c.Flag("output_path") != nil {
+			if c.Flag("output_path").Value.String() != "" {
 				outputPath = c.Flag("output_path").Value.String()
 			} else {
 				base := filepath.Base(bundlePath)

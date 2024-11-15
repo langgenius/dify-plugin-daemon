@@ -19,7 +19,7 @@ var (
 	}
 
 	pluginPackageCommand = &cobra.Command{
-		Use:   "package plugin_path [-o output_path]",
+		Use:   "package [plugin_path]",
 		Short: "Package",
 		Long:  "Package plugins",
 		Args:  cobra.ExactArgs(1),
@@ -29,7 +29,7 @@ var (
 			// using filename of input_path as output_path if not specified
 			outputPath := ""
 
-			if cmd.Flag("output_path") != nil {
+			if cmd.Flag("output_path").Value.String() != "" {
 				outputPath = cmd.Flag("output_path").Value.String()
 			} else {
 				base := filepath.Base(inputPath)
@@ -108,4 +108,6 @@ func init() {
 	// pluginCommand.AddCommand(pluginTestCommand)
 	// pluginTestCommand.Flags().StringP("inputs", "i", "", "inputs")
 	// pluginTestCommand.Flags().StringP("timeout", "t", "", "timeout")
+
+	pluginPackageCommand.Flags().StringP("output_path", "o", "", "output path")
 }
