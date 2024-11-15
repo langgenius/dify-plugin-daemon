@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -156,11 +157,18 @@ func DeletePluginInstallationTask(c *gin.Context) {
 
 func DeletePluginInstallationItemFromTask(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID   string                                 `uri:"tenant_id" validate:"required"`
-		TaskID     string                                 `uri:"id" validate:"required"`
-		Identifier plugin_entities.PluginUniqueIdentifier `uri:"identifier" validate:"required,plugin_unique_identifier"`
+		TenantID   string `uri:"tenant_id" validate:"required"`
+		TaskID     string `uri:"id" validate:"required"`
+		Identifier string `uri:"identifier" validate:"required"`
 	}) {
-		c.JSON(http.StatusOK, service.DeletePluginInstallationItemFromTask(request.TenantID, request.TaskID, request.Identifier))
+		identifierString := strings.TrimLeft(request.Identifier, "/")
+		identifier, err := plugin_entities.NewPluginUniqueIdentifier(identifierString)
+		if err != nil {
+			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			return
+		}
+
+		c.JSON(http.StatusOK, service.DeletePluginInstallationItemFromTask(request.TenantID, request.TaskID, identifier))
 	})
 }
 

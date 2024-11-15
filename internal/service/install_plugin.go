@@ -463,7 +463,7 @@ func DeletePluginInstallationItemFromTask(
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		item, err := db.GetOne[models.InstallTask](
 			db.WithTransactionContext(tx),
-			db.Equal("task_id", task_id),
+			db.Equal("id", task_id),
 			db.Equal("tenant_id", tenant_id),
 			db.WLock(),
 		)
