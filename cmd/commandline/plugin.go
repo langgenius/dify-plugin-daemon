@@ -22,19 +22,22 @@ var (
 		Use:   "package plugin_path [-o output_path]",
 		Short: "Package",
 		Long:  "Package plugins",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) < 1 {
-				fmt.Println("Error: plugin_path is required")
-				return
-			}
 			inputPath := args[0]
+
 			// using filename of input_path as output_path if not specified
 			outputPath := ""
 
 			if cmd.Flag("output_path") != nil {
 				outputPath = cmd.Flag("output_path").Value.String()
 			} else {
-				outputPath = filepath.Base(inputPath) + ".difypkg"
+				base := filepath.Base(inputPath)
+				if base == "." || base == "/" {
+					fmt.Println("Error: invalid input path, you should specify the path outside of plugin directory")
+					return
+				}
+				outputPath = base + ".difypkg"
 			}
 
 			plugin.PackagePlugin(inputPath, outputPath)
@@ -45,12 +48,8 @@ var (
 		Use:   "checksum plugin_path",
 		Short: "Checksum",
 		Long:  "Calculate the checksum of the plugin, you need specify the plugin path or .difypkg file path",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) < 1 {
-				fmt.Println("Error: plugin_path is required")
-				return
-			}
-
 			pluginPath := args[0]
 			plugin.CalculateChecksum(pluginPath)
 		},

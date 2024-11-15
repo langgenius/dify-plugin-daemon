@@ -10,7 +10,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -75,7 +74,7 @@ func InitBundle() {
 	}()
 
 	// save
-	bundleYaml := parser.MarshalYamlBytes(bundle)
+	bundleYaml := marshalYamlBytes(bundle)
 	if err := os.WriteFile(path.Join(bundleDir, "manifest.yaml"), bundleYaml, 0644); err != nil {
 		log.Error("Error saving manifest.yaml: %v", err)
 		return

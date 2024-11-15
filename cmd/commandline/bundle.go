@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/bundle"
@@ -20,11 +22,12 @@ var (
 	}
 
 	bundleAnalyzeCommand = &cobra.Command{
-		Use:   "analyze",
+		Use:   "analyze [bundle_path]",
 		Short: "List all dependencies",
-		Long:  "List all dependencies",
+		Long:  "List all dependencies in the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			bundle.ListDependencies(bundlePath)
 		},
 	}
@@ -36,11 +39,12 @@ var (
 	}
 
 	bundleAppendGithubDependencyCommand = &cobra.Command{
-		Use:   "github",
+		Use:   "github [bundle_path]",
 		Short: "Append a github dependency",
-		Long:  "Append a github dependency",
+		Long:  "Append a github dependency to the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			repoPattern := c.Flag("repo_pattern").Value.String()
 			githubPattern, err := bundle_entities.NewGithubRepoPattern(repoPattern)
 			if err != nil {
@@ -52,11 +56,12 @@ var (
 	}
 
 	bundleAppendMarketplaceDependencyCommand = &cobra.Command{
-		Use:   "marketplace",
+		Use:   "marketplace [bundle_path]",
 		Short: "Append a marketplace dependency",
-		Long:  "Append a marketplace dependency",
+		Long:  "Append a marketplace dependency to the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			marketplacePatternString := c.Flag("marketplace_pattern").Value.String()
 			marketplacePattern, err := bundle_entities.NewMarketplacePattern(marketplacePatternString)
 			if err != nil {
@@ -68,32 +73,35 @@ var (
 	}
 
 	bundleAppendPackageDependencyCommand = &cobra.Command{
-		Use:   "package",
+		Use:   "package [bundle_path]",
 		Short: "Append a local package dependency",
-		Long:  "Append a local package dependency",
+		Long:  "Append a local package dependency to the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			packagePath := c.Flag("package_path").Value.String()
 			bundle.AddPackageDependency(bundlePath, packagePath)
 		},
 	}
 
 	bundleRegenerateCommand = &cobra.Command{
-		Use:   "regenerate",
+		Use:   "regenerate [bundle_path]",
 		Short: "Regenerate the bundle",
-		Long:  "Regenerate the bundle",
+		Long:  "Regenerate the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			bundle.RegenerateBundle(bundlePath)
 		},
 	}
 
 	bundleRemoveDependencyCommand = &cobra.Command{
-		Use:   "remove",
+		Use:   "remove [bundle_path]",
 		Short: "Remove a dependency",
-		Long:  "Remove a dependency",
+		Long:  "Remove a dependency from the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			index := c.Flag("index").Value.String()
 			indexInt, err := strconv.Atoi(index)
 			if err != nil {
@@ -105,23 +113,38 @@ var (
 	}
 
 	bundleBumpVersionCommand = &cobra.Command{
-		Use:   "bump",
+		Use:   "bump [bundle_path]",
 		Short: "Bump the version of the bundle",
-		Long:  "Bump the version of the bundle",
+		Long:  "Bump the version of the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
+			bundlePath := args[0]
 			targetVersion := c.Flag("target_version").Value.String()
 			bundle.BumpVersion(bundlePath, targetVersion)
 		},
 	}
 
 	bundlePackageCommand = &cobra.Command{
-		Use:   "package",
+		Use:   "package [bundle_path]",
 		Short: "Package the bundle",
-		Long:  "Package the bundle",
+		Long:  "Package the specified bundle",
+		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			bundlePath := c.Flag("bundle_path").Value.String()
-			outputPath := c.Flag("output_path").Value.String()
+			bundlePath := args[0]
+			// using filename of input_path as output_path if not specified
+			outputPath := ""
+
+			if c.Flag("output_path") != nil {
+				outputPath = c.Flag("output_path").Value.String()
+			} else {
+				base := filepath.Base(bundlePath)
+				if base == "." || base == "/" {
+					fmt.Println("Error: invalid input path, you should specify the path outside of bundle directory")
+					return
+				}
+				outputPath = base + ".difybndl"
+			}
+
 			bundle.PackageBundle(bundlePath, outputPath)
 		},
 	}
@@ -140,35 +163,19 @@ func init() {
 	bundleCommand.AddCommand(bundleAnalyzeCommand)
 
 	bundleAppendGithubDependencyCommand.Flags().StringP("repo_pattern", "r", "", "github repo pattern")
-	bundleAppendGithubDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
 	bundleAppendGithubDependencyCommand.MarkFlagRequired("repo_pattern")
-	bundleAppendGithubDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleAppendMarketplaceDependencyCommand.Flags().StringP("marketplace_pattern", "m", "", "marketplace pattern")
-	bundleAppendMarketplaceDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
 	bundleAppendMarketplaceDependencyCommand.MarkFlagRequired("marketplace_pattern")
-	bundleAppendMarketplaceDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleAppendPackageDependencyCommand.Flags().StringP("package_path", "p", "", "path to the package")
-	bundleAppendPackageDependencyCommand.Flags().StringP("bundle_path", "i", "", "path to the bundle file")
 	bundleAppendPackageDependencyCommand.MarkFlagRequired("package_path")
-	bundleAppendPackageDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleRemoveDependencyCommand.Flags().StringP("index", "i", "", "index of the dependency")
-	bundleRemoveDependencyCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
 	bundleRemoveDependencyCommand.MarkFlagRequired("index")
-	bundleRemoveDependencyCommand.MarkFlagRequired("bundle_path")
 
 	bundleBumpVersionCommand.Flags().StringP("target_version", "t", "", "target version")
-	bundleBumpVersionCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
 	bundleBumpVersionCommand.MarkFlagRequired("target_version")
-	bundleBumpVersionCommand.MarkFlagRequired("bundle_path")
 
 	bundlePackageCommand.Flags().StringP("output_path", "o", "", "output path")
-	bundlePackageCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
-	bundlePackageCommand.MarkFlagRequired("output_path")
-	bundlePackageCommand.MarkFlagRequired("bundle_path")
-
-	bundleAnalyzeCommand.Flags().StringP("bundle_path", "b", "", "path to the bundle file")
-	bundleAnalyzeCommand.MarkFlagRequired("bundle_path")
 }

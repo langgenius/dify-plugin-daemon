@@ -116,27 +116,6 @@ func RemoveDependency(bundlePath string, index int) {
 	log.Info("Successfully removed dependency")
 }
 
-func PackageBundle(bundlePath string, outputPath string) {
-	packager, err := loadBundlePackager(bundlePath)
-	if err != nil {
-		log.Error("Failed to load bundle packager: %v", err)
-		return
-	}
-
-	zipFile, err := packager.Export()
-	if err != nil {
-		log.Error("Failed to export bundle: %v", err)
-		return
-	}
-
-	if err := os.WriteFile(outputPath, zipFile, 0644); err != nil {
-		log.Error("Failed to write zip file: %v", err)
-		return
-	}
-
-	log.Info("Successfully packaged bundle")
-}
-
 func ListDependencies(bundlePath string) {
 	packager, err := loadBundlePackager(bundlePath)
 	if err != nil {

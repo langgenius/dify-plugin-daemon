@@ -28,6 +28,15 @@ var (
 		Short: "Bundle",
 		Long:  "Bundle related commands",
 	}
+
+	versionCommand = &cobra.Command{
+		Use:   "version",
+		Short: "Version",
+		Long:  "Show the version of dify cli",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(VersionX)
+		},
+	}
 )
 
 func init() {
@@ -36,6 +45,7 @@ func init() {
 	rootCommand.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dify.yaml)")
 	rootCommand.AddCommand(pluginCommand)
 	rootCommand.AddCommand(bundleCommand)
+	rootCommand.AddCommand(versionCommand)
 }
 
 func initConfig() {
