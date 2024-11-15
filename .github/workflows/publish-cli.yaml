@@ -34,9 +34,9 @@ jobs:
       - name: Build CLI
         run: |
           go mod tidy
-          GOOS=windows GOARCH=${{ env.GOARCH }} go build -ldflags "-X main.VersionX='${{ github.event.release.tag_name }}'" -o dify-plugin-windows-${{ env.GOARCH }} ./cmd/commandline
-          GOOS=darwin GOARCH=${{ env.GOARCH }} go build -ldflags "-X main.VersionX='${{ github.event.release.tag_name }}'" -o dify-plugin-darwin-${{ env.GOARCH }} ./cmd/commandline
-          GOOS=linux GOARCH=${{ env.GOARCH }} go build -ldflags "-X main.VersionX='${{ github.event.release.tag_name }}'" -o dify-plugin-linux-${{ env.GOARCH }} ./cmd/commandline
+          GOOS=windows GOARCH=${{ env.GOARCH }} go build -ldflags "-X main.VersionX='v${{ github.event.release.tag_name }}'" -o dify-plugin-windows-${{ env.GOARCH }} ./cmd/commandline
+          GOOS=darwin GOARCH=${{ env.GOARCH }} go build -ldflags "-X main.VersionX='v${{ github.event.release.tag_name }}'" -o dify-plugin-darwin-${{ env.GOARCH }} ./cmd/commandline
+          GOOS=linux GOARCH=${{ env.GOARCH }} go build -ldflags "-X main.VersionX='v${{ github.event.release.tag_name }}'" -o dify-plugin-linux-${{ env.GOARCH }} ./cmd/commandline
 
       - name: Publish CLI
         run: |
