@@ -161,11 +161,6 @@ func (p *PromptMessage) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	// validate tool call id
-	if p.Role == PROMPT_MESSAGE_ROLE_TOOL && p.ToolCallId == "" {
-		return errors.New("tool call id is required")
-	}
-
 	return nil
 }
 

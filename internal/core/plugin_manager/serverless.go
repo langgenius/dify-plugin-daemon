@@ -74,7 +74,7 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 		)
 
 		if err == db.ErrDatabaseNotFound {
-			return nil, fmt.Errorf("plugin not found: %s", identity.String())
+			return nil, fmt.Errorf("plugin serverless runtime not found: %s", identity.String())
 		}
 
 		if err != nil {
