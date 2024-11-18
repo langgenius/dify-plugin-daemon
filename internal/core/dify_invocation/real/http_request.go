@@ -37,7 +37,7 @@ func Request[T any](i *RealBackwardsInvocation, method string, path string, opti
 	}
 
 	// check if req.Data is a map[string]any
-	if reflect.TypeOf(req.Data).Kind() == reflect.Map {
+	if reflect.TypeOf(*req.Data).Kind() == reflect.Map {
 		return req.Data, nil
 	}
 
@@ -88,7 +88,7 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 			}
 
 			// check if t.Data is a map[string]any
-			if reflect.TypeOf(t.Data).Kind() == reflect.Map {
+			if reflect.TypeOf(*t.Data).Kind() == reflect.Map {
 				newResponse.Write(*t.Data)
 				break
 			} else if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
