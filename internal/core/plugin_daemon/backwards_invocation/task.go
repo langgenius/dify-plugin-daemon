@@ -248,7 +248,7 @@ func genericDispatchTask[T any](
 ) {
 	r, err := parser.MapToStruct[T](handle.RequestData())
 	if err != nil {
-		handle.WriteError(fmt.Errorf("unmarshal invoke tool request failed: %s", err.Error()))
+		handle.WriteError(fmt.Errorf("unmarshal backwards invoke request failed: %s", err.Error()))
 		return
 	}
 	dispatch(handle, r)
