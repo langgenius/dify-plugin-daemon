@@ -2,6 +2,7 @@ package real
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
@@ -33,6 +34,11 @@ func Request[T any](i *RealBackwardsInvocation, method string, path string, opti
 
 	if req.Data == nil {
 		return nil, fmt.Errorf("data is nil")
+	}
+
+	// check if req.Data is a map[string]any
+	if reflect.TypeOf(req.Data).Kind() == reflect.Map {
+		return req.Data, nil
 	}
 
 	if err := validators.GlobalEntitiesValidator.Struct(req.Data); err != nil {
@@ -81,12 +87,14 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 				break
 			}
 
-			if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
+			// check if t.Data is a map[string]any
+			if reflect.TypeOf(t.Data).Kind() == reflect.Map {
+				newResponse.Write(*t.Data)
+				break
+			} else if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
 				newResponse.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
 				break
 			}
-
-			newResponse.Write(*t.Data)
 		}
 	})
 
