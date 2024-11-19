@@ -1,10 +1,13 @@
 package bundle
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"os"
 	"path"
+	"text/template"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
@@ -16,6 +19,9 @@ import (
 
 //go:embed templates/icon.svg
 var BUNDLE_ICON []byte
+
+//go:embed templates/README.md
+var BUNDLE_README []byte
 
 func generateNewBundle() (*bundle_entities.Bundle, error) {
 	m := newProfile()
@@ -77,6 +83,25 @@ func InitBundle() {
 	bundleYaml := marshalYamlBytes(bundle)
 	if err := os.WriteFile(path.Join(bundleDir, "manifest.yaml"), bundleYaml, 0644); err != nil {
 		log.Error("Error saving manifest.yaml: %v", err)
+		return
+	}
+
+	// create README.md
+	tmpl := template.Must(template.New("README").Parse(string(BUNDLE_README)))
+	// render the template
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]interface{}{
+		"Author":  bundle.Author,
+		"Version": bundle.Version,
+		"Date":    time.Now().Format(time.DateOnly),
+	}); err != nil {
+		log.Error("Error rendering README template: %v", err)
+		return
+	}
+
+	// save README.md
+	if err := os.WriteFile(path.Join(bundleDir, "README.md"), buf.Bytes(), 0644); err != nil {
+		log.Error("Error saving README.md: %v", err)
 		return
 	}
 

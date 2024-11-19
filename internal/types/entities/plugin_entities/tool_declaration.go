@@ -8,6 +8,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/xeipuuv/gojsonschema"
@@ -115,12 +116,12 @@ func init() {
 }
 
 type ToolProviderIdentity struct {
-	Author      string      `json:"author" validate:"required"`
-	Name        string      `json:"name" validate:"required"`
-	Description I18nObject  `json:"description"`
-	Icon        string      `json:"icon" validate:"required"`
-	Label       I18nObject  `json:"label" validate:"required"`
-	Tags        []PluginTag `json:"tags" validate:"required,dive,plugin_tag"`
+	Author      string                        `json:"author" validate:"required"`
+	Name        string                        `json:"name" validate:"required"`
+	Description I18nObject                    `json:"description"`
+	Icon        string                        `json:"icon" validate:"required"`
+	Label       I18nObject                    `json:"label" validate:"required"`
+	Tags        []manifest_entities.PluginTag `json:"tags" validate:"required,dive,plugin_tag"`
 }
 
 type ToolProviderDeclaration struct {

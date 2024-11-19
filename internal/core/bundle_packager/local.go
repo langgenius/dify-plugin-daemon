@@ -89,3 +89,7 @@ func (p *LocalBundlePackager) Save() error {
 
 	return nil
 }
+
+func (p *LocalBundlePackager) ReadFile(path string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(p.path, path))
+}

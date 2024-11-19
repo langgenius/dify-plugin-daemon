@@ -37,5 +37,10 @@ type BundlePackager interface {
 	BumpVersion(targetVersion manifest_entities.Version)
 
 	// FetchAsset fetches the asset of the bundle
+	// NOTE: path is the relative path to _assets folder
 	FetchAsset(path string) ([]byte, error)
+
+	// ReadFile reads the file from the bundle
+	// NOTE: path is the relative path to the root of the bundle
+	ReadFile(path string) ([]byte, error)
 }

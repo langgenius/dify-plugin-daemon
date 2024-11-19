@@ -73,3 +73,14 @@ func NewMemoryZipBundlePackager(zipFile []byte) (*MemoryZipBundlePackager, error
 func (p *MemoryZipBundlePackager) Save() error {
 	return nil
 }
+
+func (p *MemoryZipBundlePackager) ReadFile(path string) ([]byte, error) {
+	// read the file from the zip reader
+	file, err := p.zipReader.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return io.ReadAll(file)
+}

@@ -21,55 +21,6 @@ const (
 	PLUGIN_CATEGORY_EXTENSION PluginCategory = "extension"
 )
 
-type PluginTag string
-
-const (
-	PLUGIN_TAG_SEARCH        PluginTag = "search"
-	PLUGIN_TAG_IMAGE         PluginTag = "image"
-	PLUGIN_TAG_VIDEOS        PluginTag = "videos"
-	PLUGIN_TAG_WEATHER       PluginTag = "weather"
-	PLUGIN_TAG_FINANCE       PluginTag = "finance"
-	PLUGIN_TAG_DESIGN        PluginTag = "design"
-	PLUGIN_TAG_TRAVEL        PluginTag = "travel"
-	PLUGIN_TAG_SOCIAL        PluginTag = "social"
-	PLUGIN_TAG_NEWS          PluginTag = "news"
-	PLUGIN_TAG_MEDICAL       PluginTag = "medical"
-	PLUGIN_TAG_PRODUCTIVITY  PluginTag = "productivity"
-	PLUGIN_TAG_EDUCATION     PluginTag = "education"
-	PLUGIN_TAG_BUSINESS      PluginTag = "business"
-	PLUGIN_TAG_ENTERTAINMENT PluginTag = "entertainment"
-	PLUGIN_TAG_UTILITIES     PluginTag = "utilities"
-	PLUGIN_TAG_OTHER         PluginTag = "other"
-)
-
-func isPluginTag(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	switch value {
-	case string(PLUGIN_TAG_SEARCH),
-		string(PLUGIN_TAG_IMAGE),
-		string(PLUGIN_TAG_VIDEOS),
-		string(PLUGIN_TAG_WEATHER),
-		string(PLUGIN_TAG_FINANCE),
-		string(PLUGIN_TAG_DESIGN),
-		string(PLUGIN_TAG_TRAVEL),
-		string(PLUGIN_TAG_SOCIAL),
-		string(PLUGIN_TAG_NEWS),
-		string(PLUGIN_TAG_MEDICAL),
-		string(PLUGIN_TAG_PRODUCTIVITY),
-		string(PLUGIN_TAG_EDUCATION),
-		string(PLUGIN_TAG_BUSINESS),
-		string(PLUGIN_TAG_ENTERTAINMENT),
-		string(PLUGIN_TAG_UTILITIES),
-		string(PLUGIN_TAG_OTHER):
-		return true
-	}
-	return false
-}
-
-func init() {
-	validators.GlobalEntitiesValidator.RegisterValidation("plugin_tag", isPluginTag)
-}
-
 type PluginPermissionRequirement struct {
 	Tool     *PluginPermissionToolRequirement     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
 	Model    *PluginPermissionModelRequirement    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
@@ -197,7 +148,7 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Resource    PluginResourceRequirement          `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins     PluginExtensions                   `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
 	Meta        PluginMeta                         `json:"meta" yaml:"meta,omitempty" validate:"required"`
-	Tags        []PluginTag                        `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
+	Tags        []manifest_entities.PluginTag      `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
 }
 
 func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {
@@ -213,7 +164,7 @@ func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) erro
 	}
 
 	if p.Tags == nil {
-		p.Tags = []PluginTag{}
+		p.Tags = []manifest_entities.PluginTag{}
 	}
 
 	return nil
@@ -321,7 +272,7 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 	}
 
 	if p.Tags == nil {
-		p.Tags = []PluginTag{}
+		p.Tags = []manifest_entities.PluginTag{}
 	}
 }
 
