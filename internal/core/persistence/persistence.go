@@ -20,28 +20,28 @@ const (
 	CACHE_KEY_PREFIX = "persistence:cache"
 )
 
-func (c *Persistence) getCacheKey(tenant_id string, plugin_id string, key string) string {
-	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenant_id, plugin_id, key)
+func (c *Persistence) getCacheKey(tenantId string, pluginId string, key string) string {
+	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenantId, pluginId, key)
 }
 
-func (c *Persistence) Save(tenant_id string, plugin_id string, maxSize int64, key string, data []byte) error {
-	if len(key) > 64 {
-		return fmt.Errorf("key length must be less than 64 characters")
+func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key string, data []byte) error {
+	if len(key) > 256 {
+		return fmt.Errorf("key length must be less than 256 characters")
 	}
 
 	if maxSize == -1 {
 		maxSize = c.maxStorageSize
 	}
 
-	if err := c.storage.Save(tenant_id, plugin_id, key, data); err != nil {
+	if err := c.storage.Save(tenantId, pluginId, key, data); err != nil {
 		return err
 	}
 
 	allocatedSize := int64(len(data))
 
 	storage, err := db.GetOne[models.TenantStorage](
-		db.Equal("tenant_id", tenant_id),
-		db.Equal("plugin_id", plugin_id),
+		db.Equal("tenant_id", tenantId),
+		db.Equal("plugin_id", pluginId),
 	)
 	if err != nil {
 		if allocatedSize > c.maxStorageSize || allocatedSize > maxSize {
@@ -50,8 +50,8 @@ func (c *Persistence) Save(tenant_id string, plugin_id string, maxSize int64, ke
 
 		if err == db.ErrDatabaseNotFound {
 			storage = models.TenantStorage{
-				TenantID: tenant_id,
-				PluginID: plugin_id,
+				TenantID: tenantId,
+				PluginID: pluginId,
 				Size:     allocatedSize,
 			}
 			if err := db.Create(&storage); err != nil {
@@ -67,8 +67,8 @@ func (c *Persistence) Save(tenant_id string, plugin_id string, maxSize int64, ke
 
 		err = db.Run(
 			db.Model(&models.TenantStorage{}),
-			db.Equal("tenant_id", tenant_id),
-			db.Equal("plugin_id", plugin_id),
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
 			db.Inc(map[string]int64{"size": allocatedSize}),
 		)
 		if err != nil {
@@ -77,12 +77,12 @@ func (c *Persistence) Save(tenant_id string, plugin_id string, maxSize int64, ke
 	}
 
 	// delete from cache
-	return cache.Del(c.getCacheKey(tenant_id, plugin_id, key))
+	return cache.Del(c.getCacheKey(tenantId, pluginId, key))
 }
 
-func (c *Persistence) Load(tenant_id string, plugin_id string, key string) ([]byte, error) {
+func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte, error) {
 	// check if the key exists in cache
-	h, err := cache.GetString(c.getCacheKey(tenant_id, plugin_id, key))
+	h, err := cache.GetString(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil && err != cache.ErrNotFound {
 		return nil, err
 	}
@@ -91,31 +91,31 @@ func (c *Persistence) Load(tenant_id string, plugin_id string, key string) ([]by
 	}
 
 	// load from storage
-	data, err := c.storage.Load(tenant_id, plugin_id, key)
+	data, err := c.storage.Load(tenantId, pluginId, key)
 	if err != nil {
 		return nil, err
 	}
 
 	// add to cache
-	cache.Store(c.getCacheKey(tenant_id, plugin_id, key), hex.EncodeToString(data), time.Minute*5)
+	cache.Store(c.getCacheKey(tenantId, pluginId, key), hex.EncodeToString(data), time.Minute*5)
 
 	return data, nil
 }
 
-func (c *Persistence) Delete(tenant_id string, plugin_id string, key string) error {
+func (c *Persistence) Delete(tenantId string, pluginId string, key string) error {
 	// delete from cache and storage
-	err := cache.Del(c.getCacheKey(tenant_id, plugin_id, key))
+	err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil {
 		return err
 	}
 
 	// state size
-	size, err := c.storage.StateSize(tenant_id, plugin_id, key)
+	size, err := c.storage.StateSize(tenantId, pluginId, key)
 	if err != nil {
 		return nil
 	}
 
-	err = c.storage.Delete(tenant_id, plugin_id, key)
+	err = c.storage.Delete(tenantId, pluginId, key)
 	if err != nil {
 		return nil
 	}
@@ -123,8 +123,8 @@ func (c *Persistence) Delete(tenant_id string, plugin_id string, key string) err
 	// update storage size
 	err = db.Run(
 		db.Model(&models.TenantStorage{}),
-		db.Equal("tenant_id", tenant_id),
-		db.Equal("plugin_id", plugin_id),
+		db.Equal("tenant_id", tenantId),
+		db.Equal("plugin_id", pluginId),
 		db.Dec(map[string]int64{"size": size}),
 	)
 	if err != nil {
