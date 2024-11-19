@@ -92,7 +92,7 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 		PersistenceStorageMaxSize: 1024 * 1024 * 1024,
 	})
 
-	key := strings.RandomString(65)
+	key := strings.RandomString(257)
 
 	if err := persistence.Save("tenant_id", "plugin_checksum", -1, key, []byte("data")); err == nil {
 		t.Fatalf("Expected error, got nil")
