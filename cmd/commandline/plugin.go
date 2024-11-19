@@ -45,13 +45,58 @@ var (
 	}
 
 	pluginChecksumCommand = &cobra.Command{
-		Use:   "checksum plugin_path",
+		Use:   "checksum [plugin_path]",
 		Short: "Checksum",
 		Long:  "Calculate the checksum of the plugin, you need specify the plugin path or .difypkg file path",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			pluginPath := args[0]
 			plugin.CalculateChecksum(pluginPath)
+		},
+	}
+
+	pluginModuleCommand = &cobra.Command{
+		Use:   "module",
+		Short: "Module",
+		Long:  "Module",
+	}
+
+	pluginModuleListCommand = &cobra.Command{
+		Use:   "list [plugin_path]",
+		Short: "List",
+		Long:  "List modules",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginPath := args[0]
+			plugin.ModuleList(pluginPath)
+		},
+	}
+
+	pluginModuleAppendCommand = &cobra.Command{
+		Use:   "append",
+		Short: "Append",
+		Long:  "Append",
+	}
+
+	pluginModuleAppendToolsCommand = &cobra.Command{
+		Use:   "tools [plugin_path]",
+		Short: "Tools",
+		Long:  "Append tools",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginPath := args[0]
+			plugin.ModuleAppendTools(pluginPath)
+		},
+	}
+
+	pluginModuleAppendEndpointsCommand = &cobra.Command{
+		Use:   "endpoints [plugin_path]",
+		Short: "Endpoints",
+		Long:  "Append endpoints",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginPath := args[0]
+			plugin.ModuleAppendEndpoints(pluginPath)
 		},
 	}
 
@@ -105,6 +150,12 @@ func init() {
 	pluginCommand.AddCommand(pluginInitCommand)
 	pluginCommand.AddCommand(pluginPackageCommand)
 	pluginCommand.AddCommand(pluginChecksumCommand)
+	pluginCommand.AddCommand(pluginModuleCommand)
+	pluginModuleCommand.AddCommand(pluginModuleListCommand)
+	pluginModuleCommand.AddCommand(pluginModuleAppendCommand)
+	pluginModuleAppendCommand.AddCommand(pluginModuleAppendToolsCommand)
+	pluginModuleAppendCommand.AddCommand(pluginModuleAppendEndpointsCommand)
+
 	// pluginCommand.AddCommand(pluginTestCommand)
 	// pluginTestCommand.Flags().StringP("inputs", "i", "", "inputs")
 	// pluginTestCommand.Flags().StringP("timeout", "t", "", "timeout")
