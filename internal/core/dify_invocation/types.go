@@ -73,7 +73,7 @@ type InvokeAppSchema struct {
 	Inputs         map[string]any `json:"inputs" validate:"omitempty"`
 	Query          string         `json:"query" validate:"omitempty"`
 	ResponseMode   string         `json:"response_mode"`
-	ConversationId string         `json:"conversation_id"`
+	ConversationId string         `json:"conversation_id" validate:"omitempty"`
 	User           string         `json:"user" validate:"omitempty"`
 }
 

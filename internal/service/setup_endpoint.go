@@ -206,9 +206,22 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 	maskedSettings := encryption.MaskConfigCredentials(originalSettings, pluginDeclaration.Endpoint.Settings)
 
 	// check if settings is changed, replace the value is the same as masked_settings
-	for setting_name, value := range settings {
-		if maskedSettings[setting_name] == value {
-			settings[setting_name] = originalSettings[setting_name]
+	for settingName, value := range settings {
+		// skip it if the value is not secret-input
+		found := false
+		for _, config := range pluginDeclaration.Endpoint.Settings {
+			if config.Name == settingName && config.Type == plugin_entities.CONFIG_TYPE_SECRET_INPUT {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			continue
+		}
+
+		if maskedSettings[settingName] == value {
+			settings[settingName] = originalSettings[settingName]
 		}
 	}
 
