@@ -39,8 +39,24 @@ func NewMemoryZipBundlePackager(zipFile []byte) (*MemoryZipBundlePackager, error
 		return nil, err
 	}
 
+	// collect files starts with README
+	extraFiles := make(map[string]*bytes.Buffer)
+	for _, file := range zipReader.File {
+		if strings.HasPrefix(file.Name, "README") {
+			buffer := bytes.NewBuffer([]byte{})
+			readFile, err := file.Open()
+			if err != nil {
+				return nil, err
+			}
+			defer readFile.Close()
+
+			io.Copy(buffer, readFile)
+			extraFiles[file.Name] = buffer
+		}
+	}
+
 	packager := &MemoryZipBundlePackager{
-		GenericBundlePackager: *NewGenericBundlePackager(&bundle),
+		GenericBundlePackager: *NewGenericBundlePackager(&bundle, extraFiles),
 		zipReader:             zipReader,
 	}
 

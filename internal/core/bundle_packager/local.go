@@ -35,8 +35,25 @@ func NewLocalBundlePackager(path string) (BundlePackager, error) {
 		return nil, err
 	}
 
+	// collect files starts with README
+	readmeFiles, err := filepath.Glob(filepath.Join(path, "README*"))
+	if err != nil {
+		return nil, err
+	}
+
+	extraFiles := make(map[string]*bytes.Buffer)
+	for _, readmeFile := range readmeFiles {
+		// trim the path
+		buffer, err := os.ReadFile(readmeFile)
+		if err != nil {
+			return nil, err
+		}
+		readmeFile = strings.TrimPrefix(readmeFile, filepath.Clean(path)+"/")
+		extraFiles[readmeFile] = bytes.NewBuffer(buffer)
+	}
+
 	packager := &LocalBundlePackager{
-		GenericBundlePackager: *NewGenericBundlePackager(&bundle),
+		GenericBundlePackager: *NewGenericBundlePackager(&bundle, extraFiles),
 		path:                  path,
 	}
 

@@ -16,10 +16,19 @@ import (
 type GenericBundlePackager struct {
 	bundle *bundle_entities.Bundle
 	assets map[string]*bytes.Buffer
+
+	extraFiles map[string]*bytes.Buffer
 }
 
-func NewGenericBundlePackager(bundle *bundle_entities.Bundle) *GenericBundlePackager {
-	return &GenericBundlePackager{bundle: bundle, assets: make(map[string]*bytes.Buffer)}
+func NewGenericBundlePackager(
+	bundle *bundle_entities.Bundle,
+	extraFiles map[string]*bytes.Buffer,
+) *GenericBundlePackager {
+	return &GenericBundlePackager{
+		bundle:     bundle,
+		assets:     make(map[string]*bytes.Buffer),
+		extraFiles: extraFiles,
+	}
 }
 
 func (p *GenericBundlePackager) Export() ([]byte, error) {
@@ -48,6 +57,19 @@ func (p *GenericBundlePackager) Export() ([]byte, error) {
 		}
 
 		_, err = assetFile.Write(asset.Bytes())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// write the extra files
+	for name, file := range p.extraFiles {
+		extraFile, err := zipWriter.Create(name)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = extraFile.Write(file.Bytes())
 		if err != nil {
 			return nil, err
 		}
