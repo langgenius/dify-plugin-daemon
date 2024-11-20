@@ -1,10 +1,13 @@
 package plugin
 
 import (
+	"fmt"
 	"html/template"
 	"os"
+	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
@@ -168,9 +171,107 @@ func ModuleList(pluginPath string) {
 }
 
 func ModuleAppendTools(pluginPath string) {
+	decoder, err := decoder.NewFSPluginDecoder(pluginPath)
+	if err != nil {
+		log.Error("your plugin is not a valid plugin: %s", err)
+		return
+	}
 
+	manifest, err := decoder.Manifest()
+	if err != nil {
+		log.Error("failed to get manifest: %s", err)
+		return
+	}
+
+	if manifest.Tool != nil {
+		log.Error("you have already declared tools in this plugin, " +
+			"you can add new tool by modifying the `provider.yaml` file to add new tools, " +
+			"this command is used to create new module that never been declared in this plugin.")
+		return
+	}
+
+	if manifest.Model != nil {
+		log.Error("model plugin dose not support declare tools.")
+		return
+	}
+
+	if manifest.Plugins.Tools == nil {
+		manifest.Plugins.Tools = []string{}
+	}
+
+	manifest.Plugins.Tools = append(manifest.Plugins.Tools, fmt.Sprintf("provider/%s.yaml", manifest.Name))
+
+	if manifest.Meta.Runner.Language == constants.Python {
+		if err := createPythonTool(pluginPath, &manifest); err != nil {
+			log.Error("failed to create python tool: %s", err)
+			return
+		}
+
+		if err := createPythonToolProvider(pluginPath, &manifest); err != nil {
+			log.Error("failed to create python tool provider: %s", err)
+			return
+		}
+	}
+
+	// save manifest
+	manifest_file := marshalYamlBytes(manifest.PluginDeclarationWithoutAdvancedFields)
+	if err := writeFile(filepath.Join(pluginPath, "manifest.yaml"), string(manifest_file)); err != nil {
+		log.Error("failed to save manifest: %s", err)
+		return
+	}
+
+	log.Info("created tool module successfully")
 }
 
 func ModuleAppendEndpoints(pluginPath string) {
+	decoder, err := decoder.NewFSPluginDecoder(pluginPath)
+	if err != nil {
+		log.Error("your plugin is not a valid plugin: %s", err)
+		return
+	}
 
+	manifest, err := decoder.Manifest()
+	if err != nil {
+		log.Error("failed to get manifest: %s", err)
+		return
+	}
+
+	if manifest.Endpoint != nil {
+		log.Error("you have already declared endpoints in this plugin, " +
+			"you can add new endpoint by modifying the `provider.yaml` file to add new endpoints, " +
+			"this command is used to create new module that never been declared in this plugin.")
+		return
+	}
+
+	if manifest.Model != nil {
+		log.Error("model plugin dose not support declare endpoints.")
+		return
+	}
+
+	if manifest.Plugins.Endpoints == nil {
+		manifest.Plugins.Endpoints = []string{}
+	}
+
+	manifest.Plugins.Endpoints = append(manifest.Plugins.Endpoints, fmt.Sprintf("group/%s.yaml", manifest.Name))
+
+	if manifest.Meta.Runner.Language == constants.Python {
+		if err := createPythonEndpoint(pluginPath, &manifest); err != nil {
+			log.Error("failed to create python endpoint: %s", err)
+			return
+		}
+
+		if err := createPythonEndpointGroup(pluginPath, &manifest); err != nil {
+			log.Error("failed to create python group: %s", err)
+			return
+		}
+	}
+
+	// save manifest
+	manifest_file := marshalYamlBytes(manifest.PluginDeclarationWithoutAdvancedFields)
+	if err := writeFile(filepath.Join(pluginPath, "manifest.yaml"), string(manifest_file)); err != nil {
+		log.Error("failed to save manifest: %s", err)
+		return
+	}
+
+	log.Info("created endpoint module successfully")
 }
