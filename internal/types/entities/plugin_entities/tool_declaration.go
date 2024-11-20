@@ -217,6 +217,10 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		t.Tools = []ToolDeclaration{}
 	}
 
+	if t.Identity.Tags == nil {
+		t.Identity.Tags = []manifest_entities.PluginTag{}
+	}
+
 	return nil
 }
 
@@ -277,6 +281,10 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 
 	if t.Tools == nil {
 		t.Tools = []ToolDeclaration{}
+	}
+
+	if t.Identity.Tags == nil {
+		t.Identity.Tags = []manifest_entities.PluginTag{}
 	}
 
 	return nil
