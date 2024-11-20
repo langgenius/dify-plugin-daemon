@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -83,8 +84,7 @@ func InstallPluginRuntimeToTenant(
 
 		if err == nil {
 			if err := onDone(pluginUniqueIdentifier, pluginDeclaration); err != nil {
-				task.Plugins[i].Status = models.InstallTaskStatusFailed
-				task.Plugins[i].Message = err.Error()
+				return nil, errors.Join(err, errors.New("failed on plugin installation"))
 			} else {
 				task.CompletedPlugins++
 				task.Plugins[i].Status = models.InstallTaskStatusSuccess
