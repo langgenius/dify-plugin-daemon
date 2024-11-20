@@ -370,6 +370,22 @@ func (m *ModelDeclaration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (m *ModelDeclaration) MarshalJSON() ([]byte, error) {
+	type alias ModelDeclaration
+
+	temp := &struct {
+		*alias `json:",inline"`
+	}{
+		alias: (*alias)(m),
+	}
+
+	if temp.Label.EnUS == "" {
+		temp.Label.EnUS = temp.Model
+	}
+
+	return json.Marshal(temp)
+}
+
 func (m *ModelDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias ModelDeclaration
 
