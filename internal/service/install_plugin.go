@@ -82,10 +82,15 @@ func InstallPluginRuntimeToTenant(
 		})
 
 		if err == nil {
-			task.CompletedPlugins++
-			task.Plugins[i].Status = models.InstallTaskStatusSuccess
-			task.Plugins[i].Message = "Installed"
-			onDone(pluginUniqueIdentifier, pluginDeclaration)
+			if err := onDone(pluginUniqueIdentifier, pluginDeclaration); err != nil {
+				task.Plugins[i].Status = models.InstallTaskStatusFailed
+				task.Plugins[i].Message = err.Error()
+			} else {
+				task.CompletedPlugins++
+				task.Plugins[i].Status = models.InstallTaskStatusSuccess
+				task.Plugins[i].Message = "Installed"
+			}
+
 			continue
 		}
 
