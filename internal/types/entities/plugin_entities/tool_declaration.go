@@ -121,7 +121,7 @@ type ToolProviderIdentity struct {
 	Description I18nObject                    `json:"description"`
 	Icon        string                        `json:"icon" validate:"required"`
 	Label       I18nObject                    `json:"label" validate:"required"`
-	Tags        []manifest_entities.PluginTag `json:"tags" validate:"required,dive,plugin_tag"`
+	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
 }
 
 type ToolProviderDeclaration struct {
