@@ -165,6 +165,18 @@ func TestWrongSign(t *testing.T) {
 		return
 	}
 
+	// create _assets directory
+	if err := os.MkdirAll("temp/_assets", 0755); err != nil {
+		t.Errorf("failed to create _assets directory: %s", err.Error())
+		return
+	}
+
+	// create _assets/test.svg
+	if err := os.WriteFile("temp/_assets/test.svg", test_svg, 0644); err != nil {
+		t.Errorf("failed to write test.svg: %s", err.Error())
+		return
+	}
+
 	originDecoder, err := decoder.NewFSPluginDecoder("temp")
 	if err != nil {
 		t.Errorf("failed to create decoder: %s", err.Error())

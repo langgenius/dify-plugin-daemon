@@ -186,3 +186,7 @@ func (d *FSPluginDecoder) Checksum() (string, error) {
 func (d *FSPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifier, error) {
 	return d.PluginDecoderHelper.UniqueIdentity(d)
 }
+
+func (d *FSPluginDecoder) CheckAssetsValid() error {
+	return d.PluginDecoderHelper.CheckAssetsValid(d)
+}

@@ -231,3 +231,7 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 
 	return nil
 }
+
+func (z *ZipPluginDecoder) CheckAssetsValid() error {
+	return z.PluginDecoderHelper.CheckAssetsValid(z)
+}

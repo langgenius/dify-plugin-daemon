@@ -302,3 +302,85 @@ func (p *PluginDecoderHelper) UniqueIdentity(decoder PluginDecoder) (plugin_enti
 
 	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", identity, checksum))
 }
+
+func (p *PluginDecoderHelper) CheckAssetsValid(decoder PluginDecoder) error {
+	declaration, err := decoder.Manifest()
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to get manifest"))
+	}
+
+	assets, err := decoder.Assets()
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to get assets"))
+	}
+
+	if declaration.Model != nil {
+		if declaration.Model.IconSmall != nil {
+			if declaration.Model.IconSmall.EnUS != "" {
+				if _, ok := assets[declaration.Model.IconSmall.EnUS]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon small en_US not found"))
+				}
+			}
+
+			if declaration.Model.IconSmall.ZhHans != "" {
+				if _, ok := assets[declaration.Model.IconSmall.ZhHans]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon small zh_Hans not found"))
+				}
+			}
+
+			if declaration.Model.IconSmall.JaJp != "" {
+				if _, ok := assets[declaration.Model.IconSmall.JaJp]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon small ja_JP not found"))
+				}
+			}
+
+			if declaration.Model.IconSmall.PtBr != "" {
+				if _, ok := assets[declaration.Model.IconSmall.PtBr]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon small pt_BR not found"))
+				}
+			}
+		}
+
+		if declaration.Model.IconLarge != nil {
+			if declaration.Model.IconLarge.EnUS != "" {
+				if _, ok := assets[declaration.Model.IconLarge.EnUS]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon large en_US not found"))
+				}
+			}
+
+			if declaration.Model.IconLarge.ZhHans != "" {
+				if _, ok := assets[declaration.Model.IconLarge.ZhHans]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon large zh_Hans not found"))
+				}
+			}
+
+			if declaration.Model.IconLarge.JaJp != "" {
+				if _, ok := assets[declaration.Model.IconLarge.JaJp]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon large ja_JP not found"))
+				}
+			}
+
+			if declaration.Model.IconLarge.PtBr != "" {
+				if _, ok := assets[declaration.Model.IconLarge.PtBr]; !ok {
+					return errors.Join(err, fmt.Errorf("model icon large pt_BR not found"))
+				}
+			}
+		}
+	}
+
+	if declaration.Tool != nil {
+		if declaration.Tool.Identity.Icon != "" {
+			if _, ok := assets[declaration.Tool.Identity.Icon]; !ok {
+				return errors.Join(err, fmt.Errorf("tool icon not found"))
+			}
+		}
+	}
+
+	if declaration.Icon != "" {
+		if _, ok := assets[declaration.Icon]; !ok {
+			return errors.Join(err, fmt.Errorf("plugin icon not found"))
+		}
+	}
+
+	return nil
+}

@@ -54,4 +54,7 @@ type PluginDecoder interface {
 
 	// Checksum returns the checksum of the plugin
 	Checksum() (string, error)
+
+	// Check Assets valid
+	CheckAssetsValid() error
 }
