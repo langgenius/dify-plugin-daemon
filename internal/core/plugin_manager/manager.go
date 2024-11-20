@@ -157,12 +157,6 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) (
 	*plugin_entities.PluginDeclaration, error,
 ) {
-	// save to storage
-	err := p.packageBucket.Save(plugin_unique_identifier.String(), pkg)
-	if err != nil {
-		return nil, err
-	}
-
 	// try to decode the package
 	packageDecoder, err := decoder.NewZipPluginDecoder(pkg)
 	if err != nil {
@@ -184,10 +178,16 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 	// remap the assets
 	_, err = p.mediaBucket.RemapAssets(&declaration, assets)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("failed to remap assets"))
 	}
 
 	uniqueIdentifier, err := packageDecoder.UniqueIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	// save to storage
+	err = p.packageBucket.Save(plugin_unique_identifier.String(), pkg)
 	if err != nil {
 		return nil, err
 	}

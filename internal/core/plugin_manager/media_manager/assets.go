@@ -1,6 +1,7 @@
 package media_manager
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -37,28 +38,28 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 			if declaration.Model.IconSmall.EnUS != "" {
 				declaration.Model.IconSmall.EnUS, err = remap(declaration.Model.IconSmall.EnUS)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small en_US"))
 				}
 			}
 
 			if declaration.Model.IconSmall.ZhHans != "" {
 				declaration.Model.IconSmall.ZhHans, err = remap(declaration.Model.IconSmall.ZhHans)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small zh_Hans"))
 				}
 			}
 
 			if declaration.Model.IconSmall.JaJp != "" {
 				declaration.Model.IconSmall.JaJp, err = remap(declaration.Model.IconSmall.JaJp)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small ja_JP"))
 				}
 			}
 
 			if declaration.Model.IconSmall.PtBr != "" {
 				declaration.Model.IconSmall.PtBr, err = remap(declaration.Model.IconSmall.PtBr)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small pt_BR"))
 				}
 			}
 		}
@@ -67,28 +68,28 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 			if declaration.Model.IconLarge.EnUS != "" {
 				declaration.Model.IconLarge.EnUS, err = remap(declaration.Model.IconLarge.EnUS)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large en_US"))
 				}
 			}
 
 			if declaration.Model.IconLarge.ZhHans != "" {
 				declaration.Model.IconLarge.ZhHans, err = remap(declaration.Model.IconLarge.ZhHans)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large zh_Hans"))
 				}
 			}
 
 			if declaration.Model.IconLarge.JaJp != "" {
 				declaration.Model.IconLarge.JaJp, err = remap(declaration.Model.IconLarge.JaJp)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large ja_JP"))
 				}
 			}
 
 			if declaration.Model.IconLarge.PtBr != "" {
 				declaration.Model.IconLarge.PtBr, err = remap(declaration.Model.IconLarge.PtBr)
 				if err != nil {
-					return nil, err
+					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large pt_BR"))
 				}
 			}
 		}
@@ -98,7 +99,7 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		if declaration.Tool.Identity.Icon != "" {
 			declaration.Tool.Identity.Icon, err = remap(declaration.Tool.Identity.Icon)
 			if err != nil {
-				return nil, err
+				return nil, errors.Join(err, fmt.Errorf("failed to remap tool icon"))
 			}
 		}
 	}
@@ -106,7 +107,7 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 	if declaration.Icon != "" {
 		declaration.Icon, err = remap(declaration.Icon)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(err, fmt.Errorf("failed to remap plugin icon"))
 		}
 	}
 

@@ -13,7 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 )
 
 func UploadPluginPkg(
@@ -41,7 +41,7 @@ func UploadPluginPkg(
 	manager := plugin_manager.Manager()
 	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return entities.NewErrorResponse(-500, errors.Join(err, errors.New("failed to save package")).Error())
 	}
 
 	if config.ForceVerifyingSignature || verify_signature {
@@ -159,29 +159,9 @@ func FetchPluginManifest(
 	tenant_id string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
-	type ManifestCache struct {
-		Declaration plugin_entities.PluginDeclaration `json:"declaration"`
-	}
-
-	pluginManifestCache, err := cache.AutoGetWithGetter(pluginUniqueIdentifier.String(), func() (*ManifestCache, error) {
-		manager := plugin_manager.Manager()
-		pkg, err := manager.GetPackage(pluginUniqueIdentifier)
-		if err != nil {
-			return nil, err
-		}
-
-		decoder, err := decoder.NewZipPluginDecoder(pkg)
-		if err != nil {
-			return nil, err
-		}
-
-		manifest, err := decoder.Manifest()
-		if err != nil {
-			return nil, err
-		}
-
-		return &ManifestCache{Declaration: manifest}, nil
-	})
+	pluginManifestCache, err := helper.CombinedGetPluginDeclaration(
+		pluginUniqueIdentifier, tenant_id, plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+	)
 
 	if err != nil {
 		return entities.NewErrorResponse(-500, err.Error())
