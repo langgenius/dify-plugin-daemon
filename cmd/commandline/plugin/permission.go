@@ -59,7 +59,7 @@ func (p permission) View() string {
 		return fmt.Sprintf("\033[31m%s\033[0m", "[✘]")
 	}
 
-	s := "Configure the permissions of the plugin, use up and down to navigate, enter to select, after selection, press right to move to the next menu\n"
+	s := "Configure the permissions of the plugin, use \033[32mup\033[0m and \033[32mdown\033[0m to navigate, \033[32mtab\033[0m to select, after selection, press \033[32menter\033[0m to finish\n"
 	s += "Backwards Invocation:\n"
 	s += "Tools:\n"
 	s += fmt.Sprintf("  %sEnabled: %v %s You can invoke tools inside Dify if it's enabled %s\n", cursor("tool.enabled"), checked(p.permission.AllowInvokeTool()), YELLOW, RESET)
@@ -243,15 +243,31 @@ func (p permission) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 					break
 				}
 			}
-		case "enter":
+		case "tab":
 			p.edit()
-		case "right":
+		case "enter":
 			if p.cursor == "storage.size" {
 				break
 			}
-			p.cursor = permissionKeySeq[0]
-			p.updateStorageSize()
-			return p, SUB_MENU_EVENT_NEXT, nil
+			if p.cursor == "endpoint.enabled" {
+				p.cursor = permissionKeySeq[0]
+				p.updateStorageSize()
+				return p, SUB_MENU_EVENT_NEXT, nil
+			} else {
+				// find the next key in the permissionKeySeq
+				for i, key := range permissionKeySeq {
+					if key == p.cursor {
+						if i == len(permissionKeySeq)-1 {
+							p.cursor = permissionKeySeq[0]
+						} else {
+							p.cursor = permissionKeySeq[i+1]
+						}
+
+						p.updateStorageSize()
+						break
+					}
+				}
+			}
 		}
 	}
 
