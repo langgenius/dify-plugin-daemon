@@ -24,7 +24,7 @@ var (
 		Long:  "Package plugins",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			inputPath := args[0]
+			inputPath := filepath.Clean(args[0])
 
 			// using filename of input_path as output_path if not specified
 			outputPath := ""
