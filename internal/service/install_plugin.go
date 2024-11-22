@@ -256,7 +256,7 @@ func InstallPluginRuntimeToTenant(
 						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 							task.Status = models.InstallTaskStatusFailed
 							plugin.Status = models.InstallTaskStatusFailed
-							plugin.Message = "Failed to create plugin"
+							plugin.Message = "Failed to create plugin, perhaps it's already installed"
 						})
 						return
 					}
