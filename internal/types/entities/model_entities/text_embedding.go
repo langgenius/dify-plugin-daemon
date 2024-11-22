@@ -19,5 +19,5 @@ type TextEmbeddingResult struct {
 }
 
 type GetTextEmbeddingNumTokensResponse struct {
-	NumTokens int `json:"num_tokens" validate:"required"`
+	NumTokens []int `json:"num_tokens" validate:"required"`
 }

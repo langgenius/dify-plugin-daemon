@@ -18,6 +18,7 @@ func (e *genericError) Error() string {
 }
 
 func (e *genericError) ToResponse() *entities.Response {
+	// TODO: using struct instead, currently, for compatibility with old code
 	errorMsg := parser.MarshalJson(e)
 
 	return entities.NewDaemonErrorResponse(e.code, errorMsg)
