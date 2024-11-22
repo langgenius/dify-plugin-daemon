@@ -83,9 +83,14 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 
 		// write to data stream
 		scanner := bufio.NewScanner(response.Body)
+
+		// TODO: set a reasonable buffer size or use a reader, this is a temporary solution
+		scanner.Buffer(make([]byte, 1024), 5*1024*1024)
+
 		sessionAlive := true
 		for scanner.Scan() && sessionAlive {
 			bytes := scanner.Bytes()
+
 			if len(bytes) == 0 {
 				continue
 			}
@@ -120,12 +125,12 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 			)
 		}
 
-		if scanner.Err() != nil {
+		if err := scanner.Err(); err != nil {
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
 					ErrorType: "PluginDaemonInnerError",
-					Message:   fmt.Sprintf("failed to read response body: %v", scanner.Err()),
+					Message:   fmt.Sprintf("failed to read response body: %v", err),
 				}),
 			})
 		}

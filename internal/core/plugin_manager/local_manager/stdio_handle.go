@@ -79,8 +79,13 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 	defer s.Stop()
 
 	scanner := bufio.NewScanner(s.reader)
+
+	// TODO: set a reasonable buffer size or use a reader, this is a temporary solution
+	scanner.Buffer(make([]byte, 1024), 5*1024*1024)
+
 	for scanner.Scan() {
 		data := scanner.Bytes()
+
 		if len(data) == 0 {
 			continue
 		}
@@ -109,6 +114,10 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 				log.Info("plugin %s: %s", s.pluginUniqueIdentifier, message)
 			},
 		)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Error("plugin %s has an error on stdout: %s", s.pluginUniqueIdentifier, err)
 	}
 }
 
