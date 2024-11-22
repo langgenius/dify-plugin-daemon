@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
@@ -24,7 +25,7 @@ func InvokeTool(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -53,7 +54,7 @@ func ValidateToolCredentials(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -82,7 +83,7 @@ func GetToolRuntimeParameters(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{

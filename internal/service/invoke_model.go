@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
@@ -24,7 +25,7 @@ func InvokeLLM(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -52,7 +53,7 @@ func InvokeTextEmbedding(
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
 		ctx.GetString("cluster_id"))
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -81,7 +82,7 @@ func InvokeRerank(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -110,7 +111,7 @@ func InvokeTTS(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -139,7 +140,7 @@ func InvokeSpeech2Text(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -168,7 +169,7 @@ func InvokeModeration(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -197,7 +198,7 @@ func ValidateProviderCredentials(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -226,7 +227,7 @@ func ValidateModelCredentials(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -254,7 +255,7 @@ func GetTTSModelVoices(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -282,7 +283,7 @@ func GetTextEmbeddingNumTokens(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -310,7 +311,7 @@ func GetAIModelSchema(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -338,7 +339,7 @@ func GetLLMNumTokens(
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
 	defer session.Close(session_manager.CloseSessionPayload{

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -9,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
@@ -27,7 +29,7 @@ func SetupEndpoint(
 		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
+		return exception.ErrPluginNotFound().ToResponse()
 	}
 
 	// try get plugin
@@ -36,21 +38,22 @@ func SetupEndpoint(
 		tenant_id,
 		plugin_entities.PluginRuntimeType(installation.RuntimeType),
 	)
+
 	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
+		return exception.ErrPluginNotFound().ToResponse()
 	}
 
 	if !pluginDeclaration.Resource.Permission.AllowRegisterEndpoint() {
-		return entities.NewErrorResponse(-403, "permission denied")
+		return exception.PermissionDeniedError().ToResponse()
 	}
 
 	if pluginDeclaration.Endpoint == nil {
-		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
+		return exception.BadRequestError(errors.New("plugin does not have an endpoint")).ToResponse()
 	}
 
 	// check settings
 	if err := plugin_entities.ValidateProviderConfigs(settings, pluginDeclaration.Endpoint.Settings); err != nil {
-		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
+		return exception.BadRequestError(fmt.Errorf("failed to validate settings: %v", err)).ToResponse()
 	}
 
 	endpoint, err := install_service.InstallEndpoint(
@@ -62,12 +65,12 @@ func SetupEndpoint(
 		map[string]any{},
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to setup endpoint: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to setup endpoint: %v", err)).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+		return exception.InternalServerError(errors.New("failed to get plugin manager")).ToResponse()
 	}
 
 	// encrypt settings
@@ -89,11 +92,11 @@ func SetupEndpoint(
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to encrypt settings: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to encrypt settings: %v", err)).ToResponse()
 	}
 
 	if err := install_service.UpdateEndpoint(endpoint, name, encryptedSettings); err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to update endpoint: %v", err)).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)
@@ -105,17 +108,17 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		db.Equal("tenant_id", tenant_id),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find endpoint: %v", err))
+		return exception.NotFoundError(fmt.Errorf("failed to find endpoint: %v", err)).ToResponse()
 	}
 
 	err = install_service.UninstallEndpoint(&endpoint)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to remove endpoint: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to remove endpoint: %v", err)).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+		return exception.InternalServerError(errors.New("failed to get plugin manager")).ToResponse()
 	}
 
 	// clear credentials cache
@@ -131,7 +134,7 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 			Identity:  endpoint.ID,
 		},
 	}); err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to clear credentials cache: %v", err)).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)
@@ -144,7 +147,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		db.Equal("tenant_id", tenant_id),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find endpoint: %v", err))
+		return exception.NotFoundError(fmt.Errorf("failed to find endpoint: %v", err)).ToResponse()
 	}
 
 	// get plugin installation
@@ -153,14 +156,14 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		db.Equal("tenant_id", tenant_id),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin installation: %v", err))
+		return exception.NotFoundError(fmt.Errorf("failed to find plugin installation: %v", err)).ToResponse()
 	}
 
 	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
 		installation.PluginUniqueIdentifier,
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
+		return exception.PluginUniqueIdentifierError(fmt.Errorf("failed to parse plugin unique identifier: %v", err)).ToResponse()
 	}
 
 	// get plugin
@@ -170,17 +173,17 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		plugin_entities.PluginRuntimeType(installation.RuntimeType),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-404, fmt.Sprintf("failed to find plugin: %v", err))
+		return exception.ErrPluginNotFound().ToResponse()
 	}
 
 	if pluginDeclaration.Endpoint == nil {
-		return entities.NewErrorResponse(-404, "plugin does not have an endpoint")
+		return exception.BadRequestError(errors.New("plugin does not have an endpoint")).ToResponse()
 	}
 
 	// decrypt original settings
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return entities.NewErrorResponse(-500, "failed to get plugin manager")
+		return exception.InternalServerError(errors.New("failed to get plugin manager")).ToResponse()
 	}
 
 	originalSettings, err := manager.BackwardsInvocation().InvokeEncrypt(
@@ -200,7 +203,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		},
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to decrypt settings: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to decrypt settings: %v", err)).ToResponse()
 	}
 
 	maskedSettings := encryption.MaskConfigCredentials(originalSettings, pluginDeclaration.Endpoint.Settings)
@@ -227,7 +230,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 
 	// check settings
 	if err := plugin_entities.ValidateProviderConfigs(settings, pluginDeclaration.Endpoint.Settings); err != nil {
-		return entities.NewErrorResponse(-400, fmt.Sprintf("failed to validate settings: %v", err))
+		return exception.BadRequestError(fmt.Errorf("failed to validate settings: %v", err)).ToResponse()
 	}
 
 	// encrypt settings
@@ -248,12 +251,12 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		},
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to encrypt settings: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to encrypt settings: %v", err)).ToResponse()
 	}
 
 	// update endpoint
 	if err := install_service.UpdateEndpoint(&endpoint, name, encryptedSettings); err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to update endpoint: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to update endpoint: %v", err)).ToResponse()
 	}
 
 	// clear credentials cache
@@ -271,7 +274,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 			Config:    pluginDeclaration.Endpoint.Settings,
 		},
 	}); err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to clear credentials cache: %v", err))
+		return exception.InternalServerError(fmt.Errorf("failed to clear credentials cache: %v", err)).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)

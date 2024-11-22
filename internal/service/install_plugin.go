@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
@@ -320,7 +321,7 @@ func InstallPluginFromIdentifiers(
 			return err
 		})
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(response)
@@ -335,11 +336,11 @@ func UpgradePlugin(
 	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
 	if original_plugin_unique_identifier == new_plugin_unique_identifier {
-		return entities.NewErrorResponse(-400, "original and new plugin unique identifier are the same")
+		return exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse()
 	}
 
 	if original_plugin_unique_identifier.PluginID() != new_plugin_unique_identifier.PluginID() {
-		return entities.NewErrorResponse(-400, "original and new plugin id are different")
+		return exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse()
 	}
 
 	// uninstall the original plugin
@@ -350,11 +351,11 @@ func UpgradePlugin(
 	)
 
 	if err == db.ErrDatabaseNotFound {
-		return entities.NewErrorResponse(-404, "Plugin installation not found for this tenant")
+		return exception.NotFoundError(errors.New("plugin installation not found for this tenant")).ToResponse()
 	}
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	// install the new plugin runtime
@@ -401,8 +402,9 @@ func UpgradePlugin(
 			return nil
 		},
 	)
+
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(response)
@@ -419,7 +421,7 @@ func FetchPluginInstallationTasks(
 		db.Page(page, page_size),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(tasks)
@@ -434,7 +436,7 @@ func FetchPluginInstallationTask(
 		db.Equal("tenant_id", tenant_id),
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(task)
@@ -454,7 +456,7 @@ func DeletePluginInstallationTask(
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)
@@ -503,7 +505,7 @@ func DeletePluginInstallationItemFromTask(
 	})
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)
@@ -519,7 +521,7 @@ func FetchPluginFromIdentifier(
 		return entities.NewSuccessResponse(false)
 	}
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)
@@ -535,15 +537,15 @@ func UninstallPlugin(
 		db.Equal("id", plugin_installation_id),
 	)
 	if err == db.ErrDatabaseNotFound {
-		return entities.NewErrorResponse(-404, "Plugin installation not found for this tenant")
+		return exception.ErrPluginNotFound().ToResponse()
 	}
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("failed to parse plugin unique identifier: %v", err))
+		return exception.PluginUniqueIdentifierError(err).ToResponse()
 	}
 
 	// Uninstall the plugin
@@ -553,7 +555,7 @@ func UninstallPlugin(
 		installation.ID,
 	)
 	if err != nil {
-		return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
+		return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()
 	}
 
 	if deleteResponse.IsPluginDeleted {
@@ -564,7 +566,7 @@ func UninstallPlugin(
 		) {
 			err = manager.UninstallFromLocal(pluginUniqueIdentifier)
 			if err != nil {
-				return entities.NewErrorResponse(-500, fmt.Sprintf("Failed to uninstall plugin: %s", err.Error()))
+				return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()
 			}
 		}
 	}

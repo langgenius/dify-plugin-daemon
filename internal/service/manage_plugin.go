@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
@@ -39,7 +40,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	data := make([]installation, 0, len(pluginInstallations))
@@ -49,7 +50,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			plugin_installation.PluginUniqueIdentifier,
 		)
 		if err != nil {
-			return entities.NewErrorResponse(-500, err.Error())
+			return exception.PluginUniqueIdentifierError(err).ToResponse()
 		}
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
@@ -58,7 +59,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 		)
 		if err != nil {
-			return entities.NewErrorResponse(-500, err.Error())
+			return exception.InternalServerError(err).ToResponse()
 		}
 
 		data = append(data, installation{
@@ -105,7 +106,7 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	data := make([]installation, 0, len(pluginInstallations))
@@ -116,7 +117,7 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 		)
 
 		if err != nil {
-			return entities.NewErrorResponse(-500, errors.Join(errors.New("invalid plugin unique identifier found"), err).Error())
+			return exception.InternalServerError(errors.Join(errors.New("invalid plugin unique identifier found"), err)).ToResponse()
 		}
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
@@ -125,7 +126,7 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 		)
 		if err != nil {
-			return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to get plugin declaration"), err).Error())
+			return exception.InternalServerError(errors.Join(errors.New("failed to get plugin declaration"), err)).ToResponse()
 		}
 
 		data = append(data, installation{
@@ -162,7 +163,7 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	// check which plugin is missing
@@ -190,7 +191,7 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(providers)
@@ -203,7 +204,7 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(providers)
@@ -217,11 +218,11 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	if tool.Provider != provider {
-		return entities.NewErrorResponse(-404, "tool not found")
+		return exception.ErrPluginNotFound().ToResponse()
 	}
 
 	return entities.NewSuccessResponse(tool)

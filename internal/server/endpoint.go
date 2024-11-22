@@ -1,10 +1,13 @@
 package server
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -34,13 +37,13 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, path string) {
 		db.Equal("hook_id", hookId),
 	)
 	if err == db.ErrDatabaseNotFound {
-		ctx.JSON(404, gin.H{"error": "endpoint not found"})
+		ctx.JSON(404, exception.BadRequestError(errors.New("endpoint not found")).ToResponse())
 		return
 	}
 
 	if err != nil {
 		log.Error("get endpoint error %v", err)
-		ctx.JSON(500, gin.H{"error": "internal server error"})
+		ctx.JSON(500, exception.InternalServerError(errors.New("internal server error")).ToResponse())
 		return
 	}
 
@@ -50,7 +53,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, path string) {
 		db.Equal("tenant_id", endpoint.TenantID),
 	)
 	if err != nil {
-		ctx.JSON(404, gin.H{"error": "plugin installation not found"})
+		ctx.JSON(404, exception.BadRequestError(errors.New("plugin installation not found")).ToResponse())
 		return
 	}
 
@@ -58,7 +61,9 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, path string) {
 		pluginInstallation.PluginUniqueIdentifier,
 	)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid plugin unique identifier"})
+		ctx.JSON(400, exception.PluginUniqueIdentifierError(
+			errors.New("invalid plugin unique identifier"),
+		).ToResponse())
 		return
 	}
 

@@ -14,7 +14,7 @@ func NewSuccessResponse(data any) *Response {
 	}
 }
 
-func NewErrorResponse(code int, message string, args ...any) *Response {
+func NewDaemonErrorResponse(code int, message string, args ...any) *Response {
 	resp := &Response{
 		Code:    code,
 		Message: message,

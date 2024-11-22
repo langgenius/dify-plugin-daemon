@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
 
@@ -22,8 +24,7 @@ func BindRequest[T any](r *gin.Context, success func(T)) {
 
 	// validate, we have customized some validators which are not supported by gin binding
 	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
-		resp := entities.NewErrorResponse(-400, err.Error())
-		r.JSON(400, resp)
+		r.JSON(400, exception.BadRequestError(err).ToResponse())
 		return
 	}
 
@@ -36,15 +37,13 @@ func BindPluginDispatchRequest[T any](r *gin.Context, success func(
 	BindRequest(r, func(req plugin_entities.InvokePluginRequest[T]) {
 		pluginUniqueIdentifierAny, exists := r.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
 		if !exists {
-			resp := entities.NewErrorResponse(-400, "Plugin unique identifier is required")
-			r.JSON(400, resp)
+			r.JSON(400, exception.PluginUniqueIdentifierError(errors.New("Plugin unique identifier is required")).ToResponse())
 			return
 		}
 
 		pluginUniqueIdentifier, ok := pluginUniqueIdentifierAny.(plugin_entities.PluginUniqueIdentifier)
 		if !ok {
-			resp := entities.NewErrorResponse(-400, "Plugin unique identifier is required")
-			r.JSON(400, resp)
+			r.JSON(400, exception.PluginUniqueIdentifierError(errors.New("Plugin unique identifier is not valid")).ToResponse())
 			return
 		}
 

@@ -1,11 +1,13 @@
 package service
 
 import (
+	"errors"
 	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -39,7 +41,7 @@ func baseSSEService[R any](
 	pluginDaemonResponse, err := generator()
 
 	if err != nil {
-		writeData(entities.NewErrorResponse(-500, err.Error()))
+		writeData(exception.InternalServerError(err).ToResponse())
 		close(done)
 		return
 	}
@@ -48,7 +50,7 @@ func baseSSEService[R any](
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()
 			if err != nil {
-				writeData(entities.NewErrorResponse(-500, err.Error()))
+				writeData(exception.InternalServerError(err).ToResponse())
 				break
 			}
 			writeData(entities.NewSuccessResponse(chunk))
@@ -73,7 +75,7 @@ func baseSSEService[R any](
 	case <-done:
 		return
 	case <-timer.C:
-		writeData(entities.NewErrorResponse(-500, "killed by timeout"))
+		writeData(exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
 		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
 			close(done)
 		}

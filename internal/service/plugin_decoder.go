@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 )
 
@@ -25,30 +26,30 @@ func UploadPluginPkg(
 ) *entities.Response {
 	pluginFile, err := io.ReadAll(dify_pkg_file)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	decoder, err := decoder.NewZipPluginDecoder(pluginFile)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.BadRequestError(err).ToResponse()
 	}
 
 	pluginUniqueIdentifier, err := decoder.UniqueIdentity()
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.BadRequestError(err).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
 	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile)
 	if err != nil {
-		return entities.NewErrorResponse(-500, errors.Join(err, errors.New("failed to save package")).Error())
+		return exception.InternalServerError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
 
 	if config.ForceVerifyingSignature || verify_signature {
 		if !declaration.Verified {
-			return entities.NewErrorResponse(-500, errors.Join(err, errors.New(
+			return exception.BadRequestError(errors.Join(err, errors.New(
 				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
-			)).Error())
+			))).ToResponse()
 		}
 	}
 
@@ -67,18 +68,18 @@ func UploadPluginBundle(
 ) *entities.Response {
 	bundleFile, err := io.ReadAll(dify_bundle_file)
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	packager, err := bundle_packager.NewMemoryZipBundlePackager(bundleFile)
 	if err != nil {
-		return entities.NewErrorResponse(-500, errors.Join(err, errors.New("failed to create bundle packager")).Error())
+		return exception.BadRequestError(errors.Join(err, errors.New("failed to decode bundle"))).ToResponse()
 	}
 
 	// load bundle
 	bundle, err := packager.Manifest()
 	if err != nil {
-		return entities.NewErrorResponse(-500, errors.Join(err, errors.New("failed to load bundle manifest")).Error())
+		return exception.BadRequestError(errors.Join(err, errors.New("failed to load bundle manifest"))).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
@@ -114,29 +115,29 @@ func UploadPluginBundle(
 				// fetch package
 				path := dep.Path
 				if asset, err := packager.FetchAsset(path); err != nil {
-					return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to fetch package from bundle"), err).Error())
+					return exception.InternalServerError(errors.Join(errors.New("failed to fetch package from bundle"), err)).ToResponse()
 				} else {
 					// decode and save
 					decoder, err := decoder.NewZipPluginDecoder(asset)
 					if err != nil {
-						return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to create package decoder"), err).Error())
+						return exception.BadRequestError(errors.Join(errors.New("failed to create package decoder"), err)).ToResponse()
 					}
 
 					pluginUniqueIdentifier, err := decoder.UniqueIdentity()
 					if err != nil {
-						return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to get package unique identifier"), err).Error())
+						return exception.BadRequestError(errors.Join(errors.New("failed to get package unique identifier"), err)).ToResponse()
 					}
 
 					declaration, err := manager.SavePackage(pluginUniqueIdentifier, asset)
 					if err != nil {
-						return entities.NewErrorResponse(-500, errors.Join(errors.New("failed to save package"), err).Error())
+						return exception.InternalServerError(errors.Join(errors.New("failed to save package"), err)).ToResponse()
 					}
 
 					if config.ForceVerifyingSignature || verify_signature {
 						if !declaration.Verified {
-							return entities.NewErrorResponse(-500, errors.Join(errors.New(
+							return exception.BadRequestError(errors.Join(errors.New(
 								"plugin verification has been enabled, and the plugin you want to install has a bad signature",
-							), err).Error())
+							), err)).ToResponse()
 						}
 					}
 
@@ -164,7 +165,7 @@ func FetchPluginManifest(
 	)
 
 	if err != nil {
-		return entities.NewErrorResponse(-500, err.Error())
+		return exception.InternalServerError(err).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(pluginManifestCache)

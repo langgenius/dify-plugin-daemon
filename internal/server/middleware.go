@@ -1,13 +1,14 @@
 package server
 
 import (
+	"errors"
 	"io"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
@@ -16,7 +17,7 @@ func CheckingKey(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get header X-Api-Key
 		if c.GetHeader(constants.X_API_KEY) != key {
-			c.JSON(200, entities.NewErrorResponse(-401, "Unauthorized"))
+			c.JSON(200, exception.UnauthorizedError().ToResponse())
 			c.Abort()
 			return
 		}
@@ -29,13 +30,13 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		pluginId := ctx.Request.Header.Get(constants.X_PLUGIN_ID)
 		if pluginId == "" {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, plugin_id is required"})
+			ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("plugin_id is required")).ToResponse())
 			return
 		}
 
 		tenantId := ctx.Param("tenant_id")
 		if tenantId == "" {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, tenant_id is required"})
+			ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("tenant_id is required")).ToResponse())
 			return
 		}
 
@@ -44,14 +45,20 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			db.Equal("tenant_id", tenantId),
 			db.Equal("plugin_id", pluginId),
 		)
+
+		if err == db.ErrDatabaseNotFound {
+			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
+			return
+		}
+
 		if err != nil {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
+			ctx.AbortWithStatusJSON(500, exception.InternalServerError(err).ToResponse())
 			return
 		}
 
 		identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
 		if err != nil {
-			ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request, " + err.Error()})
+			ctx.AbortWithStatusJSON(400, exception.PluginUniqueIdentifierError(err).ToResponse())
 			return
 		}
 
@@ -67,13 +74,19 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		// get plugin unique identifier
 		identityAny, ok := ctx.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
 		if !ok {
-			ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error, plugin unique identifier not found"})
+			ctx.AbortWithStatusJSON(
+				500,
+				exception.InternalServerError(errors.New("plugin unique identifier not found")).ToResponse(),
+			)
 			return
 		}
 
 		identity, ok := identityAny.(plugin_entities.PluginUniqueIdentifier)
 		if !ok {
-			ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error, failed to parse plugin unique identifier"})
+			ctx.AbortWithStatusJSON(
+				500,
+				exception.InternalServerError(errors.New("failed to parse plugin unique identifier")).ToResponse(),
+			)
 			return
 		}
 
@@ -97,13 +110,17 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	if err != nil {
 		ctx.AbortWithStatusJSON(
 			500,
-			gin.H{"error": "Internal server error, " + originalError.Error() + ", " + err.Error()},
+			exception.InternalServerError(
+				errors.New("failed to fetch plugin available nodes, "+originalError.Error()+", "+err.Error()),
+			).ToResponse(),
 		)
 		return
 	} else if len(nodes) == 0 {
 		ctx.AbortWithStatusJSON(
 			404,
-			gin.H{"error": "No available node, " + originalError.Error()},
+			exception.InternalServerError(
+				errors.New("no available node, "+originalError.Error()),
+			).ToResponse(),
 		)
 		return
 	}
@@ -113,7 +130,10 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	statusCode, header, body, err := app.cluster.RedirectRequest(nodeId, ctx.Request)
 	if err != nil {
 		log.Error("redirect request failed: %s", err.Error())
-		ctx.AbortWithStatusJSON(500, gin.H{"error": "Internal server error"})
+		ctx.AbortWithStatusJSON(
+			500,
+			exception.InternalServerError(errors.New("redirect request failed: "+err.Error())).ToResponse(),
+		)
 		return
 	}
 

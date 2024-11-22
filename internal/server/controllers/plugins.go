@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -8,8 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 )
 
 func GetAsset(c *gin.Context) {
@@ -17,7 +18,7 @@ func GetAsset(c *gin.Context) {
 	asset, err := pluginManager.GetAsset(c.Param("id"))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, exception.InternalServerError(err).ToResponse())
 		return
 	}
 
@@ -28,18 +29,18 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		difyPkgFileHeader, err := c.FormFile("dify_pkg")
 		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
 			return
 		}
 
 		tenantId := c.Param("tenant_id")
 		if tenantId == "" {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Tenant ID is required"))
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("Tenant ID is required")).ToResponse())
 			return
 		}
 
 		if difyPkgFileHeader.Size > app.MaxPluginPackageSize {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-413, "File size exceeds the maximum limit"))
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("File size exceeds the maximum limit")).ToResponse())
 			return
 		}
 
@@ -47,7 +48,7 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 
 		difyPkgFile, err := difyPkgFileHeader.Open()
 		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
 			return
 		}
 		defer difyPkgFile.Close()
@@ -60,18 +61,18 @@ func UploadBundle(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		difyBundleFileHeader, err := c.FormFile("dify_bundle")
 		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
 			return
 		}
 
 		tenantId := c.Param("tenant_id")
 		if tenantId == "" {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, "Tenant ID is required"))
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("Tenant ID is required")).ToResponse())
 			return
 		}
 
 		if difyBundleFileHeader.Size > app.MaxBundlePackageSize {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-413, "File size exceeds the maximum limit"))
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("File size exceeds the maximum limit")).ToResponse())
 			return
 		}
 
@@ -79,7 +80,7 @@ func UploadBundle(app *app.Config) gin.HandlerFunc {
 
 		difyBundleFile, err := difyBundleFileHeader.Open()
 		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
 			return
 		}
 		defer difyBundleFile.Close()
@@ -164,7 +165,7 @@ func DeletePluginInstallationItemFromTask(c *gin.Context) {
 		identifierString := strings.TrimLeft(request.Identifier, "/")
 		identifier, err := plugin_entities.NewPluginUniqueIdentifier(identifierString)
 		if err != nil {
-			c.JSON(http.StatusOK, entities.NewErrorResponse(-400, err.Error()))
+			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
 			return
 		}
 
