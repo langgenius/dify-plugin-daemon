@@ -42,7 +42,7 @@ func UploadPluginPkg(
 	manager := plugin_manager.Manager()
 	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile)
 	if err != nil {
-		return exception.InternalServerError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
+		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
 
 	if config.ForceVerifyingSignature || verify_signature {
