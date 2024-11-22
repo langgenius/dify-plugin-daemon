@@ -6,7 +6,7 @@ import (
 )
 
 type genericError struct {
-	Msg       string         `json:"msg"`
+	Message   string         `json:"message"`
 	ErrorType string         `json:"error_type"`
 	Args      map[string]any `json:"args"`
 
@@ -14,7 +14,7 @@ type genericError struct {
 }
 
 func (e *genericError) Error() string {
-	return e.Msg
+	return e.Message
 }
 
 func (e *genericError) ToResponse() *entities.Response {
@@ -24,21 +24,21 @@ func (e *genericError) ToResponse() *entities.Response {
 }
 
 func Error(msg string) PluginDaemonError {
-	return &genericError{Msg: msg, code: -500, ErrorType: "unknown"}
+	return &genericError{Message: msg, code: -500, ErrorType: "unknown"}
 }
 
 func ErrorWithCode(msg string, code int) PluginDaemonError {
-	return &genericError{Msg: msg, code: code, ErrorType: "unknown"}
+	return &genericError{Message: msg, code: code, ErrorType: "unknown"}
 }
 
 func ErrorWithType(msg string, errorType string) PluginDaemonError {
-	return &genericError{Msg: msg, code: -500, ErrorType: errorType}
+	return &genericError{Message: msg, code: -500, ErrorType: errorType}
 }
 
 func ErrorWithTypeAndCode(msg string, errorType string, code int) PluginDaemonError {
-	return &genericError{Msg: msg, code: code, ErrorType: errorType}
+	return &genericError{Message: msg, code: code, ErrorType: errorType}
 }
 
 func ErrorWithTypeAndArgs(msg string, errorType string, args map[string]any) PluginDaemonError {
-	return &genericError{Msg: msg, code: -500, ErrorType: errorType, Args: args}
+	return &genericError{Message: msg, code: -500, ErrorType: errorType, Args: args}
 }
