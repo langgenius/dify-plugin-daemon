@@ -1,6 +1,7 @@
 package serverless
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -40,17 +41,15 @@ func UploadPlugin(decoder decoder.PluginDecoder) (*stream.Stream[LaunchAWSLambda
 		}
 	} else {
 		// found, return directly
-		response := stream.NewStream[LaunchAWSLambdaFunctionResponse](3)
+		response := stream.NewStream[LaunchAWSLambdaFunctionResponse](2)
 		response.Write(LaunchAWSLambdaFunctionResponse{
-			Event:   LambdaUrl,
-			Message: function.FunctionURL,
+			Stage:   LaunchStageRun,
+			State:   LaunchStateSuccess,
+			Message: fmt.Sprintf("endpoint=%s,name=%s,id=%s", function.FunctionURL, function.FunctionName, identity),
 		})
 		response.Write(LaunchAWSLambdaFunctionResponse{
-			Event:   Lambda,
-			Message: function.FunctionName,
-		})
-		response.Write(LaunchAWSLambdaFunctionResponse{
-			Event:   Done,
+			Stage:   LaunchStageEnd,
+			State:   LaunchStateSuccess,
 			Message: "",
 		})
 		response.Close()

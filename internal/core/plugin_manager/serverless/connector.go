@@ -88,19 +88,25 @@ func FetchLambda(identity string, checksum string) (*LambdaFunction, error) {
 	return &response.Data, nil
 }
 
-type LaunchAWSLambdaFunctionEvent string
+type LaunchFunctionStage string
+type LaunchFunctionState string
 
 const (
-	Error     LaunchAWSLambdaFunctionEvent = "error"
-	Info      LaunchAWSLambdaFunctionEvent = "info"
-	Lambda    LaunchAWSLambdaFunctionEvent = "lambda"
-	LambdaUrl LaunchAWSLambdaFunctionEvent = "lambda_url"
-	Done      LaunchAWSLambdaFunctionEvent = "done"
+	LaunchStageStart LaunchFunctionStage = "start"
+	LaunchStageBuild LaunchFunctionStage = "build"
+	LaunchStageRun   LaunchFunctionStage = "run"
+	LaunchStageEnd   LaunchFunctionStage = "end"
+
+	LaunchStateSuccess LaunchFunctionState = "success"
+	LaunchStateRunning LaunchFunctionState = "running"
+	LaunchStateFailed  LaunchFunctionState = "failed"
 )
 
 type LaunchAWSLambdaFunctionResponse struct {
-	Event   LaunchAWSLambdaFunctionEvent `json:"event"`
-	Message string                       `json:"message"`
+	Stage   LaunchFunctionStage
+	Obj     string
+	State   LaunchFunctionState
+	Message string
 }
 
 // Launch the lambda function from serverless connector, it will receive the context_tar as the input

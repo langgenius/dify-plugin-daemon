@@ -2,14 +2,29 @@ package plugin_manager
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
+
+var (
+	variablePattern = regexp.MustCompile(`(\w+)=([^,]+)`)
+)
+
+func extractVariables(message string) map[string]string {
+	matches := variablePattern.FindAllStringSubmatch(message, -1)
+	variables := make(map[string]string)
+	for _, match := range matches {
+		variables[match[1]] = match[2]
+	}
+	return variables
+}
 
 // InstallToAWSFromPkg installs a plugin to AWS Lambda
 func (p *PluginManager) InstallToAWSFromPkg(
@@ -47,65 +62,95 @@ func (p *PluginManager) InstallToAWSFromPkg(
 		lambdaFunctionName := ""
 
 		response.Async(func(r serverless.LaunchAWSLambdaFunctionResponse) {
-			if r.Event == serverless.Info {
+			if r.Stage == serverless.LaunchStageStart {
 				newResponse.Write(PluginInstallResponse{
 					Event: PluginInstallEventInfo,
 					Data:  "Installing...",
 				})
-			} else if r.Event == serverless.Done {
-				if lambdaUrl == "" || lambdaFunctionName == "" {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
-						Data:  "Internal server error, failed to get lambda url or function name",
-					})
-					return
-				}
-				// check if the plugin is already installed
-				_, err := db.GetOne[models.ServerlessRuntime](
-					db.Equal("checksum", checksum),
-					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA)),
-				)
-				if err == db.ErrDatabaseNotFound {
-					// create a new serverless runtime
-					serverlessModel := &models.ServerlessRuntime{
-						Checksum:               checksum,
-						Type:                   models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA,
-						FunctionURL:            lambdaUrl,
-						FunctionName:           lambdaFunctionName,
-						PluginUniqueIdentifier: uniqueIdentity.String(),
-						Declaration:            declaration,
-					}
-					err = db.Create(serverlessModel)
-					if err != nil {
+			} else if r.Stage == serverless.LaunchStageRun {
+				if r.State == serverless.LaunchStateSuccess {
+					// split the message to get the lambda url and function name
+					variables := extractVariables(r.Message)
+					if len(variables) != 3 {
 						newResponse.Write(PluginInstallResponse{
 							Event: PluginInstallEventError,
-							Data:  "Failed to create serverless runtime",
+							Data:  "Internal server error, failed to get lambda url or function name",
 						})
 						return
 					}
-				} else if err != nil {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
-						Data:  "Failed to check if the plugin is already installed",
-					})
-					return
-				}
 
+					lambdaUrl = variables["endpoint"]
+					lambdaFunctionName = variables["name"]
+
+					if lambdaUrl == "" || lambdaFunctionName == "" {
+						newResponse.Write(PluginInstallResponse{
+							Event: PluginInstallEventError,
+							Data: fmt.Sprintf(
+								"Internal server error, failed to get lambda url or function name,"+
+									" one of them is empty, lambdaUrl: %3s, lambdaFunctionName: %3s",
+								lambdaUrl, lambdaFunctionName,
+							),
+						})
+						return
+					}
+
+					// check if the plugin is already installed
+					_, err := db.GetOne[models.ServerlessRuntime](
+						db.Equal("checksum", checksum),
+						db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA)),
+					)
+					if err == db.ErrDatabaseNotFound {
+						// create a new serverless runtime
+						serverlessModel := &models.ServerlessRuntime{
+							Checksum:               checksum,
+							Type:                   models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA,
+							FunctionURL:            lambdaUrl,
+							FunctionName:           lambdaFunctionName,
+							PluginUniqueIdentifier: uniqueIdentity.String(),
+							Declaration:            declaration,
+						}
+						err = db.Create(serverlessModel)
+						if err != nil {
+							newResponse.Write(PluginInstallResponse{
+								Event: PluginInstallEventError,
+								Data:  "Failed to create serverless runtime",
+							})
+							return
+						}
+					} else if err != nil {
+						newResponse.Write(PluginInstallResponse{
+							Event: PluginInstallEventError,
+							Data:  "Failed to check if the plugin is already installed",
+						})
+						return
+					}
+
+				} else if r.State == serverless.LaunchStateRunning {
+					// do nothing
+				}
+			} else if r.Stage == serverless.LaunchStageEnd {
+				if r.State == serverless.LaunchStateSuccess {
+					newResponse.Write(PluginInstallResponse{
+						Event: PluginInstallEventDone,
+						Data:  "Installed",
+					})
+				}
+			} else if r.Stage == serverless.LaunchStageBuild {
+				// do nothing
 				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventDone,
-					Data:  "Installed",
+					Event: PluginInstallEventInfo,
+					Data:  "Building...",
 				})
-			} else if r.Event == serverless.Error {
+			}
+
+			// any error occurs
+			if r.State == serverless.LaunchStateFailed {
 				newResponse.Write(PluginInstallResponse{
 					Event: PluginInstallEventError,
 					Data:  "Internal server error",
 				})
-			} else if r.Event == serverless.LambdaUrl {
-				lambdaUrl = r.Message
-			} else if r.Event == serverless.Lambda {
-				lambdaFunctionName = r.Message
-			} else {
-				newResponse.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
+				// log the error message
+				log.Error("failed to install plugin to AWS Lambda, stage: %s, state: %s, error: %s", r.Stage, r.State, r.Message)
 			}
 		})
 	})
