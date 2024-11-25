@@ -156,6 +156,14 @@ func DeletePluginInstallationTask(c *gin.Context) {
 	})
 }
 
+func DeleteAllPluginInstallationTasks(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `uri:"tenant_id" validate:"required"`
+	}) {
+		c.JSON(http.StatusOK, service.DeleteAllPluginInstallationTasks(request.TenantID))
+	})
+}
+
 func DeletePluginInstallationItemFromTask(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID   string `uri:"tenant_id" validate:"required"`

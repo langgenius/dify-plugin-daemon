@@ -462,6 +462,21 @@ func DeletePluginInstallationTask(
 	return entities.NewSuccessResponse(true)
 }
 
+func DeleteAllPluginInstallationTasks(
+	tenant_id string,
+) *entities.Response {
+	err := db.DeleteByCondition(
+		models.InstallTask{
+			TenantID: tenant_id,
+		},
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	return entities.NewSuccessResponse(true)
+}
+
 func DeletePluginInstallationItemFromTask(
 	tenant_id string,
 	task_id string,
