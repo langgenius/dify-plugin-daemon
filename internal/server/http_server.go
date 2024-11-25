@@ -131,6 +131,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/models", gzip.Gzip(gzip.DefaultCompression), controllers.ListModels)
 	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
 	group.GET("/tool", gzip.Gzip(gzip.DefaultCompression), controllers.GetTool)
+	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {

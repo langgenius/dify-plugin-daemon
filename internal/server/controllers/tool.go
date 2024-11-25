@@ -68,3 +68,12 @@ func GetTool(c *gin.Context) {
 		c.JSON(http.StatusOK, service.GetTool(request.TenantID, request.PluginID, request.Provider))
 	})
 }
+
+func CheckToolExistence(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID    string                              `uri:"tenant_id" validate:"required"`
+		ProviderIDS []service.RequestCheckToolExistence `json:"provider_ids" validate:"required,dive"`
+	}) {
+		c.JSON(http.StatusOK, service.CheckToolExistence(request.TenantID, request.ProviderIDS))
+	})
+}

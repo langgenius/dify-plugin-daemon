@@ -227,3 +227,38 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 
 	return entities.NewSuccessResponse(tool)
 }
+
+type RequestCheckToolExistence struct {
+	PluginID     string `json:"plugin_id" validate:"required"`
+	ProviderName string `json:"provider_name" validate:"required"`
+}
+
+func CheckToolExistence(tenantId string, providerIds []RequestCheckToolExistence) *entities.Response {
+	existence := make([]bool, 0, len(providerIds))
+
+	// get all providers
+	providers, err := db.GetAll[models.ToolInstallation](
+		db.Equal("tenant_id", tenantId),
+		db.InArray("plugin_id", strings.Map(providerIds, func(id RequestCheckToolExistence) any { return id.PluginID })),
+		db.Page(1, 256), // TODO: pagination
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	// check provider id
+	for _, providerId := range providerIds {
+		found := false
+		for _, provider := range providers {
+			if provider.PluginID == providerId.PluginID && provider.Provider == providerId.ProviderName {
+				found = true
+				break
+			}
+		}
+
+		existence = append(existence, found)
+	}
+
+	return entities.NewSuccessResponse(existence)
+}
