@@ -40,6 +40,9 @@ type BundlePackager interface {
 	// NOTE: path is the relative path to _assets folder
 	FetchAsset(path string) ([]byte, error)
 
+	// Assets returns a set of assets in the bundle
+	Assets() (map[string][]byte, error)
+
 	// ReadFile reads the file from the bundle
 	// NOTE: path is the relative path to the root of the bundle
 	ReadFile(path string) ([]byte, error)
