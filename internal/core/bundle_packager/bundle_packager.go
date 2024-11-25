@@ -36,6 +36,9 @@ type BundlePackager interface {
 	// BumpVersion bumps the version of the bundle
 	BumpVersion(targetVersion manifest_entities.Version)
 
+	// Assets returns a set of assets in the bundle
+	Assets() (map[string][]byte, error)
+
 	// FetchAsset fetches the asset of the bundle
 	// NOTE: path is the relative path to _assets folder
 	FetchAsset(path string) ([]byte, error)

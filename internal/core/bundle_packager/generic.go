@@ -178,3 +178,11 @@ func (p *GenericBundlePackager) FetchAsset(path string) ([]byte, error) {
 
 	return asset.Bytes(), nil
 }
+
+func (p *GenericBundlePackager) Assets() (map[string][]byte, error) {
+	assets := make(map[string][]byte)
+	for path, asset := range p.assets {
+		assets[path] = asset.Bytes()
+	}
+	return assets, nil
+}
