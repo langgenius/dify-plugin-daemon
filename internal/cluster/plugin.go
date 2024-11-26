@@ -126,11 +126,6 @@ func (c *Cluster) schedulePlugins() error {
 // doPluginUpdate updates the plugin state and schedule the plugin
 func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 	state := lifetime.lifetime.RuntimeState()
-	hashIdentity, err := lifetime.lifetime.HashedIdentity()
-	if err != nil {
-		return err
-	}
-
 	identity, err := lifetime.lifetime.Identity()
 	if err != nil {
 		return err
@@ -140,12 +135,14 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		log.Info("updating plugin state %s", identity.String())
 	}
 
+	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
+
 	scheduleState := &pluginState{
 		Identity:           identity.String(),
 		PluginRuntimeState: state,
 	}
 
-	stateKey := c.getPluginStateKey(c.id, hashIdentity)
+	stateKey := c.getPluginStateKey(c.id, hashedIdentity)
 
 	// check if the plugin has been removed
 	if !c.plugins.Exists(identity.String()) {
@@ -153,7 +150,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 			log.Info("removing plugin state %s due no longer exists", identity.String())
 		}
 		// remove state
-		err = c.removePluginState(c.id, hashIdentity)
+		err = c.removePluginState(c.id, hashedIdentity)
 		if err != nil {
 			return err
 		}
