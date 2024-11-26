@@ -89,11 +89,13 @@ func TestPluginScheduleLifetime(t *testing.T) {
 		return
 	}
 
-	hashedIdentity, err := plugin.HashedIdentity()
+	identity, err := plugin.Identity()
 	if err != nil {
-		t.Errorf("get plugin hashed identity failed: %v", err)
+		t.Errorf("get plugin identity failed: %v", err)
 		return
 	}
+
+	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
 	nodes, err := cluster[0].FetchPluginAvailableNodesByHashedId(hashedIdentity)
 	if err != nil {
@@ -197,11 +199,13 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 	}
 
 	// check if plugins[master_idx] is removed
-	hashedIdentity, err := plugins[masterIdx].HashedIdentity()
+	identity, err := plugins[masterIdx].Identity()
 	if err != nil {
-		t.Errorf("get plugin hashed identity failed: %v", err)
+		t.Errorf("get plugin identity failed: %v", err)
 		return
 	}
+
+	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
 	ticker := time.NewTicker(time.Second)
 	timeout := time.NewTimer(MASTER_GC_INTERVAL * 2)
@@ -224,11 +228,13 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 	}
 
 	// check if plugins[1-master_idx] is still scheduled
-	hashedIdentity, err = plugins[1-masterIdx].HashedIdentity()
+	identity, err = plugins[1-masterIdx].Identity()
 	if err != nil {
-		t.Errorf("get plugin hashed identity failed: %v", err)
+		t.Errorf("get plugin identity failed: %v", err)
 		return
 	}
+
+	hashedIdentity = plugin_entities.HashedIdentity(identity.String())
 
 	nodes, err := cluster[1-masterIdx].FetchPluginAvailableNodesByHashedId(hashedIdentity)
 	if err != nil {
