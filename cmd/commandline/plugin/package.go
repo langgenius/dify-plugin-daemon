@@ -12,6 +12,7 @@ func PackagePlugin(inputPath string, outputPath string) {
 	decoder, err := decoder.NewFSPluginDecoder(inputPath)
 	if err != nil {
 		log.Error("failed to create plugin decoder , plugin path: %s, error: %v", inputPath, err)
+		os.Exit(1)
 		return
 	}
 
@@ -20,12 +21,14 @@ func PackagePlugin(inputPath string, outputPath string) {
 
 	if err != nil {
 		log.Error("failed to package plugin %v", err)
+		os.Exit(1)
 		return
 	}
 
 	err = os.WriteFile(outputPath, zipFile, 0644)
 	if err != nil {
 		log.Error("failed to write package file %v", err)
+		os.Exit(1)
 		return
 	}
 
