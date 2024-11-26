@@ -47,6 +47,8 @@ type Cluster struct {
 	notifyNodeUpdateChan              chan bool
 	notifyNodeUpdateCompletedChan     chan bool
 	notifyClusterStoppedChan          chan bool
+
+	showLog bool
 }
 
 func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager) *Cluster {
@@ -54,6 +56,7 @@ func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager
 		id:       uuid.New().String(),
 		port:     uint16(config.ServerPort),
 		stopChan: make(chan bool),
+		showLog:  config.DisplayClusterLog,
 
 		manager: plugin_manager,
 

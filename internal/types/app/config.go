@@ -82,6 +82,8 @@ type Config struct {
 	MaxAWSLambdaTransactionTimeout int   `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
 
 	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
+
+	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 }
 
 func (c *Config) Validate() error {
