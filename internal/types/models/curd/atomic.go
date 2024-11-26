@@ -34,7 +34,7 @@ func InstallPlugin(
 	)
 
 	if err == nil {
-		return nil, nil, errors.New("plugin already installed")
+		return nil, nil, ErrPluginAlreadyInstalled
 	}
 
 	err = db.WithTransaction(func(tx *gorm.DB) error {

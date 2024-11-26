@@ -319,8 +319,12 @@ func InstallPluginFromIdentifiers(
 				meta,
 			)
 			return err
-		})
+		},
+	)
 	if err != nil {
+		if errors.Is(err, curd.ErrPluginAlreadyInstalled) {
+			return exception.BadRequestError(err).ToResponse()
+		}
 		return exception.InternalServerError(err).ToResponse()
 	}
 
