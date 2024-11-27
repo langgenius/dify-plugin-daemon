@@ -36,11 +36,11 @@ type RequestInvokeTool struct {
 
 type RequestValidateToolCredentials struct {
 	Provider    string         `json:"provider" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty"`
 }
 
 type RequestGetToolRuntimeParameters struct {
 	Provider    string         `json:"provider" validate:"required"`
 	Tool        string         `json:"tool" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty"`
 }

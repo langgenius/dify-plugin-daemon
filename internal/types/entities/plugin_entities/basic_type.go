@@ -27,6 +27,11 @@ func isBasicType(fl validator.FieldLevel) bool {
 	switch fl.Field().Kind() {
 	case reflect.Int, reflect.String, reflect.Bool, reflect.Float64:
 		return true
+	case reflect.Ptr:
+		// check if the pointer is nil
+		if fl.Field().IsNil() {
+			return true
+		}
 	}
 
 	return false
