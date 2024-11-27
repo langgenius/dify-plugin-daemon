@@ -132,6 +132,7 @@ func TestPluginScheduleLifetime(t *testing.T) {
 	}
 }
 
+// TODO: I need to implement this test, now it's randomly working
 // func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 // 	plugins := []fakePlugin{
 // 		getRandomPluginRuntime(),
