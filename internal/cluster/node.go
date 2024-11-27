@@ -92,6 +92,10 @@ func (c *Cluster) updateNodeStatus() error {
 	return nil
 }
 
+func (c *Cluster) isNodeAvailable(node *node) bool {
+	return time.Since(time.Unix(node.LastPingAt, 0)) < c.nodeDisconnectedTimeout
+}
+
 func (c *Cluster) GetNodes() (map[string]node, error) {
 	nodes, err := cache.GetMap[node](CLUSTER_STATUS_HASH_MAP_KEY)
 	if err != nil {
@@ -100,7 +104,7 @@ func (c *Cluster) GetNodes() (map[string]node, error) {
 
 	for nodeId, node := range nodes {
 		// filter out the disconnected nodes
-		if !node.available() {
+		if !c.isNodeAvailable(&node) {
 			delete(nodes, nodeId)
 		}
 	}
@@ -146,7 +150,7 @@ func (c *Cluster) IsNodeAlive(nodeId string) bool {
 		return false
 	}
 
-	return nodeStatus.available()
+	return c.isNodeAvailable(nodeStatus)
 }
 
 // gc the nodes has already deactivated
@@ -175,7 +179,7 @@ func (c *Cluster) autoGCNodes() error {
 
 	for nodeId, nodeStatus := range nodes {
 		// delete the node if it is disconnected
-		if !nodeStatus.available() {
+		if !c.isNodeAvailable(&nodeStatus) {
 			// gc the node
 			if err := c.gcNode(nodeId); err != nil {
 				addError(err)

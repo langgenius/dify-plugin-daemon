@@ -208,7 +208,7 @@ func TestClusterAutoGCNoLongerActiveNode(t *testing.T) {
 	}
 
 	// wait for master gc task
-	time.Sleep(NODE_DISCONNECTED_TIMEOUT*2 + time.Second)
+	time.Sleep(clusters[0].nodeDisconnectedTimeout*2 + time.Second)
 
 	_, err = cache.GetMapField[node](CLUSTER_STATUS_HASH_MAP_KEY, slaveNodeId)
 	if err == nil {

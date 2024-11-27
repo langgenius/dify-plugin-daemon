@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"fmt"
-	"time"
 )
 
 type address struct {
@@ -24,10 +23,6 @@ type vote struct {
 type node struct {
 	Addresses  []address `json:"ips"`
 	LastPingAt int64     `json:"last_ping_at"`
-}
-
-func (c *node) available() bool {
-	return time.Since(time.Unix(c.LastPingAt, 0)) < NODE_DISCONNECTED_TIMEOUT
 }
 
 type newNodeEvent struct {

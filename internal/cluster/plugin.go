@@ -193,7 +193,7 @@ func (c *Cluster) removePluginState(nodeId string, hashed_identity string) error
 
 // forceGCNodePlugins will force garbage collect all the plugins on the node
 func (c *Cluster) forceGCNodePlugins(nodeId string) error {
-	return cache.ScanMapAsync[pluginState](
+	return cache.ScanMapAsync(
 		PLUGIN_STATE_MAP_KEY,
 		c.getScanPluginsByNodeKey(nodeId),
 		func(m map[string]pluginState) error {
@@ -228,7 +228,16 @@ func (c *Cluster) forceGCPluginByNodePluginJoin(node_plugin_join string) error {
 }
 
 func (c *Cluster) isPluginActive(state *pluginState) bool {
-	return state != nil && state.ScheduledAt != nil && time.Since(*state.ScheduledAt) < c.pluginDeactivatedTimeout
+	if state == nil {
+		return false
+	}
+	if state.ScheduledAt == nil {
+		return false
+	}
+	if time.Since(*state.ScheduledAt) > c.pluginDeactivatedTimeout {
+		return false
+	}
+	return true
 }
 
 func (c *Cluster) splitNodePluginJoin(node_plugin_join string) (nodeId string, plugin_hashed_id string, err error) {
@@ -248,7 +257,7 @@ func (c *Cluster) autoGCPlugins() error {
 	}
 	defer atomic.StoreInt32(&c.isInAutoGcPlugins, 0)
 
-	return cache.ScanMapAsync[pluginState](
+	return cache.ScanMapAsync(
 		PLUGIN_STATE_MAP_KEY,
 		"*",
 		func(m map[string]pluginState) error {
