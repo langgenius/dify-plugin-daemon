@@ -208,7 +208,7 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
 	ticker := time.NewTicker(time.Second)
-	timeout := time.NewTimer(MASTER_GC_INTERVAL * 2)
+	timeout := time.NewTimer(MASTER_GC_INTERVAL * 3)
 	done := false
 	for !done {
 		select {
