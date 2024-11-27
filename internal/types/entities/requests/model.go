@@ -5,7 +5,7 @@ import (
 )
 
 type Credentials struct {
-	Credentials map[string]any `json:"credentials" validate:"omitempty,dive,is_basic_type"`
+	Credentials map[string]any `json:"credentials" validate:"omitempty"`
 }
 
 type BaseRequestInvokeModel struct {
@@ -14,8 +14,8 @@ type BaseRequestInvokeModel struct {
 }
 
 type InvokeLLMSchema struct {
-	ModelParameters map[string]any                     `json:"model_parameters"  validate:"omitempty,dive,is_basic_type"`
-	PromptMessages  []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty,dive"`
+	ModelParameters map[string]any                     `json:"model_parameters"  validate:"omitempty"`
+	PromptMessages  []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
 	Tools           []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
 	Stop            []string                           `json:"stop" validate:"omitempty"`
 	Stream          bool                               `json:"stream"`
