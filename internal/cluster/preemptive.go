@@ -40,7 +40,7 @@ func (c *Cluster) lockMaster() (bool, error) {
 	var finalError error
 
 	for i := 0; i < 3; i++ {
-		if success, err := cache.SetNX(PREEMPTION_LOCK_KEY, c.id, MASTER_LOCK_EXPIRED_TIME); err != nil {
+		if success, err := cache.SetNX(PREEMPTION_LOCK_KEY, c.id, c.masterLockExpiredTime); err != nil {
 			// try again
 			if finalError == nil {
 				finalError = err
@@ -60,7 +60,7 @@ func (c *Cluster) lockMaster() (bool, error) {
 // update master
 func (c *Cluster) updateMaster() error {
 	// update expired time of master key
-	if _, err := cache.Expire(PREEMPTION_LOCK_KEY, MASTER_LOCK_EXPIRED_TIME); err != nil {
+	if _, err := cache.Expire(PREEMPTION_LOCK_KEY, c.masterLockExpiredTime); err != nil {
 		return err
 	}
 

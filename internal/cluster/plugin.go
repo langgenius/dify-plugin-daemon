@@ -97,7 +97,7 @@ func (c *Cluster) schedulePlugins() error {
 	defer c.notifyPluginScheduleCompleted()
 
 	c.plugins.Range(func(key string, value *pluginLifeTime) bool {
-		if time.Since(value.lastScheduledAt) < PLUGIN_SCHEDULER_INTERVAL {
+		if time.Since(value.lastScheduledAt) < c.pluginSchedulerInterval {
 			return true
 		}
 		if c.showLog {
@@ -228,7 +228,7 @@ func (c *Cluster) forceGCPluginByNodePluginJoin(node_plugin_join string) error {
 }
 
 func (c *Cluster) isPluginActive(state *pluginState) bool {
-	return state != nil && state.ScheduledAt != nil && time.Since(*state.ScheduledAt) < 60*time.Second
+	return state != nil && state.ScheduledAt != nil && time.Since(*state.ScheduledAt) < c.pluginDeactivatedTimeout
 }
 
 func (c *Cluster) splitNodePluginJoin(node_plugin_join string) (nodeId string, plugin_hashed_id string, err error) {

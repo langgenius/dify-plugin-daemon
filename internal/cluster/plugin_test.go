@@ -144,6 +144,15 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 		return
 	}
 
+	// set master gc interval to 1 second
+	for _, node := range cluster {
+		node.masterGcInterval = time.Second * 1
+		node.pluginSchedulerInterval = time.Second * 1
+		node.pluginSchedulerTickerInterval = time.Second * 1
+		node.updateNodeStatusInterval = time.Second * 1
+		node.pluginDeactivatedTimeout = time.Second * 3
+	}
+
 	launchSimulationCluster(cluster)
 	defer closeSimulationCluster(cluster, t)
 
@@ -208,7 +217,7 @@ func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
 	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
 	ticker := time.NewTicker(time.Second)
-	timeout := time.NewTimer(MASTER_GC_INTERVAL * 3)
+	timeout := time.NewTimer(cluster[masterIdx].masterGcInterval * 10)
 	done := false
 	for !done {
 		select {

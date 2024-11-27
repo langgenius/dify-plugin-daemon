@@ -63,19 +63,19 @@ func (c *Cluster) clusterLifetime() {
 		close(c.notifyNodeUpdateCompletedChan)
 	}()
 
-	tickerLockMaster := time.NewTicker(MASTER_LOCKING_INTERVAL)
+	tickerLockMaster := time.NewTicker(c.masterLockingInterval)
 	defer tickerLockMaster.Stop()
 
-	tickerUpdateNodeStatus := time.NewTicker(UPDATE_NODE_STATUS_INTERVAL)
+	tickerUpdateNodeStatus := time.NewTicker(c.updateNodeStatusInterval)
 	defer tickerUpdateNodeStatus.Stop()
 
-	masterGcTicker := time.NewTicker(MASTER_GC_INTERVAL)
+	masterGcTicker := time.NewTicker(c.masterGcInterval)
 	defer masterGcTicker.Stop()
 
-	nodeVoteTicker := time.NewTicker(NODE_VOTE_INTERVAL)
+	nodeVoteTicker := time.NewTicker(c.nodeVoteInterval)
 	defer nodeVoteTicker.Stop()
 
-	pluginSchedulerTicker := time.NewTicker(PLUGIN_SCHEDULER_INTERVAL)
+	pluginSchedulerTicker := time.NewTicker(c.pluginSchedulerTickerInterval)
 	defer pluginSchedulerTicker.Stop()
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling

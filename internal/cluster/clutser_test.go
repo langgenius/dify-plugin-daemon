@@ -141,7 +141,7 @@ func TestClusterSubstituteMaster(t *testing.T) {
 		return
 	}
 
-	time.Sleep(MASTER_LOCK_EXPIRED_TIME + time.Second)
+	time.Sleep(clusters[0].masterLockExpiredTime + time.Second)
 
 	hasMaster := false
 

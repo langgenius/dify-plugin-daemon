@@ -3,6 +3,7 @@ package cluster
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -49,14 +50,33 @@ type Cluster struct {
 	notifyClusterStoppedChan          chan bool
 
 	showLog bool
+
+	masterGcInterval              time.Duration
+	masterLockingInterval         time.Duration
+	masterLockExpiredTime         time.Duration
+	nodeVoteInterval              time.Duration
+	nodeDisconnectedTimeout       time.Duration
+	updateNodeStatusInterval      time.Duration
+	pluginSchedulerInterval       time.Duration
+	pluginSchedulerTickerInterval time.Duration
+	pluginDeactivatedTimeout      time.Duration
 }
 
 func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager) *Cluster {
 	return &Cluster{
-		id:       uuid.New().String(),
-		port:     uint16(config.ServerPort),
-		stopChan: make(chan bool),
-		showLog:  config.DisplayClusterLog,
+		id:                            uuid.New().String(),
+		port:                          uint16(config.ServerPort),
+		stopChan:                      make(chan bool),
+		showLog:                       config.DisplayClusterLog,
+		masterGcInterval:              MASTER_GC_INTERVAL,
+		masterLockingInterval:         MASTER_LOCKING_INTERVAL,
+		masterLockExpiredTime:         MASTER_LOCK_EXPIRED_TIME,
+		nodeVoteInterval:              NODE_VOTE_INTERVAL,
+		nodeDisconnectedTimeout:       NODE_DISCONNECTED_TIMEOUT,
+		updateNodeStatusInterval:      UPDATE_NODE_STATUS_INTERVAL,
+		pluginSchedulerInterval:       PLUGIN_SCHEDULER_INTERVAL,
+		pluginSchedulerTickerInterval: PLUGIN_SCHEDULER_TICKER_INTERVAL,
+		pluginDeactivatedTimeout:      PLUGIN_DEACTIVATED_TIMEOUT,
 
 		manager: plugin_manager,
 
