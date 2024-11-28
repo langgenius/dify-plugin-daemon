@@ -44,7 +44,7 @@ func SetupEndpoint(
 	}
 
 	if !pluginDeclaration.Resource.Permission.AllowRegisterEndpoint() {
-		return exception.PermissionDeniedError().ToResponse()
+		return exception.PermissionDeniedError("permission denied, you need to enable endpoint access in plugin manifest").ToResponse()
 	}
 
 	if pluginDeclaration.Endpoint == nil {

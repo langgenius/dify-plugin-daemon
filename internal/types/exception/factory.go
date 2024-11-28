@@ -26,8 +26,8 @@ func UnauthorizedError() PluginDaemonError {
 	return ErrorWithTypeAndCode("unauthorized", "PluginDaemonUnauthorizedError", -401)
 }
 
-func PermissionDeniedError() PluginDaemonError {
-	return ErrorWithTypeAndCode("permission denied", "PluginPermissionDeniedError", -403)
+func PermissionDeniedError(msg string) PluginDaemonError {
+	return ErrorWithTypeAndCode(msg, "PluginPermissionDeniedError", -403)
 }
 
 func InvokePluginError(err error) PluginDaemonError {
