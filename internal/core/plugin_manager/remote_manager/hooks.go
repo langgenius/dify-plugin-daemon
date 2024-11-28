@@ -303,8 +303,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 			// trigger registration event
 			if err := runtime.Register(); err != nil {
-				log.Error("register failed, error: %v", err)
-				closeConn([]byte("register failed, cannot register\n"))
+				closeConn([]byte(fmt.Sprintf("register failed, cannot register: %v\n", err)))
 				return
 			}
 
@@ -337,7 +336,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			declaration, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](registerPayload.Data)
 			if err != nil {
 				// close connection if handshake failed
-				closeConn([]byte("handshake failed, invalid plugin declaration\n"))
+				closeConn([]byte(fmt.Sprintf("handshake failed, invalid plugin declaration: %v\n", err)))
 				return
 			}
 
@@ -352,8 +351,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 			tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderDeclaration](registerPayload.Data)
 			if err != nil {
-				log.Error("tools register failed, error: %v", err)
-				closeConn([]byte("tools register failed, invalid tools declaration\n"))
+				closeConn([]byte(fmt.Sprintf("tools register failed, invalid tools declaration: %v\n", err)))
 				return
 			}
 
@@ -371,8 +369,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 			models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderDeclaration](registerPayload.Data)
 			if err != nil {
-				log.Error("models register failed, error: %v", err)
-				closeConn([]byte("models register failed, invalid models declaration\n"))
+				closeConn([]byte(fmt.Sprintf("models register failed, invalid models declaration: %v\n", err)))
 				return
 			}
 
@@ -390,8 +387,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 
 			endpoints, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.EndpointProviderDeclaration](registerPayload.Data)
 			if err != nil {
-				log.Error("endpoints register failed, error: %v", err)
-				closeConn([]byte("endpoints register failed, invalid endpoints declaration\n"))
+				closeConn([]byte(fmt.Sprintf("endpoints register failed, invalid endpoints declaration: %v\n", err)))
 				return
 			}
 
