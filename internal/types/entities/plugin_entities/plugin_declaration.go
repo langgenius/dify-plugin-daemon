@@ -139,16 +139,16 @@ type PluginExtensions struct {
 type PluginDeclarationWithoutAdvancedFields struct {
 	Version     manifest_entities.Version          `json:"version" yaml:"version,omitempty" validate:"required,version"`
 	Type        manifest_entities.DifyManifestType `json:"type" yaml:"type,omitempty" validate:"required,eq=plugin"`
-	Description I18nObject                         `json:"description" yaml:"description" validate:"required"`
-	Label       I18nObject                         `json:"label" yaml:"label" validate:"required"`
 	Author      string                             `json:"author" yaml:"author,omitempty" validate:"omitempty,max=64"`
 	Name        string                             `json:"name" yaml:"name,omitempty" validate:"required,max=128"`
+	Label       I18nObject                         `json:"label" yaml:"label" validate:"required"`
+	Description I18nObject                         `json:"description" yaml:"description" validate:"required"`
 	Icon        string                             `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
-	CreatedAt   time.Time                          `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
 	Resource    PluginResourceRequirement          `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins     PluginExtensions                   `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
 	Meta        PluginMeta                         `json:"meta" yaml:"meta,omitempty" validate:"required"`
 	Tags        []manifest_entities.PluginTag      `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
+	CreatedAt   time.Time                          `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
 }
 
 func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {

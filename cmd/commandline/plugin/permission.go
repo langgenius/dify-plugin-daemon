@@ -2,12 +2,16 @@ package plugin
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	ti "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 )
 
 var permissionKeySeq = []string{
@@ -286,4 +290,66 @@ func (p permission) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 
 func (p permission) Init() tea.Cmd {
 	return nil
+}
+
+// TODO: optimize implementation
+type permissionModel struct {
+	permission
+}
+
+func (p permissionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	m, subMenuEvent, cmd := p.permission.Update(msg)
+	p.permission = m.(permission)
+	if subMenuEvent == SUB_MENU_EVENT_NEXT {
+		return p, tea.Quit
+	}
+	return p, cmd
+}
+
+func (p permissionModel) View() string {
+	return p.permission.View()
+}
+
+func EditPermission(pluginPath string) {
+	plugin, err := decoder.NewFSPluginDecoder(pluginPath)
+	if err != nil {
+		log.Error("decode plugin failed, error: %v", err)
+		os.Exit(1)
+		return
+	}
+
+	manifest, err := plugin.Manifest()
+	if err != nil {
+		log.Error("get manifest failed, error: %v", err)
+		os.Exit(1)
+		return
+	}
+
+	// create a new permission
+	m := permissionModel{
+		permission: newPermission(),
+	}
+	m.permission.permission = *manifest.Resource.Permission
+
+	p := tea.NewProgram(m)
+	if result, err := p.Run(); err != nil {
+		fmt.Println("Error running program:", err)
+	} else {
+		if m, ok := result.(permissionModel); ok {
+			// save the manifest
+			manifestPath := filepath.Join(pluginPath, "manifest.yaml")
+			manifest.Resource.Permission = &m.permission.permission
+			if err := writeFile(
+				manifestPath,
+				string(marshalYamlBytes(manifest.PluginDeclarationWithoutAdvancedFields)),
+			); err != nil {
+				log.Error("write manifest failed, error: %v", err)
+				os.Exit(1)
+				return
+			}
+		} else {
+			log.Error("Error running program:", err)
+			return
+		}
+	}
 }

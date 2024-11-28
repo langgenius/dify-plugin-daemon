@@ -18,6 +18,16 @@ var (
 		},
 	}
 
+	pluginEditPermissionCommand = &cobra.Command{
+		Use:   "permission [plugin_path]",
+		Short: "Edit permission",
+		Long:  "Edit permission",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			plugin.EditPermission(args[0])
+		},
+	}
+
 	pluginPackageCommand = &cobra.Command{
 		Use:   "package [plugin_path]",
 		Short: "Package",
@@ -150,6 +160,7 @@ func init() {
 	pluginCommand.AddCommand(pluginInitCommand)
 	pluginCommand.AddCommand(pluginPackageCommand)
 	pluginCommand.AddCommand(pluginChecksumCommand)
+	pluginCommand.AddCommand(pluginEditPermissionCommand)
 	pluginCommand.AddCommand(pluginModuleCommand)
 	pluginModuleCommand.AddCommand(pluginModuleListCommand)
 	pluginModuleCommand.AddCommand(pluginModuleAppendCommand)
