@@ -250,9 +250,6 @@ func (p permission) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 		case "tab":
 			p.edit()
 		case "enter":
-			if p.cursor == "storage.size" {
-				break
-			}
 			if p.cursor == "endpoint.enabled" {
 				p.cursor = permissionKeySeq[0]
 				p.updateStorageSize()
