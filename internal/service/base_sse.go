@@ -50,7 +50,7 @@ func baseSSEService[R any](
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()
 			if err != nil {
-				writeData(exception.InternalServerError(err).ToResponse())
+				writeData(exception.InvokePluginError(err).ToResponse())
 				break
 			}
 			writeData(entities.NewSuccessResponse(chunk))

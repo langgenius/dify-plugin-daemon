@@ -8,7 +8,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
@@ -31,7 +30,6 @@ func GenericInvokePlugin[Req any, Rsp any](
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
 			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
 			if err != nil {
-				log.Error("unmarshal json failed: %s", err.Error())
 				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 					"error_type": "unmarshal_error",
 					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
