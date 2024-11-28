@@ -57,6 +57,7 @@ func InvokeTool(
 		for response.Next() {
 			item, err := response.Read()
 			if err != nil {
+				newResponse.WriteError(err)
 				return
 			}
 
