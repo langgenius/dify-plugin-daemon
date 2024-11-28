@@ -118,8 +118,10 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	// uninstall plugin
 	if plugin.assetsTransferred {
 		if _mode != _PLUGIN_RUNTIME_MODE_CI {
-			if err := plugin.Unregister(); err != nil {
-				log.Error("unregister plugin failed, error: %v", err)
+			if plugin.installationId != "" {
+				if err := plugin.Unregister(); err != nil {
+					log.Error("unregister plugin failed, error: %v", err)
+				}
 			}
 
 			// decrease current connection
