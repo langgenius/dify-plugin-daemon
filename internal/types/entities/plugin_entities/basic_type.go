@@ -25,7 +25,10 @@ func NewI18nObject(def string) I18nObject {
 func isBasicType(fl validator.FieldLevel) bool {
 	// allowed int, string, bool, float64
 	switch fl.Field().Kind() {
-	case reflect.Int, reflect.String, reflect.Bool, reflect.Float64:
+	case reflect.Int, reflect.String, reflect.Bool,
+		reflect.Float64, reflect.Float32,
+		reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8,
+		reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 		return true
 	case reflect.Ptr:
 		// check if the pointer is nil
