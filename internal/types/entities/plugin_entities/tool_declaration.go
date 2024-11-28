@@ -84,7 +84,7 @@ type ToolParameter struct {
 	Scope            *string               `json:"scope" yaml:"scope" validate:"omitempty,is_scope"`
 	Form             ToolParameterForm     `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
 	LLMDescription   string                `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
-	Required         bool                  `json:"required" yaml:"required" validate:"required"`
+	Required         bool                  `json:"required" yaml:"required"`
 	Default          any                   `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
 	Min              *float64              `json:"min" yaml:"min" validate:"omitempty"`
 	Max              *float64              `json:"max" yaml:"max" validate:"omitempty"`
