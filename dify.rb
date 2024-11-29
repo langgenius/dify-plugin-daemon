@@ -4,23 +4,23 @@ class Dify < Formula
   version "0.1.0"
   license "MIT"
 
-  if OS.mac? && Hardware::CPU.intel?
-    url "file:///Users/minibanana/Program/projects/dify-plugin-daemon/bin/dify-plugin-darwin-amd64.tar.gz"
-    sha256 "e01b770809c9f195524578cd88ca121c7f352a9eaf8187b07fe9596d9c3345ef"
-  elsif OS.mac? && Hardware::CPU.arm?
-    url "file:///Users/minibanana/Program/projects/dify-plugin-daemon/bin/dify-plugin-darwin-arm64.tar.gz"
-    sha256 "8696eaebff598a49577e22ba893039fc3cdecaecf30954a98379b09c71ce4f9d"
+  if OS.mac?
+    if Hardware::CPU.intel?
+      url "file://#{__dir__}/bin/dify-plugin-darwin-amd64.tar.gz"
+      sha256 "e57c3b3adab56e43f588b5add4e95d4449d916f7ef2e09d6ff4ab760e22e7bd8"
+    else
+      url "file://#{__dir__}/bin/dify-plugin-darwin-arm64.tar.gz"
+      sha256 "5a60e8a6faa43dc3241ca74856a95710d695f164d5e845bb71471b8db7ce50e7"
+    end
+  else
+    odie "This formula only supports macOS."
   end
 
   def install
-    if Hardware::CPU.intel?
-      bin.install "dify-plugin-darwin-amd64" => "dify"
-    else
-      bin.install "dify-plugin-darwin-arm64" => "dify"
-    end
+    bin.install "dify-plugin-darwin-#{Hardware::CPU.arch}" => "dify"
   end
 
   test do
-    system "#{bin}/dify", "--version"
+    assert_match version.to_s, shell_output("#{bin}/dify --version")
   end
 end
