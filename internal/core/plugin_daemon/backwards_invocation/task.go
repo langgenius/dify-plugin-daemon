@@ -2,6 +2,7 @@ package backwards_invocation
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -9,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
@@ -477,7 +479,8 @@ func executeDifyInvocationStorageTask(
 	if request.Opt == dify_invocation.STORAGE_OPT_GET {
 		data, err := persistence.Load(tenantId, pluginId.PluginID(), request.Key)
 		if err != nil {
-			handle.WriteError(fmt.Errorf("load data failed: %s", err.Error()))
+			log.Error("load data failed: %s", err.Error())
+			handle.WriteError(errors.New("load data failed, please check if the key is correct or you have not set it"))
 			return
 		}
 

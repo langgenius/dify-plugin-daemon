@@ -80,6 +80,7 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 	return cache.Del(c.getCacheKey(tenantId, pluginId, key))
 }
 
+// TODO: raises specific error to avoid confusion
 func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte, error) {
 	// check if the key exists in cache
 	h, err := cache.GetString(c.getCacheKey(tenantId, pluginId, key))
