@@ -15,11 +15,11 @@ type PluginUniqueIdentifier string
 var (
 	// pluginUniqueIdentifierRegexp is a regular expression to validate the plugin unique identifier.
 	// It must be in the format of "author/plugin_id:version@checksum".
-	// all lowercase. the length of plugin_id must be less than 128, and for version part, it must be ^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$
+	// all lowercase. the length of plugin_id must be less than 256, and for version part, it must be ^\d{1,4}(\.\d{1,4}){1,3}(-\w{1,16})?$
 	// for checksum, it must be a 32-character hexadecimal string.
 	// the author part is optional, if not specified, it will be empty.
 	pluginUniqueIdentifierRegexp = regexp.MustCompile(
-		`^(?:([a-z0-9_-]{1,64})\/)?([a-z0-9_-]{1,128}):([0-9]{1,4})(\.[0-9]{1,4}){1,3}(-\w{1,16})?@[a-f0-9]{32,64}$`,
+		`^(?:([a-z0-9_-]{1,64})\/)?([a-z0-9_-]{1,255}):([0-9]{1,4})(\.[0-9]{1,4}){1,3}(-\w{1,16})?@[a-f0-9]{32,64}$`,
 	)
 )
 

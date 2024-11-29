@@ -8,9 +8,9 @@ import (
 type Plugin struct {
 	Model
 	// PluginUniqueIdentifier is a unique identifier for the plugin, it contains version and checksum
-	PluginUniqueIdentifier string `json:"plugin_unique_identifier" gorm:"index;size:127"`
+	PluginUniqueIdentifier string `json:"plugin_unique_identifier" gorm:"index;size:255"`
 	// PluginID is the id of the plugin, only plugin name is considered
-	PluginID     string                             `json:"id" gorm:"index;size:127"`
+	PluginID     string                             `json:"id" gorm:"index;size:255"`
 	Refers       int                                `json:"refers" gorm:"default:0"`
 	InstallType  plugin_entities.PluginRuntimeType  `json:"install_type" gorm:"size:127;index"`
 	ManifestType manifest_entities.DifyManifestType `json:"manifest_type" gorm:"size:127"`
@@ -25,7 +25,7 @@ const (
 
 type ServerlessRuntime struct {
 	Model
-	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"size:127;unique"`
+	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"size:255;unique"`
 	FunctionURL            string                            `json:"function_url" gorm:"size:255"`
 	FunctionName           string                            `json:"function_name" gorm:"size:127"`
 	Type                   ServerlessRuntimeType             `json:"type" gorm:"size:127"`
@@ -35,7 +35,7 @@ type ServerlessRuntime struct {
 
 type PluginDeclaration struct {
 	Model
-	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"size:127;unique"`
-	PluginID               string                            `json:"plugin_id" gorm:"size:127;index"`
+	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"size:255;unique"`
+	PluginID               string                            `json:"plugin_id" gorm:"size:255;index"`
 	Declaration            plugin_entities.PluginDeclaration `json:"declaration" gorm:"serializer:json;type:text;size:65535"`
 }
