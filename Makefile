@@ -1,41 +1,31 @@
-# Makefile for building dify-plugin
-OS := darwin
-ARCHS := amd64 arm64
-BIN_DIR := bin
-CMD_DIR := ./cmd/commandline
-TAR_EXT := tar.gz
-
 .PHONY: build
 build:
-	@for arch in $(ARCHS); do \
-		GOOS=$(OS) GOARCH=$$arch go build -o $(BIN_DIR)/dify-plugin-$(OS)-$$arch $(CMD_DIR); \
-		chmod +x $(BIN_DIR)/dify-plugin-$(OS)-$$arch; \
-	done
+	GOOS=darwin GOARCH=amd64 go build -o bin/dify-plugin-darwin-amd64 ./cmd/commandline
+	GOOS=darwin GOARCH=arm64 go build -o bin/dify-plugin-darwin-arm64 ./cmd/commandline
+	chmod +x bin/dify-plugin-darwin-amd64
+	chmod +x bin/dify-plugin-darwin-arm64
 
 .PHONY: tarball
 tarball: build
-	@for arch in $(ARCHS); do \
-		tar -czvf $(BIN_DIR)/dify-plugin-$(OS)-$$arch.$(TAR_EXT) -C $(BIN_DIR) dify-plugin-$(OS)-$$arch; \
-	done
+	tar -czvf bin/dify-plugin-darwin-amd64.tar.gz -C bin dify-plugin-darwin-amd64
+	tar -czvf bin/dify-plugin-darwin-arm64.tar.gz -C bin dify-plugin-darwin-arm64
 
 .PHONY: sha256
 sha256: tarball
-	@for arch in $(ARCHS); do \
-		shasum -a 256 $(BIN_DIR)/dify-plugin-$(OS)-$$arch.$(TAR_EXT) | awk '{ print $$1 }' > $(BIN_DIR)/sha256_$(OS)_$$arch; \
-	done
+	shasum -a 256 bin/dify-plugin-darwin-amd64.tar.gz | awk '{ print $$1 }' > bin/sha256_darwin_amd64
+	shasum -a 256 bin/dify-plugin-darwin-arm64.tar.gz | awk '{ print $$1 }' > bin/sha256_darwin_arm64
 
 .PHONY: update_formula
 update_formula: sha256
-	@for arch in $(ARCHS); do \
-		sed -i.bak \
-			-e "s/sha256 \"SHA256_$(OS)_$${arch^^}\"/sha256 \"$(shell cat $(BIN_DIR)/sha256_$(OS)_$$arch)\"/g" \
-			dify.rb; \
-	done
+	sed -i.bak \
+        -e "s/sha256 \"SHA256_DARWIN_AMD64\"/sha256 \"$(shell cat bin/sha256_darwin_amd64)\"/g" \
+        -e "s/sha256 \"SHA256_DARWIN_ARM64\"/sha256 \"$(shell cat bin/sha256_darwin_arm64)\"/g" \
+        dify.rb
 	rm -f dify.rb.bak
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN_DIR)/* $(BIN_DIR)/sha256_*
+	rm -rf bin/* bin/sha256_*
 
 .PHONY: all
 all: update_formula
