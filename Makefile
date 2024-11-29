@@ -50,25 +50,22 @@ sha256: tarball
 			hash_file=$(BIN_DIR)/sha256_$$platform\_$$arch; \
 			echo "Computing SHA256 for $$archive"; \
 			shasum -a 256 $$archive | awk '{ print $$1 }' > $$hash_file; \
+			echo "SHA256: $$(cat $$hash_file)"; \
 		done; \
 	done
-
-.PHONY: update_formula
-update_formula: sha256
-	@cp dify.rb dify.rb.bak
-	@for platform in $(PLATFORMS); do \
-			for arch in $(ARCHS); do \
-					placeholder="SHA256_$$(echo $$platform | tr a-z A-Z)_$$(echo $$arch | tr a-z A-Z)"; \
-					hash=$$(cat $(BIN_DIR)/sha256_$$platform\_$$arch); \
-					echo "Updating formula for $$placeholder"; \
-					sed -i '' "s/sha256 \"$$placeholder\"/sha256 \"$$hash\"/" dify.rb; \
-			done; \
-	done
-	@rm -f dify.rb.bak
+.PHONY: update-brewfile
+update-brewfile: sha256
+	@echo "Updating dify.rb"
+	@amd64_checksum=$$(cat $(BIN_DIR)/sha256_darwin_amd64); \
+	arm64_checksum=$$(cat $(BIN_DIR)/sha256_darwin_arm64); \
+	sed -e "s/PLACEHOLDER_FOR_AMD64_CHECKSUM/$$amd64_checksum/" \
+		-e "s/PLACEHOLDER_FOR_ARM64_CHECKSUM/$$arm64_checksum/" \
+		dify.rb.template > dify.rb
 
 .PHONY: clean
 clean:
+	brew cleanup --prune=all
 	rm -rf $(BIN_DIR)/*
-
+	
 .PHONY: all
-all: update_formula
+all: clean update-brewfile
