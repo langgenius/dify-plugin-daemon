@@ -65,6 +65,7 @@ const (
 	PARAMETER_TYPE_INT     ModelParameterType = "int"
 	PARAMETER_TYPE_STRING  ModelParameterType = "string"
 	PARAMETER_TYPE_BOOLEAN ModelParameterType = "boolean"
+	PARAMETER_TYPE_TEXT    ModelParameterType = "text"
 )
 
 func isModelParameterType(fl validator.FieldLevel) bool {
@@ -73,7 +74,8 @@ func isModelParameterType(fl validator.FieldLevel) bool {
 	case string(PARAMETER_TYPE_FLOAT),
 		string(PARAMETER_TYPE_INT),
 		string(PARAMETER_TYPE_STRING),
-		string(PARAMETER_TYPE_BOOLEAN):
+		string(PARAMETER_TYPE_BOOLEAN),
+		string(PARAMETER_TYPE_TEXT):
 		return true
 	}
 	return false
