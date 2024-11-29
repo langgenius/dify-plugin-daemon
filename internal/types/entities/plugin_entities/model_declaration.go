@@ -102,6 +102,7 @@ const (
 	FREQUENCY_PENALTY DefaultParameterName = "frequency_penalty"
 	MAX_TOKENS        DefaultParameterName = "max_tokens"
 	RESPONSE_FORMAT   DefaultParameterName = "response_format"
+	JSON_SCHEMA       DefaultParameterName = "json_schema"
 )
 
 var PARAMETER_RULE_TEMPLATE = map[DefaultParameterName]ModelParameterRule{
@@ -221,6 +222,17 @@ var PARAMETER_RULE_TEMPLATE = map[DefaultParameterName]ModelParameterRule{
 		},
 		Required: false,
 		Options:  []string{"JSON", "XML"},
+	},
+	JSON_SCHEMA: {
+		Label: &I18nObject{
+			EnUS: "JSON Schema",
+		},
+		Type: parser.ToPtr(PARAMETER_TYPE_STRING),
+		Help: &I18nObject{
+			EnUS:   "Set a response json schema will ensure LLM to adhere it.",
+			ZhHans: "设置返回的json schema，llm将按照它返回",
+		},
+		Required: false,
 	},
 }
 
