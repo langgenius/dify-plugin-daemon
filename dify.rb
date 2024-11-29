@@ -5,11 +5,11 @@ class Dify < Formula
   license "MIT"
 
   if OS.mac? && Hardware::CPU.intel?
-    url "file://#{__dir__}/bin/dify-plugin-darwin-amd64.tar.gz"
-    sha256 "3b0172bfdaf19396a855974b6f83e03a86ce2a073615cd7d6fbbb104c3d96946"
+    url "file:///Users/minibanana/Program/projects/dify-plugin-daemon/bin/dify-plugin-darwin-amd64.tar.gz"
+    sha256 "e01b770809c9f195524578cd88ca121c7f352a9eaf8187b07fe9596d9c3345ef"
   elsif OS.mac? && Hardware::CPU.arm?
-    url "file://#{__dir__}/bin/dify-plugin-darwin-arm64.tar.gz"
-    sha256 "8a527f7bc61046aa11992d76cc2e3fe2a2c38cf3434d882273fcba30dd3a2e00"
+    url "file:///Users/minibanana/Program/projects/dify-plugin-daemon/bin/dify-plugin-darwin-arm64.tar.gz"
+    sha256 "8696eaebff598a49577e22ba893039fc3cdecaecf30954a98379b09c71ce4f9d"
   end
 
   def install

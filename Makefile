@@ -57,12 +57,21 @@ sha256: tarball
 update_formula: sha256
 	@cp dify.rb dify.rb.bak
 	@for platform in $(PLATFORMS); do \
-			for arch in $(ARCHS); do \
-					placeholder="SHA256_$$(echo $$platform | tr a-z A-Z)_$$(echo $$arch | tr a-z A-Z)"; \
-					hash=$$(cat $(BIN_DIR)/sha256_$$platform\_$$arch); \
-					echo "Updating formula for $$placeholder"; \
-					sed -i '' "s/sha256 \"$$placeholder\"/sha256 \"$$hash\"/" dify.rb; \
-			done; \
+		for arch in $(ARCHS); do \
+			hash=$$(cat $(BIN_DIR)/sha256_$$platform\_$$arch); \
+			if [ "$$platform" = "darwin" ]; then \
+				if [ "$$arch" = "amd64" ]; then \
+					url="file://$$(pwd)/$(BIN_DIR)/dify-plugin-darwin-amd64.tar.gz"; \
+					placeholder="sha256 \"3b0172bfdaf19396a855974b6f83e03a86ce2a073615cd7d6fbbb104c3d96946\""; \
+				elif [ "$$arch" = "arm64" ]; then \
+					url="file://$$(pwd)/$(BIN_DIR)/dify-plugin-darwin-arm64.tar.gz"; \
+					placeholder="sha256 \"8a527f7bc61046aa11992d76cc2e3fe2a2c38cf3434d882273fcba30dd3a2e00\""; \
+				fi; \
+				echo "Updating formula for $$platform $$arch"; \
+				sed -i '' "s|url \"file://.*$$platform-$$arch.tar.gz\"|url \"$$url\"|" dify.rb; \
+				sed -i '' "s|$$placeholder|sha256 \"$$hash\"|" dify.rb; \
+			fi; \
+		done; \
 	done
 	@rm -f dify.rb.bak
 
