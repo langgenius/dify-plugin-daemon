@@ -7,10 +7,10 @@ class Dify < Formula
   if OS.mac?
     if Hardware::CPU.intel?
       url "file://#{__dir__}/bin/dify-plugin-darwin-amd64.tar.gz"
-      sha256 "e57c3b3adab56e43f588b5add4e95d4449d916f7ef2e09d6ff4ab760e22e7bd8"
+      sha256 "39ab1029634acf1caa8e68efcc393162a0fc760170472071b5fc02d06b084993"
     else
       url "file://#{__dir__}/bin/dify-plugin-darwin-arm64.tar.gz"
-      sha256 "5a60e8a6faa43dc3241ca74856a95710d695f164d5e845bb71471b8db7ce50e7"
+      sha256 "467cd4d13a7be4d1583589da4cf6b39e3b72b2fe4a02b6bc59c2c36309459a4b"
     end
   else
     odie "This formula only supports macOS."

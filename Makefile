@@ -64,6 +64,7 @@ update-brewfile: sha256
 
 .PHONY: clean
 clean:
+	brew cleanup --prune=all
 	rm -rf $(BIN_DIR)/*
 	
 .PHONY: all
