@@ -28,5 +28,6 @@ make all
 ### Install CLI tool
 
 ```bash
+make all
 brew install --build-from-source ./dify.rb
 ```
