@@ -179,6 +179,8 @@ func InstallPluginRuntimeToTenant(
 					} else {
 						return db.Update(taskPointer, tx)
 					}
+
+					return nil
 				}); err != nil {
 					log.Error("failed to update install task status %s", err.Error())
 				}
