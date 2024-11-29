@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
@@ -172,7 +173,9 @@ func InstallPluginRuntimeToTenant(
 					// delete the task if all plugins are installed successfully,
 					// otherwise update the task status
 					if successes == len(taskPointer.Plugins) {
-						return db.Delete(taskPointer, tx)
+						time.AfterFunc(120*time.Second, func() {
+							db.Delete(taskPointer, tx)
+						})
 					} else {
 						return db.Update(taskPointer, tx)
 					}
