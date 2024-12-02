@@ -133,7 +133,7 @@ var (
 			},
 			"error": "permission denied, you need to enable storage access in plugin manifest",
 		},
-		dify_invocation.INVOKE_TYPE_SUMMARY: {
+		dify_invocation.INVOKE_TYPE_SYSTEM_SUMMARY: {
 			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
 				return declaration.Resource.Permission.AllowInvokeLLM()
 			},
@@ -232,8 +232,8 @@ var (
 		dify_invocation.INVOKE_TYPE_STORAGE: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationStorageTask)
 		},
-		dify_invocation.INVOKE_TYPE_SUMMARY: func(handle *BackwardsInvocation) {
-			genericDispatchTask(handle, executeDifyInvocationSummaryTask)
+		dify_invocation.INVOKE_TYPE_SYSTEM_SUMMARY: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationSystemSummaryTask)
 		},
 		dify_invocation.INVOKE_TYPE_UPLOAD_FILE: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationUploadFileTask)
@@ -539,7 +539,7 @@ func executeDifyInvocationStorageTask(
 	}
 }
 
-func executeDifyInvocationSummaryTask(
+func executeDifyInvocationSystemSummaryTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeSummaryRequest,
 ) {

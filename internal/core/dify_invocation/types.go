@@ -28,7 +28,7 @@ const (
 	INVOKE_TYPE_APP                      InvokeType = "app"
 	INVOKE_TYPE_STORAGE                  InvokeType = "storage"
 	INVOKE_TYPE_ENCRYPT                  InvokeType = "encrypt"
-	INVOKE_TYPE_SUMMARY                  InvokeType = "summary"
+	INVOKE_TYPE_SYSTEM_SUMMARY           InvokeType = "system_summary"
 	INVOKE_TYPE_UPLOAD_FILE              InvokeType = "upload_file"
 )
 
