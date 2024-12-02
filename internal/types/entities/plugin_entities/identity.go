@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 )
@@ -49,6 +50,12 @@ func (p PluginUniqueIdentifier) Version() manifest_entities.Version {
 		}
 	}
 	return ""
+}
+
+func (p PluginUniqueIdentifier) RemoteLike() bool {
+	// check if the author is a uuid
+	_, err := uuid.Parse(p.Author())
+	return err == nil
 }
 
 func (p PluginUniqueIdentifier) Author() string {

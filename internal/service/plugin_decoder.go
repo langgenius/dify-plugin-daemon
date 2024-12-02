@@ -39,6 +39,11 @@ func UploadPluginPkg(
 		return exception.BadRequestError(err).ToResponse()
 	}
 
+	// avoid author to be a uuid
+	if pluginUniqueIdentifier.RemoteLike() {
+		return exception.BadRequestError(errors.New("author cannot be a uuid")).ToResponse()
+	}
+
 	manager := plugin_manager.Manager()
 	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile)
 	if err != nil {
@@ -160,8 +165,13 @@ func FetchPluginManifest(
 	tenant_id string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
+	runtimeType := plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	if pluginUniqueIdentifier.RemoteLike() {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+	}
+
 	pluginManifestCache, err := helper.CombinedGetPluginDeclaration(
-		pluginUniqueIdentifier, tenant_id, plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+		pluginUniqueIdentifier, tenant_id, runtimeType,
 	)
 
 	if err != nil {
