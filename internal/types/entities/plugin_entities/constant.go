@@ -7,6 +7,7 @@ const (
 	STRING         = "string"
 	NUMBER         = "number"
 	FILE           = "file"
+	FILES          = "files"
 	BOOLEAN        = "boolean"
 	APP_SELECTOR   = "app-selector"
 	MODEL_SELECTOR = "model-selector"
