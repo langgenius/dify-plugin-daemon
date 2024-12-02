@@ -204,5 +204,5 @@ type LLMResultChunkDelta struct {
 }
 
 type LLMGetNumTokensResponse struct {
-	NumTokens int `json:"num_tokens" validate:"required"`
+	NumTokens int `json:"num_tokens"`
 }
