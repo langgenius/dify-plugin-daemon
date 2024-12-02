@@ -170,17 +170,15 @@ func InstallPluginRuntimeToTenant(
 						}
 					}
 
-					// delete the task if all plugins are installed successfully,
-					// otherwise update the task status
 					if successes == len(taskPointer.Plugins) {
+						// update status
+						taskPointer.Status = models.InstallTaskStatusSuccess
+						// delete the task after 120 seconds without transaction
 						time.AfterFunc(120*time.Second, func() {
-							db.Delete(taskPointer, tx)
+							db.Delete(taskPointer)
 						})
-					} else {
-						return db.Update(taskPointer, tx)
 					}
-
-					return nil
+					return db.Update(taskPointer, tx)
 				}); err != nil {
 					log.Error("failed to update install task status %s", err.Error())
 				}
