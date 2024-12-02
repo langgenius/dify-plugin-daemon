@@ -58,7 +58,6 @@ type RequestInvokeRerank struct {
 }
 
 type InvokeTTSSchema struct {
-	TenantId    string `json:"tenant_id" validate:"required"`
 	ContentText string `json:"content_text"  validate:"required"`
 	Voice       string `json:"voice" validate:"required"`
 }
