@@ -173,6 +173,9 @@ func FetchPluginManifest(
 	pluginManifestCache, err := helper.CombinedGetPluginDeclaration(
 		pluginUniqueIdentifier, tenant_id, runtimeType,
 	)
+	if err == helper.ErrPluginNotFound {
+		return exception.BadRequestError(errors.New("plugin not found")).ToResponse()
+	}
 
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()

@@ -1,12 +1,17 @@
 package helper
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+)
+
+var (
+	ErrPluginNotFound = errors.New("plugin not found")
 )
 
 func CombinedGetPluginDeclaration(
@@ -27,8 +32,8 @@ func CombinedGetPluginDeclaration(
 				declaration, err := db.GetOne[models.PluginDeclaration](
 					db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 				)
-				if err != nil && err != db.ErrDatabaseNotFound {
-					return nil, err
+				if err == db.ErrDatabaseNotFound {
+					return nil, ErrPluginNotFound
 				}
 
 				if err != nil {
@@ -42,8 +47,8 @@ func CombinedGetPluginDeclaration(
 					db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 					db.Equal("install_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE)),
 				)
-				if err != nil && err != db.ErrDatabaseNotFound {
-					return nil, err
+				if err == db.ErrDatabaseNotFound {
+					return nil, ErrPluginNotFound
 				}
 
 				if err != nil {
