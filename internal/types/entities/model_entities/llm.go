@@ -79,6 +79,8 @@ type PromptMessageContentType string
 const (
 	PROMPT_MESSAGE_CONTENT_TYPE_TEXT     PromptMessageContentType = "text"
 	PROMPT_MESSAGE_CONTENT_TYPE_IMAGE    PromptMessageContentType = "image"
+	PROMPT_MESSAGE_CONTENT_TYPE_AUDIO    PromptMessageContentType = "audio"
+	PROMPT_MESSAGE_CONTENT_TYPE_VIDEO    PromptMessageContentType = "video"
 	PROMPT_MESSAGE_CONTENT_TYPE_DOCUMENT PromptMessageContentType = "document"
 )
 
@@ -87,6 +89,8 @@ func isPromptMessageContentType(fl validator.FieldLevel) bool {
 	switch value {
 	case string(PROMPT_MESSAGE_CONTENT_TYPE_TEXT),
 		string(PROMPT_MESSAGE_CONTENT_TYPE_IMAGE),
+		string(PROMPT_MESSAGE_CONTENT_TYPE_AUDIO),
+		string(PROMPT_MESSAGE_CONTENT_TYPE_VIDEO),
 		string(PROMPT_MESSAGE_CONTENT_TYPE_DOCUMENT):
 		return true
 	}
@@ -97,6 +101,7 @@ type PromptMessageContent struct {
 	Type         PromptMessageContentType `json:"type" validate:"required,prompt_message_content_type"`
 	Data         string                   `json:"data" validate:"required"`
 	EncodeFormat string                   `json:"encode_format"`
+	Format       string                   `json:"format"`
 	MimeType     string                   `json:"mime_type"`
 }
 
