@@ -155,7 +155,10 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 	errChan := make(chan error)
 
 	// local plugin
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "LaunchLocal",
+	}, func() {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("plugin runtime panic: %v", r)
@@ -165,7 +168,10 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 
 		// add max launching lock to prevent too many plugins launching at the same time
 		p.maxLaunchingLock <- true
-		routine.Submit(func() {
+		routine.Submit(map[string]string{
+			"module":   "plugin_manager",
+			"function": "LaunchLocal",
+		}, func() {
 			// wait for plugin launched
 			<-launchedChan
 			// release max launching lock

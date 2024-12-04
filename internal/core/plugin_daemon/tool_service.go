@@ -50,7 +50,12 @@ func InvokeTool(
 	}
 
 	newResponse := stream.NewStream[tool_entities.ToolResponseChunk](128)
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":        "plugin_daemon",
+		"function":      "InvokeTool",
+		"tool_name":     request.Tool,
+		"tool_provider": request.Provider,
+	}, func() {
 		files := make(map[string]*bytes.Buffer)
 		defer newResponse.Close()
 

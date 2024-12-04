@@ -126,13 +126,21 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	wg.Add(2)
 
 	// listen to plugin stdout
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"type":     "local",
+		"function": "StartStdout",
+	}, func() {
 		defer wg.Done()
 		stdio.StartStdout(func() {})
 	})
 
 	// listen to plugin stderr
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"type":     "local",
+		"function": "StartStderr",
+	}, func() {
 		defer wg.Done()
 		stdio.StartStderr()
 	})

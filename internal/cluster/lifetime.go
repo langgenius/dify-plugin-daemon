@@ -79,7 +79,10 @@ func (c *Cluster) clusterLifetime() {
 	defer pluginSchedulerTicker.Stop()
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "cluster",
+		"function": "voteAddressesWhenInit",
+	}, func() {
 		if err := c.updateNodeStatus(); err != nil {
 			log.Error("failed to update the status of the node: %s", err.Error())
 		}

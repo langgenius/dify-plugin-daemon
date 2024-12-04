@@ -110,7 +110,10 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		resp.Body.Close()
 	})
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "http_requests",
+		"function": "RequestAndParseStream",
+	}, func() {
 		scanner := bufio.NewScanner(resp.Body)
 		defer resp.Body.Close()
 

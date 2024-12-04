@@ -1,6 +1,8 @@
 package routine
 
 import (
+	"context"
+	"runtime/pprof"
 	"sync"
 	"sync/atomic"
 
@@ -29,8 +31,22 @@ func InitPool(size int) {
 	p, _ = ants.NewPool(size, ants.WithNonblocking(false))
 }
 
-func Submit(f func()) {
-	p.Submit(f)
+func Submit(labels map[string]string, f func()) {
+	if labels == nil {
+		labels = map[string]string{}
+	}
+
+	p.Submit(func() {
+		label := []string{}
+		if len(labels) > 0 {
+			for k, v := range labels {
+				label = append(label, k, v)
+			}
+		}
+		pprof.Do(context.Background(), pprof.Labels(label...), func(ctx context.Context) {
+			f()
+		})
+	})
 }
 
 func WithMaxRoutine(maxRoutine int, tasks []func(), on_finish ...func()) {
@@ -42,13 +58,16 @@ func WithMaxRoutine(maxRoutine int, tasks []func(), on_finish ...func()) {
 		maxRoutine = len(tasks)
 	}
 
-	Submit(func() {
+	Submit(map[string]string{
+		"module":   "routine",
+		"function": "WithMaxRoutine",
+	}, func() {
 		wg := sync.WaitGroup{}
 		taskIndex := int32(0)
 
 		for i := 0; i < maxRoutine; i++ {
 			wg.Add(1)
-			Submit(func() {
+			Submit(nil, func() {
 				defer wg.Done()
 				currentIndex := atomic.AddInt32(&taskIndex, 1)
 				for currentIndex <= int32(len(tasks)) {

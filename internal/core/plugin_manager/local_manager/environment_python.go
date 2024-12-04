@@ -109,7 +109,10 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 	lastActiveAt := time.Now()
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "InitPythonEnvironment",
+	}, func() {
 		defer wg.Done()
 		// read stdout
 		buf := make([]byte, 1024)
@@ -123,7 +126,10 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		}
 	})
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "InitPythonEnvironment",
+	}, func() {
 		defer wg.Done()
 		// read stderr
 		buf := make([]byte, 1024)
@@ -144,7 +150,10 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		}
 	})
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "InitPythonEnvironment",
+	}, func() {
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {

@@ -32,7 +32,10 @@ func (p *PluginManager) InstallToLocal(
 	}
 
 	response := stream.NewStream[PluginInstallResponse](128)
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "InstallToLocal",
+	}, func() {
 		defer response.Close()
 
 		ticker := time.NewTicker(time.Second * 5) // check heartbeat every 5 seconds

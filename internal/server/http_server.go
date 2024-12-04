@@ -22,6 +22,7 @@ func (app *App) server(config *app.Config) func() {
 	app.endpointGroup(engine.Group("/e"), config)
 	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
 	app.pluginGroup(engine.Group("/plugin/:tenant_id"), config)
+	app.pprofGroup(engine.Group("/debug/pprof"), config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
@@ -136,4 +137,16 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
 	group.GET("/:id", gzip.Gzip(gzip.DefaultCompression), controllers.GetAsset)
+}
+
+func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
+	if config.PPROFEnabled {
+		group.Use(CheckingKey(config.ServerKey))
+
+		group.GET("/", controllers.PprofIndex)
+		group.GET("/cmdline", controllers.PprofCmdline)
+		group.GET("/profile", controllers.PprofProfile)
+		group.GET("/symbol", controllers.PprofSymbol)
+		group.GET("/trace", controllers.PprofTrace)
+	}
 }

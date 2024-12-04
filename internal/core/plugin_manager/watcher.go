@@ -47,7 +47,12 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 					return
 				}
 				p.m.Store(identity.String(), rpr)
-				routine.Submit(func() {
+				routine.Submit(map[string]string{
+					"module":    "plugin_manager",
+					"function":  "startRemoteWatcher",
+					"plugin_id": identity.String(),
+					"type":      "remote",
+				}, func() {
 					defer func() {
 						if err := recover(); err != nil {
 							log.Error("plugin runtime error: %v", err)

@@ -17,8 +17,7 @@ func CheckingKey(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get header X-Api-Key
 		if c.GetHeader(constants.X_API_KEY) != key {
-			c.JSON(200, exception.UnauthorizedError().ToResponse())
-			c.Abort()
+			c.AbortWithStatusJSON(401, exception.UnauthorizedError().ToResponse())
 			return
 		}
 

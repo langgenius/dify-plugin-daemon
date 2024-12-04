@@ -68,7 +68,10 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 	newResponse.OnClose(func() {
 		response.Close()
 	})
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "dify_invocation",
+		"function": "StreamResponse",
+	}, func() {
 		defer newResponse.Close()
 		for response.Next() {
 			t, err := response.Read()

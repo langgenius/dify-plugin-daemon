@@ -59,7 +59,12 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("Dify-Plugin-Session-ID", session_id)
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":     "aws_manager",
+		"function":   "Write",
+		"session_id": session_id,
+		"lambda_url": r.LambdaURL,
+	}, func() {
 		// remove the session from listeners
 		defer r.listeners.Delete(session_id)
 		defer l.Close()

@@ -60,7 +60,11 @@ func InvokeEndpoint(
 			}
 
 			response.Write(dehexed)
-			routine.Submit(func() {
+			routine.Submit(map[string]string{
+				"module":   "plugin_daemon",
+				"function": "InvokeEndpoint",
+				"type":     "body_write",
+			}, func() {
 				defer response.Close()
 				for resp.Next() {
 					chunk, err := resp.Read()

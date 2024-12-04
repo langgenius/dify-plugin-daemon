@@ -38,7 +38,13 @@ func (p *PluginManager) InstallToAWSFromPkg(
 	}
 
 	newResponse := stream.NewStream[PluginInstallResponse](128)
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":          "plugin_manager",
+		"function":        "InstallToAWSFromPkg",
+		"checksum":        checksum,
+		"unique_identity": uniqueIdentity.String(),
+		"source":          source,
+	}, func() {
 		defer func() {
 			newResponse.Close()
 		}()

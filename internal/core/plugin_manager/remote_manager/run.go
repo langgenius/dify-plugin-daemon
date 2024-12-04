@@ -32,8 +32,17 @@ func (r *RemotePluginRuntime) Type() plugin_entities.PluginRuntimeType {
 func (r *RemotePluginRuntime) StartPlugin() error {
 	var exitError error
 
+	identity, err := r.Identity()
+	if err != nil {
+		return err
+	}
+
 	// handle heartbeat
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":    "remote_manager",
+		"function":  "StartPlugin",
+		"plugin_id": identity.String(),
+	}, func() {
 		r.lastActiveAt = time.Now()
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()

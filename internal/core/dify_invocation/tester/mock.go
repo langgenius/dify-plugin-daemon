@@ -18,7 +18,7 @@ func NewMockedDifyInvocation() dify_invocation.BackwardsInvocation {
 
 func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
 	stream := stream.NewStream[model_entities.LLMResultChunk](5)
-	routine.Submit(func() {
+	routine.Submit(nil, func() {
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
 			PromptMessages:    payload.PromptMessages,
@@ -129,7 +129,7 @@ func (m *MockedDifyInvocation) InvokeRerank(payload *dify_invocation.InvokeReran
 
 func (m *MockedDifyInvocation) InvokeTTS(payload *dify_invocation.InvokeTTSRequest) (*stream.Stream[model_entities.TTSResult], error) {
 	stream := stream.NewStream[model_entities.TTSResult](5)
-	routine.Submit(func() {
+	routine.Submit(nil, func() {
 		for i := 0; i < 10; i++ {
 			stream.Write(model_entities.TTSResult{
 				Result: "a1b2c3d4",
@@ -157,7 +157,7 @@ func (m *MockedDifyInvocation) InvokeModeration(payload *dify_invocation.InvokeM
 
 func (m *MockedDifyInvocation) InvokeTool(payload *dify_invocation.InvokeToolRequest) (*stream.Stream[tool_entities.ToolResponseChunk], error) {
 	stream := stream.NewStream[tool_entities.ToolResponseChunk](5)
-	routine.Submit(func() {
+	routine.Submit(nil, func() {
 		for i := 0; i < 10; i++ {
 			stream.Write(tool_entities.ToolResponseChunk{
 				Type: tool_entities.ToolResponseChunkTypeText,
@@ -175,7 +175,7 @@ func (m *MockedDifyInvocation) InvokeTool(payload *dify_invocation.InvokeToolReq
 
 func (m *MockedDifyInvocation) InvokeApp(payload *dify_invocation.InvokeAppRequest) (*stream.Stream[map[string]any], error) {
 	stream := stream.NewStream[map[string]any](5)
-	routine.Submit(func() {
+	routine.Submit(nil, func() {
 		stream.Write(map[string]any{
 			"event":           "agent_message",
 			"message_id":      "5ad4cb98-f0c7-4085-b384-88c403be6290",

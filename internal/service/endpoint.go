@@ -138,7 +138,10 @@ func Endpoint(
 	}
 	defer close()
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "service",
+		"function": "Endpoint",
+	}, func() {
 		defer close()
 		for response.Next() {
 			chunk, err := response.Read()

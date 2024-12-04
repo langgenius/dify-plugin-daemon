@@ -57,7 +57,10 @@ func InvokeDify(
 	}
 
 	// dispatch invocation task
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "plugin_daemon",
+		"function": "InvokeDify",
+	}, func() {
 		dispatchDifyInvocationTask(requestHandle)
 		defer requestHandle.EndResponse()
 	})

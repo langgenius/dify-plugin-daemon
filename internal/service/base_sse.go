@@ -46,7 +46,10 @@ func baseSSEService[R any](
 		return
 	}
 
-	routine.Submit(func() {
+	routine.Submit(map[string]string{
+		"module":   "service",
+		"function": "baseSSEService",
+	}, func() {
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()
 			if err != nil {

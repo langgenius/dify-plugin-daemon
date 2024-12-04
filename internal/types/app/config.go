@@ -84,6 +84,8 @@ type Config struct {
 	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
+
+	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
 }
 
 func (c *Config) Validate() error {
