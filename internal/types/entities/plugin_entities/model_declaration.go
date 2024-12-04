@@ -482,7 +482,7 @@ func (m *ModelProviderFormOption) UnmarshalYAML(value *yaml.Node) error {
 	// avoid show_on to be nil
 	type Alias ModelProviderFormOption
 	aux := &struct {
-		*Alias
+		*Alias `yaml:",inline"`
 	}{
 		Alias: (*Alias)(m),
 	}
