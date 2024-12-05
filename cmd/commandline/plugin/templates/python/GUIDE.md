@@ -11,7 +11,7 @@ Before start, you need some basic knowledge about the Plugin types, Plugin suppo
 
 Based on the ability you want to extend, we have divided the Plugin into three types: **Tool**, **Model**, and **Extension**.
 
-- **Tool**: It's a tool provider, but not only limited to tools, you can implement a endpoint there, for example, you need both `Sending Message` and `Receiving Message` if you are building a Discord Bot, **Tool** and **Endpoint** are both required.
+- **Tool**: It's a tool provider, but not only limited to tools, you can implement an endpoint there, for example, you need both `Sending Message` and `Receiving Message` if you are building a Discord Bot, **Tool** and **Endpoint** are both required.
 - **Model**: Just a model provider, extending others is not allowed.
 - **Extension**: Other times, you may only need a simple http service to extend the functionalities, **Extension** is the right choice for you.
 

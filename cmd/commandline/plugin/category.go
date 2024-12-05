@@ -24,7 +24,7 @@ const PLUGIN_GUIDE = `But before starting, you need some basic knowledge about t
 
 Based on the ability you want to extend, we have divided the Plugin into three types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, and ` + BOLD + `Extension` + RESET + `.
 
-` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `It's a tool provider, but not only limited to tools, you can implement a endpoint there, for example, you need both ` + BLUE + `Sending Message` + RESET + YELLOW + ` and ` + BLUE + `Receiving Message` + RESET + YELLOW + ` if you are building a Discord Bot, ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` are both required.` + RESET + `
+` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `It's a tool provider, but not only limited to tools, you can implement an endpoint there, for example, you need both ` + BLUE + `Sending Message` + RESET + YELLOW + ` and ` + BLUE + `Receiving Message` + RESET + YELLOW + ` if you are building a Discord Bot, ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` are both required.` + RESET + `
 ` + BOLD + `- Model` + RESET + `: ` + YELLOW + `Just a model provider, extending others is not allowed.` + RESET + `
 ` + BOLD + `- Extension` + RESET + `: ` + YELLOW + `Other times, you may only need a simple http service to extend the functionalities, ` + BOLD + `Extension` + RESET + YELLOW + ` is the right choice for you.` + RESET + `
 ` + `
