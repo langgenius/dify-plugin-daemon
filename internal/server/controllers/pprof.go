@@ -41,3 +41,11 @@ func PprofAllocs(c *gin.Context) {
 func PprofBlock(c *gin.Context) {
 	pprof.Handler("block").ServeHTTP(c.Writer, c.Request)
 }
+
+func PprofMutex(c *gin.Context) {
+	pprof.Handler("mutex").ServeHTTP(c.Writer, c.Request)
+}
+
+func PprofThreadcreate(c *gin.Context) {
+	pprof.Handler("threadcreate").ServeHTTP(c.Writer, c.Request)
+}

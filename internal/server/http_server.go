@@ -152,5 +152,7 @@ func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
 		group.GET("/heap", controllers.PprofHeap)
 		group.GET("/allocs", controllers.PprofAllocs)
 		group.GET("/block", controllers.PprofBlock)
+		group.GET("/mutex", controllers.PprofMutex)
+		group.GET("/threadcreate", controllers.PprofThreadcreate)
 	}
 }
