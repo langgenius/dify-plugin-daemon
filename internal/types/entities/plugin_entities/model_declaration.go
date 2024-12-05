@@ -100,6 +100,7 @@ type DefaultParameterName string
 const (
 	TEMPERATURE       DefaultParameterName = "temperature"
 	TOP_P             DefaultParameterName = "top_p"
+	TOP_K             DefaultParameterName = "top_k"
 	PRESENCE_PENALTY  DefaultParameterName = "presence_penalty"
 	FREQUENCY_PENALTY DefaultParameterName = "frequency_penalty"
 	MAX_TOKENS        DefaultParameterName = "max_tokens"
@@ -147,6 +148,22 @@ var PARAMETER_RULE_TEMPLATE = map[DefaultParameterName]ModelParameterRule{
 		Min:       parser.ToPtr(0.0),
 		Max:       parser.ToPtr(1.0),
 		Precision: parser.ToPtr(2),
+	},
+	TOP_K: {
+		Label: &I18nObject{
+			EnUS:   "Top K",
+			ZhHans: "Top K",
+		},
+		Type: parser.ToPtr(PARAMETER_TYPE_INT),
+		Help: &I18nObject{
+			EnUS:   "Limits the number of tokens to consider for each step by keeping only the k most likely tokens.",
+			ZhHans: "通过只保留每一步中最可能的 k 个标记来限制要考虑的标记数量。",
+		},
+		Required:  false,
+		Default:   parser.ToPtr(any(50)),
+		Min:       parser.ToPtr(1.0),
+		Max:       parser.ToPtr(100.0),
+		Precision: parser.ToPtr(0),
 	},
 	PRESENCE_PENALTY: {
 		Label: &I18nObject{
