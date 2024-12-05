@@ -148,5 +148,9 @@ func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
 		group.GET("/profile", controllers.PprofProfile)
 		group.GET("/symbol", controllers.PprofSymbol)
 		group.GET("/trace", controllers.PprofTrace)
+		group.GET("/goroutine", controllers.PprofGoroutine)
+		group.GET("/heap", controllers.PprofHeap)
+		group.GET("/allocs", controllers.PprofAllocs)
+		group.GET("/block", controllers.PprofBlock)
 	}
 }
