@@ -666,7 +666,27 @@ func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
 		}
 	}
 
+	if m.Models == nil {
+		m.Models = []ModelDeclaration{}
+	}
+
 	return nil
+}
+
+func (m *ModelProviderDeclaration) MarshalJSON() ([]byte, error) {
+	type alias ModelProviderDeclaration
+
+	temp := &struct {
+		*alias `json:",inline"`
+	}{
+		alias: (*alias)(m),
+	}
+
+	if temp.Models == nil {
+		temp.Models = []ModelDeclaration{}
+	}
+
+	return json.Marshal(temp)
 }
 
 func (m *ModelProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
@@ -731,6 +751,10 @@ func (m *ModelProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		if err := temp.Models.Decode(&m.Models); err != nil {
 			return err
 		}
+	}
+
+	if m.Models == nil {
+		m.Models = []ModelDeclaration{}
 	}
 
 	return nil
