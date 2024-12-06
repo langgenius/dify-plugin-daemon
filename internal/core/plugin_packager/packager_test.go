@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
@@ -61,6 +62,18 @@ func TestPackagerAndVerifier(t *testing.T) {
 		return
 	}
 
+	// create ignored_paths
+	if err := os.MkdirAll("temp/ignored_paths", 0755); err != nil {
+		t.Errorf("failed to create ignored_paths directory: %s", err.Error())
+		return
+	}
+
+	// create ignored_paths/ignored
+	if err := os.WriteFile("temp/ignored_paths/ignored", ignored, 0644); err != nil {
+		t.Errorf("failed to write ignored_paths/ignored: %s", err.Error())
+		return
+	}
+
 	if err := os.MkdirAll("temp/_assets", 0755); err != nil {
 		t.Errorf("failed to create _assets directory: %s", err.Error())
 		return
@@ -81,6 +94,9 @@ func TestPackagerAndVerifier(t *testing.T) {
 	err = originDecoder.Walk(func(filename string, dir string) error {
 		if filename == "ignored" {
 			return fmt.Errorf("should not walk into ignored")
+		}
+		if strings.HasPrefix(filename, "ignored_paths") {
+			return fmt.Errorf("should not walk into ignored_paths")
 		}
 		return nil
 	})

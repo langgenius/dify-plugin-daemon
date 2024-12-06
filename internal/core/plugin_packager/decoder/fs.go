@@ -1,7 +1,6 @@
 package decoder
 
 import (
-	"bufio"
 	"errors"
 	"io"
 	"io/fs"
@@ -9,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-git/go-git/plumbing/format/gitignore"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 )
 
@@ -61,65 +61,63 @@ func (d *FSPluginDecoder) Open() error {
 }
 
 func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error {
-	// dify_ignores is a map[string][]string, the key is the directory, the value is a list of files to ignore
-	difyIgnores := make(map[string][]string)
-
-	return filepath.Walk(d.root, func(path string, info fs.FileInfo, err error) error {
-		// trim the first directory path
-		path = strings.TrimPrefix(path, d.root)
-		// trim / from the beginning
-		path = strings.TrimPrefix(path, "/")
-		p := filepath.Dir(path)
-
-		if info.IsDir() {
-			// try read the .difyignore file if it's the first time to walk this directory
-			if _, ok := difyIgnores[p]; !ok {
-				difyIgnores[p] = make([]string, 0)
-				// read the .difyignore file if it exists
-				ignoreFilePath := filepath.Join(d.root, p, ".difyignore")
-				if _, err := os.Stat(ignoreFilePath); err == nil {
-					ignoreFile, err := os.Open(ignoreFilePath)
-					if err != nil {
-						return err
-					}
-
-					scanner := bufio.NewScanner(ignoreFile)
-					for scanner.Scan() {
-						line := scanner.Text()
-						if strings.HasPrefix(line, "#") {
-							continue
-						}
-						difyIgnores[p] = append(difyIgnores[p], line)
-					}
-
-					ignoreFile.Close()
-				}
+	// read .difyignore file
+	ignorePatterns := []gitignore.Pattern{}
+	// Try .difyignore first, fallback to .gitignore if not found
+	ignoreBytes, err := d.ReadFile(".difyignore")
+	if err != nil {
+		ignoreBytes, err = d.ReadFile(".gitignore")
+	}
+	if err == nil {
+		ignoreLines := strings.Split(string(ignoreBytes), "\n")
+		for _, line := range ignoreLines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
 			}
-
-			return nil
+			ignorePatterns = append(ignorePatterns, gitignore.ParsePattern(line, nil))
 		}
+	}
 
-		currentIgnoreFiles := difyIgnores[p]
-		for _, ignoreFile := range currentIgnoreFiles {
-			// skip if match
-			matched, err := filepath.Match(ignoreFile, info.Name())
-			if err != nil {
-				return err
-			}
-			if matched {
-				return nil
-			}
-		}
-
-		if path == "" {
-			return nil
-		}
-
+	return filepath.WalkDir(d.root, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		return fn(info.Name(), p)
+		// get relative path from root
+		relPath, err := filepath.Rel(d.root, path)
+		if err != nil {
+			return err
+		}
+
+		// skip root directory
+		if relPath == "." {
+			return nil
+		}
+
+		// check if path matches any ignore pattern
+		pathParts := strings.Split(relPath, string(filepath.Separator))
+		for _, pattern := range ignorePatterns {
+			if result := pattern.Match(pathParts, info.IsDir()); result == gitignore.Exclude {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+		}
+
+		// get directory path relative to root
+		dir := filepath.Dir(relPath)
+		if dir == "." {
+			dir = ""
+		}
+
+		// skip if the path is a directory
+		if info.IsDir() {
+			return nil
+		}
+
+		return fn(info.Name(), dir)
 	})
 }
 
