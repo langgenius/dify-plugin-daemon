@@ -51,7 +51,11 @@ type InvokeRerankRequest struct {
 }
 
 type InvokeTTSRequest struct {
-	BaseInvokeDifyRequest
+	// BaseInvokeDifyRequest
+	// # TODO: BaseInvokeDifyRequest has a duplicate field with InvokeTTSSchema,
+	// # we should consider to refactor it in the future
+	UserId string     `json:"user_id"`
+	Type   InvokeType `json:"type"`
 	requests.BaseRequestInvokeModel
 	requests.InvokeTTSSchema
 }
