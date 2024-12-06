@@ -23,7 +23,7 @@ Now you can edit the `manifest.yaml` file to describe your Plugin, here is the b
 
 - version(version, required)：Plugin's version
 - type(type, required)：Plugin's type, currently only supports `plugin`, future support `bundle`
-- author(string, required)：作者，在 Marketplace 中定义为组织名
+- author(string, required)：Author, it's the organization name in Marketplace and should also equals to the owner of the repository
 - label(label, required)：Multi-language name
 - created_at(RFC3339, required)：Creation time, Marketplace requires that the creation time must be less than the current time
 - icon(asset, required)：Icon path
