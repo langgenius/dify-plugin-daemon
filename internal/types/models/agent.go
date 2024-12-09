@@ -8,5 +8,5 @@ type AgentInstallation struct {
 	Provider               string                                   `json:"provider" gorm:"column:provider;size:127;index;not null"`
 	PluginUniqueIdentifier string                                   `json:"plugin_unique_identifier" gorm:"index;size:255"`
 	PluginID               string                                   `json:"plugin_id" gorm:"index;size:255"`
-	Declaration            plugin_entities.AgentProviderDeclaration `json:"declaration" gorm:"serializer:json;type:text;size:65535;not null"`
+	Declaration            plugin_entities.AgentProviderDeclaration `json:"declaration,inline" gorm:"serializer:json;type:text;size:65535;not null"`
 }

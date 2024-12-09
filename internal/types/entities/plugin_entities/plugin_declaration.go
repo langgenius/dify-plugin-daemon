@@ -201,6 +201,7 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 		Endpoint *EndpointProviderDeclaration `json:"endpoint,omitempty"`
 		Model    *ModelProviderDeclaration    `json:"model,omitempty"`
 		Tool     *ToolProviderDeclaration     `json:"tool,omitempty"`
+		Agent    *AgentProviderDeclaration    `json:"agent,omitempty"`
 	}
 
 	var extra PluginExtra
@@ -212,6 +213,7 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 	p.Endpoint = extra.Endpoint
 	p.Model = extra.Model
 	p.Tool = extra.Tool
+	p.Agent = extra.Agent
 
 	return nil
 }
@@ -249,6 +251,12 @@ func (p *PluginDeclaration) ManifestValidate() error {
 
 	if p.Model != nil && p.Endpoint != nil {
 		return fmt.Errorf("model and endpoint cannot be provided at the same time")
+	}
+
+	if p.Agent != nil {
+		if p.Tool != nil || p.Model != nil || p.Endpoint != nil {
+			return fmt.Errorf("agent and tool, model, or endpoint cannot be provided at the same time")
+		}
 	}
 
 	return nil
