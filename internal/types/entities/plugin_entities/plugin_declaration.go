@@ -176,6 +176,7 @@ type PluginDeclaration struct {
 	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
 	Model                                  *ModelProviderDeclaration    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
 	Tool                                   *ToolProviderDeclaration     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+	Agent                                  *AgentProviderDeclaration    `json:"agent,omitempty" yaml:"agent,omitempty" validate:"omitempty"`
 }
 
 func (p *PluginDeclaration) Category() PluginCategory {

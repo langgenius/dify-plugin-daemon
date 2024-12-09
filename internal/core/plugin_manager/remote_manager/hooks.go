@@ -20,6 +20,7 @@ import (
 
 var (
 	// mode is only used for testing
+	// TODO: simplify this ugly code
 	_mode pluginRuntimeMode
 )
 
@@ -270,7 +271,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_END {
 			if !runtime.modelsRegistrationTransferred &&
 				!runtime.endpointsRegistrationTransferred &&
-				!runtime.toolsRegistrationTransferred {
+				!runtime.toolsRegistrationTransferred &&
+				!runtime.agentsRegistrationTransferred {
 				closeConn([]byte("no registration transferred, cannot initialize\n"))
 				return
 			}
@@ -400,10 +402,24 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 				declaration.Endpoint = &endpoints[0]
 				runtime.Config = declaration
 			}
-		} else {
-			// unknown event type
-			closeConn([]byte("unknown initialization event type\n"))
-			return
+		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_AGENT_DECLARATION {
+			if runtime.agentsRegistrationTransferred {
+				return
+			}
+
+			agents, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.AgentProviderDeclaration](registerPayload.Data)
+			if err != nil {
+				closeConn([]byte(fmt.Sprintf("agents register failed, invalid agents declaration: %v\n", err)))
+				return
+			}
+
+			runtime.agentsRegistrationTransferred = true
+
+			if len(agents) > 0 {
+				declaration := runtime.Config
+				declaration.Agent = &agents[0]
+				runtime.Config = declaration
+			}
 		}
 	} else {
 		// continue handle messages if handshake completed

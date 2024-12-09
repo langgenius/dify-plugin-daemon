@@ -196,6 +196,10 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		t.CredentialsSchema = credentialsSchema
 	}
 
+	if t.ToolFiles == nil {
+		t.ToolFiles = []string{}
+	}
+
 	// unmarshal tools
 	if temp.Tools.Kind == yaml.SequenceNode {
 		for _, item := range temp.Tools.Content {
@@ -264,6 +268,10 @@ func (t *ToolProviderDeclaration) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("failed to unmarshal credentials_schema as array: %v", err)
 		}
 		t.CredentialsSchema = credentials_schema_array
+	}
+
+	if t.ToolFiles == nil {
+		t.ToolFiles = []string{}
 	}
 
 	// unmarshal tools

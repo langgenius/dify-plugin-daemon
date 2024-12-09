@@ -6,12 +6,14 @@ const (
 	PLUGIN_ACCESS_TYPE_TOOL     PluginAccessType = "tool"
 	PLUGIN_ACCESS_TYPE_MODEL    PluginAccessType = "model"
 	PLUGIN_ACCESS_TYPE_ENDPOINT PluginAccessType = "endpoint"
+	PLUGIN_ACCESS_TYPE_AGENT    PluginAccessType = "agent"
 )
 
 func (p PluginAccessType) IsValid() bool {
 	return p == PLUGIN_ACCESS_TYPE_TOOL ||
 		p == PLUGIN_ACCESS_TYPE_MODEL ||
-		p == PLUGIN_ACCESS_TYPE_ENDPOINT
+		p == PLUGIN_ACCESS_TYPE_ENDPOINT ||
+		p == PLUGIN_ACCESS_TYPE_AGENT
 }
 
 type PluginAccessAction string
@@ -33,6 +35,7 @@ const (
 	PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS PluginAccessAction = "get_text_embedding_num_tokens"
 	PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS          PluginAccessAction = "get_ai_model_schemas"
 	PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS            PluginAccessAction = "get_llm_num_tokens"
+	PLUGIN_ACCESS_ACTION_INVOKE_AGENT                  PluginAccessAction = "invoke_agent"
 )
 
 func (p PluginAccessAction) IsValid() bool {
@@ -51,5 +54,6 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES ||
 		p == PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS ||
 		p == PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS ||
-		p == PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS
+		p == PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS ||
+		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT
 }

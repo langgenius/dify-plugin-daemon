@@ -52,6 +52,7 @@ type RemotePluginRuntime struct {
 	toolsRegistrationTransferred     bool
 	modelsRegistrationTransferred    bool
 	endpointsRegistrationTransferred bool
+	agentsRegistrationTransferred    bool
 	assetsTransferred                bool
 
 	// tenant id

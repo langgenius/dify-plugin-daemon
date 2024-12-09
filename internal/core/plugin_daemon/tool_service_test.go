@@ -10,7 +10,7 @@ import (
 func TestToolInvokeJSONSchemaValidator(t *testing.T) {
 	response := stream.NewStream[tool_entities.ToolResponseChunk](128)
 
-	bindValidator(response, map[string]any{
+	bindToolValidator(response, map[string]any{
 		"output_schema": map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -44,7 +44,7 @@ func TestToolInvokeJSONSchemaValidator(t *testing.T) {
 func TestToolInvokeJSONSchemaValidatorWithInvalidSchema(t *testing.T) {
 	response := stream.NewStream[tool_entities.ToolResponseChunk](128)
 
-	bindValidator(response, map[string]any{
+	bindToolValidator(response, map[string]any{
 		"output_schema": map[string]any{
 			"type": "object",
 			"properties": map[string]any{

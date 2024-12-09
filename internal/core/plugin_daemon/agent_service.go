@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/agent_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
@@ -14,22 +15,20 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-func InvokeTool(
+func InvokeAgent(
 	session *session_manager.Session,
-	request *requests.RequestInvokeTool,
-) (
-	*stream.Stream[tool_entities.ToolResponseChunk], error,
-) {
+	r *requests.RequestInvokeAgent,
+) (*stream.Stream[agent_entities.AgentResponseChunk], error) {
 	runtime := session.Runtime()
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}
 
 	response, err := GenericInvokePlugin[
-		requests.RequestInvokeTool, tool_entities.ToolResponseChunk,
+		requests.RequestInvokeAgent, agent_entities.AgentResponseChunk,
 	](
 		session,
-		request,
+		r,
 		128,
 	)
 
@@ -37,24 +36,24 @@ func InvokeTool(
 		return nil, err
 	}
 
-	toolDeclaration := runtime.Configuration().Tool
-	if toolDeclaration == nil {
-		return nil, errors.New("tool declaration not found")
+	agentDeclaration := runtime.Configuration().Agent
+	if agentDeclaration == nil {
+		return nil, errors.New("agent declaration not found")
 	}
 
-	var toolOutputSchema plugin_entities.ToolOutputSchema
-	for _, v := range toolDeclaration.Tools {
-		if v.Identity.Name == request.Tool {
-			toolOutputSchema = v.OutputSchema
+	var agentOutputSchema plugin_entities.AgentOutputSchema
+	for _, v := range agentDeclaration.Strategies {
+		if v.Identity.Name == r.Strategy {
+			agentOutputSchema = v.OutputSchema
 		}
 	}
 
-	newResponse := stream.NewStream[tool_entities.ToolResponseChunk](128)
+	newResponse := stream.NewStream[agent_entities.AgentResponseChunk](128)
 	routine.Submit(map[string]string{
-		"module":        "plugin_daemon",
-		"function":      "InvokeTool",
-		"tool_name":     request.Tool,
-		"tool_provider": request.Provider,
+		"module":         "plugin_daemon",
+		"function":       "InvokeAgent",
+		"agent_name":     r.Strategy,
+		"agent_provider": r.Provider,
 	}, func() {
 		files := make(map[string]*bytes.Buffer)
 		defer newResponse.Close()
@@ -95,12 +94,14 @@ func InvokeTool(
 				}
 
 				if end {
-					newResponse.Write(tool_entities.ToolResponseChunk{
-						Type: tool_entities.ToolResponseChunkTypeBlob,
-						Message: map[string]any{
-							"blob": files[id].Bytes(), // bytes will be encoded to base64 finally
+					newResponse.Write(agent_entities.AgentResponseChunk{
+						ToolResponseChunk: tool_entities.ToolResponseChunk{
+							Type: tool_entities.ToolResponseChunkTypeBlob,
+							Message: map[string]any{
+								"blob": files[id].Bytes(), // bytes will be encoded to base64 finally
+							},
+							Meta: item.Meta,
 						},
-						Meta: item.Meta,
 					})
 				} else {
 					if files[id].Len() > 15*1024*1024 {
@@ -130,19 +131,20 @@ func InvokeTool(
 	})
 
 	// bind json schema validator
-	bindToolValidator(response, toolOutputSchema)
+	bindAgentValidator(response, agentOutputSchema)
 
 	return newResponse, nil
 }
 
-func bindToolValidator(
-	response *stream.Stream[tool_entities.ToolResponseChunk],
-	toolOutputSchema plugin_entities.ToolOutputSchema,
+// TODO: reduce implementation of bindAgentValidator, it's a copy of bindToolValidator now
+func bindAgentValidator(
+	response *stream.Stream[agent_entities.AgentResponseChunk],
+	agentOutputSchema plugin_entities.AgentOutputSchema,
 ) {
 	// check if the tool_output_schema is valid
 	variables := make(map[string]any)
 
-	response.Filter(func(trc tool_entities.ToolResponseChunk) error {
+	response.Filter(func(trc agent_entities.AgentResponseChunk) error {
 		if trc.Type == tool_entities.ToolResponseChunkTypeVariable {
 			variableName, ok := trc.Message["variable_name"].(string)
 			if !ok {
@@ -182,7 +184,7 @@ func bindToolValidator(
 
 	response.BeforeClose(func() {
 		// validate the variables
-		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(toolOutputSchema))
+		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(agentOutputSchema))
 		if err != nil {
 			response.WriteError(err)
 			return
@@ -200,30 +202,4 @@ func bindToolValidator(
 			return
 		}
 	})
-}
-
-func ValidateToolCredentials(
-	session *session_manager.Session,
-	request *requests.RequestValidateToolCredentials,
-) (
-	*stream.Stream[tool_entities.ValidateCredentialsResult], error,
-) {
-	return GenericInvokePlugin[requests.RequestValidateToolCredentials, tool_entities.ValidateCredentialsResult](
-		session,
-		request,
-		1,
-	)
-}
-
-func GetToolRuntimeParameters(
-	session *session_manager.Session,
-	request *requests.RequestGetToolRuntimeParameters,
-) (
-	*stream.Stream[tool_entities.GetToolRuntimeParametersResponse], error,
-) {
-	return GenericInvokePlugin[requests.RequestGetToolRuntimeParameters, tool_entities.GetToolRuntimeParametersResponse](
-		session,
-		request,
-		1,
-	)
 }
