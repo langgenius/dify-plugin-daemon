@@ -19,9 +19,7 @@ type AgentParameter struct {
 	ToolParameter `json:",inline" yaml:",inline"`
 }
 
-type AgentOutputSchema struct {
-	ToolOutputSchema `json:",inline" yaml:",inline"`
-}
+type AgentOutputSchema map[string]any
 
 type AgentStrategyDeclaration struct {
 	Identity     AgentIdentity     `json:"identity" yaml:"identity" validate:"required"`
