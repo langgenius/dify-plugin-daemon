@@ -116,6 +116,22 @@ func InstallPlugin(
 			}
 		}
 
+		// create agent installation
+		if declaration.Agent != nil {
+			agentInstallation := &models.AgentInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+				Provider:               declaration.Agent.Identity.Name,
+				Declaration:            *declaration.Agent,
+			}
+
+			err := db.Create(agentInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		// create model installation
 		if declaration.Model != nil {
 			modelInstallation := &models.AIModelInstallation{
@@ -224,6 +240,20 @@ func UninstallPlugin(
 			}
 
 			err := db.DeleteByCondition(&toolInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete agent installation
+		if declaration.Agent != nil {
+			agentInstallation := &models.AgentInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenant_id,
+			}
+
+			err := db.DeleteByCondition(&agentInstallation, tx)
 			if err != nil {
 				return err
 			}

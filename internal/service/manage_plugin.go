@@ -218,6 +218,10 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 	)
 
 	if err != nil {
+		if err == db.ErrDatabaseNotFound {
+			return exception.ErrPluginNotFound().ToResponse()
+		}
+
 		return exception.InternalServerError(err).ToResponse()
 	}
 
@@ -261,4 +265,38 @@ func CheckToolExistence(tenantId string, providerIds []RequestCheckToolExistence
 	}
 
 	return entities.NewSuccessResponse(existence)
+}
+
+func ListAgents(tenant_id string, page int, page_size int) *entities.Response {
+	providers, err := db.GetAll[models.AgentInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Page(page, page_size),
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	return entities.NewSuccessResponse(providers)
+}
+
+func GetAgent(tenant_id string, plugin_id string, provider string) *entities.Response {
+	agent, err := db.GetOne[models.AgentInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_id", plugin_id),
+	)
+
+	if err != nil {
+		if err == db.ErrDatabaseNotFound {
+			return exception.ErrPluginNotFound().ToResponse()
+		}
+
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	if agent.Provider != provider {
+		return exception.ErrPluginNotFound().ToResponse()
+	}
+
+	return entities.NewSuccessResponse(agent)
 }

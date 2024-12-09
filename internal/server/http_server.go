@@ -115,8 +115,8 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 }
 
 func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config) {
-	group.POST("/install/upload/package", controllers.UploadPlugin(config))
-	group.POST("/install/upload/bundle", controllers.UploadBundle(config))
+	group.POST("/install/upload/package", gzip.Gzip(gzip.DefaultCompression), controllers.UploadPlugin(config))
+	group.POST("/install/upload/bundle", gzip.Gzip(gzip.DefaultCompression), controllers.UploadBundle(config))
 	group.POST("/install/identifiers", controllers.InstallPluginFromIdentifiers(config))
 	group.POST("/install/upgrade", controllers.UpgradePlugin(config))
 	group.GET("/install/tasks/:id", controllers.FetchPluginInstallationTask)
@@ -124,7 +124,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/install/tasks/:id/delete", controllers.DeletePluginInstallationTask)
 	group.POST("/install/tasks/:id/delete/*identifier", controllers.DeletePluginInstallationItemFromTask)
 	group.GET("/install/tasks", controllers.FetchPluginInstallationTasks)
-	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
+	group.GET("/fetch/manifest", gzip.Gzip(gzip.DefaultCompression), controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", gzip.Gzip(gzip.DefaultCompression), controllers.ListPlugins)
@@ -134,6 +134,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
 	group.GET("/tool", gzip.Gzip(gzip.DefaultCompression), controllers.GetTool)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
+	group.GET("/agents", gzip.Gzip(gzip.DefaultCompression), controllers.ListAgents)
+	group.GET("/agent", gzip.Gzip(gzip.DefaultCompression), controllers.GetAgent)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
