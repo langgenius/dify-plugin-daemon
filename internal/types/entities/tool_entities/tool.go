@@ -18,6 +18,7 @@ const (
 	ToolResponseChunkTypeImage     ToolResponseChunkType = "image"
 	ToolResponseChunkTypeImageLink ToolResponseChunkType = "image_link"
 	ToolResponseChunkTypeVariable  ToolResponseChunkType = "variable"
+	ToolResponseChunkTypeLog       ToolResponseChunkType = "log"
 )
 
 func IsValidToolResponseChunkType(fl validator.FieldLevel) bool {
@@ -31,7 +32,8 @@ func IsValidToolResponseChunkType(fl validator.FieldLevel) bool {
 		ToolResponseChunkTypeLink,
 		ToolResponseChunkTypeImage,
 		ToolResponseChunkTypeImageLink,
-		ToolResponseChunkTypeVariable:
+		ToolResponseChunkTypeVariable,
+		ToolResponseChunkTypeLog:
 		return true
 	default:
 		return false
