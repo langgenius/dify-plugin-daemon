@@ -2,6 +2,7 @@ package dify_invocation
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
@@ -32,10 +33,20 @@ const (
 	INVOKE_TYPE_UPLOAD_FILE              InvokeType = "upload_file"
 )
 
+type InvokeLLMSchema struct {
+	CompletionParams map[string]any                     `json:"completion_params"  validate:"omitempty"`
+	PromptMessages   []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
+	Tools            []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
+	Stop             []string                           `json:"stop" validate:"omitempty"`
+	Stream           bool                               `json:"stream"`
+}
+
 type InvokeLLMRequest struct {
 	BaseInvokeDifyRequest
 	requests.BaseRequestInvokeModel
-	requests.InvokeLLMSchema
+	// requests.InvokeLLMSchema,
+	// TODO: as completion_params in requests.InvokeLLMSchema is "model_parameters", we declare another one here
+	InvokeLLMSchema
 }
 
 type InvokeTextEmbeddingRequest struct {
