@@ -3,7 +3,9 @@ package plugin_entities
 import (
 	"encoding/json"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,8 +17,54 @@ type AgentStrategyIdentity struct {
 	ToolIdentity `json:",inline" yaml:",inline"`
 }
 
+type AgentStrategyParameterType string
+
+const (
+	AGENT_STRATEGY_PARAMETER_TYPE_STRING         AgentStrategyParameterType = STRING
+	AGENT_STRATEGY_PARAMETER_TYPE_NUMBER         AgentStrategyParameterType = NUMBER
+	AGENT_STRATEGY_PARAMETER_TYPE_BOOLEAN        AgentStrategyParameterType = BOOLEAN
+	AGENT_STRATEGY_PARAMETER_TYPE_SELECT         AgentStrategyParameterType = SELECT
+	AGENT_STRATEGY_PARAMETER_TYPE_SECRET_INPUT   AgentStrategyParameterType = SECRET_INPUT
+	AGENT_STRATEGY_PARAMETER_TYPE_FILE           AgentStrategyParameterType = FILE
+	AGENT_STRATEGY_PARAMETER_TYPE_FILES          AgentStrategyParameterType = FILES
+	AGENT_STRATEGY_PARAMETER_TYPE_APP_SELECTOR   AgentStrategyParameterType = APP_SELECTOR
+	AGENT_STRATEGY_PARAMETER_TYPE_MODEL_SELECTOR AgentStrategyParameterType = MODEL_SELECTOR
+	AGENT_STRATEGY_PARAMETER_TYPE_TOOLS_SELECTOR AgentStrategyParameterType = TOOLS_SELECTOR
+)
+
+func isAgentStrategyParameterType(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	switch value {
+	case string(AGENT_STRATEGY_PARAMETER_TYPE_STRING),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_NUMBER),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_BOOLEAN),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_SELECT),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_SECRET_INPUT),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_FILE),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_FILES),
+		// string(TOOL_PARAMETER_TYPE_TOOL_SELECTOR),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_APP_SELECTOR),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_MODEL_SELECTOR),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_TOOLS_SELECTOR):
+		return true
+	}
+	return false
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("agent_strategy_parameter_type", isAgentStrategyParameterType)
+}
+
 type AgentStrategyParameter struct {
-	ToolParameter `json:",inline" yaml:",inline"`
+	Name     string                     `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
+	Label    I18nObject                 `json:"label" yaml:"label" validate:"required"`
+	Type     AgentStrategyParameterType `json:"type" yaml:"type" validate:"required,agent_strategy_parameter_type"`
+	Scope    *string                    `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
+	Required bool                       `json:"required" yaml:"required"`
+	Default  any                        `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Min      *float64                   `json:"min" yaml:"min" validate:"omitempty"`
+	Max      *float64                   `json:"max" yaml:"max" validate:"omitempty"`
+	Options  []ToolParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type AgentStrategyOutputSchema map[string]any

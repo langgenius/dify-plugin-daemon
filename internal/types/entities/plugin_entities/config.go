@@ -162,6 +162,20 @@ func isScope(fl validator.FieldLevel) bool {
 		// 	return isToolSelectorScope(fl)
 		// }
 	}
+
+	if agentStrategyParameter, ok := parent.(AgentStrategyParameter); ok {
+		if agentStrategyParameter.Type == AGENT_STRATEGY_PARAMETER_TYPE_APP_SELECTOR {
+			return isAppSelectorScope(fl)
+		} else if agentStrategyParameter.Type == AGENT_STRATEGY_PARAMETER_TYPE_MODEL_SELECTOR {
+			return isModelConfigScope(fl)
+		} else {
+			return false
+		}
+
+		//else if agentStrategyParameter.Type == AGENT_STRATEGY_PARAMETER_TYPE_TOOLS_SELECTOR {
+		//	return isToolSelectorScope(fl)
+		//}
+	}
 	return false
 }
 
