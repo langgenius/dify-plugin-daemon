@@ -2,6 +2,7 @@ package plugin_entities
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -32,6 +33,8 @@ const (
 	MODEL_CONFIG_SCOPE_SPEECH2TEXT    ModelConfigScope = "speech2text"
 	MODEL_CONFIG_SCOPE_MODERATION     ModelConfigScope = "moderation"
 	MODEL_CONFIG_SCOPE_VISION         ModelConfigScope = "vision"
+	MODEL_CONFIG_SCOPE_DOCUMENT       ModelConfigScope = "document"
+	MODEL_CONFIG_SCOPE_TOOL_CALL      ModelConfigScope = "tool-call"
 )
 
 type AppSelectorScope string
@@ -72,39 +75,59 @@ type ConfigOption struct {
 
 func isModelConfigScope(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
-	switch value {
-	case string(MODEL_CONFIG_SCOPE_LLM),
-		string(MODEL_CONFIG_SCOPE_TEXT_EMBEDDING),
-		string(MODEL_CONFIG_SCOPE_RERANK),
-		string(MODEL_CONFIG_SCOPE_TTS),
-		string(MODEL_CONFIG_SCOPE_SPEECH2TEXT),
-		string(MODEL_CONFIG_SCOPE_MODERATION),
-		string(MODEL_CONFIG_SCOPE_VISION):
-		return true
+	// split by and symbol
+	scopes := strings.Split(value, "&")
+	for _, scope := range scopes {
+		// trim space
+		scope = strings.TrimSpace(scope)
+		switch scope {
+		case string(MODEL_CONFIG_SCOPE_LLM),
+			string(MODEL_CONFIG_SCOPE_TEXT_EMBEDDING),
+			string(MODEL_CONFIG_SCOPE_RERANK),
+			string(MODEL_CONFIG_SCOPE_TTS),
+			string(MODEL_CONFIG_SCOPE_SPEECH2TEXT),
+			string(MODEL_CONFIG_SCOPE_MODERATION),
+			string(MODEL_CONFIG_SCOPE_VISION),
+			string(MODEL_CONFIG_SCOPE_DOCUMENT),
+			string(MODEL_CONFIG_SCOPE_TOOL_CALL):
+			return true
+		}
 	}
 	return false
 }
 
 func isAppSelectorScope(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
-	switch value {
-	case string(APP_SELECTOR_SCOPE_ALL),
-		string(APP_SELECTOR_SCOPE_CHAT),
-		string(APP_SELECTOR_SCOPE_WORKFLOW),
-		string(APP_SELECTOR_SCOPE_COMPLETION):
-		return true
+	// split by and symbol
+	scopes := strings.Split(value, "&")
+	for _, scope := range scopes {
+		// trim space
+		scope = strings.TrimSpace(scope)
+		switch scope {
+		case string(APP_SELECTOR_SCOPE_ALL),
+			string(APP_SELECTOR_SCOPE_CHAT),
+			string(APP_SELECTOR_SCOPE_WORKFLOW),
+			string(APP_SELECTOR_SCOPE_COMPLETION):
+			return true
+		}
 	}
 	return false
 }
 
 func isToolSelectorScope(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
-	switch value {
-	case string(TOOL_SELECTOR_SCOPE_ALL),
-		string(TOOL_SELECTOR_SCOPE_PLUGIN),
-		string(TOOL_SELECTOR_SCOPE_API),
-		string(TOOL_SELECTOR_SCOPE_WORKFLOW):
-		return true
+	// split by and symbol
+	scopes := strings.Split(value, "&")
+	for _, scope := range scopes {
+		// trim space
+		scope = strings.TrimSpace(scope)
+		switch scope {
+		case string(TOOL_SELECTOR_SCOPE_ALL),
+			string(TOOL_SELECTOR_SCOPE_PLUGIN),
+			string(TOOL_SELECTOR_SCOPE_API),
+			string(TOOL_SELECTOR_SCOPE_WORKFLOW):
+			return true
+		}
 	}
 	return false
 }

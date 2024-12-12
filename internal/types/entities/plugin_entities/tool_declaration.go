@@ -83,7 +83,7 @@ type ToolParameter struct {
 	Label            I18nObject            `json:"label" yaml:"label" validate:"required"`
 	HumanDescription I18nObject            `json:"human_description" yaml:"human_description" validate:"required"`
 	Type             ToolParameterType     `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
-	Scope            *string               `json:"scope" yaml:"scope" validate:"omitempty,is_scope"`
+	Scope            *string               `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
 	Form             ToolParameterForm     `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
 	LLMDescription   string                `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
 	Required         bool                  `json:"required" yaml:"required"`
