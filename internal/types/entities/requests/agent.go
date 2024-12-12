@@ -1,11 +1,11 @@
 package requests
 
-type InvokeAgentSchema struct {
-	Provider    string         `json:"provider" validate:"required"`
-	Strategy    string         `json:"strategy" validate:"required"`
-	AgentParams map[string]any `json:"agent_params" validate:"omitempty"`
+type InvokeAgentStrategySchema struct {
+	AgentStrategyProvider string         `json:"agent_strategy_provider" validate:"required"`
+	AgentStrategy         string         `json:"agent_strategy" validate:"required"`
+	AgentStrategyParams   map[string]any `json:"agent_strategy_params" validate:"omitempty"`
 }
 
-type RequestInvokeAgent struct {
-	InvokeAgentSchema
+type RequestInvokeAgentStrategy struct {
+	InvokeAgentStrategySchema
 }

@@ -60,7 +60,7 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.POST("/tool/invoke", controllers.InvokeTool(config))
 	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials(config))
 	group.POST("/tool/get_runtime_parameters", controllers.GetToolRuntimeParameters(config))
-	group.POST("/agent/invoke", controllers.InvokeAgent(config))
+	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
 	group.POST("/llm/invoke", controllers.InvokeLLM(config))
 	group.POST("/llm/num_tokens", controllers.GetLLMNumTokens(config))
 	group.POST("/text_embedding/invoke", controllers.InvokeTextEmbedding(config))
@@ -134,8 +134,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
 	group.GET("/tool", gzip.Gzip(gzip.DefaultCompression), controllers.GetTool)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
-	group.GET("/agents", gzip.Gzip(gzip.DefaultCompression), controllers.ListAgents)
-	group.GET("/agent", gzip.Gzip(gzip.DefaultCompression), controllers.GetAgent)
+	group.GET("/agent_strategies", gzip.Gzip(gzip.DefaultCompression), controllers.ListAgentStrategies)
+	group.GET("/agent_strategy", gzip.Gzip(gzip.DefaultCompression), controllers.GetAgentStrategy)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {

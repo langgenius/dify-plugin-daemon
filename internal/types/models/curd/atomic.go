@@ -117,16 +117,16 @@ func InstallPlugin(
 		}
 
 		// create agent installation
-		if declaration.Agent != nil {
-			agentInstallation := &models.AgentInstallation{
+		if declaration.AgentStrategy != nil {
+			agentStrategyInstallation := &models.AgentStrategyInstallation{
 				PluginID:               pluginToBeReturns.PluginID,
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
-				Provider:               declaration.Agent.Identity.Name,
-				Declaration:            *declaration.Agent,
+				Provider:               declaration.AgentStrategy.Identity.Name,
+				Declaration:            *declaration.AgentStrategy,
 			}
 
-			err := db.Create(agentInstallation, tx)
+			err := db.Create(agentStrategyInstallation, tx)
 			if err != nil {
 				return err
 			}
@@ -246,14 +246,14 @@ func UninstallPlugin(
 		}
 
 		// delete agent installation
-		if declaration.Agent != nil {
-			agentInstallation := &models.AgentInstallation{
+		if declaration.AgentStrategy != nil {
+			agentStrategyInstallation := &models.AgentStrategyInstallation{
 				PluginID:               pluginToBeReturns.PluginID,
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 			}
 
-			err := db.DeleteByCondition(&agentInstallation, tx)
+			err := db.DeleteByCondition(&agentStrategyInstallation, tx)
 			if err != nil {
 				return err
 			}

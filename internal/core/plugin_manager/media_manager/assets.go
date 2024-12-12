@@ -104,9 +104,9 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		}
 	}
 
-	if declaration.Agent != nil {
-		if declaration.Agent.Identity.Icon != "" {
-			declaration.Agent.Identity.Icon, err = remap(declaration.Agent.Identity.Icon)
+	if declaration.AgentStrategy != nil {
+		if declaration.AgentStrategy.Identity.Icon != "" {
+			declaration.AgentStrategy.Identity.Icon, err = remap(declaration.AgentStrategy.Identity.Icon)
 			if err != nil {
 				return nil, errors.Join(err, fmt.Errorf("failed to remap agent icon"))
 			}

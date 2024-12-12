@@ -7,35 +7,35 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type AgentProviderIdentity struct {
+type AgentStrategyProviderIdentity struct {
 	ToolProviderIdentity `json:",inline" yaml:",inline"`
 }
 
-type AgentIdentity struct {
+type AgentStrategyIdentity struct {
 	ToolIdentity `json:",inline" yaml:",inline"`
 }
 
-type AgentParameter struct {
+type AgentStrategyParameter struct {
 	ToolParameter `json:",inline" yaml:",inline"`
 }
 
-type AgentOutputSchema map[string]any
+type AgentStrategyOutputSchema map[string]any
 
 type AgentStrategyDeclaration struct {
-	Identity     AgentIdentity     `json:"identity" yaml:"identity" validate:"required"`
-	Description  I18nObject        `json:"description" yaml:"description" validate:"required"`
-	Parameters   []AgentParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	OutputSchema AgentOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
+	Identity     AgentStrategyIdentity     `json:"identity" yaml:"identity" validate:"required"`
+	Description  I18nObject                `json:"description" yaml:"description" validate:"required"`
+	Parameters   []AgentStrategyParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
+	OutputSchema AgentStrategyOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
 }
 
-type AgentProviderDeclaration struct {
-	Identity      AgentProviderIdentity      `json:"identity" yaml:"identity" validate:"required"`
-	Strategies    []AgentStrategyDeclaration `json:"strategies" yaml:"strategies" validate:"required,dive"`
-	StrategyFiles []string                   `json:"-" yaml:"-"`
+type AgentStrategyProviderDeclaration struct {
+	Identity      AgentStrategyProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
+	Strategies    []AgentStrategyDeclaration    `json:"strategies" yaml:"strategies" validate:"required,dive"`
+	StrategyFiles []string                      `json:"-" yaml:"-"`
 }
 
-func (a *AgentProviderDeclaration) MarshalJSON() ([]byte, error) {
-	type alias AgentProviderDeclaration
+func (a *AgentStrategyProviderDeclaration) MarshalJSON() ([]byte, error) {
+	type alias AgentStrategyProviderDeclaration
 	p := alias(*a)
 	if p.Strategies == nil {
 		p.Strategies = []AgentStrategyDeclaration{}
@@ -43,10 +43,10 @@ func (a *AgentProviderDeclaration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p)
 }
 
-func (a *AgentProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
+func (a *AgentStrategyProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
-		Identity   AgentProviderIdentity `yaml:"identity"`
-		Strategies yaml.Node             `yaml:"strategies"`
+		Identity   AgentStrategyProviderIdentity `yaml:"identity"`
+		Strategies yaml.Node                     `yaml:"strategies"`
 	}
 
 	var temp alias
@@ -89,8 +89,8 @@ func (a *AgentProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (a *AgentProviderDeclaration) UnmarshalJSON(data []byte) error {
-	type alias AgentProviderDeclaration
+func (a *AgentStrategyProviderDeclaration) UnmarshalJSON(data []byte) error {
+	type alias AgentStrategyProviderDeclaration
 
 	var temp struct {
 		alias
@@ -101,7 +101,7 @@ func (a *AgentProviderDeclaration) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*a = AgentProviderDeclaration(temp.alias)
+	*a = AgentStrategyProviderDeclaration(temp.alias)
 
 	// unmarshal strategies
 	for _, item := range temp.Strategies {

@@ -16,9 +16,10 @@ import (
 type PluginCategory string
 
 const (
-	PLUGIN_CATEGORY_TOOL      PluginCategory = "tool"
-	PLUGIN_CATEGORY_MODEL     PluginCategory = "model"
-	PLUGIN_CATEGORY_EXTENSION PluginCategory = "extension"
+	PLUGIN_CATEGORY_TOOL           PluginCategory = "tool"
+	PLUGIN_CATEGORY_MODEL          PluginCategory = "model"
+	PLUGIN_CATEGORY_EXTENSION      PluginCategory = "extension"
+	PLUGIN_CATEGORY_AGENT_STRATEGY PluginCategory = "agent-strategy"
 )
 
 type PluginPermissionRequirement struct {
@@ -172,11 +173,11 @@ func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) erro
 
 type PluginDeclaration struct {
 	PluginDeclarationWithoutAdvancedFields `yaml:",inline"`
-	Verified                               bool                         `json:"verified" yaml:"verified"`
-	Endpoint                               *EndpointProviderDeclaration `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
-	Model                                  *ModelProviderDeclaration    `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
-	Tool                                   *ToolProviderDeclaration     `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
-	Agent                                  *AgentProviderDeclaration    `json:"agent,omitempty" yaml:"agent,omitempty" validate:"omitempty"`
+	Verified                               bool                              `json:"verified" yaml:"verified"`
+	Endpoint                               *EndpointProviderDeclaration      `json:"endpoint,omitempty" yaml:"endpoint,omitempty" validate:"omitempty"`
+	Model                                  *ModelProviderDeclaration         `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
+	Tool                                   *ToolProviderDeclaration          `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
+	AgentStrategy                          *AgentStrategyProviderDeclaration `json:"agent_strategy,omitempty" yaml:"agent_strategy,omitempty" validate:"omitempty"`
 }
 
 func (p *PluginDeclaration) Category() PluginCategory {
@@ -185,6 +186,9 @@ func (p *PluginDeclaration) Category() PluginCategory {
 	}
 	if p.Model != nil {
 		return PLUGIN_CATEGORY_MODEL
+	}
+	if p.AgentStrategy != nil {
+		return PLUGIN_CATEGORY_AGENT_STRATEGY
 	}
 	return PLUGIN_CATEGORY_EXTENSION
 }
@@ -197,11 +201,11 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 
 	// Then unmarshal the remaining fields
 	type PluginExtra struct {
-		Verified bool                         `json:"verified"`
-		Endpoint *EndpointProviderDeclaration `json:"endpoint,omitempty"`
-		Model    *ModelProviderDeclaration    `json:"model,omitempty"`
-		Tool     *ToolProviderDeclaration     `json:"tool,omitempty"`
-		Agent    *AgentProviderDeclaration    `json:"agent,omitempty"`
+		Verified      bool                              `json:"verified"`
+		Endpoint      *EndpointProviderDeclaration      `json:"endpoint,omitempty"`
+		Model         *ModelProviderDeclaration         `json:"model,omitempty"`
+		Tool          *ToolProviderDeclaration          `json:"tool,omitempty"`
+		AgentStrategy *AgentStrategyProviderDeclaration `json:"agent_strategy,omitempty"`
 	}
 
 	var extra PluginExtra
@@ -213,7 +217,7 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 	p.Endpoint = extra.Endpoint
 	p.Model = extra.Model
 	p.Tool = extra.Tool
-	p.Agent = extra.Agent
+	p.AgentStrategy = extra.AgentStrategy
 
 	return nil
 }
@@ -253,9 +257,9 @@ func (p *PluginDeclaration) ManifestValidate() error {
 		return fmt.Errorf("model and endpoint cannot be provided at the same time")
 	}
 
-	if p.Agent != nil {
+	if p.AgentStrategy != nil {
 		if p.Tool != nil || p.Model != nil || p.Endpoint != nil {
-			return fmt.Errorf("agent and tool, model, or endpoint cannot be provided at the same time")
+			return fmt.Errorf("agent_strategy and tool, model, or endpoint cannot be provided at the same time")
 		}
 	}
 

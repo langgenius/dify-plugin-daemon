@@ -267,8 +267,8 @@ func CheckToolExistence(tenantId string, providerIds []RequestCheckToolExistence
 	return entities.NewSuccessResponse(existence)
 }
 
-func ListAgents(tenant_id string, page int, page_size int) *entities.Response {
-	providers, err := db.GetAll[models.AgentInstallation](
+func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Response {
+	providers, err := db.GetAll[models.AgentStrategyInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Page(page, page_size),
 	)
@@ -280,8 +280,8 @@ func ListAgents(tenant_id string, page int, page_size int) *entities.Response {
 	return entities.NewSuccessResponse(providers)
 }
 
-func GetAgent(tenant_id string, plugin_id string, provider string) *entities.Response {
-	agent, err := db.GetOne[models.AgentInstallation](
+func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *entities.Response {
+	agent_strategy, err := db.GetOne[models.AgentStrategyInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Equal("plugin_id", plugin_id),
 	)
@@ -294,9 +294,9 @@ func GetAgent(tenant_id string, plugin_id string, provider string) *entities.Res
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	if agent.Provider != provider {
+	if agent_strategy.Provider != provider {
 		return exception.ErrPluginNotFound().ToResponse()
 	}
 
-	return entities.NewSuccessResponse(agent)
+	return entities.NewSuccessResponse(agent_strategy)
 }

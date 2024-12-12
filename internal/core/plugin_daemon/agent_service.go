@@ -15,17 +15,17 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-func InvokeAgent(
+func InvokeAgentStrategy(
 	session *session_manager.Session,
-	r *requests.RequestInvokeAgent,
-) (*stream.Stream[agent_entities.AgentResponseChunk], error) {
+	r *requests.RequestInvokeAgentStrategy,
+) (*stream.Stream[agent_entities.AgentStrategyResponseChunk], error) {
 	runtime := session.Runtime()
 	if runtime == nil {
 		return nil, errors.New("plugin not found")
 	}
 
 	response, err := GenericInvokePlugin[
-		requests.RequestInvokeAgent, agent_entities.AgentResponseChunk,
+		requests.RequestInvokeAgentStrategy, agent_entities.AgentStrategyResponseChunk,
 	](
 		session,
 		r,
@@ -36,24 +36,24 @@ func InvokeAgent(
 		return nil, err
 	}
 
-	agentDeclaration := runtime.Configuration().Agent
-	if agentDeclaration == nil {
+	agentStrategyDeclaration := runtime.Configuration().AgentStrategy
+	if agentStrategyDeclaration == nil {
 		return nil, errors.New("agent declaration not found")
 	}
 
-	var agentOutputSchema plugin_entities.AgentOutputSchema
-	for _, v := range agentDeclaration.Strategies {
-		if v.Identity.Name == r.Strategy {
-			agentOutputSchema = v.OutputSchema
+	var agentStrategyOutputSchema plugin_entities.AgentStrategyOutputSchema
+	for _, v := range agentStrategyDeclaration.Strategies {
+		if v.Identity.Name == r.AgentStrategy {
+			agentStrategyOutputSchema = v.OutputSchema
 		}
 	}
 
-	newResponse := stream.NewStream[agent_entities.AgentResponseChunk](128)
+	newResponse := stream.NewStream[agent_entities.AgentStrategyResponseChunk](128)
 	routine.Submit(map[string]string{
-		"module":         "plugin_daemon",
-		"function":       "InvokeAgent",
-		"agent_name":     r.Strategy,
-		"agent_provider": r.Provider,
+		"module":                  "plugin_daemon",
+		"function":                "InvokeAgentStrategy",
+		"agent_strategy_name":     r.AgentStrategy,
+		"agent_strategy_provider": r.AgentStrategyProvider,
 	}, func() {
 		files := make(map[string]*bytes.Buffer)
 		defer newResponse.Close()
@@ -94,7 +94,7 @@ func InvokeAgent(
 				}
 
 				if end {
-					newResponse.Write(agent_entities.AgentResponseChunk{
+					newResponse.Write(agent_entities.AgentStrategyResponseChunk{
 						ToolResponseChunk: tool_entities.ToolResponseChunk{
 							Type: tool_entities.ToolResponseChunkTypeBlob,
 							Message: map[string]any{
@@ -131,20 +131,20 @@ func InvokeAgent(
 	})
 
 	// bind json schema validator
-	bindAgentValidator(response, agentOutputSchema)
+	bindAgentStrategyValidator(response, agentStrategyOutputSchema)
 
 	return newResponse, nil
 }
 
 // TODO: reduce implementation of bindAgentValidator, it's a copy of bindToolValidator now
-func bindAgentValidator(
-	response *stream.Stream[agent_entities.AgentResponseChunk],
-	agentOutputSchema plugin_entities.AgentOutputSchema,
+func bindAgentStrategyValidator(
+	response *stream.Stream[agent_entities.AgentStrategyResponseChunk],
+	agentStrategyOutputSchema plugin_entities.AgentStrategyOutputSchema,
 ) {
 	// check if the tool_output_schema is valid
 	variables := make(map[string]any)
 
-	response.Filter(func(trc agent_entities.AgentResponseChunk) error {
+	response.Filter(func(trc agent_entities.AgentStrategyResponseChunk) error {
 		if trc.Type == tool_entities.ToolResponseChunkTypeVariable {
 			variableName, ok := trc.Message["variable_name"].(string)
 			if !ok {
@@ -184,7 +184,7 @@ func bindAgentValidator(
 
 	response.BeforeClose(func() {
 		// validate the variables
-		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(agentOutputSchema))
+		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(agentStrategyOutputSchema))
 		if err != nil {
 			response.WriteError(err)
 			return

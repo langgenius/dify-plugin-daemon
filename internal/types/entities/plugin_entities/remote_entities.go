@@ -10,14 +10,14 @@ type RemoteAssetPayload struct {
 type RemotePluginRegisterEventType string
 
 const (
-	REGISTER_EVENT_TYPE_HAND_SHAKE           RemotePluginRegisterEventType = "handshake"
-	REGISTER_EVENT_TYPE_ASSET_CHUNK          RemotePluginRegisterEventType = "asset_chunk"
-	REGISTER_EVENT_TYPE_MANIFEST_DECLARATION RemotePluginRegisterEventType = "manifest_declaration"
-	REGISTER_EVENT_TYPE_TOOL_DECLARATION     RemotePluginRegisterEventType = "tool_declaration"
-	REGISTER_EVENT_TYPE_MODEL_DECLARATION    RemotePluginRegisterEventType = "model_declaration"
-	REGISTER_EVENT_TYPE_ENDPOINT_DECLARATION RemotePluginRegisterEventType = "endpoint_declaration"
-	REGISTER_EVENT_TYPE_AGENT_DECLARATION    RemotePluginRegisterEventType = "agent_declaration"
-	REGISTER_EVENT_TYPE_END                  RemotePluginRegisterEventType = "end"
+	REGISTER_EVENT_TYPE_HAND_SHAKE                 RemotePluginRegisterEventType = "handshake"
+	REGISTER_EVENT_TYPE_ASSET_CHUNK                RemotePluginRegisterEventType = "asset_chunk"
+	REGISTER_EVENT_TYPE_MANIFEST_DECLARATION       RemotePluginRegisterEventType = "manifest_declaration"
+	REGISTER_EVENT_TYPE_TOOL_DECLARATION           RemotePluginRegisterEventType = "tool_declaration"
+	REGISTER_EVENT_TYPE_MODEL_DECLARATION          RemotePluginRegisterEventType = "model_declaration"
+	REGISTER_EVENT_TYPE_ENDPOINT_DECLARATION       RemotePluginRegisterEventType = "endpoint_declaration"
+	REGISTER_EVENT_TYPE_AGENT_STRATEGY_DECLARATION RemotePluginRegisterEventType = "agent_strategy_declaration"
+	REGISTER_EVENT_TYPE_END                        RemotePluginRegisterEventType = "end"
 )
 
 type RemotePluginRegisterAssetChunk struct {

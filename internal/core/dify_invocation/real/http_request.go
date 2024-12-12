@@ -98,6 +98,8 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 				newResponse.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
 				break
 			}
+
+			newResponse.Write(*t.Data)
 		}
 	})
 

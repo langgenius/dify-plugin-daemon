@@ -12,16 +12,16 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-func InvokeAgent(
-	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeAgent],
+func InvokeAgentStrategy(
+	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeAgentStrategy],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	// create session
 	session, err := createSession(
 		r,
-		access_types.PLUGIN_ACCESS_TYPE_AGENT,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_AGENT,
+		access_types.PLUGIN_ACCESS_TYPE_AGENT_STRATEGY,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY,
 		ctx.GetString("cluster_id"),
 	)
 	if err != nil {
@@ -33,8 +33,8 @@ func InvokeAgent(
 	})
 
 	baseSSEService(
-		func() (*stream.Stream[agent_entities.AgentResponseChunk], error) {
-			return plugin_daemon.InvokeAgent(session, &r.Data)
+		func() (*stream.Stream[agent_entities.AgentStrategyResponseChunk], error) {
+			return plugin_daemon.InvokeAgentStrategy(session, &r.Data)
 		},
 		ctx,
 		max_timeout_seconds,

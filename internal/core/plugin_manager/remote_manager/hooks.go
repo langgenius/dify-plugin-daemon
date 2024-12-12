@@ -272,7 +272,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			if !runtime.modelsRegistrationTransferred &&
 				!runtime.endpointsRegistrationTransferred &&
 				!runtime.toolsRegistrationTransferred &&
-				!runtime.agentsRegistrationTransferred {
+				!runtime.agentStrategyRegistrationTransferred {
 				closeConn([]byte("no registration transferred, cannot initialize\n"))
 				return
 			}
@@ -402,22 +402,22 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 				declaration.Endpoint = &endpoints[0]
 				runtime.Config = declaration
 			}
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_AGENT_DECLARATION {
-			if runtime.agentsRegistrationTransferred {
+		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_AGENT_STRATEGY_DECLARATION {
+			if runtime.agentStrategyRegistrationTransferred {
 				return
 			}
 
-			agents, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.AgentProviderDeclaration](registerPayload.Data)
+			agents, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.AgentStrategyProviderDeclaration](registerPayload.Data)
 			if err != nil {
-				closeConn([]byte(fmt.Sprintf("agents register failed, invalid agents declaration: %v\n", err)))
+				closeConn([]byte(fmt.Sprintf("agent strategies register failed, invalid agent strategies declaration: %v\n", err)))
 				return
 			}
 
-			runtime.agentsRegistrationTransferred = true
+			runtime.agentStrategyRegistrationTransferred = true
 
 			if len(agents) > 0 {
 				declaration := runtime.Config
-				declaration.Agent = &agents[0]
+				declaration.AgentStrategy = &agents[0]
 				runtime.Config = declaration
 			}
 		}

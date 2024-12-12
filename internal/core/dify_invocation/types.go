@@ -34,6 +34,7 @@ const (
 )
 
 type InvokeLLMSchema struct {
+	Mode             string                             `json:"mode" validate:"required"`
 	CompletionParams map[string]any                     `json:"completion_params"  validate:"omitempty"`
 	PromptMessages   []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
 	Tools            []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
