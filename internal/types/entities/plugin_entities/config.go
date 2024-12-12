@@ -62,7 +62,8 @@ func isCredentialType(fl validator.FieldLevel) bool {
 		string(CONFIG_TYPE_TEXT_INPUT),
 		string(CONFIG_TYPE_SELECT),
 		string(CONFIG_TYPE_BOOLEAN),
-		string(CONFIG_TYPE_APP_SELECTOR):
+		string(CONFIG_TYPE_APP_SELECTOR),
+		string(CONFIG_TYPE_MODEL_SELECTOR):
 		return true
 	}
 	return false
