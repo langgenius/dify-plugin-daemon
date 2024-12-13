@@ -153,11 +153,13 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 			break
 		} else if err != nil {
 			ctx.Writer.Write(buf[:n])
+			ctx.Writer.Flush()
 			break
 		}
 
 		if n > 0 {
 			ctx.Writer.Write(buf[:n])
+			ctx.Writer.Flush()
 		}
 	}
 }
