@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"sync/atomic"
 	"time"
 
@@ -40,11 +41,21 @@ func Endpoint(
 	req := ctx.Request.Clone(context.Background())
 	req.URL.Path = path
 
-	var buffer bytes.Buffer
-	err := req.Write(&buffer)
-
+	// read request body until complete, max 10MB
+	body, err := io.ReadAll(io.LimitReader(req.Body, 10*1024*1024))
 	if err != nil {
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
+		return
+	}
+
+	var buffer bytes.Buffer
+	req.Body = io.NopCloser(bytes.NewReader(body))
+	req.ContentLength = int64(len(body))
+	req.TransferEncoding = nil
+	err = req.Write(&buffer)
+	if err != nil {
+		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
+		return
 	}
 
 	identifier, err := plugin_entities.NewPluginUniqueIdentifier(pluginInstallation.PluginUniqueIdentifier)
