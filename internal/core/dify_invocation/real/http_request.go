@@ -90,13 +90,12 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 				break
 			}
 
-			// check if t.Data is a map[string]any
-			if reflect.TypeOf(*t.Data).Kind() == reflect.Map {
-				newResponse.Write(*t.Data)
-				break
-			} else if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
-				newResponse.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
-				break
+			// check if t.Data is a map[string]any, skip validation if it is
+			if reflect.TypeOf(*t.Data).Kind() != reflect.Map {
+				if err := validators.GlobalEntitiesValidator.Struct(t.Data); err != nil {
+					newResponse.WriteError(fmt.Errorf("validate request failed: %s", err.Error()))
+					break
+				}
 			}
 
 			newResponse.Write(*t.Data)
