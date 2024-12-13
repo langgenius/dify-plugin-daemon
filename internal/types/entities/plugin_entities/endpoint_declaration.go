@@ -40,6 +40,7 @@ func init() {
 type EndpointDeclaration struct {
 	Path   string         `json:"path" yaml:"path" validate:"required"`
 	Method EndpointMethod `json:"method" yaml:"method" validate:"required,is_available_endpoint_method"`
+	Hidden bool           `json:"hidden" yaml:"hidden" validate:"omitempty"`
 }
 
 type EndpointProviderDeclaration struct {
