@@ -29,7 +29,7 @@ func (l language) Language() constants.Language {
 
 func (l language) View() string {
 	s := `Select the language you want to use for plugin development, and press ` + GREEN + `Enter` + RESET + ` to continue, 
-BTW, you need Python 3.10+ to develop the Plugin if you choose Python.
+BTW, you need Python 3.12+ to develop the Plugin if you choose Python.
 `
 	for i, language := range languages {
 		if i == l.cursor {

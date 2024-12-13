@@ -132,9 +132,10 @@ type PluginMeta struct {
 }
 
 type PluginExtensions struct {
-	Tools     []string `json:"tools" yaml:"tools,omitempty" validate:"omitempty,dive,max=128"`
-	Models    []string `json:"models" yaml:"models,omitempty" validate:"omitempty,dive,max=128"`
-	Endpoints []string `json:"endpoints" yaml:"endpoints,omitempty" validate:"omitempty,dive,max=128"`
+	Tools           []string `json:"tools" yaml:"tools,omitempty" validate:"omitempty,dive,max=128"`
+	Models          []string `json:"models" yaml:"models,omitempty" validate:"omitempty,dive,max=128"`
+	Endpoints       []string `json:"endpoints" yaml:"endpoints,omitempty" validate:"omitempty,dive,max=128"`
+	AgentStrategies []string `json:"agent_strategies" yaml:"agent_strategies,omitempty" validate:"omitempty,dive,max=128"`
 }
 
 type PluginDeclarationWithoutAdvancedFields struct {

@@ -21,13 +21,15 @@ const PLUGIN_GUIDE = `But before starting, you need some basic knowledge about t
 ` + "\n" + BOLD + `- Tool` + RESET + `: ` + GREEN + `Tool Providers like Google Search, Stable Diffusion, etc. it can be used to perform a specific task.` + RESET + `
 ` + BOLD + `- Model` + RESET + `: ` + GREEN + `Model Providers like OpenAI, Anthropic, etc. you can use their models to enhance the AI capabilities.` + RESET + `
 ` + BOLD + `- Endpoint` + RESET + `: ` + GREEN + `Like Service API in Dify and Ingress in Kubernetes, you can extend a http service as an endpoint and control its logics using your own code.` + RESET + `
+` + BOLD + `- Agent Strategy` + RESET + `: ` + GREEN + `You can implement your own agent strategy like Function Calling, ReAct, ToT, Cot, etc. anyway you want.` + RESET + `
 
-Based on the ability you want to extend, we have divided the Plugin into three types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, and ` + BOLD + `Extension` + RESET + `.
+Based on the ability you want to extend, we have divided the Plugin into four types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, ` + BOLD + `Extension` + RESET + `, and ` + BOLD + `Agent Strategy` + RESET + `.
 
 ` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `It's a tool provider, but not only limited to tools, you can implement an endpoint there, for example, you need both ` + BLUE + `Sending Message` + RESET + YELLOW + ` and ` + BLUE + `Receiving Message` + RESET + YELLOW + ` if you are building a Discord Bot, ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` are both required.` + RESET + `
 ` + BOLD + `- Model` + RESET + `: ` + YELLOW + `Just a model provider, extending others is not allowed.` + RESET + `
 ` + BOLD + `- Extension` + RESET + `: ` + YELLOW + `Other times, you may only need a simple http service to extend the functionalities, ` + BOLD + `Extension` + RESET + YELLOW + ` is the right choice for you.` + RESET + `
-` + `
+` + BOLD + `- Agent Strategy` + RESET + `: ` + YELLOW + `Implement your own logics here, just by focusing on Agent itself` + RESET + `
+
 What's more, we have provided the template for you, you can choose one of them below:
 `
 
@@ -37,6 +39,7 @@ type category struct {
 
 var categories = []string{
 	"tool",
+	"agent-strategy",
 	"llm",
 	"text-embedding",
 	"rerank",

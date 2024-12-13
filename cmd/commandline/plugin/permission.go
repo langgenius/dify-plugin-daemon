@@ -37,9 +37,10 @@ type permission struct {
 	storageSizeEditor ti.Model
 }
 
-func newPermission() permission {
+func newPermission(defaultPermission plugin_entities.PluginPermissionRequirement) permission {
 	return permission{
 		cursor:            permissionKeySeq[0],
+		permission:        defaultPermission,
 		storageSizeEditor: ti.New(),
 	}
 }
@@ -285,6 +286,10 @@ func (p permission) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 	return p, SUB_MENU_EVENT_NONE, nil
 }
 
+func (p *permission) UpdatePermission(permission plugin_entities.PluginPermissionRequirement) {
+	p.permission = permission
+}
+
 func (p permission) Init() tea.Cmd {
 	return nil
 }
@@ -322,11 +327,14 @@ func EditPermission(pluginPath string) {
 		return
 	}
 
+	if manifest.Resource.Permission == nil {
+		manifest.Resource.Permission = &plugin_entities.PluginPermissionRequirement{}
+	}
+
 	// create a new permission
 	m := permissionModel{
-		permission: newPermission(),
+		permission: newPermission(*manifest.Resource.Permission),
 	}
-	m.permission.permission = *manifest.Resource.Permission
 
 	p := tea.NewProgram(m)
 	if result, err := p.Run(); err != nil {

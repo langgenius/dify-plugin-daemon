@@ -58,7 +58,7 @@ func initialize() model {
 		SUB_MENU_KEY_PROFILE:    newProfile(),
 		SUB_MENU_KEY_LANGUAGE:   newLanguage(),
 		SUB_MENU_KEY_CATEGORY:   newCategory(),
-		SUB_MENU_KEY_PERMISSION: newPermission(),
+		SUB_MENU_KEY_PERMISSION: newPermission(plugin_entities.PluginPermissionRequirement{}),
 	}
 	m.currentSubMenu = SUB_MENU_KEY_PROFILE
 
@@ -86,6 +86,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// move the current sub menu to the next one
 			for i, key := range m.subMenuSeq {
 				if key == m.currentSubMenu {
+					// check if the next sub menu is permission
+					if key == SUB_MENU_KEY_CATEGORY {
+						// get the type of current category
+						category := m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category()
+						if category == "agent-strategy" {
+							// update the permission to add tool and model invocation
+							perm := m.subMenus[SUB_MENU_KEY_PERMISSION].(permission)
+							perm.UpdatePermission(plugin_entities.PluginPermissionRequirement{
+								Tool: &plugin_entities.PluginPermissionToolRequirement{
+									Enabled: true,
+								},
+								Model: &plugin_entities.PluginPermissionModelRequirement{
+									Enabled: true,
+									LLM:     true,
+								},
+							})
+							m.subMenus[SUB_MENU_KEY_PERMISSION] = perm
+						}
+					}
 					m.currentSubMenu = m.subMenuSeq[i+1]
 					break
 				}
@@ -149,6 +168,10 @@ func (m model) createPlugin() {
 
 	if categoryString == "extension" {
 		manifest.Plugins.Endpoints = []string{fmt.Sprintf("group/%s.yaml", manifest.Name)}
+	}
+
+	if categoryString == "agent-strategy" {
+		manifest.Plugins.AgentStrategies = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
 	manifest.Meta = plugin_entities.PluginMeta{

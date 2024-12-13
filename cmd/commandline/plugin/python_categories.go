@@ -239,3 +239,34 @@ func createPythonModelProvider(root string, manifest *plugin_entities.PluginDecl
 
 	return nil
 }
+
+func createPythonAgentStrategy(root string, manifest *plugin_entities.PluginDeclaration) error {
+	agentFileContent, err := renderTemplate(PYTHON_AGENT_PROVIDER_MANIFEST_TEMPLATE, manifest, []string{"agent"})
+	if err != nil {
+		return err
+	}
+	agentFilePath := filepath.Join(root, "provider", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(agentFilePath, agentFileContent); err != nil {
+		return err
+	}
+
+	agentStrategyFileContent, err := renderTemplate(PYTHON_AGENT_STRATEGY_MANIFEST_TEMPLATE, manifest, []string{"agent"})
+	if err != nil {
+		return err
+	}
+	agentStrategyFilePath := filepath.Join(root, "strategies", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(agentStrategyFilePath, agentStrategyFileContent); err != nil {
+		return err
+	}
+
+	agentStrategyPyFileContent, err := renderTemplate(PYTHON_AGENT_STRATEGY_TEMPLATE, manifest, []string{"agent"})
+	if err != nil {
+		return err
+	}
+	agentStrategyPyFilePath := filepath.Join(root, "strategies", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(agentStrategyPyFilePath, agentStrategyPyFileContent); err != nil {
+		return err
+	}
+
+	return nil
+}

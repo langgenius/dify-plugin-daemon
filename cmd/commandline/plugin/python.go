@@ -82,6 +82,15 @@ var PYTHON_ENDPOINT_TEMPLATE []byte
 //go:embed templates/python/endpoint.yaml
 var PYTHON_ENDPOINT_MANIFEST_TEMPLATE []byte
 
+//go:embed templates/python/agent_provider.yaml
+var PYTHON_AGENT_PROVIDER_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/agent_strategy.yaml
+var PYTHON_AGENT_STRATEGY_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/agent_strategy.py
+var PYTHON_AGENT_STRATEGY_TEMPLATE []byte
+
 //go:embed templates/python/GUIDE.md
 var PYTHON_GUIDE []byte
 
@@ -102,7 +111,6 @@ func renderTemplate(
 		"PluginDescription":   manifest.Description.EnUS,
 		"SupportedModelTypes": supported_model_types,
 		"Version":             manifest.Version,
-		"Date":                manifest.CreatedAt,
 		"Category":            manifest.Category(),
 	}); err != nil {
 		return "", err
@@ -199,6 +207,12 @@ func createPythonEnvironment(
 
 	if category == "tts" {
 		if err := createPythonTTS(root, manifest); err != nil {
+			return err
+		}
+	}
+
+	if category == "agent-strategy" {
+		if err := createPythonAgentStrategy(root, manifest); err != nil {
 			return err
 		}
 	}

@@ -1,0 +1,13 @@
+identity:
+  author: {{ .Author }}
+  name: {{ .PluginName }}
+  label:
+    en_US: {{ .PluginName | SnakeToCamel }}
+  description:
+    en_US: {{ .PluginName | SnakeToCamel }}
+  icon: icon.svg
+strategies:
+  - strategies/{{ .PluginName }}.yaml
+extra:
+  python:
+    source: provider/{{ .PluginName }}.py
