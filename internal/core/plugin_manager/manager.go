@@ -61,6 +61,9 @@ type PluginManager struct {
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
+
+	// platform, local or aws_lambda
+	platform app.PlatformType
 }
 
 var (
@@ -88,6 +91,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		localPluginLaunchingLock: lock.NewGranularityLock(),
 		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
 		pythonInterpreterPath:    configuration.PythonInterpreterPath,
+		platform:                 configuration.Platform,
 	}
 
 	return manager
@@ -100,17 +104,21 @@ func Manager() *PluginManager {
 func (p *PluginManager) Get(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginLifetime, error) {
-	if v, ok := p.m.Load(identity.String()); ok {
-		return v, nil
-	}
+	if identity.RemoteLike() || p.platform == app.PLATFORM_LOCAL {
+		// check if it's a debugging plugin or a local plugin
+		if v, ok := p.m.Load(identity.String()); ok {
+			return v, nil
+		}
+		return nil, errors.New("plugin not found")
+	} else {
+		// otherwise, use serverless runtime instead
+		pluginSessionInterface, err := p.getServerlessPluginRuntime(identity)
+		if err != nil {
+			return nil, err
+		}
 
-	// check if plugin is a serverless runtime
-	pluginSessionInterface, err := p.getServerlessPluginRuntime(identity)
-	if err != nil {
-		return nil, err
+		return pluginSessionInterface, nil
 	}
-
-	return pluginSessionInterface, nil
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {
