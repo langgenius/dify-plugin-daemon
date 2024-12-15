@@ -48,10 +48,20 @@ func Endpoint(
 		return
 	}
 
-	var buffer bytes.Buffer
+	// replace with a new reader
 	req.Body = io.NopCloser(bytes.NewReader(body))
 	req.ContentLength = int64(len(body))
 	req.TransferEncoding = nil
+
+	// remove ip traces for security
+	req.Header.Del("X-Forwarded-For")
+	req.Header.Del("X-Real-IP")
+	req.Header.Del("X-Forwarded")
+	req.Header.Del("X-Original-Forwarded-For")
+	req.Header.Del("X-Original-Url")
+	req.Header.Del("X-Original-Host")
+
+	var buffer bytes.Buffer
 	err = req.Write(&buffer)
 	if err != nil {
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
@@ -157,7 +167,8 @@ func Endpoint(
 		for response.Next() {
 			chunk, err := response.Read()
 			if err != nil {
-				ctx.JSON(500, exception.InternalServerError(err).ToResponse())
+				ctx.Writer.Write([]byte(err.Error()))
+				ctx.Writer.Flush()
 				return
 			}
 			ctx.Writer.Write(chunk)

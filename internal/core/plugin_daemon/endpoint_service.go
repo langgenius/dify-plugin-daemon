@@ -69,6 +69,7 @@ func InvokeEndpoint(
 				for resp.Next() {
 					chunk, err := resp.Read()
 					if err != nil {
+						response.WriteError(err)
 						return
 					}
 
