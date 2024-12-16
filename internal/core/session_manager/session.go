@@ -150,6 +150,10 @@ func (s *Session) Runtime() plugin_entities.PluginLifetime {
 	return s.runtime
 }
 
+func (s *Session) BindBackwardsInvocation(backwardsInvocation dify_invocation.BackwardsInvocation) {
+	s.backwardsInvocation = backwardsInvocation
+}
+
 func (s *Session) BackwardsInvocation() dify_invocation.BackwardsInvocation {
 	return s.backwardsInvocation
 }

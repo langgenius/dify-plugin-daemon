@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -91,6 +92,10 @@ func (h *AWSTransactionHandler) Handle(
 				writer.Close()
 				return
 			}
+
+			// bind the backwards invocation
+			plugin_manager := plugin_manager.Manager()
+			session.BindBackwardsInvocation(plugin_manager.BackwardsInvocation())
 
 			awsResponseWriter := NewAWSTransactionWriter(session, writer)
 
