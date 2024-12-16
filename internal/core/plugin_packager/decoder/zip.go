@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -48,6 +49,28 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 	}
 
 	return decoder, nil
+}
+
+// NewZipPluginDecoderWithSizeLimit is a helper function to create a ZipPluginDecoder with a size limit
+// It checks the total uncompressed size of the plugin package and returns an error if it exceeds the max size
+func NewZipPluginDecoderWithSizeLimit(binary []byte, maxSize int64) (*ZipPluginDecoder, error) {
+	reader, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary)))
+	if err != nil {
+		return nil, errors.New(strings.ReplaceAll(err.Error(), "zip", "difypkg"))
+	}
+
+	totalSize := int64(0)
+	for _, file := range reader.File {
+		totalSize += int64(file.UncompressedSize64)
+		if totalSize > maxSize {
+			return nil, errors.New(
+				"plugin package size is too large, please ensure the uncompressed size is less than " +
+					strconv.FormatInt(maxSize, 10) + " bytes",
+			)
+		}
+	}
+
+	return NewZipPluginDecoder(binary)
 }
 
 func (z *ZipPluginDecoder) Stat(filename string) (fs.FileInfo, error) {

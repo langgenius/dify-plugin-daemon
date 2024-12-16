@@ -29,7 +29,7 @@ func UploadPluginPkg(
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	decoder, err := decoder.NewZipPluginDecoder(pluginFile)
+	decoder, err := decoder.NewZipPluginDecoderWithSizeLimit(pluginFile, config.MaxPluginPackageSize)
 	if err != nil {
 		return exception.BadRequestError(err).ToResponse()
 	}

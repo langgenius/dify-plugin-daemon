@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -98,11 +97,6 @@ func (p *Packager) Pack() (*os.File, error) {
 		state, err := p.decoder.Stat(fullFilename)
 		if err != nil {
 			return err
-		}
-
-		if state.Size() > 1024*1024*10 {
-			// 10MB, 1 single file is too large
-			return fmt.Errorf("file size is too large: %s, max 10MB", fullFilename)
 		}
 
 		tarHeader, err := tar.FileInfoHeader(state, fullFilename)

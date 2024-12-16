@@ -94,6 +94,12 @@ var PYTHON_AGENT_STRATEGY_TEMPLATE []byte
 //go:embed templates/python/GUIDE.md
 var PYTHON_GUIDE []byte
 
+//go:embed templates/python/.difyignore
+var PYTHON_DIFYIGNORE []byte
+
+//go:embed templates/python/.gitignore
+var PYTHON_GITIGNORE []byte
+
 func renderTemplate(
 	original_template []byte, manifest *plugin_entities.PluginDeclaration, supported_model_types []string,
 ) (string, error) {
@@ -146,6 +152,14 @@ func createPythonEnvironment(
 
 	requirementsFilePath := filepath.Join(root, "requirements.txt")
 	if err := os.WriteFile(requirementsFilePath, PYTHON_REQUIREMENTS_TEMPLATE, 0o644); err != nil {
+		return err
+	}
+
+	if err := writeFile(filepath.Join(root, ".difyignore"), string(PYTHON_DIFYIGNORE)); err != nil {
+		return err
+	}
+
+	if err := writeFile(filepath.Join(root, ".gitignore"), string(PYTHON_GITIGNORE)); err != nil {
 		return err
 	}
 

@@ -120,7 +120,7 @@ func TestPackagerAndVerifier(t *testing.T) {
 	packager := packager.NewPackager(originDecoder)
 
 	// pack
-	zip, err := packager.Pack()
+	zip, err := packager.Pack(52428800)
 	if err != nil {
 		t.Errorf("failed to pack: %s", err.Error())
 		return
@@ -202,7 +202,7 @@ func TestWrongSign(t *testing.T) {
 	packager := packager.NewPackager(originDecoder)
 
 	// pack
-	zip, err := packager.Pack()
+	zip, err := packager.Pack(52428800)
 	if err != nil {
 		t.Errorf("failed to pack: %s", err.Error())
 		return
