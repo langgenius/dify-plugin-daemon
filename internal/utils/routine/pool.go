@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/panjf2000/ants"
 )
@@ -21,7 +22,7 @@ func IsInit() bool {
 	return p != nil
 }
 
-func InitPool(size int) {
+func InitPool(size int, sentryOption ...sentry.ClientOptions) {
 	l.Lock()
 	defer l.Unlock()
 	if p != nil {
@@ -29,6 +30,12 @@ func InitPool(size int) {
 	}
 	log.Info("init routine pool, size: %d", size)
 	p, _ = ants.NewPool(size, ants.WithNonblocking(false))
+
+	if len(sentryOption) > 0 {
+		if err := sentry.Init(sentryOption[0]); err != nil {
+			log.Error("init sentry failed, error: %v", err)
+		}
+	}
 }
 
 func Submit(labels map[string]string, f func()) {
@@ -44,6 +51,7 @@ func Submit(labels map[string]string, f func()) {
 			}
 		}
 		pprof.Do(context.Background(), pprof.Labels(label...), func(ctx context.Context) {
+			defer sentry.Recover()
 			f()
 		})
 	})

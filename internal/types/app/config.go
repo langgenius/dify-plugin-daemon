@@ -86,6 +86,13 @@ type Config struct {
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
+
+	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`
+	SentryDSN              string  `envconfig:"SENTRY_DSN"`
+	SentryAttachStacktrace bool    `envconfig:"SENTRY_ATTACH_STACKTRACE"`
+	SentryTracingEnabled   bool    `envconfig:"SENTRY_TRACING_ENABLED"`
+	SentryTracesSampleRate float64 `envconfig:"SENTRY_TRACES_SAMPLE_RATE"`
+	SentrySampleRate       float64 `envconfig:"SENTRY_SAMPLE_RATE"`
 }
 
 func (c *Config) Validate() error {

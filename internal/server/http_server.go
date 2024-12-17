@@ -13,10 +13,17 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+
+	sentrygin "github.com/getsentry/sentry-go/gin"
 )
 
 func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
+	if config.SentryEnabled {
+		engine.Use(sentrygin.New(sentrygin.Options{
+			Repanic: true,
+		}))
+	}
 	engine.GET("/health/check", controllers.HealthCheck)
 
 	app.endpointGroup(engine.Group("/e"), config)

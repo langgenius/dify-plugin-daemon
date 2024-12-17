@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -38,7 +39,17 @@ func initOSS(config *app.Config) oss.OSS {
 
 func (app *App) Run(config *app.Config) {
 	// init routine pool
-	routine.InitPool(config.RoutinePoolSize)
+	if config.SentryEnabled {
+		routine.InitPool(config.RoutinePoolSize, sentry.ClientOptions{
+			Dsn:              config.SentryDSN,
+			AttachStacktrace: config.SentryAttachStacktrace,
+			TracesSampleRate: config.SentryTracesSampleRate,
+			SampleRate:       config.SentrySampleRate,
+			EnableTracing:    config.SentryTracingEnabled,
+		})
+	} else {
+		routine.InitPool(config.RoutinePoolSize)
+	}
 
 	// init db
 	db.Init(config)
