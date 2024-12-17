@@ -22,7 +22,7 @@ func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
 	engine.GET("/health/check", controllers.HealthCheck)
 
-	endpointGroup := engine.Group("/endpoint")
+	endpointGroup := engine.Group("/e")
 	awsLambdaTransactionGroup := engine.Group("/backwards-invocation")
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
