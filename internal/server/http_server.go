@@ -17,19 +17,34 @@ import (
 	sentrygin "github.com/getsentry/sentry-go/gin"
 )
 
+// server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
-	if config.SentryEnabled {
-		engine.Use(sentrygin.New(sentrygin.Options{
-			Repanic: true,
-		}))
-	}
 	engine.GET("/health/check", controllers.HealthCheck)
 
-	app.endpointGroup(engine.Group("/e"), config)
-	app.awsLambdaTransactionGroup(engine.Group("/backwards-invocation"), config)
-	app.pluginGroup(engine.Group("/plugin/:tenant_id"), config)
-	app.pprofGroup(engine.Group("/debug/pprof"), config)
+	endpointGroup := engine.Group("/endpoint")
+	awsLambdaTransactionGroup := engine.Group("/backwards-invocation")
+	pluginGroup := engine.Group("/plugin/:tenant_id")
+	pprofGroup := engine.Group("/debug/pprof")
+
+	if config.SentryEnabled {
+		// setup sentry for all groups
+		sentryGroup := []*gin.RouterGroup{
+			endpointGroup,
+			awsLambdaTransactionGroup,
+			pluginGroup,
+		}
+		for _, group := range sentryGroup {
+			group.Use(sentrygin.New(sentrygin.Options{
+				Repanic: true,
+			}))
+		}
+	}
+
+	app.endpointGroup(endpointGroup, config)
+	app.awsLambdaTransactionGroup(awsLambdaTransactionGroup, config)
+	app.pluginGroup(pluginGroup, config)
+	app.pprofGroup(pprofGroup, config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.ServerPort),
