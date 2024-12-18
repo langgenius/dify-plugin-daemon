@@ -13,7 +13,7 @@ class Dify < Formula
     if Hardware::CPU.intel?
       url "https://github.com/langgenius/dify-plugin-daemon/releases/download/0.0.1-beta.20/dify-plugin-linux-amd64"
     elsif Hardware::CPU.arm?
-      url "https://github.com/langgenius/dify-plugin-daemon/releases/download/0.0.1-beta.20/dify-plugin-linux-arm64"
+      url "https://github.com/langgenius/dify-plugin-ddify aemon/releases/download/0.0.1-beta.20/dify-plugin-linux-arm64"
     end
   elsif OS.windows?
     url "https://github.com/langgenius/dify-plugin-daemon/releases/download/0.0.1-beta.20/dify-plugin-windows-amd64"
