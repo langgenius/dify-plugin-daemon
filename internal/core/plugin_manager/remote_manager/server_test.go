@@ -49,7 +49,7 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 		PluginRemoteInstallingPort:             port,
 		PluginRemoteInstallingMaxConn:          1,
 		PluginRemoteInstallServerEventLoopNums: 8,
-	}, media_manager.NewAssetsBucket(oss, "./assets", 10)), port
+	}, media_manager.NewAssetsBucket(oss, "assets", 10)), port
 }
 
 // TestLaunchAndClosePluginServer tests the launch and close of the plugin server

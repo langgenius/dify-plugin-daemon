@@ -266,7 +266,7 @@ func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, 
 			return nil, err
 		}
 		// trim _assets
-		file, _ = strings.CutPrefix(file, "_assets/")
+		file, _ = strings.CutPrefix(file, "_assets"+string(filepath.Separator))
 		assets[file] = content
 	}
 
