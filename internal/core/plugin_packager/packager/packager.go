@@ -6,6 +6,7 @@ import (
 	"errors"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 )
@@ -44,6 +45,10 @@ func (p *Packager) Pack(maxSize int64) ([]byte, error) {
 		if totalSize > maxSize {
 			return errors.New("plugin package size is too large, please ensure the uncompressed size is less than " + strconv.FormatInt(maxSize, 10) + " bytes")
 		}
+
+		// ISSUES: Windows path separator is \, but zip requires /, to avoid this we just simply replace all \ with / for now
+		// TODO: find a better solution
+		fullPath = strings.ReplaceAll(fullPath, "\\", "/")
 
 		zipFile, err := zipWriter.Create(fullPath)
 		if err != nil {
