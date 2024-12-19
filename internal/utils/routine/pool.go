@@ -5,6 +5,7 @@ import (
 	"runtime/pprof"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -44,7 +45,9 @@ func Submit(labels map[string]string, f func()) {
 	}
 
 	p.Submit(func() {
-		label := []string{}
+		label := []string{
+			"LaunchedAt", time.Now().Format(time.RFC3339),
+		}
 		if len(labels) > 0 {
 			for k, v := range labels {
 				label = append(label, k, v)
