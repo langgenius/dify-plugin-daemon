@@ -11,7 +11,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.60.1
 	github.com/charmbracelet/bubbles v0.19.0
 	github.com/charmbracelet/bubbletea v1.1.0
+	github.com/getsentry/sentry-go v0.30.0
 	github.com/gin-contrib/gzip v1.0.1
+	github.com/go-git/go-git v4.7.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/spf13/cobra v1.8.1
@@ -44,8 +46,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/getsentry/sentry-go v0.30.0 // indirect
-	github.com/go-git/go-git v4.7.0+incompatible // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -113,12 +113,12 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1
