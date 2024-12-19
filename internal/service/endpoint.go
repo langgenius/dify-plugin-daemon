@@ -61,6 +61,9 @@ func Endpoint(
 	req.Header.Del("X-Original-Url")
 	req.Header.Del("X-Original-Host")
 
+	// setup hook id to request
+	req.Header.Set("Dify-Hook-Id", endpoint.HookID)
+
 	var buffer bytes.Buffer
 	err = req.Write(&buffer)
 	if err != nil {
