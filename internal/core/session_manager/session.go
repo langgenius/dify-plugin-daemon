@@ -84,7 +84,7 @@ func NewSession(payload NewSessionPayload) *Session {
 
 	if !payload.IgnoreCache {
 		if err := cache.Store(sessionKey(s.ID), s, time.Minute*30); err != nil {
-			log.SilentError("set session info to cache failed, %s", err)
+			log.Error("set session info to cache failed, %s", err)
 		}
 	}
 

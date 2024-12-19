@@ -9,22 +9,10 @@ import (
 	"fmt"
 	go_log "log"
 	"os"
-	"time"
 )
 
-type Log struct {
-	Level int
-	//File of log
-	File *os.File
-	path string
-}
-
-const (
-	LOG_LEVEL_DEBUG = 0
-	LOG_LEVEL_INFO  = 1
-	LOG_LEVEL_WARN  = 2
-	LOG_LEVEL_ERROR = 3
-)
+var show_log bool = true
+var logger = go_log.New(os.Stdout, "", go_log.Ldate|go_log.Ltime|go_log.Lshortfile)
 
 const (
 	LOG_LEVEL_DEBUG_COLOR = "\033[34m"
@@ -34,54 +22,11 @@ const (
 	LOG_LEVEL_COLOR_END   = "\033[0m"
 )
 
-func (l *Log) Debug(format string, stdout bool, v ...interface{}) {
-	if l.Level <= LOG_LEVEL_DEBUG {
-		l.writeLog("DEBUG", format, stdout, v...)
-	}
-}
-
-func (l *Log) Info(format string, stdout bool, v ...interface{}) {
-	if l.Level <= LOG_LEVEL_INFO {
-		l.writeLog("INFO", format, stdout, v...)
-	}
-}
-
-func (l *Log) Warn(format string, stdout bool, v ...interface{}) {
-	if l.Level <= LOG_LEVEL_WARN {
-		l.writeLog("WARN", format, stdout, v...)
-	}
-}
-
-func (l *Log) Error(format string, stdout bool, v ...interface{}) {
-	if l.Level <= LOG_LEVEL_ERROR {
-		l.writeLog("ERROR", format, stdout, v...)
-	}
-}
-
-func (l *Log) Panic(format string, stdout bool, v ...interface{}) {
-	l.writeLog("PANIC", format, stdout, v...)
-	panic("")
-}
-
-func (l *Log) writeLog(level string, format string, stdout bool, v ...interface{}) {
-	//if the next day is coming, reopen file
-	if time.Now().Format("/2006-01-02.log") != l.File.Name() {
-		l.File.Close()
-		l.OpenFile()
-	}
-	//test if file is closed
-	if l.File == nil {
-		//open file
-		err := l.OpenFile()
-		if err != nil {
-			panic(err)
-		}
-	}
-
+func writeLog(level string, format string, stdout bool, v ...interface{}) {
 	//write log
 	format = fmt.Sprintf("["+level+"]"+format, v...)
 
-	if showLog && stdout {
+	if show_log && stdout {
 		if level == "DEBUG" {
 			logger.Output(4, LOG_LEVEL_DEBUG_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "INFO" {
@@ -94,171 +39,28 @@ func (l *Log) writeLog(level string, format string, stdout bool, v ...interface{
 			logger.Output(4, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
 		}
 	}
-
-	_, err := l.File.Write([]byte(format + "\n"))
-	if err != nil {
-		//reopen file
-		l.File.Close()
-		l.OpenFile()
-	}
 }
-
-func (l *Log) SetLogLevel(level int) {
-	l.Level = level
-}
-
-func (l *Log) OpenFile() error {
-	//test if file is closed
-	if l.File == nil {
-		//open file
-		file, err := os.OpenFile(l.path+time.Now().Format("/2006-01-02.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-		if err != nil {
-			return err
-		}
-		l.File = file
-	}
-	//test if file is writable
-	_, err := l.File.Write([]byte(" "))
-	if err != nil {
-		//reopen file
-		l.File.Close()
-		file, err := os.OpenFile(l.path+time.Now().Format("/2006-01-02.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-		if err != nil {
-			return err
-		}
-		l.File = file
-	}
-	return nil
-}
-
-func NewLog(path string) (*Log, error) {
-	if path == "" {
-		path = "log"
-	}
-	//test if path is exist
-	_, err := os.Stat(path)
-	if err != nil {
-		//create path
-		err = os.MkdirAll(path, 0777)
-		if err != nil {
-			return nil, err
-		}
-	}
-	// test if path is a directory
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return nil, err
-	}
-	if !fileInfo.IsDir() {
-		return nil, fmt.Errorf("log file path %s is not a directory", path)
-	}
-
-	log := &Log{
-		Level: LOG_LEVEL_DEBUG,
-		path:  path,
-	}
-	//open file
-	err = log.OpenFile()
-	if err != nil {
-		return nil, err
-	}
-	return log, nil
-}
-
-func init() {
-	// why logger will cause panic when call
-	initlog()
-}
-
-func initlog() {
-	var err error
-	mainLog, err = NewLog("./logs")
-	if err != nil {
-		panic(err)
-	}
-}
-
-var mainLog *Log // wapper of go_log
-var showLog bool = true
-var logger = go_log.New(os.Stdout, "", go_log.Ldate|go_log.Ltime|go_log.Lshortfile)
 
 func SetShowLog(show bool) {
-	showLog = show
-}
-
-func SetLogLevel(level int) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.SetLogLevel(level)
+	show_log = show
 }
 
 func Debug(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Debug(format, true, v...)
+	writeLog("DEBUG", format, true, v...)
 }
 
 func Info(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Info(format, true, v...)
+	writeLog("INFO", format, true, v...)
 }
 
 func Warn(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Warn(format, true, v...)
+	writeLog("WARN", format, true, v...)
 }
 
 func Error(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Error(format, true, v...)
+	writeLog("ERROR", format, true, v...)
 }
 
 func Panic(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Panic(format, true, v...)
-}
-
-func SilentDebug(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Debug(format, false, v...)
-}
-
-func SilentInfo(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Info(format, false, v...)
-}
-
-func SilentWarn(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Warn(format, false, v...)
-}
-
-func SilentError(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Error(format, false, v...)
-}
-
-func SilentPanic(format string, v ...interface{}) {
-	if mainLog == nil {
-		initlog()
-	}
-	mainLog.Panic(format, false, v...)
+	writeLog("PANIC", format, true, v...)
 }
