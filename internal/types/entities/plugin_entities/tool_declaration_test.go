@@ -1178,7 +1178,7 @@ func TestParameterScope_Validate(t *testing.T) {
 
 func TestInvalidJSONSchemaToolProvider_Validate(t *testing.T) {
 	type Test struct {
-		Text map[string]any `json:"text" validate:"json_schema"`
+		Text ToolOutputSchema `json:"text" validate:"json_schema"`
 	}
 
 	data := parser.MarshalJsonBytes(Test{

@@ -110,7 +110,7 @@ type ToolDeclaration struct {
 
 func isJSONSchema(fl validator.FieldLevel) bool {
 	// get schema from interface
-	schemaMap, ok := fl.Field().Interface().(map[string]any)
+	schemaMap, ok := fl.Field().Interface().(ToolOutputSchema)
 	if !ok {
 		return false
 	}
