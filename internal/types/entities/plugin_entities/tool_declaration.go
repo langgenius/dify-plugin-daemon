@@ -109,7 +109,37 @@ type ToolDeclaration struct {
 }
 
 func isJSONSchema(fl validator.FieldLevel) bool {
+	// get schema from interface
+	schemaMap, ok := fl.Field().Interface().(map[string]any)
+	if !ok {
+		return false
+	}
+
+	// validate root schema must be object type
+	rootType, ok := schemaMap["type"].(string)
+	if !ok || rootType != "object" {
+		return false
+	}
+
+	// validate properties
+	properties, ok := schemaMap["properties"].(map[string]any)
+	if !ok {
+		return false
+	}
+
+	// disallow text, json, files as property names
+	disallowedProps := []string{"text", "json", "files"}
+	for _, prop := range disallowedProps {
+		if _, exists := properties[prop]; exists {
+			return false
+		}
+	}
+
 	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(fl.Field().Interface()))
+	if err != nil {
+		return false
+	}
+
 	return err == nil
 }
 

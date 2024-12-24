@@ -1175,3 +1175,94 @@ func TestParameterScope_Validate(t *testing.T) {
 		t.Errorf("ParameterScope_Validate() error = %v", err)
 	}
 }
+
+func TestInvalidJSONSchemaToolProvider_Validate(t *testing.T) {
+	type Test struct {
+		Text map[string]any `json:"text" validate:"json_schema"`
+	}
+
+	data := parser.MarshalJsonBytes(Test{
+		Text: map[string]any{
+			"text": "text",
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
+		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(Test{
+		Text: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"text": map[string]any{
+					"type": "object",
+				},
+			},
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
+		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(Test{
+		Text: map[string]any{
+			"type": "array",
+			"properties": map[string]any{
+				"a": map[string]any{
+					"type": "object",
+				},
+			},
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
+		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(Test{
+		Text: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"json": map[string]any{
+					"type": "object",
+				},
+			},
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
+		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(Test{
+		Text: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"files": map[string]any{
+					"type": "object",
+				},
+			},
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
+		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(Test{
+		Text: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"aaa": map[string]any{
+					"type": "object",
+				},
+			},
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[Test](data); err != nil {
+		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
+	}
+}
