@@ -246,7 +246,7 @@ func (p *PluginDeclaration) Identity() string {
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {
-	if p.Endpoint == nil && p.Model == nil && p.Tool == nil {
+	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil {
 		return fmt.Errorf("at least one of endpoint, model, or tool must be provided")
 	}
 
