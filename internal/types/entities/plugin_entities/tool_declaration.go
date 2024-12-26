@@ -78,19 +78,48 @@ func isToolParameterForm(fl validator.FieldLevel) bool {
 	return false
 }
 
+type ParameterAutoGenerateType string
+
+const (
+	PARAMETER_AUTO_GENERATE_TYPE_PROMPT_INSTRUCTION ParameterAutoGenerateType = "prompt_instruction"
+)
+
+func isParameterAutoGenerateType(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	switch value {
+	case string(PARAMETER_AUTO_GENERATE_TYPE_PROMPT_INSTRUCTION):
+		return true
+	}
+	return false
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("parameter_auto_generate_type", isParameterAutoGenerateType)
+}
+
+type ParameterAutoGenerate struct {
+	Type ParameterAutoGenerateType `json:"type" yaml:"type" validate:"required,parameter_auto_generate_type"`
+}
+
+type ParameterTemplate struct {
+	Enabled bool `json:"enabled" yaml:"enabled"`
+}
+
 type ToolParameter struct {
-	Name             string                `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
-	Label            I18nObject            `json:"label" yaml:"label" validate:"required"`
-	HumanDescription I18nObject            `json:"human_description" yaml:"human_description" validate:"required"`
-	Type             ToolParameterType     `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
-	Scope            *string               `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
-	Form             ToolParameterForm     `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
-	LLMDescription   string                `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
-	Required         bool                  `json:"required" yaml:"required"`
-	Default          any                   `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
-	Min              *float64              `json:"min" yaml:"min" validate:"omitempty"`
-	Max              *float64              `json:"max" yaml:"max" validate:"omitempty"`
-	Options          []ToolParameterOption `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Name             string                 `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
+	Label            I18nObject             `json:"label" yaml:"label" validate:"required"`
+	HumanDescription I18nObject             `json:"human_description" yaml:"human_description" validate:"required"`
+	Type             ToolParameterType      `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
+	Scope            *string                `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
+	Form             ToolParameterForm      `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
+	LLMDescription   string                 `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
+	Required         bool                   `json:"required" yaml:"required"`
+	AutoGenerate     *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
+	Template         *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
+	Default          any                    `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
+	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
+	Options          []ToolParameterOption  `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type ToolDescription struct {
