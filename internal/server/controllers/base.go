@@ -37,13 +37,13 @@ func BindPluginDispatchRequest[T any](r *gin.Context, success func(
 	BindRequest(r, func(req plugin_entities.InvokePluginRequest[T]) {
 		pluginUniqueIdentifierAny, exists := r.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
 		if !exists {
-			r.JSON(400, exception.PluginUniqueIdentifierError(errors.New("Plugin unique identifier is required")).ToResponse())
+			r.JSON(400, exception.UniqueIdentifierError(errors.New("Plugin unique identifier is required")).ToResponse())
 			return
 		}
 
 		pluginUniqueIdentifier, ok := pluginUniqueIdentifierAny.(plugin_entities.PluginUniqueIdentifier)
 		if !ok {
-			r.JSON(400, exception.PluginUniqueIdentifierError(errors.New("Plugin unique identifier is not valid")).ToResponse())
+			r.JSON(400, exception.UniqueIdentifierError(errors.New("Plugin unique identifier is not valid")).ToResponse())
 			return
 		}
 

@@ -50,7 +50,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			plugin_installation.PluginUniqueIdentifier,
 		)
 		if err != nil {
-			return exception.PluginUniqueIdentifierError(err).ToResponse()
+			return exception.UniqueIdentifierError(err).ToResponse()
 		}
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(

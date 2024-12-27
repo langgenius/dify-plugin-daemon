@@ -66,10 +66,12 @@ func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 			s.mediaManager,
 		),
 
-		conn:          c,
-		response:      stream.NewStream[[]byte](512),
-		callbacks:     make(map[string][]func([]byte)),
-		callbacksLock: &sync.RWMutex{},
+		conn:                      c,
+		response:                  stream.NewStream[[]byte](512),
+		messageCallbacks:          make(map[string][]func([]byte)),
+		messageCallbacksLock:      &sync.RWMutex{},
+		sessionMessageClosers:     make(map[string][]func()),
+		sessionMessageClosersLock: &sync.RWMutex{},
 
 		assets:      make(map[string]*bytes.Buffer),
 		assetsBytes: 0,

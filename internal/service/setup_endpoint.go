@@ -163,7 +163,7 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 		installation.PluginUniqueIdentifier,
 	)
 	if err != nil {
-		return exception.PluginUniqueIdentifierError(fmt.Errorf("failed to parse plugin unique identifier: %v", err)).ToResponse()
+		return exception.UniqueIdentifierError(fmt.Errorf("failed to parse plugin unique identifier: %v", err)).ToResponse()
 	}
 
 	// get plugin

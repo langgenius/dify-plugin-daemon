@@ -73,7 +73,7 @@ func Endpoint(
 
 	identifier, err := plugin_entities.NewPluginUniqueIdentifier(pluginInstallation.PluginUniqueIdentifier)
 	if err != nil {
-		ctx.JSON(400, exception.PluginUniqueIdentifierError(err).ToResponse())
+		ctx.JSON(400, exception.UniqueIdentifierError(err).ToResponse())
 		return
 	}
 
@@ -260,7 +260,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			pluginInstallation.PluginUniqueIdentifier,
 		)
 		if err != nil {
-			return exception.PluginUniqueIdentifierError(
+			return exception.UniqueIdentifierError(
 				fmt.Errorf("failed to parse plugin unique identifier: %v", err),
 			).ToResponse()
 		}
@@ -350,7 +350,7 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		)
 
 		if err != nil {
-			return exception.PluginUniqueIdentifierError(
+			return exception.UniqueIdentifierError(
 				fmt.Errorf("failed to parse plugin unique identifier: %v", err),
 			).ToResponse()
 		}

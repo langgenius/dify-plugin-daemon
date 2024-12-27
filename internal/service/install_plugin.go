@@ -567,7 +567,7 @@ func UninstallPlugin(
 
 	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
 	if err != nil {
-		return exception.PluginUniqueIdentifierError(err).ToResponse()
+		return exception.UniqueIdentifierError(err).ToResponse()
 	}
 
 	// Uninstall the plugin

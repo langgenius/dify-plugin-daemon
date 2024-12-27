@@ -66,9 +66,9 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
 			func(session_id string, data []byte) {
-				r.callbacksLock.RLock()
-				listeners := r.callbacks[session_id][:]
-				r.callbacksLock.RUnlock()
+				r.messageCallbacksLock.RLock()
+				listeners := r.messageCallbacks[session_id][:]
+				r.messageCallbacksLock.RUnlock()
 
 				// handle session event
 				for _, listener := range listeners {

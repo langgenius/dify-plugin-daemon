@@ -81,6 +81,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 		}
 	})
 
+	// close the listener if stream outside is closed due to close of connection
 	response.OnClose(func() {
 		listener.Close()
 	})

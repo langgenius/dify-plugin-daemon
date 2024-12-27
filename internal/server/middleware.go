@@ -57,7 +57,7 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 
 		identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
 		if err != nil {
-			ctx.AbortWithStatusJSON(400, exception.PluginUniqueIdentifierError(err).ToResponse())
+			ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
 			return
 		}
 
