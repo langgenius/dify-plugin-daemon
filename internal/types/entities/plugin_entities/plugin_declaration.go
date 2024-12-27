@@ -151,6 +151,7 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Meta        PluginMeta                         `json:"meta" yaml:"meta,omitempty" validate:"required"`
 	Tags        []manifest_entities.PluginTag      `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
 	CreatedAt   time.Time                          `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
+	Privacy     *string                            `json:"privacy,omitempty" yaml:"privacy,omitempty" validate:"omitempty"`
 }
 
 func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {

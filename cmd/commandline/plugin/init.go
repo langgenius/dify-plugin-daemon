@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 //go:embed templates/python/icon.svg
@@ -148,7 +149,8 @@ func (m model) createPlugin() {
 				Memory:     1024 * 1024 * 256, // 256MB
 				Permission: &permission,
 			},
-			Label: plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name()),
+			Label:   plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name()),
+			Privacy: parser.ToPtr("PRIVACY.md"),
 		},
 	}
 
@@ -237,6 +239,12 @@ func (m model) createPlugin() {
 	// create .env.example
 	if err := writeFile(filepath.Join(pluginDir, ".env.example"), string(ENV_EXAMPLE)); err != nil {
 		log.Error("failed to write .env.example file: %s", err)
+		return
+	}
+
+	// create PRIVACY.md
+	if err := writeFile(filepath.Join(pluginDir, "PRIVACY.md"), string(PRIVACY)); err != nil {
+		log.Error("failed to write PRIVACY file: %s", err)
 		return
 	}
 

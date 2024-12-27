@@ -110,3 +110,8 @@ dify-plugin plugin package ./ROOT_DIRECTORY_OF_YOUR_PLUGIN
 ```
 
 you will get a `plugin.difypkg` file, that's all, you can submit it to the Marketplace now, look forward to your Plugin being listed!
+
+
+## User Privacy Policy
+
+Please fill in the privacy policy of the plugin if you want to make it published on the Marketplace, refer to [PRIVACY.md](PRIVACY.md) for more details.
