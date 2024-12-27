@@ -66,6 +66,7 @@ type AgentStrategyParameter struct {
 	Default      any                        `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
 	Min          *float64                   `json:"min" yaml:"min" validate:"omitempty"`
 	Max          *float64                   `json:"max" yaml:"max" validate:"omitempty"`
+	Precision    *int                       `json:"precision" yaml:"precision" validate:"omitempty"`
 	Options      []ToolParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
