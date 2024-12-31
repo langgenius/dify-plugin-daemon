@@ -116,13 +116,25 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 			TenantID                string                                   `uri:"tenant_id" validate:"required"`
 			PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=64,dive,plugin_unique_identifier"`
 			Source                  string                                   `json:"source" validate:"required"`
-			Meta                    map[string]any                           `json:"meta" validate:"omitempty"`
+			Metas                   []map[string]any                         `json:"metas" validate:"omitempty"`
 		}) {
-			if request.Meta == nil {
-				request.Meta = map[string]any{}
+			if request.Metas == nil {
+				request.Metas = []map[string]any{}
 			}
+
+			if len(request.Metas) != len(request.PluginUniqueIdentifiers) {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("the number of metas must be equal to the number of plugin unique identifiers")).ToResponse())
+				return
+			}
+
+			for i := range request.Metas {
+				if request.Metas[i] == nil {
+					request.Metas[i] = map[string]any{}
+				}
+			}
+
 			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
-				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Meta,
+				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
 		})
 	}

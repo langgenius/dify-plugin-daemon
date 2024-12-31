@@ -48,6 +48,15 @@ func (b *InstalledBucket) Get(
 
 // List lists all the plugins in the installed bucket
 func (b *InstalledBucket) List() ([]plugin_entities.PluginUniqueIdentifier, error) {
+	// check if the patch exists
+	exists, err := b.oss.Exists(b.installedPath)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return []plugin_entities.PluginUniqueIdentifier{}, nil
+	}
+
 	paths, err := b.oss.List(b.installedPath)
 	if err != nil {
 		return nil, err
