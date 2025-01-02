@@ -28,7 +28,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
-	setDefaultBool(&config.ForceVerifyingSignature, false)
+	setDefaultBool(&config.ForceVerifyingSignature, true)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
