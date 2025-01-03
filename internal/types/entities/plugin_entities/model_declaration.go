@@ -371,7 +371,7 @@ type ModelDeclaration struct {
 	ModelType       ModelType                      `json:"model_type" yaml:"model_type" validate:"required,model_type"`
 	Features        []string                       `json:"features" yaml:"features" validate:"omitempty,lte=256,dive,lt=256"`
 	FetchFrom       ModelProviderConfigurateMethod `json:"fetch_from" yaml:"fetch_from" validate:"omitempty,model_provider_configurate_method"`
-	ModelProperties map[string]any                 `json:"model_properties" yaml:"model_properties" validate:"omitempty,dive,is_basic_type"`
+	ModelProperties map[string]any                 `json:"model_properties" yaml:"model_properties" validate:"omitempty"`
 	Deprecated      bool                           `json:"deprecated" yaml:"deprecated"`
 	ParameterRules  []ModelParameterRule           `json:"parameter_rules" yaml:"parameter_rules" validate:"omitempty,lte=128,dive,parameter_rule"`
 	PriceConfig     *ModelPriceConfig              `json:"pricing" yaml:"pricing" validate:"omitempty"`
