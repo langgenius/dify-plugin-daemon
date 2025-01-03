@@ -349,10 +349,7 @@ func ValidateProviderConfigs(settings map[string]any, configs []ProviderConfig) 
 				case string(MODEL_CONFIG_SCOPE_ALL):
 					// do nothing
 				case string(MODEL_CONFIG_SCOPE_LLM):
-					// completion_params
-					if _, ok := m["completion_params"]; !ok {
-						return errors.New("setting " + config_name + " is missing completion_params")
-					}
+					// do nothing
 				case string(MODEL_CONFIG_SCOPE_TEXT_EMBEDDING):
 					// do nothing
 				case string(MODEL_CONFIG_SCOPE_RERANK):
