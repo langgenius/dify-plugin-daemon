@@ -4,7 +4,7 @@ import "golang.org/x/exp/constraints"
 
 func (config *Config) SetDefault() {
 	setDefaultInt(&config.ServerPort, 5002)
-	setDefaultInt(&config.RoutinePoolSize, 1000)
+	setDefaultInt(&config.RoutinePoolSize, 10000)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
 	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
 	setDefaultInt(&config.LifetimeStateGCInterval, 300)
