@@ -12,16 +12,17 @@ WORKDIR /app
 # build
 RUN go build -o /app/main cmd/server/main.go
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 COPY --from=builder /app/main /app/main
 
 WORKDIR /app
 
-# Install python3.10
-RUN apt-get update && apt-get install -y python3.10 python3.10-venv python3.10-dev \
+# Install python3.12
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.12 python3.12-venv python3.12-dev \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 
 ENV PLATFORM=local
 ENV GIN_MODE=release
