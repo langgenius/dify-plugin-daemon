@@ -14,9 +14,14 @@ WORKDIR /app
 # build
 RUN go build -ldflags "-X 'internal.manifest.VersionX=${VERSION}' -X 'internal.manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" -o /app/main cmd/server/main.go
 
+# copy entrypoint.sh
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 FROM ubuntu:24.04
 
 COPY --from=builder /app/main /app/main
+COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 
 WORKDIR /app
 
@@ -34,5 +39,6 @@ RUN if [ "$PLATFORM" = "local" ]; then \
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
-# run the server, using bash as the entrypoint to recycle resources
-CMD ["/bin/bash", "-c", "exec /app/main"]
+# run the server, using sh as the entrypoint to avoid process being the root process
+# and using bash to recycle resources
+CMD ["/bin/bash", "-c", "/app/entrypoint.sh"]
