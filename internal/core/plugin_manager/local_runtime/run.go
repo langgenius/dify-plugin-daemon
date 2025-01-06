@@ -158,7 +158,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	// wait for plugin to exit
 	err = stdio.Wait()
 	if err != nil {
-		return err
+		return errors.Join(err, stdio.Error())
 	}
 	wg.Wait()
 
