@@ -7,9 +7,9 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
@@ -36,13 +36,13 @@ type PluginManager struct {
 	pluginStoragePath string
 
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
-	mediaBucket *media_manager.MediaBucket
+	mediaBucket *media_transport.MediaBucket
 
 	// packageBucket is used to manage plugin packages, all the packages uploaded by users will be saved here
-	packageBucket *media_manager.PackageBucket
+	packageBucket *media_transport.PackageBucket
 
 	// installedBucket is used to manage installed plugins, all the installed plugins will be saved here
-	installedBucket *media_manager.InstalledBucket
+	installedBucket *media_transport.InstalledBucket
 
 	// register plugin
 	pluginRegisters []func(lifetime plugin_entities.PluginLifetime) error
@@ -57,7 +57,7 @@ type PluginManager struct {
 	pythonInterpreterPath string
 
 	// remote plugin server
-	remotePluginServer remote_manager.RemotePluginServerInterface
+	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
@@ -75,16 +75,16 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		maxPluginPackageSize: configuration.MaxPluginPackageSize,
 		pluginStoragePath:    configuration.PluginInstalledPath,
 		workingDirectory:     configuration.PluginWorkingPath,
-		mediaBucket: media_manager.NewAssetsBucket(
+		mediaBucket: media_transport.NewAssetsBucket(
 			oss,
 			configuration.PluginMediaCachePath,
 			configuration.PluginMediaCacheSize,
 		),
-		packageBucket: media_manager.NewPackageBucket(
+		packageBucket: media_transport.NewPackageBucket(
 			oss,
 			configuration.PluginPackageCachePath,
 		),
-		installedBucket: media_manager.NewInstalledBucket(
+		installedBucket: media_transport.NewInstalledBucket(
 			oss,
 			configuration.PluginInstalledPath,
 		),

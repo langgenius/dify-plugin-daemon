@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/aws_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -40,10 +39,10 @@ func (p *PluginManager) getServerlessPluginRuntime(
 	runtimeEntity.InitState()
 
 	// convert to plugin runtime
-	pluginRuntime := aws_manager.AWSPluginRuntime{
-		PositivePluginRuntime: positive_manager.PositivePluginRuntime{
-			BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
-			InnerChecksum:      model.Checksum,
+	pluginRuntime := serverless_runtime.AWSPluginRuntime{
+		BasicChecksum: basic_runtime.BasicChecksum{
+			MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),
+			InnerChecksum:  model.Checksum,
 		},
 		PluginRuntime: runtimeEntity,
 		LambdaURL:     model.FunctionURL,

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 )
@@ -11,7 +11,7 @@ func GetRemoteDebuggingKey(tenant_id string) *entities.Response {
 		Key string `json:"key"`
 	}
 
-	key, err := remote_manager.GetConnectionKey(remote_manager.ConnectionInfo{
+	key, err := debugging_runtime.GetConnectionKey(debugging_runtime.ConnectionInfo{
 		TenantId: tenant_id,
 	})
 

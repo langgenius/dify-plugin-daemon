@@ -3,8 +3,8 @@ package plugin_manager
 import (
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/remote_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -26,7 +26,7 @@ func (p *PluginManager) initRemotePluginServer(config *app.Config) {
 	if p.remotePluginServer != nil {
 		return
 	}
-	p.remotePluginServer = remote_manager.NewRemotePluginServer(config, p.mediaBucket)
+	p.remotePluginServer = debugging_runtime.NewRemotePluginServer(config, p.mediaBucket)
 }
 
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {
@@ -95,7 +95,7 @@ func (p *PluginManager) removeUninstalledLocalPlugins() {
 	// read all local plugin runtimes
 	p.m.Range(func(key string, value plugin_entities.PluginLifetime) bool {
 		// try to convert to local runtime
-		runtime, ok := value.(*local_manager.LocalPluginRuntime)
+		runtime, ok := value.(*local_runtime.LocalPluginRuntime)
 		if !ok {
 			return true
 		}

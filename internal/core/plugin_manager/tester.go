@@ -24,10 +24,10 @@ NOTE: tester is deprecated, maybe, in several months, we will support this again
 // 		return nil, errors.Join(err, errors.New("failed to get assets"))
 // 	}
 
-// 	local_plugin_runtime := local_manager.NewLocalPluginRuntime(p.pythonInterpreterPath)
+// 	local_plugin_runtime := local_runtime.NewLocalPluginRuntime(p.pythonInterpreterPath)
 // 	local_plugin_runtime.PluginRuntime = plugin.runtime
 // 	local_plugin_runtime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
-// 		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
+// 		BasicPluginRuntime: basic_runtime.NewBasicPluginRuntime(p.mediaBucket),
 // 		WorkingPath:        plugin.runtime.State.WorkingPath,
 // 		Decoder:            plugin.decoder,
 // 	}

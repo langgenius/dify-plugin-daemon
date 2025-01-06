@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
@@ -13,7 +13,7 @@ import (
 
 type fakePlugin struct {
 	plugin_entities.PluginRuntime
-	positive_manager.PositivePluginRuntime
+	basic_runtime.BasicChecksum
 }
 
 func (r *fakePlugin) InitEnvironment() error {

@@ -3,7 +3,7 @@ package plugin_manager
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"

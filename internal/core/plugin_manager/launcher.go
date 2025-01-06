@@ -7,9 +7,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/positive_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -130,12 +129,12 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		return nil, nil, nil, failed(err.Error())
 	}
 
-	localPluginRuntime := local_manager.NewLocalPluginRuntime(p.pythonInterpreterPath)
+	localPluginRuntime := local_runtime.NewLocalPluginRuntime(p.pythonInterpreterPath)
 	localPluginRuntime.PluginRuntime = plugin.runtime
-	localPluginRuntime.PositivePluginRuntime = positive_manager.PositivePluginRuntime{
-		BasicPluginRuntime: basic_manager.NewBasicPluginRuntime(p.mediaBucket),
-		WorkingPath:        plugin.runtime.State.WorkingPath,
-		Decoder:            plugin.decoder,
+	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
+		MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),
+		WorkingPath:    plugin.runtime.State.WorkingPath,
+		Decoder:        plugin.decoder,
 	}
 
 	if err := localPluginRuntime.RemapAssets(
