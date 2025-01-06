@@ -102,10 +102,18 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		return fmt.Errorf("start plugin failed: %s", err.Error())
 	}
 
+	var stdio *stdioHolder
+
 	defer func() {
 		// wait for plugin to exit
 		err = e.Wait()
 		if err != nil {
+			// get stdio
+			var err error
+			if stdio != nil {
+				err = stdio.Error()
+			}
+			err = errors.Join(err, err)
 			log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
 		}
 
@@ -118,7 +126,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	log.Info("plugin %s started", r.Config.Identity())
 
 	// setup stdio
-	stdio := registerStdioHandler(r.Config.Identity(), stdin, stdout, stderr)
+	stdio = registerStdioHandler(r.Config.Identity(), stdin, stdout, stderr)
 	r.ioIdentity = stdio.GetID()
 	defer stdio.Stop()
 
