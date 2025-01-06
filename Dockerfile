@@ -12,7 +12,11 @@ WORKDIR /app
 # ENV GOPROXY=https://goproxy.cn,direct
 
 # build
-RUN go build -ldflags "-X 'internal.manifest.VersionX=${VERSION}' -X 'internal.manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" -o /app/main cmd/server/main.go
+RUN go build \
+    -ldflags "\
+    -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.VersionX=${VERSION}' \
+    -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" \
+    -o /app/main cmd/server/main.go
 
 # copy entrypoint.sh
 COPY entrypoint.sh /app/entrypoint.sh
