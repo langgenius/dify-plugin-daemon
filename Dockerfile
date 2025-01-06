@@ -34,4 +34,4 @@ RUN if [ "$PLATFORM" = "local" ]; then \
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
-CMD ["/app/main"]
+CMD ["/bin/bash", "-c", "/app/main"]
