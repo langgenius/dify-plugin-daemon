@@ -35,4 +35,4 @@ ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
 # run the server, using bash as the entrypoint to recycle resources
-CMD ["/bin/bash", "-c", "/app/main"]
+CMD ["/bin/bash", "-c", "exec /app/main"]
