@@ -20,7 +20,7 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.Default()
-	engine.GET("/health/check", controllers.HealthCheck)
+	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
 	awsLambdaTransactionGroup := engine.Group("/backwards-invocation")

@@ -68,7 +68,7 @@ jobs:
             type=raw,value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
       - name: Run Build Docker Image
-        run: docker build -t dify-plugin-daemon -f ./docker/${{ matrix.scope }}/Dockerfile .
+        run: docker build --build-arg PLATFORM=${{ matrix.scope }} -t dify-plugin-daemon -f ./Dockerfile .
 
       - name: Tag Docker Images
         run:
