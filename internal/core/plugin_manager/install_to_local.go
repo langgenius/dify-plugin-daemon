@@ -3,9 +3,9 @@ package plugin_manager
 import (
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 // InstallToLocal installs a plugin to local

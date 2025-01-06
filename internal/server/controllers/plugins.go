@@ -9,8 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func GetAsset(c *gin.Context) {

@@ -1,6 +1,6 @@
 package serverless_runtime
 
-import "github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+import "github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 
 func (r *AWSPluginRuntime) StartPlugin() error {
 	return nil

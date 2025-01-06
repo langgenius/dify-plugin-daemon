@@ -1,6 +1,6 @@
 package exception
 
-import "github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+import "github.com/langgenius/dify-plugin-daemon/pkg/entities"
 
 type PluginDaemonError interface {
 	error

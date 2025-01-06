@@ -9,10 +9,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

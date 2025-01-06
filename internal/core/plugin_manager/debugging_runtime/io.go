@@ -3,12 +3,12 @@ package debugging_runtime
 import (
 	"encoding/json"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/panjf2000/gnet/v2"
 )
 

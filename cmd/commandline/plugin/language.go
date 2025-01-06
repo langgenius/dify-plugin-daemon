@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 )
 
 var languages = []constants.Language{

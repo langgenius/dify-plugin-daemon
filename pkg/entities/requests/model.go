@@ -1,7 +1,7 @@
 package requests
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 )
 
 type Credentials struct {

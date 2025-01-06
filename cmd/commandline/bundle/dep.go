@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/bundle_packager"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
 )
 
 func loadBundlePackager(bundlePath string) (bundle_packager.BundlePackager, error) {

@@ -3,7 +3,7 @@ package plugin_entities
 import (
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
 func TestGenericType_Validate(t *testing.T) {

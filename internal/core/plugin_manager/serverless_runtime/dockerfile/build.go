@@ -3,9 +3,9 @@ package dockerfile
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func handleTemplate(configuration *plugin_entities.PluginDeclaration, templateFunc func(configuration *plugin_entities.PluginDeclaration) (string, error)) (string, error) {

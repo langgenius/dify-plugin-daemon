@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"gopkg.in/yaml.v3"
 )
 

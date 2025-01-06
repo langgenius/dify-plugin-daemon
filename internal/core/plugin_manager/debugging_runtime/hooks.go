@@ -10,11 +10,11 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/panjf2000/gnet/v2"
 )
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"gopkg.in/yaml.v3"
 )
 

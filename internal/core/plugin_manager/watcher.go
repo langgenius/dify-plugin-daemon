@@ -6,9 +6,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func (p *PluginManager) startLocalWatcher() {

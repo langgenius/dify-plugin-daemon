@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/plumbing/format/gitignore"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 var (

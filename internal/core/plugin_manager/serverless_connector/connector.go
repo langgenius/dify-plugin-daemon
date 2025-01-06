@@ -6,9 +6,9 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 )
 
 var ()

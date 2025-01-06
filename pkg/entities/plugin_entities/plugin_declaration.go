@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
 type PluginCategory string

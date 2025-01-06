@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/mitchellh/mapstructure"
 )
 

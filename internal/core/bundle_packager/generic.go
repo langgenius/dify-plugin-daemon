@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/bundle_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 )
 
 type GenericBundlePackager struct {

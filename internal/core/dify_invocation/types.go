@@ -2,10 +2,10 @@ package dify_invocation
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/model_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
 type BaseInvokeDifyRequest struct {

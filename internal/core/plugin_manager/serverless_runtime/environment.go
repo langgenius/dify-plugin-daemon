@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func (r *AWSPluginRuntime) InitEnvironment() error {

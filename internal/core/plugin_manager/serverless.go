@@ -7,9 +7,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 const (

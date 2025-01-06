@@ -3,8 +3,8 @@ package plugin_daemon
 import (
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
 )
 
 func TestToolInvokeJSONSchemaValidator(t *testing.T) {

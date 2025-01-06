@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/manifest_entities"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"gorm.io/gorm"
 )
 

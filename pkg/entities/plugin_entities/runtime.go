@@ -9,7 +9,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 )
 
 type (

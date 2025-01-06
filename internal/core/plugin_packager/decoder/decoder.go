@@ -4,7 +4,7 @@ import (
 	"io"
 	"io/fs"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 // PluginDecoder is an interface for decoding and interacting with plugin files

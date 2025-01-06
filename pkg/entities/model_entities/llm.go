@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/validators"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/shopspring/decimal"
 )
 

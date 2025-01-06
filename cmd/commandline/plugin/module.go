@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 )
 
 const TOOL_MODULE_TEMPLATE = `
