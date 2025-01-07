@@ -31,7 +31,7 @@ func (p *PluginManager) initRemotePluginServer(config *app.Config) {
 
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	// launch TCP debugging server if enabled
-	if config.PluginRemoteInstallingEnabled {
+	if config.PluginRemoteInstallingEnabled != nil && *config.PluginRemoteInstallingEnabled {
 		p.initRemotePluginServer(config)
 		go func() {
 			err := p.remotePluginServer.Launch()

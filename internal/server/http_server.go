@@ -98,13 +98,13 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginRemoteInstallingEnabled {
+	if config.PluginRemoteInstallingEnabled != nil && *config.PluginRemoteInstallingEnabled {
 		group.POST("/key", CheckingKey(config.ServerKey), controllers.GetRemoteDebuggingKey)
 	}
 }
 
 func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginEndpointEnabled {
+	if config.PluginEndpointEnabled != nil && *config.PluginEndpointEnabled {
 		group.HEAD("/:hook_id/*path", app.Endpoint())
 		group.POST("/:hook_id/*path", app.Endpoint())
 		group.GET("/:hook_id/*path", app.Endpoint())

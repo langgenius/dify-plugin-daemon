@@ -26,12 +26,12 @@ type Config struct {
 	// plugin remote installing
 	PluginRemoteInstallingHost                string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort                uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
-	PluginRemoteInstallingEnabled             bool   `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
+	PluginRemoteInstallingEnabled             *bool  `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
 	PluginRemoteInstallingMaxConn             int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_CONN"`
 	PluginRemoteInstallingMaxSingleTenantConn int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_SINGLE_TENANT_CONN"`
 	PluginRemoteInstallServerEventLoopNums    int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
-	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
+	PluginEndpointEnabled *bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
 
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
@@ -65,7 +65,7 @@ type Config struct {
 	PersistenceStorageMaxSize int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
-	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
+	ForceVerifyingSignature *bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
 
 	// lifetime state management
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
@@ -102,7 +102,7 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if c.PluginRemoteInstallingEnabled {
+	if c.PluginRemoteInstallingEnabled != nil && *c.PluginRemoteInstallingEnabled {
 		if c.PluginRemoteInstallingHost == "" {
 			return fmt.Errorf("plugin remote installing host is empty")
 		}

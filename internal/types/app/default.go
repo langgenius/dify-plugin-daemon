@@ -18,8 +18,8 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PluginStorageType, "local")
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
-	setDefaultBool(&config.PluginRemoteInstallingEnabled, true)
-	setDefaultBool(&config.PluginEndpointEnabled, true)
+	setDefaultBoolPtr(&config.PluginRemoteInstallingEnabled, true)
+	setDefaultBoolPtr(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
 	setDefaultString(&config.PluginStorageLocalRoot, "storage")
 	setDefaultString(&config.PluginInstalledPath, "plugin")
@@ -28,7 +28,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
-	setDefaultBool(&config.ForceVerifyingSignature, true)
+	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
@@ -43,8 +43,8 @@ func setDefaultString(value *string, defaultValue string) {
 	}
 }
 
-func setDefaultBool(value *bool, defaultValue bool) {
-	if !*value {
-		*value = defaultValue
+func setDefaultBoolPtr(value **bool, defaultValue bool) {
+	if *value == nil {
+		*value = &defaultValue
 	}
 }
