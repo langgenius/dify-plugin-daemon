@@ -28,15 +28,15 @@ func writeLog(level string, format string, stdout bool, v ...interface{}) {
 
 	if show_log && stdout {
 		if level == "DEBUG" {
-			logger.Output(4, LOG_LEVEL_DEBUG_COLOR+format+LOG_LEVEL_COLOR_END)
+			logger.Output(3, LOG_LEVEL_DEBUG_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "INFO" {
-			logger.Output(4, LOG_LEVEL_INFO_COLOR+format+LOG_LEVEL_COLOR_END)
+			logger.Output(3, LOG_LEVEL_INFO_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "WARN" {
-			logger.Output(4, LOG_LEVEL_WARN_COLOR+format+LOG_LEVEL_COLOR_END)
+			logger.Output(3, LOG_LEVEL_WARN_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "ERROR" {
-			logger.Output(4, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
+			logger.Output(3, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "PANIC" {
-			logger.Output(4, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
+			logger.Output(3, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
 		}
 	}
 }
