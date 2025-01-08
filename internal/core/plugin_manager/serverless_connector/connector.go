@@ -10,7 +10,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -26,7 +25,7 @@ func Ping() error {
 	if err != nil {
 		return err
 	}
-	response, err := http_requests.PostAndParse[entities.GenericResponse[string]](
+	response, err := http_requests.PostAndParse[string](
 		client,
 		url,
 		http_requests.HttpHeader(map[string]string{
@@ -37,13 +36,10 @@ func Ping() error {
 		return err
 	}
 
-	if response.Code != 0 {
-		return fmt.Errorf("unexpected response from serverless connector: %s", response.Message)
+	if response == nil || *response != "pong" {
+		return fmt.Errorf("unexpected response from serverless connector: %s", *response)
 	}
 
-	if response.Data != "pong" {
-		return fmt.Errorf("unexpected response from serverless connector: %s", response.Data)
-	}
 	return nil
 }
 
