@@ -13,6 +13,7 @@ import (
 
 // InstallToAWSFromPkg installs a plugin to AWS Lambda
 func (p *PluginManager) InstallToAWSFromPkg(
+	originalPackager []byte,
 	decoder decoder.PluginDecoder,
 	source string,
 	meta map[string]any,
@@ -32,7 +33,7 @@ func (p *PluginManager) InstallToAWSFromPkg(
 		return nil, err
 	}
 
-	response, err := serverless.UploadPlugin(decoder)
+	response, err := serverless.LaunchPlugin(originalPackager, decoder)
 	if err != nil {
 		return nil, err
 	}
@@ -49,17 +50,17 @@ func (p *PluginManager) InstallToAWSFromPkg(
 			newResponse.Close()
 		}()
 
-		lambdaUrl := ""
-		lambdaFunctionName := ""
+		functionUrl := ""
+		functionName := ""
 
-		response.Async(func(r serverless.LaunchAWSLambdaFunctionResponse) {
+		response.Async(func(r serverless.LaunchFunctionResponse) {
 			if r.Event == serverless.Info {
 				newResponse.Write(PluginInstallResponse{
 					Event: PluginInstallEventInfo,
 					Data:  "Installing...",
 				})
 			} else if r.Event == serverless.Done {
-				if lambdaUrl == "" || lambdaFunctionName == "" {
+				if functionUrl == "" || functionName == "" {
 					newResponse.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  "Internal server error, failed to get lambda url or function name",
@@ -76,8 +77,8 @@ func (p *PluginManager) InstallToAWSFromPkg(
 					serverlessModel := &models.ServerlessRuntime{
 						Checksum:               checksum,
 						Type:                   models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA,
-						FunctionURL:            lambdaUrl,
-						FunctionName:           lambdaFunctionName,
+						FunctionURL:            functionUrl,
+						FunctionName:           functionName,
 						PluginUniqueIdentifier: uniqueIdentity.String(),
 						Declaration:            declaration,
 					}
@@ -106,10 +107,10 @@ func (p *PluginManager) InstallToAWSFromPkg(
 					Event: PluginInstallEventError,
 					Data:  "Internal server error",
 				})
-			} else if r.Event == serverless.LambdaUrl {
-				lambdaUrl = r.Message
-			} else if r.Event == serverless.Lambda {
-				lambdaFunctionName = r.Message
+			} else if r.Event == serverless.FunctionUrl {
+				functionUrl = r.Message
+			} else if r.Event == serverless.Function {
+				functionName = r.Message
 			} else {
 				newResponse.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
 			}

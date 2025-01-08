@@ -215,7 +215,7 @@ func InstallPluginRuntimeToTenant(
 					})
 					return
 				}
-				stream, err = manager.InstallToAWSFromPkg(zipDecoder, source, metas[i])
+				stream, err = manager.InstallToAWSFromPkg(pkgFile, zipDecoder, source, metas[i])
 			} else if config.Platform == app.PLATFORM_LOCAL {
 				stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, metas[i])
 			} else {
