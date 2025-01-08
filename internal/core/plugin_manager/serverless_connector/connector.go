@@ -72,7 +72,7 @@ func FetchFunction(manifest plugin_entities.PluginDeclaration, checksum string) 
 	}
 
 	if response.Error != "" {
-		return nil, fmt.Errorf("unexpected response from serverless connector: %s", response.Error)
+		return nil, fmt.Errorf("unexpected response from plugin controller: %s", response.Error)
 	}
 
 	if len(response.Items) == 0 {
@@ -132,7 +132,6 @@ func SetupFunction(
 				},
 			},
 		),
-		http_requests.HttpRaiseErrorWhenStreamDataNotMatch(true),
 	)
 	if err != nil {
 		return nil, err
@@ -145,7 +144,7 @@ func SetupFunction(
 		"func":   "SetupFunction",
 	}, func() {
 		defer response.Close()
-		serverless_connector_response.Async(func(chunk LaunchFunctionResponseChunk) {
+		if err := serverless_connector_response.Async(func(chunk LaunchFunctionResponseChunk) {
 			if chunk.State == LAUNCH_STATE_FAILED {
 				response.Write(LaunchFunctionResponse{
 					Event:   Error,
@@ -191,7 +190,12 @@ func SetupFunction(
 					Message: "Plugin launched",
 				})
 			}
-		})
+		}); err != nil {
+			response.Write(LaunchFunctionResponse{
+				Event:   Error,
+				Message: err.Error(),
+			})
+		}
 	})
 
 	return response, nil

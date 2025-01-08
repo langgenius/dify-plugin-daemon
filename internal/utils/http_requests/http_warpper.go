@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -123,10 +124,18 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 				continue
 			}
 
-			if bytes.HasPrefix(data, []byte("data: ")) {
+			if bytes.HasPrefix(data, []byte("data:")) {
 				// split
-				data = data[6:]
+				data = data[5:]
 			}
+
+			if bytes.HasPrefix(data, []byte("event:")) {
+				// TODO: handle event
+				continue
+			}
+
+			// trim space
+			data = bytes.TrimSpace(data)
 
 			// unmarshal
 			t, err := parser.UnmarshalJsonBytes[T](data)
@@ -134,6 +143,8 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 				if raiseErrorWhenStreamDataNotMatch {
 					ch.WriteError(err)
 					break
+				} else {
+					log.Warn("stream data not match for %s, got %s", url, string(data))
 				}
 				continue
 			}

@@ -52,5 +52,5 @@ type LaunchFunctionFinalStageMessage struct {
 }
 
 func getFunctionFilename(manifest plugin_entities.PluginDeclaration, checksum string) string {
-	return fmt.Sprintf("%s-%s_%s@%s.difypkg", manifest.Author, manifest.Name, manifest.Version, checksum)
+	return fmt.Sprintf("%s@%s@%s@%s.difypkg", manifest.Author, manifest.Name, manifest.Version, checksum)
 }
