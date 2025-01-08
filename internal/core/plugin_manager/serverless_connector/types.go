@@ -1,5 +1,11 @@
 package serverless
 
+import (
+	"fmt"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+)
+
 type RunnerInstance struct {
 	ID           string `json:"ID" validate:"required"`
 	Name         string `json:"Name" validate:"required"`
@@ -43,4 +49,8 @@ type LaunchFunctionFinalStageMessage struct {
 	Endpoint string `comma:"endpoint"`
 	Name     string `comma:"name"`
 	ID       string `comma:"id"`
+}
+
+func getFunctionFilename(manifest plugin_entities.PluginDeclaration, checksum string) string {
+	return fmt.Sprintf("%s-%s_%s@%s.difypkg", manifest.Author, manifest.Name, manifest.Version, checksum)
 }

@@ -53,7 +53,7 @@ var (
 
 // Fetch the function from serverless connector, return error if failed
 func FetchFunction(manifest plugin_entities.PluginDeclaration, checksum string) (*ServerlessFunction, error) {
-	filename := fmt.Sprintf("%s-%s_%s@%s.difypkg", manifest.Author, manifest.Name, manifest.Version, checksum)
+	filename := getFunctionFilename(manifest, checksum)
 
 	url, err := url.JoinPath(baseurl.String(), "/v1/runner/instances")
 	if err != nil {
@@ -119,7 +119,6 @@ func SetupFunction(
 	}
 
 	// join a filename
-	filename := fmt.Sprintf("%s-%s_%s@%s.difypkg", manifest.Author, manifest.Name, manifest.Version, checksum)
 	serverless_connector_response, err := http_requests.PostAndParseStream[LaunchFunctionResponseChunk](
 		client,
 		url,
@@ -132,7 +131,7 @@ func SetupFunction(
 			map[string]string{},
 			map[string]http_requests.HttpPayloadMultipartFile{
 				"context": {
-					Filename: filename,
+					Filename: getFunctionFilename(manifest, checksum),
 					Reader:   context,
 				},
 			},
