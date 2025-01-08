@@ -240,6 +240,35 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		dec.Model = &pluginDec
 	}
 
+	for _, agentStrategy := range plugins.AgentStrategies {
+		// read yaml
+		pluginYaml, err := decoder.ReadFile(agentStrategy)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read agent strategy file: %s", agentStrategy))
+		}
+
+		pluginDec, err := parser.UnmarshalYamlBytes[plugin_entities.AgentStrategyProviderDeclaration](pluginYaml)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", agentStrategy))
+		}
+
+		for _, strategyFile := range pluginDec.StrategyFiles {
+			strategyFileContent, err := decoder.ReadFile(strategyFile)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read agent strategy file: %s", strategyFile))
+			}
+
+			strategyDec, err := parser.UnmarshalYamlBytes[plugin_entities.AgentStrategyDeclaration](strategyFileContent)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal agent strategy file: %s", strategyFile))
+			}
+
+			pluginDec.Strategies = append(pluginDec.Strategies, strategyDec)
+		}
+
+		dec.AgentStrategy = &pluginDec
+	}
+
 	dec.FillInDefaultValues()
 
 	// verify signature

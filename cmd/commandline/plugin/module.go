@@ -35,6 +35,22 @@ Parameters:
 {{- end}}
 `
 
+const AGENT_MODULE_TEMPLATE = `
+========== {{.Identity.Name}} ==========
+Author: {{.Identity.Author}}
+Label: {{.Identity.Label.EnUS}}
+Description: {{.Description.EnUS}}
+Parameters:
+{{- range .Parameters}}
+  - Name: {{.Name}}
+    Type: {{.Type}}
+    Required: {{.Required}}
+    {{- if .Default}}
+    Default: {{.Default}}
+    {{- end}}
+{{- end}}
+`
+
 const MODEL_MODULE_TEMPLATE = `
 ========== {{.Model}} ==========
 Name: {{.Model}}
@@ -109,13 +125,35 @@ Permissions:
 `
 
 func ModuleList(pluginPath string) {
-	decoder, err := decoder.NewFSPluginDecoder(pluginPath)
+	var pluginDecoder decoder.PluginDecoder
+	var err error
+
+	stat, err := os.Stat(pluginPath)
+	if err != nil {
+		log.Error("failed to get plugin file stat: %s", err)
+		return
+	}
+
+	if stat.IsDir() {
+		pluginDecoder, err = decoder.NewFSPluginDecoder(pluginPath)
+	} else {
+		fileContent, err := os.ReadFile(pluginPath)
+		if err != nil {
+			log.Error("failed to read plugin file: %s", err)
+			return
+		}
+		pluginDecoder, err = decoder.NewZipPluginDecoder(fileContent)
+		if err != nil {
+			log.Error("failed to create zip plugin decoder: %s", err)
+			return
+		}
+	}
 	if err != nil {
 		log.Error("your plugin is not a valid plugin: %s", err)
 		return
 	}
 
-	manifest, err := decoder.Manifest()
+	manifest, err := pluginDecoder.Manifest()
 	if err != nil {
 		log.Error("failed to get manifest: %s", err)
 		return
@@ -130,6 +168,22 @@ func ModuleList(pluginPath string) {
 			}
 
 			err = tmpl.Execute(os.Stdout, tool)
+			if err != nil {
+				log.Error("failed to execute template: %s", err)
+				return
+			}
+		}
+	}
+
+	if manifest.AgentStrategy != nil {
+		for _, strategy := range manifest.AgentStrategy.Strategies {
+			tmpl, err := template.New("agent").Parse(AGENT_MODULE_TEMPLATE)
+			if err != nil {
+				log.Error("failed to parse template: %s", err)
+				return
+			}
+
+			err = tmpl.Execute(os.Stdout, strategy)
 			if err != nil {
 				log.Error("failed to execute template: %s", err)
 				return
