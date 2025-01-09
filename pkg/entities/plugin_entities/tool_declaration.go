@@ -140,9 +140,18 @@ type ToolDeclaration struct {
 
 func isJSONSchema(fl validator.FieldLevel) bool {
 	// get schema from interface
-	schemaMap, ok := fl.Field().Interface().(ToolOutputSchema)
+	schemaMapInf := fl.Field().Interface()
+	// convert to map[string]any
+	var schemaMap map[string]any
+	toolSchemaMap, ok := schemaMapInf.(ToolOutputSchema)
 	if !ok {
-		return false
+		agentSchemaMap, ok := schemaMapInf.(AgentStrategyOutputSchema)
+		if !ok {
+			return false
+		}
+		schemaMap = agentSchemaMap
+	} else {
+		schemaMap = toolSchemaMap
 	}
 
 	// validate root schema must be object type
