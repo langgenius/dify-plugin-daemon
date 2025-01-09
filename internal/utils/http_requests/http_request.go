@@ -44,14 +44,14 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 			buffer := new(bytes.Buffer)
 			writer := multipart.NewWriter(buffer)
 
-			files := option.Value.(map[string]any)["files"].(map[string]HttpPayloadMultipartFile)
-			for filename, file := range files {
-				part, err := writer.CreateFormFile(filename, file.Filename)
+			files := option.Value.(map[string]any)["files"].(map[string]io.Reader)
+			for filename, reader := range files {
+				part, err := writer.CreateFormFile(filename, filename)
 				if err != nil {
 					writer.Close()
 					return nil, err
 				}
-				_, err = io.Copy(part, file.Reader)
+				_, err = io.Copy(part, reader)
 				if err != nil {
 					writer.Close()
 					return nil, err

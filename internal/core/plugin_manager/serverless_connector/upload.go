@@ -1,7 +1,7 @@
 package serverless
 
 import (
-	"bytes"
+	"os"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
@@ -13,9 +13,9 @@ var (
 	AWS_LAUNCH_LOCK_PREFIX = "aws_launch_lock_"
 )
 
-// LaunchPlugin uploads the plugin to specific serverless connector
-// return the function url and name
-func LaunchPlugin(originPackage []byte, decoder decoder.PluginDecoder) (*stream.Stream[LaunchFunctionResponse], error) {
+// UploadPlugin uploads the plugin to the AWS Lambda
+// return the lambda url and name
+func UploadPlugin(decoder decoder.PluginDecoder) (*stream.Stream[LaunchAWSLambdaFunctionResponse], error) {
 	checksum, err := decoder.Checksum()
 	if err != nil {
 		return nil, err
@@ -32,23 +32,24 @@ func LaunchPlugin(originPackage []byte, decoder decoder.PluginDecoder) (*stream.
 		return nil, err
 	}
 
-	function, err := FetchFunction(manifest, checksum)
+	identity := manifest.Identity()
+	function, err := FetchLambda(identity, checksum)
 	if err != nil {
-		if err != ErrFunctionNotFound {
+		if err != ErrNoLambdaFunction {
 			return nil, err
 		}
 	} else {
 		// found, return directly
-		response := stream.NewStream[LaunchFunctionResponse](3)
-		response.Write(LaunchFunctionResponse{
-			Event:   FunctionUrl,
+		response := stream.NewStream[LaunchAWSLambdaFunctionResponse](3)
+		response.Write(LaunchAWSLambdaFunctionResponse{
+			Event:   LambdaUrl,
 			Message: function.FunctionURL,
 		})
-		response.Write(LaunchFunctionResponse{
-			Event:   Function,
+		response.Write(LaunchAWSLambdaFunctionResponse{
+			Event:   Lambda,
 			Message: function.FunctionName,
 		})
-		response.Write(LaunchFunctionResponse{
+		response.Write(LaunchAWSLambdaFunctionResponse{
 			Event:   Done,
 			Message: "",
 		})
@@ -56,7 +57,16 @@ func LaunchPlugin(originPackage []byte, decoder decoder.PluginDecoder) (*stream.
 		return response, nil
 	}
 
-	response, err := SetupFunction(manifest, checksum, bytes.NewReader(originPackage))
+	// create lambda function
+	packager := NewPackager(decoder)
+	context, err := packager.Pack()
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(context.Name())
+	defer context.Close()
+
+	response, err := LaunchLambda(identity, checksum, context)
 	if err != nil {
 		return nil, err
 	}

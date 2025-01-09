@@ -1,0 +1,30 @@
+version: 0.0.1
+type: plugin
+author: "Yeuoly"
+name: "jina"
+label:
+  en_US: "Jina"
+created_at: "2024-07-12T08:03:44.658609186Z"
+resource:
+  memory: 1048576
+  permission:
+    tool:
+      enabled: true
+    model:
+      enabled: true
+      llm: true
+plugins:
+  models:
+    - "provider/jina.yaml"
+execution:
+  install: install.sh
+  launch: launch.sh
+meta:
+  version: 0.0.1
+  arch:
+    - "amd64"
+    - "arm64"
+  runner:
+    language: "python"
+    version: "3.12"
+    entrypoint: "main"
