@@ -69,7 +69,7 @@ Now you can edit the `manifest.yaml` file to describe your Plugin, here is the b
 
 ### Install Dependencies
 
-- First of all, you need a Python 3.10+ environment, as our SDK requires that.
+- First of all, you need a Python 3.11+ environment, as our SDK requires that.
 - Then, install the dependencies:
     ```bash
     pip install -r requirements.txt
