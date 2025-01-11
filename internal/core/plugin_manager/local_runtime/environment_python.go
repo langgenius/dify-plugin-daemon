@@ -161,7 +161,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 				break
 			}
 
-			if time.Since(lastActiveAt) > 60*time.Second {
+			if time.Since(lastActiveAt) > 180*time.Second {
 				cmd.Process.Kill()
 				err_msg.WriteString("init process exited due to long time no activity")
 				break
