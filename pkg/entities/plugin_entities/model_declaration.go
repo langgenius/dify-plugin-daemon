@@ -256,6 +256,12 @@ var PARAMETER_RULE_TEMPLATE = map[DefaultParameterName]ModelParameterRule{
 }
 
 func (m *ModelParameterRule) TransformTemplate() error {
+	if m.Label == nil || m.Label.EnUS == "" {
+		m.Label = &I18nObject{
+			EnUS: m.Name,
+		}
+	}
+
 	// if use_template is not empty, transform to use default value
 	if m.UseTemplate != nil && *m.UseTemplate != "" {
 		// get the value of use_template
