@@ -39,7 +39,13 @@ func Endpoint(
 	}
 
 	req := ctx.Request.Clone(context.Background())
+	// get query params
+	queryParams := req.URL.Query()
+
+	// replace path with endpoint path
 	req.URL.Path = path
+	// set query params
+	req.URL.RawQuery = queryParams.Encode()
 
 	// read request body until complete, max 10MB
 	body, err := io.ReadAll(io.LimitReader(req.Body, 10*1024*1024))
