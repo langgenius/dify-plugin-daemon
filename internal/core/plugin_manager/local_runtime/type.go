@@ -21,6 +21,10 @@ type LocalPluginRuntime struct {
 	// by using its venv module
 	defaultPythonInterpreterPath string
 
+	// proxy settings
+	proxyHttp  string
+	proxyHttps string
+
 	waitChanLock    sync.Mutex
 	waitStartedChan []chan bool
 	waitStoppedChan []chan bool
@@ -30,8 +34,12 @@ type LocalPluginRuntime struct {
 
 func NewLocalPluginRuntime(
 	pythonInterpreterPath string,
+	proxyHttp string,
+	proxyHttps string,
 ) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
 		defaultPythonInterpreterPath: pythonInterpreterPath,
+		proxyHttp:                    proxyHttp,
+		proxyHttps:                   proxyHttps,
 	}
 }

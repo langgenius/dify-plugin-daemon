@@ -36,6 +36,12 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 	if r.Config.Meta.Runner.Language == constants.Python {
 		cmd := exec.Command(r.pythonInterpreterPath, "-m", r.Config.Meta.Runner.Entrypoint)
 		cmd.Dir = r.State.WorkingPath
+		if r.proxyHttps != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.proxyHttps))
+		}
+		if r.proxyHttp != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.proxyHttp))
+		}
 		return cmd, nil
 	}
 

@@ -56,6 +56,10 @@ type PluginManager struct {
 	// python interpreter path
 	pythonInterpreterPath string
 
+	// proxy settings
+	proxyHttp  string
+	proxyHttps string
+
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
@@ -92,6 +96,8 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
 		pythonInterpreterPath:    configuration.PythonInterpreterPath,
 		platform:                 configuration.Platform,
+		proxyHttp:                configuration.ProxyHttp,
+		proxyHttps:               configuration.ProxyHttps,
 	}
 
 	return manager
