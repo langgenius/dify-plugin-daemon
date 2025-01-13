@@ -17,6 +17,9 @@ type LocalPluginRuntime struct {
 	// python interpreter path, currently only support python
 	pythonInterpreterPath string
 
+	// python env init timeout
+	pythonEnvInitTimeout int
+
 	// to create a new python virtual environment, we need a default python interpreter
 	// by using its venv module
 	defaultPythonInterpreterPath string
@@ -30,8 +33,10 @@ type LocalPluginRuntime struct {
 
 func NewLocalPluginRuntime(
 	pythonInterpreterPath string,
+	pythonEnvInitTimeout int,
 ) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
 		defaultPythonInterpreterPath: pythonInterpreterPath,
+		pythonEnvInitTimeout:         pythonEnvInitTimeout,
 	}
 }

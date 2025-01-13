@@ -82,6 +82,7 @@ type Config struct {
 	MaxAWSLambdaTransactionTimeout int   `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
 
 	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
+	PythonEnvInitTimeout  int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
