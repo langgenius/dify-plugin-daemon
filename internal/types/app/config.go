@@ -94,6 +94,10 @@ type Config struct {
 	SentryTracingEnabled   bool    `envconfig:"SENTRY_TRACING_ENABLED"`
 	SentryTracesSampleRate float64 `envconfig:"SENTRY_TRACES_SAMPLE_RATE"`
 	SentrySampleRate       float64 `envconfig:"SENTRY_SAMPLE_RATE"`
+
+	// proxy settings
+	HttpProxy  string `envconfig:"HTTP_PROXY"`
+	HttpsProxy string `envconfig:"HTTPS_PROXY"`
 }
 
 func (c *Config) Validate() error {
