@@ -96,8 +96,8 @@ type Config struct {
 	SentrySampleRate       float64 `envconfig:"SENTRY_SAMPLE_RATE"`
 
 	// proxy settings
-	ProxyHttp  string `envconfig:"PROXY_HTTP"`
-	ProxyHttps string `envconfig:"PROXY_HTTPS"`
+	HttpProxy  string `envconfig:"HTTP_PROXY"`
+	HttpsProxy string `envconfig:"HTTPS_PROXY"`
 }
 
 func (c *Config) Validate() error {

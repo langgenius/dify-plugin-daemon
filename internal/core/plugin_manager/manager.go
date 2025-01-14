@@ -60,8 +60,8 @@ type PluginManager struct {
 	pythonEnvInitTimeout int
 
 	// proxy settings
-	proxyHttp  string
-	proxyHttps string
+	HttpProxy  string
+	HttpsProxy string
 
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
@@ -100,8 +100,8 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		pythonInterpreterPath:    configuration.PythonInterpreterPath,
 		pythonEnvInitTimeout:     configuration.PythonEnvInitTimeout,
 		platform:                 configuration.Platform,
-		proxyHttp:                configuration.ProxyHttp,
-		proxyHttps:               configuration.ProxyHttps,
+		HttpProxy:                configuration.HttpProxy,
+		HttpsProxy:               configuration.HttpsProxy,
 	}
 
 	return manager

@@ -25,8 +25,8 @@ type LocalPluginRuntime struct {
 	defaultPythonInterpreterPath string
 
 	// proxy settings
-	proxyHttp  string
-	proxyHttps string
+	HttpProxy  string
+	HttpsProxy string
 
 	waitChanLock    sync.Mutex
 	waitStartedChan []chan bool
@@ -38,13 +38,13 @@ type LocalPluginRuntime struct {
 func NewLocalPluginRuntime(
 	pythonInterpreterPath string,
 	pythonEnvInitTimeout int,
-	proxyHttp string,
-	proxyHttps string,
+	HttpProxy string,
+	HttpsProxy string,
 ) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
 		defaultPythonInterpreterPath: pythonInterpreterPath,
 		pythonEnvInitTimeout:         pythonEnvInitTimeout,
-		proxyHttp:                    proxyHttp,
-		proxyHttps:                   proxyHttps,
+		HttpProxy:                    HttpProxy,
+		HttpsProxy:                   HttpsProxy,
 	}
 }
