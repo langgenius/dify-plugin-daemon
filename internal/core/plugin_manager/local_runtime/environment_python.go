@@ -103,7 +103,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		}
 	}()
 
-	var err_msg strings.Builder
+	var errMsg strings.Builder
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -137,14 +137,14 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 			n, err := stderr.Read(buf)
 			if err != nil && err != os.ErrClosed {
 				lastActiveAt = time.Now()
-				err_msg.WriteString(string(buf[:n]))
+				errMsg.WriteString(string(buf[:n]))
 				break
 			} else if err == os.ErrClosed {
 				break
 			}
 
 			if n > 0 {
-				err_msg.WriteString(string(buf[:n]))
+				errMsg.WriteString(string(buf[:n]))
 				lastActiveAt = time.Now()
 			}
 		}
@@ -161,9 +161,9 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 				break
 			}
 
-			if time.Since(lastActiveAt) > 60*time.Second {
+			if time.Since(lastActiveAt) > time.Duration(p.pythonEnvInitTimeout)*time.Second {
 				cmd.Process.Kill()
-				err_msg.WriteString("init process exited due to long time no activity")
+				errMsg.WriteString(fmt.Sprintf("init process exited due to no activity for %d seconds", p.pythonEnvInitTimeout))
 				break
 			}
 		}
@@ -172,7 +172,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, err_msg.String())
+		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 	}
 
 	success = true

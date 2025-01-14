@@ -129,7 +129,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		return nil, nil, nil, failed(err.Error())
 	}
 
-	localPluginRuntime := local_runtime.NewLocalPluginRuntime(p.pythonInterpreterPath, p.proxyHttp, p.proxyHttps)
+	localPluginRuntime := local_runtime.NewLocalPluginRuntime(p.pythonInterpreterPath, p.pythonEnvInitTimeout, p.proxyHttp, p.proxyHttps)
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
 		MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),

@@ -112,15 +112,25 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	defer func() {
 		// wait for plugin to exit
-		err = e.Wait()
-		if err != nil {
+		originalErr := e.Wait()
+		if originalErr != nil {
 			// get stdio
 			var err error
 			if stdio != nil {
-				err = stdio.Error()
+				stdioErr := stdio.Error()
+				if stdioErr != nil {
+					err = errors.Join(originalErr, stdioErr)
+				} else {
+					err = originalErr
+				}
+			} else {
+				err = originalErr
 			}
-			err = errors.Join(err, err)
-			log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
+			if err != nil {
+				log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
+			} else {
+				log.Error("plugin %s exited with unknown error", r.Config.Identity())
+			}
 		}
 
 		r.gc()

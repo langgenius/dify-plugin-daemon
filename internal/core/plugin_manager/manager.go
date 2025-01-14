@@ -56,6 +56,9 @@ type PluginManager struct {
 	// python interpreter path
 	pythonInterpreterPath string
 
+	// python env init timeout
+	pythonEnvInitTimeout int
+
 	// proxy settings
 	proxyHttp  string
 	proxyHttps string
@@ -95,6 +98,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		localPluginLaunchingLock: lock.NewGranularityLock(),
 		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
 		pythonInterpreterPath:    configuration.PythonInterpreterPath,
+		pythonEnvInitTimeout:     configuration.PythonEnvInitTimeout,
 		platform:                 configuration.Platform,
 		proxyHttp:                configuration.ProxyHttp,
 		proxyHttps:               configuration.ProxyHttps,

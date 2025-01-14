@@ -28,6 +28,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
+	setDefaultInt(&config.PythonEnvInitTimeout, 120)
 	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
 }
 
