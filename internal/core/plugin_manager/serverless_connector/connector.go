@@ -124,7 +124,14 @@ func SetupFunction(
 		http_requests.HttpReadTimeout(240000),
 		http_requests.HttpWriteTimeout(240000),
 		http_requests.HttpPayloadMultipart(
-			map[string]string{},
+			map[string]string{
+				"verified": func() string {
+					if manifest.Verified {
+						return "true"
+					}
+					return "false"
+				}(),
+			},
 			map[string]http_requests.HttpPayloadMultipartFile{
 				"context": {
 					Filename: getFunctionFilename(manifest, checksum),
