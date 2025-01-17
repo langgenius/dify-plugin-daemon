@@ -112,16 +112,12 @@ func Del(key string, context ...redis.Cmdable) error {
 		return ErrDBNotInit
 	}
 
-	_, err := getCmdable(context...).Del(ctx, serialKey(key)).Result()
-	if err != nil {
-		if err == redis.Nil {
-			return ErrNotFound
-		}
-
-		return err
+	v, err := getCmdable(context...).Del(ctx, serialKey(key)).Result()
+	if v == 0 {
+		return ErrNotFound
 	}
 
-	return nil
+	return err
 }
 
 // Exist check the key exist or not
