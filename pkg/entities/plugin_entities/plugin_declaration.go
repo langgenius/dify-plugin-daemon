@@ -233,8 +233,8 @@ func (p *PluginDeclaration) MarshalJSON() ([]byte, error) {
 }
 
 var (
-	PluginNameRegex = regexp.MustCompile(`^[a-z0-9_-]{1,128}$`)
-	AuthorRegex     = regexp.MustCompile(`^[a-z0-9_-]{1,64}$`)
+	PluginNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,128}$`)
+	AuthorRegex     = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`)
 )
 
 func isPluginName(fl validator.FieldLevel) bool {
