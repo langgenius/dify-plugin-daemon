@@ -62,10 +62,10 @@ func (p *profile) checkRule() bool {
 		p.warning = "Name, author and description cannot be empty"
 		return false
 	} else if p.cursor == 0 && !plugin_entities.PluginNameRegex.MatchString(p.inputs[p.cursor].Value()) {
-		p.warning = "Plugin name must be 1-128 characters long, and can only contain letters, numbers, dashes and underscores"
+		p.warning = "Plugin name must be 1-128 characters long, and can only contain lowercase letters, numbers, dashes and underscores"
 		return false
 	} else if p.cursor == 1 && !plugin_entities.AuthorRegex.MatchString(p.inputs[p.cursor].Value()) {
-		p.warning = "Author name must be 1-64 characters long, and can only contain letters, numbers, dashes and underscores"
+		p.warning = "Author name must be 1-64 characters long, and can only contain lowercase letters, numbers, dashes and underscores"
 		return false
 	} else {
 		p.warning = ""
