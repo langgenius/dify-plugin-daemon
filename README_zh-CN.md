@@ -27,10 +27,10 @@ wget -qO- https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/main/i
 ### 方式二：手动安装
 
 1. 从[发布页面](https://github.com/langgenius/dify-plugin-daemon/releases)下载对应平台的二进制文件
-2. 将其移动到相应目录：
-   - macOS系统：`~/.local/bin`
-   - Linux系统：`/usr/local/bin`
-3. 添加可执行权限：`chmod +x dify-plugin-daemon`
+2. 将其移动到相应目录并重命名为 `dify`：
+   - macOS系统：`~/.local/bin/dify`
+   - Linux系统：`/usr/local/bin/dify`
+3. 添加可执行权限：`chmod +x dify`
 
 ## 安装详情
 
@@ -39,8 +39,8 @@ wget -qO- https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/main/i
 - 自动检测您的操作系统（macOS 或 Linux）和架构（AMD64 或 ARM64）
 - 下载对应的二进制文件
 - 安装到正确的位置：
-  - macOS：`~/.local/bin/dify-plugin-daemon`
-  - Linux：`/usr/local/bin/dify-plugin-daemon`
+  - macOS：`~/.local/bin/dify`
+  - Linux：`/usr/local/bin/dify`
 - 设置正确的权限
 - 添加安装目录到 PATH（如果需要，仅限 macOS）
 

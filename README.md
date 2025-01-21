@@ -27,10 +27,10 @@ wget -qO- https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/main/i
 ### Option 2: Manual Installation
 
 1. Download the binary for your platform from [releases page](https://github.com/langgenius/dify-plugin-daemon/releases)
-2. Move it to the appropriate directory:
-   - For macOS: `~/.local/bin`
-   - For Linux: `/usr/local/bin`
-3. Make it executable: `chmod +x dify-plugin-daemon`
+2. Move it to the appropriate directory and rename it to `dify`:
+   - For macOS: `~/.local/bin/dify`
+   - For Linux: `/usr/local/bin/dify`
+3. Make it executable: `chmod +x dify`
 
 ## Installation Details
 
@@ -39,8 +39,8 @@ The installation script will:
 - Automatically detect your operating system (macOS or Linux) and architecture (AMD64 or ARM64)
 - Download the appropriate binary
 - Install it to the correct location:
-  - macOS: `~/.local/bin/dify-plugin-daemon`
-  - Linux: `/usr/local/bin/dify-plugin-daemon`
+  - macOS: `~/.local/bin/dify`
+  - Linux: `/usr/local/bin/dify`
 - Set the correct permissions
 - Add the installation directory to PATH (if needed, for macOS)
 
