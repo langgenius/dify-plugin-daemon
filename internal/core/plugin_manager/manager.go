@@ -63,6 +63,9 @@ type PluginManager struct {
 	HttpProxy  string
 	HttpsProxy string
 
+	// pip mirror url
+	pipMirrorUrl string
+
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
@@ -102,6 +105,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		platform:                 configuration.Platform,
 		HttpProxy:                configuration.HttpProxy,
 		HttpsProxy:               configuration.HttpsProxy,
+		pipMirrorUrl:             configuration.PipMirrorUrl,
 	}
 
 	return manager

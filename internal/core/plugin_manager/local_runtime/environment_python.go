@@ -89,7 +89,21 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	cmd = exec.CommandContext(ctx, pipPath, "install", "-r", "requirements.txt")
+	args := []string{"install"}
+
+	if p.HttpProxy != "" {
+		args = append(args, "--proxy", p.HttpProxy)
+	} else if p.HttpsProxy != "" {
+		args = append(args, "--proxy", p.HttpsProxy)
+	}
+
+	if p.pipMirrorUrl != "" {
+		args = append(args, "-i", p.pipMirrorUrl)
+	}
+
+	args = append(args, "-r", "requirements.txt")
+
+	cmd = exec.CommandContext(ctx, pipPath, args...)
 	cmd.Dir = p.State.WorkingPath
 
 	// get stdout and stderr
