@@ -1266,3 +1266,62 @@ func TestInvalidJSONSchemaToolProvider_Validate(t *testing.T) {
 		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
 	}
 }
+
+func TestToolName_Validate(t *testing.T) {
+	data := parser.MarshalJsonBytes(ToolProviderIdentity{
+		Author: "author",
+		Name:   "tool-name",
+		Description: I18nObject{
+			EnUS:   "description",
+			ZhHans: "描述",
+		},
+		Icon: "icon",
+		Label: I18nObject{
+			EnUS:   "label",
+			ZhHans: "标签",
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[ToolProviderIdentity](data); err != nil {
+		t.Errorf("TestToolName_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(ToolProviderIdentity{
+		Author: "author",
+		Name:   "tool AA",
+		Label: I18nObject{
+			EnUS:   "label",
+			ZhHans: "标签",
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[ToolProviderIdentity](data); err == nil {
+		t.Errorf("TestToolName_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(ToolIdentity{
+		Author: "author",
+		Name:   "tool-name-123",
+		Label: I18nObject{
+			EnUS:   "label",
+			ZhHans: "标签",
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[ToolIdentity](data); err != nil {
+		t.Errorf("TestToolName_Validate() error = %v", err)
+	}
+
+	data = parser.MarshalJsonBytes(ToolIdentity{
+		Author: "author",
+		Name:   "tool name-123",
+		Label: I18nObject{
+			EnUS:   "label",
+			ZhHans: "标签",
+		},
+	})
+
+	if _, err := parser.UnmarshalJsonBytes[ToolIdentity](data); err == nil {
+		t.Errorf("TestToolName_Validate() error = %v", err)
+	}
+}
