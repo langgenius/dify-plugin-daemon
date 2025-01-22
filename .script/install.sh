@@ -64,10 +64,10 @@ chmod +x "dify-plugin-daemon"
 # Install the binary with the new name
 if [ "$NEED_SUDO" = true ]; then
     echo "Installing to $INSTALL_DIR (requires sudo)..."
-    sudo mv "dify-plugin-daemon" "$INSTALL_DIR/dify"
+    sudo mv "dify-plugin-daemon" "$INSTALL_DIR/dify-plugin"
 else
     echo "Installing to $INSTALL_DIR..."
-    mv "dify-plugin-daemon" "$INSTALL_DIR/dify"
+    mv "dify-plugin-daemon" "$INSTALL_DIR/dify-plugin"
 fi
 
 # Clean up
@@ -96,4 +96,4 @@ if [ "$OS" = "darwin" ]; then
     fi
 fi
 
-echo "Installation completed! The dify plugin daemon has been installed to $INSTALL_DIR/dify" 
+echo "Installation completed! The dify plugin daemon has been installed to $INSTALL_DIR/dify-plugin" 
