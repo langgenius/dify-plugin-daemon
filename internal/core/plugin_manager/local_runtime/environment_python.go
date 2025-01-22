@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,13 +20,19 @@ import (
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// check if virtual environment exists
 	if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv")); err == nil {
-		// setup python interpreter path
-		pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
-		if err != nil {
-			return fmt.Errorf("failed to find python: %s", err)
+		// check if venv is valid, try to find .venv/dify/plugin.json
+		if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv/dify/plugin.json")); err != nil {
+			// remove the venv and rebuild it
+			os.RemoveAll(path.Join(p.State.WorkingPath, ".venv"))
+		} else {
+			// setup python interpreter path
+			pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+			if err != nil {
+				return fmt.Errorf("failed to find python: %s", err)
+			}
+			p.pythonInterpreterPath = pythonPath
+			return nil
 		}
-		p.pythonInterpreterPath = pythonPath
-		return nil
 	}
 
 	// execute init command, create a virtual environment
@@ -43,6 +50,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		// if init failed, remove the .venv directory
 		if !success {
 			os.RemoveAll(path.Join(p.State.WorkingPath, ".venv"))
+		} else {
+			// create dify/plugin.json
+			pluginJsonPath := path.Join(p.State.WorkingPath, ".venv/dify/plugin.json")
+			os.MkdirAll(path.Dir(pluginJsonPath), 0755)
+			os.WriteFile(pluginJsonPath, []byte(`{"timestamp":`+strconv.FormatInt(time.Now().Unix(), 10)+`}`), 0644)
 		}
 	}()
 
