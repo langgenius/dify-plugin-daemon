@@ -24,6 +24,8 @@ type LocalPluginRuntime struct {
 	// by using its venv module
 	defaultPythonInterpreterPath string
 
+	pipMirrorUrl string
+
 	// proxy settings
 	HttpProxy  string
 	HttpsProxy string
@@ -35,16 +37,20 @@ type LocalPluginRuntime struct {
 	isNotFirstStart bool
 }
 
-func NewLocalPluginRuntime(
-	pythonInterpreterPath string,
-	pythonEnvInitTimeout int,
-	HttpProxy string,
-	HttpsProxy string,
-) *LocalPluginRuntime {
+type LocalPluginRuntimeConfig struct {
+	PythonInterpreterPath string
+	PythonEnvInitTimeout  int
+	HttpProxy             string
+	HttpsProxy            string
+	PipMirrorUrl          string
+}
+
+func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
-		defaultPythonInterpreterPath: pythonInterpreterPath,
-		pythonEnvInitTimeout:         pythonEnvInitTimeout,
-		HttpProxy:                    HttpProxy,
-		HttpsProxy:                   HttpsProxy,
+		defaultPythonInterpreterPath: config.PythonInterpreterPath,
+		pythonEnvInitTimeout:         config.PythonEnvInitTimeout,
+		HttpProxy:                    config.HttpProxy,
+		HttpsProxy:                   config.HttpsProxy,
+		pipMirrorUrl:                 config.PipMirrorUrl,
 	}
 }
