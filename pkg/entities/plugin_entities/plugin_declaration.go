@@ -183,13 +183,13 @@ type PluginDeclaration struct {
 }
 
 func (p *PluginDeclaration) Category() PluginCategory {
-	if p.Tool != nil {
+	if p.Tool != nil || len(p.Plugins.Tools) != 0 {
 		return PLUGIN_CATEGORY_TOOL
 	}
-	if p.Model != nil {
+	if p.Model != nil || len(p.Plugins.Models) != 0 {
 		return PLUGIN_CATEGORY_MODEL
 	}
-	if p.AgentStrategy != nil {
+	if p.AgentStrategy != nil || len(p.Plugins.AgentStrategies) != 0 {
 		return PLUGIN_CATEGORY_AGENT_STRATEGY
 	}
 	return PLUGIN_CATEGORY_EXTENSION
