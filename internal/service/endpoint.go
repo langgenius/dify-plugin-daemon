@@ -202,14 +202,8 @@ func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		return exception.NotFoundError(errors.New("endpoint not found")).ToResponse()
 	}
 
-	endpoint.Enabled = true
-
 	if err := install_service.EnabledEndpoint(&endpoint); err != nil {
 		return exception.InternalServerError(errors.New("failed to enable endpoint")).ToResponse()
-	}
-
-	if err := db.Update(&endpoint); err != nil {
-		return exception.InternalServerError(fmt.Errorf("failed to update endpoint in database")).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)
@@ -224,14 +218,8 @@ func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 		return exception.NotFoundError(errors.New("Endpoint not found")).ToResponse()
 	}
 
-	endpoint.Enabled = false
-
 	if err := install_service.DisabledEndpoint(&endpoint); err != nil {
 		return exception.InternalServerError(errors.New("failed to disable endpoint")).ToResponse()
-	}
-
-	if err := db.Update(&endpoint); err != nil {
-		return exception.InternalServerError(errors.New("failed to update endpoint in database")).ToResponse()
 	}
 
 	return entities.NewSuccessResponse(true)

@@ -1,6 +1,7 @@
 package install_service
 
 import (
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -144,52 +145,53 @@ func UninstallEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
+var endpointMutex sync.Mutex
+
 func EnabledEndpoint(endpoint *models.Endpoint) error {
+	endpointMutex.Lock()
+	defer endpointMutex.Unlock()
+
 	if endpoint.Enabled {
 		return nil
 	}
 
-	return db.WithTransaction(func(tx *gorm.DB) error {
-		endpoint.Enabled = true
-		if err := db.Update(endpoint, tx); err != nil {
-			return err
-		}
+	endpoint.Enabled = true
+	if err := db.Update(endpoint); err != nil {
+		return err
+	}
 
-		// update the plugin installation
-		return db.Run(
-			db.WithTransactionContext(tx),
-			db.Model(models.PluginInstallation{}),
-			db.Equal("plugin_id", endpoint.PluginID),
-			db.Equal("tenant_id", endpoint.TenantID),
-			db.Inc(map[string]int{
-				"endpoints_active": 1,
-			}),
-		)
-	})
+	// update the plugin installation
+	return db.Run(
+		db.Model(models.PluginInstallation{}),
+		db.Equal("plugin_id", endpoint.PluginID),
+		db.Equal("tenant_id", endpoint.TenantID),
+		db.Inc(map[string]int{
+			"endpoints_active": 1,
+		}),
+	)
 }
 
 func DisabledEndpoint(endpoint *models.Endpoint) error {
+	endpointMutex.Lock()
+	defer endpointMutex.Unlock()
+
 	if !endpoint.Enabled {
 		return nil
 	}
 
-	return db.WithTransaction(func(tx *gorm.DB) error {
-		endpoint.Enabled = false
-		if err := db.Update(endpoint, tx); err != nil {
-			return err
-		}
+	endpoint.Enabled = false
+	if err := db.Update(endpoint); err != nil {
+		return err
+	}
 
-		// update the plugin installation
-		return db.Run(
-			db.WithTransactionContext(tx),
-			db.Model(models.PluginInstallation{}),
-			db.Equal("plugin_id", endpoint.PluginID),
-			db.Equal("tenant_id", endpoint.TenantID),
-			db.Dec(map[string]int{
-				"endpoints_active": 1,
-			}),
-		)
-	})
+	return db.Run(
+		db.Model(models.PluginInstallation{}),
+		db.Equal("plugin_id", endpoint.PluginID),
+		db.Equal("tenant_id", endpoint.TenantID),
+		db.Dec(map[string]int{
+			"endpoints_active": 1,
+		}),
+	)
 }
 
 func UpdateEndpoint(endpoint *models.Endpoint, name string, settings map[string]any) error {
