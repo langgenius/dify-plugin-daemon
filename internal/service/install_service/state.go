@@ -198,6 +198,7 @@ func DisabledEndpoint(endpoint_id string, tenant_id string) error {
 			return err
 		}
 
+		// update the plugin installation
 		return db.Run(
 			db.WithTransactionContext(tx),
 			db.Model(models.PluginInstallation{}),
