@@ -1,6 +1,7 @@
 release/
 logs/
 .vscode/
+.idea/
 .env
 cmd/**/__debug_bin*
 *.zip
