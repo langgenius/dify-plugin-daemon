@@ -1,7 +1,6 @@
 package install_service
 
 import (
-	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -145,53 +144,70 @@ func UninstallEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
-var endpointMutex sync.Mutex
+func EnabledEndpoint(endpoint_id string, tenant_id string) error {
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint, err := db.GetOne[models.Endpoint](
+			db.WithTransactionContext(tx),
+			db.Equal("id", endpoint_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+		if err != nil {
+			return err
+		}
 
-func EnabledEndpoint(endpoint *models.Endpoint) error {
-	endpointMutex.Lock()
-	defer endpointMutex.Unlock()
+		if endpoint.Enabled {
+			return nil
+		}
 
-	if endpoint.Enabled {
-		return nil
-	}
+		endpoint.Enabled = true
+		if err := db.Update(endpoint, tx); err != nil {
+			return err
+		}
 
-	endpoint.Enabled = true
-	if err := db.Update(endpoint); err != nil {
-		return err
-	}
-
-	// update the plugin installation
-	return db.Run(
-		db.Model(models.PluginInstallation{}),
-		db.Equal("plugin_id", endpoint.PluginID),
-		db.Equal("tenant_id", endpoint.TenantID),
-		db.Inc(map[string]int{
-			"endpoints_active": 1,
-		}),
-	)
+		// update the plugin installation
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(models.PluginInstallation{}),
+			db.Equal("plugin_id", endpoint.PluginID),
+			db.Equal("tenant_id", endpoint.TenantID),
+			db.Inc(map[string]int{
+				"endpoints_active": 1,
+			}),
+		)
+	})
 }
 
-func DisabledEndpoint(endpoint *models.Endpoint) error {
-	endpointMutex.Lock()
-	defer endpointMutex.Unlock()
+func DisabledEndpoint(endpoint_id string, tenant_id string) error {
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint, err := db.GetOne[models.Endpoint](
+			db.WithTransactionContext(tx),
+			db.Equal("id", endpoint_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+		if err != nil {
+			return err
+		}
+		if !endpoint.Enabled {
+			return nil
+		}
 
-	if !endpoint.Enabled {
-		return nil
-	}
+		endpoint.Enabled = false
+		if err := db.Update(endpoint, tx); err != nil {
+			return err
+		}
 
-	endpoint.Enabled = false
-	if err := db.Update(endpoint); err != nil {
-		return err
-	}
-
-	return db.Run(
-		db.Model(models.PluginInstallation{}),
-		db.Equal("plugin_id", endpoint.PluginID),
-		db.Equal("tenant_id", endpoint.TenantID),
-		db.Dec(map[string]int{
-			"endpoints_active": 1,
-		}),
-	)
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(models.PluginInstallation{}),
+			db.Equal("plugin_id", endpoint.PluginID),
+			db.Equal("tenant_id", endpoint.TenantID),
+			db.Dec(map[string]int{
+				"endpoints_active": 1,
+			}),
+		)
+	})
 }
 
 func UpdateEndpoint(endpoint *models.Endpoint, name string, settings map[string]any) error {

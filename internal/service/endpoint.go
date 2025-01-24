@@ -194,15 +194,8 @@ func Endpoint(
 }
 
 func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-	endpoint, err := db.GetOne[models.Endpoint](
-		db.Equal("id", endpoint_id),
-		db.Equal("tenant_id", tenant_id),
-	)
-	if err != nil {
-		return exception.NotFoundError(errors.New("endpoint not found")).ToResponse()
-	}
 
-	if err := install_service.EnabledEndpoint(&endpoint); err != nil {
+	if err := install_service.EnabledEndpoint(endpoint_id, tenant_id); err != nil {
 		return exception.InternalServerError(errors.New("failed to enable endpoint")).ToResponse()
 	}
 
@@ -210,15 +203,8 @@ func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 }
 
 func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-	endpoint, err := db.GetOne[models.Endpoint](
-		db.Equal("id", endpoint_id),
-		db.Equal("tenant_id", tenant_id),
-	)
-	if err != nil {
-		return exception.NotFoundError(errors.New("Endpoint not found")).ToResponse()
-	}
 
-	if err := install_service.DisabledEndpoint(&endpoint); err != nil {
+	if err := install_service.DisabledEndpoint(endpoint_id, tenant_id); err != nil {
 		return exception.InternalServerError(errors.New("failed to disable endpoint")).ToResponse()
 	}
 
