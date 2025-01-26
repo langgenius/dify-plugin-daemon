@@ -144,12 +144,22 @@ func UninstallEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
-func EnabledEndpoint(endpoint *models.Endpoint) error {
-	if endpoint.Enabled {
-		return nil
-	}
-
+func EnabledEndpoint(endpoint_id string, tenant_id string) error {
 	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint, err := db.GetOne[models.Endpoint](
+			db.WithTransactionContext(tx),
+			db.Equal("id", endpoint_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if endpoint.Enabled {
+			return nil
+		}
+
 		endpoint.Enabled = true
 		if err := db.Update(endpoint, tx); err != nil {
 			return err
@@ -168,12 +178,21 @@ func EnabledEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
-func DisabledEndpoint(endpoint *models.Endpoint) error {
-	if !endpoint.Enabled {
-		return nil
-	}
-
+func DisabledEndpoint(endpoint_id string, tenant_id string) error {
 	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint, err := db.GetOne[models.Endpoint](
+			db.WithTransactionContext(tx),
+			db.Equal("id", endpoint_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+		if err != nil {
+			return err
+		}
+		if !endpoint.Enabled {
+			return nil
+		}
+
 		endpoint.Enabled = false
 		if err := db.Update(endpoint, tx); err != nil {
 			return err
