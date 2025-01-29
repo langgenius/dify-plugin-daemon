@@ -8,7 +8,7 @@ import (
 )
 
 func TestConnectionKey(t *testing.T) {
-	err := cache.InitRedisClient("0.0.0.0:6379", "difyai123456")
+	err := cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false)
 	if err != nil {
 		t.Errorf("init redis client failed: %v", err)
 		return

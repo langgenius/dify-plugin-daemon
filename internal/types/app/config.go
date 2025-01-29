@@ -48,9 +48,10 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	// redis
-	RedisHost string `envconfig:"REDIS_HOST" validate:"required"`
-	RedisPort uint16 `envconfig:"REDIS_PORT" validate:"required"`
-	RedisPass string `envconfig:"REDIS_PASSWORD"`
+	RedisHost   string `envconfig:"REDIS_HOST" validate:"required"`
+	RedisPort   uint16 `envconfig:"REDIS_PORT" validate:"required"`
+	RedisPass   string `envconfig:"REDIS_PASSWORD"`
+	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
 
 	// database
 	DBUsername string `envconfig:"DB_USERNAME" validate:"required"`

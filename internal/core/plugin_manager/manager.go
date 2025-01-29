@@ -146,6 +146,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	if err := cache.InitRedisClient(
 		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
 		configuration.RedisPass,
+		configuration.RedisUseSsl,
 	); err != nil {
 		log.Panic("init redis client failed: %s", err.Error())
 	}
