@@ -11,7 +11,7 @@ import (
 )
 
 func createSimulationCluster(nums int) ([]*Cluster, error) {
-	err := cache.InitRedisClient("0.0.0.0:6379", "difyai123456")
+	err := cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false)
 	if err != nil {
 		return nil, err
 	}

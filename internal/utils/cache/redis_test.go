@@ -15,7 +15,7 @@ const (
 )
 
 func getRedisConnection() error {
-	return InitRedisClient("0.0.0.0:6379", "difyai123456")
+	return InitRedisClient("0.0.0.0:6379", "difyai123456", false)
 }
 
 func TestRedisConnection(t *testing.T) {
