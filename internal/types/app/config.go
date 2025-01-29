@@ -151,10 +151,6 @@ func (c *Config) Validate() error {
 		if c.PluginStorageOSSBucket == "" {
 			return fmt.Errorf("plugin storage bucket is empty")
 		}
-
-		if c.AWSAccessKey == "" || c.AWSSecretKey == "" || c.AWSRegion == "" {
-			return fmt.Errorf("aws access key, secret key or region is empty")
-		}
 	}
 
 	return nil
