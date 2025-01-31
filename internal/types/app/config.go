@@ -152,6 +152,10 @@ func (c *Config) Validate() error {
 		if c.PluginStorageOSSBucket == "" {
 			return fmt.Errorf("plugin storage bucket is empty")
 		}
+
+		if c.AWSRegion == "" {
+			return fmt.Errorf("aws region is empty")
+		}
 	}
 
 	return nil
