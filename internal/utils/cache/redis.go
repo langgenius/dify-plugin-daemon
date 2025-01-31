@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"strings"
 	"time"
@@ -18,11 +19,20 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func InitRedisClient(addr, password string) error {
-	client = redis.NewClient(&redis.Options{
+func getRedisOptions(addr, password string, useSsl bool) *redis.Options {
+	opts := &redis.Options{
 		Addr:     addr,
 		Password: password,
-	})
+	}
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+	return opts
+}
+
+func InitRedisClient(addr, password string, useSsl bool) error {
+	opts := getRedisOptions(addr, password, useSsl)
+	client = redis.NewClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
