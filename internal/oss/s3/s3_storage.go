@@ -21,20 +21,30 @@ type AWSS3Storage struct {
 }
 
 func NewAWSS3Storage(ak string, sk string, region string, bucket string) (oss.OSS, error) {
-	c, err := config.LoadDefaultConfig(
-		context.TODO(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			ak,
-			sk,
-			"",
-		)),
-	)
+	var cfg aws.Config
+	var err error
+
+	if ak == "" && sk == "" {
+		cfg, err = config.LoadDefaultConfig(
+			context.TODO(),
+			config.WithRegion(region),
+		)
+	} else {
+		cfg, err = config.LoadDefaultConfig(
+			context.TODO(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				ak,
+				sk,
+				"",
+			)),
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	client := s3.NewFromConfig(c)
+	client := s3.NewFromConfig(cfg)
 
 	// check bucket
 	_, err = client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
