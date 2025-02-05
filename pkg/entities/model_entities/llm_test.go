@@ -1,7 +1,6 @@
 package model_entities
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -294,9 +293,7 @@ func TestImagePromptMessage(t *testing.T) {
 		`
 	)
 
-	a, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(promptMessage))
-
-	fmt.Println(a.Content)
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(promptMessage))
 	if err != nil {
 		t.Error(err)
 	}
