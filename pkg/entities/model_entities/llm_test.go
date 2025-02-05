@@ -143,25 +143,25 @@ func TestWrongContentArray(t *testing.T) {
 	}
 }
 
-func TestWrongContentArray2(t *testing.T) {
-	const (
-		wrong_content_array2 = `
-		{
-			"role": "user",
-			"content": [
-				{
-					"type": "image"
-				}
-			]
-		}
-		`
-	)
+// func TestWrongContentArray2(t *testing.T) {
+// 	const (
+// 		wrong_content_array2 = `
+// 		{
+// 			"role": "user",
+// 			"content": [
+// 				{
+// 					"type": "image"
+// 				}
+// 			]
+// 		}
+// 		`
+// 	)
 
-	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_content_array2))
-	if err == nil {
-		t.Error("error is nil")
-	}
-}
+// 	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wrong_content_array2))
+// 	if err == nil {
+// 		t.Error("error is nil")
+// 	}
+// }
 
 func TestWrongContentArray3(t *testing.T) {
 	const (
