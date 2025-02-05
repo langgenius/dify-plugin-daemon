@@ -99,7 +99,8 @@ func isPromptMessageContentType(fl validator.FieldLevel) bool {
 
 type PromptMessageContent struct {
 	Type         PromptMessageContentType `json:"type" validate:"required,prompt_message_content_type"`
-	Data         string                   `json:"data" validate:"required"`
+	Base64Data   string                   `json:"base64_data"` // for multi-modal data
+	Data         string                   `json:"data"`        // for text only
 	EncodeFormat string                   `json:"encode_format"`
 	Format       string                   `json:"format"`
 	MimeType     string                   `json:"mime_type"`

@@ -1,6 +1,7 @@
 package model_entities
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -257,6 +258,45 @@ func TestZeroLLMUsage(t *testing.T) {
 	)
 
 	_, err := parser.UnmarshalJsonBytes[LLMUsage]([]byte(llm_usage))
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTextPromptMessage(t *testing.T) {
+	const (
+		promptMessage = `
+		{
+			"role": "user",
+			"content": "hello"
+		}
+		`
+	)
+
+	_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(promptMessage))
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestImagePromptMessage(t *testing.T) {
+	const (
+		promptMessage = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "image",
+					"data": "base64"
+				}
+			]
+		}
+		`
+	)
+
+	a, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(promptMessage))
+
+	fmt.Println(a.Content)
 	if err != nil {
 		t.Error(err)
 	}
