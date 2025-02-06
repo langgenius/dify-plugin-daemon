@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/packager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/signer"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/packager"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer"
 )
 
 //go:embed manifest.yaml

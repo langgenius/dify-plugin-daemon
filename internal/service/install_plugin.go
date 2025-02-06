@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
@@ -18,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"gorm.io/gorm"
 )
 

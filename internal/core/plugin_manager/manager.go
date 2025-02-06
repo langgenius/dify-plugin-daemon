@@ -10,7 +10,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -21,6 +20,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type PluginManager struct {

@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/license/private_key"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 /*
