@@ -142,7 +142,11 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 
 // check which plugin is missing
 func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier) *entities.Response {
-	result := make([]plugin_entities.PluginUniqueIdentifier, 0, len(plugin_unique_identifiers))
+	type MissingPluginDependency struct {
+		PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
+		CurrentIdentifier      string `json:"current_identifier"`
+	}
+	result := make([]MissingPluginDependency, 0, len(plugin_unique_identifiers))
 
 	if len(plugin_unique_identifiers) == 0 {
 		return entities.NewSuccessResponse(result)
@@ -151,11 +155,11 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 	installed, err := db.GetAll[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.InArray(
-			"plugin_unique_identifier",
+			"plugin_id",
 			strings.Map(
 				plugin_unique_identifiers,
 				func(id plugin_entities.PluginUniqueIdentifier) any {
-					return id.String()
+					return id.PluginID()
 				},
 			),
 		),
@@ -169,15 +173,24 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 	// check which plugin is missing
 	for _, pluginUniqueIdentifier := range plugin_unique_identifiers {
 		found := false
-		for _, installed_plugin := range installed {
-			if installed_plugin.PluginUniqueIdentifier == pluginUniqueIdentifier.String() {
+		for _, installedPlugin := range installed {
+			if installedPlugin.PluginID == pluginUniqueIdentifier.PluginID() {
 				found = true
+				if installedPlugin.PluginUniqueIdentifier != pluginUniqueIdentifier.String() {
+					// version mismatched
+					result = append(result, MissingPluginDependency{
+						PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+						CurrentIdentifier:      installedPlugin.PluginUniqueIdentifier,
+					})
+				}
 				break
 			}
 		}
 
 		if !found {
-			result = append(result, pluginUniqueIdentifier)
+			result = append(result, MissingPluginDependency{
+				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+			})
 		}
 	}
 
