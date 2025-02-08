@@ -13,5 +13,5 @@ brew -v
 ### Install CLI tool
 
 ```bash
-brew install --build-from-source ./dify.rb
+brew install --formula ./dify.rb
 ```
