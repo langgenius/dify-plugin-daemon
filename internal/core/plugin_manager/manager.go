@@ -72,7 +72,7 @@ type PluginManager struct {
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
 
-	// platform, local or aws_lambda
+	// platform, local or serverless
 	platform app.PlatformType
 }
 
@@ -165,7 +165,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 
 	// launch serverless connector
-	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
+	if configuration.Platform == app.PLATFORM_SERVERLESS {
 		serverless.Init(configuration)
 	}
 

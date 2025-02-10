@@ -20,7 +20,7 @@ type Plugin struct {
 type ServerlessRuntimeType string
 
 const (
-	SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA ServerlessRuntimeType = "aws_lambda"
+	SERVERLESS_RUNTIME_TYPE_SERVERLESS ServerlessRuntimeType = "serverless"
 )
 
 type ServerlessRuntime struct {

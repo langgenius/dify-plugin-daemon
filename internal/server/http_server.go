@@ -115,9 +115,9 @@ func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
 }
 
 func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.Platform == app.PLATFORM_AWS_LAMBDA {
+	if config.Platform == app.PLATFORM_SERVERLESS {
 		appRef.awsTransactionHandler = transaction.NewAWSTransactionHandler(
-			time.Duration(config.MaxAWSLambdaTransactionTimeout) * time.Second,
+			time.Duration(config.MaxServerlessTransactionTimeout) * time.Second,
 		)
 		group.POST(
 			"/transaction",

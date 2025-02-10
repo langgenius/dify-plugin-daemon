@@ -25,7 +25,7 @@ COPY --from=builder /app/main /app/main
 WORKDIR /app
 
 # check build args
-ARG PLATFORM=aws_lambda
+ARG PLATFORM=serverless
 
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release

@@ -11,5 +11,5 @@ func (r *AWSPluginRuntime) Wait() (<-chan bool, error) {
 }
 
 func (r *AWSPluginRuntime) Type() plugin_entities.PluginRuntimeType {
-	return plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
 }

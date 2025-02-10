@@ -13,7 +13,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginRemoteInstallingMaxConn, 256)
 	setDefaultInt(&config.MaxPluginPackageSize, 52428800)
 	setDefaultInt(&config.MaxBundlePackageSize, 52428800*12)
-	setDefaultInt(&config.MaxAWSLambdaTransactionTimeout, 150)
+	setDefaultInt(&config.MaxServerlessTransactionTimeout, 300)
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 240)
 	setDefaultString(&config.PluginStorageType, "local")
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)

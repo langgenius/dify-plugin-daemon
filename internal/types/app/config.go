@@ -78,9 +78,9 @@ type Config struct {
 	DifyPluginServerlessConnectorURL    *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL"`
 	DifyPluginServerlessConnectorAPIKey *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 
-	MaxPluginPackageSize           int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
-	MaxBundlePackageSize           int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
-	MaxAWSLambdaTransactionTimeout int   `envconfig:"MAX_AWS_LAMBDA_TRANSACTION_TIMEOUT"`
+	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
+	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
+	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
 	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
 	PythonEnvInitTimeout  int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
@@ -124,7 +124,7 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.Platform == PLATFORM_AWS_LAMBDA {
+	if c.Platform == PLATFORM_SERVERLESS {
 		if c.DifyPluginServerlessConnectorURL == nil {
 			return fmt.Errorf("dify plugin serverless connector url is empty")
 		}
@@ -133,8 +133,8 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("dify plugin serverless connector api key is empty")
 		}
 
-		if c.MaxAWSLambdaTransactionTimeout == 0 {
-			return fmt.Errorf("max aws lambda transaction timeout is empty")
+		if c.MaxServerlessTransactionTimeout == 0 {
+			return fmt.Errorf("max serverless transaction timeout is empty")
 		}
 	} else if c.Platform == PLATFORM_LOCAL {
 		if c.PluginWorkingPath == "" {
@@ -165,5 +165,5 @@ type PlatformType string
 
 const (
 	PLATFORM_LOCAL      PlatformType = "local"
-	PLATFORM_AWS_LAMBDA PlatformType = "aws_lambda"
+	PLATFORM_SERVERLESS PlatformType = "serverless"
 )

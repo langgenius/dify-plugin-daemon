@@ -41,7 +41,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
 			// check if the request contains a aws_event_id
-			if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_AWS {
+			if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
 				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 					"error_type": "aws_event_not_supported",
 					"message":    "aws event is not supported by full duplex",

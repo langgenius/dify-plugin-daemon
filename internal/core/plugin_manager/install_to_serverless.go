@@ -70,13 +70,13 @@ func (p *PluginManager) InstallToAWSFromPkg(
 				// check if the plugin is already installed
 				_, err := db.GetOne[models.ServerlessRuntime](
 					db.Equal("checksum", checksum),
-					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA)),
+					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
 				)
 				if err == db.ErrDatabaseNotFound {
 					// create a new serverless runtime
 					serverlessModel := &models.ServerlessRuntime{
 						Checksum:               checksum,
-						Type:                   models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA,
+						Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
 						FunctionURL:            functionUrl,
 						FunctionName:           functionName,
 						PluginUniqueIdentifier: uniqueIdentity.String(),

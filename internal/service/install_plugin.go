@@ -44,8 +44,8 @@ func InstallPluginRuntimeToTenant(
 	pluginsWaitForInstallation := []plugin_entities.PluginUniqueIdentifier{}
 
 	runtimeType := plugin_entities.PluginRuntimeType("")
-	if config.Platform == app.PLATFORM_AWS_LAMBDA {
-		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+	if config.Platform == app.PLATFORM_SERVERLESS {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
 	} else if config.Platform == app.PLATFORM_LOCAL {
 		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 	} else {
@@ -192,7 +192,7 @@ func InstallPluginRuntimeToTenant(
 			})
 
 			var stream *stream.Stream[plugin_manager.PluginInstallResponse]
-			if config.Platform == app.PLATFORM_AWS_LAMBDA {
+			if config.Platform == app.PLATFORM_SERVERLESS {
 				var zipDecoder *decoder.ZipPluginDecoder
 				var pkgFile []byte
 
@@ -308,8 +308,8 @@ func InstallPluginFromIdentifiers(
 			runtimeType := plugin_entities.PluginRuntimeType("")
 
 			switch config.Platform {
-			case app.PLATFORM_AWS_LAMBDA:
-				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+			case app.PLATFORM_SERVERLESS:
+				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
 			case app.PLATFORM_LOCAL:
 				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 			default:
