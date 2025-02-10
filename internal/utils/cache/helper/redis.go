@@ -15,22 +15,22 @@ var (
 )
 
 func CombinedGetPluginDeclaration(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	tenant_id string,
-	runtime_type plugin_entities.PluginRuntimeType,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	tenantId string,
+	runtimeType plugin_entities.PluginRuntimeType,
 ) (*plugin_entities.PluginDeclaration, error) {
 	return cache.AutoGetWithGetter(
 		strings.Join(
 			[]string{
-				string(runtime_type),
-				plugin_unique_identifier.String(),
+				string(runtimeType),
+				pluginUniqueIdentifier.String(),
 			},
 			":",
 		),
 		func() (*plugin_entities.PluginDeclaration, error) {
-			if runtime_type != plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+			if runtimeType != plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
 				declaration, err := db.GetOne[models.PluginDeclaration](
-					db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 				)
 				if err == db.ErrDatabaseNotFound {
 					return nil, ErrPluginNotFound
@@ -44,7 +44,7 @@ func CombinedGetPluginDeclaration(
 			} else {
 				// try to fetch the declaration from plugin if it's remote
 				plugin, err := db.GetOne[models.Plugin](
-					db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 					db.Equal("install_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE)),
 				)
 				if err == db.ErrDatabaseNotFound {
