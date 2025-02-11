@@ -75,7 +75,7 @@ func InstallEndpoint(
 	settings map[string]any,
 ) (*models.Endpoint, error) {
 	installation := &models.Endpoint{
-		HookID:    strings.RandomString(32),
+		HookID:    strings.RandomLowercaseString(16),
 		PluginID:  plugin_id.PluginID(),
 		TenantID:  tenant_id,
 		UserID:    user_id,
