@@ -69,6 +69,13 @@ func Endpoint(
 
 	// setup hook id to request
 	req.Header.Set("Dify-Hook-Id", endpoint.HookID)
+	// check if Dify-Hook-Url is set
+	if url := req.Header.Get("Dify-Hook-Url"); url == "" {
+		req.Header.Set(
+			"Dify-Hook-Url",
+			fmt.Sprintf("http://%s:%s/e/%s%s", req.Host, req.URL.Port(), endpoint.HookID, path),
+		)
+	}
 
 	var buffer bytes.Buffer
 	err = req.Write(&buffer)
