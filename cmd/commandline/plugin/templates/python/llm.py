@@ -2,6 +2,7 @@ import logging
 from collections.abc import Generator
 from typing import Optional, Union
 
+from dify_plugin import LargeLanguageModel
 from dify_plugin.entities import I18nObject
 from dify_plugin.errors.model import (
     CredentialsValidateFailedError,
