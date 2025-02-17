@@ -156,7 +156,7 @@ func TestAcceptConnection(t *testing.T) {
 			Description: plugin_entities.I18nObject{
 				EnUS: "test",
 			},
-			Author: "Yeuoly",
+			Author: "yeuoly",
 			Name:   "ci_test",
 			Icon:   "test.svg",
 			Label: plugin_entities.I18nObject{
