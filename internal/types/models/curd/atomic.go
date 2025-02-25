@@ -305,6 +305,8 @@ func UpgradePlugin(
 	tenant_id string,
 	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	originalDeclaration *plugin_entities.PluginDeclaration,
+	newDeclaration *plugin_entities.PluginDeclaration,
 	install_type plugin_entities.PluginRuntimeType,
 	source string,
 	meta map[string]any,
@@ -396,6 +398,90 @@ func UpgradePlugin(
 
 		if err != nil {
 			return err
+		}
+
+		// update ai model installation
+		if originalDeclaration.Model != nil {
+			// delete the original ai model installation
+			err := db.DeleteByCondition(&models.AIModelInstallation{
+				PluginUniqueIdentifier: original_plugin_unique_identifier.String(),
+				TenantID:               tenant_id,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Model != nil {
+			// create the new ai model installation
+			modelInstallation := &models.AIModelInstallation{
+				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
+				TenantID:               tenant_id,
+				Provider:               newDeclaration.Model.Provider,
+				PluginID:               new_plugin_unique_identifier.PluginID(),
+			}
+
+			err := db.Create(modelInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update tool installation
+		if originalDeclaration.Tool != nil {
+			// delete the original tool installation
+			err := db.DeleteByCondition(&models.ToolInstallation{
+				PluginUniqueIdentifier: original_plugin_unique_identifier.String(),
+				TenantID:               tenant_id,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Tool != nil {
+			// create the new tool installation
+			toolInstallation := &models.ToolInstallation{
+				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
+				TenantID:               tenant_id,
+				Provider:               newDeclaration.Tool.Identity.Name,
+				PluginID:               new_plugin_unique_identifier.PluginID(),
+			}
+
+			err := db.Create(toolInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update agent installation
+		if originalDeclaration.AgentStrategy != nil {
+			// delete the original agent installation
+			err := db.DeleteByCondition(&models.AgentStrategyInstallation{
+				PluginUniqueIdentifier: original_plugin_unique_identifier.String(),
+				TenantID:               tenant_id,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.AgentStrategy != nil {
+			// create the new agent installation
+			agentStrategyInstallation := &models.AgentStrategyInstallation{
+				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
+				TenantID:               tenant_id,
+				Provider:               newDeclaration.AgentStrategy.Identity.Name,
+				PluginID:               new_plugin_unique_identifier.PluginID(),
+			}
+
+			err := db.Create(agentStrategyInstallation, tx)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
