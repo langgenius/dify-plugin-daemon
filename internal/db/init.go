@@ -77,7 +77,7 @@ func initDifyPluginDB(host string, port int, db_name string, user string, pass s
 }
 
 func autoMigrate() error {
-	return DifyPluginDB.AutoMigrate(
+	err := DifyPluginDB.AutoMigrate(
 		models.Plugin{},
 		models.PluginInstallation{},
 		models.PluginDeclaration{},
@@ -89,6 +89,43 @@ func autoMigrate() error {
 		models.TenantStorage{},
 		models.AgentStrategyInstallation{},
 	)
+
+	if err != nil {
+		return err
+	}
+
+	// check if "declaration" table exists in Plugin/ServerlessRuntime/ToolInstallation/AIModelInstallation/AgentStrategyInstallation
+	// delete the column if exists
+	deleteDeclarationColumn := func(model any) error {
+		if DifyPluginDB.Migrator().HasColumn(model, "declaration") {
+			if err := DifyPluginDB.Migrator().DropColumn(model, "declaration"); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if err := deleteDeclarationColumn(&models.Plugin{}); err != nil {
+		return err
+	}
+
+	if err := deleteDeclarationColumn(&models.ServerlessRuntime{}); err != nil {
+		return err
+	}
+
+	if err := deleteDeclarationColumn(&models.ToolInstallation{}); err != nil {
+		return err
+	}
+
+	if err := deleteDeclarationColumn(&models.AIModelInstallation{}); err != nil {
+		return err
+	}
+
+	if err := deleteDeclarationColumn(&models.AgentStrategyInstallation{}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Init(config *app.Config) {

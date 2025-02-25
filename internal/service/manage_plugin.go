@@ -55,7 +55,6 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
-			tenant_id,
 			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 		)
 		if err != nil {
@@ -122,7 +121,6 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
-			tenant_id,
 			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 		)
 		if err != nil {
@@ -198,6 +196,12 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 }
 
 func ListTools(tenant_id string, page int, page_size int) *entities.Response {
+	type Tool struct {
+		models.ToolInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.ToolProviderDeclaration `json:"declaration"`
+	}
+
 	providers, err := db.GetAll[models.ToolInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Page(page, page_size),
@@ -207,10 +211,44 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	return entities.NewSuccessResponse(providers)
+	data := make([]Tool, 0, len(providers))
+
+	for _, provider := range providers {
+		// check if plugin id starts with uuid
+		// split by uuid length
+		uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(provider.PluginUniqueIdentifier)
+		var runtimeType plugin_entities.PluginRuntimeType
+		if uniqueIdentifier.RemoteLike() {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+		} else {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+		}
+
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			uniqueIdentifier,
+			runtimeType,
+		)
+
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		data = append(data, Tool{
+			ToolInstallation: provider,
+			Declaration:      declaration.Tool,
+		})
+	}
+
+	return entities.NewSuccessResponse(data)
 }
 
 func ListModels(tenant_id string, page int, page_size int) *entities.Response {
+	type AIModel struct {
+		models.AIModelInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.ModelProviderDeclaration `json:"declaration"`
+	}
+
 	providers, err := db.GetAll[models.AIModelInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Page(page, page_size),
@@ -220,10 +258,42 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	return entities.NewSuccessResponse(providers)
+	data := make([]AIModel, 0, len(providers))
+
+	for _, provider := range providers {
+		uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(provider.PluginUniqueIdentifier)
+		var runtimeType plugin_entities.PluginRuntimeType
+		if uniqueIdentifier.RemoteLike() {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+		} else {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+		}
+
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			uniqueIdentifier,
+			runtimeType,
+		)
+
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		data = append(data, AIModel{
+			AIModelInstallation: provider,
+			Declaration:         declaration.Model,
+		})
+	}
+
+	return entities.NewSuccessResponse(data)
 }
 
 func GetTool(tenant_id string, plugin_id string, provider string) *entities.Response {
+	type Tool struct {
+		models.ToolInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.ToolProviderDeclaration `json:"declaration"`
+	}
+
 	// try get tool
 	tool, err := db.GetOne[models.ToolInstallation](
 		db.Equal("tenant_id", tenant_id),
@@ -242,7 +312,27 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 		return exception.ErrPluginNotFound().ToResponse()
 	}
 
-	return entities.NewSuccessResponse(tool)
+	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(tool.PluginUniqueIdentifier)
+	var runtimeType plugin_entities.PluginRuntimeType
+	if uniqueIdentifier.RemoteLike() {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+	} else {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	}
+
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		uniqueIdentifier,
+		runtimeType,
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	return entities.NewSuccessResponse(Tool{
+		ToolInstallation: tool,
+		Declaration:      declaration.Tool,
+	})
 }
 
 type RequestCheckToolExistence struct {
@@ -281,6 +371,12 @@ func CheckToolExistence(tenantId string, providerIds []RequestCheckToolExistence
 }
 
 func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Response {
+	type AgentStrategy struct {
+		models.AgentStrategyInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.AgentStrategyProviderDeclaration `json:"declaration"`
+	}
+
 	providers, err := db.GetAll[models.AgentStrategyInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Page(page, page_size),
@@ -290,10 +386,42 @@ func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Re
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	return entities.NewSuccessResponse(providers)
+	data := make([]AgentStrategy, 0, len(providers))
+
+	for _, provider := range providers {
+		uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(provider.PluginUniqueIdentifier)
+		var runtimeType plugin_entities.PluginRuntimeType
+		if uniqueIdentifier.RemoteLike() {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+		} else {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+		}
+
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			uniqueIdentifier,
+			runtimeType,
+		)
+
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		data = append(data, AgentStrategy{
+			AgentStrategyInstallation: provider,
+			Declaration:               declaration.AgentStrategy,
+		})
+	}
+
+	return entities.NewSuccessResponse(data)
 }
 
 func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *entities.Response {
+	type AgentStrategy struct {
+		models.AgentStrategyInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.AgentStrategyProviderDeclaration `json:"declaration"`
+	}
+
 	agent_strategy, err := db.GetOne[models.AgentStrategyInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Equal("plugin_id", plugin_id),
@@ -311,5 +439,25 @@ func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *enti
 		return exception.ErrPluginNotFound().ToResponse()
 	}
 
-	return entities.NewSuccessResponse(agent_strategy)
+	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(agent_strategy.PluginUniqueIdentifier)
+	var runtimeType plugin_entities.PluginRuntimeType
+	if uniqueIdentifier.RemoteLike() {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+	} else {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	}
+
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		uniqueIdentifier,
+		runtimeType,
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	return entities.NewSuccessResponse(AgentStrategy{
+		AgentStrategyInstallation: agent_strategy,
+		Declaration:               declaration.AgentStrategy,
+	})
 }

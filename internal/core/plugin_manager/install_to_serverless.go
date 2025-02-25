@@ -24,7 +24,8 @@ func (p *PluginManager) InstallToAWSFromPkg(
 	if err != nil {
 		return nil, err
 	}
-	declaration, err := decoder.Manifest()
+	// check valid manifest
+	_, err = decoder.Manifest()
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,6 @@ func (p *PluginManager) InstallToAWSFromPkg(
 						FunctionURL:            functionUrl,
 						FunctionName:           functionName,
 						PluginUniqueIdentifier: uniqueIdentity.String(),
-						Declaration:            declaration,
 					}
 					err = db.Create(serverlessModel)
 					if err != nil {

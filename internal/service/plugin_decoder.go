@@ -162,7 +162,6 @@ func UploadPluginBundle(
 }
 
 func FetchPluginManifest(
-	tenant_id string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
 	runtimeType := plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
@@ -171,7 +170,7 @@ func FetchPluginManifest(
 	}
 
 	pluginManifestCache, err := helper.CombinedGetPluginDeclaration(
-		pluginUniqueIdentifier, tenant_id, runtimeType,
+		pluginUniqueIdentifier, runtimeType,
 	)
 	if err == helper.ErrPluginNotFound {
 		return exception.BadRequestError(errors.New("plugin not found")).ToResponse()

@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -30,11 +31,12 @@ func (p *PluginManager) getServerlessPluginRuntime(
 		return nil, err
 	}
 
-	declaration := model.Declaration
+	// FIXME: get declaration
+	declaration, err := helper.CombinedGetPluginDeclaration(identity, plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS)
 
 	// init runtime entity
 	runtimeEntity := plugin_entities.PluginRuntime{
-		Config: declaration,
+		Config: *declaration,
 	}
 	runtimeEntity.InitState()
 

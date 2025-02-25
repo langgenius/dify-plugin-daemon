@@ -256,6 +256,6 @@ func (p *PluginManager) GetDeclaration(
 	*plugin_entities.PluginDeclaration, error,
 ) {
 	return helper.CombinedGetPluginDeclaration(
-		plugin_unique_identifier, tenant_id, runtime_type,
+		plugin_unique_identifier, runtime_type,
 	)
 }

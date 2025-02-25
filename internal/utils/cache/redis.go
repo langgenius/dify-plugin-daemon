@@ -72,7 +72,11 @@ func Store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 	}
 
 	if _, ok := value.(string); !ok {
-		value = parser.MarshalJson(value)
+		var err error
+		value, err = parser.MarshalCBOR(value)
+		if err != nil {
+			return err
+		}
 	}
 
 	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
