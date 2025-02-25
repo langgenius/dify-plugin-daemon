@@ -96,32 +96,33 @@ func autoMigrate() error {
 
 	// check if "declaration" table exists in Plugin/ServerlessRuntime/ToolInstallation/AIModelInstallation/AgentStrategyInstallation
 	// delete the column if exists
-	deleteDeclarationColumn := func(model any) error {
-		if DifyPluginDB.Migrator().HasColumn(model, "declaration") {
-			if err := DifyPluginDB.Migrator().DropColumn(model, "declaration"); err != nil {
+	ignoreDeclarationColumn := func(table string) error {
+		if DifyPluginDB.Migrator().HasColumn(table, "declaration") {
+			// remove NOT NULL constraint on declaration column
+			if err := DifyPluginDB.Exec("ALTER TABLE " + table + " ALTER COLUMN declaration DROP NOT NULL").Error; err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 
-	if err := deleteDeclarationColumn(&models.Plugin{}); err != nil {
+	if err := ignoreDeclarationColumn("plugins"); err != nil {
 		return err
 	}
 
-	if err := deleteDeclarationColumn(&models.ServerlessRuntime{}); err != nil {
+	if err := ignoreDeclarationColumn("serverless_runtimes"); err != nil {
 		return err
 	}
 
-	if err := deleteDeclarationColumn(&models.ToolInstallation{}); err != nil {
+	if err := ignoreDeclarationColumn("tool_installations"); err != nil {
 		return err
 	}
 
-	if err := deleteDeclarationColumn(&models.AIModelInstallation{}); err != nil {
+	if err := ignoreDeclarationColumn("ai_model_installations"); err != nil {
 		return err
 	}
 
-	if err := deleteDeclarationColumn(&models.AgentStrategyInstallation{}); err != nil {
+	if err := ignoreDeclarationColumn("agent_strategy_installations"); err != nil {
 		return err
 	}
 
