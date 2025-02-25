@@ -378,11 +378,29 @@ func UpgradePlugin(
 			declaration *plugin_entities.PluginDeclaration,
 			meta map[string]any,
 		) error {
+			originalDeclaration, err := helper.CombinedGetPluginDeclaration(
+				original_plugin_unique_identifier,
+				plugin_entities.PluginRuntimeType(installation.RuntimeType),
+			)
+			if err != nil {
+				return err
+			}
+
+			newDeclaration, err := helper.CombinedGetPluginDeclaration(
+				new_plugin_unique_identifier,
+				plugin_entities.PluginRuntimeType(installation.RuntimeType),
+			)
+			if err != nil {
+				return err
+			}
+
 			// uninstall the original plugin
 			upgradeResponse, err := curd.UpgradePlugin(
 				tenant_id,
 				original_plugin_unique_identifier,
 				new_plugin_unique_identifier,
+				originalDeclaration,
+				newDeclaration,
 				plugin_entities.PluginRuntimeType(installation.RuntimeType),
 				source,
 				meta,
