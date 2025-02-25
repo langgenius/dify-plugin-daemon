@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -25,16 +24,8 @@ type ConnectionInfo struct {
 	TenantId string `json:"tenant_id" validate:"required"`
 }
 
-func (c ConnectionInfo) MarshalBinary() ([]byte, error) {
-	return parser.MarshalJsonBytes(c), nil
-}
-
 type Key struct {
 	Key string `json:"key" validate:"required"`
-}
-
-func (k Key) MarshalBinary() ([]byte, error) {
-	return parser.MarshalJsonBytes(k), nil
 }
 
 const (

@@ -387,7 +387,13 @@ func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cm
 		return false, ErrDBNotInit
 	}
 
-	return getCmdable(context...).SetNX(ctx, serialKey(key), value, expire).Result()
+	// marshal the value
+	bytes, err := parser.MarshalCBOR(value)
+	if err != nil {
+		return false, err
+	}
+
+	return getCmdable(context...).SetNX(ctx, serialKey(key), bytes, expire).Result()
 }
 
 var (
