@@ -100,7 +100,7 @@ func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 		return nil, ErrNotFound
 	}
 
-	result, err := parser.UnmarshalJson[T](val)
+	result, err := parser.UnmarshalCBOR[T]([]byte(val))
 	return &result, err
 }
 
