@@ -64,7 +64,6 @@ func InstallPluginRuntimeToTenant(
 		// fetch plugin declaration first, before installing, we need to ensure pkg is uploaded
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
-			tenant_id,
 			runtimeType,
 		)
 		if err != nil {
@@ -125,7 +124,6 @@ func InstallPluginRuntimeToTenant(
 
 		declaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
-			tenant_id,
 			runtimeType,
 		)
 		if err != nil {
@@ -385,7 +383,6 @@ func UpgradePlugin(
 				tenant_id,
 				original_plugin_unique_identifier,
 				new_plugin_unique_identifier,
-				declaration,
 				plugin_entities.PluginRuntimeType(installation.RuntimeType),
 				source,
 				meta,
@@ -574,11 +571,21 @@ func UninstallPlugin(
 		return exception.UniqueIdentifierError(err).ToResponse()
 	}
 
+	// get declaration
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		pluginUniqueIdentifier,
+		plugin_entities.PluginRuntimeType(installation.RuntimeType),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
 	// Uninstall the plugin
 	deleteResponse, err := curd.UninstallPlugin(
 		tenant_id,
 		pluginUniqueIdentifier,
 		installation.ID,
+		declaration,
 	)
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()

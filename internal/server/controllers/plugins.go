@@ -198,7 +198,7 @@ func FetchPluginManifest(c *gin.Context) {
 		TenantID               string                                 `uri:"tenant_id" validate:"required"`
 		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchPluginManifest(request.TenantID, request.PluginUniqueIdentifier))
+		c.JSON(http.StatusOK, service.FetchPluginManifest(request.PluginUniqueIdentifier))
 	})
 }
 

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
@@ -137,8 +136,8 @@ func (app *App) endpointManagementGroup(group *gin.RouterGroup) {
 }
 
 func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config) {
-	group.POST("/install/upload/package", gzip.Gzip(gzip.DefaultCompression), controllers.UploadPlugin(config))
-	group.POST("/install/upload/bundle", gzip.Gzip(gzip.DefaultCompression), controllers.UploadBundle(config))
+	group.POST("/install/upload/package", controllers.UploadPlugin(config))
+	group.POST("/install/upload/bundle", controllers.UploadBundle(config))
 	group.POST("/install/identifiers", controllers.InstallPluginFromIdentifiers(config))
 	group.POST("/install/upgrade", controllers.UpgradePlugin(config))
 	group.GET("/install/tasks/:id", controllers.FetchPluginInstallationTask)
@@ -146,22 +145,22 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/install/tasks/:id/delete", controllers.DeletePluginInstallationTask)
 	group.POST("/install/tasks/:id/delete/*identifier", controllers.DeletePluginInstallationItemFromTask)
 	group.GET("/install/tasks", controllers.FetchPluginInstallationTasks)
-	group.GET("/fetch/manifest", gzip.Gzip(gzip.DefaultCompression), controllers.FetchPluginManifest)
+	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/uninstall", controllers.UninstallPlugin)
-	group.GET("/list", gzip.Gzip(gzip.DefaultCompression), controllers.ListPlugins)
+	group.GET("/list", controllers.ListPlugins)
 	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)
 	group.POST("/installation/missing", controllers.FetchMissingPluginInstallations)
-	group.GET("/models", gzip.Gzip(gzip.DefaultCompression), controllers.ListModels)
-	group.GET("/tools", gzip.Gzip(gzip.DefaultCompression), controllers.ListTools)
-	group.GET("/tool", gzip.Gzip(gzip.DefaultCompression), controllers.GetTool)
+	group.GET("/models", controllers.ListModels)
+	group.GET("/tools", controllers.ListTools)
+	group.GET("/tool", controllers.GetTool)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
-	group.GET("/agent_strategies", gzip.Gzip(gzip.DefaultCompression), controllers.ListAgentStrategies)
-	group.GET("/agent_strategy", gzip.Gzip(gzip.DefaultCompression), controllers.GetAgentStrategy)
+	group.GET("/agent_strategies", controllers.ListAgentStrategies)
+	group.GET("/agent_strategy", controllers.GetAgentStrategy)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
-	group.GET("/:id", gzip.Gzip(gzip.DefaultCompression), controllers.GetAsset)
+	group.GET("/:id", controllers.GetAsset)
 }
 
 func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {

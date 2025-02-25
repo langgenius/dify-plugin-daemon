@@ -52,7 +52,6 @@ func InstallPlugin(
 				PluginUniqueIdentifier: plugin_unique_identifier.String(),
 				InstallType:            install_type,
 				Refers:                 1,
-				Declaration:            *declaration,
 			}
 
 			err := db.Create(plugin, tx)
@@ -107,7 +106,6 @@ func InstallPlugin(
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 				Provider:               declaration.Tool.Identity.Name,
-				Declaration:            *declaration.Tool,
 			}
 
 			err := db.Create(toolInstallation, tx)
@@ -123,7 +121,6 @@ func InstallPlugin(
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 				Provider:               declaration.AgentStrategy.Identity.Name,
-				Declaration:            *declaration.AgentStrategy,
 			}
 
 			err := db.Create(agentStrategyInstallation, tx)
@@ -139,7 +136,6 @@ func InstallPlugin(
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
 				TenantID:               tenant_id,
 				Provider:               declaration.Model.Provider,
-				Declaration:            *declaration.Model,
 			}
 
 			err := db.Create(modelInstallation, tx)
@@ -174,6 +170,7 @@ func UninstallPlugin(
 	tenant_id string,
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	installation_id string,
+	declaration *plugin_entities.PluginDeclaration,
 ) (*DeletePluginResponse, error) {
 	var pluginToBeReturns *models.Plugin
 	var installationToBeReturns *models.PluginInstallation
@@ -231,7 +228,6 @@ func UninstallPlugin(
 		}
 
 		// delete tool installation
-		declaration := p.Declaration
 		if declaration.Tool != nil {
 			toolInstallation := &models.ToolInstallation{
 				PluginID:               pluginToBeReturns.PluginID,
@@ -309,7 +305,6 @@ func UpgradePlugin(
 	tenant_id string,
 	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	new_declaration *plugin_entities.PluginDeclaration,
 	install_type plugin_entities.PluginRuntimeType,
 	source string,
 	meta map[string]any,
@@ -343,7 +338,6 @@ func UpgradePlugin(
 				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
 				InstallType:            install_type,
 				Refers:                 0,
-				Declaration:            *new_declaration,
 				ManifestType:           manifest_entities.PluginType,
 			}
 

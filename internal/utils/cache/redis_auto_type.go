@@ -21,7 +21,12 @@ func AutoSet[T any](key string, value T, context ...redis.Cmdable) error {
 	fullTypeName := pkgPath + "." + typeName
 
 	key = serialKey("auto_type", fullTypeName, key)
-	return getCmdable(context...).Set(ctx, key, parser.MarshalJson(value), time.Minute*30).Err()
+	cborValue, err := parser.MarshalCBOR(value)
+	if err != nil {
+		return err
+	}
+
+	return getCmdable(context...).Set(ctx, key, cborValue, time.Minute*30).Err()
 }
 
 // Get the value with key
@@ -46,7 +51,7 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 	fullTypeName := pkgPath + "." + typeName
 
 	key = serialKey("auto_type", fullTypeName, key)
-	val, err := getCmdable(context...).Get(ctx, key).Result()
+	val, err := getCmdable(context...).Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			value, err := getter()
@@ -62,7 +67,7 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 		return nil, err
 	}
 
-	result, err := parser.UnmarshalJson[T](val)
+	result, err := parser.UnmarshalCBOR[T](val)
 	return &result, err
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"gorm.io/gorm"
@@ -46,8 +47,16 @@ func UninstallPlugin(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	install_type plugin_entities.PluginRuntimeType,
 ) error {
+	// get declaration
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		plugin_unique_identifier,
+		install_type,
+	)
+	if err != nil {
+		return err
+	}
 	// delete the plugin from db
-	_, err := curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation_id)
+	_, err = curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation_id, declaration)
 	if err != nil {
 		return err
 	}
