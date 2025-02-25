@@ -88,7 +88,7 @@ func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 		return nil, ErrDBNotInit
 	}
 
-	val, err := getCmdable(context...).Get(ctx, serialKey(key)).Result()
+	val, err := getCmdable(context...).Get(ctx, serialKey(key)).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, ErrNotFound
@@ -96,11 +96,11 @@ func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 		return nil, err
 	}
 
-	if val == "" {
+	if len(val) == 0 {
 		return nil, ErrNotFound
 	}
 
-	result, err := parser.UnmarshalCBOR[T]([]byte(val))
+	result, err := parser.UnmarshalCBOR[T](val)
 	return &result, err
 }
 
