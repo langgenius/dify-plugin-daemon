@@ -1,6 +1,8 @@
 package requests
 
 import (
+	"encoding/json"
+
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 )
 
@@ -131,6 +133,18 @@ type RequestGetLLMNumTokens struct {
 	ModelType      model_entities.ModelType           `json:"model_type"  validate:"required,model_type,eq=llm"`
 	PromptMessages []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty,dive"`
 	Tools          []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
+}
+
+func (r RequestGetLLMNumTokens) MarshalJSON() ([]byte, error) {
+	type alias RequestGetLLMNumTokens
+	p := alias(r)
+	if p.PromptMessages == nil {
+		p.PromptMessages = []model_entities.PromptMessage{}
+	}
+	if p.Tools == nil {
+		p.Tools = []model_entities.PromptMessageTool{}
+	}
+	return json.Marshal(p)
 }
 
 type RequestGetAIModelSchema struct {
