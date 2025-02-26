@@ -26,7 +26,11 @@ func ParsePluginUniversalEvent(
 	// handle event
 	event, err := parser.UnmarshalJsonBytes[PluginUniversalEvent](data)
 	if err != nil {
-		error_handler(err.Error())
+		if len(data) > 1024 {
+			error_handler(err.Error() + " original response: " + string(data[:1024]) + "...")
+		} else {
+			error_handler(err.Error() + " original response: " + string(data))
+		}
 		return
 	}
 
