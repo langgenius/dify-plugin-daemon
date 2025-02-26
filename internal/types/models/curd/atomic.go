@@ -54,6 +54,10 @@ func InstallPlugin(
 				Refers:                 1,
 			}
 
+			if install_type == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+				plugin.RemoteDeclaration = *declaration
+			}
+
 			err := db.Create(plugin, tx)
 			if err != nil {
 				return err
