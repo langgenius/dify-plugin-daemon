@@ -72,6 +72,7 @@ func (h *AWSTransactionHandler) Handle(
 
 	plugin_entities.ParsePluginUniversalEvent(
 		bytes,
+		"",
 		func(session_id string, data []byte) {
 			// parse the data
 			sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)

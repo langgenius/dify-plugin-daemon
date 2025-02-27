@@ -65,6 +65,7 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 	r.response.Async(func(data []byte) {
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
+			"",
 			func(session_id string, data []byte) {
 				r.messageCallbacksLock.RLock()
 				listeners := r.messageCallbacks[session_id][:]

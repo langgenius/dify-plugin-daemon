@@ -92,6 +92,7 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
+			"",
 			func(session_id string, data []byte) {
 				for _, listener := range listeners {
 					listener(s.id, data)

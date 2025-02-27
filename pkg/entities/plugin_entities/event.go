@@ -18,18 +18,19 @@ type PluginUniversalEvent struct {
 // error_handler will be called when data is not standard or itself it's an error message
 func ParsePluginUniversalEvent(
 	data []byte,
-	session_handler func(sessionId string, data []byte),
-	heartbeat_handler func(),
-	error_handler func(err string),
-	info_handler func(message string),
+	statusText string,
+	sessionHandler func(sessionId string, data []byte),
+	heartbeatHandler func(),
+	errorHandler func(err string),
+	infoHandler func(message string),
 ) {
 	// handle event
 	event, err := parser.UnmarshalJsonBytes[PluginUniversalEvent](data)
 	if err != nil {
 		if len(data) > 1024 {
-			error_handler(err.Error() + " original response: " + string(data[:1024]) + "...")
+			errorHandler(err.Error() + " status: " + statusText + " original response: " + string(data[:1024]) + "...")
 		} else {
-			error_handler(err.Error() + " original response: " + string(data))
+			errorHandler(err.Error() + " status: " + statusText + " original response: " + string(data))
 		}
 		return
 	}
@@ -47,14 +48,14 @@ func ParsePluginUniversalEvent(
 				return
 			}
 
-			info_handler(logEvent.Message)
+			infoHandler(logEvent.Message)
 		}
 	case PLUGIN_EVENT_SESSION:
-		session_handler(sessionId, event.Data)
+		sessionHandler(sessionId, event.Data)
 	case PLUGIN_EVENT_ERROR:
-		error_handler(string(event.Data))
+		errorHandler(string(event.Data))
 	case PLUGIN_EVENT_HEARTBEAT:
-		heartbeat_handler()
+		heartbeatHandler()
 	}
 }
 
