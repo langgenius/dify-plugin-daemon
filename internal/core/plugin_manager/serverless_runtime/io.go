@@ -102,6 +102,7 @@ func (r *AWSPluginRuntime) Write(sessionId string, data []byte) {
 
 			plugin_entities.ParsePluginUniversalEvent(
 				bytes,
+				response.Status,
 				func(session_id string, data []byte) {
 					sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 					if err != nil {
