@@ -176,7 +176,7 @@ func (p *PromptMessage) UnmarshalJSON(data []byte) error {
 
 type PromptMessageTool struct {
 	Name        string         `json:"name" validate:"required"`
-	Description string         `json:"description" validate:"required"`
+	Description string         `json:"description"`
 	Parameters  map[string]any `json:"parameters"`
 }
 
