@@ -25,6 +25,7 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PluginInstalledPath, "plugin")
 	setDefaultString(&config.PluginMediaCachePath, "assets")
 	setDefaultString(&config.PersistenceStoragePath, "persistence")
+	setDefaultInt(&config.PluginLocalLaunchingConcurrent, 2)
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
