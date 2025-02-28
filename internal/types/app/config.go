@@ -31,15 +31,21 @@ type Config struct {
 	PluginRemoteInstallingMaxSingleTenantConn int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_SINGLE_TENANT_CONN"`
 	PluginRemoteInstallServerEventLoopNums    int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
+	// plugin endpoint
 	PluginEndpointEnabled *bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
 
+	// storage
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
 
+	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
+
+	// local launching max concurrent
+	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
 
 	// platform like local or aws lambda
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
