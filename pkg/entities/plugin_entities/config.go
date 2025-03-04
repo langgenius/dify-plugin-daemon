@@ -243,7 +243,7 @@ type ProviderConfig struct {
 	Scope       *string        `json:"scope" validate:"omitempty,is_scope"`
 	Required    bool           `json:"required"`
 	Default     any            `json:"default" validate:"omitempty,is_basic_type"`
-	Options     []ConfigOption `json:"optioSns" validate:"omitempty,lt=128,dive"`
+	Options     []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
 	Label       I18nObject     `json:"label" validate:"required"`
 	Help        *I18nObject    `json:"help" validate:"omitempty"`
 	URL         *string        `json:"url" validate:"omitempty"`
