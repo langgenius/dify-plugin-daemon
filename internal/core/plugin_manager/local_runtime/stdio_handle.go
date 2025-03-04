@@ -97,6 +97,8 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 				for _, listener := range listeners {
 					listener(s.id, data)
 				}
+				s.l.Lock()
+				defer s.l.Unlock()
 				for listener_session_id, listener := range s.listener {
 					if listener_session_id == session_id {
 						listener(data)
