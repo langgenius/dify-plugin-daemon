@@ -3,19 +3,25 @@ package local_runtime
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	version "github.com/hashicorp/go-version"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
+
+//go:embed patches/0.0.1b70.ai_model.py.patch
+var pythonPatches []byte
 
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// check if virtual environment exists
@@ -31,6 +37,13 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 				return fmt.Errorf("failed to find python: %s", err)
 			}
 			p.pythonInterpreterPath = pythonPath
+			// PATCH:
+			//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
+			//  to reach a better user experience, we will patch it here using a patched file
+			// https://github.com/langgenius/dify-plugin-sdks/commit/161045b65f708d8ef0837da24440ab3872821b3b
+			if err := p.patchPluginSdk(path.Join(p.State.WorkingPath, "requirements.txt")); err != nil {
+				log.Error("failed to patch the plugin sdk: %s", err)
+			}
 			return nil
 		}
 	}
@@ -282,7 +295,73 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to pre-compile the plugin: %s", compileErrMsg.String())
 	}
 
+	// PATCH:
+	//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
+	//  to reach a better user experience, we will patch it here using a patched file
+	// https://github.com/langgenius/dify-plugin-sdks/commit/161045b65f708d8ef0837da24440ab3872821b3b
+	if err := p.patchPluginSdk(requirementsPath); err != nil {
+		log.Error("failed to patch the plugin sdk: %s", err)
+	}
+
 	success = true
 
 	return nil
+}
+
+func (p *LocalPluginRuntime) patchPluginSdk(requirementsPath string) error {
+	// get the version of the plugin sdk
+	requirements, err := os.ReadFile(requirementsPath)
+	if err != nil {
+		return fmt.Errorf("failed to read requirements.txt: %s", err)
+	}
+
+	pluginSdkVersion, err := p.getPluginSdkVersion(string(requirements))
+	if err != nil {
+		log.Error("failed to get the version of the plugin sdk: %s", err)
+		return nil
+	}
+
+	pluginSdkVersionObj, err := version.NewVersion(pluginSdkVersion)
+	if err != nil {
+		log.Error("failed to create the version: %s", err)
+		return nil
+	}
+
+	if pluginSdkVersionObj.LessThan(version.Must(version.NewVersion("0.0.1b70"))) {
+		// get dify-plugin path
+		command := exec.Command(p.pythonInterpreterPath, "-c", "import importlib.util;print(importlib.util.find_spec('dify_plugin').origin)")
+		command.Dir = p.State.WorkingPath
+		output, err := command.Output()
+		if err != nil {
+			return fmt.Errorf("failed to get the path of the plugin sdk: %s", err)
+		}
+
+		pluginSdkPath := path.Dir(strings.TrimSpace(string(output)))
+		patchPath := path.Join(pluginSdkPath, "interfaces/model/ai_model.py")
+		if _, err := os.Stat(patchPath); err != nil {
+			return fmt.Errorf("failed to find the patch file: %s", err)
+		}
+
+		// apply the patch
+		if _, err := os.Stat(patchPath); err != nil {
+			return fmt.Errorf("failed to find the patch file: %s", err)
+		}
+
+		if err := os.WriteFile(patchPath, pythonPatches, 0644); err != nil {
+			return fmt.Errorf("failed to write the patch file: %s", err)
+		}
+	}
+
+	return nil
+}
+
+func (p *LocalPluginRuntime) getPluginSdkVersion(requirements string) (string, error) {
+	// using regex to find the version of the plugin sdk
+	re := regexp.MustCompile(`(?:dify[_-]plugin)(?:~=|==)([0-9.a-z]+)`)
+	matches := re.FindStringSubmatch(requirements)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("failed to find the version of the plugin sdk")
+	}
+
+	return matches[1], nil
 }
