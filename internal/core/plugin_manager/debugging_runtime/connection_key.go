@@ -29,8 +29,8 @@ type Key struct {
 }
 
 const (
-	CONNECTION_KEY_MANAGER_KEY2ID_PREFIX = "remote:key:manager:key2id"
-	CONNECTION_KEY_MANAGER_ID2KEY_PREFIX = "remote:key:manager:id2key"
+	CONNECTION_KEY_MANAGER_KEY2ID_PREFIX = "{remote:key:manager}:key2id"
+	CONNECTION_KEY_MANAGER_ID2KEY_PREFIX = "{remote:key:manager}:id2key"
 	CONNECTION_KEY_LOCK                  = "connection_lock"
 	CONNECTION_KEY_EXPIRE_TIME           = time.Minute * 120 // 2 hours
 )
