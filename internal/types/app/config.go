@@ -60,12 +60,13 @@ type Config struct {
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
 
 	// database
-	DBUsername string `envconfig:"DB_USERNAME" validate:"required"`
-	DBPassword string `envconfig:"DB_PASSWORD" validate:"required"`
-	DBHost     string `envconfig:"DB_HOST" validate:"required"`
-	DBPort     uint16 `envconfig:"DB_PORT" validate:"required"`
-	DBDatabase string `envconfig:"DB_DATABASE" validate:"required"`
-	DBSslMode  string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
+	DBUsername        string `envconfig:"DB_USERNAME" validate:"required"`
+	DBPassword        string `envconfig:"DB_PASSWORD" validate:"required"`
+	DBHost            string `envconfig:"DB_HOST" validate:"required"`
+	DBPort            uint16 `envconfig:"DB_PORT" validate:"required"`
+	DBDatabase        string `envconfig:"DB_DATABASE" validate:"required"`
+	DBDefaultDatabase string `envconfig:"DB_DEFAULT_DATABASE" validate:"required"`
+	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`

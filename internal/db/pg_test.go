@@ -8,7 +8,7 @@ import (
 )
 
 func TestTransaction(t *testing.T) {
-	if err := initDifyPluginDB("0.0.0.0", 5432, "testing", "postgres", "difyai123456", "disable"); err != nil {
+	if err := initDifyPluginDB("0.0.0.0", 5432, "testing", "postgres", "postgres", "difyai123456", "disable"); err != nil {
 		t.Fatal(err)
 	}
 	defer Close()
