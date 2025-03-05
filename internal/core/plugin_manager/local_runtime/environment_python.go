@@ -201,6 +201,88 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 	}
 
+	// pre-compile the plugin to avoid costly compilation on first invocation
+	compileCmd := exec.CommandContext(ctx, pythonPath, "-m", "compileall", ".")
+	compileCmd.Dir = p.State.WorkingPath
+
+	// get stdout and stderr
+	compileStdout, err := compileCmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to get stdout: %s", err)
+	}
+	defer compileStdout.Close()
+
+	compileStderr, err := compileCmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("failed to get stderr: %s", err)
+	}
+	defer compileStderr.Close()
+
+	// start command
+	if err := compileCmd.Start(); err != nil {
+		return fmt.Errorf("failed to start command: %s", err)
+	}
+	defer func() {
+		if compileCmd.Process != nil {
+			compileCmd.Process.Kill()
+		}
+	}()
+
+	var compileErrMsg strings.Builder
+	var compileWg sync.WaitGroup
+	compileWg.Add(2)
+
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "InitPythonEnvironment",
+	}, func() {
+		defer compileWg.Done()
+		// read compileStdout
+		for {
+			buf := make([]byte, 102400)
+			n, err := compileStdout.Read(buf)
+			if err != nil {
+				break
+			}
+			// split to first line
+			lines := strings.Split(string(buf[:n]), "\n")
+
+			for len(lines) > 0 && len(lines[0]) == 0 {
+				lines = lines[1:]
+			}
+
+			if len(lines) > 0 {
+				if len(lines) > 1 {
+					log.Info("pre-compiling %s - %s...", p.Config.Identity(), lines[0])
+				} else {
+					log.Info("pre-compiling %s - %s", p.Config.Identity(), lines[0])
+				}
+			}
+		}
+	})
+
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"function": "InitPythonEnvironment",
+	}, func() {
+		defer compileWg.Done()
+		// read stderr
+		buf := make([]byte, 1024)
+		for {
+			n, err := compileStderr.Read(buf)
+			if err != nil {
+				break
+			}
+			compileErrMsg.WriteString(string(buf[:n]))
+		}
+	})
+
+	compileWg.Wait()
+	if err := compileCmd.Wait(); err != nil {
+		return fmt.Errorf("failed to pre-compile the plugin: %s", compileErrMsg.String())
+	}
+
 	success = true
+
 	return nil
 }

@@ -464,8 +464,8 @@ func UpgradePlugin(
 		if originalDeclaration.AgentStrategy != nil {
 			// delete the original agent installation
 			err := db.DeleteByCondition(&models.AgentStrategyInstallation{
-				PluginUniqueIdentifier: original_plugin_unique_identifier.String(),
-				TenantID:               tenant_id,
+				PluginID: original_plugin_unique_identifier.PluginID(),
+				TenantID: tenant_id,
 			}, tx)
 
 			if err != nil {
