@@ -245,7 +245,7 @@ type ProviderConfig struct {
 	Default     any            `json:"default" validate:"omitempty,is_basic_type"`
 	Options     []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
 	Label       I18nObject     `json:"label" validate:"required"`
-	Helper      *I18nObject    `json:"helper" validate:"omitempty"`
+	Help        *I18nObject    `json:"help" validate:"omitempty"`
 	URL         *string        `json:"url" validate:"omitempty"`
 	Placeholder *I18nObject    `json:"placeholder" validate:"omitempty"`
 }

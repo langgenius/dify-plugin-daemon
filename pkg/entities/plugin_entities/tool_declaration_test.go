@@ -40,7 +40,7 @@ func TestFullFunctionToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -130,7 +130,7 @@ credentials_schema:
       en_US: API Key
       zh_Hans: API 密钥
       pt_BR: Chave da API
-    helper:
+    help:
       en_US: API Key
       zh_Hans: API 密钥
       pt_BR: Chave da API
@@ -230,7 +230,7 @@ func TestToolProviderWithMapCredentials_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -320,7 +320,7 @@ credentials_schema:
       en_US: API Key
       zh_Hans: API 密钥
       pt_BR: Chave da API
-    helper:
+    help:
       en_US: API Key
       zh_Hans: API 密钥
       pt_BR: Chave da API
@@ -430,7 +430,7 @@ func TestWithoutAuthorToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -490,7 +490,7 @@ func TestWithoutNameToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -544,7 +544,7 @@ func TestWithoutDescriptionToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -603,7 +603,7 @@ func TestWrongCredentialTypeToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -662,7 +662,7 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
 			},
-			"helper": {
+			"help": {
 				"en_US": "API Key",
 				"zh_Hans": "API 密钥",
 				"pt_BR": "Chave da API"
@@ -979,7 +979,7 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "app-selector",
 				"pt_BR": "app-selector"
 			},
-			"helper": {
+			"help": {
 				"en_US": "app-selector",
 				"zh_Hans": "app-selector",
 				"pt_BR": "app-selector"
@@ -1086,7 +1086,7 @@ func TestAppSelectorScopeToolProvider_Validate(t *testing.T) {
 				"zh_Hans": "app-selector",
 				"pt_BR": "app-selector"
 			},
-			"helper": {
+			"help": {
 				"en_US": "app-selector",
 				"zh_Hans": "app-selector",
 				"pt_BR": "app-selector"
