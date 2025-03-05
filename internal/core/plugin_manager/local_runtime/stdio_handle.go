@@ -90,6 +90,9 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 			continue
 		}
 
+		// update the last active time on each time the plugin sends data
+		s.lastActiveAt = time.Now()
+
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
 			"",
@@ -106,7 +109,6 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 				}
 			},
 			func() {
-				s.lastActiveAt = time.Now()
 				// notify launched
 				notify_heartbeat()
 			},
