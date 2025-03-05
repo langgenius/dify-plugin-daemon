@@ -226,6 +226,7 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 				return
 			} else if err != nil {
 				// close connection if handshake failed
+				log.Error("failed to get connection info: %v", err)
 				closeConn([]byte("internal error\n"))
 				return
 			}
