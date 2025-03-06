@@ -33,6 +33,7 @@ func (config *Config) SetDefault() {
 	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
 	setDefaultBoolPtr(&config.PipPreferBinary, true)
 	setDefaultBoolPtr(&config.PipVerbose, true)
+	setDefaultString(&config.DBDefaultDatabase, "postgres")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
