@@ -1,6 +1,7 @@
 package local_runtime
 
 import (
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -25,6 +26,6 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 	return listener
 }
 
-func (r *LocalPluginRuntime) Write(session_id string, data []byte) {
+func (r *LocalPluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
 	writeToStdioHandler(r.ioIdentity, append(data, '\n'))
 }
