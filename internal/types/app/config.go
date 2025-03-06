@@ -92,6 +92,9 @@ type Config struct {
 	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
 	PythonEnvInitTimeout  int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PipMirrorUrl          string `envconfig:"PIP_MIRROR_URL"`
+	PipPreferBinary       *bool  `envconfig:"PIP_PREFER_BINARY"`
+	PipVerbose            *bool  `envconfig:"PIP_VERBOSE"`
+	PipExtraArgs          string `envconfig:"PIP_EXTRA_ARGS"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 

@@ -102,7 +102,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	args := []string{"install"}
+	args := []string{"install", "--disable-pip-version-check"} // FIX: pip version check takes too long
 
 	if p.HttpProxy != "" {
 		args = append(args, "--proxy", p.HttpProxy)
@@ -115,6 +115,18 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	}
 
 	args = append(args, "-r", "requirements.txt")
+
+	if p.pipPreferBinary {
+		args = append(args, "--prefer-binary")
+	}
+
+	if p.pipVerbose {
+		args = append(args, "-vvv")
+	}
+
+	if p.pipExtraArgs != "" {
+		args = append(args, strings.Split(p.pipExtraArgs, " ")...)
+	}
 
 	cmd = exec.CommandContext(ctx, pipPath, args...)
 	cmd.Dir = p.State.WorkingPath

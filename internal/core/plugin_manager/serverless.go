@@ -33,6 +33,9 @@ func (p *PluginManager) getServerlessPluginRuntime(
 
 	// FIXME: get declaration
 	declaration, err := helper.CombinedGetPluginDeclaration(identity, plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS)
+	if err != nil {
+		return nil, err
+	}
 
 	// init runtime entity
 	runtimeEntity := plugin_entities.PluginRuntime{
