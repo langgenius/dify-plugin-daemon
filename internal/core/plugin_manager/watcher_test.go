@@ -111,7 +111,7 @@ func TestRemotePluginWatcherPluginStoredToManager(t *testing.T) {
 	config.SetDefault()
 	routine.InitPool(1024)
 	oss := local.NewLocalStorage("./storage")
-	pm := InitGlobalManager(oss, &app.Config{})
+	pm := InitGlobalManager(oss, config)
 	pm.remotePluginServer = &fakeRemotePluginServer{}
 	pm.startRemoteWatcher(config)
 
