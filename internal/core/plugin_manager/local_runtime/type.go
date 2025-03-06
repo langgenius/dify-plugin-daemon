@@ -24,7 +24,10 @@ type LocalPluginRuntime struct {
 	// by using its venv module
 	defaultPythonInterpreterPath string
 
-	pipMirrorUrl string
+	pipMirrorUrl    string
+	pipPreferBinary bool
+	pipVerbose      bool
+	pipExtraArgs    string
 
 	// proxy settings
 	HttpProxy  string
@@ -43,6 +46,9 @@ type LocalPluginRuntimeConfig struct {
 	HttpProxy             string
 	HttpsProxy            string
 	PipMirrorUrl          string
+	PipPreferBinary       bool
+	PipVerbose            bool
+	PipExtraArgs          string
 }
 
 func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
@@ -52,5 +58,8 @@ func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime 
 		HttpProxy:                    config.HttpProxy,
 		HttpsProxy:                   config.HttpsProxy,
 		pipMirrorUrl:                 config.PipMirrorUrl,
+		pipPreferBinary:              config.PipPreferBinary,
+		pipVerbose:                   config.PipVerbose,
+		pipExtraArgs:                 config.PipExtraArgs,
 	}
 }
