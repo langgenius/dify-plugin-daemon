@@ -88,6 +88,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 
 	session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
+		session.Action,
 		getInvokePluginMap(
 			session,
 			request,

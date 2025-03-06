@@ -31,6 +31,9 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
 	setDefaultInt(&config.PythonEnvInitTimeout, 120)
 	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
+	setDefaultBoolPtr(&config.PipPreferBinary, true)
+	setDefaultBoolPtr(&config.PipVerbose, true)
+	setDefaultString(&config.DBDefaultDatabase, "postgres")
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {

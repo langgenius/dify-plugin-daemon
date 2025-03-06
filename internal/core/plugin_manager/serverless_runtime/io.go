@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -24,7 +25,7 @@ func (r *AWSPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_e
 }
 
 // For AWS Lambda, write is equivalent to http request, it's not a normal stream like stdio and tcp
-func (r *AWSPluginRuntime) Write(sessionId string, data []byte) {
+func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
 		log.Error("session %s not found", sessionId)
@@ -44,6 +45,8 @@ func (r *AWSPluginRuntime) Write(sessionId string, data []byte) {
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
 		return
 	}
+
+	url += "?action=" + string(action)
 
 	connectTime := 240 * time.Second
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -47,7 +48,7 @@ func (r *fakePlugin) Listen(string) *entities.Broadcast[plugin_entities.SessionM
 	return nil
 }
 
-func (r *fakePlugin) Write(string, []byte) {
+func (r *fakePlugin) Write(string, access_types.PluginAccessAction, []byte) {
 }
 
 func (r *fakePlugin) WaitStarted() <-chan bool {
@@ -111,7 +112,7 @@ func TestRemotePluginWatcherPluginStoredToManager(t *testing.T) {
 	config.SetDefault()
 	routine.InitPool(1024)
 	oss := local.NewLocalStorage("./storage")
-	pm := InitGlobalManager(oss, &app.Config{})
+	pm := InitGlobalManager(oss, config)
 	pm.remotePluginServer = &fakeRemotePluginServer{}
 	pm.startRemoteWatcher(config)
 

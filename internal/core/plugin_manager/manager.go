@@ -66,6 +66,15 @@ type PluginManager struct {
 	// pip mirror url
 	pipMirrorUrl string
 
+	// pip prefer binary
+	pipPreferBinary bool
+
+	// pip verbose
+	pipVerbose bool
+
+	// pip extra args
+	pipExtraArgs string
+
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
@@ -106,6 +115,9 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		HttpProxy:                configuration.HttpProxy,
 		HttpsProxy:               configuration.HttpsProxy,
 		pipMirrorUrl:             configuration.PipMirrorUrl,
+		pipPreferBinary:          *configuration.PipPreferBinary,
+		pipVerbose:               *configuration.PipVerbose,
+		pipExtraArgs:             configuration.PipExtraArgs,
 	}
 
 	return manager
