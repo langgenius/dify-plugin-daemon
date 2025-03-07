@@ -100,12 +100,21 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 				for _, listener := range listeners {
 					listener(s.id, data)
 				}
+				// FIX: avoid deadlock to plugin invoke
 				s.l.Lock()
-				defer s.l.Unlock()
+				tasks := []func(){}
 				for listener_session_id, listener := range s.listener {
+					// copy the listener to avoid reference issue
+					listener := listener
 					if listener_session_id == session_id {
-						listener(data)
+						tasks = append(tasks, func() {
+							listener(data)
+						})
 					}
+				}
+				s.l.Unlock()
+				for _, t := range tasks {
+					t()
 				}
 			},
 			func() {
