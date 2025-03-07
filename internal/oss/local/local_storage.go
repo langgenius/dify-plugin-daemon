@@ -57,10 +57,18 @@ func (l *LocalStorage) State(key string) (oss.OSSState, error) {
 }
 
 func (l *LocalStorage) List(prefix string) ([]oss.OSSPath, error) {
-	prefix = filepath.Join(l.root, prefix)
 	paths := make([]oss.OSSPath, 0)
+	// check if the patch exists
+	exists, err := l.Exists(prefix)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return paths, nil
+	}
+	prefix = filepath.Join(l.root, prefix)
 
-	err := filepath.WalkDir(prefix, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(prefix, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
