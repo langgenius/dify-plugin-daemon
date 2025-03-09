@@ -19,12 +19,13 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
+		DBUsername:        "postgres",
+		DBPassword:        "difyai123456",
+		DBHost:            "localhost",
+		DBDefaultDatabase: "postgres",
+		DBPort:            5432,
+		DBDatabase:        "dify_plugin_daemon",
+		DBSslMode:         "disable",
 	})
 	defer db.Close()
 
