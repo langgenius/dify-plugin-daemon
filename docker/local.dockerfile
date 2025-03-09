@@ -39,7 +39,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl pyt
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1;
 
 # Install uv
-RUN python3 -m pip install uv
+RUN python3 -m pipx install uv
 
 # Test uv
 RUN python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin())"
