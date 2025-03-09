@@ -41,6 +41,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl pyt
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Test uv
+RUN python3 -c "import uv._find_uv import find_uv_bin;print(find_uv_bin())"
+
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
