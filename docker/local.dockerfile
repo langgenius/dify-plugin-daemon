@@ -38,8 +38,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1;
 
-# Install uv
+
 RUN pip install uv
+
 
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
