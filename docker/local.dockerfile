@@ -39,7 +39,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl pyt
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1;
 
 # Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN pipx install uv
 
 # Test uv
 RUN python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin())"
