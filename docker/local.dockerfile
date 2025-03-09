@@ -33,11 +33,13 @@ WORKDIR /app
 ARG PLATFORM=local
 
 # Install python3.12 if PLATFORM is local
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.12 python3.12-venv python3.12-dev python3-uv python3-pip ffmpeg \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl python3.12 python3.12-venv python3.12-dev python3-pip ffmpeg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1;
 
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
