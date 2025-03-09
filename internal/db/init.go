@@ -134,7 +134,7 @@ func Init(config *app.Config) {
 		config.DBHost,
 		int(config.DBPort),
 		config.DBDatabase,
-		"postgres",
+		config.DBDefaultDatabase,
 		config.DBUsername,
 		config.DBPassword,
 		config.DBSslMode,
