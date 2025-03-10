@@ -31,6 +31,7 @@ func Endpoint(
 	ctx *gin.Context,
 	endpoint *models.Endpoint,
 	pluginInstallation *models.PluginInstallation,
+	maxExecutionTime time.Duration,
 	path string,
 ) {
 	if !endpoint.Enabled {
@@ -195,7 +196,7 @@ func Endpoint(
 	select {
 	case <-ctx.Writer.CloseNotify():
 	case <-done:
-	case <-time.After(240 * time.Second):
+	case <-time.After(maxExecutionTime):
 		ctx.JSON(500, exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
 	}
 }
