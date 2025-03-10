@@ -41,6 +41,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl pyt
 # Install uv
 RUN mv /usr/lib/python3.12/EXTERNALLY-MANAGED /usr/lib/python3.12/EXTERNALLY-MANAGED.bk && python3 -m pip install uv
 
+# Install dify_plugin to speedup the environment setup
+RUN uv pip install --system dify_plugin
+
 # Test uv
 RUN python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin())"
 
