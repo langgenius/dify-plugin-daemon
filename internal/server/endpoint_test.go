@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -21,7 +22,7 @@ func TestEndpointParams(t *testing.T) {
 	globalHookId := ""
 	globalHookPath := ""
 
-	handler := func(ctx *gin.Context, hook_id string, path string) {
+	handler := func(ctx *gin.Context, hook_id string, maxExecutionTime time.Duration, path string) {
 		globalHookId = hook_id
 		globalHookPath = path
 	}
