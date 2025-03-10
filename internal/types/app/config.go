@@ -19,7 +19,14 @@ type Config struct {
 	AWSSecretKey string `envconfig:"AWS_SECRET_KEY"`
 	AWSRegion    string `envconfig:"AWS_REGION"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3"`
+	TencentBucketName string `envconfig:"TENCENT_COS_BUCKET_NAME"`
+	TencentSecretKey  string `envconfig:"TENCENT_COS_SECRET_KEY"`
+	TencentSecretID   string `envconfig:"TENCENT_COS_SECRET_ID"`
+	TencentRegion     string `envconfig:"TENCENT_COS_REGION"`
+	TencentScheme     string `envconfig:"TENCENT_COS_SCHEME"`
+	TencentRoot       string `envconfig:"TENCENT_COS_ROOT"`
+
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 

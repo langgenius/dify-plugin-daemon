@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
@@ -9,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/s3"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/tencent"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -30,6 +32,14 @@ func initOSS(config *app.Config) oss.OSS {
 		}
 	} else if config.PluginStorageType == "local" {
 		oss = local.NewLocalStorage(config.PluginStorageLocalRoot)
+	} else if config.PluginStorageType == "tencent_cos" {
+		var bucketURL = fmt.Sprintf("%s://%s.cos.%s.myqcloud.com", config.TencentScheme, config.TencentBucketName, config.TencentRegion)
+		oss, err = tencent.NewTencentCOS(
+			bucketURL,
+			config.TencentSecretID,
+			config.TencentSecretKey,
+			config.TencentRoot,
+		)
 	} else {
 		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
 	}
