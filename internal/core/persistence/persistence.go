@@ -77,7 +77,10 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 	}
 
 	// delete from cache
-	return cache.Del(c.getCacheKey(tenantId, pluginId, key))
+	if err := cache.Del(c.getCacheKey(tenantId, pluginId, key)); err == cache.ErrNotFound {
+		return nil
+	}
+	return err
 }
 
 // TODO: raises specific error to avoid confusion
