@@ -18,7 +18,14 @@ import (
 
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
-	engine := gin.Default()
+	engine := gin.New()
+
+	engine.Use(
+		gin.LoggerWithConfig(gin.LoggerConfig{
+			SkipPaths: []string{"/health/check"},
+		}),
+		gin.Recovery(),
+	)
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
