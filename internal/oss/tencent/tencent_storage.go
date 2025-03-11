@@ -18,7 +18,7 @@ type TencentCOS struct {
 	client *cos.Client
 }
 
-// NewTencentCOS 创建并返回一个初始化的 TencentCOS 实例
+// NewTencentCOS Create and return an initialized TencentCOS instance.
 func NewTencentCOS(bucketURL, secretID, secretKey, root string) (*TencentCOS, error) {
 	u, err := url.Parse(bucketURL)
 	if err != nil {
