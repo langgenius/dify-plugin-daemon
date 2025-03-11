@@ -28,6 +28,7 @@ type LocalPluginRuntime struct {
 	pipPreferBinary bool
 	pipVerbose      bool
 	pipExtraArgs    string
+	disableGevent   bool
 
 	// proxy settings
 	HttpProxy  string
@@ -49,6 +50,7 @@ type LocalPluginRuntimeConfig struct {
 	PipPreferBinary       bool
 	PipVerbose            bool
 	PipExtraArgs          string
+	DisableGevent         bool
 }
 
 func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
@@ -61,5 +63,6 @@ func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime 
 		pipPreferBinary:              config.PipPreferBinary,
 		pipVerbose:                   config.PipVerbose,
 		pipExtraArgs:                 config.PipExtraArgs,
+		disableGevent:                config.DisableGevent,
 	}
 }

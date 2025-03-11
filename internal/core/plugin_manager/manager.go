@@ -75,6 +75,9 @@ type PluginManager struct {
 	// pip extra args
 	pipExtraArgs string
 
+	// disable gevent
+	disableGevent bool
+
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
@@ -118,6 +121,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		pipPreferBinary:          *configuration.PipPreferBinary,
 		pipVerbose:               *configuration.PipVerbose,
 		pipExtraArgs:             configuration.PipExtraArgs,
+		disableGevent:            *configuration.DisableGevent,
 	}
 
 	return manager

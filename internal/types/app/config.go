@@ -95,6 +95,7 @@ type Config struct {
 	PipPreferBinary       *bool  `envconfig:"PIP_PREFER_BINARY"`
 	PipVerbose            *bool  `envconfig:"PIP_VERBOSE"`
 	PipExtraArgs          string `envconfig:"PIP_EXTRA_ARGS"`
+	DisableGevent         *bool  `envconfig:"DISABLE_GEVENT"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 

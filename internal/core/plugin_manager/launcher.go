@@ -137,6 +137,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		PipMirrorUrl:          p.pipMirrorUrl,
 		PipPreferBinary:       p.pipPreferBinary,
 		PipExtraArgs:          p.pipExtraArgs,
+		DisableGevent:         p.disableGevent,
 	})
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{

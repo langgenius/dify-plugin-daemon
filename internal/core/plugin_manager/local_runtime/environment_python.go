@@ -307,14 +307,6 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to pre-compile the plugin: %s", compileErrMsg.String())
 	}
 
-	log.Info("pre-loading the plugin %s", p.Config.Identity())
-
-	// import dify_plugin to speedup the first launching
-	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it
-	importCmd := exec.CommandContext(ctx, pythonPath, "-c", "import dify_plugin")
-	importCmd.Dir = p.State.WorkingPath
-	importCmd.Output()
-
 	// PATCH:
 	//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
 	//  to reach a better user experience, we will patch it here using a patched file
@@ -322,6 +314,14 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	if err := p.patchPluginSdk(requirementsPath); err != nil {
 		log.Error("failed to patch the plugin sdk: %s", err)
 	}
+
+	// import dify_plugin to speedup the first launching
+	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it
+	log.Info("pre-loading the plugin %s", p.Config.Identity())
+	importCmd := exec.CommandContext(ctx, pythonPath, "-c", "import dify_plugin")
+	importCmd.Dir = p.State.WorkingPath
+	importCmd.Output()
+	log.Info("pre-loading the plugin %s done", p.Config.Identity())
 
 	success = true
 
@@ -347,21 +347,21 @@ func (p *LocalPluginRuntime) patchPluginSdk(requirementsPath string) error {
 		return nil
 	}
 
-	if pluginSdkVersionObj.LessThan(version.Must(version.NewVersion("0.0.1b70"))) {
-		// get dify-plugin path
-		command := exec.Command(p.pythonInterpreterPath, "-c", "import importlib.util;print(importlib.util.find_spec('dify_plugin').origin)")
-		command.Dir = p.State.WorkingPath
-		output, err := command.Output()
-		if err != nil {
-			return fmt.Errorf("failed to get the path of the plugin sdk: %s", err)
-		}
+	command := exec.Command(p.pythonInterpreterPath, "-c", "import importlib.util;print(importlib.util.find_spec('dify_plugin').origin)")
+	command.Dir = p.State.WorkingPath
+	output, err := command.Output()
+	if err != nil {
+		return fmt.Errorf("failed to get the path of the plugin sdk: %s", err)
+	}
 
-		pluginSdkPath := path.Dir(strings.TrimSpace(string(output)))
+	// get dify-plugin path
+	pluginSdkPath := path.Dir(strings.TrimSpace(string(output)))
+
+	if pluginSdkVersionObj.LessThan(version.Must(version.NewVersion("0.0.1b70"))) {
 		patchPath := path.Join(pluginSdkPath, "interfaces/model/ai_model.py")
 		if _, err := os.Stat(patchPath); err != nil {
 			return fmt.Errorf("failed to find the patch file: %s", err)
 		}
-
 		// apply the patch
 		if _, err := os.Stat(patchPath); err != nil {
 			return fmt.Errorf("failed to find the patch file: %s", err)
@@ -369,6 +369,39 @@ func (p *LocalPluginRuntime) patchPluginSdk(requirementsPath string) error {
 
 		if err := os.WriteFile(patchPath, pythonPatches, 0644); err != nil {
 			return fmt.Errorf("failed to write the patch file: %s", err)
+		}
+	}
+
+	initPyPath := path.Join(pluginSdkPath, "__init__.py")
+	if _, err := os.Stat(initPyPath); err != nil {
+		return fmt.Errorf("failed to find the __init__.py file: %s", err)
+	}
+
+	content, err := os.ReadFile(initPyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read the __init__.py file: %s", err)
+	}
+
+	// check if `# monkey.patch_all(sys=True)` is in the content
+	alreadyPatched := bytes.Contains(content, []byte("# monkey.patch_all(sys=True)"))
+
+	// disable gevent
+	if p.disableGevent {
+		log.Info("plugin %s is disabling gevent", p.Config.Identity())
+		if !alreadyPatched {
+			// override pluginSdkPath/__init__.py, replace `monkey.patch_all(sys=True)` to empty string
+			content = bytes.ReplaceAll(content, []byte("monkey.patch_all(sys=True)"), []byte("# monkey.patch_all(sys=True)"))
+			if err := os.WriteFile(initPyPath, content, 0644); err != nil {
+				return fmt.Errorf("failed to write the __init__.py file: %s", err)
+			}
+		}
+	} else {
+		if alreadyPatched {
+			// remove the patch
+			content = bytes.ReplaceAll(content, []byte("# monkey.patch_all(sys=True)"), []byte("monkey.patch_all(sys=True)"))
+			if err := os.WriteFile(initPyPath, content, 0644); err != nil {
+				return fmt.Errorf("failed to write the __init__.py file: %s", err)
+			}
 		}
 	}
 
