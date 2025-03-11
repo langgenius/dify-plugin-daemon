@@ -34,6 +34,7 @@ func (config *Config) SetDefault() {
 	setDefaultBoolPtr(&config.PipPreferBinary, true)
 	setDefaultBoolPtr(&config.PipVerbose, true)
 	setDefaultString(&config.DBDefaultDatabase, "postgres")
+	setDefaultBoolPtr(&config.HealthApiLogEnabled, true)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
