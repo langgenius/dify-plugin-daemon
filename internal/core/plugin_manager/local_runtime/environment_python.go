@@ -104,12 +104,6 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 	args := []string{"install"}
 
-	if p.HttpProxy != "" {
-		args = append(args, "--proxy", p.HttpProxy)
-	} else if p.HttpsProxy != "" {
-		args = append(args, "--proxy", p.HttpsProxy)
-	}
-
 	if p.pipMirrorUrl != "" {
 		args = append(args, "-i", p.pipMirrorUrl)
 	}
