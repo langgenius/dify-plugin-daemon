@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"sync/atomic"
 	"time"
 
@@ -27,6 +28,54 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
 
+func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, error) {
+	newReq := req.Clone(context.Background())
+	// get query params
+	queryParams := req.URL.Query()
+
+	// replace path with endpoint path
+	newReq.URL.Path = path
+	// set query params
+	newReq.URL.RawQuery = queryParams.Encode()
+
+	// read request body until complete, max 10MB
+	body, err := io.ReadAll(io.LimitReader(req.Body, 10*1024*1024))
+	if err != nil {
+		return nil, err
+	}
+
+	// replace with a new reader
+	newReq.Body = io.NopCloser(bytes.NewReader(body))
+	newReq.ContentLength = int64(len(body))
+	newReq.TransferEncoding = nil
+
+	// remove ip traces for security
+	newReq.Header.Del("X-Forwarded-For")
+	newReq.Header.Del("X-Real-IP")
+	newReq.Header.Del("X-Forwarded")
+	newReq.Header.Del("X-Original-Forwarded-For")
+	newReq.Header.Del("X-Original-Url")
+	newReq.Header.Del("X-Original-Host")
+
+	// setup hook id to request
+	newReq.Header.Set("Dify-Hook-Id", hookId)
+	// check if Dify-Hook-Url is set
+	if url := req.Header.Get("Dify-Hook-Url"); url == "" {
+		newReq.Header.Set(
+			"Dify-Hook-Url",
+			fmt.Sprintf("http://%s/e/%s%s", req.Host, hookId, path),
+		)
+	}
+
+	var buffer bytes.Buffer
+	err = newReq.Write(&buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return &buffer, nil
+}
+
 func Endpoint(
 	ctx *gin.Context,
 	endpoint *models.Endpoint,
@@ -39,47 +88,7 @@ func Endpoint(
 		return
 	}
 
-	req := ctx.Request.Clone(context.Background())
-	// get query params
-	queryParams := req.URL.Query()
-
-	// replace path with endpoint path
-	req.URL.Path = path
-	// set query params
-	req.URL.RawQuery = queryParams.Encode()
-
-	// read request body until complete, max 10MB
-	body, err := io.ReadAll(io.LimitReader(req.Body, 10*1024*1024))
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-
-	// replace with a new reader
-	req.Body = io.NopCloser(bytes.NewReader(body))
-	req.ContentLength = int64(len(body))
-	req.TransferEncoding = nil
-
-	// remove ip traces for security
-	req.Header.Del("X-Forwarded-For")
-	req.Header.Del("X-Real-IP")
-	req.Header.Del("X-Forwarded")
-	req.Header.Del("X-Original-Forwarded-For")
-	req.Header.Del("X-Original-Url")
-	req.Header.Del("X-Original-Host")
-
-	// setup hook id to request
-	req.Header.Set("Dify-Hook-Id", endpoint.HookID)
-	// check if Dify-Hook-Url is set
-	if url := req.Header.Get("Dify-Hook-Url"); url == "" {
-		req.Header.Set(
-			"Dify-Hook-Url",
-			fmt.Sprintf("http://%s:%s/e/%s%s", req.Host, req.URL.Port(), endpoint.HookID, path),
-		)
-	}
-
-	var buffer bytes.Buffer
-	err = req.Write(&buffer)
+	buffer, err := copyRequest(ctx.Request, endpoint.HookID, path)
 	if err != nil {
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
