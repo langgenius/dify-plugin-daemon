@@ -205,7 +205,7 @@ func (s *stdioHolder) Wait() error {
 			}
 			if time.Since(s.lastActiveAt) > 60*time.Second {
 				log.Warn(
-					"plugin %s is not active for %d seconds, it may be dead",
+					"plugin %s is not active for %f seconds, it may be dead",
 					s.pluginUniqueIdentifier,
 					time.Since(s.lastActiveAt).Seconds(),
 				)
