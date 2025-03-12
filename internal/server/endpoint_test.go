@@ -33,6 +33,7 @@ func TestEndpointParams(t *testing.T) {
 	cancel := appPointer.server(&app.Config{
 		ServerPort:            port,
 		PluginEndpointEnabled: parser.ToPtr(true),
+		HealthApiLogEnabled:   parser.ToPtr(true),
 	})
 	defer cancel()
 
