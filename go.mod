@@ -13,12 +13,13 @@ require (
 	github.com/charmbracelet/bubbletea v1.1.0
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/getsentry/sentry-go v0.30.0
-	github.com/gin-contrib/gzip v1.0.1
 	github.com/go-git/go-git v4.7.0+incompatible
 	github.com/google/uuid v1.6.0
+	github.com/hashicorp/go-version v1.7.0
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.62
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gorm.io/gorm v1.25.11
@@ -45,10 +46,11 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
 	github.com/charmbracelet/x/ansi v0.2.3 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
+	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -62,6 +64,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
