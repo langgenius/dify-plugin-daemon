@@ -110,6 +110,9 @@ type Config struct {
 	// proxy settings
 	HttpProxy  string `envconfig:"HTTP_PROXY"`
 	HttpsProxy string `envconfig:"HTTPS_PROXY"`
+
+	// log settings
+	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`
 }
 
 func (c *Config) Validate() error {
