@@ -15,11 +15,16 @@ type Config struct {
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
+	AliOssAccessKey string `envconfig:"ALI_OSS_ACCESS_KEY"`
+	AliOssSecretKey string `envconfig:"ALI_OSS_SECRET_KEY"`
+	AliOssEndPoint  string `envconfig:"ALI_OSS_ENDPOINT"`
+	AliOssPath      string `envconfig:"ALI_OSS_PATH"`
+
 	AWSAccessKey string `envconfig:"AWS_ACCESS_KEY"`
 	AWSSecretKey string `envconfig:"AWS_SECRET_KEY"`
 	AWSRegion    string `envconfig:"AWS_REGION"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3"`
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 ali_oss"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -168,6 +173,24 @@ func (c *Config) Validate() error {
 
 		if c.AWSRegion == "" {
 			return fmt.Errorf("aws region is empty")
+		}
+	}
+
+	if c.PluginStorageType == "ali_oss" {
+		if c.PluginStorageOSSBucket == "" {
+			return fmt.Errorf("plugin storage bucket is empty")
+		}
+
+		if c.AliOssAccessKey == "" {
+			return fmt.Errorf("ali oss access key is empty")
+		}
+
+		if c.AliOssSecretKey == "" {
+			return fmt.Errorf("ali oss secret key is empty")
+		}
+
+		if c.AliOssEndPoint == "" {
+			return fmt.Errorf("ali oss endpoint is empty")
 		}
 	}
 
