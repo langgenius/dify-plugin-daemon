@@ -9,6 +9,8 @@ import (
 type BackwardsInvocation interface {
 	// InvokeLLM
 	InvokeLLM(payload *InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error)
+	// InvokeBlockingLLM
+	InvokeBlockingLLM(payload *InvokeLLMRequest) (*model_entities.LLMResult, error)
 	// InvokeTextEmbedding
 	InvokeTextEmbedding(payload *InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error)
 	// InvokeRerank

@@ -311,21 +311,32 @@ func executeDifyInvocationLLMTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeLLMRequest,
 ) {
-	response, err := handle.backwardsInvocation.InvokeLLM(request)
-	if err != nil {
-		handle.WriteError(fmt.Errorf("invoke llm model failed: %s", err.Error()))
-		return
-	}
-
-	for response.Next() {
-		value, err := response.Read()
+	if request.Stream {
+		response, err := handle.backwardsInvocation.InvokeLLM(request)
 		if err != nil {
-			handle.WriteError(fmt.Errorf("read llm model failed: %s", err.Error()))
+			handle.WriteError(fmt.Errorf("invoke llm model failed: %s", err.Error()))
 			return
 		}
 
-		handle.WriteResponse("stream", value)
+		for response.Next() {
+			value, err := response.Read()
+			if err != nil {
+				handle.WriteError(fmt.Errorf("read llm model failed: %s", err.Error()))
+				return
+			}
+
+			handle.WriteResponse("stream", value)
+		}
+	} else {
+		response, err := handle.backwardsInvocation.InvokeBlockingLLM(request)
+		if err != nil {
+			handle.WriteError(fmt.Errorf("invoke llm model failed: %s", err.Error()))
+			return
+		}
+
+		handle.WriteResponse("stream", response)
 	}
+
 }
 
 func executeDifyInvocationTextEmbeddingTask(
