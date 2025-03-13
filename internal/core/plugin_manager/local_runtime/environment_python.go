@@ -51,7 +51,17 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// execute init command, create a virtual environment
 	success := false
 
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("%s -m venv .venv", p.defaultPythonInterpreterPath))
+	// using `from uv._find_uv import find_uv_bin; print(find_uv_bin())` to find uv path
+	cmd := exec.Command(p.defaultPythonInterpreterPath, "-c", "from uv._find_uv import find_uv_bin; print(find_uv_bin())")
+	cmd.Dir = p.State.WorkingPath
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to find uv path: %s", err)
+	}
+
+	uvPath := strings.TrimSpace(string(output))
+
+	cmd = exec.Command(uvPath, "venv", ".venv")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b
@@ -71,19 +81,9 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		}
 	}()
 
-	// try find python interpreter and pip
-	pipPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/pip"))
-	if err != nil {
-		return fmt.Errorf("failed to find pip: %s", err)
-	}
-
 	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
 	if err != nil {
 		return fmt.Errorf("failed to find python: %s", err)
-	}
-
-	if _, err := os.Stat(pipPath); err != nil {
-		return fmt.Errorf("failed to find pip: %s", err)
 	}
 
 	if _, err := os.Stat(pythonPath); err != nil {
@@ -102,23 +102,13 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	args := []string{"install", "--disable-pip-version-check"} // FIX: pip version check takes too long
-
-	if p.HttpProxy != "" {
-		args = append(args, "--proxy", p.HttpProxy)
-	} else if p.HttpsProxy != "" {
-		args = append(args, "--proxy", p.HttpsProxy)
-	}
+	args := []string{"install"}
 
 	if p.pipMirrorUrl != "" {
 		args = append(args, "-i", p.pipMirrorUrl)
 	}
 
 	args = append(args, "-r", "requirements.txt")
-
-	if p.pipPreferBinary {
-		args = append(args, "--prefer-binary")
-	}
 
 	if p.pipVerbose {
 		args = append(args, "-vvv")
@@ -128,7 +118,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		args = append(args, strings.Split(p.pipExtraArgs, " ")...)
 	}
 
-	cmd = exec.CommandContext(ctx, pipPath, args...)
+	args = append([]string{"pip"}, args...)
+
+	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
+	cmd = exec.CommandContext(ctx, uvPath, args...)
+	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
 	cmd.Dir = p.State.WorkingPath
 
 	// get stdout and stderr
@@ -306,6 +300,14 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	if err := compileCmd.Wait(); err != nil {
 		return fmt.Errorf("failed to pre-compile the plugin: %s", compileErrMsg.String())
 	}
+
+	log.Info("pre-loading the plugin %s", p.Config.Identity())
+
+	// import dify_plugin to speedup the first launching
+	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it
+	importCmd := exec.CommandContext(ctx, pythonPath, "-c", "import dify_plugin")
+	importCmd.Dir = p.State.WorkingPath
+	importCmd.Output()
 
 	// PATCH:
 	//  plugin sdk version less than 0.0.1b70 contains a memory leak bug

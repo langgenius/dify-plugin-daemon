@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/redis/go-redis/v9"
 )
@@ -483,8 +484,9 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		for alive {
 			iface, err := pubsub.Receive(context.Background())
 			if err != nil {
-				alive = false
-				break
+				log.Error("failed to receive message from redis: %s, will retry in 1 second", err.Error())
+				time.Sleep(1 * time.Second)
+				continue
 			}
 			switch data := iface.(type) {
 			case *redis.Subscription:

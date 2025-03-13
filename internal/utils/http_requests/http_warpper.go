@@ -87,12 +87,6 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, errorText)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		defer resp.Body.Close()
-		errorText, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, errorText)
-	}
-
 	ch := stream.NewStream[T](1024)
 
 	// get read timeout

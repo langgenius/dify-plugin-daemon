@@ -2,10 +2,12 @@ package server
 
 import (
 	"errors"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -17,22 +19,22 @@ import (
 // - Yeuoly
 
 // EndpointHandler is a function type that can be used to handle endpoint requests
-type EndpointHandler func(ctx *gin.Context, hookId string, path string)
+type EndpointHandler func(ctx *gin.Context, hookId string, maxExecutionTime time.Duration, path string)
 
-func (app *App) Endpoint() func(c *gin.Context) {
+func (app *App) Endpoint(config *app.Config) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		hookId := c.Param("hook_id")
 		path := c.Param("path")
 
 		if app.endpointHandler != nil {
-			app.endpointHandler(c, hookId, path)
+			app.endpointHandler(c, hookId, time.Duration(config.PluginMaxExecutionTimeout)*time.Second, path)
 		} else {
-			app.EndpointHandler(c, hookId, path)
+			app.EndpointHandler(c, hookId, time.Duration(config.PluginMaxExecutionTimeout)*time.Second, path)
 		}
 	}
 }
 
-func (app *App) EndpointHandler(ctx *gin.Context, hookId string, path string) {
+func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTime time.Duration, path string) {
 	endpoint, err := db.GetOne[models.Endpoint](
 		db.Equal("hook_id", hookId),
 	)
@@ -71,6 +73,6 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, path string) {
 	if ok, originalError := app.cluster.IsPluginOnCurrentNode(pluginUniqueIdentifier); !ok {
 		app.redirectPluginInvokeByPluginIdentifier(ctx, pluginUniqueIdentifier, originalError)
 	} else {
-		service.Endpoint(ctx, &endpoint, &pluginInstallation, path)
+		service.Endpoint(ctx, &endpoint, &pluginInstallation, maxExecutionTime, path)
 	}
 }

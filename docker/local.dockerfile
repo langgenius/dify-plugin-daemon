@@ -33,10 +33,19 @@ WORKDIR /app
 ARG PLATFORM=local
 
 # Install python3.12 if PLATFORM is local
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.12 python3.12-venv python3.12-dev ffmpeg \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl python3.12 python3.12-venv python3.12-dev python3-pip ffmpeg build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1;
+
+# Install uv
+RUN mv /usr/lib/python3.12/EXTERNALLY-MANAGED /usr/lib/python3.12/EXTERNALLY-MANAGED.bk && python3 -m pip install uv
+
+# Install dify_plugin to speedup the environment setup
+RUN uv pip install --system dify_plugin
+
+# Test uv
+RUN python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin())"
 
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release

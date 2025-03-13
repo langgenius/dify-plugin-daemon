@@ -18,7 +18,15 @@ import (
 
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
-	engine := gin.Default()
+	engine := gin.New()
+	if *config.HealthApiLogEnabled {
+		engine.Use(gin.Logger())
+	} else {
+		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+			SkipPaths: []string{"/health/check"},
+		}))
+	}
+	engine.Use(gin.Recovery())
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
@@ -104,12 +112,12 @@ func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config)
 
 func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
 	if config.PluginEndpointEnabled != nil && *config.PluginEndpointEnabled {
-		group.HEAD("/:hook_id/*path", app.Endpoint())
-		group.POST("/:hook_id/*path", app.Endpoint())
-		group.GET("/:hook_id/*path", app.Endpoint())
-		group.PUT("/:hook_id/*path", app.Endpoint())
-		group.DELETE("/:hook_id/*path", app.Endpoint())
-		group.OPTIONS("/:hook_id/*path", app.Endpoint())
+		group.HEAD("/:hook_id/*path", app.Endpoint(config))
+		group.POST("/:hook_id/*path", app.Endpoint(config))
+		group.GET("/:hook_id/*path", app.Endpoint(config))
+		group.PUT("/:hook_id/*path", app.Endpoint(config))
+		group.DELETE("/:hook_id/*path", app.Endpoint(config))
+		group.OPTIONS("/:hook_id/*path", app.Endpoint(config))
 	}
 }
 
