@@ -15,12 +15,14 @@ type Config struct {
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
-	AWSAccessKey string `envconfig:"AWS_ACCESS_KEY"`
-	AWSSecretKey string `envconfig:"AWS_SECRET_KEY"`
-	AWSRegion    string `envconfig:"AWS_REGION"`
+	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM"`
+	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
+	S3AccessKey        string `envconfig:"S3_ACCESS_KEY"`
+	S3SecretKey        string `envconfig:"S3_SECRET_KEY"`
+	S3BucketName       string `envconfig:"S3_BUCKET_NAME"`
+	S3Region           string `envconfig:"S3_REGION"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3"`
-	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local s3"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
 	// plugin remote installing
@@ -161,12 +163,12 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("plugin package cache path is empty")
 	}
 
-	if c.PluginStorageType == "aws_s3" {
-		if c.PluginStorageOSSBucket == "" {
+	if c.PluginStorageType == "s3" {
+		if c.S3BucketName == "" {
 			return fmt.Errorf("plugin storage bucket is empty")
 		}
 
-		if c.AWSRegion == "" {
+		if c.S3Region == "" {
 			return fmt.Errorf("aws region is empty")
 		}
 	}
