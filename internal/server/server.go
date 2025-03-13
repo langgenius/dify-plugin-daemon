@@ -18,15 +18,17 @@ func initOSS(config *app.Config) oss.OSS {
 	// init oss
 	var oss oss.OSS
 	var err error
-	if config.PluginStorageType == "aws_s3" {
-		oss, err = s3.NewAWSS3Storage(
-			config.AWSAccessKey,
-			config.AWSSecretKey,
-			config.AWSRegion,
-			config.PluginStorageOSSBucket,
+	if config.PluginStorageType == "s3" {
+		oss, err = s3.NewS3Storage(
+			config.S3UseAwsManagedIam,
+			config.S3Endpoint,
+			config.S3AccessKey,
+			config.S3SecretKey,
+			config.S3BucketName,
+			config.S3Region,
 		)
 		if err != nil {
-			log.Panic("Failed to create aws s3 storage: %s", err)
+			log.Panic("Failed to create s3 storage: %s", err)
 		}
 	} else if config.PluginStorageType == "local" {
 		oss = local.NewLocalStorage(config.PluginStorageLocalRoot)

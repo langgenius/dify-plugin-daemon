@@ -15,36 +15,59 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
-type AWSS3Storage struct {
+type S3Storage struct {
 	bucket string
 	client *s3.Client
 }
 
-func NewAWSS3Storage(ak string, sk string, region string, bucket string) (oss.OSS, error) {
+func NewS3Storage(useAws bool, endpoint string, ak string, sk string, bucket string, region string) (oss.OSS, error) {
 	var cfg aws.Config
 	var err error
+	var client *s3.Client
 
-	if ak == "" && sk == "" {
-		cfg, err = config.LoadDefaultConfig(
-			context.TODO(),
-			config.WithRegion(region),
-		)
+	if useAws {
+		if ak == "" && sk == "" {
+			cfg, err = config.LoadDefaultConfig(
+				context.TODO(),
+				config.WithRegion(region),
+			)
+		} else {
+			cfg, err = config.LoadDefaultConfig(
+				context.TODO(),
+				config.WithRegion(region),
+				config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+					ak,
+					sk,
+					"",
+				)),
+			)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		client = s3.NewFromConfig(cfg, func(options *s3.Options) {
+			options.BaseEndpoint = aws.String(endpoint)
+		})
 	} else {
-		cfg, err = config.LoadDefaultConfig(
-			context.TODO(),
-			config.WithRegion(region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-				ak,
-				sk,
-				"",
-			)),
-		)
+		client = s3.New(s3.Options{
+			Credentials:  credentials.NewStaticCredentialsProvider(ak, sk, ""),
+			UsePathStyle: true,
+			Region:       region,
+			EndpointResolver: s3.EndpointResolverFunc(
+				func(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
+					return aws.Endpoint{
+						URL:               endpoint,
+						HostnameImmutable: false,
+						SigningName:       "s3",
+						PartitionID:       "aws",
+						SigningRegion:     region,
+						SigningMethod:     "v4",
+						Source:            aws.EndpointSourceCustom,
+					}, nil
+				}),
+		})
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	client := s3.NewFromConfig(cfg)
 
 	// check bucket
 	_, err = client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
@@ -59,10 +82,10 @@ func NewAWSS3Storage(ak string, sk string, region string, bucket string) (oss.OS
 		}
 	}
 
-	return &AWSS3Storage{bucket: bucket, client: client}, nil
+	return &S3Storage{bucket: bucket, client: client}, nil
 }
 
-func (s *AWSS3Storage) Save(key string, data []byte) error {
+func (s *S3Storage) Save(key string, data []byte) error {
 	_, err := s.client.PutObject(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -71,7 +94,7 @@ func (s *AWSS3Storage) Save(key string, data []byte) error {
 	return err
 }
 
-func (s *AWSS3Storage) Load(key string) ([]byte, error) {
+func (s *S3Storage) Load(key string) ([]byte, error) {
 	resp, err := s.client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -83,7 +106,7 @@ func (s *AWSS3Storage) Load(key string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func (s *AWSS3Storage) Exists(key string) (bool, error) {
+func (s *S3Storage) Exists(key string) (bool, error) {
 	_, err := s.client.HeadObject(context.TODO(), &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -91,7 +114,7 @@ func (s *AWSS3Storage) Exists(key string) (bool, error) {
 	return err == nil, nil
 }
 
-func (s *AWSS3Storage) Delete(key string) error {
+func (s *S3Storage) Delete(key string) error {
 	_, err := s.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -99,7 +122,7 @@ func (s *AWSS3Storage) Delete(key string) error {
 	return err
 }
 
-func (s *AWSS3Storage) List(prefix string) ([]oss.OSSPath, error) {
+func (s *S3Storage) List(prefix string) ([]oss.OSSPath, error) {
 	// append a slash to the prefix if it doesn't end with one
 	if !strings.HasSuffix(prefix, "/") {
 		prefix = prefix + "/"
@@ -132,7 +155,7 @@ func (s *AWSS3Storage) List(prefix string) ([]oss.OSSPath, error) {
 	return keys, nil
 }
 
-func (s *AWSS3Storage) State(key string) (oss.OSSState, error) {
+func (s *S3Storage) State(key string) (oss.OSSState, error) {
 	resp, err := s.client.HeadObject(context.TODO(), &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
