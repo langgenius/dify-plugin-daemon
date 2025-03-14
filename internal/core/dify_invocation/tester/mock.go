@@ -94,6 +94,17 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 	})
 	return stream, nil
 }
+func (m *MockedDifyInvocation) InvokeBlockingLLM(payload *dify_invocation.InvokeLLMRequest) (*model_entities.LLMResult, error) {
+	result := model_entities.LLMResult{
+		Model: payload.Model,
+		Usage: model_entities.LLMUsage{
+			PromptTokens:     &[]int{100}[0],
+			CompletionTokens: &[]int{100}[0],
+		},
+	}
+	return &result, nil
+
+}
 
 func (m *MockedDifyInvocation) InvokeTextEmbedding(payload *dify_invocation.InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error) {
 	result := model_entities.TextEmbeddingResult{
