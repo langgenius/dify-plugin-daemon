@@ -8,7 +8,9 @@ import (
 	"io"
 	"log"
 	"path"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -64,7 +66,6 @@ func (s *AliOSSStorage) State(key string) (oss.OSSState, error) {
 		return oss.OSSState{}, fmt.Errorf("failed to get object metadata: %w", err)
 	}
 
-	// 解析文件大小和最后修改时间
 	size, _ := strconv.ParseInt(header.Get("Content-Length"), 10, 64)
 	lastModified, _ := time.Parse(time.RFC1123, header.Get("Last-Modified"))
 
@@ -75,36 +76,64 @@ func (s *AliOSSStorage) State(key string) (oss.OSSState, error) {
 }
 
 func (s *AliOSSStorage) List(prefix string) ([]oss.OSSPath, error) {
+	fullPrefix := wrapperFolderFilename(s.folder, prefix)
+	fullPrefix = strings.TrimSuffix(fullPrefix, "/") + "/"
+
 	var paths []oss.OSSPath
+	marker := ""
+	maxKeys := 100
+	dirSet := make(map[string]struct{})
 
-	marker := aliyunoss.Marker("")
 	for {
-		lor, err := s.bucket.ListObjects(aliyunoss.Prefix(wrapperFolderFilename(s.folder, prefix)), aliyunoss.Delimiter("/"), marker)
+		options := []aliyunoss.Option{
+			aliyunoss.Prefix(fullPrefix),
+			aliyunoss.Marker(marker),
+			aliyunoss.MaxKeys(maxKeys),
+		}
+
+		lor, err := s.bucket.ListObjects(options...)
 		if err != nil {
-			return nil, fmt.Errorf("list objects failed: %w", err)
+			return nil, fmt.Errorf("OSS list objects failed: %v", err)
 		}
 
-		// 处理文件
 		for _, obj := range lor.Objects {
-			paths = append(paths, oss.OSSPath{
-				Path:  obj.Key,
-				IsDir: false,
-			})
+			if strings.HasSuffix(obj.Key, "/") {
+				continue
+			}
+
+			relativePath := strings.TrimPrefix(obj.Key, fullPrefix)
+
+			segments := strings.Split(relativePath, "/")
+
+			currentPath := ""
+			for i := 0; i < len(segments); i++ {
+				if i == len(segments)-1 {
+					paths = append(paths, oss.OSSPath{
+						Path:  relativePath,
+						IsDir: false,
+					})
+				} else {
+					currentPath = path.Join(currentPath, segments[i])
+					if _, exists := dirSet[currentPath]; !exists {
+						paths = append(paths, oss.OSSPath{
+							Path:  currentPath,
+							IsDir: true,
+						})
+						dirSet[currentPath] = struct{}{}
+					}
+				}
+			}
 		}
 
-		// 处理目录
-		for _, prefix := range lor.CommonPrefixes {
-			paths = append(paths, oss.OSSPath{
-				Path:  prefix,
-				IsDir: true,
-			})
-		}
-
-		marker = aliyunoss.Marker(lor.NextMarker)
 		if !lor.IsTruncated {
 			break
 		}
+		marker = lor.NextMarker
 	}
+
+	sort.Slice(paths, func(i, j int) bool {
+		return paths[i].Path < paths[j].Path
+	})
 
 	return paths, nil
 }
