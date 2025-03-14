@@ -7,6 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/alioss"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/s3"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -27,6 +28,17 @@ func initOSS(config *app.Config) oss.OSS {
 		)
 		if err != nil {
 			log.Panic("Failed to create aws s3 storage: %s", err)
+		}
+	} else if config.PluginStorageType == "ali_oss" {
+		oss, err = alioss.NewOSSStorage(
+			config.AliOssAccessKey,
+			config.AliOssSecretKey,
+			config.AliOssEndPoint,
+			config.PluginStorageOSSBucket,
+			config.AliOssPath,
+		)
+		if err != nil {
+			log.Panic("Failed to create ali oss storage: %s", err)
 		}
 	} else if config.PluginStorageType == "local" {
 		oss = local.NewLocalStorage(config.PluginStorageLocalRoot)
