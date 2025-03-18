@@ -89,12 +89,13 @@ type Config struct {
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
-	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
-	PythonEnvInitTimeout  int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
-	PipMirrorUrl          string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary       *bool  `envconfig:"PIP_PREFER_BINARY"`
-	PipVerbose            *bool  `envconfig:"PIP_VERBOSE"`
-	PipExtraArgs          string `envconfig:"PIP_EXTRA_ARGS"`
+	PythonInterpreterPath      string `envconfig:"PYTHON_INTERPRETER_PATH"`
+	PythonEnvInitTimeout  	   int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
+	PythonCompileAllExtraArgs  string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
+	PipMirrorUrl               string `envconfig:"PIP_MIRROR_URL"`
+	PipPreferBinary            *bool  `envconfig:"PIP_PREFER_BINARY"`
+	PipVerbose                 *bool  `envconfig:"PIP_VERBOSE"`
+	PipExtraArgs               string `envconfig:"PIP_EXTRA_ARGS"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 

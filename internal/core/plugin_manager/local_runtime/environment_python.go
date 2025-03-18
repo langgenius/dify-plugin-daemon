@@ -220,8 +220,14 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 	}
 
+	compileArgs := []string{"-m", "compileall"}
+	if p.pythonCompileAllExtraArgs != "" {
+		compileArgs = append(compileArgs, strings.Split(p.pythonCompileAllExtraArgs, " ")...)
+	}
+	compileArgs = append(compileArgs, ".")
+
 	// pre-compile the plugin to avoid costly compilation on first invocation
-	compileCmd := exec.CommandContext(ctx, pythonPath, "-m", "compileall", ".")
+	compileCmd := exec.CommandContext(ctx, pythonPath, compileArgs...)
 	compileCmd.Dir = p.State.WorkingPath
 
 	// get stdout and stderr
