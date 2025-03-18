@@ -91,6 +91,7 @@ func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAcc
 
 		// write to data stream
 		scanner := bufio.NewScanner(response.Body)
+		defer response.Body.Close()
 
 		// TODO: set a reasonable buffer size or use a reader, this is a temporary solution
 		scanner.Buffer(make([]byte, 1024), 5*1024*1024)
