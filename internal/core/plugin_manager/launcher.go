@@ -130,13 +130,14 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 	}
 
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
-		PythonInterpreterPath: p.pythonInterpreterPath,
-		PythonEnvInitTimeout:  p.pythonEnvInitTimeout,
-		HttpProxy:             p.HttpProxy,
-		HttpsProxy:            p.HttpsProxy,
-		PipMirrorUrl:          p.pipMirrorUrl,
-		PipPreferBinary:       p.pipPreferBinary,
-		PipExtraArgs:          p.pipExtraArgs,
+		PythonInterpreterPath:     p.pythonInterpreterPath,
+		PythonEnvInitTimeout:      p.pythonEnvInitTimeout,
+		PythonCompileAllExtraArgs: p.pythonCompileAllExtraArgs,
+		HttpProxy:                 p.HttpProxy,
+		HttpsProxy:                p.HttpsProxy,
+		PipMirrorUrl:              p.pipMirrorUrl,
+		PipPreferBinary:           p.pipPreferBinary,
+		PipExtraArgs:              p.pipExtraArgs,
 	})
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
