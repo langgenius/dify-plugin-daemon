@@ -15,9 +15,11 @@ type Config struct {
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
-	AWSAccessKey string `envconfig:"AWS_ACCESS_KEY"`
-	AWSSecretKey string `envconfig:"AWS_SECRET_KEY"`
-	AWSRegion    string `envconfig:"AWS_REGION"`
+	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"true"`
+	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
+	AWSAccessKey       string `envconfig:"AWS_ACCESS_KEY"`
+	AWSSecretKey       string `envconfig:"AWS_SECRET_KEY"`
+	AWSRegion          string `envconfig:"AWS_REGION"`
 
 	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
