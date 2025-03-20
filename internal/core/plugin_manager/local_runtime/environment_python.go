@@ -314,7 +314,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		// ISSUE: for some weird reasons, plugins may reference to a broken sdk but it works well itself
 		// we need to skip it but log the messages
 		// https://github.com/langgenius/dify/issues/16292
-		log.Error("failed to pre-compile the plugin: %s", compileErrMsg.String())
+		log.Warn("failed to pre-compile the plugin: %s", compileErrMsg.String())
 	}
 
 	log.Info("pre-loaded the plugin %s", p.Config.Identity())
