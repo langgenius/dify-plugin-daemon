@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gorm/caches/v4"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -71,6 +72,16 @@ func initDifyPluginDB(host string, port int, db_name string, default_db_name str
 	}
 
 	pgsqlDB.SetConnMaxIdleTime(time.Minute * 1)
+
+	cachesPlugin := &caches.Caches{Conf: &caches.Config{
+		Easer: true,
+	}}
+
+	err = db.Use(cachesPlugin)
+	if err != nil {
+		return err
+	}
+
 	DifyPluginDB = db
 
 	return nil
