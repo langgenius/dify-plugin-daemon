@@ -185,6 +185,17 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenant_id),
 	)
 
+	_ = db.DeleteCache[models.PluginInstallation](
+		&db.DeleteCachePayload[models.PluginInstallation]{
+			Delete: func() error {
+				return nil
+			},
+			CacheKey: []db.KeyValuePair{
+				{Key: "plugin_id", Val: plugin_unique_identifier.PluginID()},
+				{Key: "tenant_id", Val: tenant_id},
+			},
+		})
+
 	if err != nil {
 		if err == db.ErrDatabaseNotFound {
 			return nil, errors.New("plugin has not been installed")
