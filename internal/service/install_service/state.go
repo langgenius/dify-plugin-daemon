@@ -134,6 +134,14 @@ func GetEndpoint(
 
 // uninstalls a plugin from db
 func UninstallEndpoint(endpoint *models.Endpoint) error {
+	_ = db.DeleteCache[models.Endpoint](&db.DeleteCachePayload[models.Endpoint]{
+		Delete: func() error {
+			return nil
+		},
+		CacheKey: []db.KeyValuePair{
+			{Key: "hook_id", Val: endpoint.HookID},
+		},
+	})
 	return db.WithTransaction(func(tx *gorm.DB) error {
 		if err := db.Delete(endpoint, tx); err != nil {
 			return err
@@ -201,6 +209,15 @@ func DisabledEndpoint(endpoint_id string, tenant_id string) error {
 		if !endpoint.Enabled {
 			return nil
 		}
+
+		_ = db.DeleteCache[models.Endpoint](&db.DeleteCachePayload[models.Endpoint]{
+			Delete: func() error {
+				return nil
+			},
+			CacheKey: []db.KeyValuePair{
+				{Key: "hook_id", Val: endpoint.HookID},
+			},
+		})
 
 		endpoint.Enabled = false
 		if err := db.Update(endpoint, tx); err != nil {
