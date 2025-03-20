@@ -6,7 +6,10 @@ import (
 
 // UninstallFromLocal uninstalls a plugin from local storage
 // once deleted, local runtime will automatically shutdown and exit after several time
-func (p *PluginManager) UninstallFromLocal(identity plugin_entities.PluginUniqueIdentifier) error {
+func (p *PluginManager) UninstallFromLocal(
+	identity plugin_entities.PluginUniqueIdentifier,
+	graceful bool,
+) error {
 	if err := p.installedBucket.Delete(identity); err != nil {
 		return err
 	}
@@ -16,6 +19,6 @@ func (p *PluginManager) UninstallFromLocal(identity plugin_entities.PluginUnique
 		// no runtime to shutdown, already uninstalled
 		return nil
 	}
-	runtime.Stop()
+	runtime.Stop(graceful)
 	return nil
 }

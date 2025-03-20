@@ -17,7 +17,7 @@ func (r *RemotePluginRuntime) Stopped() bool {
 	return !r.alive
 }
 
-func (r *RemotePluginRuntime) Stop() {
+func (r *RemotePluginRuntime) Stop(graceful bool) {
 	r.alive = false
 	if r.conn == nil {
 		return

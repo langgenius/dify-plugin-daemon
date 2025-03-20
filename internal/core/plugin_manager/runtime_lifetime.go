@@ -19,7 +19,7 @@ func (p *PluginManager) fullDuplexLifecycle(
 	errChan chan error,
 ) {
 	// stop plugin when the plugin reaches the end of its lifetime
-	defer r.Stop()
+	defer r.Stop(false)
 
 	// cleanup plugin runtime state and working directory
 	defer r.Cleanup()
