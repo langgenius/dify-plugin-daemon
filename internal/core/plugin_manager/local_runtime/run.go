@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -218,13 +219,43 @@ func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
 }
 
 // Stop stops the plugin
-func (r *LocalPluginRuntime) Stop() {
-	// inherit from PluginRuntime
-	r.PluginRuntime.Stop()
+func (r *LocalPluginRuntime) Stop(graceful bool) {
+	// inherit from PluginRuntime, set status to stopped
+	r.PluginRuntime.Stop(graceful)
 
-	// get stdio
-	stdio := getStdioHandler(r.ioIdentity)
-	if stdio != nil {
-		stdio.Stop()
+	if graceful {
+		routine.Submit(map[string]string{
+			"module":   "plugin_manager",
+			"type":     "local",
+			"function": "Stop",
+		}, func() {
+			// stop the plugin by closing stdio
+			// normally, Runtime.run will blocks a goroutine by listening on the stdio
+			// plugin were considered as running until it's stdio is closed, just by closing the stdio, we can reach the goal
+			// but to be more robust, we want a graceful stop.
+			// After calling Stop, new requests will be routed to new runtime
+			defer func() {
+				stdio := getStdioHandler(r.ioIdentity)
+				if stdio != nil {
+					stdio.Stop()
+				}
+			}()
+
+			ticker := time.NewTicker(1 * time.Second)
+			defer ticker.Stop()
+			timeout := time.After(360 * time.Second)
+
+			for {
+				select {
+				case <-ticker.C:
+					if r.activeSessions == 0 {
+						return
+					}
+				case <-timeout:
+					return
+				}
+			}
+		})
 	}
+
 }

@@ -41,6 +41,8 @@ type LocalPluginRuntime struct {
 	waitStoppedChan []chan bool
 
 	isNotFirstStart bool
+
+	activeSessions int32
 }
 
 type LocalPluginRuntimeConfig struct {

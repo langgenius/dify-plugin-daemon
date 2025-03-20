@@ -57,7 +57,7 @@ func (p *PluginManager) InstallToLocal(
 					Event: PluginInstallEventInfo,
 					Data:  "Timeout",
 				})
-				runtime.Stop()
+				runtime.Stop(false)
 				return
 			case err := <-errChan:
 				if err != nil {
@@ -66,7 +66,7 @@ func (p *PluginManager) InstallToLocal(
 						Event: PluginInstallEventError,
 						Data:  err.Error(),
 					})
-					runtime.Stop()
+					runtime.Stop(false)
 					return
 				}
 			case <-launchedChan:
