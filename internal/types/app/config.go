@@ -66,6 +66,7 @@ type Config struct {
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
 
 	// database
+	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
 	DBUsername        string `envconfig:"DB_USERNAME" validate:"required"`
 	DBPassword        string `envconfig:"DB_PASSWORD" validate:"required"`
 	DBHost            string `envconfig:"DB_HOST" validate:"required"`
