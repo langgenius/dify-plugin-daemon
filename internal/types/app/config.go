@@ -20,11 +20,17 @@ type Config struct {
 	AliOssEndPoint  string `envconfig:"ALI_OSS_ENDPOINT"`
 	AliOssPath      string `envconfig:"ALI_OSS_PATH"`
 
-	AWSAccessKey string `envconfig:"AWS_ACCESS_KEY"`
-	AWSSecretKey string `envconfig:"AWS_SECRET_KEY"`
-	AWSRegion    string `envconfig:"AWS_REGION"`
+	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"true"`
+	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
+	AWSAccessKey       string `envconfig:"AWS_ACCESS_KEY"`
+	AWSSecretKey       string `envconfig:"AWS_SECRET_KEY"`
+	AWSRegion          string `envconfig:"AWS_REGION"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 ali_oss"`
+	TencentCOSSecretKey string `envconfig:"TENCENT_COS_SECRET_KEY"`
+	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
+	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
+
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos ali_oss"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -94,12 +100,13 @@ type Config struct {
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
-	PythonInterpreterPath string `envconfig:"PYTHON_INTERPRETER_PATH"`
-	PythonEnvInitTimeout  int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
-	PipMirrorUrl          string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary       *bool  `envconfig:"PIP_PREFER_BINARY"`
-	PipVerbose            *bool  `envconfig:"PIP_VERBOSE"`
-	PipExtraArgs          string `envconfig:"PIP_EXTRA_ARGS"`
+	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
+	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
+	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
+	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
+	PipPreferBinary           *bool  `envconfig:"PIP_PREFER_BINARY"`
+	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
+	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 

@@ -75,6 +75,9 @@ type PluginManager struct {
 	// pip extra args
 	pipExtraArgs string
 
+	// python compileall extra args
+	pythonCompileAllExtraArgs string
+
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
@@ -107,17 +110,18 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			oss,
 			configuration.PluginInstalledPath,
 		),
-		localPluginLaunchingLock: lock.NewGranularityLock(),
-		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
-		pythonInterpreterPath:    configuration.PythonInterpreterPath,
-		pythonEnvInitTimeout:     configuration.PythonEnvInitTimeout,
-		platform:                 configuration.Platform,
-		HttpProxy:                configuration.HttpProxy,
-		HttpsProxy:               configuration.HttpsProxy,
-		pipMirrorUrl:             configuration.PipMirrorUrl,
-		pipPreferBinary:          *configuration.PipPreferBinary,
-		pipVerbose:               *configuration.PipVerbose,
-		pipExtraArgs:             configuration.PipExtraArgs,
+		localPluginLaunchingLock:  lock.NewGranularityLock(),
+		maxLaunchingLock:          make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
+		pythonInterpreterPath:     configuration.PythonInterpreterPath,
+		pythonEnvInitTimeout:      configuration.PythonEnvInitTimeout,
+		pythonCompileAllExtraArgs: configuration.PythonCompileAllExtraArgs,
+		platform:                  configuration.Platform,
+		HttpProxy:                 configuration.HttpProxy,
+		HttpsProxy:                configuration.HttpsProxy,
+		pipMirrorUrl:              configuration.PipMirrorUrl,
+		pipPreferBinary:           *configuration.PipPreferBinary,
+		pipVerbose:                *configuration.PipVerbose,
+		pipExtraArgs:              configuration.PipExtraArgs,
 	}
 
 	return manager
