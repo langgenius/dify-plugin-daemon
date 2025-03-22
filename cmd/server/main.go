@@ -16,7 +16,7 @@ func main() {
 
 	err := envconfig.Process("", &config)
 	if err != nil {
-		log.Panic("Error processing environment variables")
+		log.Panic("Error processing environment variables: %s", err.Error())
 	}
 
 	config.SetDefault()
