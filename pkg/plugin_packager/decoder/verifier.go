@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
 	"path"
@@ -12,7 +13,7 @@ import (
 )
 
 // VerifyPlugin is a function that verifies the signature of a plugin
-// It takes a plugin decoder and verifies the signature
+// It takes a plugin decoder and verifies the signature with a bundled public key
 func VerifyPlugin(decoder PluginDecoder) error {
 	// load public key
 	publicKey, err := encryption.LoadPublicKey(public_key.PUBLIC_KEY)
@@ -20,9 +21,16 @@ func VerifyPlugin(decoder PluginDecoder) error {
 		return err
 	}
 
+	// verify the plugin
+	return VerifyPluginWithPublicKey(decoder, publicKey)
+}
+
+// VerifyPluginWithPublicKey is a function that verifies the signature of a plugin
+// It takes a plugin decoder and a public key to verify the signature
+func VerifyPluginWithPublicKey(decoder PluginDecoder, publicKey *rsa.PublicKey) error {
 	data := new(bytes.Buffer)
 	// read one by one
-	err = decoder.Walk(func(filename, dir string) error {
+	err := decoder.Walk(func(filename, dir string) error {
 		// read file bytes
 		file, err := decoder.ReadFile(path.Join(dir, filename))
 		if err != nil {
