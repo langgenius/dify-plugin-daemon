@@ -1,6 +1,7 @@
 package signature
 
 import (
+	"crypto/rsa"
 	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
@@ -44,7 +45,7 @@ func Verify(difypkgPath string, publicKeyPath string) error {
 		}
 
 		// verify the plugin
-		err = decoder.VerifyPluginWithPublicKey(decoderInstance, publicKey)
+		err = decoder.VerifyPluginWithPublicKeys(decoderInstance, []*rsa.PublicKey{publicKey})
 		if err != nil {
 			log.Error("Failed to verify plugin with provided public key: %v", err)
 			return err
