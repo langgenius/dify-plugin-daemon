@@ -35,7 +35,7 @@ func TestAutoType(t *testing.T) {
 }
 
 func TestAutoTypeWithGetter(t *testing.T) {
-	if err := InitRedisClient("192.168.125.241:26379", "difyai123456", false); err != nil {
+	if err := InitRedisClient("127.0.0.1:6379", "difyai123456", false); err != nil {
 		t.Fatal(err)
 	}
 	defer Close()
