@@ -310,10 +310,14 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 	compileWg.Wait()
 	if err := compileCmd.Wait(); err != nil {
-		return fmt.Errorf("failed to pre-compile the plugin: %s", compileErrMsg.String())
+		// skip the error if the plugin is not compiled
+		// ISSUE: for some weird reasons, plugins may reference to a broken sdk but it works well itself
+		// we need to skip it but log the messages
+		// https://github.com/langgenius/dify/issues/16292
+		log.Warn("failed to pre-compile the plugin: %s", compileErrMsg.String())
 	}
 
-	log.Info("pre-loading the plugin %s", p.Config.Identity())
+	log.Info("pre-loaded the plugin %s", p.Config.Identity())
 
 	// import dify_plugin to speedup the first launching
 	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it
