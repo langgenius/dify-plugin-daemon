@@ -68,6 +68,11 @@ func serialKey(keys ...string) string {
 
 // Store the key-value pair
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
+	return store(serialKey(key), value, time, context...)
+}
+
+// store the key-value pair, without serialKey
+func store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
@@ -80,7 +85,7 @@ func Store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 		}
 	}
 
-	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
+	return getCmdable(context...).Set(ctx, key, value, time).Err()
 }
 
 // Get the value with key

@@ -59,7 +59,7 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 				return nil, err
 			}
 
-			if err := Store(key, value, time.Minute*30, context...); err != nil {
+			if err := store(key, value, time.Minute*30, context...); err != nil {
 				return nil, err
 			}
 			return value, nil
