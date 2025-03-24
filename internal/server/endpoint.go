@@ -2,6 +2,8 @@ package server
 
 import (
 	"errors"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,17 +37,22 @@ func (app *App) Endpoint(config *app.Config) func(c *gin.Context) {
 }
 
 func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTime time.Duration, path string) {
-	endpoint, err := db.GetCache[models.Endpoint](&db.GetCachePayload[models.Endpoint]{
-		Getter: func() (*models.Endpoint, error) {
+	endpointCacheKey := strings.Join(
+		[]string{
+			"hook_id",
+			hookId,
+		},
+		":",
+	)
+	log.Info(endpointCacheKey)
+	endpoint, err := cache.AutoGetWithGetter[models.Endpoint](
+		endpointCacheKey,
+		func() (*models.Endpoint, error) {
 			v, err := db.GetOne[models.Endpoint](
 				db.Equal("hook_id", hookId),
 			)
 			return &v, err
-		},
-		CacheKey: []db.KeyValuePair{
-			{Key: "hook_id", Val: hookId},
-		},
-	})
+		})
 	if err == db.ErrDatabaseNotFound {
 		ctx.JSON(404, exception.BadRequestError(errors.New("endpoint not found")).ToResponse())
 		return
@@ -58,20 +65,25 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 	}
 
 	// get plugin installation
-	pluginInstallation, err := db.GetCache[models.PluginInstallation](
-		&db.GetCachePayload[models.PluginInstallation]{
-			Getter: func() (*models.PluginInstallation, error) {
-				v, err := db.GetOne[models.PluginInstallation](
-					db.Equal("plugin_id", endpoint.PluginID),
-					db.Equal("tenant_id", endpoint.TenantID),
-				)
-				return &v, err
-			},
-			CacheKey: []db.KeyValuePair{
-				{Key: "plugin_id", Val: endpoint.PluginID},
-				{Key: "tenant_id", Val: endpoint.TenantID},
-			},
-		})
+	pluginInstallationCacheKey := strings.Join(
+		[]string{
+			"plugin_id",
+			endpoint.PluginID,
+			"tenant_id",
+			endpoint.TenantID,
+		},
+		":",
+	)
+	pluginInstallation, err := cache.AutoGetWithGetter[models.PluginInstallation](
+		pluginInstallationCacheKey,
+		func() (*models.PluginInstallation, error) {
+			v, err := db.GetOne[models.PluginInstallation](
+				db.Equal("plugin_id", endpoint.PluginID),
+				db.Equal("tenant_id", endpoint.TenantID),
+			)
+			return &v, err
+		},
+	)
 	if err != nil {
 		ctx.JSON(404, exception.BadRequestError(errors.New("plugin installation not found")).ToResponse())
 		return
