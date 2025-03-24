@@ -44,7 +44,6 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 		},
 		":",
 	)
-	log.Info(endpointCacheKey)
 	endpoint, err := cache.AutoGetWithGetter[models.Endpoint](
 		endpointCacheKey,
 		func() (*models.Endpoint, error) {
