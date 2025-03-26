@@ -161,6 +161,9 @@ func (a *AgentStrategyProviderDeclaration) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(item, &strategy); err != nil {
 			a.StrategyFiles = append(a.StrategyFiles, string(item))
 		} else {
+			if strategy.Features == nil {
+				strategy.Features = []string{}
+			}
 			a.Strategies = append(a.Strategies, strategy)
 		}
 	}
