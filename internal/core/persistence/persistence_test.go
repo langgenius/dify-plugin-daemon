@@ -12,7 +12,7 @@ import (
 )
 
 func TestPersistenceStoreAndLoad(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "difyai123456", false)
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 }
 
 func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "difyai123456", false)
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 }
 
 func TestPersistenceDelete(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "difyai123456", false)
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
