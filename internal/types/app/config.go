@@ -15,6 +15,11 @@ type Config struct {
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
+	AliOssAccessKey string `envconfig:"ALI_OSS_ACCESS_KEY"`
+	AliOssSecretKey string `envconfig:"ALI_OSS_SECRET_KEY"`
+	AliOssEndPoint  string `envconfig:"ALI_OSS_ENDPOINT"`
+	AliOssPath      string `envconfig:"ALI_OSS_PATH"`
+
 	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"true"`
 	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
 	AWSAccessKey       string `envconfig:"AWS_ACCESS_KEY"`
@@ -25,7 +30,7 @@ type Config struct {
 	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
 	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos"`
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos ali_oss"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -95,13 +100,13 @@ type Config struct {
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
-	PythonInterpreterPath      string `envconfig:"PYTHON_INTERPRETER_PATH"`
-	PythonEnvInitTimeout  	   int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
-	PythonCompileAllExtraArgs  string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
-	PipMirrorUrl               string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary            *bool  `envconfig:"PIP_PREFER_BINARY"`
-	PipVerbose                 *bool  `envconfig:"PIP_VERBOSE"`
-	PipExtraArgs               string `envconfig:"PIP_EXTRA_ARGS"`
+	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
+	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
+	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
+	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
+	PipPreferBinary           *bool  `envconfig:"PIP_PREFER_BINARY"`
+	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
+	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
@@ -175,6 +180,24 @@ func (c *Config) Validate() error {
 
 		if c.AWSRegion == "" {
 			return fmt.Errorf("aws region is empty")
+		}
+	}
+
+	if c.PluginStorageType == "ali_oss" {
+		if c.PluginStorageOSSBucket == "" {
+			return fmt.Errorf("plugin storage bucket is empty")
+		}
+
+		if c.AliOssAccessKey == "" {
+			return fmt.Errorf("ali oss access key is empty")
+		}
+
+		if c.AliOssSecretKey == "" {
+			return fmt.Errorf("ali oss secret key is empty")
+		}
+
+		if c.AliOssEndPoint == "" {
+			return fmt.Errorf("ali oss endpoint is empty")
 		}
 	}
 
