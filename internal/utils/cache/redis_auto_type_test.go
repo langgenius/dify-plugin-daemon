@@ -1,6 +1,9 @@
 package cache
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 type TestAutoTypeStruct struct {
 	ID string `json:"id"`
@@ -41,6 +44,12 @@ func TestAutoTypeWithGetter(t *testing.T) {
 		return &TestAutoTypeStruct{
 			ID: "123",
 		}, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err = AutoGetWithGetter("test1", func() (*TestAutoTypeStruct, error) {
+		return nil, errors.New("must hit cache")
 	})
 	if err != nil {
 		t.Fatal(err)
