@@ -29,6 +29,12 @@ var (
 		Long:  "Bundle related commands",
 	}
 
+	signatureCommand = &cobra.Command{
+		Use:   "signature",
+		Short: "Signature",
+		Long:  "Signature related commands",
+	}
+
 	versionCommand = &cobra.Command{
 		Use:   "version",
 		Short: "Version",
@@ -45,6 +51,7 @@ func init() {
 	rootCommand.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dify.yaml)")
 	rootCommand.AddCommand(pluginCommand)
 	rootCommand.AddCommand(bundleCommand)
+	rootCommand.AddCommand(signatureCommand)
 	rootCommand.AddCommand(versionCommand)
 }
 
