@@ -23,6 +23,7 @@ func initOSS(config *app.Config) oss.OSS {
 		oss, err = s3.NewS3Storage(
 			config.S3UseAwsManagedIam,
 			config.S3Endpoint,
+			config.S3UsePathStyle,
 			config.AWSAccessKey,
 			config.AWSSecretKey,
 			config.PluginStorageOSSBucket,
