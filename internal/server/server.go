@@ -16,11 +16,12 @@ import (
 )
 
 func initOSS(config *app.Config) oss.OSS {
-	// init oss
-	var oss oss.OSS
+	// init storage
+	var storage oss.OSS
 	var err error
-	if config.PluginStorageType == "aws_s3" {
-		oss, err = s3.NewS3Storage(
+	switch config.PluginStorageType {
+	case oss.OSS_TYPE_S3:
+		storage, err = s3.NewS3Storage(
 			config.S3UseAwsManagedIam,
 			config.S3Endpoint,
 			config.S3UsePathStyle,
@@ -29,25 +30,24 @@ func initOSS(config *app.Config) oss.OSS {
 			config.PluginStorageOSSBucket,
 			config.AWSRegion,
 		)
-		if err != nil {
-			log.Panic("Failed to create s3 storage: %s", err)
-		}
-	} else if config.PluginStorageType == "local" {
-		oss = local.NewLocalStorage(config.PluginStorageLocalRoot)
-	} else if config.PluginStorageType == "tencent_cos" {
-		oss, err = tencent_cos.NewTencentCOSStorage(
+	case oss.OSS_TYPE_LOCAL:
+		storage = local.NewLocalStorage(config.PluginStorageLocalRoot)
+	case oss.OSS_TYPE_TENCENT_COS:
+		storage, err = tencent_cos.NewTencentCOSStorage(
 			config.TencentCOSSecretId,
 			config.TencentCOSSecretKey,
 			config.TencentCOSRegion,
-			config.PluginStorageOSSBucket)
-		if err != nil {
-			log.Panic("Failed to create tencent cos storage: %s", err)
-		}
-	} else {
+			config.PluginStorageOSSBucket,
+		)
+	default:
 		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
 	}
 
-	return oss
+	if err != nil {
+		log.Panic("Failed to create storage: %s", err)
+	}
+
+	return storage
 }
 
 func (app *App) Run(config *app.Config) {

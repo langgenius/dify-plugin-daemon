@@ -98,3 +98,7 @@ func (l *LocalStorage) Delete(key string) error {
 
 	return os.RemoveAll(path)
 }
+
+func (l *LocalStorage) Type() string {
+	return oss.OSS_TYPE_LOCAL
+}

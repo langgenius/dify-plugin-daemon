@@ -176,3 +176,7 @@ func (s *S3Storage) State(key string) (oss.OSSState, error) {
 		LastModified: *resp.LastModified,
 	}, nil
 }
+
+func (s *S3Storage) Type() string {
+	return oss.OSS_TYPE_S3
+}
