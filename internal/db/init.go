@@ -94,8 +94,8 @@ func autoMigrate() error {
 		return err
 	}
 
-	// check if "declaration" table exists in Plugin/ServerlessRuntime/ToolInstallation/AIModelInstallation/AgentStrategyInstallation
-	// delete the column if exists
+	// check if "declaration" column exists in Plugin/ServerlessRuntime/ToolInstallation/AIModelInstallation/AgentStrategyInstallation
+	// drop the "declaration" column not null constraint if exists
 	ignoreDeclarationColumn := func(table string) error {
 		if DifyPluginDB.Migrator().HasColumn(table, "declaration") {
 			// remove NOT NULL constraint on declaration column
@@ -106,24 +106,18 @@ func autoMigrate() error {
 		return nil
 	}
 
-	if err := ignoreDeclarationColumn("plugins"); err != nil {
-		return err
+	tables := []string{
+		"plugins",
+		"serverless_runtimes",
+		"tool_installations",
+		"ai_model_installations",
+		"agent_strategy_installations",
 	}
 
-	if err := ignoreDeclarationColumn("serverless_runtimes"); err != nil {
-		return err
-	}
-
-	if err := ignoreDeclarationColumn("tool_installations"); err != nil {
-		return err
-	}
-
-	if err := ignoreDeclarationColumn("ai_model_installations"); err != nil {
-		return err
-	}
-
-	if err := ignoreDeclarationColumn("agent_strategy_installations"); err != nil {
-		return err
+	for _, table := range tables {
+		if err := ignoreDeclarationColumn(table); err != nil {
+			return err
+		}
 	}
 
 	return nil
