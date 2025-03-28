@@ -8,6 +8,8 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/shopspring/decimal"
@@ -407,17 +409,28 @@ func (m *ModelDeclaration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *ModelDeclaration) MarshalJSON() ([]byte, error) {
+func (m ModelDeclaration) MarshalJSON() ([]byte, error) {
 	type alias ModelDeclaration
 
 	temp := &struct {
-		*alias `json:",inline"`
+		alias `json:",inline"`
 	}{
-		alias: (*alias)(m),
+		alias: (alias)(m),
 	}
 
 	if temp.Label.EnUS == "" {
 		temp.Label.EnUS = temp.Model
+	}
+
+	// to avoid ModelProperties not serializable, we need to convert all the keys to string
+	// includes inner map and slice
+	if temp.ModelProperties != nil {
+		result, ok := mapping.ConvertAnyMap(temp.ModelProperties).(map[string]any)
+		if !ok {
+			log.Error("ModelProperties is not a map[string]any", "model_properties", temp.ModelProperties)
+		} else {
+			temp.ModelProperties = result
+		}
 	}
 
 	return json.Marshal(temp)
