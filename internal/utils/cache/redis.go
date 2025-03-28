@@ -90,11 +90,15 @@ func store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 
 // Get the value with key
 func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
+	return get[T](serialKey(key), context...)
+}
+
+func get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
-	val, err := getCmdable(context...).Get(ctx, serialKey(key)).Bytes()
+	val, err := getCmdable(context...).Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, ErrNotFound
@@ -128,11 +132,15 @@ func GetString(key string, context ...redis.Cmdable) (string, error) {
 
 // Del the key
 func Del(key string, context ...redis.Cmdable) error {
+	return del(serialKey(key), context...)
+}
+
+func del(key string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
-	_, err := getCmdable(context...).Del(ctx, serialKey(key)).Result()
+	_, err := getCmdable(context...).Del(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return ErrNotFound
