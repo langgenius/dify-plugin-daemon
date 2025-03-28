@@ -149,3 +149,7 @@ func (s *TencentCOSStorage) State(key string) (oss.OSSState, error) {
 		LastModified: lastModified,
 	}, nil
 }
+
+func (s *TencentCOSStorage) Type() string {
+	return oss.OSS_TYPE_TENCENT_COS
+}
