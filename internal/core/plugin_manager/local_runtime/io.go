@@ -1,6 +1,8 @@
 package local_runtime
 
 import (
+	"sync/atomic"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -8,12 +10,19 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
+func (r *LocalPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
 	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
+
 	listener.OnClose(func() {
-		removeStdioHandlerListener(r.ioIdentity, session_id)
+		removeStdioHandlerListener(r.ioIdentity, sessionId)
+		// decrease the active sessions
+		atomic.AddInt32(&r.activeSessions, -1)
 	})
-	setupStdioEventListener(r.ioIdentity, session_id, func(b []byte) {
+
+	// increase the active sessions
+	atomic.AddInt32(&r.activeSessions, 1)
+
+	setupStdioEventListener(r.ioIdentity, sessionId, func(b []byte) {
 		// unmarshal the session message
 		data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](b)
 		if err != nil {
@@ -26,6 +35,6 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 	return listener
 }
 
-func (r *LocalPluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
+func (r *LocalPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
 	writeToStdioHandler(r.ioIdentity, append(data, '\n'))
 }

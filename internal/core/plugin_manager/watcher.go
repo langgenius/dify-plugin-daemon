@@ -114,7 +114,7 @@ func (p *PluginManager) removeUninstalledLocalPlugins() {
 		}
 
 		if !exists {
-			runtime.Stop()
+			runtime.Stop(false)
 		}
 
 		return true
