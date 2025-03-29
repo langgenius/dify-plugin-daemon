@@ -12,19 +12,19 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer"
 )
 
-//go:embed manifest.yaml
+//go:embed testdata/manifest.yaml
 var manifest []byte
 
-//go:embed neko.yaml
+//go:embed testdata/neko.yaml
 var neko []byte
 
-//go:embed .difyignore
+//go:embed testdata/.difyignore
 var dify_ignore []byte
 
-//go:embed ignored
+//go:embed testdata/ignored
 var ignored []byte
 
-//go:embed _assets/test.svg
+//go:embed testdata/_assets/test.svg
 var test_svg []byte
 
 func TestPackagerAndVerifier(t *testing.T) {
