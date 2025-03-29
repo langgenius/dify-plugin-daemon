@@ -163,6 +163,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
 		configuration.RedisPass,
 		configuration.RedisUseSsl,
+		configuration.RedisDB,
 	); err != nil {
 		log.Panic("init redis client failed: %s", err.Error())
 	}
