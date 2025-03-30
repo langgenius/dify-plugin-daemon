@@ -65,6 +65,7 @@ type Config struct {
 	RedisPort   uint16 `envconfig:"REDIS_PORT" validate:"required"`
 	RedisPass   string `envconfig:"REDIS_PASSWORD"`
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
+	RedisDB     int    `envconfig:"REDIS_DB"`
 
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`

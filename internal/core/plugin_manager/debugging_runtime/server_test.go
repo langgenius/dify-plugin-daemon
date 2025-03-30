@@ -112,7 +112,7 @@ func TestLaunchAndClosePluginServer(t *testing.T) {
 
 // TestAcceptConnection tests the acceptance of the connection
 func TestAcceptConnection(t *testing.T) {
-	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false) != nil {
+	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false, 0) != nil {
 		t.Errorf("failed to init redis client")
 		return
 	}
@@ -348,7 +348,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 }
 
 func TestIncorrectHandshake(t *testing.T) {
-	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false) != nil {
+	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false, 0) != nil {
 		t.Errorf("failed to init redis client")
 		return
 	}

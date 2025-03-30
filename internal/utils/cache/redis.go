@@ -20,10 +20,11 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func getRedisOptions(addr, password string, useSsl bool) *redis.Options {
+func getRedisOptions(addr, password string, useSsl bool, db int) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
 		Password: password,
+		DB:       db,
 	}
 	if useSsl {
 		opts.TLSConfig = &tls.Config{}
@@ -31,8 +32,8 @@ func getRedisOptions(addr, password string, useSsl bool) *redis.Options {
 	return opts
 }
 
-func InitRedisClient(addr, password string, useSsl bool) error {
-	opts := getRedisOptions(addr, password, useSsl)
+func InitRedisClient(addr, password string, useSsl bool, db int) error {
+	opts := getRedisOptions(addr, password, useSsl, db)
 	client = redis.NewClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
