@@ -61,7 +61,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 
 	uvPath := strings.TrimSpace(string(output))
 
-	cmd = exec.Command(uvPath, "venv", ".venv")
+	cmd = exec.Command(uvPath, "venv", ".venv", "--python", "3.12")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b
