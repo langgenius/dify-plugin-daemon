@@ -418,6 +418,7 @@ func UpgradePlugin(
 				) {
 					err = manager.UninstallFromLocal(
 						plugin_entities.PluginUniqueIdentifier(upgradeResponse.DeletedPlugin.PluginUniqueIdentifier),
+						true,
 					)
 					if err != nil {
 						return err
@@ -615,9 +616,11 @@ func UninstallPlugin(
 		if deleteResponse.Installation.RuntimeType == string(
 			plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
 		) {
-			err = manager.UninstallFromLocal(pluginUniqueIdentifier)
+			err = manager.UninstallFromLocal(pluginUniqueIdentifier, false)
 			if err != nil {
-				return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()
+				return exception.InternalServerError(
+					fmt.Errorf("failed to uninstall plugin: %s", err.Error()),
+				).ToResponse()
 			}
 		}
 	}
