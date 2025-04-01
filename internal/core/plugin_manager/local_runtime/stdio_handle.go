@@ -97,9 +97,12 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 			data,
 			"",
 			func(session_id string, data []byte) {
+				l.Lock()
 				for _, listener := range listeners {
 					listener(s.id, data)
 				}
+				l.Unlock()
+				
 				// FIX: avoid deadlock to plugin invoke
 				s.l.Lock()
 				tasks := []func(){}
