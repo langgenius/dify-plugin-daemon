@@ -272,7 +272,17 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 	dec.FillInDefaultValues()
 
 	// verify signature
-	dec.Verified = VerifyPlugin(decoder) == nil
+	// for ZipPluginDecoder, use the third party signature verification if it is enabled
+	if zipDecoder, ok := decoder.(*ZipPluginDecoder); ok {
+		config := zipDecoder.thirdPartySignatureVerificationConfig
+		if config != nil && config.Enabled && len(config.PublicKeyPaths) > 0 {
+			dec.Verified = VerifyPluginWithPublicKeyPaths(decoder, config.PublicKeyPaths) == nil
+		} else {
+			dec.Verified = VerifyPlugin(decoder) == nil
+		}
+	} else {
+		dec.Verified = VerifyPlugin(decoder) == nil
+	}
 
 	if err := dec.ManifestValidate(); err != nil {
 		return plugin_entities.PluginDeclaration{}, err

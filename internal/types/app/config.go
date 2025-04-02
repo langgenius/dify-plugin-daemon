@@ -84,6 +84,11 @@ type Config struct {
 	// force verifying signature for all plugins, not allowing install plugin not signed
 	ForceVerifyingSignature *bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
 
+	// enable or disable third-party signature verification for plugins
+	ThirdPartySignatureVerificationEnabled bool `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_ENABLED"  default:"false"`
+	// a comma-separated list of file paths to public keys in addition to the official public key for signature verification
+	ThirdPartySignatureVerificationPublicKeys []string `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_PUBLIC_KEYS"  default:""`
+
 	// lifetime state management
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
 	LifetimeCollectionGCInterval        int `envconfig:"LIFETIME_COLLECTION_GC_INTERVAL" validate:"required"`

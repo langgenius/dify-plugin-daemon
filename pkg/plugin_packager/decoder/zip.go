@@ -26,9 +26,16 @@ type ZipPluginDecoder struct {
 
 	sig        string
 	createTime int64
+
+	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig
 }
 
-func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
+type ThirdPartySignatureVerificationConfig struct {
+    Enabled bool
+    PublicKeyPaths []string
+}
+
+func newZipPluginDecoder(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
 	reader, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary)))
 	if err != nil {
 		return nil, errors.New(strings.ReplaceAll(err.Error(), "zip", "difypkg"))
@@ -37,6 +44,7 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 	decoder := &ZipPluginDecoder{
 		reader: reader,
 		err:    err,
+		thirdPartySignatureVerificationConfig: thirdPartySignatureVerificationConfig,
 	}
 
 	err = decoder.Open()
@@ -49,6 +57,17 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 	}
 
 	return decoder, nil
+}
+
+// NewZipPluginDecoder is a helper function to create ZipPluginDecoder
+func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
+	return newZipPluginDecoder(binary, nil)
+}
+
+// NewZipPluginDecoderWithThirdPartySignatureVerificationConfig is a helper function
+// to create a ZipPluginDecoder with a third party signature verification
+func NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
+	return newZipPluginDecoder(binary, thirdPartySignatureVerificationConfig)
 }
 
 // NewZipPluginDecoderWithSizeLimit is a helper function to create a ZipPluginDecoder with a size limit
@@ -70,7 +89,7 @@ func NewZipPluginDecoderWithSizeLimit(binary []byte, maxSize int64) (*ZipPluginD
 		}
 	}
 
-	return NewZipPluginDecoder(binary)
+	return newZipPluginDecoder(binary, nil)
 }
 
 func (z *ZipPluginDecoder) Stat(filename string) (fs.FileInfo, error) {
