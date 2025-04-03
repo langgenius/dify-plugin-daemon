@@ -81,6 +81,11 @@ func (a *AzureBlobStorage) State(key string) (oss.OSSState, error) {
 }
 
 func (a *AzureBlobStorage) List(prefix string) ([]oss.OSSPath, error) {
+	// append a slash to the prefix if it doesn't end with one
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+
 	pager := a.client.NewListBlobsFlatPager(a.containerName, &azblob.ListBlobsFlatOptions{
 		Prefix: &prefix,
 	})
@@ -93,8 +98,12 @@ func (a *AzureBlobStorage) List(prefix string) ([]oss.OSSPath, error) {
 		}
 
 		for _, blob := range page.Segment.BlobItems {
+			// remove prefix
+			key := strings.TrimPrefix(*blob.Name, prefix)
+			// remove leading slash
+			key = strings.TrimPrefix(key, "/")
 			paths = append(paths, oss.OSSPath{
-				Path:  *blob.Name,
+				Path:  key,
 				IsDir: false,
 			})
 		}
