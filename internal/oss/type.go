@@ -6,9 +6,10 @@ import "time"
 // such as local file system, AWS S3, and Tencent COS.
 // The interface defines methods for saving, loading, checking existence,
 const (
-	OSS_TYPE_LOCAL  = "local"
-	OSS_TYPE_S3     = "aws_s3"
+	OSS_TYPE_LOCAL       = "local"
+	OSS_TYPE_S3          = "aws_s3"
 	OSS_TYPE_TENCENT_COS = "tencent_cos"
+	OSS_TYPE_AZURE_BLOB  = "azure_blob"
 )
 
 type OSSState struct {
