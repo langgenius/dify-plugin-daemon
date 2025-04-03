@@ -7,6 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/azure"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/s3"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/tencent_cos"
@@ -38,6 +39,11 @@ func initOSS(config *app.Config) oss.OSS {
 			config.TencentCOSSecretKey,
 			config.TencentCOSRegion,
 			config.PluginStorageOSSBucket,
+		)
+	case oss.OSS_TYPE_AZURE_BLOB:
+		storage, err = azure.NewAzureBlobStorage(
+			config.AzureBlobStorageContainerName,
+			config.AzureBlobStorageConnectionString,
 		)
 	default:
 		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
