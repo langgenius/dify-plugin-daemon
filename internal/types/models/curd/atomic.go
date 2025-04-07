@@ -2,6 +2,8 @@ package curd
 
 import (
 	"errors"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -184,6 +186,18 @@ func UninstallPlugin(
 		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
 		db.Equal("tenant_id", tenant_id),
 	)
+
+	pluginInstallationCacheKey := strings.Join(
+		[]string{
+			"plugin_id",
+			plugin_unique_identifier.PluginID(),
+			"tenant_id",
+			tenant_id,
+		},
+		":",
+	)
+
+	_ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
 	if err != nil {
 		if err == db.ErrDatabaseNotFound {
