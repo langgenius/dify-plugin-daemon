@@ -47,7 +47,9 @@ func NewS3Storage(useAws bool, endpoint string, usePathStyle bool, ak string, sk
 		}
 
 		client = s3.NewFromConfig(cfg, func(options *s3.Options) {
-			options.BaseEndpoint = aws.String(endpoint)
+			if endpoint != "" {
+				options.BaseEndpoint = aws.String(endpoint)
+			}
 		})
 	} else {
 		client = s3.New(s3.Options{
