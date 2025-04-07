@@ -200,3 +200,22 @@ func TestRedirectTrafficWithQueryParams(t *testing.T) {
 		t.Fatal("redirected request is not correct")
 	}
 }
+
+func TestRedirectTrafficWithOutQueryParams(t *testing.T) {
+	request, err := http.NewRequest("GET", "http://localhost:8080/plugin/invoke/tool", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request.Header.Set(endpoint_entities.HeaderXOriginalHost, "localhost:8080")
+
+	ip := address{
+		Ip:   "127.0.0.1",
+		Port: 8080,
+	}
+
+	redirectedRequest := constructRedirectUrl(ip, request)
+	if redirectedRequest != "http://127.0.0.1:8080/plugin/invoke/tool" {
+		t.Fatal("redirected request is not correct")
+	}
+}
