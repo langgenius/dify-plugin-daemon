@@ -20,6 +20,7 @@ const (
 	CONFIG_TYPE_MODEL_SELECTOR ConfigType = MODEL_SELECTOR
 	CONFIG_TYPE_APP_SELECTOR   ConfigType = APP_SELECTOR
 	// CONFIG_TYPE_TOOL_SELECTOR  ConfigType = TOOL_SELECTOR
+	CONFIG_TYPE_TOOLS_SELECTOR ConfigType = TOOLS_SELECTOR
 )
 
 type ModelConfigScope string
@@ -63,7 +64,8 @@ func isCredentialType(fl validator.FieldLevel) bool {
 		string(CONFIG_TYPE_SELECT),
 		string(CONFIG_TYPE_BOOLEAN),
 		string(CONFIG_TYPE_APP_SELECTOR),
-		string(CONFIG_TYPE_MODEL_SELECTOR):
+		string(CONFIG_TYPE_MODEL_SELECTOR),
+		string(CONFIG_TYPE_TOOLS_SELECTOR):
 		return true
 	}
 	return false
