@@ -21,19 +21,37 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
+var defaultConfig = &app.Config{
+	DBType:     "postgresql",
+	DBUsername: "postgres",
+	DBPassword: "difyai123456",
+	DBHost:     "localhost",
+	DBPort:     5432,
+	DBDatabase: "dify_plugin_daemon",
+	DBSslMode:  "disable",
+}
+var mysqlConfig = &app.Config{
+	DBType:     "mysql",
+	DBUsername: "root",
+	DBPassword: "difyai123456",
+	DBHost:     "localhost",
+	DBPort:     3306,
+	DBDatabase: "dify_plugin_daemon",
+	DBSslMode:  "disable",
+}
+
+var testConfig = defaultConfig
+var testConfigs = []*app.Config{
+	defaultConfig,
+	mysqlConfig,
+}
+
 func init() {
 	_mode = _PLUGIN_RUNTIME_MODE_CI
 }
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
-	db.Init(&app.Config{
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
-	})
+	db.Init(testConfig)
 
 	port, err := network.GetRandomPort()
 	if err != nil {
@@ -54,39 +72,47 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 
 // TestLaunchAndClosePluginServer tests the launch and close of the plugin server
 func TestLaunchAndClosePluginServer(t *testing.T) {
-	// start plugin server
-	server, _ := preparePluginServer(t)
-	if server == nil {
-		return
-	}
-
-	doneChan := make(chan error)
-
-	go func() {
-		err := server.Launch()
-		if err != nil {
-			doneChan <- err
-		}
+	defer func() {
+		testConfig = defaultConfig
 	}()
+	for _, conf := range testConfigs {
+		testConfig = conf
+		t.Logf("Start to test on %s database", testConfig.DBType)
 
-	timer := time.NewTimer(time.Second * 5)
-
-	select {
-	case err := <-doneChan:
-		t.Errorf("failed to launch plugin server: %s", err.Error())
-		return
-	case <-timer.C:
-		err := server.Stop()
-		if err != nil {
-			t.Errorf("failed to stop plugin server: %s", err.Error())
+		// start plugin server
+		server, _ := preparePluginServer(t)
+		if server == nil {
 			return
+		}
+
+		doneChan := make(chan error)
+
+		go func() {
+			err := server.Launch()
+			if err != nil {
+				doneChan <- err
+			}
+		}()
+
+		timer := time.NewTimer(time.Second * 5)
+
+		select {
+		case err := <-doneChan:
+			t.Errorf("failed to launch plugin server: %s", err.Error())
+			return
+		case <-timer.C:
+			err := server.Stop()
+			if err != nil {
+				t.Errorf("failed to stop plugin server: %s", err.Error())
+				return
+			}
 		}
 	}
 }
 
 // TestAcceptConnection tests the acceptance of the connection
 func TestAcceptConnection(t *testing.T) {
-	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false) != nil {
+	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false, 0) != nil {
 		t.Errorf("failed to init redis client")
 		return
 	}
@@ -322,7 +348,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 }
 
 func TestIncorrectHandshake(t *testing.T) {
-	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false) != nil {
+	if cache.InitRedisClient("0.0.0.0:6379", "difyai123456", false, 0) != nil {
 		t.Errorf("failed to init redis client")
 		return
 	}

@@ -20,10 +20,11 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func getRedisOptions(addr, password string, useSsl bool) *redis.Options {
+func getRedisOptions(addr, password string, useSsl bool, db int) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
 		Password: password,
+		DB:       db,
 	}
 	if useSsl {
 		opts.TLSConfig = &tls.Config{}
@@ -31,8 +32,8 @@ func getRedisOptions(addr, password string, useSsl bool) *redis.Options {
 	return opts
 }
 
-func InitRedisClient(addr, password string, useSsl bool) error {
-	opts := getRedisOptions(addr, password, useSsl)
+func InitRedisClient(addr, password string, useSsl bool, db int) error {
+	opts := getRedisOptions(addr, password, useSsl, db)
 	client = redis.NewClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
@@ -68,6 +69,11 @@ func serialKey(keys ...string) string {
 
 // Store the key-value pair
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
+	return store(serialKey(key), value, time, context...)
+}
+
+// store the key-value pair, without serialKey
+func store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
@@ -80,16 +86,20 @@ func Store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 		}
 	}
 
-	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
+	return getCmdable(context...).Set(ctx, key, value, time).Err()
 }
 
 // Get the value with key
 func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
+	return get[T](serialKey(key), context...)
+}
+
+func get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
-	val, err := getCmdable(context...).Get(ctx, serialKey(key)).Bytes()
+	val, err := getCmdable(context...).Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, ErrNotFound
@@ -123,11 +133,15 @@ func GetString(key string, context ...redis.Cmdable) (string, error) {
 
 // Del the key
 func Del(key string, context ...redis.Cmdable) error {
+	return del(serialKey(key), context...)
+}
+
+func del(key string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
-	_, err := getCmdable(context...).Del(ctx, serialKey(key)).Result()
+	_, err := getCmdable(context...).Del(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return ErrNotFound

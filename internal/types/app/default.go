@@ -33,7 +33,11 @@ func (config *Config) SetDefault() {
 	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
 	setDefaultBoolPtr(&config.PipPreferBinary, true)
 	setDefaultBoolPtr(&config.PipVerbose, true)
-	setDefaultString(&config.DBDefaultDatabase, "postgres")
+	if config.DBType == "postgresql" {
+		setDefaultString(&config.DBDefaultDatabase, "postgres")
+	} else if config.DBType == "mysql" {
+		setDefaultString(&config.DBDefaultDatabase, "mysql")
+	}
 	setDefaultBoolPtr(&config.HealthApiLogEnabled, true)
 }
 

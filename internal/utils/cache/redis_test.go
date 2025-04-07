@@ -15,7 +15,7 @@ const (
 )
 
 func getRedisConnection() error {
-	return InitRedisClient("0.0.0.0:6379", "difyai123456", false)
+	return InitRedisClient("0.0.0.0:6379", "difyai123456", false, 0)
 }
 
 func TestRedisConnection(t *testing.T) {
@@ -269,15 +269,47 @@ func TestRedisP2ARedis(t *testing.T) {
 }
 
 func TestGetRedisOptions(t *testing.T) {
-	opts := getRedisOptions("dummy:6379", "password", false)
+	opts := getRedisOptions("dummy:6379", "password", false, 0)
 	if opts.TLSConfig != nil {
 		t.Errorf("TLSConfig should not be set")
 		return
 	}
 
-	opts = getRedisOptions("dummy:6379", "password", true)
+	opts = getRedisOptions("dummy:6379", "password", true, 0)
 	if opts.TLSConfig == nil {
 		t.Errorf("TLSConfig should be set")
 		return
+	}
+}
+
+func TestSetAndGet(t *testing.T) {
+	if err := InitRedisClient("127.0.0.1:6379", "difyai123456", false); err != nil {
+		t.Fatal(err)
+	}
+	defer Close()
+
+	m := map[string]string{
+		"key": "hello",
+	}
+
+	err := Store(strings.Join([]string{TEST_PREFIX, "get-test"}, ":"), m, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	val, err := Get[map[string]string](strings.Join([]string{TEST_PREFIX, "get-test"}, ":"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if (*val)["key"] != "hello" {
+		t.Fatalf("Get[\"key\"] should be \"hello\"")
+	}
+	err = Del(strings.Join([]string{TEST_PREFIX, "get-test"}, ":"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	val, err = Get[map[string]string](strings.Join([]string{TEST_PREFIX, "get-test"}, ":"))
+	if err != ErrNotFound {
+		t.Fatalf("Get[\"key\"] should be ErrNotFound")
 	}
 }

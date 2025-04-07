@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -21,12 +20,7 @@ func AutoSet[T any](key string, value T, context ...redis.Cmdable) error {
 	fullTypeName := pkgPath + "." + typeName
 
 	key = serialKey("auto_type", fullTypeName, key)
-	cborValue, err := parser.MarshalCBOR(value)
-	if err != nil {
-		return err
-	}
-
-	return getCmdable(context...).Set(ctx, key, cborValue, time.Minute*30).Err()
+	return store(key, value, time.Minute*30, context...)
 }
 
 // Get the value with key
@@ -51,24 +45,23 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 	fullTypeName := pkgPath + "." + typeName
 
 	key = serialKey("auto_type", fullTypeName, key)
-	val, err := getCmdable(context...).Get(ctx, key).Bytes()
+	result, err := get[T](key, context...)
 	if err != nil {
-		if err == redis.Nil {
-			value, err := getter()
+		if err == ErrNotFound {
+			result, err = getter()
 			if err != nil {
 				return nil, err
 			}
 
-			if err := Store(key, value, time.Minute*30, context...); err != nil {
+			if err := store(key, result, time.Minute*30, context...); err != nil {
 				return nil, err
 			}
-			return value, nil
+			return result, nil
 		}
 		return nil, err
 	}
 
-	result, err := parser.UnmarshalCBOR[T](val)
-	return &result, err
+	return result, err
 }
 
 // Delete the value with key
@@ -85,5 +78,5 @@ func AutoDelete[T any](key string, context ...redis.Cmdable) error {
 	fullTypeName := pkgPath + "." + typeName
 
 	key = serialKey("auto_type", fullTypeName, key)
-	return getCmdable(context...).Del(ctx, key).Err()
+	return del(key, context...)
 }
