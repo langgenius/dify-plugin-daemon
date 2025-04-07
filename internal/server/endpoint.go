@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -27,6 +28,11 @@ func (app *App) Endpoint(config *app.Config) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		hookId := c.Param("hook_id")
 		path := c.Param("path")
+
+		// set X-Original-Host
+		if c.Request.Header.Get(endpoint_entities.HeaderXOriginalHost) == "" {
+			c.Request.Header.Set(endpoint_entities.HeaderXOriginalHost, c.Request.Host)
+		}
 
 		if app.endpointHandler != nil {
 			app.endpointHandler(c, hookId, time.Duration(config.PluginMaxExecutionTimeout)*time.Second, path)
