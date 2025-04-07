@@ -32,6 +32,27 @@ Attention that the `PYTHON_INTERPRETER_PATH` is the path to the python interpret
 
 We recommend you to use `vscode` to debug the daemon,  and a `launch.json` file is provided in the `.vscode` directory.
 
+### Python environment
+#### UV
+Daemon uses `uv` to manage the dependencies of plugins, before you start the daemon, you need to install [uv](https://github.com/astral-sh/uv) by yourself. 
+
+#### Interpreter
+There is a possibility that you have multiple python versions installed on your machine, a variable `PYTHON_INTERPRETER_PATH` is provided to specify the python interpreter path for you.
+
+## Deployment
+
+Currently, the daemon only supports Linux and MacOS, lots of adaptions are needed for Windows, feel free to contribute if you need it.
+
+### Docker
+
+> **NOTE:** Since the daemon depends on a shared `cwd` directory for running plugins, it's not recommended to use network-based volumes or bind mounts from outside the host machine. This could result in poor performance, such as plugins not launching in a timely manner.
+
+uses docker volume to share the directory with the host machine, it's better for performance.
+
+### Kubernetes
+
+For now, Daemon community edition dose not support smoothly scale out with the number of replicas, If you are interested in this feature, please contact us. we have a more production-ready version for enterprise users.
+
 ## LICENSE
 
 Dify Plugin Daemon is released under the [Apache-2.0 license](LICENSE).
