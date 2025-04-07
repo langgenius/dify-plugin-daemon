@@ -12,5 +12,5 @@ const (
 	APP_SELECTOR   = "app-selector"
 	MODEL_SELECTOR = "model-selector"
 	// TOOL_SELECTOR  = "tool-selector"
-	TOOLS_SELECTOR = "array[tools]" // for agent strategy only
+	TOOLS_SELECTOR = "array[tools]"
 )
