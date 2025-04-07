@@ -194,11 +194,11 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 	return p.backwardsInvocation
 }
 
-func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) (
+func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte, thirdPartySignatureVerificationConfig *decoder.ThirdPartySignatureVerificationConfig) (
 	*plugin_entities.PluginDeclaration, error,
 ) {
 	// try to decode the package
-	packageDecoder, err := decoder.NewZipPluginDecoder(pkg)
+	packageDecoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(pkg, thirdPartySignatureVerificationConfig)
 	if err != nil {
 		return nil, err
 	}
