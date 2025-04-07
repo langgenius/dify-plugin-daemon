@@ -22,10 +22,15 @@ func (c *Cluster) RedirectRequest(
 
 	ip := ips[0]
 
+	url := "http://" + ip.fullAddress() + request.URL.Path
+	if request.URL.RawQuery != "" {
+		url += "?" + request.URL.RawQuery
+	}
+
 	// create a new request
 	redirectedRequest, err := http.NewRequest(
 		request.Method,
-		"http://"+ip.fullAddress()+request.URL.Path,
+		url,
 		request.Body,
 	)
 

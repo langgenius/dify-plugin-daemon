@@ -24,6 +24,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
@@ -56,6 +57,12 @@ func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, 
 	newReq.Header.Del("X-Original-Forwarded-For")
 	newReq.Header.Del("X-Original-Url")
 	newReq.Header.Del("X-Original-Host")
+
+	// check if X-Original-Host is set
+	if originalHost := req.Header.Get(endpoint_entities.HeaderXOriginalHost); originalHost != "" {
+		// replace host with original host
+		newReq.Host = originalHost
+	}
 
 	// setup hook id to request
 	newReq.Header.Set("Dify-Hook-Id", hookId)
