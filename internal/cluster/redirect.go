@@ -6,6 +6,14 @@ import (
 	"net/http"
 )
 
+func constructRedirectUrl(ip address, request *http.Request) string {
+	url := "http://" + ip.fullAddress() + request.URL.Path
+	if request.URL.RawQuery != "" {
+		url += "?" + request.URL.RawQuery
+	}
+	return url
+}
+
 // RedirectRequest redirects the request to the specified node
 func (c *Cluster) RedirectRequest(
 	node_id string, request *http.Request,
@@ -22,10 +30,7 @@ func (c *Cluster) RedirectRequest(
 
 	ip := ips[0]
 
-	url := "http://" + ip.fullAddress() + request.URL.Path
-	if request.URL.RawQuery != "" {
-		url += "?" + request.URL.RawQuery
-	}
+	url := constructRedirectUrl(ip, request)
 
 	// create a new request
 	redirectedRequest, err := http.NewRequest(
