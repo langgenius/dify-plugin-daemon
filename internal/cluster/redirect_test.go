@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,13 +21,13 @@ type SimulationCheckServer struct {
 	port uint16
 }
 
-func createSimulationSevers(nums int, register_callback func(i int, c *gin.Engine)) ([]*SimulationCheckServer, error) {
+func createSimulationSevers(nums int, registerCallback func(i int, c *gin.Engine)) ([]*SimulationCheckServer, error) {
 	gin.SetMode(gin.ReleaseMode)
 	engines := make([]*gin.Engine, nums)
 	servers := make([]*SimulationCheckServer, nums)
 	for i := 0; i < nums; i++ {
 		engines[i] = gin.Default()
-		register_callback(i, engines[i])
+		registerCallback(i, engines[i])
 	}
 
 	// get random port
@@ -217,5 +218,59 @@ func TestRedirectTrafficWithOutQueryParams(t *testing.T) {
 	redirectedRequest := constructRedirectUrl(ip, request)
 	if redirectedRequest != "http://127.0.0.1:8080/plugin/invoke/tool" {
 		t.Fatal("redirected request is not correct")
+	}
+}
+
+func TestRedirectTrafficWithPathStyle(t *testing.T) {
+	payload := `{"a": "1", "b": "2"}`
+
+	server := gin.Default()
+	server.POST("/plugin/invoke/tool", func(c *gin.Context) {
+		content, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.String(http.StatusOK, string(content))
+	})
+
+	srv := &SimulationCheckServer{
+		Server: http.Server{
+			Addr:    ":19898",
+			Handler: server,
+		},
+		port: 19898,
+	}
+
+	go func() {
+		srv.ListenAndServe()
+	}()
+	defer srv.Shutdown(context.Background())
+
+	request, err := http.NewRequest("POST", "http://localhost:8080/plugin/invoke/tool", strings.NewReader(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// redirect to srv
+	statusCode, _, reader, err := redirectRequestToIp(address{
+		Ip:   "127.0.0.1",
+		Port: 19898,
+	}, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if statusCode != http.StatusOK {
+		t.Fatal("status code is not ok")
+	}
+
+	if string(content) != payload {
+		t.Fatal("content is not correct")
 	}
 }

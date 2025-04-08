@@ -70,7 +70,7 @@ func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, 
 	if url := req.Header.Get("Dify-Hook-Url"); url == "" {
 		newReq.Header.Set(
 			"Dify-Hook-Url",
-			fmt.Sprintf("http://%s/e/%s%s", req.Host, hookId, path),
+			fmt.Sprintf("http://%s/e/%s%s", newReq.Host, hookId, path),
 		)
 	}
 
