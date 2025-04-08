@@ -234,17 +234,26 @@ func TestRedirectTrafficWithPathStyle(t *testing.T) {
 		c.String(http.StatusOK, string(content))
 	})
 
+	port, err := network.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	srv := &SimulationCheckServer{
 		Server: http.Server{
-			Addr:    ":19898",
+			Addr:    fmt.Sprintf(":%d", port),
 			Handler: server,
 		},
-		port: 19898,
+		port: port,
 	}
 
 	go func() {
 		srv.ListenAndServe()
 	}()
+
+	// wait for server to be ready
+	time.Sleep(3 * time.Second)
+
 	defer srv.Shutdown(context.Background())
 
 	request, err := http.NewRequest("POST", "http://localhost:8080/plugin/invoke/tool", strings.NewReader(payload))
@@ -255,7 +264,7 @@ func TestRedirectTrafficWithPathStyle(t *testing.T) {
 	// redirect to srv
 	statusCode, _, reader, err := redirectRequestToIp(address{
 		Ip:   "127.0.0.1",
-		Port: 19898,
+		Port: port,
 	}, request)
 	if err != nil {
 		t.Fatal(err)
