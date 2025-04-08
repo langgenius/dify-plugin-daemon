@@ -26,7 +26,10 @@ type Config struct {
 	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
 	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos"`
+	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
+	AzureBlobStorageConnectionString string `envconfig:"AZURE_BLOB_STORAGE_CONNECTION_STRING"`
+
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -183,6 +186,16 @@ func (c *Config) Validate() error {
 
 		if c.AWSRegion == "" {
 			return fmt.Errorf("aws region is empty")
+		}
+	}
+
+	if c.PluginStorageType == "azure_blob" {
+		if c.AzureBlobStorageConnectionString == "" {
+			return fmt.Errorf("azure blob storage connection string is empty")
+		}
+
+		if c.AzureBlobStorageContainerName == "" {
+			return fmt.Errorf("azure blob storage container name is empty")
 		}
 	}
 
