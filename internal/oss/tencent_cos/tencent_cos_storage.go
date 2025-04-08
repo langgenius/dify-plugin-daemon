@@ -87,7 +87,6 @@ func (s *TencentCOSStorage) List(prefix string) ([]oss.OSSPath, error) {
 	}
 	isTruncated := true
 	var marker string
-
 	for isTruncated {
 		if marker != "" {
 			opt.Marker = marker
@@ -98,9 +97,10 @@ func (s *TencentCOSStorage) List(prefix string) ([]oss.OSSPath, error) {
 			return nil, err
 		}
 
-		// 处理文件
-		for _, obj := range result.Contents {
-			key := strings.TrimPrefix(obj.Key, prefix)
+		for _, content := range result.Contents {
+			// remove prefix
+			key := strings.TrimPrefix(content.Key, prefix)
+			// remove leading slash
 			key = strings.TrimPrefix(key, "/")
 			if key == "" {
 				continue
@@ -112,16 +112,26 @@ func (s *TencentCOSStorage) List(prefix string) ([]oss.OSSPath, error) {
 		}
 
 		for _, commonPrefix := range result.CommonPrefixes {
-			dir := strings.TrimPrefix(commonPrefix, prefix)
-			dir = strings.TrimPrefix(dir, "/")
-			dir = strings.TrimSuffix(dir, "/")
-			if dir == "" {
+			if commonPrefix == "" {
 				continue
 			}
+			if !strings.HasSuffix(commonPrefix, "/") {
+				commonPrefix = commonPrefix + "/"
+			}
 			keys = append(keys, oss.OSSPath{
-				Path:  dir,
+				Path:  commonPrefix,
 				IsDir: true,
 			})
+
+			subKeys, _ := s.List(commonPrefix)
+			if len(subKeys) > 0 {
+				subPrefix := strings.TrimPrefix(commonPrefix, prefix)
+				for i := range subKeys {
+					subKeys[i].Path = subPrefix + subKeys[i].Path
+				}
+				keys = append(keys, subKeys...)
+			}
+
 		}
 
 		isTruncated = result.IsTruncated
