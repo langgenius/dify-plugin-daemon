@@ -78,7 +78,7 @@ func DeleteCache[T any](p *DeleteCachePayload[T]) error {
 	cacheKey := joinCacheKey(typename, p.CacheKey)
 
 	// delete cache
-	err := cache.Del(cacheKey)
+	_, err := cache.Del(cacheKey)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func UpdateCache[T any](p *UpdateCachePayload[T]) error {
 	}
 
 	// delete cache
-	err = cache.Del(cacheKey)
+	_, err = cache.Del(cacheKey)
 	if err != nil {
 		return err
 	}

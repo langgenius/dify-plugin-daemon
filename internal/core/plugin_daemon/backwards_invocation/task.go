@@ -531,7 +531,8 @@ func executeDifyInvocationStorageTask(
 			"data": "ok",
 		})
 	} else if request.Opt == dify_invocation.STORAGE_OPT_DEL {
-		if err := persistence.Delete(tenantId, pluginId.PluginID(), request.Key); err != nil {
+		_, err := persistence.Delete(tenantId, pluginId.PluginID(), request.Key)
+		if err != nil {
 			handle.WriteError(fmt.Errorf("delete data failed: %s", err.Error()))
 			return
 		}

@@ -29,7 +29,7 @@ func TestAutoType(t *testing.T) {
 		t.Fatal("result not correct")
 	}
 
-	if err := AutoDelete[TestAutoTypeStruct]("test"); err != nil {
+	if _, err := AutoDelete[TestAutoTypeStruct]("test"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -54,7 +54,7 @@ func TestAutoTypeWithGetter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := AutoDelete[TestAutoTypeStruct]("test1"); err != nil {
+	if _, err := AutoDelete[TestAutoTypeStruct]("test1"); err != nil {
 		t.Fatal(err)
 	}
 
