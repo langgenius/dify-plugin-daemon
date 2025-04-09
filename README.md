@@ -18,6 +18,17 @@ All requests from Dify api based on HTTP protocol, but depends on the runtime ty
 
 For more detailed introduction about Dify plugin, please refer to our docs [https://docs.dify.ai/plugins/introduction](https://docs.dify.ai/plugins/introduction).
 
+## CLI
+
+We provide a CLI tool to help you develop plugins locally, you can install it by running:
+
+```bash
+brew tap langgenius/dify
+brew install dify
+```
+
+Or you can download the binary from [https://github.com/langgenius/dify/releases](https://github.com/langgenius/dify/releases).
+
 ## Development
 
 ### Run daemon
