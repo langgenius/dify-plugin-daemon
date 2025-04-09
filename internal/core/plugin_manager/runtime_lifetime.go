@@ -74,7 +74,6 @@ func (p *PluginManager) fullDuplexLifecycle(
 				}
 			})
 
-			// exit the loop to avoid infinite setup
 			return
 		}
 
