@@ -131,6 +131,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
 		PythonInterpreterPath:     p.pythonInterpreterPath,
+		UvPath:                    p.uvPath,
 		PythonEnvInitTimeout:      p.pythonEnvInitTimeout,
 		PythonCompileAllExtraArgs: p.pythonCompileAllExtraArgs,
 		HttpProxy:                 p.HttpProxy,
