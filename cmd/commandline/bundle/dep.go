@@ -3,8 +3,8 @@ package bundle
 import (
 	"os"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/bundle_packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/bundle_packager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
 )
 

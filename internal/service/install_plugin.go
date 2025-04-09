@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
@@ -18,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"gorm.io/gorm"
 )
 
@@ -44,8 +44,8 @@ func InstallPluginRuntimeToTenant(
 	pluginsWaitForInstallation := []plugin_entities.PluginUniqueIdentifier{}
 
 	runtimeType := plugin_entities.PluginRuntimeType("")
-	if config.Platform == app.PLATFORM_AWS_LAMBDA {
-		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+	if config.Platform == app.PLATFORM_SERVERLESS {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
 	} else if config.Platform == app.PLATFORM_LOCAL {
 		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 	} else {
@@ -64,7 +64,6 @@ func InstallPluginRuntimeToTenant(
 		// fetch plugin declaration first, before installing, we need to ensure pkg is uploaded
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
-			tenant_id,
 			runtimeType,
 		)
 		if err != nil {
@@ -125,7 +124,6 @@ func InstallPluginRuntimeToTenant(
 
 		declaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
-			tenant_id,
 			runtimeType,
 		)
 		if err != nil {
@@ -192,7 +190,7 @@ func InstallPluginRuntimeToTenant(
 			})
 
 			var stream *stream.Stream[plugin_manager.PluginInstallResponse]
-			if config.Platform == app.PLATFORM_AWS_LAMBDA {
+			if config.Platform == app.PLATFORM_SERVERLESS {
 				var zipDecoder *decoder.ZipPluginDecoder
 				var pkgFile []byte
 
@@ -308,8 +306,8 @@ func InstallPluginFromIdentifiers(
 			runtimeType := plugin_entities.PluginRuntimeType("")
 
 			switch config.Platform {
-			case app.PLATFORM_AWS_LAMBDA:
-				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_AWS
+			case app.PLATFORM_SERVERLESS:
+				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
 			case app.PLATFORM_LOCAL:
 				runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 			default:
@@ -380,12 +378,29 @@ func UpgradePlugin(
 			declaration *plugin_entities.PluginDeclaration,
 			meta map[string]any,
 		) error {
+			originalDeclaration, err := helper.CombinedGetPluginDeclaration(
+				original_plugin_unique_identifier,
+				plugin_entities.PluginRuntimeType(installation.RuntimeType),
+			)
+			if err != nil {
+				return err
+			}
+
+			newDeclaration, err := helper.CombinedGetPluginDeclaration(
+				new_plugin_unique_identifier,
+				plugin_entities.PluginRuntimeType(installation.RuntimeType),
+			)
+			if err != nil {
+				return err
+			}
+
 			// uninstall the original plugin
 			upgradeResponse, err := curd.UpgradePlugin(
 				tenant_id,
 				original_plugin_unique_identifier,
 				new_plugin_unique_identifier,
-				declaration,
+				originalDeclaration,
+				newDeclaration,
 				plugin_entities.PluginRuntimeType(installation.RuntimeType),
 				source,
 				meta,
@@ -574,11 +589,21 @@ func UninstallPlugin(
 		return exception.UniqueIdentifierError(err).ToResponse()
 	}
 
+	// get declaration
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		pluginUniqueIdentifier,
+		plugin_entities.PluginRuntimeType(installation.RuntimeType),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
 	// Uninstall the plugin
 	deleteResponse, err := curd.UninstallPlugin(
 		tenant_id,
 		pluginUniqueIdentifier,
 		installation.ID,
+		declaration,
 	)
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()

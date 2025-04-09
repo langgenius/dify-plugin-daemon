@@ -5,3 +5,7 @@ type EndpointResponseChunk struct {
 	Headers map[string]string `json:"headers" validate:"omitempty"`
 	Result  *string           `json:"result" validate:"omitempty"`
 }
+
+const (
+	HeaderXOriginalHost = "X-Original-Host"
+)

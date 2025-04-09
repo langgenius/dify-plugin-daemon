@@ -37,7 +37,7 @@ func writeLog(level string, format string, stdout bool, v ...interface{}) {
 			logger.Output(3, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
 		} else if level == "PANIC" {
 			logger.Output(3, LOG_LEVEL_ERROR_COLOR+format+LOG_LEVEL_COLOR_END)
-			panic(fmt.Sprintf(format, v...))
+			panic(format)
 		}
 	}
 }

@@ -55,7 +55,7 @@ func InvokeTTS(
 	return GenericInvokePlugin[requests.RequestInvokeTTS, model_entities.TTSResult](
 		session,
 		request,
-		1,
+		512,
 	)
 }
 

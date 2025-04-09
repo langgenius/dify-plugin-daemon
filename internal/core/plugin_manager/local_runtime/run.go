@@ -36,6 +36,7 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 	if r.Config.Meta.Runner.Language == constants.Python {
 		cmd := exec.Command(r.pythonInterpreterPath, "-m", r.Config.Meta.Runner.Entrypoint)
 		cmd.Dir = r.State.WorkingPath
+		cmd.Env = cmd.Environ()
 		if r.HttpsProxy != "" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.HttpsProxy))
 		}
@@ -81,7 +82,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	e.Dir = r.State.WorkingPath
 	// add env INSTALL_METHOD=local
-	e.Env = append(e.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
+	e.Env = append(e.Environ(), "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
 
 	// get writer
 	stdin, err := e.StdinPipe()

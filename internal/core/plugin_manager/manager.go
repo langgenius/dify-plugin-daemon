@@ -10,7 +10,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -21,6 +20,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type PluginManager struct {
@@ -63,13 +63,28 @@ type PluginManager struct {
 	HttpProxy  string
 	HttpsProxy string
 
+	// pip mirror url
+	pipMirrorUrl string
+
+	// pip prefer binary
+	pipPreferBinary bool
+
+	// pip verbose
+	pipVerbose bool
+
+	// pip extra args
+	pipExtraArgs string
+
+	// python compileall extra args
+	pythonCompileAllExtraArgs string
+
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
 
-	// platform, local or aws_lambda
+	// platform, local or serverless
 	platform app.PlatformType
 }
 
@@ -95,13 +110,18 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			oss,
 			configuration.PluginInstalledPath,
 		),
-		localPluginLaunchingLock: lock.NewGranularityLock(),
-		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
-		pythonInterpreterPath:    configuration.PythonInterpreterPath,
-		pythonEnvInitTimeout:     configuration.PythonEnvInitTimeout,
-		platform:                 configuration.Platform,
-		HttpProxy:                configuration.HttpProxy,
-		HttpsProxy:               configuration.HttpsProxy,
+		localPluginLaunchingLock:  lock.NewGranularityLock(),
+		maxLaunchingLock:          make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
+		pythonInterpreterPath:     configuration.PythonInterpreterPath,
+		pythonEnvInitTimeout:      configuration.PythonEnvInitTimeout,
+		pythonCompileAllExtraArgs: configuration.PythonCompileAllExtraArgs,
+		platform:                  configuration.Platform,
+		HttpProxy:                 configuration.HttpProxy,
+		HttpsProxy:                configuration.HttpsProxy,
+		pipMirrorUrl:              configuration.PipMirrorUrl,
+		pipPreferBinary:           *configuration.PipPreferBinary,
+		pipVerbose:                *configuration.PipVerbose,
+		pipExtraArgs:              configuration.PipExtraArgs,
 	}
 
 	return manager
@@ -142,6 +162,8 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	if err := cache.InitRedisClient(
 		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
 		configuration.RedisPass,
+		configuration.RedisUseSsl,
+		configuration.RedisDB,
 	); err != nil {
 		log.Panic("init redis client failed: %s", err.Error())
 	}
@@ -160,7 +182,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 
 	// launch serverless connector
-	if configuration.Platform == app.PLATFORM_AWS_LAMBDA {
+	if configuration.Platform == app.PLATFORM_SERVERLESS {
 		serverless.Init(configuration)
 	}
 
@@ -172,11 +194,11 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 	return p.backwardsInvocation
 }
 
-func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte) (
+func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte, thirdPartySignatureVerificationConfig *decoder.ThirdPartySignatureVerificationConfig) (
 	*plugin_entities.PluginDeclaration, error,
 ) {
 	// try to decode the package
-	packageDecoder, err := decoder.NewZipPluginDecoder(pkg)
+	packageDecoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(pkg, thirdPartySignatureVerificationConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -251,6 +273,6 @@ func (p *PluginManager) GetDeclaration(
 	*plugin_entities.PluginDeclaration, error,
 ) {
 	return helper.CombinedGetPluginDeclaration(
-		plugin_unique_identifier, tenant_id, runtime_type,
+		plugin_unique_identifier, runtime_type,
 	)
 }

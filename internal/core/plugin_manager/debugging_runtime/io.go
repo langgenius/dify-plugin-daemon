@@ -3,6 +3,7 @@ package debugging_runtime
 import (
 	"encoding/json"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -51,7 +52,7 @@ func (r *RemotePluginRuntime) Listen(session_id string) *entities.Broadcast[plug
 	return listener
 }
 
-func (r *RemotePluginRuntime) Write(session_id string, data []byte) {
+func (r *RemotePluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
 	r.conn.AsyncWrite(append(data, '\n'), func(c gnet.Conn, err error) error {
 		return nil
 	})

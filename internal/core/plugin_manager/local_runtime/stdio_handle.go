@@ -90,20 +90,34 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 			continue
 		}
 
+		// update the last active time on each time the plugin sends data
+		s.lastActiveAt = time.Now()
+
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
+			"",
 			func(session_id string, data []byte) {
 				for _, listener := range listeners {
 					listener(s.id, data)
 				}
+				// FIX: avoid deadlock to plugin invoke
+				s.l.Lock()
+				tasks := []func(){}
 				for listener_session_id, listener := range s.listener {
+					// copy the listener to avoid reference issue
+					listener := listener
 					if listener_session_id == session_id {
-						listener(data)
+						tasks = append(tasks, func() {
+							listener(data)
+						})
 					}
+				}
+				s.l.Unlock()
+				for _, t := range tasks {
+					t()
 				}
 			},
 			func() {
-				s.lastActiveAt = time.Now()
 				// notify launched
 				notify_heartbeat()
 			},
@@ -182,8 +196,19 @@ func (s *stdioHolder) Wait() error {
 		select {
 		case <-ticker.C:
 			// check heartbeat
-			if time.Since(s.lastActiveAt) > 60*time.Second {
+			if time.Since(s.lastActiveAt) > 120*time.Second {
+				log.Error(
+					"plugin %s is not active for 120 seconds, it may be dead, killing and restarting it",
+					s.pluginUniqueIdentifier,
+				)
 				return plugin_errors.ErrPluginNotActive
+			}
+			if time.Since(s.lastActiveAt) > 60*time.Second {
+				log.Warn(
+					"plugin %s is not active for %f seconds, it may be dead",
+					s.pluginUniqueIdentifier,
+					time.Since(s.lastActiveAt).Seconds(),
+				)
 			}
 		case <-s.waitingControllerChan:
 			// closed

@@ -1,11 +1,14 @@
 package install_service
 
 import (
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	gostrings "strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"gorm.io/gorm"
@@ -46,8 +49,16 @@ func UninstallPlugin(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	install_type plugin_entities.PluginRuntimeType,
 ) error {
+	// get declaration
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		plugin_unique_identifier,
+		install_type,
+	)
+	if err != nil {
+		return err
+	}
 	// delete the plugin from db
-	_, err := curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation_id)
+	_, err = curd.UninstallPlugin(tenant_id, plugin_unique_identifier, installation_id, declaration)
 	if err != nil {
 		return err
 	}
@@ -75,7 +86,7 @@ func InstallEndpoint(
 	settings map[string]any,
 ) (*models.Endpoint, error) {
 	installation := &models.Endpoint{
-		HookID:    strings.RandomString(32),
+		HookID:    strings.RandomLowercaseString(16),
 		PluginID:  plugin_id.PluginID(),
 		TenantID:  tenant_id,
 		UserID:    user_id,
@@ -125,6 +136,14 @@ func GetEndpoint(
 
 // uninstalls a plugin from db
 func UninstallEndpoint(endpoint *models.Endpoint) error {
+	cacheKey := gostrings.Join(
+		[]string{
+			"hook_id",
+			endpoint.HookID,
+		},
+		":",
+	)
+	_ = cache.AutoDelete[models.Endpoint](cacheKey)
 	return db.WithTransaction(func(tx *gorm.DB) error {
 		if err := db.Delete(endpoint, tx); err != nil {
 			return err
@@ -144,12 +163,22 @@ func UninstallEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
-func EnabledEndpoint(endpoint *models.Endpoint) error {
-	if endpoint.Enabled {
-		return nil
-	}
-
+func EnabledEndpoint(endpoint_id string, tenant_id string) error {
 	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint, err := db.GetOne[models.Endpoint](
+			db.WithTransactionContext(tx),
+			db.Equal("id", endpoint_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if endpoint.Enabled {
+			return nil
+		}
+
 		endpoint.Enabled = true
 		if err := db.Update(endpoint, tx); err != nil {
 			return err
@@ -168,12 +197,31 @@ func EnabledEndpoint(endpoint *models.Endpoint) error {
 	})
 }
 
-func DisabledEndpoint(endpoint *models.Endpoint) error {
-	if !endpoint.Enabled {
-		return nil
-	}
-
+func DisabledEndpoint(endpoint_id string, tenant_id string) error {
 	return db.WithTransaction(func(tx *gorm.DB) error {
+		endpoint, err := db.GetOne[models.Endpoint](
+			db.WithTransactionContext(tx),
+			db.Equal("id", endpoint_id),
+			db.Equal("tenant_id", tenant_id),
+			db.WLock(),
+		)
+		if err != nil {
+			return err
+		}
+		if !endpoint.Enabled {
+			return nil
+		}
+
+		endpointCacheKey := gostrings.Join(
+			[]string{
+				"hook_id",
+				endpoint.HookID,
+			},
+			":",
+		)
+
+		_ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
+
 		endpoint.Enabled = false
 		if err := db.Update(endpoint, tx); err != nil {
 			return err

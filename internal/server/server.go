@@ -7,34 +7,53 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/azure"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/s3"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/tencent_cos"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 )
 
 func initOSS(config *app.Config) oss.OSS {
-	// init oss
-	var oss oss.OSS
+	// init storage
+	var storage oss.OSS
 	var err error
-	if config.PluginStorageType == "aws_s3" {
-		oss, err = s3.NewAWSS3Storage(
+	switch config.PluginStorageType {
+	case oss.OSS_TYPE_S3:
+		storage, err = s3.NewS3Storage(
+			config.S3UseAwsManagedIam,
+			config.S3Endpoint,
+			config.S3UsePathStyle,
 			config.AWSAccessKey,
 			config.AWSSecretKey,
+			config.PluginStorageOSSBucket,
 			config.AWSRegion,
+		)
+	case oss.OSS_TYPE_LOCAL:
+		storage = local.NewLocalStorage(config.PluginStorageLocalRoot)
+	case oss.OSS_TYPE_TENCENT_COS:
+		storage, err = tencent_cos.NewTencentCOSStorage(
+			config.TencentCOSSecretId,
+			config.TencentCOSSecretKey,
+			config.TencentCOSRegion,
 			config.PluginStorageOSSBucket,
 		)
-		if err != nil {
-			log.Panic("Failed to create aws s3 storage: %s", err)
-		}
-	} else if config.PluginStorageType == "local" {
-		oss = local.NewLocalStorage(config.PluginStorageLocalRoot)
-	} else {
+	case oss.OSS_TYPE_AZURE_BLOB:
+		storage, err = azure.NewAzureBlobStorage(
+			config.AzureBlobStorageContainerName,
+			config.AzureBlobStorageConnectionString,
+		)
+	default:
 		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
 	}
 
-	return oss
+	if err != nil {
+		log.Panic("Failed to create storage: %s", err)
+	}
+
+	return storage
 }
 
 func (app *App) Run(config *app.Config) {

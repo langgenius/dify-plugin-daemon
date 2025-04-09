@@ -9,10 +9,10 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type pluginRuntimeWithDecoder struct {
@@ -129,7 +129,16 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		return nil, nil, nil, failed(err.Error())
 	}
 
-	localPluginRuntime := local_runtime.NewLocalPluginRuntime(p.pythonInterpreterPath, p.pythonEnvInitTimeout, p.HttpProxy, p.HttpsProxy)
+	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
+		PythonInterpreterPath:     p.pythonInterpreterPath,
+		PythonEnvInitTimeout:      p.pythonEnvInitTimeout,
+		PythonCompileAllExtraArgs: p.pythonCompileAllExtraArgs,
+		HttpProxy:                 p.HttpProxy,
+		HttpsProxy:                p.HttpsProxy,
+		PipMirrorUrl:              p.pipMirrorUrl,
+		PipPreferBinary:           p.pipPreferBinary,
+		PipExtraArgs:              p.pipExtraArgs,
+	})
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
 		MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),

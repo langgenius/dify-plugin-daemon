@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -25,21 +24,13 @@ type ConnectionInfo struct {
 	TenantId string `json:"tenant_id" validate:"required"`
 }
 
-func (c ConnectionInfo) MarshalBinary() ([]byte, error) {
-	return parser.MarshalJsonBytes(c), nil
-}
-
 type Key struct {
 	Key string `json:"key" validate:"required"`
 }
 
-func (k Key) MarshalBinary() ([]byte, error) {
-	return parser.MarshalJsonBytes(k), nil
-}
-
 const (
-	CONNECTION_KEY_MANAGER_KEY2ID_PREFIX = "remote:key:manager:key2id"
-	CONNECTION_KEY_MANAGER_ID2KEY_PREFIX = "remote:key:manager:id2key"
+	CONNECTION_KEY_MANAGER_KEY2ID_PREFIX = "{remote:key:manager}:key2id"
+	CONNECTION_KEY_MANAGER_ID2KEY_PREFIX = "{remote:key:manager}:id2key"
 	CONNECTION_KEY_LOCK                  = "connection_lock"
 	CONNECTION_KEY_EXPIRE_TIME           = time.Minute * 120 // 2 hours
 )

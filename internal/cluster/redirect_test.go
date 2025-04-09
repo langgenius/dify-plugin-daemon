@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 )
 
 type SimulationCheckServer struct {
@@ -19,13 +21,13 @@ type SimulationCheckServer struct {
 	port uint16
 }
 
-func createSimulationSevers(nums int, register_callback func(i int, c *gin.Engine)) ([]*SimulationCheckServer, error) {
+func createSimulationSevers(nums int, registerCallback func(i int, c *gin.Engine)) ([]*SimulationCheckServer, error) {
 	gin.SetMode(gin.ReleaseMode)
 	engines := make([]*gin.Engine, nums)
 	servers := make([]*SimulationCheckServer, nums)
 	for i := 0; i < nums; i++ {
 		engines[i] = gin.Default()
-		register_callback(i, engines[i])
+		registerCallback(i, engines[i])
 	}
 
 	// get random port
@@ -178,5 +180,106 @@ func TestRedirectTraffic(t *testing.T) {
 		case <-time.After(5 * time.Second):
 			t.Fatal("node 1 did not receive correct requests")
 		}
+	}
+}
+
+func TestRedirectTrafficWithQueryParams(t *testing.T) {
+	request, err := http.NewRequest("GET", "http://localhost:8080/plugin/invoke/tool?a=1&b=2", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request.Header.Set(endpoint_entities.HeaderXOriginalHost, "localhost:8080")
+
+	ip := address{
+		Ip:   "127.0.0.1",
+		Port: 8080,
+	}
+
+	redirectedRequest := constructRedirectUrl(ip, request)
+	if redirectedRequest != "http://127.0.0.1:8080/plugin/invoke/tool?a=1&b=2" {
+		t.Fatal("redirected request is not correct")
+	}
+}
+
+func TestRedirectTrafficWithOutQueryParams(t *testing.T) {
+	request, err := http.NewRequest("GET", "http://localhost:8080/plugin/invoke/tool", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request.Header.Set(endpoint_entities.HeaderXOriginalHost, "localhost:8080")
+
+	ip := address{
+		Ip:   "127.0.0.1",
+		Port: 8080,
+	}
+
+	redirectedRequest := constructRedirectUrl(ip, request)
+	if redirectedRequest != "http://127.0.0.1:8080/plugin/invoke/tool" {
+		t.Fatal("redirected request is not correct")
+	}
+}
+
+func TestRedirectTrafficWithPathStyle(t *testing.T) {
+	payload := `{"a": "1", "b": "2"}`
+
+	server := gin.Default()
+	server.POST("/plugin/invoke/tool", func(c *gin.Context) {
+		content, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.String(http.StatusOK, string(content))
+	})
+
+	port, err := network.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	srv := &SimulationCheckServer{
+		Server: http.Server{
+			Addr:    fmt.Sprintf(":%d", port),
+			Handler: server,
+		},
+		port: port,
+	}
+
+	go func() {
+		srv.ListenAndServe()
+	}()
+
+	// wait for server to be ready
+	time.Sleep(3 * time.Second)
+
+	defer srv.Shutdown(context.Background())
+
+	request, err := http.NewRequest("POST", "http://localhost:8080/plugin/invoke/tool", strings.NewReader(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// redirect to srv
+	statusCode, _, reader, err := redirectRequestToIp(address{
+		Ip:   "127.0.0.1",
+		Port: port,
+	}, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if statusCode != http.StatusOK {
+		t.Fatal("status code is not ok")
+	}
+
+	if string(content) != payload {
+		t.Fatal("content is not correct")
 	}
 }

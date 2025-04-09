@@ -2,10 +2,12 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"strings"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/redis/go-redis/v9"
 )
@@ -18,11 +20,21 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func InitRedisClient(addr, password string) error {
-	client = redis.NewClient(&redis.Options{
+func getRedisOptions(addr, password string, useSsl bool, db int) *redis.Options {
+	opts := &redis.Options{
 		Addr:     addr,
 		Password: password,
-	})
+		DB:       db,
+	}
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+	return opts
+}
+
+func InitRedisClient(addr, password string, useSsl bool, db int) error {
+	opts := getRedisOptions(addr, password, useSsl, db)
+	client = redis.NewClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
@@ -57,24 +69,37 @@ func serialKey(keys ...string) string {
 
 // Store the key-value pair
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
+	return store(serialKey(key), value, time, context...)
+}
+
+// store the key-value pair, without serialKey
+func store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
 	if _, ok := value.(string); !ok {
-		value = parser.MarshalJson(value)
+		var err error
+		value, err = parser.MarshalCBOR(value)
+		if err != nil {
+			return err
+		}
 	}
 
-	return getCmdable(context...).Set(ctx, serialKey(key), value, time).Err()
+	return getCmdable(context...).Set(ctx, key, value, time).Err()
 }
 
 // Get the value with key
 func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
+	return get[T](serialKey(key), context...)
+}
+
+func get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
-	val, err := getCmdable(context...).Get(ctx, serialKey(key)).Result()
+	val, err := getCmdable(context...).Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, ErrNotFound
@@ -82,11 +107,11 @@ func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 		return nil, err
 	}
 
-	if val == "" {
+	if len(val) == 0 {
 		return nil, ErrNotFound
 	}
 
-	result, err := parser.UnmarshalJson[T](val)
+	result, err := parser.UnmarshalCBOR[T](val)
 	return &result, err
 }
 
@@ -108,14 +133,19 @@ func GetString(key string, context ...redis.Cmdable) (string, error) {
 
 // Del the key
 func Del(key string, context ...redis.Cmdable) error {
+	return del(serialKey(key), context...)
+}
+
+func del(key string, context ...redis.Cmdable) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
-	v, err := getCmdable(context...).Del(ctx, serialKey(key)).Result()
-	if v == 0 {
-		return ErrNotFound
-	}
+	_, err := getCmdable(context...).Del(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return ErrNotFound
+		}
 
 	return err
 }
@@ -369,7 +399,13 @@ func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cm
 		return false, ErrDBNotInit
 	}
 
-	return getCmdable(context...).SetNX(ctx, serialKey(key), value, expire).Result()
+	// marshal the value
+	bytes, err := parser.MarshalCBOR(value)
+	if err != nil {
+		return false, err
+	}
+
+	return getCmdable(context...).SetNX(ctx, serialKey(key), bytes, expire).Result()
 }
 
 var (
@@ -459,8 +495,9 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		for alive {
 			iface, err := pubsub.Receive(context.Background())
 			if err != nil {
-				alive = false
-				break
+				log.Error("failed to receive message from redis: %s, will retry in 1 second", err.Error())
+				time.Sleep(1 * time.Second)
+				continue
 			}
 			switch data := iface.(type) {
 			case *redis.Subscription:

@@ -3,7 +3,7 @@ package basic_runtime
 import (
 	"os"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type BasicChecksum struct {

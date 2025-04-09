@@ -3,6 +3,7 @@ package plugin_entities
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -17,8 +18,19 @@ import (
 
 type ToolIdentity struct {
 	Author string     `json:"author" yaml:"author" validate:"required"`
-	Name   string     `json:"name" yaml:"name" validate:"required"`
+	Name   string     `json:"name" yaml:"name" validate:"required,tool_identity_name"`
 	Label  I18nObject `json:"label" yaml:"label" validate:"required"`
+}
+
+var toolIdentityNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
+func isToolIdentityName(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return toolIdentityNameRegex.MatchString(value)
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("tool_identity_name", isToolIdentityName)
 }
 
 type ToolParameterOption struct {
@@ -188,11 +200,22 @@ func init() {
 
 type ToolProviderIdentity struct {
 	Author      string                        `json:"author" validate:"required"`
-	Name        string                        `json:"name" validate:"required"`
+	Name        string                        `json:"name" validate:"required,tool_provider_identity_name"`
 	Description I18nObject                    `json:"description"`
 	Icon        string                        `json:"icon" validate:"required"`
 	Label       I18nObject                    `json:"label" validate:"required"`
 	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
+}
+
+var toolProviderIdentityNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
+func isToolProviderIdentityName(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return toolProviderIdentityNameRegex.MatchString(value)
+}
+
+func init() {
+	validators.GlobalEntitiesValidator.RegisterValidation("tool_provider_identity_name", isToolProviderIdentityName)
 }
 
 type ToolProviderDeclaration struct {

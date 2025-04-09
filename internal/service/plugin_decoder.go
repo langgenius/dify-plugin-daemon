@@ -6,15 +6,15 @@ import (
 	"mime/multipart"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/bundle_packager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/bundle_packager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 func UploadPluginPkg(
@@ -29,12 +29,12 @@ func UploadPluginPkg(
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	decoder, err := decoder.NewZipPluginDecoderWithSizeLimit(pluginFile, config.MaxPluginPackageSize)
+	decoderInstance, err := decoder.NewZipPluginDecoderWithSizeLimit(pluginFile, config.MaxPluginPackageSize)
 	if err != nil {
 		return exception.BadRequestError(err).ToResponse()
 	}
 
-	pluginUniqueIdentifier, err := decoder.UniqueIdentity()
+	pluginUniqueIdentifier, err := decoderInstance.UniqueIdentity()
 	if err != nil {
 		return exception.BadRequestError(err).ToResponse()
 	}
@@ -45,7 +45,10 @@ func UploadPluginPkg(
 	}
 
 	manager := plugin_manager.Manager()
-	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile)
+	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile, &decoder.ThirdPartySignatureVerificationConfig{
+		Enabled:        config.ThirdPartySignatureVerificationEnabled,
+		PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
+	})
 	if err != nil {
 		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
@@ -123,17 +126,20 @@ func UploadPluginBundle(
 					return exception.InternalServerError(errors.Join(errors.New("failed to fetch package from bundle"), err)).ToResponse()
 				} else {
 					// decode and save
-					decoder, err := decoder.NewZipPluginDecoder(asset)
+					decoderInstance, err := decoder.NewZipPluginDecoder(asset)
 					if err != nil {
 						return exception.BadRequestError(errors.Join(errors.New("failed to create package decoder"), err)).ToResponse()
 					}
 
-					pluginUniqueIdentifier, err := decoder.UniqueIdentity()
+					pluginUniqueIdentifier, err := decoderInstance.UniqueIdentity()
 					if err != nil {
 						return exception.BadRequestError(errors.Join(errors.New("failed to get package unique identifier"), err)).ToResponse()
 					}
 
-					declaration, err := manager.SavePackage(pluginUniqueIdentifier, asset)
+					declaration, err := manager.SavePackage(pluginUniqueIdentifier, asset, &decoder.ThirdPartySignatureVerificationConfig{
+						Enabled:        config.ThirdPartySignatureVerificationEnabled,
+						PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
+					})
 					if err != nil {
 						return exception.InternalServerError(errors.Join(errors.New("failed to save package"), err)).ToResponse()
 					}
@@ -162,7 +168,6 @@ func UploadPluginBundle(
 }
 
 func FetchPluginManifest(
-	tenant_id string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
 	runtimeType := plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
@@ -171,7 +176,7 @@ func FetchPluginManifest(
 	}
 
 	pluginManifestCache, err := helper.CombinedGetPluginDeclaration(
-		pluginUniqueIdentifier, tenant_id, runtimeType,
+		pluginUniqueIdentifier, runtimeType,
 	)
 	if err == helper.ErrPluginNotFound {
 		return exception.BadRequestError(errors.New("plugin not found")).ToResponse()

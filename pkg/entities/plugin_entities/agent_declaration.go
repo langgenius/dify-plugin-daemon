@@ -77,6 +77,7 @@ type AgentStrategyDeclaration struct {
 	Description  I18nObject                `json:"description" yaml:"description" validate:"required"`
 	Parameters   []AgentStrategyParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
 	OutputSchema AgentStrategyOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
+	Features     []string                  `json:"features" yaml:"features" validate:"omitempty,dive,lt=256"`
 }
 
 type AgentStrategyProviderDeclaration struct {
@@ -91,6 +92,13 @@ func (a *AgentStrategyProviderDeclaration) MarshalJSON() ([]byte, error) {
 	if p.Strategies == nil {
 		p.Strategies = []AgentStrategyDeclaration{}
 	}
+
+	for i := range p.Strategies {
+		if p.Strategies[i].Features == nil {
+			p.Strategies[i].Features = []string{}
+		}
+	}
+
 	return json.Marshal(p)
 }
 

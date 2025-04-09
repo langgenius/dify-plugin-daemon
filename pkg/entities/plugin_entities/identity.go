@@ -26,7 +26,7 @@ var (
 
 func NewPluginUniqueIdentifier(identifier string) (PluginUniqueIdentifier, error) {
 	if !pluginUniqueIdentifierRegexp.MatchString(identifier) {
-		return "", errors.New("plugin_unique_identifier is not valid")
+		return "", errors.New("plugin_unique_identifier is not valid: " + identifier)
 	}
 	return PluginUniqueIdentifier(identifier), nil
 }

@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 // InstallToAWSFromPkg installs a plugin to AWS Lambda
@@ -24,7 +24,8 @@ func (p *PluginManager) InstallToAWSFromPkg(
 	if err != nil {
 		return nil, err
 	}
-	declaration, err := decoder.Manifest()
+	// check valid manifest
+	_, err = decoder.Manifest()
 	if err != nil {
 		return nil, err
 	}
@@ -70,17 +71,16 @@ func (p *PluginManager) InstallToAWSFromPkg(
 				// check if the plugin is already installed
 				_, err := db.GetOne[models.ServerlessRuntime](
 					db.Equal("checksum", checksum),
-					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA)),
+					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
 				)
 				if err == db.ErrDatabaseNotFound {
 					// create a new serverless runtime
 					serverlessModel := &models.ServerlessRuntime{
 						Checksum:               checksum,
-						Type:                   models.SERVERLESS_RUNTIME_TYPE_AWS_LAMBDA,
+						Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
 						FunctionURL:            functionUrl,
 						FunctionName:           functionName,
 						PluginUniqueIdentifier: uniqueIdentity.String(),
-						Declaration:            declaration,
 					}
 					err = db.Create(serverlessModel)
 					if err != nil {

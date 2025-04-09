@@ -24,10 +24,11 @@ type RunnerInstances struct {
 type LaunchStage string
 
 const (
-	LAUNCH_STAGE_START LaunchStage = "start"
-	LAUNCH_STAGE_BUILD LaunchStage = "build"
-	LAUNCH_STAGE_RUN   LaunchStage = "run"
-	LAUNCH_STAGE_END   LaunchStage = "end"
+	LAUNCH_STAGE_HEALTHZ LaunchStage = "healthz"
+	LAUNCH_STAGE_START   LaunchStage = "start"
+	LAUNCH_STAGE_BUILD   LaunchStage = "build"
+	LAUNCH_STAGE_RUN     LaunchStage = "run"
+	LAUNCH_STAGE_END     LaunchStage = "end"
 )
 
 type LaunchState string

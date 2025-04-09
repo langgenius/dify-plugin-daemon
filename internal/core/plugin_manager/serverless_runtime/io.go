@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -16,18 +17,18 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *AWSPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
+func (r *AWSPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
 	l := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	// store the listener
-	r.listeners.Store(session_id, l)
+	r.listeners.Store(sessionId, l)
 	return l
 }
 
 // For AWS Lambda, write is equivalent to http request, it's not a normal stream like stdio and tcp
-func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
-	l, ok := r.listeners.Load(session_id)
+func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
+	l, ok := r.listeners.Load(sessionId)
 	if !ok {
-		log.Error("session %s not found", session_id)
+		log.Error("session %s not found", sessionId)
 		return
 	}
 
@@ -45,6 +46,8 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 		return
 	}
 
+	url += "?action=" + string(action)
+
 	connectTime := 240 * time.Second
 
 	// create a new http request
@@ -57,16 +60,16 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
-	req.Header.Set("Dify-Plugin-Session-ID", session_id)
+	req.Header.Set("Dify-Plugin-Session-ID", sessionId)
 
 	routine.Submit(map[string]string{
 		"module":     "serverless_runtime",
 		"function":   "Write",
-		"session_id": session_id,
+		"session_id": sessionId,
 		"lambda_url": r.LambdaURL,
 	}, func() {
 		// remove the session from listeners
-		defer r.listeners.Delete(session_id)
+		defer r.listeners.Delete(sessionId)
 		defer l.Close()
 		defer l.Send(plugin_entities.SessionMessage{
 			Type: plugin_entities.SESSION_MESSAGE_TYPE_END,
@@ -88,6 +91,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 
 		// write to data stream
 		scanner := bufio.NewScanner(response.Body)
+		defer response.Body.Close()
 
 		// TODO: set a reasonable buffer size or use a reader, this is a temporary solution
 		scanner.Buffer(make([]byte, 1024), 5*1024*1024)
@@ -102,6 +106,7 @@ func (r *AWSPluginRuntime) Write(session_id string, data []byte) {
 
 			plugin_entities.ParsePluginUniversalEvent(
 				bytes,
+				response.Status,
 				func(session_id string, data []byte) {
 					sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 					if err != nil {

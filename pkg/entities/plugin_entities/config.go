@@ -20,6 +20,7 @@ const (
 	CONFIG_TYPE_MODEL_SELECTOR ConfigType = MODEL_SELECTOR
 	CONFIG_TYPE_APP_SELECTOR   ConfigType = APP_SELECTOR
 	// CONFIG_TYPE_TOOL_SELECTOR  ConfigType = TOOL_SELECTOR
+	CONFIG_TYPE_TOOLS_SELECTOR ConfigType = TOOLS_SELECTOR
 )
 
 type ModelConfigScope string
@@ -63,7 +64,8 @@ func isCredentialType(fl validator.FieldLevel) bool {
 		string(CONFIG_TYPE_SELECT),
 		string(CONFIG_TYPE_BOOLEAN),
 		string(CONFIG_TYPE_APP_SELECTOR),
-		string(CONFIG_TYPE_MODEL_SELECTOR):
+		string(CONFIG_TYPE_MODEL_SELECTOR),
+		string(CONFIG_TYPE_TOOLS_SELECTOR):
 		return true
 	}
 	return false
@@ -245,7 +247,7 @@ type ProviderConfig struct {
 	Default     any            `json:"default" validate:"omitempty,is_basic_type"`
 	Options     []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
 	Label       I18nObject     `json:"label" validate:"required"`
-	Helper      *I18nObject    `json:"helper" validate:"omitempty"`
+	Help        *I18nObject    `json:"help" validate:"omitempty"`
 	URL         *string        `json:"url" validate:"omitempty"`
 	Placeholder *I18nObject    `json:"placeholder" validate:"omitempty"`
 }

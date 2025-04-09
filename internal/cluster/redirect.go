@@ -6,26 +6,22 @@ import (
 	"net/http"
 )
 
-// RedirectRequest redirects the request to the specified node
-func (c *Cluster) RedirectRequest(
-	node_id string, request *http.Request,
-) (int, http.Header, io.ReadCloser, error) {
-	node, ok := c.nodes.Load(node_id)
-	if !ok {
-		return 0, nil, nil, errors.New("node not found")
+func constructRedirectUrl(ip address, request *http.Request) string {
+	url := "http://" + ip.fullAddress() + request.URL.Path
+	if request.URL.RawQuery != "" {
+		url += "?" + request.URL.RawQuery
 	}
+	return url
+}
 
-	ips := c.SortIps(node)
-	if len(ips) == 0 {
-		return 0, nil, nil, errors.New("no available ip found")
-	}
-
-	ip := ips[0]
+// basic redirect request
+func redirectRequestToIp(ip address, request *http.Request) (int, http.Header, io.ReadCloser, error) {
+	url := constructRedirectUrl(ip, request)
 
 	// create a new request
 	redirectedRequest, err := http.NewRequest(
 		request.Method,
-		"http://"+ip.fullAddress()+request.URL.Path,
+		url,
 		request.Body,
 	)
 
@@ -48,4 +44,23 @@ func (c *Cluster) RedirectRequest(
 	}
 
 	return resp.StatusCode, resp.Header, resp.Body, nil
+}
+
+// RedirectRequest redirects the request to the specified node
+func (c *Cluster) RedirectRequest(
+	node_id string, request *http.Request,
+) (int, http.Header, io.ReadCloser, error) {
+	node, ok := c.nodes.Load(node_id)
+	if !ok {
+		return 0, nil, nil, errors.New("node not found")
+	}
+
+	ips := c.SortIps(node)
+	if len(ips) == 0 {
+		return 0, nil, nil, errors.New("no available ip found")
+	}
+
+	ip := ips[0]
+
+	return redirectRequestToIp(ip, request)
 }

@@ -1,5 +1,11 @@
 package exception
 
+import (
+	"runtime/debug"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+)
+
 const (
 	PluginDaemonInternalServerError   = "PluginDaemonInternalServerError"
 	PluginDaemonBadRequestError       = "PluginDaemonBadRequestError"
@@ -16,6 +22,11 @@ const (
 )
 
 func InternalServerError(err error) PluginDaemonError {
+	// log the error
+	// get traceback
+	traceback := string(debug.Stack())
+	log.Error("PluginDaemonInternalServerError: %v\n%s", err, traceback)
+
 	return ErrorWithTypeAndCode(err.Error(), PluginDaemonInternalServerError, -500)
 }
 

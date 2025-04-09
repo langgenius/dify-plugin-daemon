@@ -12,19 +12,21 @@ import (
 )
 
 func TestPersistenceStoreAndLoad(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "difyai123456")
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
+		DBType:            "postgresql",
+		DBUsername:        "postgres",
+		DBPassword:        "difyai123456",
+		DBHost:            "localhost",
+		DBDefaultDatabase: "postgres",
+		DBPort:            5432,
+		DBDatabase:        "dify_plugin_daemon",
+		DBSslMode:         "disable",
 	})
 	defer db.Close()
 
@@ -72,12 +74,13 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 }
 
 func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "difyai123456")
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
 	db.Init(&app.Config{
+		DBType:     "postgresql",
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",
@@ -100,12 +103,13 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 }
 
 func TestPersistenceDelete(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "difyai123456")
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
 	db.Init(&app.Config{
+		DBType:     "postgresql",
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",

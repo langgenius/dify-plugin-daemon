@@ -177,10 +177,10 @@ func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 	})
 }
 
-func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, data any) error {
+func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, action access_types.PluginAccessAction, data any) error {
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.ID, s.Message(event, data))
+	s.runtime.Write(s.ID, action, s.Message(event, data))
 	return nil
 }
