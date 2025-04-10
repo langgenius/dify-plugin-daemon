@@ -161,7 +161,7 @@ func TestAcceptConnection(t *testing.T) {
 			}
 
 			gotConnection = true
-			runtime.Stop()
+			runtime.Stop(false)
 		}
 	}()
 
@@ -308,7 +308,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 				return
 			}
 
-			runtime.Stop()
+			runtime.Stop(false)
 		}
 	}()
 
@@ -372,7 +372,7 @@ func TestIncorrectHandshake(t *testing.T) {
 				return
 			}
 
-			runtime.Stop()
+			runtime.Stop(false)
 		}
 	}()
 

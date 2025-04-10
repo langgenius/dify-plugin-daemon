@@ -83,7 +83,7 @@ type (
 
 	PluginClusterLifetime interface {
 		// stop the plugin
-		Stop()
+		Stop(graceful bool)
 		// add a function to be called when the plugin stops
 		OnStop(func())
 		// trigger the stop event
@@ -114,7 +114,7 @@ func (r *PluginRuntime) Stopped() bool {
 	return r.State.Status == PLUGIN_RUNTIME_STATUS_STOPPED
 }
 
-func (r *PluginRuntime) Stop() {
+func (r *PluginRuntime) Stop(graceful bool) {
 	r.State.Status = PLUGIN_RUNTIME_STATUS_STOPPED
 }
 
