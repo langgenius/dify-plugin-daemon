@@ -16,21 +16,21 @@ const (
 	YELLOW = "\033[33m"
 	BLUE   = "\033[34m"
 )
+const PLUGIN_GUIDE = `Before starting, here's some basic knowledge about Plugin types in Dify:
 
-const PLUGIN_GUIDE = `But before starting, you need some basic knowledge about the Plugin types, Plugin supports to extend the following abilities in Dify:
-` + "\n" + BOLD + `- Tool` + RESET + `: ` + GREEN + `Tool Providers like Google Search, Stable Diffusion, etc. it can be used to perform a specific task.` + RESET + `
-` + BOLD + `- Model` + RESET + `: ` + GREEN + `Model Providers like OpenAI, Anthropic, etc. you can use their models to enhance the AI capabilities.` + RESET + `
-` + BOLD + `- Endpoint` + RESET + `: ` + GREEN + `Like Service API in Dify and Ingress in Kubernetes, you can extend a http service as an endpoint and control its logics using your own code.` + RESET + `
-` + BOLD + `- Agent Strategy` + RESET + `: ` + GREEN + `You can implement your own agent strategy like Function Calling, ReAct, ToT, Cot, etc. anyway you want.` + RESET + `
+` + BOLD + `- Tool` + RESET + `: ` + GREEN + `Tool Providers like Google Search, Stable Diffusion, etc. Used to perform specific tasks.` + RESET + `
+` + BOLD + `- Model` + RESET + `: ` + GREEN + `Model Providers like OpenAI, Anthropic, etc. Use their models to enhance AI capabilities.` + RESET + `
+` + BOLD + `- Endpoint` + RESET + `: ` + GREEN + `Similar to Service API in Dify and Ingress in Kubernetes. Extend HTTP services as endpoints with custom logic.` + RESET + `
+` + BOLD + `- Agent Strategy` + RESET + `: ` + GREEN + `Implement your own agent strategies like Function Calling, ReAct, ToT, CoT, etc.` + RESET + `
 
-Based on the ability you want to extend, we have divided the Plugin into four types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, ` + BOLD + `Extension` + RESET + `, and ` + BOLD + `Agent Strategy` + RESET + `.
+Based on the ability you want to extend, Plugins are divided into four types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, ` + BOLD + `Extension` + RESET + `, and ` + BOLD + `Agent Strategy` + RESET + `.
 
-` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `It's a tool provider, but not only limited to tools, you can implement an endpoint there, for example, you need both ` + BLUE + `Sending Message` + RESET + YELLOW + ` and ` + BLUE + `Receiving Message` + RESET + YELLOW + ` if you are building a Discord Bot, ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` are both required.` + RESET + `
-` + BOLD + `- Model` + RESET + `: ` + YELLOW + `Just a model provider, extending others is not allowed.` + RESET + `
-` + BOLD + `- Extension` + RESET + `: ` + YELLOW + `Other times, you may only need a simple http service to extend the functionalities, ` + BOLD + `Extension` + RESET + YELLOW + ` is the right choice for you.` + RESET + `
-` + BOLD + `- Agent Strategy` + RESET + `: ` + YELLOW + `Implement your own logics here, just by focusing on Agent itself` + RESET + `
+` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `A tool provider that can also implement endpoints. For example, building a Discord Bot requires both ` + BLUE + `Sending` + RESET + YELLOW + ` and ` + BLUE + `Receiving Messages` + RESET + YELLOW + `, so both ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` functionality.` + RESET + `
+` + BOLD + `- Model` + RESET + `: ` + YELLOW + `Strictly for model providers, no other extensions allowed.` + RESET + `
+` + BOLD + `- Extension` + RESET + `: ` + YELLOW + `For simple HTTP services that extend functionality.` + RESET + `
+` + BOLD + `- Agent Strategy` + RESET + `: ` + YELLOW + `Implement custom agent logic with a focused approach.` + RESET + `
 
-What's more, we have provided the template for you, you can choose one of them below:
+We've provided templates to help you get started. Choose one of the options below:
 `
 
 type category struct {
