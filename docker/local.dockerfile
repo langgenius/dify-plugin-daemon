@@ -45,7 +45,8 @@ ENV TIKTOKEN_CACHE_DIR=/app/.tiktoken
 RUN mv /usr/lib/python3.12/EXTERNALLY-MANAGED /usr/lib/python3.12/EXTERNALLY-MANAGED.bk \
     && python3 -m pip install uv \
     && uv pip install --system dify_plugin \
-    && python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin());" \
+    && export UV_PATH=$(python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin());") \
+    && echo "UV_PATH=$UV_PATH" >> /etc/environment \
     && python3 -c "import tiktoken; encodings = ['o200k_base', 'cl100k_base', 'p50k_base', 'r50k_base', 'p50k_edit', 'gpt2']; [tiktoken.get_encoding(encoding).special_tokens_set for encoding in encodings]"
 
 ENV PLATFORM=$PLATFORM

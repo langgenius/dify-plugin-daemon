@@ -51,21 +51,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// execute init command, create a virtual environment
 	success := false
 
-	var uvPath string
-	if p.uvPath != "" {
-		uvPath = p.uvPath
-	} else {
-		// using `from uv._find_uv import find_uv_bin; print(find_uv_bin())` to find uv path
-		cmd := exec.Command(p.defaultPythonInterpreterPath, "-c", "from uv._find_uv import find_uv_bin; print(find_uv_bin())")
-		cmd.Dir = p.State.WorkingPath
-		output, err := cmd.Output()
-		if err != nil {
-			return fmt.Errorf("failed to find uv path: %s", err)
-		}
-		uvPath = strings.TrimSpace(string(output))
+	if p.uvPath == "" {
+		return fmt.Errorf("failed to find uv path, please add environment variable UV_PATH")
 	}
 
-	cmd := exec.Command(uvPath, "venv", ".venv", "--python", "3.12")
+	cmd := exec.Command(p.uvPath, "venv", ".venv", "--python", "3.12")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b
@@ -125,7 +115,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	args = append([]string{"pip"}, args...)
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
-	cmd = exec.CommandContext(ctx, uvPath, args...)
+	cmd = exec.CommandContext(ctx, p.uvPath, args...)
 	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
 	if p.HttpProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.HttpProxy))
