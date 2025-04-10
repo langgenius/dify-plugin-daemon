@@ -48,6 +48,7 @@ RUN mv /usr/lib/python3.12/EXTERNALLY-MANAGED /usr/lib/python3.12/EXTERNALLY-MAN
     && python3 -c "from uv._find_uv import find_uv_bin;print(find_uv_bin());" \
     && python3 -c "import tiktoken; encodings = ['o200k_base', 'cl100k_base', 'p50k_base', 'r50k_base', 'p50k_edit', 'gpt2']; [tiktoken.get_encoding(encoding).special_tokens_set for encoding in encodings]"
 
+ENV UV_PATH=/usr/local/bin/uv
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
