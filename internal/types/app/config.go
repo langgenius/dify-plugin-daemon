@@ -107,6 +107,7 @@ type Config struct {
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
+	UvPath                    string `envconfig:"UV_PATH"  default:""`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`

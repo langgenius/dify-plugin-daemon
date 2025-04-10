@@ -51,17 +51,21 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// execute init command, create a virtual environment
 	success := false
 
-	// using `from uv._find_uv import find_uv_bin; print(find_uv_bin())` to find uv path
-	cmd := exec.Command(p.defaultPythonInterpreterPath, "-c", "from uv._find_uv import find_uv_bin; print(find_uv_bin())")
-	cmd.Dir = p.State.WorkingPath
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("failed to find uv path: %s", err)
+	var uvPath string
+	if p.uvPath != "" {
+		uvPath = p.uvPath
+	} else {
+		// using `from uv._find_uv import find_uv_bin; print(find_uv_bin())` to find uv path
+		cmd := exec.Command(p.defaultPythonInterpreterPath, "-c", "from uv._find_uv import find_uv_bin; print(find_uv_bin())")
+		cmd.Dir = p.State.WorkingPath
+		output, err := cmd.Output()
+		if err != nil {
+			return fmt.Errorf("failed to find uv path: %s", err)
+		}
+		uvPath = strings.TrimSpace(string(output))
 	}
 
-	uvPath := strings.TrimSpace(string(output))
-
-	cmd = exec.Command(uvPath, "venv", ".venv", "--python", "3.12")
+	cmd := exec.Command(uvPath, "venv", ".venv", "--python", "3.12")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b

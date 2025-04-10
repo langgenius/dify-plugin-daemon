@@ -56,6 +56,9 @@ type PluginManager struct {
 	// python interpreter path
 	pythonInterpreterPath string
 
+	// uv path
+	uvPath string
+
 	// python env init timeout
 	pythonEnvInitTimeout int
 
@@ -113,6 +116,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		localPluginLaunchingLock:  lock.NewGranularityLock(),
 		maxLaunchingLock:          make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
 		pythonInterpreterPath:     configuration.PythonInterpreterPath,
+		uvPath:                    configuration.UvPath,
 		pythonEnvInitTimeout:      configuration.PythonEnvInitTimeout,
 		pythonCompileAllExtraArgs: configuration.PythonCompileAllExtraArgs,
 		platform:                  configuration.Platform,

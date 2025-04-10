@@ -26,6 +26,7 @@ type LocalPluginRuntime struct {
 	// to create a new python virtual environment, we need a default python interpreter
 	// by using its venv module
 	defaultPythonInterpreterPath string
+	uvPath                       string
 
 	pipMirrorUrl    string
 	pipPreferBinary bool
@@ -45,6 +46,7 @@ type LocalPluginRuntime struct {
 
 type LocalPluginRuntimeConfig struct {
 	PythonInterpreterPath     string
+	UvPath                    string
 	PythonEnvInitTimeout      int
 	PythonCompileAllExtraArgs string
 	HttpProxy                 string
@@ -58,6 +60,7 @@ type LocalPluginRuntimeConfig struct {
 func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
 		defaultPythonInterpreterPath: config.PythonInterpreterPath,
+		uvPath:                       config.UvPath,
 		pythonEnvInitTimeout:         config.PythonEnvInitTimeout,
 		pythonCompileAllExtraArgs:    config.PythonCompileAllExtraArgs,
 		HttpProxy:                    config.HttpProxy,
