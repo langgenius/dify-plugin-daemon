@@ -23,15 +23,18 @@ func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key stri
 }
 
 func (s *wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
-	// save to s3
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
 	return s.oss.Save(filePath, data)
 }
 
 func (s *wrapper) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
-	// load from s3
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
 	return s.oss.Load(filePath)
+}
+
+func (s *wrapper) Exists(tenant_id string, plugin_checksum string, key string) (bool, error) {
+	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	return s.oss.Exists(filePath)
 }
 
 func (s *wrapper) Delete(tenant_id string, plugin_checksum string, key string) error {

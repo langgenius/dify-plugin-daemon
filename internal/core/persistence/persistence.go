@@ -137,3 +137,22 @@ func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int6
 
 	return deletedNum, nil
 }
+
+func (c *Persistence) Exist(tenantId string, pluginId string, key string) (int64, error) {
+	existNum, err := cache.Exist(c.getCacheKey(tenantId, pluginId, key))
+	if err != nil {
+		return 0, err
+	}
+	if existNum > 0 {
+		return existNum, nil
+	}
+	
+	isExist, err := c.storage.Exists(tenantId, pluginId, key)
+	if err != nil {
+		return 0, err
+	}
+	if isExist {
+		return 1, nil
+	}
+	return 0, nil
+}
