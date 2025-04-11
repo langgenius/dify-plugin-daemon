@@ -96,14 +96,15 @@ type InvokeAppSchema struct {
 type StorageOpt string
 
 const (
-	STORAGE_OPT_GET StorageOpt = "get"
-	STORAGE_OPT_SET StorageOpt = "set"
-	STORAGE_OPT_DEL StorageOpt = "del"
+	STORAGE_OPT_GET   StorageOpt = "get"
+	STORAGE_OPT_SET   StorageOpt = "set"
+	STORAGE_OPT_DEL   StorageOpt = "del"
+	STORAGE_OPT_EXIST StorageOpt = "exist"
 )
 
 func isStorageOpt(fl validator.FieldLevel) bool {
 	opt := StorageOpt(fl.Field().String())
-	return opt == STORAGE_OPT_GET || opt == STORAGE_OPT_SET || opt == STORAGE_OPT_DEL
+	return opt == STORAGE_OPT_GET || opt == STORAGE_OPT_SET || opt == STORAGE_OPT_DEL || opt == STORAGE_OPT_EXIST
 }
 
 func init() {

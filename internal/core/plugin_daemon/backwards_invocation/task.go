@@ -541,6 +541,18 @@ func executeDifyInvocationStorageTask(
 			"data":        "ok",
 			"deleted_num": deletedNum,
 		})
+	} else if request.Opt == dify_invocation.STORAGE_OPT_EXIST {
+		existNum, err := persistence.Exist(tenantId, pluginId.PluginID(), request.Key)
+		if err != nil {
+			handle.WriteError(fmt.Errorf("exist data failed: %s", err.Error()))
+			return
+		}
+		isExist := existNum > 0
+
+		handle.WriteResponse("struct", map[string]any{
+			"data":      isExist,
+			"exist_num": existNum,
+		})
 	}
 }
 
