@@ -1,8 +1,8 @@
 name: Plugin Publish Workflow
 
 on:
-  push:
-    branches: [main] # Or your main branch name
+  release:
+    types: [published]
 
 jobs:
   publish:
