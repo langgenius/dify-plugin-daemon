@@ -1,9 +1,10 @@
 package install_service
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	gostrings "strings"
 	"time"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -143,7 +144,7 @@ func UninstallEndpoint(endpoint *models.Endpoint) error {
 		},
 		":",
 	)
-	_ = cache.AutoDelete[models.Endpoint](cacheKey)
+	_, _ = cache.AutoDelete[models.Endpoint](cacheKey)
 	return db.WithTransaction(func(tx *gorm.DB) error {
 		if err := db.Delete(endpoint, tx); err != nil {
 			return err
@@ -220,7 +221,7 @@ func DisabledEndpoint(endpoint_id string, tenant_id string) error {
 			":",
 		)
 
-		_ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
+		_, _ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
 
 		endpoint.Enabled = false
 		if err := db.Update(endpoint, tx); err != nil {

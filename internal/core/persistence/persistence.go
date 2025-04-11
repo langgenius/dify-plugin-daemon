@@ -77,7 +77,10 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 	}
 
 	// delete from cache
-	return cache.Del(c.getCacheKey(tenantId, pluginId, key))
+	if _, err = cache.Del(c.getCacheKey(tenantId, pluginId, key)); err == cache.ErrNotFound {
+		return nil
+	}
+	return err
 }
 
 // TODO: raises specific error to avoid confusion
@@ -103,22 +106,22 @@ func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte
 	return data, nil
 }
 
-func (c *Persistence) Delete(tenantId string, pluginId string, key string) error {
+func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int64, error) {
 	// delete from cache and storage
-	err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
+	deletedNum, err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// state size
 	size, err := c.storage.StateSize(tenantId, pluginId, key)
 	if err != nil {
-		return nil
+		return 0, err
 	}
 
 	err = c.storage.Delete(tenantId, pluginId, key)
 	if err != nil {
-		return nil
+		return 0, err
 	}
 
 	// update storage size
@@ -129,8 +132,8 @@ func (c *Persistence) Delete(tenantId string, pluginId string, key string) error
 		db.Dec(map[string]int64{"size": size}),
 	)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return deletedNum, nil
 }

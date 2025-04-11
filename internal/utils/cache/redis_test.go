@@ -304,7 +304,7 @@ func TestSetAndGet(t *testing.T) {
 	if (*val)["key"] != "hello" {
 		t.Fatalf("Get[\"key\"] should be \"hello\"")
 	}
-	err = Del(strings.Join([]string{TEST_PREFIX, "get-test"}, ":"))
+	_, err = Del(strings.Join([]string{TEST_PREFIX, "get-test"}, ":"))
 	if err != nil {
 		t.Fatal(err)
 	}

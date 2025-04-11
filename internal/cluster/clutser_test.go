@@ -28,7 +28,7 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 	routine.InitPool(1024)
 
 	// delete master key
-	if err := cache.Del(PREEMPTION_LOCK_KEY); err != nil {
+	if _, err := cache.Del(PREEMPTION_LOCK_KEY); err != nil {
 		return nil, err
 	}
 

@@ -132,7 +132,7 @@ func TestPersistenceDelete(t *testing.T) {
 		t.Fatalf("Failed to save data: %v", err)
 	}
 
-	if err := persistence.Delete("tenant_id", "plugin_checksum", key); err != nil {
+	if _, err := persistence.Delete("tenant_id", "plugin_checksum", key); err != nil {
 		t.Fatalf("Failed to delete data: %v", err)
 	}
 
