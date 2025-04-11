@@ -531,14 +531,15 @@ func executeDifyInvocationStorageTask(
 			"data": "ok",
 		})
 	} else if request.Opt == dify_invocation.STORAGE_OPT_DEL {
-		_, err := persistence.Delete(tenantId, pluginId.PluginID(), request.Key)
+		deletedNum, err := persistence.Delete(tenantId, pluginId.PluginID(), request.Key)
 		if err != nil {
 			handle.WriteError(fmt.Errorf("delete data failed: %s", err.Error()))
 			return
 		}
 
 		handle.WriteResponse("struct", map[string]any{
-			"data": "ok",
+			"data":        "ok",
+			"deleted_num": deletedNum,
 		})
 	}
 }
