@@ -13,21 +13,19 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-var (
-	stdio_holder sync.Map                        = sync.Map{}
-	l            *sync.Mutex                     = &sync.Mutex{}
-	listeners    map[string]func(string, []byte) = map[string]func(string, []byte){}
+const (
+	MAX_ERR_MSG_LEN = 1024
+
+	MAX_HEARTBEAT_INTERVAL = 120 * time.Second
 )
 
 type stdioHolder struct {
-	id                     string
 	pluginUniqueIdentifier string
 	writer                 io.WriteCloser
 	reader                 io.ReadCloser
 	errReader              io.ReadCloser
 	l                      *sync.Mutex
 	listener               map[string]func([]byte)
-	errorListener          map[string]func([]byte)
 	started                bool
 
 	// error message container
@@ -41,6 +39,45 @@ type stdioHolder struct {
 
 	// the last time the plugin sent a heartbeat
 	lastActiveAt time.Time
+}
+
+func newStdioHolder(
+	pluginUniqueIdentifier string, writer io.WriteCloser,
+	reader io.ReadCloser, err_reader io.ReadCloser,
+) *stdioHolder {
+	holder := &stdioHolder{
+		pluginUniqueIdentifier: pluginUniqueIdentifier,
+		writer:                 writer,
+		reader:                 reader,
+		errReader:              err_reader,
+		l:                      &sync.Mutex{},
+
+		waitControllerChanLock: &sync.Mutex{},
+		waitingControllerChan:  make(chan bool),
+	}
+
+	return holder
+}
+
+func (s *stdioHolder) setupStdioEventListener(session_id string, listener func([]byte)) {
+	s.l.Lock()
+	defer s.l.Unlock()
+	if s.listener == nil {
+		s.listener = map[string]func([]byte){}
+	}
+
+	s.listener[session_id] = listener
+}
+
+func (s *stdioHolder) removeStdioHandlerListener(session_id string) {
+	s.l.Lock()
+	defer s.l.Unlock()
+	delete(s.listener, session_id)
+}
+
+func (s *stdioHolder) write(data []byte) error {
+	_, err := s.writer.Write(data)
+	return err
 }
 
 func (s *stdioHolder) Error() error {
@@ -66,8 +103,6 @@ func (s *stdioHolder) Stop() {
 		s.waitingControllerChanClosed = true
 	}
 	s.waitControllerChanLock.Unlock()
-
-	stdio_holder.Delete(s.id)
 }
 
 // StartStdout starts to read the stdout of the plugin
@@ -97,9 +132,6 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 			data,
 			"",
 			func(session_id string, data []byte) {
-				for _, listener := range listeners {
-					listener(s.id, data)
-				}
 				// FIX: avoid deadlock to plugin invoke
 				s.l.Lock()
 				tasks := []func(){}
@@ -138,7 +170,10 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 // WriteError writes the error message to the stdio holder
 // it will keep the last 1024 bytes of the error message
 func (s *stdioHolder) WriteError(msg string) {
-	const MAX_ERR_MSG_LEN = 1024
+	if len(msg) > MAX_ERR_MSG_LEN {
+		msg = msg[:MAX_ERR_MSG_LEN]
+	}
+
 	reduce := len(msg) + len(s.errMessage) - MAX_ERR_MSG_LEN
 	if reduce > 0 {
 		if reduce > len(s.errMessage) {
@@ -196,14 +231,15 @@ func (s *stdioHolder) Wait() error {
 		select {
 		case <-ticker.C:
 			// check heartbeat
-			if time.Since(s.lastActiveAt) > 120*time.Second {
+			if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
 				log.Error(
-					"plugin %s is not active for 120 seconds, it may be dead, killing and restarting it",
+					"plugin %s is not active for %f seconds, it may be dead, killing and restarting it",
 					s.pluginUniqueIdentifier,
+					time.Since(s.lastActiveAt).Seconds(),
 				)
 				return plugin_errors.ErrPluginNotActive
 			}
-			if time.Since(s.lastActiveAt) > 60*time.Second {
+			if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
 				log.Warn(
 					"plugin %s is not active for %f seconds, it may be dead",
 					s.pluginUniqueIdentifier,
@@ -217,9 +253,4 @@ func (s *stdioHolder) Wait() error {
 	}
 
 	return nil
-}
-
-// GetID returns the id of the stdio holder
-func (s *stdioHolder) GetID() string {
-	return s.id
 }
