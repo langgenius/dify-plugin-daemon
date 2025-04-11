@@ -43,7 +43,7 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-linux-${{ env.GOARCH }} ./cmd/commandline
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: builds
           path: |
@@ -72,7 +72,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
       - name: Download binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: builds
 
