@@ -13,14 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-var (
-	stdio_holder sync.Map                        = sync.Map{}
-	l            *sync.Mutex                     = &sync.Mutex{}
-	listeners    map[string]func(string, []byte) = map[string]func(string, []byte){}
-)
-
 type stdioHolder struct {
-	id                     string
 	pluginUniqueIdentifier string
 	writer                 io.WriteCloser
 	reader                 io.ReadCloser
@@ -41,6 +34,45 @@ type stdioHolder struct {
 
 	// the last time the plugin sent a heartbeat
 	lastActiveAt time.Time
+}
+
+func newStdioHolder(
+	pluginUniqueIdentifier string, writer io.WriteCloser,
+	reader io.ReadCloser, err_reader io.ReadCloser,
+) *stdioHolder {
+	holder := &stdioHolder{
+		pluginUniqueIdentifier: pluginUniqueIdentifier,
+		writer:                 writer,
+		reader:                 reader,
+		errReader:              err_reader,
+		l:                      &sync.Mutex{},
+
+		waitControllerChanLock: &sync.Mutex{},
+		waitingControllerChan:  make(chan bool),
+	}
+
+	return holder
+}
+
+func (s *stdioHolder) setupStdioEventListener(session_id string, listener func([]byte)) {
+	s.l.Lock()
+	defer s.l.Unlock()
+	if s.listener == nil {
+		s.listener = map[string]func([]byte){}
+	}
+
+	s.listener[session_id] = listener
+}
+
+func (s *stdioHolder) removeStdioHandlerListener(session_id string) {
+	s.l.Lock()
+	defer s.l.Unlock()
+	delete(s.listener, session_id)
+}
+
+func (s *stdioHolder) write(data []byte) error {
+	_, err := s.writer.Write(data)
+	return err
 }
 
 func (s *stdioHolder) Error() error {
@@ -66,8 +98,6 @@ func (s *stdioHolder) Stop() {
 		s.waitingControllerChanClosed = true
 	}
 	s.waitControllerChanLock.Unlock()
-
-	stdio_holder.Delete(s.id)
 }
 
 // StartStdout starts to read the stdout of the plugin
@@ -97,9 +127,6 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 			data,
 			"",
 			func(session_id string, data []byte) {
-				for _, listener := range listeners {
-					listener(s.id, data)
-				}
 				// FIX: avoid deadlock to plugin invoke
 				s.l.Lock()
 				tasks := []func(){}
@@ -217,9 +244,4 @@ func (s *stdioHolder) Wait() error {
 	}
 
 	return nil
-}
-
-// GetID returns the id of the stdio holder
-func (s *stdioHolder) GetID() string {
-	return s.id
 }

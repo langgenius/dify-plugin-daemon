@@ -42,6 +42,8 @@ type LocalPluginRuntime struct {
 	waitStoppedChan []chan bool
 
 	isNotFirstStart bool
+
+	stdioHolder *stdioHolder
 }
 
 type LocalPluginRuntimeConfig struct {
