@@ -101,17 +101,9 @@ jobs:
           spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-${{ matrix.platform }}
 
       - name: Upload signed binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: dify-plugin-darwin-${{ matrix.platform }}
-          repository: langgenius/dify-plugin-daemon
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload signed binary
         run: |
-          # remove already uploaded binaries
-          gh release delete ${{ github.event.release.tag_name }} --yes
-          # upload signed binaries
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-${{ matrix.platform }}.exe --clobber
           gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-${{ matrix.platform }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-${{ matrix.platform }} --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
