@@ -17,6 +17,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 10*60)
 	setDefaultString(&config.PluginStorageType, "local")
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
+	setDefaultInt(&config.DifyPluginServerlessConnectorLaunchTimeout, 240)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
 	setDefaultBoolPtr(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBoolPtr(&config.PluginEndpointEnabled, true)

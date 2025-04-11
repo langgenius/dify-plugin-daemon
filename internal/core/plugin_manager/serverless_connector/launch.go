@@ -15,7 +15,11 @@ var (
 
 // LaunchPlugin uploads the plugin to specific serverless connector
 // return the function url and name
-func LaunchPlugin(originPackage []byte, decoder decoder.PluginDecoder) (*stream.Stream[LaunchFunctionResponse], error) {
+func LaunchPlugin(
+	originPackage []byte,
+	decoder decoder.PluginDecoder,
+	timeout int, // in seconds
+) (*stream.Stream[LaunchFunctionResponse], error) {
 	checksum, err := decoder.Checksum()
 	if err != nil {
 		return nil, err
@@ -56,7 +60,7 @@ func LaunchPlugin(originPackage []byte, decoder decoder.PluginDecoder) (*stream.
 		return response, nil
 	}
 
-	response, err := SetupFunction(manifest, checksum, bytes.NewReader(originPackage))
+	response, err := SetupFunction(manifest, checksum, bytes.NewReader(originPackage), timeout)
 	if err != nil {
 		return nil, err
 	}

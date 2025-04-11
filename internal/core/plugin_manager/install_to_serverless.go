@@ -34,7 +34,7 @@ func (p *PluginManager) InstallToAWSFromPkg(
 		return nil, err
 	}
 
-	response, err := serverless.LaunchPlugin(originalPackager, decoder)
+	response, err := serverless.LaunchPlugin(originalPackager, decoder, p.serverlessConnectorLaunchTimeout)
 	if err != nil {
 		return nil, err
 	}
