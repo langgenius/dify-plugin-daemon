@@ -12,3 +12,6 @@ var ENV_EXAMPLE []byte
 
 //go:embed templates/PRIVACY.md
 var PRIVACY []byte
+
+//go:embed templates/.github/workflows/plugin-publish.yml
+var PLUGIN_PUBLISH_WORKFLOW []byte

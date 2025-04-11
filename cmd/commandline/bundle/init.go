@@ -116,6 +116,11 @@ func InitBundle() {
 		log.Error("Error saving icon.svg: %v", err)
 		return
 	}
+	// create .github/workflows/plugin-publish.yml
+	if err := os.MkdirAll(path.Join(bundleDir, ".github", "workflows"), 0755); err != nil {
+		log.Error("Error creating .github/workflows directory: %v", err)
+		return
+	}
 
 	success = true
 
