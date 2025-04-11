@@ -21,7 +21,6 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 	routine.Submit(nil, func() {
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{1}[0],
@@ -35,7 +34,6 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{1}[0],
@@ -49,7 +47,6 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{2}[0],
@@ -63,7 +60,6 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{3}[0],
@@ -77,7 +73,6 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{3}[0],

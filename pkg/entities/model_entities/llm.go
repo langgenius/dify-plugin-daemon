@@ -105,7 +105,7 @@ type PromptMessageContent struct {
 	EncodeFormat string                   `json:"encode_format"`
 	Format       string                   `json:"format"`
 	MimeType     string                   `json:"mime_type"`
-	Detail       string                   `json:"detail"`      // for multi-modal data
+	Detail       string                   `json:"detail"` // for multi-modal data
 }
 
 type PromptMessageToolCall struct {
@@ -184,7 +184,6 @@ type PromptMessageTool struct {
 
 type LLMResultChunk struct {
 	Model             LLMModel            `json:"model" validate:"required"`
-	PromptMessages    []PromptMessage     `json:"prompt_messages" validate:"required,dive"`
 	SystemFingerprint string              `json:"system_fingerprint" validate:"omitempty"`
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
 }
