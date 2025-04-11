@@ -55,12 +55,6 @@ jobs:
     needs: build
     runs-on: macos-latest
     if: github.repository == 'langgenius/dify-plugin-daemon'
-    strategy:
-      matrix:
-        include:
-          - platform: arm64
-          - platform: amd64
-
     steps:
       - name: Set up certificate
         run: |
@@ -71,39 +65,71 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERT_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
-      - name: Download binary
+      - name: Download arm64 binary
         uses: actions/download-artifact@v4
         with:
-          name: builds-${{ matrix.platform }}
+          name: builds-arm64
 
-      - name: Sign binary
-        run: |
-          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dify-plugin-darwin-${{ matrix.platform }}
+      - name: Download amd64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: builds-amd64
 
-      - name: Create zip for notarization
+      - name: Sign arm64 binary
         run: |
-          zip -r dify-plugin-darwin-${{ matrix.platform }}.zip ./dify-plugin-darwin-${{ matrix.platform }}
+          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dify-plugin-darwin-arm64
 
-      - name: Notarize binary
+      - name: Sign amd64 binary
         run: |
-          xcrun notarytool submit dify-plugin-darwin-${{ matrix.platform }}.zip \
+          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dify-plugin-darwin-amd64
+
+      - name: Create zip for arm64 notarization
+        run: |
+          zip -r dify-plugin-darwin-arm64.zip ./dify-plugin-darwin-arm64
+
+      - name: Create zip for amd64 notarization
+        run: |
+          zip -r dify-plugin-darwin-amd64.zip ./dify-plugin-darwin-amd64
+
+      - name: Notarize arm64 binary
+        run: |
+          xcrun notarytool submit dify-plugin-darwin-arm64.zip \
             --apple-id "${{ secrets.AC_USERNAME }}" \
             --password "${{ secrets.AC_PASSWORD }}" \
             --team-id "${{ secrets.TEAM_ID }}" \
             --wait
 
-      - name: Staple notarization ticket to binary
+      - name: Notarize amd64 binary
         run: |
-          xcrun stapler staple ./dify-plugin-darwin-${{ matrix.platform }}
+          xcrun notarytool submit dify-plugin-darwin-amd64.zip \
+            --apple-id "${{ secrets.AC_USERNAME }}" \
+            --password "${{ secrets.AC_PASSWORD }}" \
+            --team-id "${{ secrets.TEAM_ID }}" \
+            --wait
 
-      - name: Verify signature
+      - name: Staple notarization ticket to arm64 binary
         run: |
-          spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-${{ matrix.platform }}
+          xcrun stapler staple ./dify-plugin-darwin-arm64
 
-      - name: Upload signed binary
+      - name: Staple notarization ticket to amd64 binary
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-${{ matrix.platform }}.exe --clobber
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-${{ matrix.platform }} --clobber
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-${{ matrix.platform }} --clobber
+          xcrun stapler staple ./dify-plugin-darwin-amd64
+
+      - name: Verify arm64 signature
+        run: |
+          spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-arm64
+
+      - name: Verify amd64 signature
+        run: |
+          spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-amd64
+
+      - name: Upload signed binaries
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-arm64.exe --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-arm64 --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-arm64 --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-amd64.exe --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-amd64 --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-amd64 --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
