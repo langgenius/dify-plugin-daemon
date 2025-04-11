@@ -11,8 +11,7 @@ type LocalPluginRuntime struct {
 	basic_runtime.BasicChecksum
 	plugin_entities.PluginRuntime
 
-	waitChan   chan bool
-	ioIdentity string
+	waitChan chan bool
 
 	// python interpreter path, currently only support python
 	pythonInterpreterPath string

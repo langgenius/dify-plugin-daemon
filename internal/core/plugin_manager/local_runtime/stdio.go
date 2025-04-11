@@ -13,6 +13,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
+const (
+	MAX_ERR_MSG_LEN = 1024
+
+	MAX_HEARTBEAT_INTERVAL = 120 * time.Second
+)
+
 type stdioHolder struct {
 	pluginUniqueIdentifier string
 	writer                 io.WriteCloser
@@ -20,7 +26,6 @@ type stdioHolder struct {
 	errReader              io.ReadCloser
 	l                      *sync.Mutex
 	listener               map[string]func([]byte)
-	errorListener          map[string]func([]byte)
 	started                bool
 
 	// error message container
@@ -165,7 +170,10 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 // WriteError writes the error message to the stdio holder
 // it will keep the last 1024 bytes of the error message
 func (s *stdioHolder) WriteError(msg string) {
-	const MAX_ERR_MSG_LEN = 1024
+	if len(msg) > MAX_ERR_MSG_LEN {
+		msg = msg[:MAX_ERR_MSG_LEN]
+	}
+
 	reduce := len(msg) + len(s.errMessage) - MAX_ERR_MSG_LEN
 	if reduce > 0 {
 		if reduce > len(s.errMessage) {
@@ -223,14 +231,15 @@ func (s *stdioHolder) Wait() error {
 		select {
 		case <-ticker.C:
 			// check heartbeat
-			if time.Since(s.lastActiveAt) > 120*time.Second {
+			if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
 				log.Error(
-					"plugin %s is not active for 120 seconds, it may be dead, killing and restarting it",
+					"plugin %s is not active for %f seconds, it may be dead, killing and restarting it",
 					s.pluginUniqueIdentifier,
+					time.Since(s.lastActiveAt).Seconds(),
 				)
 				return plugin_errors.ErrPluginNotActive
 			}
-			if time.Since(s.lastActiveAt) > 60*time.Second {
+			if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
 				log.Warn(
 					"plugin %s is not active for %f seconds, it may be dead",
 					s.pluginUniqueIdentifier,
