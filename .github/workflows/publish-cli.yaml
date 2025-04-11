@@ -74,7 +74,7 @@ jobs:
       - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: builds-${{ env.GOARCH }}
+          name: builds-${{ matrix.platform }}
 
       - name: Sign binary
         run: |
