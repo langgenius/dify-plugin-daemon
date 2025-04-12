@@ -136,6 +136,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		PythonCompileAllExtraArgs: p.pythonCompileAllExtraArgs,
 		HttpProxy:                 p.HttpProxy,
 		HttpsProxy:                p.HttpsProxy,
+		NoProxy:                   p.NoProxy,
 		PipMirrorUrl:              p.pipMirrorUrl,
 		PipPreferBinary:           p.pipPreferBinary,
 		PipExtraArgs:              p.pipExtraArgs,

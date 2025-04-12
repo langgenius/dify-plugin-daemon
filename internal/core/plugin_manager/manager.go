@@ -65,6 +65,7 @@ type PluginManager struct {
 	// proxy settings
 	HttpProxy  string
 	HttpsProxy string
+	NoProxy    string
 
 	// pip mirror url
 	pipMirrorUrl string
@@ -125,6 +126,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		platform:                         configuration.Platform,
 		HttpProxy:                        configuration.HttpProxy,
 		HttpsProxy:                       configuration.HttpsProxy,
+		NoProxy:                          configuration.NoProxy,
 		pipMirrorUrl:                     configuration.PipMirrorUrl,
 		pipPreferBinary:                  *configuration.PipPreferBinary,
 		pipVerbose:                       *configuration.PipVerbose,

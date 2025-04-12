@@ -39,6 +39,9 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 		if r.HttpProxy != "" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.HttpProxy))
 		}
+		if r.NoProxy != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", r.NoProxy))
+		}
 		return cmd, nil
 	}
 
