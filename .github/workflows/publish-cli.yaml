@@ -3,10 +3,6 @@ name: Build and Publish CLI
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - main
-      - feat/sign-apple-os-cli
 
 concurrency:
   group: publish-cli-${{ github.head_ref || github.run_id }}
