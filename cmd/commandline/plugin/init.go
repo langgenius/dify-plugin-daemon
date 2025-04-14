@@ -191,7 +191,7 @@ func (m model) createPlugin() {
 	}
 
 	if m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion() != "" {
-		manifest.Meta.MinimalDifyVersion = parser.ToPtr(m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion())
+		manifest.Meta.MinimumDifyVersion = parser.ToPtr(m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion())
 	}
 
 	switch m.subMenus[SUB_MENU_KEY_LANGUAGE].(language).Language() {
