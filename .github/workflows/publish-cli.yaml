@@ -107,10 +107,11 @@ jobs:
           
           wait
 
-      - name: Staple notarization ticket to binaries
-        run: |
-          xcrun stapler staple ./dify-plugin-darwin-arm64
-          xcrun stapler staple ./dify-plugin-darwin-amd64
+      # Staple is not needed for CLI
+      # - name: Staple notarization ticket to binaries
+      #   run: |
+      #     xcrun stapler staple ./dify-plugin-darwin-arm64
+      #     xcrun stapler staple ./dify-plugin-darwin-amd64
 
       - name: Verify signatures
         run: |
