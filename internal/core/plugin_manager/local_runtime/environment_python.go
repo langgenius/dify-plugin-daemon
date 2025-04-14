@@ -133,6 +133,9 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	if p.HttpsProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", p.HttpsProxy))
 	}
+	if p.NoProxy != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", p.NoProxy))
+	}
 	cmd.Dir = p.State.WorkingPath
 
 	// get stdout and stderr

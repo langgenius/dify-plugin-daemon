@@ -35,6 +35,7 @@ type LocalPluginRuntime struct {
 	// proxy settings
 	HttpProxy  string
 	HttpsProxy string
+	NoProxy    string
 
 	waitChanLock    sync.Mutex
 	waitStartedChan []chan bool
@@ -52,6 +53,7 @@ type LocalPluginRuntimeConfig struct {
 	PythonCompileAllExtraArgs string
 	HttpProxy                 string
 	HttpsProxy                string
+	NoProxy                   string
 	PipMirrorUrl              string
 	PipPreferBinary           bool
 	PipVerbose                bool
@@ -66,6 +68,7 @@ func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime 
 		pythonCompileAllExtraArgs:    config.PythonCompileAllExtraArgs,
 		HttpProxy:                    config.HttpProxy,
 		HttpsProxy:                   config.HttpsProxy,
+		NoProxy:                      config.NoProxy,
 		pipMirrorUrl:                 config.PipMirrorUrl,
 		pipPreferBinary:              config.PipPreferBinary,
 		pipVerbose:                   config.PipVerbose,
