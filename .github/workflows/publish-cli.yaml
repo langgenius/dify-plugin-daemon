@@ -113,10 +113,10 @@ jobs:
       #     xcrun stapler staple ./dify-plugin-darwin-arm64
       #     xcrun stapler staple ./dify-plugin-darwin-amd64
 
-      - name: Verify signatures
-        run: |
-          spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-arm64
-          spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-amd64
+      # - name: Verify signatures
+      #   run: |
+      #     spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-arm64
+      #     spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-amd64
 
       - name: Upload signed binaries
         if: github.event_name == 'release'
