@@ -126,9 +126,10 @@ type PluginRunner struct {
 }
 
 type PluginMeta struct {
-	Version string           `json:"version" yaml:"version" validate:"required,version"`
-	Arch    []constants.Arch `json:"arch" yaml:"arch" validate:"required,dive,is_available_arch"`
-	Runner  PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
+	Version            string           `json:"version" yaml:"version" validate:"required,version"`
+	Arch               []constants.Arch `json:"arch" yaml:"arch" validate:"required,dive,is_available_arch"`
+	Runner             PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
+	MinimumDifyVersion *string          `json:"minimum_dify_version" yaml:"minimum_dify_version"`
 }
 
 type PluginExtensions struct {

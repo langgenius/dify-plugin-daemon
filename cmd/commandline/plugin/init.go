@@ -39,10 +39,11 @@ func InitPlugin() {
 type subMenuKey string
 
 const (
-	SUB_MENU_KEY_PROFILE    subMenuKey = "profile"
-	SUB_MENU_KEY_LANGUAGE   subMenuKey = "language"
-	SUB_MENU_KEY_CATEGORY   subMenuKey = "category"
-	SUB_MENU_KEY_PERMISSION subMenuKey = "permission"
+	SUB_MENU_KEY_PROFILE         subMenuKey = "profile"
+	SUB_MENU_KEY_LANGUAGE        subMenuKey = "language"
+	SUB_MENU_KEY_CATEGORY        subMenuKey = "category"
+	SUB_MENU_KEY_PERMISSION      subMenuKey = "permission"
+	SUB_MENU_KEY_VERSION_REQUIRE subMenuKey = "version_require"
 )
 
 type model struct {
@@ -56,10 +57,11 @@ type model struct {
 func initialize() model {
 	m := model{}
 	m.subMenus = map[subMenuKey]subMenu{
-		SUB_MENU_KEY_PROFILE:    newProfile(),
-		SUB_MENU_KEY_LANGUAGE:   newLanguage(),
-		SUB_MENU_KEY_CATEGORY:   newCategory(),
-		SUB_MENU_KEY_PERMISSION: newPermission(plugin_entities.PluginPermissionRequirement{}),
+		SUB_MENU_KEY_PROFILE:         newProfile(),
+		SUB_MENU_KEY_LANGUAGE:        newLanguage(),
+		SUB_MENU_KEY_CATEGORY:        newCategory(),
+		SUB_MENU_KEY_PERMISSION:      newPermission(plugin_entities.PluginPermissionRequirement{}),
+		SUB_MENU_KEY_VERSION_REQUIRE: newVersionRequire(),
 	}
 	m.currentSubMenu = SUB_MENU_KEY_PROFILE
 
@@ -68,6 +70,7 @@ func initialize() model {
 		SUB_MENU_KEY_LANGUAGE,
 		SUB_MENU_KEY_CATEGORY,
 		SUB_MENU_KEY_PERMISSION,
+		SUB_MENU_KEY_VERSION_REQUIRE,
 	}
 
 	return m
@@ -154,6 +157,8 @@ func (m model) createPlugin() {
 		},
 	}
 
+	fmt.Println(m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion())
+
 	categoryString := m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category()
 	if categoryString == "tool" {
 		manifest.Plugins.Tools = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
@@ -183,6 +188,10 @@ func (m model) createPlugin() {
 			constants.ARM64,
 		},
 		Runner: plugin_entities.PluginRunner{},
+	}
+
+	if m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion() != "" {
+		manifest.Meta.MinimumDifyVersion = parser.ToPtr(m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion())
 	}
 
 	switch m.subMenus[SUB_MENU_KEY_LANGUAGE].(language).Language() {
