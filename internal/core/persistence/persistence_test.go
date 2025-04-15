@@ -198,7 +198,7 @@ func TestPersistencePathTraversal(t *testing.T) {
 		{
 			name:    "double slash",
 			key:     "test//test.txt",
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:    "backslash",
@@ -208,7 +208,7 @@ func TestPersistencePathTraversal(t *testing.T) {
 		{
 			name:    "mixed traversal",
 			key:     "test/../test.txt",
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:    "absolute path",
@@ -232,7 +232,7 @@ func TestPersistencePathTraversal(t *testing.T) {
 			}
 
 			// Test Delete
-			err = persistence.Delete("tenant_id", "plugin_checksum", tc.key)
+			_, err = persistence.Delete("tenant_id", "plugin_checksum", tc.key)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tc.wantErr)
 			}

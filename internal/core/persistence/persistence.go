@@ -3,6 +3,7 @@ package persistence
 import (
 	"encoding/hex"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ func (c *Persistence) getCacheKey(tenantId string, pluginId string, key string) 
 }
 
 func (c *Persistence) checkPathTraversal(key string) error {
+	key = path.Clean(key)
 	if strings.Contains(key, "..") || strings.Contains(key, "//") || strings.Contains(key, "\\") {
 		return fmt.Errorf("invalid key: path traversal attempt detected")
 	}
