@@ -19,6 +19,7 @@ func NewWrapper(oss oss.OSS, persistenceStoragePath string) *wrapper {
 }
 
 func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key string) string {
+	key = path.Clean(key)
 	return path.Join(s.persistenceStoragePath, tenant_id, plugin_checksum, key)
 }
 
