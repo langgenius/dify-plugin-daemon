@@ -101,6 +101,38 @@ python -m main
 
 Refresh the page of your Dify instance, you should be able to see your Plugin in the list now, but it will be marked as `debugging`, you can use it normally, but not recommended for production.
 
+### Publish and Update the Plugin
+
+To streamline your plugin update workflow, you can configure GitHub Actions to automatically create PRs to the Dify plugin repository whenever you create a release.
+
+##### Prerequisites
+
+- Your plugin source repository
+- A fork of the dify-plugins repository
+- Proper plugin directory structure in your fork
+
+#### Configure GitHub Action
+
+1. Create a Personal Access Token with write permissions to your forked repository
+2. Add it as a secret named `PLUGIN_ACTION` in your source repository settings
+3. Create a workflow file at `.github/workflows/plugin-publish.yml`
+
+#### Usage
+
+1. Update your code and the version in your `manifest.yaml`
+2. Create a release in your source repository
+3. The action automatically packages your plugin and creates a PR to your forked repository
+
+#### Benefits
+
+- Eliminates manual packaging and PR creation steps
+- Ensures consistency in your release process
+- Saves time during frequent updates
+
+---
+
+For detailed setup instructions and example configuration, visit: [GitHub Actions Workflow Documentation](https://docs.dify.ai/plugins/publish-plugins/plugin-auto-publish-pr)
+
 ### Package the Plugin
 
 After all, just package your Plugin by running the following command:
