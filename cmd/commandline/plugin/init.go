@@ -256,6 +256,11 @@ func (m model) createPlugin() {
 		log.Error("failed to write PRIVACY file: %s", err)
 		return
 	}
+	// create github CI workflow
+	if err := writeFile(filepath.Join(pluginDir, ".github", "workflows", "plugin-publish.yml"), string(PLUGIN_PUBLISH_WORKFLOW)); err != nil {
+		log.Error("failed to write plugin-publish workflow file: %s", err)
+		return
+	}
 
 	err = createPythonEnvironment(
 		pluginDir,

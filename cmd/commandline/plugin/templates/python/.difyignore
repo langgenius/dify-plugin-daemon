@@ -170,6 +170,7 @@ cython_debug/
 # Git
 .git/
 .gitignore
+.github/
 
 # Mac
 .DS_Store
