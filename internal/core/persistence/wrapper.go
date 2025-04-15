@@ -1,7 +1,9 @@
 package persistence
 
 import (
+	"fmt"
 	"path"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 )
@@ -19,16 +21,31 @@ func NewWrapper(oss oss.OSS, persistenceStoragePath string) *wrapper {
 }
 
 func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key string) string {
+	// Check for path traversal attempts
+	if strings.Contains(key, "..") || strings.Contains(key, "//") || strings.Contains(key, "\\") {
+		return ""
+	}
+
+	// Clean the key to remove any potential path traversal attempts
+	key = path.Clean(key)
+
+	// Join the paths
 	return path.Join(s.persistenceStoragePath, tenant_id, plugin_checksum, key)
 }
 
 func (s *wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	if filePath == "" {
+		return fmt.Errorf("invalid key: path traversal attempt detected")
+	}
 	return s.oss.Save(filePath, data)
 }
 
 func (s *wrapper) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	if filePath == "" {
+		return nil, fmt.Errorf("invalid key: path traversal attempt detected")
+	}
 	return s.oss.Load(filePath)
 }
 
@@ -39,11 +56,17 @@ func (s *wrapper) Exists(tenant_id string, plugin_checksum string, key string) (
 
 func (s *wrapper) Delete(tenant_id string, plugin_checksum string, key string) error {
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	if filePath == "" {
+		return fmt.Errorf("invalid key: path traversal attempt detected")
+	}
 	return s.oss.Delete(filePath)
 }
 
 func (s *wrapper) StateSize(tenant_id string, plugin_checksum string, key string) (int64, error) {
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	if filePath == "" {
+		return 0, fmt.Errorf("invalid key: path traversal attempt detected")
+	}
 	state, err := s.oss.State(filePath)
 	if err != nil {
 		return 0, err

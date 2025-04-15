@@ -147,3 +147,95 @@ func TestPersistenceDelete(t *testing.T) {
 		t.Fatalf("Cache data not deleted: %v", err)
 	}
 }
+
+func TestPersistencePathTraversal(t *testing.T) {
+	err := cache.InitRedisClient("localhost:6379", "difyai123456", false, 0)
+	if err != nil {
+		t.Fatalf("Failed to init redis client: %v", err)
+	}
+	defer cache.Close()
+
+	db.Init(&app.Config{
+		DBType:            "postgresql",
+		DBUsername:        "postgres",
+		DBPassword:        "difyai123456",
+		DBHost:            "localhost",
+		DBDefaultDatabase: "postgres",
+		DBPort:            5432,
+		DBDatabase:        "dify_plugin_daemon",
+		DBSslMode:         "disable",
+	})
+	defer db.Close()
+
+	oss := local.NewLocalStorage("./storage")
+
+	InitPersistence(oss, &app.Config{
+		PersistenceStoragePath:    "./persistence_storage",
+		PersistenceStorageMaxSize: 1024 * 1024 * 1024,
+	})
+
+	// Test cases for path traversal
+	testCases := []struct {
+		name    string
+		key     string
+		wantErr bool
+	}{
+		{
+			name:    "normal key",
+			key:     "test.txt",
+			wantErr: false,
+		},
+		{
+			name:    "parent directory traversal",
+			key:     "../test.txt",
+			wantErr: true,
+		},
+		{
+			name:    "multiple parent directory traversal",
+			key:     "../../test.txt",
+			wantErr: true,
+		},
+		{
+			name:    "double slash",
+			key:     "test//test.txt",
+			wantErr: true,
+		},
+		{
+			name:    "backslash",
+			key:     "test\\test.txt",
+			wantErr: true,
+		},
+		{
+			name:    "mixed traversal",
+			key:     "test/../test.txt",
+			wantErr: true,
+		},
+		{
+			name:    "absolute path",
+			key:     "/etc/passwd",
+			wantErr: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Test Save
+			err := persistence.Save("tenant_id", "plugin_checksum", -1, tc.key, []byte("data"))
+			if err != nil && !tc.wantErr {
+				t.Errorf("Save() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			// Test Load
+			_, err = persistence.Load("tenant_id", "plugin_checksum", tc.key)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Load() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			// Test Delete
+			err = persistence.Delete("tenant_id", "plugin_checksum", tc.key)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tc.wantErr)
+			}
+		})
+	}
+}
