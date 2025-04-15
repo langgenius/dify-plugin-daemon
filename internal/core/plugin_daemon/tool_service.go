@@ -27,7 +27,7 @@ func InvokeTool(
 	](
 		session,
 		request,
-		12800,
+		128,
 	)
 
 	if err != nil {
