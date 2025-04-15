@@ -23,13 +23,18 @@ type Stream[T any] struct {
 	filter      []func(T) error
 
 	err error
+
+	// Condition variable for blocking writes when queue is full
+	writeCond *sync.Cond
 }
 
 func NewStream[T any](max int) *Stream[T] {
+	mutex := &sync.Mutex{}
 	return &Stream[T]{
-		l:   &sync.Mutex{},
-		sig: make(chan bool),
-		max: max,
+		l:         mutex,
+		sig:       make(chan bool),
+		max:       max,
+		writeCond: sync.NewCond(mutex),
 	}
 }
 
@@ -82,6 +87,9 @@ func (r *Stream[T]) Read() (T, error) {
 
 	if r.q.Len() > 0 {
 		data := r.q.PopFront()
+		// Signal any waiting writers that there's now space in the queue
+		r.writeCond.Signal()
+
 		for _, f := range r.filter {
 			err := f(data)
 			if err != nil {
@@ -140,6 +148,34 @@ func (r *Stream[T]) Write(data T) error {
 	return nil
 }
 
+// WriteBlocking writes data to the stream,
+// blocks if the buffer is full until space becomes available
+func (r *Stream[T]) WriteBlocking(data T) {
+	if atomic.LoadInt32(&r.closed) == 1 {
+		return
+	}
+
+	r.l.Lock()
+	defer r.l.Unlock()
+
+	// Wait until there's space in the queue or the stream is closed
+	for r.q.Len() >= r.max && atomic.LoadInt32(&r.closed) == 0 {
+		r.writeCond.Wait()
+	}
+
+	// Check if the stream was closed while waiting
+	if atomic.LoadInt32(&r.closed) == 1 {
+		return
+	}
+
+	r.q.PushBack(data)
+	if r.q.Len() == 1 {
+		if r.listening {
+			r.sig <- true
+		}
+	}
+}
+
 // Close closes the stream
 func (r *Stream[T]) Close() {
 	if !atomic.CompareAndSwapInt32(&r.closed, 0, 1) {
@@ -155,6 +191,11 @@ func (r *Stream[T]) Close() {
 	default:
 	}
 	close(r.sig)
+
+	// Wake up any waiting writers
+	r.l.Lock()
+	r.writeCond.Broadcast()
+	r.l.Unlock()
 
 	for _, f := range r.onClose {
 		f()

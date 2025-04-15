@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStreamGenerator(t *testing.T) {
@@ -89,5 +91,61 @@ func TestStreamGeneratorWrapper(t *testing.T) {
 
 	if nums != 10000 {
 		t.Errorf("Expected 10000 messages, got %d", nums)
+	}
+}
+
+func TestStreamBlockingWrite(t *testing.T) {
+	response := NewStream[int](1)
+	response.Write(1)
+
+	const numWrites = 1000000
+
+	go func() {
+		for i := 0; i < numWrites; i++ {
+			response.WriteBlocking(1)
+			time.Sleep(time.Microsecond)
+		}
+		response.Close()
+	}()
+
+	received := 0
+	done := make(chan bool)
+	go func() {
+		defer func() {
+			close(done)
+		}()
+		// wait for the blocking write to happen
+		time.Sleep(1 * time.Second)
+		for response.Next() {
+			_, err := response.Read()
+			if err != nil {
+				t.Error(err)
+			}
+			received += 1
+		}
+	}()
+
+	<-done
+	assert.Equal(t, received, numWrites+1)
+}
+
+// WriteBlocking should return directly if the stream is closed
+func TestStreamCloseBlockingWrite(t *testing.T) {
+	response := NewStream[int](1)
+	response.Write(1)
+
+	done := make(chan bool)
+
+	go func() {
+		response.WriteBlocking(1)
+		close(done)
+	}()
+
+	response.Close()
+
+	select {
+	case <-done:
+	case <-time.After(1 * time.Second):
+		t.Error("Expected the blocking write to be done")
 	}
 }
