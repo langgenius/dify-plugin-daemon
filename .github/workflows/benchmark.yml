@@ -22,7 +22,7 @@ jobs:
 
       - name: Run benchmark
         run: |
-          go test -bench=. -benchmem ./... > result.txt
+          go test -run=^$ -bench=. -benchmem ./... > result.txt
 
       - name: Store benchmark result
         uses: rhysd/github-action-benchmark@v1
