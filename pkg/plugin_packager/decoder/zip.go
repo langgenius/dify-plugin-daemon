@@ -31,8 +31,8 @@ type ZipPluginDecoder struct {
 }
 
 type ThirdPartySignatureVerificationConfig struct {
-    Enabled bool
-    PublicKeyPaths []string
+	Enabled        bool
+	PublicKeyPaths []string
 }
 
 func newZipPluginDecoder(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
@@ -42,8 +42,8 @@ func newZipPluginDecoder(binary []byte, thirdPartySignatureVerificationConfig *T
 	}
 
 	decoder := &ZipPluginDecoder{
-		reader: reader,
-		err:    err,
+		reader:                                reader,
+		err:                                   err,
 		thirdPartySignatureVerificationConfig: thirdPartySignatureVerificationConfig,
 	}
 
@@ -232,7 +232,9 @@ func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error)
 }
 
 func (z *ZipPluginDecoder) Assets() (map[string][]byte, error) {
-	return z.PluginDecoderHelper.Assets(z)
+	// FIXES: https://github.com/langgenius/dify-plugin-daemon/issues/166
+	// zip file is os-independent, `/` is the separator
+	return z.PluginDecoderHelper.Assets(z, "/")
 }
 
 func (z *ZipPluginDecoder) Checksum() (string, error) {

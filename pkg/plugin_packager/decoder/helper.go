@@ -292,7 +292,7 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 	return dec, nil
 }
 
-func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, error) {
+func (p *PluginDecoderHelper) Assets(decoder PluginDecoder, separator string) (map[string][]byte, error) {
 	files, err := decoder.ReadDir("_assets")
 	if err != nil {
 		return nil, err
@@ -305,7 +305,7 @@ func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, 
 			return nil, err
 		}
 		// trim _assets
-		file, _ = strings.CutPrefix(file, "_assets"+string(filepath.Separator))
+		file, _ = strings.CutPrefix(file, "_assets"+separator)
 		assets[file] = content
 	}
 

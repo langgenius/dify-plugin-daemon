@@ -174,7 +174,8 @@ func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) 
 }
 
 func (d *FSPluginDecoder) Assets() (map[string][]byte, error) {
-	return d.PluginDecoderHelper.Assets(d)
+	// use filepath.Separator as the separator to make it os-independent
+	return d.PluginDecoderHelper.Assets(d, string(filepath.Separator))
 }
 
 func (d *FSPluginDecoder) Checksum() (string, error) {
