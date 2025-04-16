@@ -198,6 +198,8 @@ func runOnce(
 var openaiPluginZip []byte
 
 func BenchmarkLocalOpenAILLMInvocation(b *testing.B) {
+	log.SetShowLog(false)
+
 	routine.InitPool(10000)
 
 	const concurrency = 100
