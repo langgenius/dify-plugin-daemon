@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.22"
 
       - name: Setup License
         run: go run cmd/license/generate/main.go
@@ -24,12 +24,15 @@ jobs:
         run: |
           go test -run=^$ -bench=. -benchmem ./... > result.txt
 
+      - name: Remove License
+        run: git stash
+
       - name: Store benchmark result
         uses: rhysd/github-action-benchmark@v1
         with:
           name: Go Benchmark
-          tool: 'go'
+          tool: "go"
           output-file-path: result.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          benchmark-data-dir-path: 'benchmark-data'
+          benchmark-data-dir-path: "benchmark-data"
           auto-push: true
