@@ -320,3 +320,9 @@ func (m *MockedDifyInvocation) UploadFile(payload *dify_invocation.UploadFileReq
 		URL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 	}, nil
 }
+
+func (m *MockedDifyInvocation) FetchApp(payload *dify_invocation.FetchAppRequest) (map[string]any, error) {
+	return map[string]any{
+		"name": "test",
+	}, nil
+}

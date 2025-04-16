@@ -148,6 +148,12 @@ var (
 			},
 			"error": "permission denied, you need to enable storage access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_FETCH_APP: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeApp()
+			},
+			"error": "permission denied, you need to enable app access in plugin manifest",
+		},
 	}
 )
 
@@ -240,6 +246,9 @@ var (
 		},
 		dify_invocation.INVOKE_TYPE_UPLOAD_FILE: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationUploadFileTask)
+		},
+		dify_invocation.INVOKE_TYPE_FETCH_APP: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationFetchAppTask)
 		},
 	}
 )
@@ -576,6 +585,19 @@ func executeDifyInvocationUploadFileTask(
 	response, err := handle.backwardsInvocation.UploadFile(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("upload file failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
+}
+
+func executeDifyInvocationFetchAppTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.FetchAppRequest,
+) {
+	response, err := handle.backwardsInvocation.FetchApp(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("fetch app failed: %s", err.Error()))
 		return
 	}
 

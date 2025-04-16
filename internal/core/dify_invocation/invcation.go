@@ -33,4 +33,6 @@ type BackwardsInvocation interface {
 	InvokeSummary(payload *InvokeSummaryRequest) (*InvokeSummaryResponse, error)
 	// UploadFile
 	UploadFile(payload *UploadFileRequest) (*UploadFileResponse, error)
+	// FetchApp
+	FetchApp(payload *FetchAppRequest) (map[string]any, error)
 }

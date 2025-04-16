@@ -31,6 +31,7 @@ const (
 	INVOKE_TYPE_ENCRYPT                  InvokeType = "encrypt"
 	INVOKE_TYPE_SYSTEM_SUMMARY           InvokeType = "system_summary"
 	INVOKE_TYPE_UPLOAD_FILE              InvokeType = "upload_file"
+	INVOKE_TYPE_FETCH_APP                InvokeType = "fetch_app"
 )
 
 type InvokeLLMSchema struct {
@@ -256,4 +257,9 @@ type UploadFileRequest struct {
 
 type UploadFileResponse struct {
 	URL string `json:"url"`
+}
+
+type FetchAppRequest struct {
+	BaseInvokeDifyRequest
+	AppId string `json:"app_id" validate:"required"`
 }

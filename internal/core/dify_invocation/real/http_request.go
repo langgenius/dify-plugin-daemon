@@ -169,3 +169,20 @@ func (i *RealBackwardsInvocation) InvokeSummary(payload *dify_invocation.InvokeS
 func (i *RealBackwardsInvocation) UploadFile(payload *dify_invocation.UploadFileRequest) (*dify_invocation.UploadFileResponse, error) {
 	return Request[dify_invocation.UploadFileResponse](i, "POST", "upload/file/request", http_requests.HttpPayloadJson(payload))
 }
+
+func (i *RealBackwardsInvocation) FetchApp(payload *dify_invocation.FetchAppRequest) (map[string]any, error) {
+	type resp struct {
+		Data map[string]any `json:"data,omitempty"`
+	}
+
+	data, err := Request[resp](i, "POST", "fetch/app/info", http_requests.HttpPayloadJson(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	if data.Data == nil {
+		return nil, fmt.Errorf("data is nil")
+	}
+
+	return data.Data, nil
+}
