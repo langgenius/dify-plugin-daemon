@@ -57,6 +57,10 @@ func (b *InstalledBucket) List() ([]plugin_entities.PluginUniqueIdentifier, erro
 		if path.IsDir {
 			continue
 		}
+		// skip hidden files
+		if strings.HasPrefix(path.Path, ".") {
+			continue
+		}
 		// remove prefix
 		identifier, err := plugin_entities.NewPluginUniqueIdentifier(
 			strings.TrimPrefix(path.Path, b.installedPath),
