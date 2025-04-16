@@ -22,7 +22,7 @@ jobs:
 
       - name: Run benchmark
         run: |
-          go test -run=^$ -bench=. -benchmem -benchtime=30s ./... > result.txt
+          go test -run=^$ -bench=. -benchmem -benchtime=30s ./...
 
       - name: Remove License
         run: git stash
