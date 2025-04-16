@@ -375,9 +375,6 @@ func (p *LocalPluginRuntime) patchPluginSdk(requirementsPath string) error {
 
 		pluginSdkPath := path.Dir(strings.TrimSpace(string(output)))
 		patchPath := path.Join(pluginSdkPath, "interfaces/model/ai_model.py")
-		if _, err := os.Stat(patchPath); err != nil {
-			return fmt.Errorf("failed to find the patch file: %s", err)
-		}
 
 		// apply the patch
 		if _, err := os.Stat(patchPath); err != nil {
