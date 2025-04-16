@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: benchmark-${{ github.event_name == 'pull_request' && github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   benchmark:
     runs-on: ubuntu-latest
@@ -17,10 +21,18 @@ jobs:
         with:
           go-version: "1.22"
 
+      # setup uv and get uv path to env
+      - name: Install uv
+        run: |
+          curl -fsSL https://get.uv.dev | sh
+          echo "UV_PATH=$(which uv)" >> $GITHUB_ENV
+      
       - name: Setup License
         run: go run cmd/license/generate/main.go
 
       - name: Run benchmark
+        env:
+          UV_PATH: ${{ env.UV_PATH }}
         run: |
           go test -run=^$ -bench=. -benchmem -benchtime=30s ./...
 
