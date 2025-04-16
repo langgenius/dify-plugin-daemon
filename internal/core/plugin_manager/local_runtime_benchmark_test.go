@@ -62,7 +62,7 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
-		UvPath:                "/Users/yeuoly/.local/bin/uv",
+		UvPath:                os.Getenv("UV_PATH"),
 		PythonEnvInitTimeout:  120,
 	})
 
