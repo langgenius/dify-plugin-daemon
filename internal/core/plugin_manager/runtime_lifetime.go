@@ -26,14 +26,6 @@ func (p *PluginManager) fullDuplexLifecycle(
 	launchedChan chan bool,
 	errChan chan error,
 ) {
-	// stop plugin when the plugin reaches the end of its lifetime
-	defer r.Stop()
-
-	// cleanup plugin runtime state and working directory
-	defer r.Cleanup()
-
-	// remove lifetime state after plugin if it has been stopped
-	defer r.TriggerStop()
 
 	// register plugin
 	for _, reg := range p.pluginRegisters {
@@ -43,6 +35,23 @@ func (p *PluginManager) fullDuplexLifecycle(
 			return
 		}
 	}
+
+	fullDuplexLifecycle(r, launchedChan, errChan)
+}
+
+func fullDuplexLifecycle(
+	r plugin_entities.PluginFullDuplexLifetime,
+	launchedChan chan bool,
+	errChan chan error,
+) {
+	// stop plugin when the plugin reaches the end of its lifetime
+	defer r.Stop()
+
+	// cleanup plugin runtime state and working directory
+	defer r.Cleanup()
+
+	// remove lifetime state after plugin if it has been stopped
+	defer r.TriggerStop()
 
 	configuration := r.Configuration()
 	log.Info("new plugin logged in: %s", configuration.Identity())
