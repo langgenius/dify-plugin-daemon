@@ -58,6 +58,7 @@ func init() {
 type AgentStrategyParameter struct {
 	Name         string                     `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
 	Label        I18nObject                 `json:"label" yaml:"label" validate:"required"`
+	Help         I18nObject                 `json:"help" yaml:"help" validate:"omitempty"`
 	Type         AgentStrategyParameterType `json:"type" yaml:"type" validate:"required,agent_strategy_parameter_type"`
 	AutoGenerate *ParameterAutoGenerate     `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
 	Template     *ParameterTemplate         `json:"template" yaml:"template" validate:"omitempty"`
