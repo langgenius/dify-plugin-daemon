@@ -24,7 +24,7 @@ jobs:
       # setup uv and get uv path to env
       - name: Install uv
         run: |
-          curl -fsSL https://get.uv.dev | sh
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "UV_PATH=$(which uv)" >> $GITHUB_ENV
       
       - name: Setup License
