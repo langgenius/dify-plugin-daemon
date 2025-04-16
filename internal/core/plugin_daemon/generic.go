@@ -6,6 +6,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -89,26 +90,11 @@ func GenericInvokePlugin[Req any, Rsp any](
 	session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
 		session.Action,
-		getInvokePluginMap(
+		generic_invoke.GetInvokePluginMap(
 			session,
 			request,
 		),
 	)
 
 	return response, nil
-}
-
-func getInvokePluginMap(
-	session *session_manager.Session,
-	request any,
-) map[string]any {
-	req := getBasicPluginAccessMap(
-		session.UserID,
-		session.InvokeFrom,
-		session.Action,
-	)
-	for k, v := range parser.StructToMap(request) {
-		req[k] = v
-	}
-	return req
 }
