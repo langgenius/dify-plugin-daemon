@@ -21,7 +21,13 @@ import (
 )
 
 //go:embed patches/0.0.1b70.ai_model.py.patch
-var pythonPatches []byte
+var python001b70aiModelsPatches []byte
+
+//go:embed patches/0.1.1.llm.py.patch
+var python011llmPatches []byte
+
+//go:embed patches/0.1.1.request_reader.py.patch
+var python011requestReaderPatches []byte
 
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// check if virtual environment exists
@@ -381,11 +387,41 @@ func (p *LocalPluginRuntime) patchPluginSdk(requirementsPath string) error {
 			return fmt.Errorf("failed to find the patch file: %s", err)
 		}
 
-		if err := os.WriteFile(patchPath, pythonPatches, 0644); err != nil {
+		if err := os.WriteFile(patchPath, python001b70aiModelsPatches, 0644); err != nil {
 			return fmt.Errorf("failed to write the patch file: %s", err)
 		}
 	}
 
+	if pluginSdkVersionObj.LessThan(version.Must(version.NewVersion("0.1.1"))) {
+		// get dify-plugin path
+		command := exec.Command(p.pythonInterpreterPath, "-c", "import importlib.util;print(importlib.util.find_spec('dify_plugin').origin)")
+		command.Dir = p.State.WorkingPath
+		output, err := command.Output()
+		if err != nil {
+			return fmt.Errorf("failed to get the path of the plugin sdk: %s", err)
+		}
+
+		pluginSdkPath := path.Dir(strings.TrimSpace(string(output)))
+		patchPath := path.Join(pluginSdkPath, "entities/model/llm.py")
+
+		// apply the patch
+		if _, err := os.Stat(patchPath); err != nil {
+			return fmt.Errorf("failed to find the patch file: %s", err)
+		}
+
+		if err := os.WriteFile(patchPath, python011llmPatches, 0644); err != nil {
+			return fmt.Errorf("failed to write the patch file: %s", err)
+		}
+
+		patchPath = path.Join(pluginSdkPath, "core/server/stdio/request_reader.py")
+		if _, err := os.Stat(patchPath); err != nil {
+			return fmt.Errorf("failed to find the patch file: %s", err)
+		}
+
+		if err := os.WriteFile(patchPath, python011requestReaderPatches, 0644); err != nil {
+			return fmt.Errorf("failed to write the patch file: %s", err)
+		}
+	}
 	return nil
 }
 
