@@ -66,13 +66,14 @@ func (l *LocalStorage) List(prefix string) ([]oss.OSSPath, error) {
 	if !exists {
 		return paths, nil
 	}
-	prefix = filepath.Join(l.root, prefix)
+	prefix = filepath.ToSlash(filepath.Join(l.root, prefix))
 
 	err = filepath.WalkDir(prefix, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		// remove prefix
+		path = filepath.ToSlash(path)
 		path = strings.TrimPrefix(path, prefix)
 		if path == "" {
 			return nil

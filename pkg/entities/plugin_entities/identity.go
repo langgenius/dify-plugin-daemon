@@ -25,6 +25,8 @@ var (
 )
 
 func NewPluginUniqueIdentifier(identifier string) (PluginUniqueIdentifier, error) {
+	identifier = strings.ReplaceAll(identifier, "$", ":") // for windows
+
 	if !pluginUniqueIdentifierRegexp.MatchString(identifier) {
 		return "", errors.New("plugin_unique_identifier is not valid: " + identifier)
 	}

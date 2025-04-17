@@ -2,6 +2,7 @@ package media_transport
 
 import (
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
@@ -22,28 +23,44 @@ func (b *InstalledBucket) Save(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	file []byte,
 ) error {
-	return b.oss.Save(filepath.Join(b.installedPath, plugin_unique_identifier.String()), file)
+	compat_plugin_unique_identifier := plugin_unique_identifier.String()
+	if runtime.GOOS == "windows" {
+		compat_plugin_unique_identifier = strings.ReplaceAll(plugin_unique_identifier.String(), ":", "$")
+	}
+	return b.oss.Save(filepath.Join(b.installedPath, compat_plugin_unique_identifier), file)
 }
 
 // Exists checks if the plugin exists in the installed bucket
 func (b *InstalledBucket) Exists(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 ) (bool, error) {
-	return b.oss.Exists(filepath.Join(b.installedPath, plugin_unique_identifier.String()))
+	compat_plugin_unique_identifier := plugin_unique_identifier.String()
+	if runtime.GOOS == "windows" {
+		compat_plugin_unique_identifier = strings.ReplaceAll(plugin_unique_identifier.String(), ":", "$")
+	}
+	return b.oss.Exists(filepath.Join(b.installedPath, compat_plugin_unique_identifier))
 }
 
 // Delete deletes the plugin from the installed bucket
 func (b *InstalledBucket) Delete(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 ) error {
-	return b.oss.Delete(filepath.Join(b.installedPath, plugin_unique_identifier.String()))
+	compat_plugin_unique_identifier := plugin_unique_identifier.String()
+	if runtime.GOOS == "windows" {
+		compat_plugin_unique_identifier = strings.ReplaceAll(plugin_unique_identifier.String(), ":", "$")
+	}
+	return b.oss.Delete(filepath.Join(b.installedPath, compat_plugin_unique_identifier))
 }
 
 // Get gets the plugin from the installed bucket
 func (b *InstalledBucket) Get(
 	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 ) ([]byte, error) {
-	return b.oss.Load(filepath.Join(b.installedPath, plugin_unique_identifier.String()))
+	compat_plugin_unique_identifier := plugin_unique_identifier.String()
+	if runtime.GOOS == "windows" {
+		compat_plugin_unique_identifier = strings.ReplaceAll(plugin_unique_identifier.String(), ":", "$")
+	}
+	return b.oss.Load(filepath.Join(b.installedPath, compat_plugin_unique_identifier))
 }
 
 // List lists all the plugins in the installed bucket

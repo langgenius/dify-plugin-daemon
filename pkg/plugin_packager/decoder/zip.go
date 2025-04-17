@@ -248,18 +248,18 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	// copy to working directory
 	if err := z.Walk(func(filename, dir string) error {
-		workingPath := path.Join(dst, dir)
+		workingPath := filepath.ToSlash(path.Join(dst, dir))
 		// check if directory exists
 		if err := os.MkdirAll(workingPath, 0755); err != nil {
 			return err
 		}
 
-		bytes, err := z.ReadFile(filepath.Join(dir, filename))
+		bytes, err := z.ReadFile(filepath.ToSlash(filepath.Join(dir, filename)))
 		if err != nil {
 			return err
 		}
 
-		filename = filepath.Join(workingPath, filename)
+		filename = filepath.ToSlash(filepath.Join(workingPath, filename))
 
 		// copy file
 		if err := os.WriteFile(filename, bytes, 0644); err != nil {

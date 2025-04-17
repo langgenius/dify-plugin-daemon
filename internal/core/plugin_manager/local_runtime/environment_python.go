@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,7 +33,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 			os.RemoveAll(path.Join(p.State.WorkingPath, ".venv"))
 		} else {
 			// setup python interpreter path
-			pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+			pythonExec := ".venv/bin/python"
+			if runtime.GOOS == "windows" {
+				pythonExec = ".venv/Scripts/python.exe"
+			}
+			pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, pythonExec))
 			if err != nil {
 				return fmt.Errorf("failed to find python: %s", err)
 			}
@@ -85,7 +90,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		}
 	}()
 
-	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+	pythonExec := ".venv/bin/python"
+	if runtime.GOOS == "windows" {
+		pythonExec = ".venv/Scripts/python.exe"
+	}
+	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, pythonExec))
 	if err != nil {
 		return fmt.Errorf("failed to find python: %s", err)
 	}
