@@ -33,6 +33,7 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 		cmd := exec.Command(r.pythonInterpreterPath, "-m", r.Config.Meta.Runner.Entrypoint)
 		cmd.Dir = r.State.WorkingPath
 		cmd.Env = cmd.Environ()
+		cmd.Env = append(cmd.Env, "PYTHONIOENCODING=utf-8") // for windows
 		if r.HttpsProxy != "" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.HttpsProxy))
 		}
