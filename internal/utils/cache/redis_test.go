@@ -15,7 +15,7 @@ const (
 )
 
 func getRedisConnection() error {
-	return InitRedisClient("0.0.0.0:6379", "difyai123456", false, 0)
+	return InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0)
 }
 
 func TestRedisConnection(t *testing.T) {
@@ -269,13 +269,13 @@ func TestRedisP2ARedis(t *testing.T) {
 }
 
 func TestGetRedisOptions(t *testing.T) {
-	opts := getRedisOptions("dummy:6379", "password", false, 0)
+	opts := getRedisOptions("dummy:6379", "", "password", false, 0)
 	if opts.TLSConfig != nil {
 		t.Errorf("TLSConfig should not be set")
 		return
 	}
 
-	opts = getRedisOptions("dummy:6379", "password", true, 0)
+	opts = getRedisOptions("dummy:6379", "", "password", true, 0)
 	if opts.TLSConfig == nil {
 		t.Errorf("TLSConfig should be set")
 		return
@@ -283,7 +283,7 @@ func TestGetRedisOptions(t *testing.T) {
 }
 
 func TestSetAndGet(t *testing.T) {
-	if err := InitRedisClient("127.0.0.1:6379", "difyai123456", false, 0); err != nil {
+	if err := InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0); err != nil {
 		t.Fatal(err)
 	}
 	defer Close()
