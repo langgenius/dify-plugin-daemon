@@ -20,14 +20,23 @@ For more detailed introduction about Dify plugin, please refer to our docs [http
 
 ## CLI
 
-We provide a CLI tool to help you develop plugins locally, you can install it by running:
+A CLI tool is provided for plugin development on local environment.
+
+- Install via `brew`
+
+Both Linux and MacOS on either arm64 or amd64 architecture are supported.
+
+1. Tapping the [Homebrew tap for Dify CLI](https://github.com/langgenius/homebrew-dify)
+2. Install Dify cli with brew
 
 ```bash
 brew tap langgenius/dify
 brew install dify
 ```
 
-Or you can download the binary from [https://github.com/langgenius/dify/releases](https://github.com/langgenius/dify/releases).
+- Install with the binary file
+
+Download the binary file from the assets' list in [the release page](https://github.com/langgenius/dify-plugin-daemon/releases).
 
 ## Development
 
