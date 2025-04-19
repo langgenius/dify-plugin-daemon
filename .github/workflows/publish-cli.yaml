@@ -26,10 +26,10 @@ jobs:
           GOARCH=$(echo "${{ matrix.platform }}" | cut -d '/' -f 2)
           echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: '1.23'
 
       - name: Build CLI
         run: |
