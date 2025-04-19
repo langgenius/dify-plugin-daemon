@@ -26,7 +26,7 @@ A CLI tool is provided for plugin development on local environment.
 
 Both Linux and MacOS on either arm64 or amd64 architecture are supported.
 
-1. Tapping the [Homebrew tap for Dify](https://github.com/langgenius/homebrew-dify)
+1. Tapping the [Homebrew tap for Dify CLI](https://github.com/langgenius/homebrew-dify)
 2. Install Dify cli with brew
 
 ```bash
