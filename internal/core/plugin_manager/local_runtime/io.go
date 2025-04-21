@@ -13,7 +13,7 @@ import (
 
 func (r *LocalPluginRuntime) Listen(sessionId string) (*entities.Broadcast[plugin_entities.SessionMessage], error) {
 	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
-	holder, err := r.matchStdioHolder(sessionId)
+	holder, err := r.matchPluginInstance(sessionId)
 	if err != nil {
 		return nil, err
 	}
@@ -37,14 +37,14 @@ func (r *LocalPluginRuntime) Listen(sessionId string) (*entities.Broadcast[plugi
 	return listener, nil
 }
 
-func (r *LocalPluginRuntime) matchStdioHolder(sessionId string) (*pluginInstance, error) {
-	r.stdioHolderLock.Lock()
-	defer r.stdioHolderLock.Unlock()
+func (r *LocalPluginRuntime) matchPluginInstance(sessionId string) (*pluginInstance, error) {
+	r.pluginInstancesLock.Lock()
+	defer r.pluginInstancesLock.Unlock()
 
-	key, ok := r.sessionToStdioHolder[sessionId]
+	key, ok := r.sessionToPluginInstance[sessionId]
 	if ok {
 		// fetch the stdio holder
-		for _, holder := range r.stdioHolders {
+		for _, holder := range r.pluginInstances {
 			if holder.id == key.instanceId {
 				return holder, nil
 			}
@@ -53,20 +53,20 @@ func (r *LocalPluginRuntime) matchStdioHolder(sessionId string) (*pluginInstance
 		return nil, fmt.Errorf("stdio holder for session %s not found, the plugin instance may dead", sessionId)
 	}
 
-	if len(r.stdioHolders) == 0 {
+	if len(r.pluginInstances) == 0 {
 		return nil, fmt.Errorf("no stdio holder found, please wait for the plugin to start")
 	}
 
 	var holder *pluginInstance
 
 	if r.autoScale {
-		holder = r.getLowestLoadStdioHolder()
+		holder = r.getLowestLoadPluginInstance()
 	} else {
-		holder = r.stdioHolders[0]
+		holder = r.pluginInstances[0]
 	}
 
 	// add the session to the stdio holder
-	r.sessionToStdioHolder[sessionId] = &stdioHolderKey{
+	r.sessionToPluginInstance[sessionId] = &pluginInstanceKey{
 		instanceId: holder.id,
 		attachedAt: time.Now(),
 	}
@@ -75,7 +75,7 @@ func (r *LocalPluginRuntime) matchStdioHolder(sessionId string) (*pluginInstance
 }
 
 func (r *LocalPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) error {
-	holder, err := r.matchStdioHolder(sessionId)
+	holder, err := r.matchPluginInstance(sessionId)
 	if err != nil {
 		return err
 	}

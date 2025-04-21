@@ -26,7 +26,7 @@ const (
 	launchStageVerifiedWorking
 )
 
-type stdioHolderKey struct {
+type pluginInstanceKey struct {
 	instanceId string
 	attachedAt time.Time
 }
@@ -72,10 +72,10 @@ type LocalPluginRuntime struct {
 	minInstances int
 	autoScale    bool
 
-	stdioHolders []*pluginInstance
+	pluginInstances []*pluginInstance
 
-	sessionToStdioHolder map[string]*stdioHolderKey
-	stdioHolderLock      *sync.Mutex
+	sessionToPluginInstance map[string]*pluginInstanceKey
+	pluginInstancesLock     *sync.Mutex
 
 	stage   launchStage
 	scaling bool
@@ -124,8 +124,8 @@ func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime 
 		maxInstances:                 maxInstances,
 		minInstances:                 minInstances,
 		autoScale:                    config.AutoScale,
-		sessionToStdioHolder:         make(map[string]*stdioHolderKey),
-		stdioHolders:                 make([]*pluginInstance, 0),
-		stdioHolderLock:              &sync.Mutex{},
+		sessionToPluginInstance:      make(map[string]*pluginInstanceKey),
+		pluginInstances:              make([]*pluginInstance, 0),
+		pluginInstancesLock:          &sync.Mutex{},
 	}
 }

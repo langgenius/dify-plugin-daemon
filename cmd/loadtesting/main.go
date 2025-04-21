@@ -528,7 +528,7 @@ func StartFakeOpenAIServer() (int, func()) {
 		}
 
 		// Stream 400 words, one every 100ms
-		for i := 0; i < 400; i++ {
+		for i := 0; i < 100; i++ {
 			word := words[i%len(words)]
 
 			// Add space before words (except the first one)
@@ -557,7 +557,7 @@ func StartFakeOpenAIServer() (int, func()) {
 			}
 
 			// For the last message, set finish_reason to "stop"
-			if i == 89 {
+			if i == 99 {
 				response.Choices[0].FinishReason = &[]string{"stop"}[0]
 			}
 

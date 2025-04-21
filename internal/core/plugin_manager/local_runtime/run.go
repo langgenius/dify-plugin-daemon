@@ -161,12 +161,12 @@ func (r *LocalPluginRuntime) Stop() {
 	// Inherit behaviour from PluginRuntime (sets stopped flag etc.)
 	r.PluginRuntime.Stop()
 
-	// Stop every active stdioHolder
-	r.stdioHolderLock.Lock()
-	for _, h := range r.stdioHolders {
+	// Stop every active pluginInstance
+	r.pluginInstancesLock.Lock()
+	for _, h := range r.pluginInstances {
 		h.Stop()
 	}
-	r.stdioHolderLock.Unlock()
+	r.pluginInstancesLock.Unlock()
 }
 
 //------------------------------------------------------------------------------
@@ -194,9 +194,9 @@ func (r *LocalPluginRuntime) schedulerLoop(scalingTicker *time.Ticker, scalingSt
 func (r *LocalPluginRuntime) reconcileOnce(fatalErrChan chan<- error) error {
 	desired := r.getDesiredScale()
 
-	r.stdioHolderLock.Lock()
-	current := len(r.stdioHolders)
-	r.stdioHolderLock.Unlock()
+	r.pluginInstancesLock.Lock()
+	current := len(r.pluginInstances)
+	r.pluginInstancesLock.Unlock()
 
 	switch {
 	case desired > current:
@@ -222,11 +222,11 @@ func (r *LocalPluginRuntime) getDesiredScale() int {
 
 	// keep the average cpu usage of the instances below 50%
 	totalCpuUsage := 0
-	r.stdioHolderLock.Lock()
-	for _, h := range r.stdioHolders {
+	r.pluginInstancesLock.Lock()
+	for _, h := range r.pluginInstances {
 		totalCpuUsage += int(h.cpuUsagePercentSum / _SAMPLES)
 	}
-	r.stdioHolderLock.Unlock()
+	r.pluginInstancesLock.Unlock()
 
 	// calculate how many instances are needed to keep the average cpu usage below 50%
 	targetInstances := totalCpuUsage / 50
@@ -295,13 +295,13 @@ func (r *LocalPluginRuntime) scaleUp(n int, fatalErrChan chan<- error) error {
 
 // scaleDown terminates `n` surplus instances (FIFO order).
 func (r *LocalPluginRuntime) scaleDown(n int) {
-	r.stdioHolderLock.Lock()
-	if n > len(r.stdioHolders) {
-		n = len(r.stdioHolders)
+	r.pluginInstancesLock.Lock()
+	if n > len(r.pluginInstances) {
+		n = len(r.pluginInstances)
 	}
-	toStop := r.stdioHolders[:n]
-	r.stdioHolders = r.stdioHolders[n:]
-	r.stdioHolderLock.Unlock()
+	toStop := r.pluginInstances[:n]
+	r.pluginInstances = r.pluginInstances[n:]
+	r.pluginInstancesLock.Unlock()
 
 	for _, h := range toStop {
 		h.Stop()
@@ -310,11 +310,11 @@ func (r *LocalPluginRuntime) scaleDown(n int) {
 
 // removeHolder deletes a finished instance from the holders slice.
 func (r *LocalPluginRuntime) removeHolder(target *pluginInstance) {
-	r.stdioHolderLock.Lock()
-	defer r.stdioHolderLock.Unlock()
-	for i, h := range r.stdioHolders {
+	r.pluginInstancesLock.Lock()
+	defer r.pluginInstancesLock.Unlock()
+	for i, h := range r.pluginInstances {
 		if h == target {
-			r.stdioHolders = append(r.stdioHolders[:i], r.stdioHolders[i+1:]...)
+			r.pluginInstances = append(r.pluginInstances[:i], r.pluginInstances[i+1:]...)
 			return
 		}
 	}
@@ -361,12 +361,12 @@ func (r *LocalPluginRuntime) launchOneInstance(launched chan bool) (*pluginInsta
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	holder := newPluginInstance(r.Config.Identity(), cmd.Process.Pid, stdin, stdout, stderr)
+	instance := newPluginInstance(r.Config.Identity(), cmd.Process.Pid, stdin, stdout, stderr)
 
-	// add holder to r.stdioHolders
-	r.stdioHolderLock.Lock()
-	r.stdioHolders = append(r.stdioHolders, holder)
-	r.stdioHolderLock.Unlock()
+	// add instance to r.pluginInstances
+	r.pluginInstancesLock.Lock()
+	r.pluginInstances = append(r.pluginInstances, instance)
+	r.pluginInstancesLock.Unlock()
 
 	// instance has started successfully; notify caller
 	closeOnce()
@@ -377,7 +377,7 @@ func (r *LocalPluginRuntime) launchOneInstance(launched chan bool) (*pluginInsta
 		"function": "StartStdout",
 	}, func() {
 		defer wg.Done()
-		holder.StartStdout(func() {
+		instance.StartStdout(func() {
 			r.stage = launchStageVerifiedWorking
 		})
 	})
@@ -387,23 +387,23 @@ func (r *LocalPluginRuntime) launchOneInstance(launched chan bool) (*pluginInsta
 		"function": "StartStderr",
 	}, func() {
 		defer wg.Done()
-		holder.StartStderr()
+		instance.StartStderr()
 	})
 	routine.Submit(map[string]string{
 		"module":   "plugin_manager",
 		"type":     "local",
 		"function": "startUsageMonitor",
 	}, func() {
-		holder.startUsageMonitor()
+		instance.startUsageMonitor()
 	})
 
-	err = holder.Wait()
+	err = instance.Wait()
 	if err != nil {
-		return holder, errors.Join(err, holder.Error())
+		return instance, errors.Join(err, instance.Error())
 	}
 	wg.Wait()
 
-	return holder, nil
+	return instance, nil
 }
 
 //------------------------------------------------------------------------------

@@ -100,8 +100,8 @@ func (m *mockReadWriteCloser) IsClosed() bool {
 	return m.closed
 }
 
-// TestNewStdioHolder tests the creation of a new stdioHolder
-func TestNewStdioHolder(t *testing.T) {
+// TestNewPluginInstance tests the creation of a new pluginInstance
+func TestNewPluginInstance(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
@@ -119,8 +119,8 @@ func TestNewStdioHolder(t *testing.T) {
 	assert.False(t, holder.waitingControllerChanClosed)
 }
 
-// TestStdioHolderSetupAndRemoveListener tests setting up and removing event listeners
-func TestStdioHolderSetupAndRemoveListener(t *testing.T) {
+// TestPluginInstanceSetupAndRemoveListener tests setting up and removing event listeners
+func TestPluginInstanceSetupAndRemoveListener(t *testing.T) {
 	holder := newPluginInstance("test-plugin", 1, nil, nil, nil)
 
 	// Test setup listener
@@ -136,8 +136,8 @@ func TestStdioHolderSetupAndRemoveListener(t *testing.T) {
 	assert.Len(t, holder.listener, 0)
 }
 
-// TestStdioHolderWrite tests writing to the stdio
-func TestStdioHolderWrite(t *testing.T) {
+// TestPluginInstanceWrite tests writing to the stdio
+func TestPluginInstanceWrite(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	holder := newPluginInstance("test-plugin", 1, stdin, nil, nil)
 
@@ -146,8 +146,8 @@ func TestStdioHolderWrite(t *testing.T) {
 	assert.Equal(t, "test data", string(stdin.GetWrittenData()))
 }
 
-// TestStdioHolderError tests the Error method
-func TestStdioHolderError(t *testing.T) {
+// TestPluginInstanceError tests the Error method
+func TestPluginInstanceError(t *testing.T) {
 	holder := newPluginInstance("test-plugin", 1, nil, nil, nil)
 
 	// No error initially
@@ -167,8 +167,8 @@ func TestStdioHolderError(t *testing.T) {
 	assert.NoError(t, holder.Error())
 }
 
-// TestStdioHolderStop tests stopping the stdio holder
-func TestStdioHolderStop(t *testing.T) {
+// TestPluginInstanceStop tests stopping the stdio holder
+func TestPluginInstanceStop(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
@@ -186,8 +186,8 @@ func TestStdioHolderStop(t *testing.T) {
 	holder.Stop()
 }
 
-// TestStdioHolderWriteError tests writing error messages
-func TestStdioHolderWriteError(t *testing.T) {
+// TestPluginInstanceWriteError tests writing error messages
+func TestPluginInstanceWriteError(t *testing.T) {
 	holder := newPluginInstance("test-plugin", 1, nil, nil, nil)
 
 	// Test writing a simple error
@@ -206,8 +206,8 @@ func TestStdioHolderWriteError(t *testing.T) {
 	assert.True(t, strings.HasSuffix(holder.errMessage, "a"))
 }
 
-// TestStdioHolderStartStderr tests the StartStderr method
-func TestStdioHolderStartStderr(t *testing.T) {
+// TestPluginInstanceStartStderr tests the StartStderr method
+func TestPluginInstanceStartStderr(t *testing.T) {
 	stderr := newMockReadWriteCloser()
 	holder := newPluginInstance("test-plugin", 1, nil, nil, stderr)
 
@@ -232,8 +232,8 @@ func TestStdioHolderStartStderr(t *testing.T) {
 	assert.Contains(t, holder.errMessage, "stderr message")
 }
 
-// TestStdioHolderWait tests the Wait method
-func TestStdioHolderWait(t *testing.T) {
+// TestPluginInstanceWait tests the Wait method
+func TestPluginInstanceWait(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
@@ -273,8 +273,8 @@ func TestStdioHolderWait(t *testing.T) {
 	assert.Equal(t, "you need to start the health check before waiting", err.Error())
 }
 
-// TestStdioHolderStartStdout tests the StartStdout method
-func TestStdioHolderStartStdout(t *testing.T) {
+// TestPluginInstanceStartStdout tests the StartStdout method
+func TestPluginInstanceStartStdout(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
@@ -322,8 +322,8 @@ func TestStdioHolderStartStdout(t *testing.T) {
 	stdout.Close()
 }
 
-// TestStdioHolderWithRealData tests the stdioHolder with realistic data flow
-func TestStdioHolderWithRealData(t *testing.T) {
+// TestPluginInstanceWithRealData tests the pluginInstance with realistic data flow
+func TestPluginInstanceWithRealData(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()

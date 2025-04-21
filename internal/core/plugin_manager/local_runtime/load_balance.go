@@ -10,11 +10,11 @@ const (
 	_SAMPLES = 5
 )
 
-func (r *LocalPluginRuntime) getLowestLoadStdioHolder() *pluginInstance {
+func (r *LocalPluginRuntime) getLowestLoadPluginInstance() *pluginInstance {
 	// get the lowest load plugin instance
 	var lowestInstance *pluginInstance
 
-	for _, s := range r.stdioHolders {
+	for _, s := range r.pluginInstances {
 		if lowestInstance == nil || s.cpuUsagePercentSum < lowestInstance.cpuUsagePercentSum {
 			lowestInstance = s
 		}
