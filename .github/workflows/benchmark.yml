@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/auto-scale
 
 concurrency:
   group: benchmark-${{ github.event_name == 'pull_request' && github.head_ref || github.run_id }}
