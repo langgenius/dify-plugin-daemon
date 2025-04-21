@@ -36,10 +36,10 @@ func (p *PluginManager) fullDuplexLifecycle(
 		}
 	}
 
-	fullDuplexLifecycle(r, launchedChan, errChan)
+	FullDuplexLifecycle(r, launchedChan, errChan)
 }
 
-func fullDuplexLifecycle(
+func FullDuplexLifecycle(
 	r plugin_entities.PluginFullDuplexLifetime,
 	launchedChan chan bool,
 	errChan chan error,

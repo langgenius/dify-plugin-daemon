@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -19,7 +20,14 @@ const (
 	MAX_HEARTBEAT_INTERVAL = 120 * time.Second
 )
 
-type stdioHolder struct {
+type pluginInstance struct {
+	pid                int             // pid of the plugin
+	id                 string          // id of current instance
+	cpuUsagePercent    [_SAMPLES]int8  // the cpu usage of the plugin, unit: %
+	memoryUsage        [_SAMPLES]int64 // the memory usage of the plugin, unit: bytes
+	cpuUsagePercentSum int16
+	memoryUsageSum     int64
+
 	pluginUniqueIdentifier string
 	writer                 io.WriteCloser
 	reader                 io.ReadCloser
@@ -41,12 +49,17 @@ type stdioHolder struct {
 	lastActiveAt time.Time
 }
 
-func newStdioHolder(
-	pluginUniqueIdentifier string, writer io.WriteCloser,
-	reader io.ReadCloser, err_reader io.ReadCloser,
-) *stdioHolder {
-	holder := &stdioHolder{
+func newPluginInstance(
+	pluginUniqueIdentifier string,
+	pid int,
+	writer io.WriteCloser,
+	reader io.ReadCloser,
+	err_reader io.ReadCloser,
+) *pluginInstance {
+	holder := &pluginInstance{
+		id:                     uuid.New().String(),
 		pluginUniqueIdentifier: pluginUniqueIdentifier,
+		pid:                    pid,
 		writer:                 writer,
 		reader:                 reader,
 		errReader:              err_reader,
@@ -59,7 +72,7 @@ func newStdioHolder(
 	return holder
 }
 
-func (s *stdioHolder) setupStdioEventListener(session_id string, listener func([]byte)) {
+func (s *pluginInstance) setupStdioEventListener(session_id string, listener func([]byte)) {
 	s.l.Lock()
 	defer s.l.Unlock()
 	if s.listener == nil {
@@ -69,18 +82,18 @@ func (s *stdioHolder) setupStdioEventListener(session_id string, listener func([
 	s.listener[session_id] = listener
 }
 
-func (s *stdioHolder) removeStdioHandlerListener(session_id string) {
+func (s *pluginInstance) removeStdioHandlerListener(session_id string) {
 	s.l.Lock()
 	defer s.l.Unlock()
 	delete(s.listener, session_id)
 }
 
-func (s *stdioHolder) write(data []byte) error {
+func (s *pluginInstance) write(data []byte) error {
 	_, err := s.writer.Write(data)
 	return err
 }
 
-func (s *stdioHolder) Error() error {
+func (s *pluginInstance) Error() error {
 	if time.Since(s.lastErrMessageUpdatedAt) < 60*time.Second {
 		if s.errMessage != "" {
 			return errors.New(s.errMessage)
@@ -92,7 +105,7 @@ func (s *stdioHolder) Error() error {
 
 // Stop stops the stdio, of course, it will shutdown the plugin asynchronously
 // by closing a channel to notify the `Wait()` function to exit
-func (s *stdioHolder) Stop() {
+func (s *pluginInstance) Stop() {
 	s.writer.Close()
 	s.reader.Close()
 	s.errReader.Close()
@@ -108,7 +121,7 @@ func (s *stdioHolder) Stop() {
 // StartStdout starts to read the stdout of the plugin
 // it will notify the heartbeat function when the plugin is active
 // and parse the stdout data to trigger corresponding listeners
-func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
+func (s *pluginInstance) StartStdout(notify_heartbeat func()) {
 	s.started = true
 	s.lastActiveAt = time.Now()
 	defer s.Stop()
@@ -131,14 +144,14 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
 			"",
-			func(session_id string, data []byte) {
+			func(sessionId string, data []byte) {
 				// FIX: avoid deadlock to plugin invoke
 				s.l.Lock()
 				tasks := []func(){}
 				for listener_session_id, listener := range s.listener {
 					// copy the listener to avoid reference issue
 					listener := listener
-					if listener_session_id == session_id {
+					if listener_session_id == sessionId {
 						tasks = append(tasks, func() {
 							listener(data)
 						})
@@ -169,7 +182,7 @@ func (s *stdioHolder) StartStdout(notify_heartbeat func()) {
 
 // WriteError writes the error message to the stdio holder
 // it will keep the last 1024 bytes of the error message
-func (s *stdioHolder) WriteError(msg string) {
+func (s *pluginInstance) WriteError(msg string) {
 	if len(msg) > MAX_ERR_MSG_LEN {
 		msg = msg[:MAX_ERR_MSG_LEN]
 	}
@@ -189,7 +202,7 @@ func (s *stdioHolder) WriteError(msg string) {
 
 // StartStderr starts to read the stderr of the plugin
 // it will write the error message to the stdio holder
-func (s *stdioHolder) StartStderr() {
+func (s *pluginInstance) StartStderr() {
 	for {
 		buf := make([]byte, 1024)
 		n, err := s.errReader.Read(buf)
@@ -209,7 +222,7 @@ func (s *stdioHolder) StartStderr() {
 // Wait waits for the plugin to exit
 // it will return an error if the plugin is not active
 // you can also call `Stop()` to stop the waiting process
-func (s *stdioHolder) Wait() error {
+func (s *pluginInstance) Wait() error {
 	s.waitControllerChanLock.Lock()
 	if s.waitingControllerChanClosed {
 		s.waitControllerChanLock.Unlock()

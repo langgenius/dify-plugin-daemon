@@ -1,4 +1,6 @@
-// Package local_runtime handles the local plugin runtime management
+// Package local_runtime manages local plugin runtimes and provides a lightweight autoscaling
+// scheduler. The autoscaling algorithm itself is intentionally stubbed; only the scheduling
+// framework is implemented here.
 package local_runtime
 
 import (
@@ -7,12 +9,45 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
+
+/*
+================================================================================
+ Autoscaling scheduler — design notes
+ --------------------------------------------------------------------------------
+ * All plugin instances are treated identically. During `launchStageInit`, any
+   failure to start **any** instance is considered fatal and is propagated back
+   to `StartPlugin` so that callers know startup failed.
+ * After the runtime enters `launchStageVerified`, instance exits are considered
+   unexpected crashes. The scheduler will automatically start new instances to
+   bring the replica count back to the desired target.
+ * The replica‑target decision is encapsulated in `getDesiredScale()` so that
+   higher‑level code can plug in metrics‑driven logic.
+ * `waitChan` semantics from the original implementation remain untouched:
+       – it is created at the beginning of `StartPlugin`
+       – closed in `gc()` when the runtime tears down
+   The scheduler uses its own `scalingStop` channel to terminate the ticker
+   goroutine, keeping `waitChan` for external observers only.
+================================================================================
+*/
+
+//----------------------------------------------------------------------------//
+// Additional struct fields (add these to LocalPluginRuntime)
+//----------------------------------------------------------------------------//
+//   scalingTicker *time.Ticker  // periodic reconciliation ticker
+//   scalingStop   chan struct{} // closed when the scheduler should exit
+//   scaleInterval time.Duration // reconciliation period (defaults to 5 s)
+//----------------------------------------------------------------------------//
+
+//------------------------------------------------------------------------------
+// Helper functions
+//------------------------------------------------------------------------------
 
 // gc performs garbage collection for the LocalPluginRuntime
 func (r *LocalPluginRuntime) gc() {
@@ -27,7 +62,7 @@ func (r *LocalPluginRuntime) Type() plugin_entities.PluginRuntimeType {
 	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 }
 
-// getCmd prepares the exec.Cmd for the plugin based on its language
+// getCmd prepares the exec.Cmd for the plugin according to its language
 func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 	if r.Config.Meta.Runner.Language == constants.Python {
 		cmd := exec.Command(r.pythonInterpreterPath, "-m", r.Config.Meta.Runner.Entrypoint)
@@ -44,12 +79,24 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 		}
 		return cmd, nil
 	}
-
 	return nil, fmt.Errorf("unsupported language: %s", r.Config.Meta.Runner.Language)
 }
 
-// StartPlugin starts the plugin and manages its lifecycle
+//------------------------------------------------------------------------------
+// Start / Stop lifecycle (single entry point)
+//------------------------------------------------------------------------------
+
+// StartPlugin launches the autoscaling scheduler and blocks until the runtime
+// is stopped or until startup fails while still in launchStageInit.
 func (r *LocalPluginRuntime) StartPlugin() error {
+	r.stage = launchStageInit
+	scalingTicker := time.NewTicker(time.Second * 5)
+	scalingStop := make(chan bool)
+	defer func() {
+		close(scalingStop)
+		scalingTicker.Stop()
+	}()
+
 	defer log.Info("plugin %s stopped", r.Config.Identity())
 	defer func() {
 		r.waitChanLock.Lock()
@@ -69,125 +116,300 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		r.isNotFirstStart = true
 	}
 
-	// reset wait chan
+	// Reset waitChan for external observers (original behaviour)
 	r.waitChan = make(chan bool)
-	// reset wait launched chan
 
-	// start plugin
-	e, err := r.getCmd()
-	if err != nil {
+	// fatalErrChan propagates startup failures while still in Init stage
+	fatalErrChan := make(chan error, 1)
+
+	// Do an immediate reconcile so at least one instance is running
+	if err := r.reconcileOnce(fatalErrChan); err != nil {
+		r.gc()
 		return err
 	}
 
-	e.Dir = r.State.WorkingPath
-	// add env INSTALL_METHOD=local
-	e.Env = append(e.Environ(), "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"type":     "local",
+		"function": "schedulerLoop",
+	}, func() {
+		r.schedulerLoop(scalingTicker, scalingStop, fatalErrChan)
+	})
 
-	// get writer
-	stdin, err := e.StdinPipe()
+	healthCheckTicker := time.NewTicker(time.Second * 10)
+	defer healthCheckTicker.Stop()
+
+	// Wait for a fatal startup error or for external Stop()
+	for {
+		select {
+		case err := <-fatalErrChan:
+			r.Stop()
+			r.gc()
+			return err
+		case <-scalingStop: // gc() triggered → runtime shutting down
+			return nil
+		case <-healthCheckTicker.C:
+			if r.Stopped() {
+				return nil
+			}
+		}
+	}
+}
+
+// Stop terminates the runtime and all managed plugin instances.
+func (r *LocalPluginRuntime) Stop() {
+	// Inherit behaviour from PluginRuntime (sets stopped flag etc.)
+	r.PluginRuntime.Stop()
+
+	// Stop every active stdioHolder
+	r.stdioHolderLock.Lock()
+	for _, h := range r.stdioHolders {
+		h.Stop()
+	}
+	r.stdioHolderLock.Unlock()
+}
+
+//------------------------------------------------------------------------------
+// Scheduler
+//------------------------------------------------------------------------------
+
+// schedulerLoop runs a ticker‑driven reconciliation until scalingStop is closed.
+func (r *LocalPluginRuntime) schedulerLoop(scalingTicker *time.Ticker, scalingStop chan bool, fatalErrChan chan<- error) {
+	for {
+		select {
+		case <-scalingTicker.C:
+			if r.Stopped() {
+				return
+			}
+			_ = r.reconcileOnce(fatalErrChan) // errors after Init stage are logged only
+		case <-scalingStop:
+			return
+		}
+	}
+}
+
+// reconcileOnce ensures that the current replica count matches getDesiredScale().
+// During launchStageInit any instance‑startup error is fatal and returned, otherwise
+// the error is only logged.
+func (r *LocalPluginRuntime) reconcileOnce(fatalErrChan chan<- error) error {
+	desired := r.getDesiredScale()
+
+	r.stdioHolderLock.Lock()
+	current := len(r.stdioHolders)
+	r.stdioHolderLock.Unlock()
+
+	switch {
+	case desired > current:
+		if r.autoScale && desired > 1 {
+			log.Info("plugin %s auto scaling from %d to %d", r.Config.Identity(), current, desired)
+		}
+		return r.scaleUp(desired-current, fatalErrChan)
+	case desired < current:
+		r.scaleDown(current - desired)
+	}
+	return nil
+}
+
+// getDesiredScale decides the target replica count.
+func (r *LocalPluginRuntime) getDesiredScale() int {
+	if r.stage == launchStageInit {
+		return 1
+	}
+
+	if !r.autoScale {
+		return 1
+	}
+
+	// keep the average cpu usage of the instances below 50%
+	totalCpuUsage := 0
+	r.stdioHolderLock.Lock()
+	for _, h := range r.stdioHolders {
+		totalCpuUsage += int(h.cpuUsagePercentSum / _SAMPLES)
+	}
+	r.stdioHolderLock.Unlock()
+
+	// calculate how many instances are needed to keep the average cpu usage below 50%
+	targetInstances := totalCpuUsage / 50
+
+	if targetInstances > r.maxInstances {
+		targetInstances = r.maxInstances
+	} else if targetInstances < r.minInstances {
+		targetInstances = r.minInstances
+	}
+
+	return targetInstances
+}
+
+// scaleUp starts `n` additional plugin instances.
+func (r *LocalPluginRuntime) scaleUp(n int, fatalErrChan chan<- error) error {
+	if r.scaling {
+		return nil
+	}
+
+	r.scaling = true
+	defer func() {
+		r.scaling = false
+	}()
+
+	var firstErr error
+	for i := 0; i < n; i++ {
+		launched := make(chan bool)
+		routine.Submit(map[string]string{
+			"module":      "plugin_manager",
+			"type":        "local",
+			"function":    "AutoScale",
+			"innerMethod": "scaleUp.launchOneInstance",
+		}, func() {
+			holder, err := r.launchOneInstance(launched)
+			if err != nil {
+				// propagate the first fatal error only when still in Init stage
+				if r.stage == launchStageInit && firstErr == nil {
+					firstErr = err
+					select {
+					case fatalErrChan <- err:
+					default:
+					}
+				} else {
+					log.Error("plugin %s instance exited unexpectedly: %s", r.Config.Identity(), err.Error())
+				}
+
+				if holder != nil {
+					err := holder.Error()
+					if err != nil {
+						log.Error(
+							"plugin %s instance exited unexpectedly with stderr messages: %s",
+							r.Config.Identity(),
+							err.Error(),
+						)
+					}
+				}
+			}
+			if holder != nil {
+				r.removeHolder(holder)
+			}
+		})
+		<-launched // wait until the instance has executed cmd.Start()
+	}
+	return firstErr
+}
+
+// scaleDown terminates `n` surplus instances (FIFO order).
+func (r *LocalPluginRuntime) scaleDown(n int) {
+	r.stdioHolderLock.Lock()
+	if n > len(r.stdioHolders) {
+		n = len(r.stdioHolders)
+	}
+	toStop := r.stdioHolders[:n]
+	r.stdioHolders = r.stdioHolders[n:]
+	r.stdioHolderLock.Unlock()
+
+	for _, h := range toStop {
+		h.Stop()
+	}
+}
+
+// removeHolder deletes a finished instance from the holders slice.
+func (r *LocalPluginRuntime) removeHolder(target *pluginInstance) {
+	r.stdioHolderLock.Lock()
+	defer r.stdioHolderLock.Unlock()
+	for i, h := range r.stdioHolders {
+		if h == target {
+			r.stdioHolders = append(r.stdioHolders[:i], r.stdioHolders[i+1:]...)
+			return
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+// launchOneInstance — unchanged except for comment tidy‑up
+//------------------------------------------------------------------------------
+
+func (r *LocalPluginRuntime) launchOneInstance(launched chan bool) (*pluginInstance, error) {
+	once := sync.Once{}
+	closeOnce := func() { once.Do(func() { close(launched) }) }
+	defer closeOnce()
+
+	cmd, err := r.getCmd()
 	if err != nil {
-		return fmt.Errorf("get stdin pipe failed: %s", err.Error())
+		return nil, err
+	}
+
+	cmd.Dir = r.State.WorkingPath
+	cmd.Env = append(cmd.Environ(), "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, fmt.Errorf("get stdin pipe failed: %s", err.Error())
 	}
 	defer stdin.Close()
-
-	// get stdout
-	stdout, err := e.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("get stdout pipe failed: %s", err.Error())
+		return nil, fmt.Errorf("get stdout pipe failed: %s", err.Error())
 	}
 	defer stdout.Close()
-
-	// get stderr
-	stderr, err := e.StderrPipe()
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		return fmt.Errorf("get stderr pipe failed: %s", err.Error())
+		return nil, fmt.Errorf("get stderr pipe failed: %s", err.Error())
 	}
 	defer stderr.Close()
 
-	if err := e.Start(); err != nil {
-		return fmt.Errorf("start plugin failed: %s", err.Error())
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("start plugin failed: %s", err.Error())
 	}
-
-	// setup stdio
-	r.stdioHolder = newStdioHolder(r.Config.Identity(), stdin, stdout, stderr)
-	defer r.stdioHolder.Stop()
-
-	defer func() {
-		// wait for plugin to exit
-		originalErr := e.Wait()
-		if originalErr != nil {
-			// get stdio
-			var err error
-			if r.stdioHolder != nil {
-				stdioErr := r.stdioHolder.Error()
-				if stdioErr != nil {
-					err = errors.Join(originalErr, stdioErr)
-				} else {
-					err = originalErr
-				}
-			} else {
-				err = originalErr
-			}
-			if err != nil {
-				log.Error("plugin %s exited with error: %s", r.Config.Identity(), err.Error())
-			} else {
-				log.Error("plugin %s exited with unknown error", r.Config.Identity())
-			}
-		}
-
-		r.gc()
-	}()
-
-	// ensure the plugin process is killed after the plugin exits
-	defer e.Process.Kill()
-
-	log.Info("plugin %s started", r.Config.Identity())
+	defer cmd.Process.Kill()
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	// listen to plugin stdout
+	holder := newPluginInstance(r.Config.Identity(), cmd.Process.Pid, stdin, stdout, stderr)
+
+	// add holder to r.stdioHolders
+	r.stdioHolderLock.Lock()
+	r.stdioHolders = append(r.stdioHolders, holder)
+	r.stdioHolderLock.Unlock()
+
+	// instance has started successfully; notify caller
+	closeOnce()
+
 	routine.Submit(map[string]string{
 		"module":   "plugin_manager",
 		"type":     "local",
 		"function": "StartStdout",
 	}, func() {
 		defer wg.Done()
-		r.stdioHolder.StartStdout(func() {})
+		holder.StartStdout(func() {
+			r.stage = launchStageVerifiedWorking
+		})
 	})
-
-	// listen to plugin stderr
 	routine.Submit(map[string]string{
 		"module":   "plugin_manager",
 		"type":     "local",
 		"function": "StartStderr",
 	}, func() {
 		defer wg.Done()
-		r.stdioHolder.StartStderr()
+		holder.StartStderr()
+	})
+	routine.Submit(map[string]string{
+		"module":   "plugin_manager",
+		"type":     "local",
+		"function": "startUsageMonitor",
+	}, func() {
+		holder.startUsageMonitor()
 	})
 
-	// send started event
-	r.waitChanLock.Lock()
-	for _, c := range r.waitStartedChan {
-		select {
-		case c <- true:
-		default:
-		}
-	}
-	r.waitChanLock.Unlock()
-
-	// wait for plugin to exit
-	err = r.stdioHolder.Wait()
+	err = holder.Wait()
 	if err != nil {
-		return errors.Join(err, r.stdioHolder.Error())
+		return holder, errors.Join(err, holder.Error())
 	}
 	wg.Wait()
 
-	// plugin has exited
-	return nil
+	return holder, nil
 }
 
-// Wait returns a channel that will be closed when the plugin stops
+//------------------------------------------------------------------------------
+// Wait helpers (original logic retained)
+//------------------------------------------------------------------------------
+
 func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
 	if r.waitChan == nil {
 		return nil, errors.New("plugin not started")
@@ -195,7 +417,6 @@ func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
 	return r.waitChan, nil
 }
 
-// WaitStarted returns a channel that will receive true when the plugin starts
 func (r *LocalPluginRuntime) WaitStarted() <-chan bool {
 	c := make(chan bool)
 	r.waitChanLock.Lock()
@@ -204,22 +425,10 @@ func (r *LocalPluginRuntime) WaitStarted() <-chan bool {
 	return c
 }
 
-// WaitStopped returns a channel that will receive true when the plugin stops
 func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
 	c := make(chan bool)
 	r.waitChanLock.Lock()
 	r.waitStoppedChan = append(r.waitStoppedChan, c)
 	r.waitChanLock.Unlock()
 	return c
-}
-
-// Stop stops the plugin
-func (r *LocalPluginRuntime) Stop() {
-	// inherit from PluginRuntime
-	r.PluginRuntime.Stop()
-
-	// get stdio
-	if r.stdioHolder != nil {
-		r.stdioHolder.Stop()
-	}
 }

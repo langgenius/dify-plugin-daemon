@@ -25,7 +25,7 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "UV_PATH=$(which uv)" >> $GITHUB_ENV
-      
+
       - name: Setup License
         run: go run cmd/license/generate/main.go
 
@@ -34,6 +34,14 @@ jobs:
           UV_PATH: ${{ env.UV_PATH }}
         run: |
           go test -run=^$ -bench=. -benchmem -benchtime=30s ./... > result.txt
+
+      - name: Run load testing
+        run: |
+          go run cmd/loadtesting/main.go > load_testing_result.txt
+
+      - name: Run load testing with auto scale
+        run: |
+          go run cmd/loadtesting/main.go --min-instances 4 --max-instances 4 --auto-scale > load_testing_result_auto_scale.txt
 
       - name: Remove License
         run: git stash
@@ -47,3 +55,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           benchmark-data-dir-path: "benchmark-data"
           auto-push: true
+
+      - name: Store load testing result to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: load_testing_result.txt
+          path: load_testing_result.txt
+
+      - name: Store load testing result with auto scale to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: load_testing_result_auto_scale.txt
+          path: load_testing_result_auto_scale.txt
