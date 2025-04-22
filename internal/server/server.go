@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
@@ -8,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/azure"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/gcs"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/s3"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/tencent_cos"
@@ -18,6 +21,7 @@ import (
 
 func initOSS(config *app.Config) oss.OSS {
 	// init storage
+	ctx := context.TODO()
 	var storage oss.OSS
 	var err error
 	switch config.PluginStorageType {
@@ -45,6 +49,8 @@ func initOSS(config *app.Config) oss.OSS {
 			config.AzureBlobStorageContainerName,
 			config.AzureBlobStorageConnectionString,
 		)
+	case oss.OSS_TYPE_GCS:
+		storage, err = gcs.NewGCSStorage(ctx, config.PluginStorageOSSBucket)
 	default:
 		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
 	}
