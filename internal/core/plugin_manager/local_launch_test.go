@@ -11,7 +11,7 @@ import (
 )
 
 func TestLocalLaunch(t *testing.T) {
-	// log.SetShowLog(false)
+	log.SetShowLog(false)
 
 	routine.InitPool(100000)
 	defer test_utils.ClearTestingPath()
