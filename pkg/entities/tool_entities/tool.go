@@ -9,16 +9,17 @@ import (
 type ToolResponseChunkType string
 
 const (
-	ToolResponseChunkTypeText      ToolResponseChunkType = "text"
-	ToolResponseChunkTypeFile      ToolResponseChunkType = "file"
-	ToolResponseChunkTypeBlob      ToolResponseChunkType = "blob"
-	ToolResponseChunkTypeBlobChunk ToolResponseChunkType = "blob_chunk"
-	ToolResponseChunkTypeJson      ToolResponseChunkType = "json"
-	ToolResponseChunkTypeLink      ToolResponseChunkType = "link"
-	ToolResponseChunkTypeImage     ToolResponseChunkType = "image"
-	ToolResponseChunkTypeImageLink ToolResponseChunkType = "image_link"
-	ToolResponseChunkTypeVariable  ToolResponseChunkType = "variable"
-	ToolResponseChunkTypeLog       ToolResponseChunkType = "log"
+	ToolResponseChunkTypeText               ToolResponseChunkType = "text"
+	ToolResponseChunkTypeFile               ToolResponseChunkType = "file"
+	ToolResponseChunkTypeBlob               ToolResponseChunkType = "blob"
+	ToolResponseChunkTypeBlobChunk          ToolResponseChunkType = "blob_chunk"
+	ToolResponseChunkTypeJson               ToolResponseChunkType = "json"
+	ToolResponseChunkTypeLink               ToolResponseChunkType = "link"
+	ToolResponseChunkTypeImage              ToolResponseChunkType = "image"
+	ToolResponseChunkTypeImageLink          ToolResponseChunkType = "image_link"
+	ToolResponseChunkTypeVariable           ToolResponseChunkType = "variable"
+	ToolResponseChunkTypeLog                ToolResponseChunkType = "log"
+	ToolResponseChunkTypeRetrieverResources ToolResponseChunkType = "retriever_resources"
 )
 
 func IsValidToolResponseChunkType(fl validator.FieldLevel) bool {
@@ -33,7 +34,8 @@ func IsValidToolResponseChunkType(fl validator.FieldLevel) bool {
 		ToolResponseChunkTypeImage,
 		ToolResponseChunkTypeImageLink,
 		ToolResponseChunkTypeVariable,
-		ToolResponseChunkTypeLog:
+		ToolResponseChunkTypeLog,
+		ToolResponseChunkTypeRetrieverResources:
 		return true
 	default:
 		return false
