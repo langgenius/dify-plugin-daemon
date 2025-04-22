@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745299477523,
+  "lastUpdate": 1745303402472,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -624,6 +624,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "987819278 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "admin@srmxy.cn",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "admin@srmxy.cn",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "distinct": true,
+          "id": "63279c70c1a2e02926c1f6fe48900b65d46a7f50",
+          "message": "refactor",
+          "timestamp": "2025-04-22T14:21:30+08:00",
+          "tree_id": "428b46e19a339e83af8a9b18ad707cfc0c1ef11c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/63279c70c1a2e02926c1f6fe48900b65d46a7f50"
+        },
+        "date": 1745303402172,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.55,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "976079280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.55,
+            "unit": "ns/op",
+            "extra": "976079280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "976079280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "976079280 times\n4 procs"
           }
         ]
       }
