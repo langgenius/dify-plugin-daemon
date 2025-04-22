@@ -1,37 +1,26 @@
 package main
 
 import (
-	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"net"
-	"net/http"
-	"os"
-	"path"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/test_utils"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
-	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
-	"golang.org/x/exp/rand"
 )
 
 var (
@@ -66,13 +55,13 @@ func main() {
 
 	routine.InitPool(100000)
 
-	runtime, err := getRuntime(openaiPluginZip, *flagSupportAutoScale, *flagMaxInstances, *flagMinInstances)
+	runtime, err := test_utils.GetOpenAIRuntime(*flagSupportAutoScale, *flagMaxInstances, *flagMinInstances)
 	if err != nil {
 		log.Panic("Failed to get runtime: ", err)
 	}
 	defer runtime.Stop()
 
-	port, cancel := StartFakeOpenAIServer()
+	port, cancel := test_utils.StartFakeOpenAIServer()
 	defer cancel()
 
 	// wait for 10 seconds for the auto scale to be ready
@@ -285,101 +274,6 @@ func analyzeTrend(results []ConcurrencyResult, extractor func(ConcurrencyResult)
 	}
 }
 
-const (
-	_testingPath = "./loadtesting_cwd"
-)
-
-func getRuntime(pluginZip []byte, autoScale bool, maxInstances int, minInstances int) (*local_runtime.LocalPluginRuntime, error) {
-	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
-	}
-
-	// get manifest
-	manifest, err := decoder.Manifest()
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("get plugin manifest error"))
-	}
-
-	identity := manifest.Identity()
-	identity = strings.ReplaceAll(identity, ":", "-")
-
-	checksum, err := decoder.Checksum()
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))
-	}
-
-	// check if the working directory exists, if not, create it, otherwise, launch it directly
-	pluginWorkingPath := path.Join(_testingPath, fmt.Sprintf("%s@%s", identity, checksum))
-	if _, err := os.Stat(pluginWorkingPath); err != nil {
-		if err := decoder.ExtractTo(pluginWorkingPath); err != nil {
-			return nil, errors.Join(err, fmt.Errorf("extract plugin to working directory error"))
-		}
-	}
-
-	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
-		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
-		UvPath:                os.Getenv("UV_PATH"),
-		PythonEnvInitTimeout:  120,
-		AutoScale:             autoScale,
-		MaxInstances:          maxInstances,
-		MinInstances:          minInstances,
-	})
-
-	localPluginRuntime.PluginRuntime = plugin_entities.PluginRuntime{
-		Config: manifest,
-		State: plugin_entities.PluginRuntimeState{
-			Status:      plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
-			Restarts:    0,
-			ActiveAt:    nil,
-			Verified:    manifest.Verified,
-			WorkingPath: pluginWorkingPath,
-		},
-	}
-	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
-		WorkingPath: pluginWorkingPath,
-		Decoder:     decoder,
-	}
-
-	launchedChan := make(chan bool)
-	errChan := make(chan error)
-
-	// local plugin
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "LaunchLocal",
-	}, func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Error("plugin runtime panic: %v", r)
-			}
-		}()
-
-		// add max launching lock to prevent too many plugins launching at the same time
-		routine.Submit(map[string]string{
-			"module":   "plugin_manager",
-			"function": "LaunchLocal",
-		}, func() {
-			// wait for plugin launched
-			<-launchedChan
-		})
-
-		plugin_manager.FullDuplexLifecycle(localPluginRuntime, launchedChan, errChan)
-	})
-
-	// wait for plugin launched
-	select {
-	case err := <-errChan:
-		return nil, err
-	case <-launchedChan:
-	}
-
-	// wait 1s for stdio to be ready
-	time.Sleep(1 * time.Second)
-
-	return localPluginRuntime, nil
-}
-
 func runOnce(
 	runtime *local_runtime.LocalPluginRuntime,
 	request requests.RequestInvokeLLM,
@@ -453,145 +347,5 @@ func runOnce(
 
 	for response.Next() {
 		response.Read()
-	}
-}
-
-//go:embed testdata/openai.difypkg
-var openaiPluginZip []byte
-
-// FakeOpenAIResponse represents the structure of an OpenAI chat completion response
-type FakeOpenAIResponse struct {
-	ID      string `json:"id"`
-	Object  string `json:"object"`
-	Created int64  `json:"created"`
-	Model   string `json:"model"`
-	Choices []struct {
-		Index        int     `json:"index"`
-		Delta        Delta   `json:"delta"`
-		FinishReason *string `json:"finish_reason"`
-	} `json:"choices"`
-}
-
-type Delta struct {
-	Content string `json:"content"`
-}
-
-// StartFakeOpenAIServer starts a fake OpenAI server that streams responses
-// Returns the port number and a cancel function to stop the server
-func StartFakeOpenAIServer() (int, func()) {
-	port, err := network.GetRandomPort()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to get a random port: %v", err))
-	}
-
-	// Find an available port
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		panic(fmt.Sprintf("Failed to find an available port: %v", err))
-	}
-
-	listener.Close()
-
-	// Create a new server
-	mux := http.NewServeMux()
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
-	}
-
-	// Define the chat completions endpoint
-	mux.HandleFunc("/v1/chat/completions", func(w http.ResponseWriter, r *http.Request) {
-		// Set headers for streaming response
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-
-		// Generate a random ID
-		id := fmt.Sprintf("chatcmpl-%d", rand.Intn(1000000))
-
-		// Create a list of random words to return
-		words := []string{
-			"hello", "world", "this", "is", "a", "fake", "openai", "server",
-			"that", "streams", "responses", "for", "testing", "purposes",
-			"only", "it", "will", "return", "words", "every", "hundred",
-			"milliseconds", "until", "it", "reaches", "the", "limit",
-			"of", "four", "hundred", "tokens", "please", "use", "this",
-			"for", "benchmarking", "your", "plugin", "system", "thank",
-			"you", "for", "using", "our", "service", "have", "a", "nice",
-			"day", "goodbye", "see", "you", "soon", "take", "care",
-		}
-
-		flusher, ok := w.(http.Flusher)
-		if !ok {
-			http.Error(w, "Streaming not supported", http.StatusInternalServerError)
-			return
-		}
-
-		// Stream 400 words, one every 100ms
-		for i := 0; i < 100; i++ {
-			word := words[i%len(words)]
-
-			// Add space before words (except the first one)
-			if i > 0 {
-				word = " " + word
-			}
-
-			response := FakeOpenAIResponse{
-				ID:      id,
-				Object:  "chat.completion.chunk",
-				Created: time.Now().Unix(),
-				Model:   "gpt-3.5-turbo",
-				Choices: []struct {
-					Index        int     `json:"index"`
-					Delta        Delta   `json:"delta"`
-					FinishReason *string `json:"finish_reason"`
-				}{
-					{
-						Index: i,
-						Delta: Delta{
-							Content: word,
-						},
-						FinishReason: nil,
-					},
-				},
-			}
-
-			// For the last message, set finish_reason to "stop"
-			if i == 99 {
-				response.Choices[0].FinishReason = &[]string{"stop"}[0]
-			}
-
-			data, _ := json.Marshal(response)
-			fmt.Fprintf(w, "data: %s\n\n", string(data))
-			flusher.Flush()
-
-			// Sleep for 100ms
-			time.Sleep(10 * time.Millisecond)
-
-			// Check if the client has disconnected
-			select {
-			case <-r.Context().Done():
-				return
-			default:
-			}
-		}
-
-		// Send the [DONE] message
-		fmt.Fprintf(w, "data: [DONE]\n\n")
-		flusher.Flush()
-	})
-
-	// Start the server in a goroutine
-	go func() {
-		if err := server.ListenAndServe(); err != nil && !strings.Contains(err.Error(), "server closed") {
-			fmt.Printf("Fake OpenAI server error: %v\n", err)
-		}
-	}()
-
-	// Return the port and a cancel function
-	return int(port), func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		server.Shutdown(ctx)
 	}
 }

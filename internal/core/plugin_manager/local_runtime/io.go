@@ -31,7 +31,7 @@ func (r *LocalPluginRuntime) Listen(sessionId string) (*entities.Broadcast[plugi
 		listener.Send(data)
 
 		// received event from plugin, it has been verified to work properly
-		r.stage = launchStageVerifiedWorking
+		r.stage = LAUNCH_STAGE_VERIFIED_WORKING
 	})
 
 	return listener, nil

@@ -89,7 +89,7 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 // StartPlugin launches the autoscaling scheduler and blocks until the runtime
 // is stopped or until startup fails while still in launchStageInit.
 func (r *LocalPluginRuntime) StartPlugin() error {
-	r.stage = launchStageInit
+	r.stage = LAUNCH_STAGE_INIT
 	scalingTicker := time.NewTicker(time.Second * 5)
 	scalingStop := make(chan bool)
 	defer func() {
@@ -212,7 +212,7 @@ func (r *LocalPluginRuntime) reconcileOnce(fatalErrChan chan<- error) error {
 
 // getDesiredScale decides the target replica count.
 func (r *LocalPluginRuntime) getDesiredScale() int {
-	if r.stage == launchStageInit {
+	if r.stage == LAUNCH_STAGE_INIT {
 		return 1
 	}
 
@@ -263,7 +263,7 @@ func (r *LocalPluginRuntime) scaleUp(n int, fatalErrChan chan<- error) error {
 			holder, err := r.launchOneInstance(launched)
 			if err != nil {
 				// propagate the first fatal error only when still in Init stage
-				if r.stage == launchStageInit && firstErr == nil {
+				if r.stage == LAUNCH_STAGE_INIT && firstErr == nil {
 					firstErr = err
 					select {
 					case fatalErrChan <- err:
@@ -378,7 +378,7 @@ func (r *LocalPluginRuntime) launchOneInstance(launched chan bool) (*pluginInsta
 	}, func() {
 		defer wg.Done()
 		instance.StartStdout(func() {
-			r.stage = launchStageVerifiedWorking
+			r.stage = LAUNCH_STAGE_VERIFIED_WORKING
 		})
 	})
 	routine.Submit(map[string]string{
@@ -407,7 +407,7 @@ func (r *LocalPluginRuntime) launchOneInstance(launched chan bool) (*pluginInsta
 }
 
 //------------------------------------------------------------------------------
-// Wait helpers (original logic retained)
+// Wait helpers
 //------------------------------------------------------------------------------
 
 func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
@@ -431,4 +431,12 @@ func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
 	r.waitStoppedChan = append(r.waitStoppedChan, c)
 	r.waitChanLock.Unlock()
 	return c
+}
+
+//------------------------------------------------------------------------------
+// Stage helpers
+//------------------------------------------------------------------------------
+
+func (r *LocalPluginRuntime) Stage() LaunchStage {
+	return r.stage
 }
