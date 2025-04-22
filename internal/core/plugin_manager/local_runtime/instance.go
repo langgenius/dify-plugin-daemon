@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,8 @@ type pluginInstance struct {
 	memoryUsage        [_SAMPLES]int64 // the memory usage of the plugin, unit: bytes
 	cpuUsagePercentSum int16
 	memoryUsageSum     int64
+
+	sessionCount int32 // the number of sessions
 
 	pluginUniqueIdentifier string
 	writer                 io.WriteCloser
@@ -80,12 +83,16 @@ func (s *pluginInstance) setupStdioEventListener(session_id string, listener fun
 	}
 
 	s.listener[session_id] = listener
+
+	atomic.AddInt32(&s.sessionCount, 1)
 }
 
 func (s *pluginInstance) removeStdioHandlerListener(session_id string) {
 	s.l.Lock()
 	defer s.l.Unlock()
 	delete(s.listener, session_id)
+
+	atomic.AddInt32(&s.sessionCount, -1)
 }
 
 func (s *pluginInstance) write(data []byte) error {

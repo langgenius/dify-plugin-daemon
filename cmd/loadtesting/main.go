@@ -119,7 +119,7 @@ func main() {
 				declineCount = 0
 
 				// Check for plateau (no significant improvement)
-				if result.Throughput <= maxThroughput*1.05 {
+				if result.Throughput <= maxThroughput*1.02 {
 					plateauCount++
 					if plateauCount >= *flagPlateau {
 						fmt.Println("\nStopping test: Throughput has plateaued")

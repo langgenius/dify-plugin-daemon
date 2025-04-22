@@ -11,12 +11,19 @@ const (
 )
 
 func (r *LocalPluginRuntime) getLowestLoadPluginInstance() *pluginInstance {
-	// get the lowest load plugin instance
+	// get the lowest load plugin instance by considering both session count and CPU usage
 	var lowestInstance *pluginInstance
+	var lowestScore int64
 
 	for _, s := range r.pluginInstances {
-		if lowestInstance == nil || s.cpuUsagePercentSum < lowestInstance.cpuUsagePercentSum {
+		// Calculate a combined score based on session count and CPU usage
+		// Multiply session count by 5 to give it more weight in the calculation
+		// This helps prevent many requests from flooding the same instance
+		score := (int64(s.cpuUsagePercentSum) / _SAMPLES) + int64(s.sessionCount*5)
+
+		if lowestInstance == nil || score < lowestScore {
 			lowestInstance = s
+			lowestScore = score
 		}
 	}
 
