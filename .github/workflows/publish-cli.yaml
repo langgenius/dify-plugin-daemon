@@ -19,17 +19,17 @@ jobs:
           - platform: linux/arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Transform platform
         run: |
           GOARCH=$(echo "${{ matrix.platform }}" | cut -d '/' -f 2)
           echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: '1.23'
 
       - name: Build CLI
         run: |
@@ -58,6 +58,9 @@ jobs:
     runs-on: macos-latest
     if: github.repository == 'langgenius/dify-plugin-daemon'
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up certificate
         run: |
           echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
