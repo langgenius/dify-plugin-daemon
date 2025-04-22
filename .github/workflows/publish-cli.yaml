@@ -58,6 +58,9 @@ jobs:
     runs-on: macos-latest
     if: github.repository == 'langgenius/dify-plugin-daemon'
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up certificate
         run: |
           echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
