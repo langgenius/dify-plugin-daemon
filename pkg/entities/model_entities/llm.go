@@ -188,6 +188,22 @@ type LLMResultChunk struct {
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
 }
 
+/*
+This is a compatibility layer for the old LLMResultChunk format.
+The old one has the `PromptMessages` field, we need to ensure the new one is backward compatible.
+*/
+func (l LLMResultChunk) MarshalJSON() ([]byte, error) {
+	type Alias LLMResultChunk
+	type LLMResultChunk struct {
+		Alias
+		PromptMessages []any `json:"prompt_messages"`
+	}
+	return json.Marshal(LLMResultChunk{
+		Alias:          (Alias)(l),
+		PromptMessages: []any{},
+	})
+}
+
 type LLMUsage struct {
 	PromptTokens        *int            `json:"prompt_tokens" validate:"required"`
 	PromptUnitPrice     decimal.Decimal `json:"prompt_unit_price" validate:"required"`

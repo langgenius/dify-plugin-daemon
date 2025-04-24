@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFullFunctionPromptMessage(t *testing.T) {
@@ -297,4 +298,17 @@ func TestImagePromptMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestLLMResultChunkCompatibility(t *testing.T) {
+	llmResultChunk := LLMResultChunk{
+		Model: "gpt-3.5-turbo",
+	}
+
+	result := parser.MarshalJson(llmResultChunk)
+	assert.Contains(t, string(result), `"prompt_messages":[]`)
+
+	llmResultChunkPointer := &llmResultChunk
+	result = parser.MarshalJson(llmResultChunkPointer)
+	assert.Contains(t, string(result), `"prompt_messages":[]`)
 }
