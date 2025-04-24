@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745473232293,
+  "lastUpdate": 1745483793675,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1224,6 +1224,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "989799157 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9730b7dc63bd9c1eb05cf2c0f36755738a162868",
+          "message": "tests: enhance integration testing for specific plugins (#242)\n\n* feat: enhance integration testing for specific plugins\n\n- Added integration tests for the official agent, including test data for agent strategy invocation.\n- Introduced JSON schema generation and validation utilities to ensure proper request formatting.\n- Enhanced mock invocation handling in the plugin manager to support tool parameters.\n- Added new test utilities for simulating OpenAI server responses and managing plugin runtime.\n\n* fix: update RunOnce function to return response stream and enhance integration test\n\n- Modified the RunOnce function to return a response stream instead of an error, allowing for better handling of streamed responses.\n- Updated the integration test for the official agent to read from the response stream, ensuring proper validation of the agent strategy invocation.",
+          "timestamp": "2025-04-24T16:33:50+08:00",
+          "tree_id": "3fe97f790194dc28f74a7ba43f573fc45c1bd575",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/9730b7dc63bd9c1eb05cf2c0f36755738a162868"
+        },
+        "date": 1745483793372,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141508021,
+            "unit": "ns/op\t 1594183 B/op\t   28317 allocs/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141508021,
+            "unit": "ns/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1594183,
+            "unit": "B/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.65,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "987052456 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.65,
+            "unit": "ns/op",
+            "extra": "987052456 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "987052456 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "987052456 times\n4 procs"
           }
         ]
       }
