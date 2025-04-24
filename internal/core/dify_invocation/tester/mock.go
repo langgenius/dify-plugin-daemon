@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	jsonschema "github.com/langgenius/dify-plugin-daemon/internal/utils/json_schema"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
@@ -19,15 +21,50 @@ func NewMockedDifyInvocation() dify_invocation.BackwardsInvocation {
 func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
 	stream := stream.NewStream[model_entities.LLMResultChunk](5)
 	routine.Submit(nil, func() {
+		if len(payload.Tools) > 0 {
+			tool := payload.Tools[0]
+			// generate a valid arguments json string
+			arguments, err := jsonschema.GenerateValidateJson(tool.Parameters)
+			if err != nil {
+				stream.WriteError(err)
+				return
+			}
+
+			stream.WriteBlocking(model_entities.LLMResultChunk{
+				Model:             model_entities.LLMModel(payload.Model),
+				SystemFingerprint: "test",
+				Delta: model_entities.LLMResultChunkDelta{
+					Index: parser.ToPtr(0),
+					Message: model_entities.PromptMessage{
+						Role: model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+						ToolCalls: []model_entities.PromptMessageToolCall{
+							{
+								ID:   "oshiawaseni", // お幸せに
+								Type: "function",
+								Function: struct {
+									Name      string "json:\"name\""
+									Arguments string "json:\"arguments\""
+								}{
+									Name:      tool.Name,
+									Arguments: parser.MarshalJson(arguments),
+								},
+							},
+						},
+					},
+				},
+			})
+		}
+
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{1}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: "hello",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   "hello",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
@@ -38,9 +75,10 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{1}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: " world",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " world",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
@@ -51,9 +89,10 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{2}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: " world",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " world",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
@@ -64,9 +103,10 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{3}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: " !",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " !",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
@@ -76,6 +116,12 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{3}[0],
+				Message: model_entities.PromptMessage{
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " !",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
+				},
 				Usage: &model_entities.LLMUsage{
 					PromptTokens:     &[]int{100}[0],
 					CompletionTokens: &[]int{100}[0],
