@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745326228126,
+  "lastUpdate": 1745473232293,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1152,6 +1152,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "989561757 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ea67e810ddcd795466e4cd1a8fcedda19454a033",
+          "message": "feat: add backward compatibility for LLMResultChunk and new test case (#240)\n\n- Implemented a compatibility layer in LLMResultChunk to ensure backward compatibility with the old format by adding a `PromptMessages` field.\n- Added a new test case `TestLLMResultChunkCompatibility` to verify the JSON marshaling behavior of the updated LLMResultChunk structure.",
+          "timestamp": "2025-04-24T13:37:46+08:00",
+          "tree_id": "0724b935e2d4193c30d686f5ec5b1660b13e9d1b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/ea67e810ddcd795466e4cd1a8fcedda19454a033"
+        },
+        "date": 1745473231934,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141768634,
+            "unit": "ns/op\t 1593368 B/op\t   28316 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141768634,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593368,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.97,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "989799157 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.97,
+            "unit": "ns/op",
+            "extra": "989799157 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "989799157 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "989799157 times\n4 procs"
           }
         ]
       }
