@@ -1,19 +1,20 @@
-package plugin_manager
+package test_utils
 
 import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
-	"sync"
-	"testing"
 	"time"
 
 	_ "embed"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/lifecycle"
@@ -23,17 +24,16 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 const (
-	_testingPath = "./benchmark_testing"
+	_testingPath = "./integration_test_cwd"
 )
 
-func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
+func GetRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
@@ -61,9 +61,16 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 		}
 	}
 
+	uvPath := os.Getenv("UV_PATH")
+	if uvPath == "" {
+		if path, err := exec.LookPath("uv"); err == nil {
+			uvPath = path
+		}
+	}
+
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
-		UvPath:                os.Getenv("UV_PATH"),
+		UvPath:                uvPath,
 		PythonEnvInitTimeout:  120,
 	})
 
@@ -121,19 +128,32 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	return localPluginRuntime, nil
 }
 
-func runOnce(
-	b *testing.B,
+func ClearTestingPath() {
+	os.RemoveAll(_testingPath)
+}
+
+type RunOnceRequest interface {
+	requests.RequestInvokeLLM | requests.RequestInvokeTextEmbedding | requests.RequestInvokeRerank |
+		requests.RequestInvokeTTS | requests.RequestInvokeSpeech2Text | requests.RequestInvokeModeration |
+		requests.RequestValidateProviderCredentials | requests.RequestValidateModelCredentials |
+		requests.RequestGetTTSModelVoices | requests.RequestGetTextEmbeddingNumTokens |
+		requests.RequestGetLLMNumTokens | requests.RequestGetAIModelSchema | requests.RequestInvokeAgentStrategy
+}
+
+func RunOnce[T RunOnceRequest, R any](
 	runtime *local_runtime.LocalPluginRuntime,
-	request requests.RequestInvokeLLM,
-) {
+	accessType access_types.PluginAccessType,
+	action access_types.PluginAccessAction,
+	request T,
+) (*stream.Stream[R], error) {
 	session := session_manager.NewSession(
 		session_manager.NewSessionPayload{
 			UserID:                 "test",
 			TenantID:               "test",
 			PluginUniqueIdentifier: plugin_entities.PluginUniqueIdentifier(""),
 			ClusterID:              "test",
-			InvokeFrom:             access_types.PLUGIN_ACCESS_TYPE_MODEL,
-			Action:                 access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
+			InvokeFrom:             accessType,
+			Action:                 action,
 			Declaration:            nil,
 			BackwardsInvocation:    tester.NewMockedDifyInvocation(),
 			IgnoreCache:            true,
@@ -141,16 +161,16 @@ func runOnce(
 	)
 	session.BindRuntime(runtime)
 
-	response := stream.NewStream[model_entities.LLMResultChunk](1024)
+	response := stream.NewStream[R](1024)
 
 	listener := runtime.Listen(session.ID)
 	listener.Listen(func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
-			chunk, err := parser.UnmarshalJsonBytes[model_entities.LLMResultChunk](chunk.Data)
+			chunk, err := parser.UnmarshalJsonBytes[R](chunk.Data)
 			if err != nil {
 				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "unmarshal_error",
+					"error_type": "unmarshal_error1",
 					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
 				})))
 				response.Close()
@@ -167,6 +187,21 @@ func runOnce(
 			}
 			response.WriteError(errors.New(e.Error()))
 			response.Close()
+		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
+			if err := backwards_invocation.InvokeDify(
+				runtime.Configuration(),
+				session.InvokeFrom,
+				session,
+				transaction.NewFullDuplexEventWriter(session),
+				chunk.Data,
+			); err != nil {
+				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
+					"error_type": "invoke_dify_error",
+					"message":    fmt.Sprintf("invoke dify failed: %s", err.Error()),
+				})))
+				response.Close()
+				return
+			}
 		default:
 			response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 				"error_type": "unknown_stream_message_type",
@@ -190,77 +225,5 @@ func runOnce(
 		),
 	)
 
-	for response.Next() {
-		response.Read()
-	}
-}
-
-//go:embed testdata/openai.difypkg
-var openaiPluginZip []byte
-
-func BenchmarkLocalOpenAILLMInvocation(b *testing.B) {
-	log.SetShowLog(false)
-
-	routine.InitPool(10000)
-
-	const concurrency = 100
-	r := b.N
-
-	wg := sync.WaitGroup{}
-	sem := make(chan struct{}, concurrency)
-
-	// get runtime
-	runtime, err := getRuntime(openaiPluginZip)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer func() {
-		//runtime.Stop()
-		// os.RemoveAll(runtime.PluginRuntime.State.WorkingPath)
-		// os.RemoveAll(_testingPath)
-	}()
-
-	// launch fake openai server
-	port, _ := StartFakeOpenAIServer()
-
-	b.ResetTimer()
-	for i := 0; i < r; i++ {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func() {
-			defer func() {
-				<-sem
-				wg.Done()
-			}()
-			runOnce(b, runtime, requests.RequestInvokeLLM{
-				BaseRequestInvokeModel: requests.BaseRequestInvokeModel{
-					Provider: "openai",
-					Model:    "gpt-3.5-turbo",
-				},
-				Credentials: requests.Credentials{
-					Credentials: map[string]any{
-						"openai_api_key":  "test",
-						"openai_api_base": fmt.Sprintf("http://localhost:%d", port),
-					},
-				},
-				InvokeLLMSchema: requests.InvokeLLMSchema{
-					ModelParameters: map[string]any{
-						"temperature": 0.5,
-					},
-					PromptMessages: []model_entities.PromptMessage{
-						{
-							Role:    "user",
-							Content: "Hello, world!",
-						},
-					},
-					Tools:  []model_entities.PromptMessageTool{},
-					Stop:   []string{},
-					Stream: true,
-				},
-				ModelType: model_entities.MODEL_TYPE_LLM,
-			})
-		}()
-	}
-
-	wg.Wait()
+	return response, nil
 }

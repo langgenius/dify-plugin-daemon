@@ -1,0 +1,411 @@
+{
+    "model": {
+        "provider": "langgenius/openai/openai",
+        "model": "gpt-3.5-turbo",
+        "model_type": "llm",
+        "mode": "chat",
+        "completion_params": {},
+        "type": "model-selector",
+        "history_prompt_messages": [],
+        "entity": {
+            "model": "gpt-3.5-turbo",
+            "label": {
+                "zh_Hans": "gpt-3.5-turbo",
+                "en_US": "gpt-3.5-turbo"
+            },
+            "model_type": "llm",
+            "features": [
+                "multi-tool-call",
+                "agent-thought",
+                "stream-tool-call"
+            ],
+            "fetch_from": "predefined-model",
+            "model_properties": {
+                "context_size": 16385,
+                "mode": "chat"
+            },
+            "deprecated": false,
+            "parameter_rules": [
+                {
+                    "name": "temperature",
+                    "use_template": "temperature",
+                    "label": {
+                        "zh_Hans": "\\u6e29\\u5ea6",
+                        "en_US": "Temperature"
+                    },
+                    "type": "float",
+                    "help": {
+                        "zh_Hans": "\\u6e29\\u5ea6\\u63a7\\u5236\\u968f\\u673a\\u6027\\u3002\\u8f83\\u4f4e\\u7684\\u6e29\\u5ea6\\u4f1a\\u5bfc\\u81f4\\u8f83\\u5c11\\u7684\\u968f\\u673a\\u5b8c\\u6210\\u3002\\u968f\\u7740\\u6e29\\u5ea6\\u63a5\\u8fd1\\u96f6\\uff0c\\u6a21\\u578b\\u5c06\\u53d8\\u5f97\\u786e\\u5b9a\\u6027\\u548c\\u91cd\\u590d\\u6027\\u3002\\u8f83\\u9ad8\\u7684\\u6e29\\u5ea6\\u4f1a\\u5bfc\\u81f4\\u66f4\\u591a\\u7684\\u968f\\u673a\\u5b8c\\u6210\\u3002",
+                        "en_US": "Controls randomness. Lower temperature results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive. Higher temperature results in more random completions."
+                    },
+                    "required": false,
+                    "default": 0,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "precision": 2,
+                    "options": []
+                },
+                {
+                    "name": "top_p",
+                    "use_template": "top_p",
+                    "label": {
+                        "zh_Hans": "Top P",
+                        "en_US": "Top P"
+                    },
+                    "type": "float",
+                    "help": {
+                        "zh_Hans": "\\u901a\\u8fc7\\u6838\\u5fc3\\u91c7\\u6837\\u63a7\\u5236\\u591a\\u6837\\u6027\\uff1a0.5\\u8868\\u793a\\u8003\\u8651\\u4e86\\u4e00\\u534a\\u7684\\u6240\\u6709\\u53ef\\u80fd\\u6027\\u52a0\\u6743\\u9009\\u9879\\u3002",
+                        "en_US": "Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered."
+                    },
+                    "required": false,
+                    "default": 1,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "precision": 2,
+                    "options": []
+                },
+                {
+                    "name": "presence_penalty",
+                    "use_template": "presence_penalty",
+                    "label": {
+                        "zh_Hans": "\\u5b58\\u5728\\u60e9\\u7f5a",
+                        "en_US": "Presence Penalty"
+                    },
+                    "type": "float",
+                    "help": {
+                        "zh_Hans": "\\u5bf9\\u6587\\u672c\\u4e2d\\u5df2\\u6709\\u7684\\u6807\\u8bb0\\u7684\\u5bf9\\u6570\\u6982\\u7387\\u65bd\\u52a0\\u60e9\\u7f5a\\u3002",
+                        "en_US": "Applies a penalty to the log-probability of tokens already in the text."
+                    },
+                    "required": false,
+                    "default": 0,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "precision": 2,
+                    "options": []
+                },
+                {
+                    "name": "frequency_penalty",
+                    "use_template": "frequency_penalty",
+                    "label": {
+                        "zh_Hans": "\\u9891\\u7387\\u60e9\\u7f5a",
+                        "en_US": "Frequency Penalty"
+                    },
+                    "type": "float",
+                    "help": {
+                        "zh_Hans": "\\u5bf9\\u6587\\u672c\\u4e2d\\u51fa\\u73b0\\u7684\\u6807\\u8bb0\\u7684\\u5bf9\\u6570\\u6982\\u7387\\u65bd\\u52a0\\u60e9\\u7f5a\\u3002",
+                        "en_US": "Applies a penalty to the log-probability of tokens that appear in the text."
+                    },
+                    "required": false,
+                    "default": 0,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "precision": 2,
+                    "options": []
+                },
+                {
+                    "name": "max_tokens",
+                    "use_template": "max_tokens",
+                    "label": {
+                        "zh_Hans": "\\u6700\\u5927\\u6807\\u8bb0",
+                        "en_US": "Max Tokens"
+                    },
+                    "type": "int",
+                    "help": {
+                        "zh_Hans": "\\u6307\\u5b9a\\u751f\\u6210\\u7ed3\\u679c\\u957f\\u5ea6\\u7684\\u4e0a\\u9650\\u3002\\u5982\\u679c\\u751f\\u6210\\u7ed3\\u679c\\u622a\\u65ad\\uff0c\\u53ef\\u4ee5\\u8c03\\u5927\\u8be5\\u53c2\\u6570\\u3002",
+                        "en_US": "Specifies the upper limit on the length of generated results. If the generated results are truncated, you can increase this parameter."
+                    },
+                    "required": false,
+                    "default": 512,
+                    "min": 1.0,
+                    "max": 4096.0,
+                    "precision": 0,
+                    "options": []
+                },
+                {
+                    "name": "response_format",
+                    "use_template": null,
+                    "label": {
+                        "zh_Hans": "\\u56de\\u590d\\u683c\\u5f0f",
+                        "en_US": "Response Format"
+                    },
+                    "type": "string",
+                    "help": {
+                        "zh_Hans": "\\u6307\\u5b9a\\u6a21\\u578b\\u5fc5\\u987b\\u8f93\\u51fa\\u7684\\u683c\\u5f0f",
+                        "en_US": "specifying the format that the model must output"
+                    },
+                    "required": false,
+                    "default": null,
+                    "min": null,
+                    "max": null,
+                    "precision": null,
+                    "options": [
+                        "text",
+                        "json_object"
+                    ]
+                }
+            ],
+            "pricing": {
+                "input": "0.0005",
+                "output": "0.0015",
+                "unit": "0.001",
+                "currency": "USD"
+            }
+        }
+    },
+    "instruction": "you are a helpful assistant",
+    "query": "what time is it?",
+    "tools": [
+        {
+            "identity": {
+                "author": "Dify",
+                "name": "current_time",
+                "label": {
+                    "en_US": "Current Time",
+                    "zh_Hans": "\\u83b7\\u53d6\\u5f53\\u524d\\u65f6\\u95f4",
+                    "pt_BR": "Current Time",
+                    "ja_JP": "Current Time"
+                },
+                "provider": "time",
+                "icon": null
+            },
+            "parameters": [
+                {
+                    "name": "format",
+                    "label": {
+                        "en_US": "Format",
+                        "zh_Hans": "\\u683c\\u5f0f",
+                        "pt_BR": "Format",
+                        "ja_JP": "Format"
+                    },
+                    "placeholder": null,
+                    "scope": null,
+                    "auto_generate": null,
+                    "template": null,
+                    "required": false,
+                    "default": "%Y-%m-%d %H:%M:%S",
+                    "min": null,
+                    "max": null,
+                    "precision": null,
+                    "options": [],
+                    "type": "string",
+                    "human_description": {
+                        "en_US": "Time format in strftime standard.",
+                        "zh_Hans": "strftime \\u6807\\u51c6\\u7684\\u65f6\\u95f4\\u683c\\u5f0f\\u3002",
+                        "pt_BR": "Time format in strftime standard.",
+                        "ja_JP": "Time format in strftime standard."
+                    },
+                    "form": "form",
+                    "llm_description": null
+                },
+                {
+                    "name": "timezone",
+                    "label": {
+                        "en_US": "Timezone",
+                        "zh_Hans": "\\u65f6\\u533a",
+                        "pt_BR": "Timezone",
+                        "ja_JP": "Timezone"
+                    },
+                    "placeholder": null,
+                    "scope": null,
+                    "auto_generate": null,
+                    "template": null,
+                    "required": false,
+                    "default": "UTC",
+                    "min": null,
+                    "max": null,
+                    "precision": null,
+                    "options": [
+                        {
+                            "value": "UTC",
+                            "label": {
+                                "en_US": "UTC",
+                                "zh_Hans": "UTC",
+                                "pt_BR": "UTC",
+                                "ja_JP": "UTC"
+                            }
+                        },
+                        {
+                            "value": "America/New_York",
+                            "label": {
+                                "en_US": "America/New_York",
+                                "zh_Hans": "\\u7f8e\\u6d32/\\u7ebd\\u7ea6",
+                                "pt_BR": "America/New_York",
+                                "ja_JP": "America/New_York"
+                            }
+                        },
+                        {
+                            "value": "America/Los_Angeles",
+                            "label": {
+                                "en_US": "America/Los_Angeles",
+                                "zh_Hans": "\\u7f8e\\u6d32/\\u6d1b\\u6749\\u77f6",
+                                "pt_BR": "America/Los_Angeles",
+                                "ja_JP": "America/Los_Angeles"
+                            }
+                        },
+                        {
+                            "value": "America/Chicago",
+                            "label": {
+                                "en_US": "America/Chicago",
+                                "zh_Hans": "\\u7f8e\\u6d32/\\u829d\\u52a0\\u54e5",
+                                "pt_BR": "America/Chicago",
+                                "ja_JP": "America/Chicago"
+                            }
+                        },
+                        {
+                            "value": "America/Sao_Paulo",
+                            "label": {
+                                "en_US": "America/Sao_Paulo",
+                                "zh_Hans": "\\u7f8e\\u6d32/\\u5723\\u4fdd\\u7f57",
+                                "pt_BR": "Am\\u00e9rica/S\\u00e3o Paulo",
+                                "ja_JP": "America/Sao_Paulo"
+                            }
+                        },
+                        {
+                            "value": "Asia/Shanghai",
+                            "label": {
+                                "en_US": "Asia/Shanghai",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u4e0a\\u6d77",
+                                "pt_BR": "Asia/Shanghai",
+                                "ja_JP": "Asia/Shanghai"
+                            }
+                        },
+                        {
+                            "value": "Asia/Ho_Chi_Minh",
+                            "label": {
+                                "en_US": "Asia/Ho_Chi_Minh",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u80e1\\u5fd7\\u660e\\u5e02",
+                                "pt_BR": "\\u00c1sia/Ho Chi Minh",
+                                "ja_JP": "Asia/Ho_Chi_Minh"
+                            }
+                        },
+                        {
+                            "value": "Asia/Tokyo",
+                            "label": {
+                                "en_US": "Asia/Tokyo",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u4e1c\\u4eac",
+                                "pt_BR": "Asia/Tokyo",
+                                "ja_JP": "Asia/Tokyo"
+                            }
+                        },
+                        {
+                            "value": "Asia/Dubai",
+                            "label": {
+                                "en_US": "Asia/Dubai",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u8fea\\u62dc",
+                                "pt_BR": "Asia/Dubai",
+                                "ja_JP": "Asia/Dubai"
+                            }
+                        },
+                        {
+                            "value": "Asia/Kolkata",
+                            "label": {
+                                "en_US": "Asia/Kolkata",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u52a0\\u5c14\\u5404\\u7b54",
+                                "pt_BR": "Asia/Kolkata",
+                                "ja_JP": "Asia/Kolkata"
+                            }
+                        },
+                        {
+                            "value": "Asia/Seoul",
+                            "label": {
+                                "en_US": "Asia/Seoul",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u9996\\u5c14",
+                                "pt_BR": "Asia/Seoul",
+                                "ja_JP": "Asia/Seoul"
+                            }
+                        },
+                        {
+                            "value": "Asia/Singapore",
+                            "label": {
+                                "en_US": "Asia/Singapore",
+                                "zh_Hans": "\\u4e9a\\u6d32/\\u65b0\\u52a0\\u5761",
+                                "pt_BR": "Asia/Singapore",
+                                "ja_JP": "Asia/Singapore"
+                            }
+                        },
+                        {
+                            "value": "Europe/London",
+                            "label": {
+                                "en_US": "Europe/London",
+                                "zh_Hans": "\\u6b27\\u6d32/\\u4f26\\u6566",
+                                "pt_BR": "Europe/London",
+                                "ja_JP": "Europe/London"
+                            }
+                        },
+                        {
+                            "value": "Europe/Berlin",
+                            "label": {
+                                "en_US": "Europe/Berlin",
+                                "zh_Hans": "\\u6b27\\u6d32/\\u67cf\\u6797",
+                                "pt_BR": "Europe/Berlin",
+                                "ja_JP": "Europe/Berlin"
+                            }
+                        },
+                        {
+                            "value": "Europe/Moscow",
+                            "label": {
+                                "en_US": "Europe/Moscow",
+                                "zh_Hans": "\\u6b27\\u6d32/\\u83ab\\u65af\\u79d1",
+                                "pt_BR": "Europe/Moscow",
+                                "ja_JP": "Europe/Moscow"
+                            }
+                        },
+                        {
+                            "value": "Australia/Sydney",
+                            "label": {
+                                "en_US": "Australia/Sydney",
+                                "zh_Hans": "\\u6fb3\\u5927\\u5229\\u4e9a/\\u6089\\u5c3c",
+                                "pt_BR": "Australia/Sydney",
+                                "ja_JP": "Australia/Sydney"
+                            }
+                        },
+                        {
+                            "value": "Pacific/Auckland",
+                            "label": {
+                                "en_US": "Pacific/Auckland",
+                                "zh_Hans": "\\u592a\\u5e73\\u6d0b/\\u5965\\u514b\\u5170",
+                                "pt_BR": "Pacific/Auckland",
+                                "ja_JP": "Pacific/Auckland"
+                            }
+                        },
+                        {
+                            "value": "Africa/Cairo",
+                            "label": {
+                                "en_US": "Africa/Cairo",
+                                "zh_Hans": "\\u975e\\u6d32/\\u5f00\\u7f57",
+                                "pt_BR": "Africa/Cairo",
+                                "ja_JP": "Africa/Cairo"
+                            }
+                        }
+                    ],
+                    "type": "select",
+                    "human_description": {
+                        "en_US": "Timezone",
+                        "zh_Hans": "\\u65f6\\u533a",
+                        "pt_BR": "Timezone",
+                        "ja_JP": "Timezone"
+                    },
+                    "form": "form",
+                    "llm_description": null
+                }
+            ],
+            "description": {
+                "human": {
+                    "en_US": "A tool for getting the current time.",
+                    "zh_Hans": "\\u4e00\\u4e2a\\u7528\\u4e8e\\u83b7\\u53d6\\u5f53\\u524d\\u65f6\\u95f4\\u7684\\u5de5\\u5177\\u3002",
+                    "pt_BR": "A tool for getting the current time.",
+                    "ja_JP": "A tool for getting the current time."
+                },
+                "llm": "A tool for getting the current time."
+            },
+            "output_schema": null,
+            "has_runtime_parameters": false,
+            "runtime_parameters": {
+                "format": "%Y-%m-%d %H:%M:%S",
+                "timezone": "UTC"
+            },
+            "provider_type": "builtin"
+        }
+    ],
+    "maximum_iterations": 3
+}
