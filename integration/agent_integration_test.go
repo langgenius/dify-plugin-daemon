@@ -29,7 +29,7 @@ func TestDifyOfficialAgentIntegration(t *testing.T) {
 
 	invokePayload, err := parser.UnmarshalJsonBytes2Map(invokeAgentStrategyJson)
 	assert.NoError(t, err)
-	err = test_utils.RunOnce[requests.RequestInvokeAgentStrategy, agent_entities.AgentStrategyResponseChunk](
+	response, err := test_utils.RunOnce[requests.RequestInvokeAgentStrategy, agent_entities.AgentStrategyResponseChunk](
 		runtime,
 		access_types.PLUGIN_ACCESS_TYPE_AGENT_STRATEGY,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY,
@@ -43,4 +43,9 @@ func TestDifyOfficialAgentIntegration(t *testing.T) {
 	)
 
 	assert.NoError(t, err)
+
+	for response.Next() {
+		_, err := response.Read()
+		assert.NoError(t, err)
+	}
 }

@@ -145,7 +145,7 @@ func RunOnce[T RunOnceRequest, R any](
 	accessType access_types.PluginAccessType,
 	action access_types.PluginAccessAction,
 	request T,
-) error {
+) (*stream.Stream[R], error) {
 	session := session_manager.NewSession(
 		session_manager.NewSessionPayload{
 			UserID:                 "test",
@@ -225,11 +225,5 @@ func RunOnce[T RunOnceRequest, R any](
 		),
 	)
 
-	for response.Next() {
-		if _, err := response.Read(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return response, nil
 }
