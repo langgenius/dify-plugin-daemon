@@ -100,13 +100,13 @@ func (m *mockReadWriteCloser) IsClosed() bool {
 	return m.closed
 }
 
-// TestNewStdioHolder tests the creation of a new stdioHolder
-func TestNewStdioHolder(t *testing.T) {
+// TestNewPluginInstance tests the creation of a new pluginInstance
+func TestNewPluginInstance(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 
 	assert.NotNil(t, holder)
 	assert.Equal(t, "test-plugin", holder.pluginUniqueIdentifier)
@@ -119,9 +119,9 @@ func TestNewStdioHolder(t *testing.T) {
 	assert.False(t, holder.waitingControllerChanClosed)
 }
 
-// TestStdioHolderSetupAndRemoveListener tests setting up and removing event listeners
-func TestStdioHolderSetupAndRemoveListener(t *testing.T) {
-	holder := newStdioHolder("test-plugin", nil, nil, nil)
+// TestPluginInstanceSetupAndRemoveListener tests setting up and removing event listeners
+func TestPluginInstanceSetupAndRemoveListener(t *testing.T) {
+	holder := newPluginInstance("test-plugin", 1, nil, nil, nil)
 
 	// Test setup listener
 	holder.setupStdioEventListener("session1", func(data []byte) {
@@ -136,19 +136,19 @@ func TestStdioHolderSetupAndRemoveListener(t *testing.T) {
 	assert.Len(t, holder.listener, 0)
 }
 
-// TestStdioHolderWrite tests writing to the stdio
-func TestStdioHolderWrite(t *testing.T) {
+// TestPluginInstanceWrite tests writing to the stdio
+func TestPluginInstanceWrite(t *testing.T) {
 	stdin := newMockReadWriteCloser()
-	holder := newStdioHolder("test-plugin", stdin, nil, nil)
+	holder := newPluginInstance("test-plugin", 1, stdin, nil, nil)
 
 	err := holder.write([]byte("test data"))
 	assert.NoError(t, err)
 	assert.Equal(t, "test data", string(stdin.GetWrittenData()))
 }
 
-// TestStdioHolderError tests the Error method
-func TestStdioHolderError(t *testing.T) {
-	holder := newStdioHolder("test-plugin", nil, nil, nil)
+// TestPluginInstanceError tests the Error method
+func TestPluginInstanceError(t *testing.T) {
+	holder := newPluginInstance("test-plugin", 1, nil, nil, nil)
 
 	// No error initially
 	assert.NoError(t, holder.Error())
@@ -167,13 +167,13 @@ func TestStdioHolderError(t *testing.T) {
 	assert.NoError(t, holder.Error())
 }
 
-// TestStdioHolderStop tests stopping the stdio holder
-func TestStdioHolderStop(t *testing.T) {
+// TestPluginInstanceStop tests stopping the stdio holder
+func TestPluginInstanceStop(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 
 	holder.Stop()
 
@@ -186,9 +186,9 @@ func TestStdioHolderStop(t *testing.T) {
 	holder.Stop()
 }
 
-// TestStdioHolderWriteError tests writing error messages
-func TestStdioHolderWriteError(t *testing.T) {
-	holder := newStdioHolder("test-plugin", nil, nil, nil)
+// TestPluginInstanceWriteError tests writing error messages
+func TestPluginInstanceWriteError(t *testing.T) {
+	holder := newPluginInstance("test-plugin", 1, nil, nil, nil)
 
 	// Test writing a simple error
 	holder.WriteError("error1")
@@ -206,10 +206,10 @@ func TestStdioHolderWriteError(t *testing.T) {
 	assert.True(t, strings.HasSuffix(holder.errMessage, "a"))
 }
 
-// TestStdioHolderStartStderr tests the StartStderr method
-func TestStdioHolderStartStderr(t *testing.T) {
+// TestPluginInstanceStartStderr tests the StartStderr method
+func TestPluginInstanceStartStderr(t *testing.T) {
 	stderr := newMockReadWriteCloser()
-	holder := newStdioHolder("test-plugin", nil, nil, stderr)
+	holder := newPluginInstance("test-plugin", 1, nil, nil, stderr)
 
 	// Write some data to stderr
 	stderr.WriteToRead([]byte("stderr message"))
@@ -232,13 +232,13 @@ func TestStdioHolderStartStderr(t *testing.T) {
 	assert.Contains(t, holder.errMessage, "stderr message")
 }
 
-// TestStdioHolderWait tests the Wait method
-func TestStdioHolderWait(t *testing.T) {
+// TestPluginInstanceWait tests the Wait method
+func TestPluginInstanceWait(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 	holder.lastActiveAt = time.Now()
 
 	// Test normal wait with stop
@@ -254,7 +254,7 @@ func TestStdioHolderWait(t *testing.T) {
 	stdout = newMockReadWriteCloser()
 	stderr = newMockReadWriteCloser()
 
-	holder = newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder = newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 	holder.lastActiveAt = time.Now().Add(-(MAX_HEARTBEAT_INTERVAL + 1*time.Second)) // Inactive for more than 120 seconds
 
 	// Test timeout due to inactivity
@@ -266,20 +266,20 @@ func TestStdioHolderWait(t *testing.T) {
 	stderr = newMockReadWriteCloser()
 
 	// Test error when already closed
-	holder = newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder = newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 	holder.Stop()
 	err = holder.Wait()
 	assert.Error(t, err)
 	assert.Equal(t, "you need to start the health check before waiting", err.Error())
 }
 
-// TestStdioHolderStartStdout tests the StartStdout method
-func TestStdioHolderStartStdout(t *testing.T) {
+// TestPluginInstanceStartStdout tests the StartStdout method
+func TestPluginInstanceStartStdout(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 
 	// Setup a listener
 	receivedData := make(chan []byte, 1)
@@ -311,7 +311,7 @@ func TestStdioHolderStartStdout(t *testing.T) {
 	stdout = newMockReadWriteCloser()
 	stderr = newMockReadWriteCloser()
 
-	holder = newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder = newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 	stdout.WriteToRead([]byte{})
 
 	go func() {
@@ -322,13 +322,13 @@ func TestStdioHolderStartStdout(t *testing.T) {
 	stdout.Close()
 }
 
-// TestStdioHolderWithRealData tests the stdioHolder with realistic data flow
-func TestStdioHolderWithRealData(t *testing.T) {
+// TestPluginInstanceWithRealData tests the pluginInstance with realistic data flow
+func TestPluginInstanceWithRealData(t *testing.T) {
 	stdin := newMockReadWriteCloser()
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 
 	// Setup listeners
 	dataReceived := make(chan bool, 1)
@@ -395,7 +395,7 @@ func TestMultipleTransactions(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newPluginInstance("test-plugin", 1, stdin, stdout, stderr)
 	transactionMap := make(map[string]bool)
 	transactionMapLock := sync.Mutex{}
 

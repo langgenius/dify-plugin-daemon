@@ -1,13 +1,12 @@
-package plugin_manager
+package test_utils
 
 import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
-	"sync"
-	"testing"
 	"time"
 
 	_ "embed"
@@ -16,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/lifecycle"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -29,10 +29,24 @@ import (
 )
 
 const (
-	_testingPath = "./benchmark_testing"
+	_testingPath = "./loadtesting_cwd"
 )
 
-func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
+//go:embed testdata/openai.difypkg
+var openaiPluginZip []byte
+
+//go:embed testdata/broken.difypkg
+var brokenPluginZip []byte
+
+func GetOpenAIRuntime(autoScale bool, maxInstances int, minInstances int) (*local_runtime.LocalPluginRuntime, error) {
+	return GetRuntime(openaiPluginZip, autoScale, maxInstances, minInstances)
+}
+
+func GetBrokenRuntime(autoScale bool, maxInstances int, minInstances int) (*local_runtime.LocalPluginRuntime, error) {
+	return GetRuntime(brokenPluginZip, autoScale, maxInstances, minInstances)
+}
+
+func GetRuntime(pluginZip []byte, autoScale bool, maxInstances int, minInstances int) (*local_runtime.LocalPluginRuntime, error) {
 	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
@@ -60,10 +74,20 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 		}
 	}
 
+	uvPath := os.Getenv("UV_PATH")
+	if uvPath == "" {
+		if path, err := exec.LookPath("uv"); err == nil {
+			uvPath = path
+		}
+	}
+
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
-		UvPath:                os.Getenv("UV_PATH"),
+		UvPath:                uvPath,
 		PythonEnvInitTimeout:  120,
+		AutoScale:             autoScale,
+		MaxInstances:          maxInstances,
+		MinInstances:          minInstances,
 	})
 
 	localPluginRuntime.PluginRuntime = plugin_entities.PluginRuntime{
@@ -104,7 +128,7 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 			<-launchedChan
 		})
 
-		fullDuplexLifecycle(localPluginRuntime, launchedChan, errChan)
+		lifecycle.FullDuplex(localPluginRuntime, launchedChan, errChan)
 	})
 
 	// wait for plugin launched
@@ -120,8 +144,11 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	return localPluginRuntime, nil
 }
 
+func ClearTestingPath() {
+	os.RemoveAll(_testingPath)
+}
+
 func runOnce(
-	b *testing.B,
 	runtime *local_runtime.LocalPluginRuntime,
 	request requests.RequestInvokeLLM,
 ) {
@@ -142,7 +169,10 @@ func runOnce(
 
 	response := stream.NewStream[model_entities.LLMResultChunk](1024)
 
-	listener := runtime.Listen(session.ID)
+	listener, err := runtime.Listen(session.ID)
+	if err != nil {
+		log.Panic("Failed to listen: ", err)
+	}
 	listener.Listen(func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
@@ -192,74 +222,4 @@ func runOnce(
 	for response.Next() {
 		response.Read()
 	}
-}
-
-//go:embed testdata/openai.difypkg
-var openaiPluginZip []byte
-
-func BenchmarkLocalOpenAILLMInvocation(b *testing.B) {
-	log.SetShowLog(false)
-
-	routine.InitPool(10000)
-
-	const concurrency = 100
-	r := b.N
-
-	wg := sync.WaitGroup{}
-	sem := make(chan struct{}, concurrency)
-
-	// get runtime
-	runtime, err := getRuntime(openaiPluginZip)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer func() {
-		//runtime.Stop()
-		// os.RemoveAll(runtime.PluginRuntime.State.WorkingPath)
-		// os.RemoveAll(_testingPath)
-	}()
-
-	// launch fake openai server
-	port, _ := StartFakeOpenAIServer()
-
-	b.ResetTimer()
-	for i := 0; i < r; i++ {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func() {
-			defer func() {
-				<-sem
-				wg.Done()
-			}()
-			runOnce(b, runtime, requests.RequestInvokeLLM{
-				BaseRequestInvokeModel: requests.BaseRequestInvokeModel{
-					Provider: "openai",
-					Model:    "gpt-3.5-turbo",
-				},
-				Credentials: requests.Credentials{
-					Credentials: map[string]any{
-						"openai_api_key":  "test",
-						"openai_api_base": fmt.Sprintf("http://localhost:%d", port),
-					},
-				},
-				InvokeLLMSchema: requests.InvokeLLMSchema{
-					ModelParameters: map[string]any{
-						"temperature": 0.5,
-					},
-					PromptMessages: []model_entities.PromptMessage{
-						{
-							Role:    "user",
-							Content: "Hello, world!",
-						},
-					},
-					Tools:  []model_entities.PromptMessageTool{},
-					Stop:   []string{},
-					Stream: true,
-				},
-				ModelType: model_entities.MODEL_TYPE_LLM,
-			})
-		}()
-	}
-
-	wg.Wait()
 }

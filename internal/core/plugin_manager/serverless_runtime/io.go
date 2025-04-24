@@ -10,26 +10,24 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *AWSPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
+func (r *AWSPluginRuntime) Listen(sessionId string) (*entities.Broadcast[plugin_entities.SessionMessage], error) {
 	l := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	// store the listener
 	r.listeners.Store(sessionId, l)
-	return l
+	return l, nil
 }
 
 // For AWS Lambda, write is equivalent to http request, it's not a normal stream like stdio and tcp
-func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
+func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) error {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
-		log.Error("session %s not found", sessionId)
-		return
+		return fmt.Errorf("session %s not found", sessionId)
 	}
 
 	url, err := url.JoinPath(r.LambdaURL, "invoke")
@@ -43,7 +41,7 @@ func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAcc
 		})
 		l.Close()
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
-		return
+		return fmt.Errorf("error creating request: %v", err)
 	}
 
 	url += "?action=" + string(action)
@@ -56,7 +54,7 @@ func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAcc
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))
 	if err != nil {
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
-		return
+		return fmt.Errorf("error creating request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
@@ -145,4 +143,6 @@ func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAcc
 			})
 		}
 	})
+
+	return nil
 }
