@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745559184788,
+  "lastUpdate": 1745577446382,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1368,6 +1368,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "985532454 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "00730b67c3841a32ac23c418b0f9274fabd64e9e",
+          "message": "refactor: replace baseSSEService with baseSSEWithSession in multiple service files (#244)\n\n- Introduced baseSSEWithSession to streamline session management across various service functions.\n- Updated InvokeAgentStrategy, InvokeLLM, InvokeTextEmbedding, InvokeRerank, InvokeTTS, InvokeSpeech2Text, InvokeModeration, ValidateProviderCredentials, ValidateModelCredentials, GetTTSModelVoices, GetTextEmbeddingNumTokens, GetAIModelSchema, and GetLLMNumTokens to utilize the new session handling approach, improving code readability and maintainability.",
+          "timestamp": "2025-04-25T18:34:46+08:00",
+          "tree_id": "af963447ad594856d965f8e553f31a2663685585",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/00730b67c3841a32ac23c418b0f9274fabd64e9e"
+        },
+        "date": 1745577446067,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139231238,
+            "unit": "ns/op\t 1593705 B/op\t   28316 allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139231238,
+            "unit": "ns/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593705,
+            "unit": "B/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.12,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "983818504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.12,
+            "unit": "ns/op",
+            "extra": "983818504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "983818504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "983818504 times\n4 procs"
           }
         ]
       }
