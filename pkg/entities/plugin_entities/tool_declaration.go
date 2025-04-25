@@ -221,6 +221,7 @@ func init() {
 type ToolProviderDeclaration struct {
 	Identity          ToolProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
 	CredentialsSchema []ProviderConfig     `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
+	OAuthSchema       *OAuthSchema         `json:"oauth_schema" yaml:"oauth_schema" validate:"omitempty,dive"`
 	Tools             []ToolDeclaration    `json:"tools" yaml:"tools" validate:"required,dive"`
 	ToolFiles         []string             `json:"-" yaml:"-"`
 }
@@ -243,6 +244,7 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		CredentialsSchema      yaml.Node            `yaml:"credentials_schema"`
 		CredentialsForProvider yaml.Node            `yaml:"credentials_for_provider"`
 		Tools                  yaml.Node            `yaml:"tools"`
+		OAuthSchema            *OAuthSchema         `yaml:"oauth_schema"`
 	}
 
 	var temp alias
@@ -260,6 +262,9 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 
 	// apply identity
 	t.Identity = temp.Identity
+
+	// apply oauth_schema
+	t.OAuthSchema = temp.OAuthSchema
 
 	// check if credentials_schema is a map
 	if temp.CredentialsSchema.Kind != yaml.MappingNode {

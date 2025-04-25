@@ -7,13 +7,15 @@ const (
 	PLUGIN_ACCESS_TYPE_MODEL          PluginAccessType = "model"
 	PLUGIN_ACCESS_TYPE_ENDPOINT       PluginAccessType = "endpoint"
 	PLUGIN_ACCESS_TYPE_AGENT_STRATEGY PluginAccessType = "agent_strategy"
+	PLUGIN_ACCESS_TYPE_OAUTH          PluginAccessType = "oauth"
 )
 
 func (p PluginAccessType) IsValid() bool {
 	return p == PLUGIN_ACCESS_TYPE_TOOL ||
 		p == PLUGIN_ACCESS_TYPE_MODEL ||
 		p == PLUGIN_ACCESS_TYPE_ENDPOINT ||
-		p == PLUGIN_ACCESS_TYPE_AGENT_STRATEGY
+		p == PLUGIN_ACCESS_TYPE_AGENT_STRATEGY ||
+		p == PLUGIN_ACCESS_TYPE_OAUTH
 }
 
 type PluginAccessAction string
@@ -36,6 +38,8 @@ const (
 	PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS          PluginAccessAction = "get_ai_model_schemas"
 	PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS            PluginAccessAction = "get_llm_num_tokens"
 	PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY         PluginAccessAction = "invoke_agent_strategy"
+	PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL         PluginAccessAction = "get_authorization_url"
+	PLUGIN_ACCESS_ACTION_GET_CREDENTIALS               PluginAccessAction = "get_credentials"
 )
 
 func (p PluginAccessAction) IsValid() bool {
@@ -55,5 +59,7 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS ||
 		p == PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS ||
 		p == PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS ||
-		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY
+		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY ||
+		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
+		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS
 }
