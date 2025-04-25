@@ -26,3 +26,17 @@ func OAuthGetAuthorizationURL(config *app.Config) gin.HandlerFunc {
 		)
 	}
 }
+
+func OAuthGetCredentials(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestOAuthGetCredentials]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(c, func(ipr request) {
+			service.OAuthGetCredentials(
+				&ipr,
+				c,
+				time.Duration(config.PluginMaxExecutionTimeout)*time.Second,
+			)
+		})
+	}
+}
