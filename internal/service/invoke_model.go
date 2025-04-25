@@ -5,7 +5,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -17,25 +16,13 @@ func InvokeLLM(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.LLMResultChunk], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.LLMResultChunk], error) {
 			return plugin_daemon.InvokeLLM(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -46,24 +33,13 @@ func InvokeTextEmbedding(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
-		ctx.GetString("cluster_id"))
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.TextEmbeddingResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.TextEmbeddingResult], error) {
 			return plugin_daemon.InvokeTextEmbedding(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -74,25 +50,13 @@ func InvokeRerank(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.RerankResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.RerankResult], error) {
 			return plugin_daemon.InvokeRerank(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -103,25 +67,13 @@ func InvokeTTS(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TTS,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.TTSResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.TTSResult], error) {
 			return plugin_daemon.InvokeTTS(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TTS,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -132,25 +84,13 @@ func InvokeSpeech2Text(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_SPEECH2TEXT,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.Speech2TextResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.Speech2TextResult], error) {
 			return plugin_daemon.InvokeSpeech2Text(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_SPEECH2TEXT,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -161,25 +101,13 @@ func InvokeModeration(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.ModerationResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.ModerationResult], error) {
 			return plugin_daemon.InvokeModeration(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -190,25 +118,13 @@ func ValidateProviderCredentials(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
 			return plugin_daemon.ValidateProviderCredentials(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -219,25 +135,13 @@ func ValidateModelCredentials(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	// create session
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
 			return plugin_daemon.ValidateModelCredentials(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -248,24 +152,13 @@ func GetTTSModelVoices(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.GetTTSVoicesResponse], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.GetTTSVoicesResponse], error) {
 			return plugin_daemon.GetTTSModelVoices(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -276,24 +169,13 @@ func GetTextEmbeddingNumTokens(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error) {
 			return plugin_daemon.GetTextEmbeddingNumTokens(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -304,24 +186,13 @@ func GetAIModelSchema(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.GetModelSchemasResponse], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.GetModelSchemasResponse], error) {
 			return plugin_daemon.GetAIModelSchema(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
@@ -332,24 +203,13 @@ func GetLLMNumTokens(
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
-	session, err := createSession(
-		r,
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS,
-		ctx.GetString("cluster_id"),
-	)
-	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
-		return
-	}
-	defer session.Close(session_manager.CloseSessionPayload{
-		IgnoreCache: false,
-	})
-
-	baseSSEService(
-		func() (*stream.Stream[model_entities.LLMGetNumTokensResponse], error) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.LLMGetNumTokensResponse], error) {
 			return plugin_daemon.GetLLMNumTokens(session, &r.Data)
 		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS,
+		r,
 		ctx,
 		max_timeout_seconds,
 	)
