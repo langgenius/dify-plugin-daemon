@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745577446382,
+  "lastUpdate": 1745585111194,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1440,6 +1440,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "983818504 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "taeyoung613@gmail.com",
+            "name": "Taeyoung Park",
+            "username": "taeyoungpark"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5d83258371b0a051d50ec4fbbdfa99a32dffcf4e",
+          "message": " Add optional Redis username authentication (#218)\n\n* You can include username for Redis Auth\n\n* Redis auth with username - test code update\n\n* fix: tests\n\n---------\n\nCo-authored-by: Yeuoly <admin@srmxy.cn>",
+          "timestamp": "2025-04-25T20:42:14+08:00",
+          "tree_id": "716ade3701822df44166329021b78c2aed1bc307",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/5d83258371b0a051d50ec4fbbdfa99a32dffcf4e"
+        },
+        "date": 1745585110259,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 148297152,
+            "unit": "ns/op\t 1593570 B/op\t   28317 allocs/op",
+            "extra": "232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 148297152,
+            "unit": "ns/op",
+            "extra": "232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593570,
+            "unit": "B/op",
+            "extra": "232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.57,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "946875913 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.57,
+            "unit": "ns/op",
+            "extra": "946875913 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "946875913 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "946875913 times\n4 procs"
           }
         ]
       }
