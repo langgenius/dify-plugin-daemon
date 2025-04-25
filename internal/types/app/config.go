@@ -29,7 +29,7 @@ type Config struct {
 	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
 	AzureBlobStorageConnectionString string `envconfig:"AZURE_BLOB_STORAGE_CONNECTION_STRING"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob"`
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob gcs"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -130,7 +130,7 @@ type Config struct {
 	// proxy settings
 	HttpProxy  string `envconfig:"HTTP_PROXY"`
 	HttpsProxy string `envconfig:"HTTPS_PROXY"`
-	NoProxy string `envconfig:"NO_PROXY"`
+	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
 	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`

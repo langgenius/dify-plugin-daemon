@@ -10,6 +10,7 @@ const (
 	OSS_TYPE_S3          = "aws_s3"
 	OSS_TYPE_TENCENT_COS = "tencent_cos"
 	OSS_TYPE_AZURE_BLOB  = "azure_blob"
+	OSS_TYPE_GCS         = "gcs"
 )
 
 type OSSState struct {
