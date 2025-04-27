@@ -9,10 +9,32 @@ import (
 )
 
 var (
+	author                   string
+	name                     string
+	description              string
+	allowRegisterEndpoint    bool
+	allowInvokeTool          bool
+	allowInvokeModel         bool
+	allowInvokeLLM           bool
+	allowInvokeTextEmbedding bool
+	allowInvokeRerank        bool
+	allowInvokeTTS           bool
+	allowInvokeSpeech2Text   bool
+	allowInvokeModeration    bool
+	allowInvokeNode          bool
+	allowInvokeApp           bool
+	allowUseStorage          bool
+	storageSize              uint64
+	category                 string
+	language                 string
+	minDifyVersion           string
+	quick                    bool
+
 	pluginInitCommand = &cobra.Command{
 		Use:   "init",
-		Short: "Init",
-		Long:  "Init",
+		Short: "Initialize a new plugin",
+		Long: `Initialize a new plugin with the given parameters.
+If no parameters are provided, an interactive mode will be started.`,
 		Run: func(c *cobra.Command, args []string) {
 			author, _ := c.Flags().GetString("author")
 			name, _ := c.Flags().GetString("name")
@@ -209,26 +231,36 @@ func init() {
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendToolsCommand)
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendEndpointsCommand)
 
-	pluginInitCommand.Flags().StringP("author", "a", "", "Author name")
-	pluginInitCommand.Flags().StringP("name", "n", "", "Plugin name")
-	pluginInitCommand.Flags().StringP("description", "d", "", "Plugin description")
-	pluginInitCommand.Flags().Bool("allow-register-endpoint", false, "Allow to register endpoints")
-	pluginInitCommand.Flags().Bool("allow-invoke-tool", false, "Allow to invoke tools")
-	pluginInitCommand.Flags().Bool("allow-invoke-model", false, "Allow to invoke models")
-	pluginInitCommand.Flags().Bool("allow-invoke-llm", false, "Allow to invoke LLM models")
-	pluginInitCommand.Flags().Bool("allow-invoke-text-embedding", false, "Allow to invoke text embedding models")
-	pluginInitCommand.Flags().Bool("allow-invoke-rerank", false, "Allow to invoke rerank models")
-	pluginInitCommand.Flags().Bool("allow-invoke-tts", false, "Allow to invoke TTS models")
-	pluginInitCommand.Flags().Bool("allow-invoke-speech2text", false, "Allow to invoke speech2text models")
-	pluginInitCommand.Flags().Bool("allow-invoke-moderation", false, "Allow to invoke moderation models")
-	pluginInitCommand.Flags().Bool("allow-invoke-node", false, "Allow to invoke nodes")
-	pluginInitCommand.Flags().Bool("allow-invoke-app", false, "Allow to invoke apps")
-	pluginInitCommand.Flags().Bool("allow-use-storage", false, "Allow to use storage")
-	pluginInitCommand.Flags().Uint64("storage-size", 1048576, "Storage size in bytes (default: 1MB)")
-	pluginInitCommand.Flags().StringP("category", "c", "", "Plugin category")
-	pluginInitCommand.Flags().StringP("language", "l", "", "Plugin language")
-	pluginInitCommand.Flags().String("min-dify-version", "", "Minimum Dify version")
-	pluginInitCommand.Flags().Bool("quick", false, "Skip interactive mode")
+	pluginInitCommand.Flags().StringVar(&author, "author", "", "Author name (1-64 characters, lowercase letters, numbers, dashes and underscores only)")
+	pluginInitCommand.Flags().StringVar(&name, "name", "", "Plugin name (1-128 characters, lowercase letters, numbers, dashes and underscores only)")
+	pluginInitCommand.Flags().StringVar(&description, "description", "", "Plugin description (cannot be empty)")
+	pluginInitCommand.Flags().BoolVar(&allowRegisterEndpoint, "allow-endpoint", false, "Allow the plugin to register endpoints")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeTool, "allow-tool", false, "Allow the plugin to invoke tools")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeModel, "allow-model", false, "Allow the plugin to invoke models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeLLM, "allow-llm", false, "Allow the plugin to invoke LLM models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeTextEmbedding, "allow-text-embedding", false, "Allow the plugin to invoke text embedding models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeRerank, "allow-rerank", false, "Allow the plugin to invoke rerank models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeTTS, "allow-tts", false, "Allow the plugin to invoke TTS models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeSpeech2Text, "allow-speech2text", false, "Allow the plugin to invoke speech to text models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeModeration, "allow-moderation", false, "Allow the plugin to invoke moderation models")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeNode, "allow-node", false, "Allow the plugin to invoke nodes")
+	pluginInitCommand.Flags().BoolVar(&allowInvokeApp, "allow-app", false, "Allow the plugin to invoke apps")
+	pluginInitCommand.Flags().BoolVar(&allowUseStorage, "allow-storage", false, "Allow the plugin to use storage")
+	pluginInitCommand.Flags().Uint64Var(&storageSize, "storage-size", 0, "Maximum storage size in bytes")
+	pluginInitCommand.Flags().StringVar(&category, "category", "", `Plugin category. Available options:
+  - tool: Tool plugin
+  - llm: Large Language Model plugin
+  - text-embedding: Text embedding plugin
+  - speech2text: Speech to text plugin
+  - moderation: Content moderation plugin
+  - rerank: Rerank plugin
+  - tts: Text to speech plugin
+  - extension: Extension plugin
+  - agent-strategy: Agent strategy plugin`)
+	pluginInitCommand.Flags().StringVar(&language, "language", "", `Programming language. Available options:
+  - python: Python language`)
+	pluginInitCommand.Flags().StringVar(&minDifyVersion, "min-dify-version", "", "Minimum Dify version required")
+	pluginInitCommand.Flags().BoolVar(&quick, "quick", false, "Skip interactive mode and create plugin directly")
 
 	pluginPackageCommand.Flags().StringP("output_path", "o", "", "output path")
 }

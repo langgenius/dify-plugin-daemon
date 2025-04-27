@@ -72,6 +72,51 @@ func InitPluginWithFlags(
 		return
 	}
 
+	// Validate language
+	if languageStr != "" {
+		validLanguages := []string{
+			string(constants.Python),
+			// Add more languages here if supported
+		}
+		valid := false
+		for _, lang := range validLanguages {
+			if languageStr == lang {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			log.Error("Invalid language. Supported languages are: %v", validLanguages)
+			return
+		}
+	}
+
+	// Validate category
+	if categoryStr != "" {
+		validCategories := []string{
+			"tool",
+			"llm",
+			"text-embedding",
+			"speech2text",
+			"moderation",
+			"rerank",
+			"tts",
+			"extension",
+			"agent-strategy",
+		}
+		valid := false
+		for _, cat := range validCategories {
+			if categoryStr == cat {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			log.Error("Invalid category. Supported categories are: %v", validCategories)
+			return
+		}
+	}
+
 	m := newModel()
 
 	// Set profile information
