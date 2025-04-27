@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745732647300,
+  "lastUpdate": 1745733764763,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1584,6 +1584,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "994132584 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d80630acd59e02f54812aed197853cfa0034dbea",
+          "message": "feat: implement OAuth functionality (#245)\n\n* feat: implement OAuth functionality in plugin daemon\n\n- Added OAuth service methods for getting authorization URLs and credentials.\n- Updated access types to include OAuth-related actions.\n- Created new controller for handling OAuth requests.\n- Introduced entities for OAuth results and requests.\n- Enhanced plugin entities to support OAuth schema in tool declarations.\n\n* feat: add OAuth endpoints for authorization and credentials retrieval\n\n- Introduced new POST endpoints for obtaining authorization URLs and credentials in the OAuth controller.\n- Enhanced the plugin dispatch group to include these new OAuth routes, improving integration with OAuth services.",
+          "timestamp": "2025-04-27T13:59:57+08:00",
+          "tree_id": "f72bb5e53f9732e5f93cd2568f99daa173ee0a29",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/d80630acd59e02f54812aed197853cfa0034dbea"
+        },
+        "date": 1745733764499,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138558126,
+            "unit": "ns/op\t 1593650 B/op\t   28316 allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138558126,
+            "unit": "ns/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593650,
+            "unit": "B/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.33,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "997990780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.33,
+            "unit": "ns/op",
+            "extra": "997990780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "997990780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "997990780 times\n4 procs"
           }
         ]
       }
