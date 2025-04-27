@@ -84,3 +84,7 @@ func (p versionRequire) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 func (p versionRequire) Init() tea.Cmd {
 	return nil
 }
+
+func (p *versionRequire) SetMinimalDifyVersion(version string) {
+	p.minimalDifyVersion.SetValue(version)
+}

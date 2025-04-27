@@ -14,7 +14,49 @@ var (
 		Short: "Init",
 		Long:  "Init",
 		Run: func(c *cobra.Command, args []string) {
-			plugin.InitPlugin()
+			author, _ := c.Flags().GetString("author")
+			name, _ := c.Flags().GetString("name")
+			description, _ := c.Flags().GetString("description")
+			allowRegisterEndpoint, _ := c.Flags().GetBool("allow-register-endpoint")
+			allowInvokeTool, _ := c.Flags().GetBool("allow-invoke-tool")
+			allowInvokeModel, _ := c.Flags().GetBool("allow-invoke-model")
+			allowInvokeLLM, _ := c.Flags().GetBool("allow-invoke-llm")
+			allowInvokeTextEmbedding, _ := c.Flags().GetBool("allow-invoke-text-embedding")
+			allowInvokeRerank, _ := c.Flags().GetBool("allow-invoke-rerank")
+			allowInvokeTTS, _ := c.Flags().GetBool("allow-invoke-tts")
+			allowInvokeSpeech2Text, _ := c.Flags().GetBool("allow-invoke-speech2text")
+			allowInvokeModeration, _ := c.Flags().GetBool("allow-invoke-moderation")
+			allowInvokeNode, _ := c.Flags().GetBool("allow-invoke-node")
+			allowInvokeApp, _ := c.Flags().GetBool("allow-invoke-app")
+			allowUseStorage, _ := c.Flags().GetBool("allow-use-storage")
+			storageSize, _ := c.Flags().GetUint64("storage-size")
+			category, _ := c.Flags().GetString("category")
+			language, _ := c.Flags().GetString("language")
+			minDifyVersion, _ := c.Flags().GetString("min-dify-version")
+			quick, _ := c.Flags().GetBool("quick")
+
+			plugin.InitPluginWithFlags(
+				author,
+				name,
+				description,
+				allowRegisterEndpoint,
+				allowInvokeTool,
+				allowInvokeModel,
+				allowInvokeLLM,
+				allowInvokeTextEmbedding,
+				allowInvokeRerank,
+				allowInvokeTTS,
+				allowInvokeSpeech2Text,
+				allowInvokeModeration,
+				allowInvokeNode,
+				allowInvokeApp,
+				allowUseStorage,
+				storageSize,
+				category,
+				language,
+				minDifyVersion,
+				quick,
+			)
 		},
 	}
 
@@ -167,9 +209,26 @@ func init() {
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendToolsCommand)
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendEndpointsCommand)
 
-	// pluginCommand.AddCommand(pluginTestCommand)
-	// pluginTestCommand.Flags().StringP("inputs", "i", "", "inputs")
-	// pluginTestCommand.Flags().StringP("timeout", "t", "", "timeout")
+	pluginInitCommand.Flags().StringP("author", "a", "", "Author name")
+	pluginInitCommand.Flags().StringP("name", "n", "", "Plugin name")
+	pluginInitCommand.Flags().StringP("description", "d", "", "Plugin description")
+	pluginInitCommand.Flags().Bool("allow-register-endpoint", false, "Allow to register endpoints")
+	pluginInitCommand.Flags().Bool("allow-invoke-tool", false, "Allow to invoke tools")
+	pluginInitCommand.Flags().Bool("allow-invoke-model", false, "Allow to invoke models")
+	pluginInitCommand.Flags().Bool("allow-invoke-llm", false, "Allow to invoke LLM models")
+	pluginInitCommand.Flags().Bool("allow-invoke-text-embedding", false, "Allow to invoke text embedding models")
+	pluginInitCommand.Flags().Bool("allow-invoke-rerank", false, "Allow to invoke rerank models")
+	pluginInitCommand.Flags().Bool("allow-invoke-tts", false, "Allow to invoke TTS models")
+	pluginInitCommand.Flags().Bool("allow-invoke-speech2text", false, "Allow to invoke speech2text models")
+	pluginInitCommand.Flags().Bool("allow-invoke-moderation", false, "Allow to invoke moderation models")
+	pluginInitCommand.Flags().Bool("allow-invoke-node", false, "Allow to invoke nodes")
+	pluginInitCommand.Flags().Bool("allow-invoke-app", false, "Allow to invoke apps")
+	pluginInitCommand.Flags().Bool("allow-use-storage", false, "Allow to use storage")
+	pluginInitCommand.Flags().Uint64("storage-size", 1048576, "Storage size in bytes (default: 1MB)")
+	pluginInitCommand.Flags().StringP("category", "c", "", "Plugin category")
+	pluginInitCommand.Flags().StringP("language", "l", "", "Plugin language")
+	pluginInitCommand.Flags().String("min-dify-version", "", "Minimum Dify version")
+	pluginInitCommand.Flags().Bool("quick", false, "Skip interactive mode")
 
 	pluginPackageCommand.Flags().StringP("output_path", "o", "", "output path")
 }
