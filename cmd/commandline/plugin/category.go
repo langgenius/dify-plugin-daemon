@@ -100,3 +100,12 @@ func (c category) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 func (c category) Init() tea.Cmd {
 	return nil
 }
+
+func (c *category) SetCategory(cat string) {
+	for i, v := range categories {
+		if v == cat {
+			c.cursor = i
+			return
+		}
+	}
+}

@@ -139,3 +139,11 @@ func (p profile) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 func (p profile) Init() tea.Cmd {
 	return nil
 }
+
+func (p *profile) SetAuthor(author string) {
+	p.inputs[1].SetValue(author)
+}
+
+func (p *profile) SetName(name string) {
+	p.inputs[0].SetValue(name)
+}

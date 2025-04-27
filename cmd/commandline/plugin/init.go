@@ -36,6 +36,170 @@ func InitPlugin() {
 	}
 }
 
+func InitPluginWithFlags(
+	author string,
+	name string,
+	description string,
+	allowRegisterEndpoint bool,
+	allowInvokeTool bool,
+	allowInvokeModel bool,
+	allowInvokeLLM bool,
+	allowInvokeTextEmbedding bool,
+	allowInvokeRerank bool,
+	allowInvokeTTS bool,
+	allowInvokeSpeech2Text bool,
+	allowInvokeModeration bool,
+	allowInvokeNode bool,
+	allowInvokeApp bool,
+	allowUseStorage bool,
+	storageSize uint64,
+	categoryStr string,
+	languageStr string,
+	minDifyVersion string,
+	quick bool,
+) {
+	// Validate name and author
+	if !plugin_entities.PluginNameRegex.MatchString(name) {
+		log.Error("Plugin name must be 1-128 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
+		return
+	}
+	if !plugin_entities.AuthorRegex.MatchString(author) {
+		log.Error("Author name must be 1-64 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
+		return
+	}
+	if description == "" {
+		log.Error("Description cannot be empty")
+		return
+	}
+
+	// Validate language
+	if languageStr != "" {
+		validLanguages := []string{
+			string(constants.Python),
+			// Add more languages here if supported
+		}
+		valid := false
+		for _, lang := range validLanguages {
+			if languageStr == lang {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			log.Error("Invalid language. Supported languages are: %v", validLanguages)
+			return
+		}
+	}
+
+	// Validate category
+	if categoryStr != "" {
+		validCategories := []string{
+			"tool",
+			"llm",
+			"text-embedding",
+			"speech2text",
+			"moderation",
+			"rerank",
+			"tts",
+			"extension",
+			"agent-strategy",
+		}
+		valid := false
+		for _, cat := range validCategories {
+			if categoryStr == cat {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			log.Error("Invalid category. Supported categories are: %v", validCategories)
+			return
+		}
+	}
+
+	m := newModel()
+
+	// Set profile information
+	profile := m.subMenus[SUB_MENU_KEY_PROFILE].(profile)
+	profile.SetAuthor(author)
+	profile.SetName(name)
+	profile.inputs[2].SetValue(description)
+	m.subMenus[SUB_MENU_KEY_PROFILE] = profile
+
+	// Set category if provided
+	if categoryStr != "" {
+		cat := m.subMenus[SUB_MENU_KEY_CATEGORY].(category)
+		cat.SetCategory(categoryStr)
+		m.subMenus[SUB_MENU_KEY_CATEGORY] = cat
+	}
+
+	// Set language if provided
+	if languageStr != "" {
+		lang := m.subMenus[SUB_MENU_KEY_LANGUAGE].(language)
+		lang.SetLanguage(languageStr)
+		m.subMenus[SUB_MENU_KEY_LANGUAGE] = lang
+	}
+
+	// Set minimal Dify version if provided
+	if minDifyVersion != "" {
+		ver := m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire)
+		ver.SetMinimalDifyVersion(minDifyVersion)
+		m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE] = ver
+	}
+
+	// Update permissions
+	perm := m.subMenus[SUB_MENU_KEY_PERMISSION].(permission)
+	perm.UpdatePermission(plugin_entities.PluginPermissionRequirement{
+		Endpoint: &plugin_entities.PluginPermissionEndpointRequirement{
+			Enabled: allowRegisterEndpoint,
+		},
+		Tool: &plugin_entities.PluginPermissionToolRequirement{
+			Enabled: allowInvokeTool,
+		},
+		Model: &plugin_entities.PluginPermissionModelRequirement{
+			Enabled:       allowInvokeModel,
+			LLM:           allowInvokeLLM,
+			TextEmbedding: allowInvokeTextEmbedding,
+			Rerank:        allowInvokeRerank,
+			TTS:           allowInvokeTTS,
+			Speech2text:   allowInvokeSpeech2Text,
+			Moderation:    allowInvokeModeration,
+		},
+		Node: &plugin_entities.PluginPermissionNodeRequirement{
+			Enabled: allowInvokeNode,
+		},
+		App: &plugin_entities.PluginPermissionAppRequirement{
+			Enabled: allowInvokeApp,
+		},
+		Storage: &plugin_entities.PluginPermissionStorageRequirement{
+			Enabled: allowUseStorage,
+			Size:    storageSize,
+		},
+	})
+	m.subMenus[SUB_MENU_KEY_PERMISSION] = perm
+
+	// If quick mode is enabled, skip interactive mode
+	if quick {
+		m.createPlugin()
+		return
+	}
+
+	// Otherwise, start interactive mode
+	p := tea.NewProgram(m)
+	if result, err := p.Run(); err != nil {
+		fmt.Println("Error running program:", err)
+	} else {
+		if m, ok := result.(model); ok {
+			if m.completed {
+				m.createPlugin()
+			}
+		} else {
+			log.Error("Error running program:", err)
+			return
+		}
+	}
+}
+
 type subMenuKey string
 
 const (
@@ -55,6 +219,28 @@ type model struct {
 }
 
 func initialize() model {
+	m := model{}
+	m.subMenus = map[subMenuKey]subMenu{
+		SUB_MENU_KEY_PROFILE:         newProfile(),
+		SUB_MENU_KEY_LANGUAGE:        newLanguage(),
+		SUB_MENU_KEY_CATEGORY:        newCategory(),
+		SUB_MENU_KEY_PERMISSION:      newPermission(plugin_entities.PluginPermissionRequirement{}),
+		SUB_MENU_KEY_VERSION_REQUIRE: newVersionRequire(),
+	}
+	m.currentSubMenu = SUB_MENU_KEY_PROFILE
+
+	m.subMenuSeq = []subMenuKey{
+		SUB_MENU_KEY_PROFILE,
+		SUB_MENU_KEY_LANGUAGE,
+		SUB_MENU_KEY_CATEGORY,
+		SUB_MENU_KEY_PERMISSION,
+		SUB_MENU_KEY_VERSION_REQUIRE,
+	}
+
+	return m
+}
+
+func newModel() model {
 	m := model{}
 	m.subMenus = map[subMenuKey]subMenu{
 		SUB_MENU_KEY_PROFILE:         newProfile(),
