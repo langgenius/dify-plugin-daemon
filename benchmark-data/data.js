@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745735917776,
+  "lastUpdate": 1745746334035,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1728,6 +1728,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "982843048 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ee540bc2209bca6792b0f8d62b8f37ce27d16ae3",
+          "message": "feat: enhance plugin initialization with configurable parameters (#248)\n\n* feat: enhance plugin initialization with configurable parameters\n\n- Added new flags for plugin initialization, allowing users to specify author, name, description, and various permissions.\n- Implemented InitPluginWithFlags function to handle the new parameters and validate input.\n- Introduced methods to set category, language, and minimal Dify version within the plugin model.\n- Enhanced profile management by adding methods to set author and name directly.\n- Improved category and language selection with dedicated setter methods.\n\n* add enum\n\n* add tests",
+          "timestamp": "2025-04-27T17:29:26+08:00",
+          "tree_id": "7def44d7dd36c3dd75523a1c7afee2d226d350e3",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/ee540bc2209bca6792b0f8d62b8f37ce27d16ae3"
+        },
+        "date": 1745746333715,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139648779,
+            "unit": "ns/op\t 1593845 B/op\t   28316 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139648779,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593845,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.21,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "982338816 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.21,
+            "unit": "ns/op",
+            "extra": "982338816 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "982338816 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "982338816 times\n4 procs"
           }
         ]
       }
