@@ -58,18 +58,20 @@ func InitPluginWithFlags(
 	minDifyVersion string,
 	quick bool,
 ) {
-	// Validate name and author
-	if !plugin_entities.PluginNameRegex.MatchString(name) {
-		log.Error("Plugin name must be 1-128 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
-		return
-	}
-	if !plugin_entities.AuthorRegex.MatchString(author) {
-		log.Error("Author name must be 1-64 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
-		return
-	}
-	if description == "" {
-		log.Error("Description cannot be empty")
-		return
+	if quick {
+		// Validate name and author
+		if !plugin_entities.PluginNameRegex.MatchString(name) {
+			log.Error("Plugin name must be 1-128 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
+			return
+		}
+		if !plugin_entities.AuthorRegex.MatchString(author) {
+			log.Error("Author name must be 1-64 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
+			return
+		}
+		if description == "" {
+			log.Error("Description cannot be empty")
+			return
+		}
 	}
 
 	// Validate language
