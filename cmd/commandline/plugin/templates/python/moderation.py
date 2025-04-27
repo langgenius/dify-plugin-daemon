@@ -5,7 +5,7 @@ from dify_plugin import ModerationModel
 
 class {{ .PluginName | SnakeToCamel }}ModerationModel(ModerationModel):
     """
-    Model class for {{ .PluginName | CamelToTitle }} text moderation model.
+    Model class for {{ .PluginName }} text moderation model.
     """
 
     def _invoke(self, model: str, credentials: dict,
