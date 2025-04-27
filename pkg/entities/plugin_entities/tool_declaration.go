@@ -51,6 +51,7 @@ const (
 	TOOL_PARAMETER_TYPE_APP_SELECTOR   ToolParameterType = APP_SELECTOR
 	TOOL_PARAMETER_TYPE_MODEL_SELECTOR ToolParameterType = MODEL_SELECTOR
 	// TOOL_PARAMETER_TYPE_TOOL_SELECTOR  ToolParameterType = TOOL_SELECTOR
+	TOOL_PARAMETER_TYPE_ANY ToolParameterType = ANY
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -65,7 +66,8 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_FILES),
 		// string(TOOL_PARAMETER_TYPE_TOOL_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_APP_SELECTOR),
-		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR):
+		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR),
+		string(TOOL_PARAMETER_TYPE_ANY):
 		return true
 	}
 	return false

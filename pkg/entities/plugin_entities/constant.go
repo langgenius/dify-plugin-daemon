@@ -13,4 +13,5 @@ const (
 	MODEL_SELECTOR = "model-selector"
 	// TOOL_SELECTOR  = "tool-selector"
 	TOOLS_SELECTOR = "array[tools]"
+	ANY            = "any"
 )
