@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745733764763,
+  "lastUpdate": 1745735917776,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1656,6 +1656,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "997990780 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d13fb55f4f0b387432cd9b9f6567843e2431cb41",
+          "message": "Refactor/oauth parameters (#247)\n\n* feat: implement OAuth functionality in plugin daemon\n\n- Added OAuth service methods for getting authorization URLs and credentials.\n- Updated access types to include OAuth-related actions.\n- Created new controller for handling OAuth requests.\n- Introduced entities for OAuth results and requests.\n- Enhanced plugin entities to support OAuth schema in tool declarations.\n\n* feat: add OAuth endpoints for authorization and credentials retrieval\n\n- Introduced new POST endpoints for obtaining authorization URLs and credentials in the OAuth controller.\n- Enhanced the plugin dispatch group to include these new OAuth routes, improving integration with OAuth services.\n\n* refactor: clean up OAuth entity and request structures\n\n- Removed unused validation logic and constants from the OAuth entity file.\n- Added required provider field to OAuth request structures for better validation and clarity.",
+          "timestamp": "2025-04-27T14:35:43+08:00",
+          "tree_id": "1a7579c9eac2b3db6d3770632509a6e7331a6161",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/d13fb55f4f0b387432cd9b9f6567843e2431cb41"
+        },
+        "date": 1745735917336,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138948407,
+            "unit": "ns/op\t 1593024 B/op\t   28316 allocs/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138948407,
+            "unit": "ns/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593024,
+            "unit": "B/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.23,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "982843048 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.23,
+            "unit": "ns/op",
+            "extra": "982843048 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "982843048 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "982843048 times\n4 procs"
           }
         ]
       }
