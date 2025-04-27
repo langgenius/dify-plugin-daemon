@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745585111194,
+  "lastUpdate": 1745732647300,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -1512,6 +1512,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "946875913 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99897242+chiehw@users.noreply.github.com",
+            "name": "Chieh Wang",
+            "username": "chiehw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1121069521aeb714184b52957ac68a94bf2cf2cf",
+          "message": "feat: Add Citations and Attributions to Agent Node (#236)\n\n* feat: support var-selector params & surpport retriever_resources messsage\n\n* opt: rename var-selector to any",
+          "timestamp": "2025-04-27T13:41:21+08:00",
+          "tree_id": "ec9b2199b254653463337293e475fda490a75dbb",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1121069521aeb714184b52957ac68a94bf2cf2cf"
+        },
+        "date": 1745732646855,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137816806,
+            "unit": "ns/op\t 1593256 B/op\t   28316 allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137816806,
+            "unit": "ns/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593256,
+            "unit": "B/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.6,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "994132584 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.6,
+            "unit": "ns/op",
+            "extra": "994132584 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "994132584 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "994132584 times\n4 procs"
           }
         ]
       }
