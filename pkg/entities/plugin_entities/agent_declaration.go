@@ -57,6 +57,10 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("agent_strategy_parameter_type", isAgentStrategyParameterType)
 }
 
+type ParameterContext struct {
+	Enabled bool `json:"enabled" yaml:"enabled"`
+}
+
 type AgentStrategyParameter struct {
 	Name         string                     `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
 	Label        I18nObject                 `json:"label" yaml:"label" validate:"required"`
@@ -64,6 +68,7 @@ type AgentStrategyParameter struct {
 	Type         AgentStrategyParameterType `json:"type" yaml:"type" validate:"required,agent_strategy_parameter_type"`
 	AutoGenerate *ParameterAutoGenerate     `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
 	Template     *ParameterTemplate         `json:"template" yaml:"template" validate:"omitempty"`
+	Context      *ParameterContext          `json:"context" yaml:"context" validate:"omitempty"`
 	Scope        *string                    `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
 	Required     bool                       `json:"required" yaml:"required"`
 	Default      any                        `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
