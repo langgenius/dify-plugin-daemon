@@ -66,6 +66,9 @@ func Init(config *app.Config) {
 			config.DBUsername,
 			config.DBPassword,
 			config.DBSslMode,
+			config.DBMaxIdleConns,
+			config.DBMaxOpenConns,
+			config.DBConnMaxLifetime,
 		)
 	} else if config.DBType == "mysql" {
 		DifyPluginDB, err = mysql.InitPluginDB(
@@ -76,6 +79,9 @@ func Init(config *app.Config) {
 			config.DBUsername,
 			config.DBPassword,
 			config.DBSslMode,
+			config.DBMaxIdleConns,
+			config.DBMaxOpenConns,
+			config.DBConnMaxLifetime,
 		)
 	} else {
 		log.Panic("unsupported database type: %v", config.DBType)

@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitPluginDB(host string, port int, db_name string, default_db_name string, user string, pass string, sslmode string) (*gorm.DB, error) {
+func InitPluginDB(host string, port int, db_name string, default_db_name string, user string, pass string, sslmode string, maxIdleConns int, maxOpenConns int, connMaxLifetime int) (*gorm.DB, error) {
 	// first try to connect to target database
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, db_name, sslmode)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -67,7 +67,10 @@ func InitPluginDB(host string, port int, db_name string, default_db_name string,
 		}
 	}
 
-	pgsqlDB.SetConnMaxIdleTime(time.Minute * 1)
-
+	// configure connection pool
+	pgsqlDB.SetMaxIdleConns(maxIdleConns)
+	pgsqlDB.SetMaxOpenConns(maxOpenConns)
+	pgsqlDB.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
+	
 	return db, nil
 }

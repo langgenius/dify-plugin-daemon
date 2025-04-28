@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitPluginDB(host string, port int, dbName string, defaultDbName string, user string, password string, sslMode string) (*gorm.DB, error) {
+func InitPluginDB(host string, port int, dbName string, defaultDbName string, user string, password string, sslMode string, maxIdleConns int, maxOpenConns int, connMaxLifetime int) (*gorm.DB, error) {
 	initializer := mysqlDbInitializer{
 		host:     host,
 		port:     port,
@@ -43,7 +43,10 @@ func InitPluginDB(host string, port int, dbName string, defaultDbName string, us
 		return nil, err
 	}
 
-	pool.SetConnMaxIdleTime(time.Minute * 1)
+	// configure connection pool
+	pool.SetMaxIdleConns(maxIdleConns)
+	pool.SetMaxOpenConns(maxOpenConns)
+	pool.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
 
 	return db, nil
 }
