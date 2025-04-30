@@ -109,7 +109,10 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	}
 
 	// setup stdio
-	r.stdioHolder = newStdioHolder(r.Config.Identity(), stdin, stdout, stderr)
+	r.stdioHolder = newStdioHolder(r.Config.Identity(), stdin, stdout, stderr, &StdioHolderConfig{
+		StdoutBufferSize:    r.stdoutBufferSize,
+		StdoutMaxBufferSize: r.stdoutMaxBufferSize,
+	})
 	defer r.stdioHolder.Stop()
 
 	defer func() {

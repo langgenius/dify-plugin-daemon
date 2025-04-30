@@ -93,6 +93,10 @@ type PluginManager struct {
 
 	// serverless connector launch timeout
 	serverlessConnectorLaunchTimeout int
+
+	// plugin stdio buffer size
+	pluginStdioBufferSize    int
+	pluginStdioMaxBufferSize int
 }
 
 var (
@@ -132,6 +136,8 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		pipVerbose:                       *configuration.PipVerbose,
 		pipExtraArgs:                     configuration.PipExtraArgs,
 		serverlessConnectorLaunchTimeout: configuration.DifyPluginServerlessConnectorLaunchTimeout,
+		pluginStdioBufferSize:            configuration.PluginStdioBufferSize,
+		pluginStdioMaxBufferSize:         configuration.PluginStdioMaxBufferSize,
 	}
 
 	return manager

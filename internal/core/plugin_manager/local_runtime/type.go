@@ -41,6 +41,9 @@ type LocalPluginRuntime struct {
 	waitStartedChan []chan bool
 	waitStoppedChan []chan bool
 
+	stdoutBufferSize    int
+	stdoutMaxBufferSize int
+
 	isNotFirstStart bool
 
 	stdioHolder *stdioHolder
@@ -58,6 +61,8 @@ type LocalPluginRuntimeConfig struct {
 	PipPreferBinary           bool
 	PipVerbose                bool
 	PipExtraArgs              string
+	StdoutBufferSize          int
+	StdoutMaxBufferSize       int
 }
 
 func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
@@ -73,5 +78,7 @@ func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime 
 		pipPreferBinary:              config.PipPreferBinary,
 		pipVerbose:                   config.PipVerbose,
 		pipExtraArgs:                 config.PipExtraArgs,
+		stdoutBufferSize:             config.StdoutBufferSize,
+		stdoutMaxBufferSize:          config.StdoutMaxBufferSize,
 	}
 }
