@@ -106,7 +106,7 @@ func TestNewStdioHolder(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 
 	assert.NotNil(t, holder)
 	assert.Equal(t, "test-plugin", holder.pluginUniqueIdentifier)
@@ -121,7 +121,7 @@ func TestNewStdioHolder(t *testing.T) {
 
 // TestStdioHolderSetupAndRemoveListener tests setting up and removing event listeners
 func TestStdioHolderSetupAndRemoveListener(t *testing.T) {
-	holder := newStdioHolder("test-plugin", nil, nil, nil)
+	holder := newStdioHolder("test-plugin", nil, nil, nil, nil)
 
 	// Test setup listener
 	holder.setupStdioEventListener("session1", func(data []byte) {
@@ -139,7 +139,7 @@ func TestStdioHolderSetupAndRemoveListener(t *testing.T) {
 // TestStdioHolderWrite tests writing to the stdio
 func TestStdioHolderWrite(t *testing.T) {
 	stdin := newMockReadWriteCloser()
-	holder := newStdioHolder("test-plugin", stdin, nil, nil)
+	holder := newStdioHolder("test-plugin", stdin, nil, nil, nil)
 
 	err := holder.write([]byte("test data"))
 	assert.NoError(t, err)
@@ -148,7 +148,7 @@ func TestStdioHolderWrite(t *testing.T) {
 
 // TestStdioHolderError tests the Error method
 func TestStdioHolderError(t *testing.T) {
-	holder := newStdioHolder("test-plugin", nil, nil, nil)
+	holder := newStdioHolder("test-plugin", nil, nil, nil, nil)
 
 	// No error initially
 	assert.NoError(t, holder.Error())
@@ -173,7 +173,7 @@ func TestStdioHolderStop(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 
 	holder.Stop()
 
@@ -188,7 +188,7 @@ func TestStdioHolderStop(t *testing.T) {
 
 // TestStdioHolderWriteError tests writing error messages
 func TestStdioHolderWriteError(t *testing.T) {
-	holder := newStdioHolder("test-plugin", nil, nil, nil)
+	holder := newStdioHolder("test-plugin", nil, nil, nil, nil)
 
 	// Test writing a simple error
 	holder.WriteError("error1")
@@ -209,7 +209,7 @@ func TestStdioHolderWriteError(t *testing.T) {
 // TestStdioHolderStartStderr tests the StartStderr method
 func TestStdioHolderStartStderr(t *testing.T) {
 	stderr := newMockReadWriteCloser()
-	holder := newStdioHolder("test-plugin", nil, nil, stderr)
+	holder := newStdioHolder("test-plugin", nil, nil, stderr, nil)
 
 	// Write some data to stderr
 	stderr.WriteToRead([]byte("stderr message"))
@@ -238,7 +238,7 @@ func TestStdioHolderWait(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 	holder.lastActiveAt = time.Now()
 
 	// Test normal wait with stop
@@ -254,7 +254,7 @@ func TestStdioHolderWait(t *testing.T) {
 	stdout = newMockReadWriteCloser()
 	stderr = newMockReadWriteCloser()
 
-	holder = newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder = newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 	holder.lastActiveAt = time.Now().Add(-(MAX_HEARTBEAT_INTERVAL + 1*time.Second)) // Inactive for more than 120 seconds
 
 	// Test timeout due to inactivity
@@ -266,7 +266,7 @@ func TestStdioHolderWait(t *testing.T) {
 	stderr = newMockReadWriteCloser()
 
 	// Test error when already closed
-	holder = newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder = newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 	holder.Stop()
 	err = holder.Wait()
 	assert.Error(t, err)
@@ -279,7 +279,7 @@ func TestStdioHolderStartStdout(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 
 	// Setup a listener
 	receivedData := make(chan []byte, 1)
@@ -311,7 +311,7 @@ func TestStdioHolderStartStdout(t *testing.T) {
 	stdout = newMockReadWriteCloser()
 	stderr = newMockReadWriteCloser()
 
-	holder = newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder = newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 	stdout.WriteToRead([]byte{})
 
 	go func() {
@@ -328,7 +328,7 @@ func TestStdioHolderWithRealData(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 
 	// Setup listeners
 	dataReceived := make(chan bool, 1)
@@ -395,7 +395,7 @@ func TestMultipleTransactions(t *testing.T) {
 	stdout := newMockReadWriteCloser()
 	stderr := newMockReadWriteCloser()
 
-	holder := newStdioHolder("test-plugin", stdin, stdout, stderr)
+	holder := newStdioHolder("test-plugin", stdin, stdout, stderr, nil)
 	transactionMap := make(map[string]bool)
 	transactionMapLock := sync.Mutex{}
 

@@ -140,6 +140,8 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		PipMirrorUrl:              p.pipMirrorUrl,
 		PipPreferBinary:           p.pipPreferBinary,
 		PipExtraArgs:              p.pipExtraArgs,
+		StdoutBufferSize:          p.pluginStdioBufferSize,
+		StdoutMaxBufferSize:       p.pluginStdioMaxBufferSize,
 	})
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{

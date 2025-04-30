@@ -117,6 +117,9 @@ type Config struct {
 	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
+	PluginStdioBufferSize    int `envconfig:"PLUGIN_STDIO_BUFFER_SIZE" default:"1024"`
+	PluginStdioMaxBufferSize int `envconfig:"PLUGIN_STDIO_MAX_BUFFER_SIZE" default:"5242880"`
+
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`

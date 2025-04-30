@@ -39,12 +39,32 @@ type stdioHolder struct {
 
 	// the last time the plugin sent a heartbeat
 	lastActiveAt time.Time
+
+	stdoutBufferSize    int
+	stdoutMaxBufferSize int
+}
+
+type StdioHolderConfig struct {
+	StdoutBufferSize    int
+	StdoutMaxBufferSize int
 }
 
 func newStdioHolder(
 	pluginUniqueIdentifier string, writer io.WriteCloser,
 	reader io.ReadCloser, err_reader io.ReadCloser,
+	config *StdioHolderConfig,
 ) *stdioHolder {
+	if config == nil {
+		config = &StdioHolderConfig{}
+	}
+
+	if config.StdoutBufferSize <= 0 {
+		config.StdoutBufferSize = 1024
+	}
+	if config.StdoutMaxBufferSize <= 0 {
+		config.StdoutMaxBufferSize = 5 * 1024 * 1024
+	}
+
 	holder := &stdioHolder{
 		pluginUniqueIdentifier: pluginUniqueIdentifier,
 		writer:                 writer,
@@ -52,6 +72,8 @@ func newStdioHolder(
 		errReader:              err_reader,
 		l:                      &sync.Mutex{},
 
+		stdoutBufferSize:       config.StdoutBufferSize,
+		stdoutMaxBufferSize:    config.StdoutMaxBufferSize,
 		waitControllerChanLock: &sync.Mutex{},
 		waitingControllerChan:  make(chan bool),
 	}
