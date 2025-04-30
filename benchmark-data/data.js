@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745998347965,
+  "lastUpdate": 1745998826732,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -2016,6 +2016,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "993655850 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "quicksandzn@gmail.com",
+            "name": "quicksand",
+            "username": "quicksandznzn"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2858ac210cd1573dd11e700aa81bd3a4edb39c7b",
+          "message": "optimize (db): add db pool config (#251)",
+          "timestamp": "2025-04-30T15:36:35+08:00",
+          "tree_id": "6a224c01f5ca441033f09daa3e17eda81d05ec32",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/2858ac210cd1573dd11e700aa81bd3a4edb39c7b"
+        },
+        "date": 1745998825855,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 142518160,
+            "unit": "ns/op\t 1593524 B/op\t   28317 allocs/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 142518160,
+            "unit": "ns/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593524,
+            "unit": "B/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.22,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "928951952 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.22,
+            "unit": "ns/op",
+            "extra": "928951952 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "928951952 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "928951952 times\n4 procs"
           }
         ]
       }
