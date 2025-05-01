@@ -9,6 +9,8 @@ type RealBackwardsInvocation struct {
 	difyInnerApiKey     string
 	difyInnerApiBaseurl *url.URL
 	client              *http.Client
+	writeTimeout              int
+	readTimeout               int
 }
 
 type BaseBackwardsInvocationResponse[T any] struct {

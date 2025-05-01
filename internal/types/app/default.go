@@ -34,6 +34,8 @@ func (config *Config) SetDefault() {
 	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
 	setDefaultBoolPtr(&config.PipPreferBinary, true)
 	setDefaultBoolPtr(&config.PipVerbose, true)
+	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
+	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
 	if config.DBType == "postgresql" {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
 	} else if config.DBType == "mysql" {

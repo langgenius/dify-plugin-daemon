@@ -186,7 +186,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 
 	invocation, err := real.NewDifyInvocationDaemon(
-		configuration.DifyInnerApiURL, configuration.DifyInnerApiKey,
+		configuration.DifyInnerApiURL, configuration.DifyInnerApiKey, configuration.DifyInvocationWriteTimeout, configuration.DifyInvocationReadTimeout
 	)
 	if err != nil {
 		log.Panic("init dify invocation daemon failed: %s", err.Error())
