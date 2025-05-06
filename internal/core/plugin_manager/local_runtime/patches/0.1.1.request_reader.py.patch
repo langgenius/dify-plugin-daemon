@@ -16,6 +16,11 @@ from dify_plugin.core.server.stdio.response_writer import StdioResponseWriter
 class StdioRequestReader(RequestReader):
     def __init__(self):
         super().__init__()
+        
+    def _read_async(self) -> bytes:
+        # read data from stdin using tp_read in 64KB chunks.
+        # the OS buffer for stdin is usually 64KB, so using a larger value doesn't make sense.
+        return tp_read(sys.stdin.fileno(), 65536)
 
     def _read_stream(self) -> Generator[PluginInStream, None, None]:
         buffer = b""
