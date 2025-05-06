@@ -145,9 +145,9 @@ type Config struct {
 	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`
 
 	// dify invocation write timeout in milliseconds
-	DifyInvocationWriteTimeout int `envconfig:"DIFY_INVOCATION_WRITE_TIMEOUT" default:"5000"`
+	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
 	// dify invocation read timeout in milliseconds
-	DifyInvocationReadTimeout int `envconfig:"DIFY_INVOCATION_READ_TIMEOUT" default:"240000"`
+	DifyInvocationReadTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_READ_TIMEOUT" default:"240000"`
 }
 
 func (c *Config) Validate() error {
