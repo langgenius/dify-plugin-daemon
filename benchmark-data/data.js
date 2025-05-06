@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746508308819,
+  "lastUpdate": 1746515633212,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -2160,6 +2160,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "981067863 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1ebe7fdf655939ccab8eda12c1892919b5af342f",
+          "message": "fix: improve line processing in StdioRequestReader (#260)\n\n* fix: improve line processing in StdioRequestReader\n\n- Replaced synchronous stdin reading with asynchronous data retrieval.\n- Enhanced line processing to skip empty lines and handle incomplete data more effectively, improving overall robustness of the request reading mechanism.\n\n* feat: add asynchronous reading to StdioRequestReader\n\n- Implemented the _read_async method to read data from stdin in 64KB chunks, optimizing data retrieval.\n- This enhancement improves the efficiency of the request reading process in the StdioRequestReader class.",
+          "timestamp": "2025-05-06T15:09:54+08:00",
+          "tree_id": "7e3e575a172e0eb95f1e143b6fa4012495c4bdea",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1ebe7fdf655939ccab8eda12c1892919b5af342f"
+        },
+        "date": 1746515632303,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141888694,
+            "unit": "ns/op\t 1593458 B/op\t   28316 allocs/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141888694,
+            "unit": "ns/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593458,
+            "unit": "B/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.09,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "997479056 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.09,
+            "unit": "ns/op",
+            "extra": "997479056 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "997479056 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "997479056 times\n4 procs"
           }
         ]
       }
