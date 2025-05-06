@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745998826732,
+  "lastUpdate": 1746508308819,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -2088,6 +2088,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "928951952 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "slm_1990@126.com",
+            "name": "Good Wood",
+            "username": "LeeeeeeM"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "977665e73b600c247b132bc958284b7f296c5231",
+          "message": "feat: add read & write timeout config (#259)\n\n* feat: add read & write timeout config\n\n* refactor: update Dify invocation configuration to use structured payload\n\n- Changed the Dify invocation daemon to accept a structured payload for initialization, improving clarity and maintainability.\n- Updated related configuration variables in the .env.example file to reflect the new naming convention for backwards invocation timeouts.\n- Adjusted tests and plugin manager to accommodate the new payload structure.\n\n---------\n\nCo-authored-by: Yeuoly <admin@srmxy.cn>",
+          "timestamp": "2025-05-06T13:08:02+08:00",
+          "tree_id": "701c71fc4474379123d20a2b32a97e901f886b1d",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/977665e73b600c247b132bc958284b7f296c5231"
+        },
+        "date": 1746508307980,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139633054,
+            "unit": "ns/op\t 1593429 B/op\t   28316 allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139633054,
+            "unit": "ns/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593429,
+            "unit": "B/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.91,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "981067863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.91,
+            "unit": "ns/op",
+            "extra": "981067863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "981067863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "981067863 times\n4 procs"
           }
         ]
       }
