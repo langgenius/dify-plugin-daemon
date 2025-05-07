@@ -67,7 +67,7 @@ func (p profile) View() string {
 }
 
 func (p *profile) checkRule() bool {
-	if p.inputs[p.cursor].Value() == "" {
+	if p.cursor >= 0 && p.cursor <= 2 && p.inputs[p.cursor].Value() == "" {
 		p.warning = "Name, author and description cannot be empty"
 		return false
 	} else if p.cursor == 0 && !plugin_entities.PluginNameRegex.MatchString(p.inputs[p.cursor].Value()) {
