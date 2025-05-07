@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746607812173,
+  "lastUpdate": 1746614306945,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -2304,6 +2304,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "996924553 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d02885674a3e391e2941b838403d09ba32055b84",
+          "message": "feat: add repository URL support for plugin manifest (#262)\n\n* feat: add repository URL support for plugin manifest\n\n- Introduced a new optional flag for specifying the plugin repository URL during initialization.\n- Updated the InitPluginWithFlags function to handle the new repository parameter.\n- Enhanced profile management to include repository input.\n- Modified related tests to validate the new repository functionality.\n\n* fix: improve input validation in profile checkRule method\n\n- Updated the checkRule method to ensure cursor is within valid range before checking for empty input values. This change prevents potential out-of-bounds errors and enhances the robustness of the input validation process.",
+          "timestamp": "2025-05-07T18:35:38+08:00",
+          "tree_id": "a495b8a0e4baa16a77a05a3f1a52e4f0601b4d4b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/d02885674a3e391e2941b838403d09ba32055b84"
+        },
+        "date": 1746614306639,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141632802,
+            "unit": "ns/op\t 1593269 B/op\t   28316 allocs/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141632802,
+            "unit": "ns/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593269,
+            "unit": "B/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.19,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "976410202 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.19,
+            "unit": "ns/op",
+            "extra": "976410202 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "976410202 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "976410202 times\n4 procs"
           }
         ]
       }
