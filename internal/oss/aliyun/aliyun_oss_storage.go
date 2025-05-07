@@ -140,7 +140,7 @@ func (s *AliyunOSSStorage) State(key string) (dify_oss.OSSState, error) {
 }
 
 func (s *AliyunOSSStorage) List(prefix string) ([]dify_oss.OSSPath, error) {
-	// 将给定的前缀与path组合
+	// combine given prefix with path
 	fullPrefix := path.Join(s.path, prefix)
 
 	// Ensure the prefix ends with a slash for directories
@@ -161,7 +161,7 @@ func (s *AliyunOSSStorage) List(prefix string) ([]dify_oss.OSSPath, error) {
 			if object.Key == fullPrefix {
 				continue
 			}
-			// 从完整路径中去除path和prefix，只保留相对路径
+			// remove path and prefix from full path, only keep relative path
 			key := strings.TrimPrefix(object.Key, fullPrefix)
 			// Skip empty keys
 			if key == "" {
@@ -178,7 +178,7 @@ func (s *AliyunOSSStorage) List(prefix string) ([]dify_oss.OSSPath, error) {
 			if commonPrefix == fullPrefix {
 				continue
 			}
-			// 从完整路径中去除path和prefix，只保留相对路径
+			// remove path and prefix from full path, only keep relative path
 			dirPath := strings.TrimPrefix(commonPrefix, fullPrefix)
 			dirPath = strings.TrimSuffix(dirPath, "/")
 			if dirPath == "" {
