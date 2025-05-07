@@ -29,7 +29,14 @@ type Config struct {
 	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
 	AzureBlobStorageConnectionString string `envconfig:"AZURE_BLOB_STORAGE_CONNECTION_STRING"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob gcs"`
+	AliyunOSSRegion          string `envconfig:"ALIYUN_OSS_REGION"`
+	AliyunOSSEndpoint        string `envconfig:"ALIYUN_OSS_ENDPOINT"`
+	AliyunOSSAccessKeyID     string `envconfig:"ALIYUN_OSS_ACCESS_KEY_ID"`
+	AliyunOSSAccessKeySecret string `envconfig:"ALIYUN_OSS_ACCESS_KEY_SECRET"`
+	AliyunOSSAuthVersion     string `envconfig:"ALIYUN_OSS_AUTH_VERSION" default:"v4"`
+	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
+
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob gcs aliyun_oss"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -213,6 +220,24 @@ func (c *Config) Validate() error {
 
 		if c.AzureBlobStorageContainerName == "" {
 			return fmt.Errorf("azure blob storage container name is empty")
+		}
+	}
+
+	if c.PluginStorageType == "aliyun_oss" {
+		if c.PluginStorageOSSBucket == "" {
+			return fmt.Errorf("plugin storage bucket is empty")
+		}
+
+		if c.AliyunOSSEndpoint == "" {
+			return fmt.Errorf("aliyun oss endpoint is empty")
+		}
+
+		if c.AliyunOSSAccessKeyID == "" {
+			return fmt.Errorf("aliyun oss access key id is empty")
+		}
+
+		if c.AliyunOSSAccessKeySecret == "" {
+			return fmt.Errorf("aliyun oss access key secret is empty")
 		}
 	}
 
