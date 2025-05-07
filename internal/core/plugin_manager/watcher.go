@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
@@ -11,12 +12,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (p *PluginManager) startLocalWatcher() {
+func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
 		log.Info("start to handle new plugins in path: %s", p.pluginStoragePath)
-		p.handleNewLocalPlugins()
+		p.handleNewLocalPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
-			p.handleNewLocalPlugins()
+			p.handleNewLocalPlugins(config)
 			p.removeUninstalledLocalPlugins()
 		}
 	}()
@@ -66,28 +67,43 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	}
 }
 
-func (p *PluginManager) handleNewLocalPlugins() {
-	// walk through all plugins
+func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 	plugins, err := p.installedBucket.List()
 	if err != nil {
 		log.Error("list installed plugins failed: %s", err.Error())
 		return
 	}
 
+	var (
+		waitGroup  sync.WaitGroup
+		semaphores = make(chan struct{}, config.PluginLocalLaunchingConcurrent)
+	)
+
 	for _, plugin := range plugins {
-		_, launchedChan, errChan, err := p.launchLocal(plugin)
-		if err != nil {
-			log.Error("launch local plugin failed: %s", err.Error())
-		}
+		waitGroup.Add(1)
+		go func(plug plugin_entities.PluginUniqueIdentifier) {
+			defer waitGroup.Done()
 
-		// consume error, avoid deadlock
-		for err := range errChan {
-			log.Error("plugin launch error: %s", err.Error())
-		}
+			semaphores <- struct{}{}
+			defer func() { <-semaphores }()
 
-		// wait for plugin launched
-		<-launchedChan
+			_, launchedChan, errChan, err := p.launchLocal(plug)
+			if err != nil {
+				log.Error("launch local plugin failed: %s", err.Error())
+				return
+			}
+
+			go func() {
+				for err := range errChan {
+					log.Error("plugin launch error: %s", err.Error())
+				}
+			}()
+
+			<-launchedChan
+		}(plugin)
 	}
+
+	waitGroup.Wait()
 }
 
 // an async function to remove uninstalled local plugins
