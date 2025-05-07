@@ -25,6 +25,7 @@ func TestInitPluginWithFlags(t *testing.T) {
 		testName    string
 		author      string
 		pluginName  string
+		repo        string
 		description string
 		quick       bool
 		permissions struct {
@@ -47,6 +48,7 @@ func TestInitPluginWithFlags(t *testing.T) {
 			testName:    "Quick mode with minimal permissions",
 			author:      "test-author",
 			pluginName:  "test-plugin",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "Test plugin description",
 			quick:       true,
 			permissions: struct {
@@ -80,6 +82,7 @@ func TestInitPluginWithFlags(t *testing.T) {
 			testName:    "Quick mode with all permissions",
 			author:      "test-author",
 			pluginName:  "test-plugin-full",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "Test plugin with all permissions",
 			quick:       true,
 			permissions: struct {
@@ -122,6 +125,7 @@ func TestInitPluginWithFlags(t *testing.T) {
 			testName:    "Non-quick mode with tool permissions",
 			author:      "test-author",
 			pluginName:  "test-plugin-tool",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "Test plugin with tool permissions",
 			quick:       false,
 			permissions: struct {
@@ -157,6 +161,7 @@ func TestInitPluginWithFlags(t *testing.T) {
 			InitPluginWithFlags(
 				tt.author,
 				tt.pluginName,
+				tt.repo,
 				tt.description,
 				tt.permissions.endpoint,
 				tt.permissions.tool,
@@ -261,6 +266,7 @@ func TestInitPluginWithFlagsValidation(t *testing.T) {
 		name        string
 		author      string
 		pluginName  string
+		repo        string
 		description string
 		expectError bool
 	}{
@@ -268,6 +274,7 @@ func TestInitPluginWithFlagsValidation(t *testing.T) {
 			name:        "Valid inputs",
 			author:      "test-author",
 			pluginName:  "test-plugin",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "Test description",
 			expectError: false,
 		},
@@ -275,6 +282,7 @@ func TestInitPluginWithFlagsValidation(t *testing.T) {
 			name:        "Invalid author (uppercase)",
 			author:      "Test-Author",
 			pluginName:  "test-plugin",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "Test description",
 			expectError: true,
 		},
@@ -282,6 +290,7 @@ func TestInitPluginWithFlagsValidation(t *testing.T) {
 			name:        "Invalid plugin name (uppercase)",
 			author:      "test-author",
 			pluginName:  "Test-Plugin",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "Test description",
 			expectError: true,
 		},
@@ -289,6 +298,7 @@ func TestInitPluginWithFlagsValidation(t *testing.T) {
 			name:        "Empty description",
 			author:      "test-author",
 			pluginName:  "test-plugin",
+			repo:        "https://github.com/langgenius/dify-official-plugins",
 			description: "",
 			expectError: true,
 		},
@@ -312,6 +322,7 @@ func TestInitPluginWithFlagsValidation(t *testing.T) {
 			InitPluginWithFlags(
 				tt.author,
 				tt.pluginName,
+				tt.repo,
 				tt.description,
 				false, // allowRegisterEndpoint
 				false, // allowInvokeTool

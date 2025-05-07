@@ -11,6 +11,7 @@ import (
 var (
 	author                   string
 	name                     string
+	repo                     string
 	description              string
 	allowRegisterEndpoint    bool
 	allowInvokeTool          bool
@@ -38,6 +39,7 @@ If no parameters are provided, an interactive mode will be started.`,
 		Run: func(c *cobra.Command, args []string) {
 			author, _ := c.Flags().GetString("author")
 			name, _ := c.Flags().GetString("name")
+			repo, _ := c.Flags().GetString("repo")
 			description, _ := c.Flags().GetString("description")
 			allowRegisterEndpoint, _ := c.Flags().GetBool("allow-register-endpoint")
 			allowInvokeTool, _ := c.Flags().GetBool("allow-invoke-tool")
@@ -60,6 +62,7 @@ If no parameters are provided, an interactive mode will be started.`,
 			plugin.InitPluginWithFlags(
 				author,
 				name,
+				repo,
 				description,
 				allowRegisterEndpoint,
 				allowInvokeTool,
@@ -234,6 +237,7 @@ func init() {
 	pluginInitCommand.Flags().StringVar(&author, "author", "", "Author name (1-64 characters, lowercase letters, numbers, dashes and underscores only)")
 	pluginInitCommand.Flags().StringVar(&name, "name", "", "Plugin name (1-128 characters, lowercase letters, numbers, dashes and underscores only)")
 	pluginInitCommand.Flags().StringVar(&description, "description", "", "Plugin description (cannot be empty)")
+	pluginInitCommand.Flags().StringVar(&repo, "repo", "", "Plugin repository URL (optional)")
 	pluginInitCommand.Flags().BoolVar(&allowRegisterEndpoint, "allow-endpoint", false, "Allow the plugin to register endpoints")
 	pluginInitCommand.Flags().BoolVar(&allowInvokeTool, "allow-tool", false, "Allow the plugin to invoke tools")
 	pluginInitCommand.Flags().BoolVar(&allowInvokeModel, "allow-model", false, "Allow the plugin to invoke models")

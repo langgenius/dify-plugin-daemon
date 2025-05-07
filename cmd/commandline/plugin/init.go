@@ -39,6 +39,7 @@ func InitPlugin() {
 func InitPluginWithFlags(
 	author string,
 	name string,
+	repo string,
 	description string,
 	allowRegisterEndpoint bool,
 	allowInvokeTool bool,
@@ -345,7 +346,10 @@ func (m model) createPlugin() {
 		},
 	}
 
-	fmt.Println(m.subMenus[SUB_MENU_KEY_VERSION_REQUIRE].(versionRequire).MinimalDifyVersion())
+	repo := m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Repo()
+	if repo != "" {
+		manifest.Repo = parser.ToPtr(repo)
+	}
 
 	categoryString := m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category()
 	if categoryString == "tool" {
