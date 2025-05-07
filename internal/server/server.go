@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/aliyun"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/azure"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/gcs"
 	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
@@ -51,6 +52,16 @@ func initOSS(config *app.Config) oss.OSS {
 		)
 	case oss.OSS_TYPE_GCS:
 		storage, err = gcs.NewGCSStorage(ctx, config.PluginStorageOSSBucket)
+	case oss.OSS_TYPE_ALIYUN_OSS:
+		storage, err = aliyun.NewAliyunOSSStorage(
+			config.AliyunOSSRegion,
+			config.AliyunOSSEndpoint,
+			config.AliyunOSSAccessKeyID,
+			config.AliyunOSSAccessKeySecret,
+			config.AliyunOSSAuthVersion,
+			config.AliyunOSSPath,
+			config.PluginStorageOSSBucket,
+		)
 	default:
 		log.Panic("Invalid plugin storage type: %s", config.PluginStorageType)
 	}

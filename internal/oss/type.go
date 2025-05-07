@@ -11,6 +11,7 @@ const (
 	OSS_TYPE_TENCENT_COS = "tencent_cos"
 	OSS_TYPE_AZURE_BLOB  = "azure_blob"
 	OSS_TYPE_GCS         = "gcs"
+	OSS_TYPE_ALIYUN_OSS  = "aliyun_oss"
 )
 
 type OSSState struct {
