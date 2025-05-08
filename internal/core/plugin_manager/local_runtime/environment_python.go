@@ -239,6 +239,33 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 	}
 
+	err = precompilePlugin(p, ctx, pythonPath)
+	if err != nil {
+		return err
+	}
+
+	log.Info("pre-loaded the plugin %s", p.Config.Identity())
+
+	// import dify_plugin to speedup the first launching
+	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it
+	importCmd := exec.CommandContext(ctx, pythonPath, "-c", "import dify_plugin")
+	importCmd.Dir = p.State.WorkingPath
+	importCmd.Output()
+
+	// PATCH:
+	//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
+	//  to reach a better user experience, we will patch it here using a patched file
+	// https://github.com/langgenius/dify-plugin-sdks/commit/161045b65f708d8ef0837da24440ab3872821b3b
+	if err := p.patchPluginSdk(requirementsPath); err != nil {
+		log.Error("failed to patch the plugin sdk: %s", err)
+	}
+
+	success = true
+
+	return nil
+}
+
+func precompilePlugin(p *LocalPluginRuntime, ctx context.Context, pythonPath string) error {
 	compileArgs := []string{"-m", "compileall"}
 	if p.pythonCompileAllExtraArgs != "" {
 		compileArgs = append(compileArgs, strings.Split(p.pythonCompileAllExtraArgs, " ")...)
@@ -329,25 +356,6 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		// https://github.com/langgenius/dify/issues/16292
 		log.Warn("failed to pre-compile the plugin: %s", compileErrMsg.String())
 	}
-
-	log.Info("pre-loaded the plugin %s", p.Config.Identity())
-
-	// import dify_plugin to speedup the first launching
-	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it
-	importCmd := exec.CommandContext(ctx, pythonPath, "-c", "import dify_plugin")
-	importCmd.Dir = p.State.WorkingPath
-	importCmd.Output()
-
-	// PATCH:
-	//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
-	//  to reach a better user experience, we will patch it here using a patched file
-	// https://github.com/langgenius/dify-plugin-sdks/commit/161045b65f708d8ef0837da24440ab3872821b3b
-	if err := p.patchPluginSdk(requirementsPath); err != nil {
-		log.Error("failed to patch the plugin sdk: %s", err)
-	}
-
-	success = true
-
 	return nil
 }
 
