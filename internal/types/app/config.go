@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -203,7 +204,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("plugin package cache path is empty")
 	}
 
-	if c.PluginStorageType == "aws_s3" {
+	if c.PluginStorageType == oss.OSS_TYPE_S3 {
 		if c.PluginStorageOSSBucket == "" {
 			return fmt.Errorf("plugin storage bucket is empty")
 		}
@@ -213,7 +214,7 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.PluginStorageType == "azure_blob" {
+	if c.PluginStorageType == oss.OSS_TYPE_AZURE_BLOB {
 		if c.AzureBlobStorageConnectionString == "" {
 			return fmt.Errorf("azure blob storage connection string is empty")
 		}
@@ -223,7 +224,7 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.PluginStorageType == "aliyun_oss" {
+	if c.PluginStorageType == oss.OSS_TYPE_ALIYUN_OSS {
 		if c.PluginStorageOSSBucket == "" {
 			return fmt.Errorf("plugin storage bucket is empty")
 		}
