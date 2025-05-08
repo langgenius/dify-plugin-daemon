@@ -77,8 +77,8 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	// redis
-	RedisHost   string `envconfig:"REDIS_HOST" validate:"required"`
-	RedisPort   uint16 `envconfig:"REDIS_PORT" validate:"required"`
+	RedisHost   string `envconfig:"REDIS_HOST"`
+	RedisPort   uint16 `envconfig:"REDIS_PORT"`
 	RedisPass   string `envconfig:"REDIS_PASSWORD"`
 	RedisUser   string `envconfig:"REDIS_USERNAME"`
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
@@ -91,6 +91,11 @@ type Config struct {
 	RedisSentinelUsername      string  `envconfig:"REDIS_SENTINEL_USERNAME"`
 	RedisSentinelPassword      string  `envconfig:"REDIS_SENTINEL_PASSWORD"`
 	RedisSentinelSocketTimeout float64 `envconfig:"REDIS_SENTINEL_SOCKET_TIMEOUT"`
+
+	// redis clusters
+	RedisUseClusters      bool     `envconfig:"REDIS_USE_CLUSTERS"`
+	RedisClusters         []string `envconfig:"REDIS_CLUSTERS"`
+	RedisClustersPassword string   `envconfig:"REDIS_CLUSTERS_PASSWORD"`
 
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
