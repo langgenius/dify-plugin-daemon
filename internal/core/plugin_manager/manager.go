@@ -175,14 +175,44 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	log.Info("start plugin manager daemon...")
 
 	// init redis client
-	if err := cache.InitRedisClient(
-		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
-		configuration.RedisUser,
-		configuration.RedisPass,
-		configuration.RedisUseSsl,
-		configuration.RedisDB,
-	); err != nil {
-		log.Panic("init redis client failed: %s", err.Error())
+	if configuration.RedisUseSentinel {
+		// use redis sentinel mode
+		if err := cache.InitRedisSentinelClient(
+			configuration.RedisSentinelServiceName,
+			configuration.RedisSentinels,
+			configuration.RedisUser,             // 对主从服务器使用原有的用户名
+			configuration.RedisPass,             // 对主从服务器使用原有的密码
+			configuration.RedisSentinelUsername, // 连接哨兵服务器的用户名
+			configuration.RedisSentinelPassword, // 连接哨兵服务器的密码
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+			configuration.RedisSentinelSocketTimeout,
+		); err != nil {
+			log.Panic("init redis sentinel client failed: %s", err.Error())
+		}
+		log.Info("redis sentinel client initialized")
+	} else if configuration.RedisUseClusters {
+		// use redis cluster mode
+		if err := cache.InitRedisClusterClient(
+			configuration.RedisClusters,
+			configuration.RedisClustersPassword,
+			configuration.RedisUseSsl,
+		); err != nil {
+			log.Panic("init redis cluster client failed: %s", err.Error())
+		}
+		log.Info("redis cluster client initialized")
+	} else {
+		// use redis standalone mode
+		if err := cache.InitRedisClient(
+			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
+			configuration.RedisUser,
+			configuration.RedisPass,
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+		); err != nil {
+			log.Panic("init redis client failed: %s", err.Error())
+		}
+		log.Info("redis standalone client initialized")
 	}
 
 	invocation, err := real.NewDifyInvocationDaemon(
