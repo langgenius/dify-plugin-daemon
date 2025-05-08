@@ -47,6 +47,8 @@ type LocalPluginRuntime struct {
 	isNotFirstStart bool
 
 	stdioHolder *stdioHolder
+
+	skipPrecompilation bool
 }
 
 type LocalPluginRuntimeConfig struct {
@@ -63,6 +65,7 @@ type LocalPluginRuntimeConfig struct {
 	PipExtraArgs              string
 	StdoutBufferSize          int
 	StdoutMaxBufferSize       int
+	SkipPrecompilation        bool
 }
 
 func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
@@ -80,5 +83,6 @@ func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime 
 		pipExtraArgs:                 config.PipExtraArgs,
 		stdoutBufferSize:             config.StdoutBufferSize,
 		stdoutMaxBufferSize:          config.StdoutMaxBufferSize,
+		skipPrecompilation:           config.SkipPrecompilation,
 	}
 }

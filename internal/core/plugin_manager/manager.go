@@ -97,6 +97,9 @@ type PluginManager struct {
 	// plugin stdio buffer size
 	pluginStdioBufferSize    int
 	pluginStdioMaxBufferSize int
+
+	// skip plugin pre-compilation
+	skipPrecompilation bool
 }
 
 var (
@@ -138,6 +141,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		serverlessConnectorLaunchTimeout: configuration.DifyPluginServerlessConnectorLaunchTimeout,
 		pluginStdioBufferSize:            configuration.PluginStdioBufferSize,
 		pluginStdioMaxBufferSize:         configuration.PluginStdioMaxBufferSize,
+		skipPrecompilation:               *configuration.SkipPrecompilation,
 	}
 
 	return manager

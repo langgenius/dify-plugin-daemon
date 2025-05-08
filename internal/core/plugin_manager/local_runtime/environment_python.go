@@ -266,6 +266,9 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 }
 
 func precompilePlugin(p *LocalPluginRuntime, ctx context.Context, pythonPath string) error {
+	if p.skipPrecompilation {
+		return nil
+	}
 	compileArgs := []string{"-m", "compileall"}
 	if p.pythonCompileAllExtraArgs != "" {
 		compileArgs = append(compileArgs, strings.Split(p.pythonCompileAllExtraArgs, " ")...)
