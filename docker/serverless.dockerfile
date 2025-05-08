@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine as builder
+FROM golang:1.23-alpine AS builder
 
 ARG VERSION=unknown
 
@@ -20,8 +20,6 @@ RUN CGO_ENABLED=0 go build \
 
 FROM alpine:latest
 
-COPY --from=builder /app/main /app/main
-
 WORKDIR /app
 
 # check build args
@@ -29,6 +27,8 @@ ARG PLATFORM=serverless
 
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
+
+COPY --from=builder /app/main /app/main
 
 # run the server
 CMD ["./main"]
