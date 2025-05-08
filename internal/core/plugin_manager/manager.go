@@ -119,7 +119,17 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		); err != nil {
 			log.Panic("init redis sentinel client failed: %s", err.Error())
 		}
-	} else {
+	} else if configuration.RedisUseClusters {
+		// use redis cluster mode
+		if err := cache.InitRedisClusterClient(
+		configuration.RedisClusters,
+		configuration.RedisClustersPassword,
+		configuration.RedisUseSsl,
+	); err != nil {
+		log.Panic("init redis cluster client failed: %s", err.Error())
+	}
+		log.Info("redis cluster client initialized")	
+	}else {
 		if err := cache.InitRedisClient(
 			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
 			configuration.RedisUser,
