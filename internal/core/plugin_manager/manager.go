@@ -141,7 +141,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		serverlessConnectorLaunchTimeout: configuration.DifyPluginServerlessConnectorLaunchTimeout,
 		pluginStdioBufferSize:            configuration.PluginStdioBufferSize,
 		pluginStdioMaxBufferSize:         configuration.PluginStdioMaxBufferSize,
-		skipPrecompilation:               *configuration.SkipPrecompilation,
+		skipPrecompilation:               configuration.SkipPrecompilation,
 	}
 
 	return manager
