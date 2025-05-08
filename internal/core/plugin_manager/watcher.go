@@ -79,8 +79,8 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 		semaphores = make(chan struct{}, config.PluginLocalLaunchingConcurrent)
 	)
 
+	waitGroup.Add(len(plugins))
 	for _, plugin := range plugins {
-		waitGroup.Add(1)
 		go func(plug plugin_entities.PluginUniqueIdentifier) {
 			defer waitGroup.Done()
 
