@@ -239,9 +239,11 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 	}
 
-	err = precompilePlugin(p, ctx, pythonPath)
-	if err != nil {
-		return err
+	if !p.skipPrecompilation {
+		err = precompilePlugin(p, ctx, pythonPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Info("pre-loaded the plugin %s", p.Config.Identity())
@@ -266,9 +268,6 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 }
 
 func precompilePlugin(p *LocalPluginRuntime, ctx context.Context, pythonPath string) error {
-	if p.skipPrecompilation {
-		return nil
-	}
 	compileArgs := []string{"-m", "compileall"}
 	if p.pythonCompileAllExtraArgs != "" {
 		compileArgs = append(compileArgs, strings.Split(p.pythonCompileAllExtraArgs, " ")...)
