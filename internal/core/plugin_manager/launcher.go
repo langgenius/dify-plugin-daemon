@@ -142,7 +142,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		PipExtraArgs:              p.pipExtraArgs,
 		StdoutBufferSize:          p.pluginStdioBufferSize,
 		StdoutMaxBufferSize:       p.pluginStdioMaxBufferSize,
-		SkipPrecompilation:        p.skipPrecompilation,
+		SkipPrecompilation:        p.pluginSkipPrecompilation,
 	})
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{

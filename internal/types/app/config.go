@@ -157,7 +157,7 @@ type Config struct {
 	DifyInvocationReadTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_READ_TIMEOUT" default:"240000"`
 
 	// skip plugin precompilation
-	SkipPrecompilation bool `envconfig:"SKIP_PRECOMPILATION" default:"false"`
+	PluginSkipPrecompilation bool `envconfig:"PLUGIN_SKIP_PRECOMPILATION" default:"false"`
 }
 
 func (c *Config) Validate() error {
