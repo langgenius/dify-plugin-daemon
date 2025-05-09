@@ -1,6 +1,9 @@
 package app
 
-import "golang.org/x/exp/constraints"
+import (
+	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"golang.org/x/exp/constraints"
+)
 
 func (config *Config) SetDefault() {
 	setDefaultInt(&config.ServerPort, 5002)
@@ -15,7 +18,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.MaxBundlePackageSize, 52428800*12)
 	setDefaultInt(&config.MaxServerlessTransactionTimeout, 300)
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 10*60)
-	setDefaultString(&config.PluginStorageType, "local")
+	setDefaultString(&config.PluginStorageType, oss.OSS_TYPE_LOCAL)
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
 	setDefaultInt(&config.DifyPluginServerlessConnectorLaunchTimeout, 240)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
