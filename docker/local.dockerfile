@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine as builder
+FROM golang:1.23-alpine AS builder
 
 ARG VERSION=unknown
 
@@ -24,9 +24,6 @@ RUN chmod +x /app/entrypoint.sh
 
 FROM ubuntu:24.04
 
-COPY --from=builder /app/main /app/main
-COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
-
 WORKDIR /app
 
 # check build args
@@ -51,6 +48,8 @@ RUN mv /usr/lib/python3.12/EXTERNALLY-MANAGED /usr/lib/python3.12/EXTERNALLY-MAN
 ENV UV_PATH=/usr/local/bin/uv
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
+
+COPY --from=builder /app/main /app/entrypoint.sh /app/
 
 # run the server, using sh as the entrypoint to avoid process being the root process
 # and using bash to recycle resources
