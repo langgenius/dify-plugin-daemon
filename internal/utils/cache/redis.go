@@ -44,10 +44,11 @@ func InitRedisClient(addr, username, password string, useSsl bool, db int) error
 	return nil
 }
 
-func InitRedisSentinelClient(sentinels []string, masterName, password, sentinelUsername, sentinelPassword string, useSsl bool, db int, socketTimeout float64) error {
+func InitRedisSentinelClient(sentinels []string, masterName, username, password, sentinelUsername, sentinelPassword string, useSsl bool, db int, socketTimeout float64) error {
 	opts := &redis.FailoverOptions{
 		MasterName:       masterName,
 		SentinelAddrs:    sentinels,
+		Username:         username,
 		Password:         password,
 		DB:               db,
 		SentinelUsername: sentinelUsername,

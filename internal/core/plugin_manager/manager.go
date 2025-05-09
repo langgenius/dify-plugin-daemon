@@ -182,6 +182,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		if err := cache.InitRedisSentinelClient(
 			sentinels,
 			configuration.RedisSentinelServiceName,
+			configuration.RedisUser,
 			configuration.RedisPass,
 			configuration.RedisSentinelUsername,
 			configuration.RedisSentinelPassword,
