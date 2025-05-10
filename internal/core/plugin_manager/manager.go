@@ -128,7 +128,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	); err != nil {
 		log.Panic("init redis cluster client failed: %s", err.Error())
 	}
-		log.Info("redis cluster client initialized")	
+		log.Info("redis cluster client initialized")
 	}else {
 		if err := cache.InitRedisClient(
 			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
@@ -139,6 +139,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		); err != nil {
 			log.Panic("init redis client failed: %s", err.Error())
 		}
+		log.Info("redis standalone client initialized")
 	}
 
 	invocation, err := calldify.NewDifyInvocationDaemon(
