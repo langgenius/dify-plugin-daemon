@@ -21,7 +21,7 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-// RedisInterface 是 Redis 客户端的抽象接口
+// RedisInterface is an abstract interface for Redis client
 type RedisInterface interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
@@ -44,22 +44,22 @@ type RedisInterface interface {
 	Close() error
 }
 
-// StandaloneRedis 包装单实例 Redis 客户端
+// StandaloneRedis wraps the standalone Redis client
 type StandaloneRedis struct {
 	*redis.Client
 }
 
-// ClusterRedis 包装集群 Redis 客户端
+// ClusterRedis wraps the cluster Redis client
 type ClusterRedis struct {
 	*redis.ClusterClient
 }
 
-// Pipeline 包装 Pipeline 方法，确保 ClusterRedis 实现接口
+// Pipeline wraps the Pipeline method to ensure ClusterRedis implements the interface
 func (c *ClusterRedis) Pipeline() redis.Pipeliner {
 	return c.ClusterClient.Pipeline()
 }
 
-// 创建 Redis 单实例配置选项
+// Create Redis standalone config options
 func getRedisOptions(addr, username, password string, useSsl bool, db int) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
@@ -73,7 +73,7 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int) *redi
 	return opts
 }
 
-// InitStandaloneClient 初始化单实例 Redis 客户端（内部使用）
+// InitStandaloneClient initializes a standalone Redis client (internal use)
 func InitStandaloneClient(addr, username, password string, useSsl bool, db int) (redis.Cmdable, error) {
 	opts := getRedisOptions(addr, username, password, useSsl, db)
 	client := redis.NewClient(opts)
@@ -85,7 +85,7 @@ func InitStandaloneClient(addr, username, password string, useSsl bool, db int) 
 	return client, nil
 }
 
-// InitClusterClient 初始化集群 Redis 客户端（内部使用）
+// InitClusterClient initializes a cluster Redis client (internal use)
 func InitClusterClient(addrs []string, password string, useSsl bool) (redis.Cmdable, error) {
 	opts := &redis.ClusterOptions{
 		Addrs:    addrs,
@@ -105,14 +105,14 @@ func InitClusterClient(addrs []string, password string, useSsl bool) (redis.Cmda
 	return client, nil
 }
 
-// InitSentinelClient 初始化哨兵模式 Redis 客户端（内部使用）
+// InitSentinelClient initializes a sentinel mode Redis client (internal use)
 func InitSentinelClient(
 	masterName string,
 	sentinelAddrs []string,
-	username string, // Redis 主从服务器的用户名
-	password string, // Redis 主从服务器的密码
-	sentinelUsername string, // 连接哨兵服务器的用户名
-	sentinelPassword string, // 连接哨兵服务器的密码
+	username string, // Username for Redis master-slave servers
+	password string, // Password for Redis master-slave servers
+	sentinelUsername string, // Username for connecting to sentinel servers
+	sentinelPassword string, // Password for connecting to sentinel servers
 	useSsl bool,
 	db int,
 	socketTimeout float64,
@@ -120,14 +120,14 @@ func InitSentinelClient(
 	opts := &redis.FailoverOptions{
 		MasterName:       masterName,
 		SentinelAddrs:    sentinelAddrs,
-		Username:         username,         // Redis 主从服务器的用户名
-		Password:         password,         // Redis 主从服务器的密码
-		SentinelUsername: sentinelUsername, // 连接哨兵服务器的用户名
-		SentinelPassword: sentinelPassword, // 连接哨兵服务器的密码
+		Username:         username,         // Username for Redis master-slave servers
+		Password:         password,         // Password for Redis master-slave servers
+		SentinelUsername: sentinelUsername, // Username for connecting to sentinel servers
+		SentinelPassword: sentinelPassword, // Password for connecting to sentinel servers
 		DB:               db,
 	}
 
-	// 设置套接字超时
+	// Set socket timeout
 	if socketTimeout > 0 {
 		opts.DialTimeout = time.Duration(socketTimeout * float64(time.Second))
 	}
@@ -138,7 +138,7 @@ func InitSentinelClient(
 
 	client := redis.NewFailoverClient(opts)
 
-	// 打印客户端类型，用于调试
+	// Print client type for debugging
 	log.Info("Redis failover client type: %T", client)
 
 	if _, err := client.Ping(context.Background()).Result(); err != nil {
@@ -148,7 +148,7 @@ func InitSentinelClient(
 	return client, nil
 }
 
-// InitRedisClient 初始化单实例 Redis 客户端
+// InitRedisClient initializes a standalone Redis client
 func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
 	client, err := InitStandaloneClient(addr, username, password, useSsl, db)
 	if err != nil {
@@ -159,7 +159,7 @@ func InitRedisClient(addr, username, password string, useSsl bool, db int) error
 	return nil
 }
 
-// InitRedisClusterClient 初始化集群 Redis 客户端
+// InitRedisClusterClient initializes a cluster Redis client
 func InitRedisClusterClient(addrs []string, password string, useSsl bool) error {
 	client, err := InitClusterClient(addrs, password, useSsl)
 	if err != nil {
@@ -170,7 +170,7 @@ func InitRedisClusterClient(addrs []string, password string, useSsl bool) error 
 	return nil
 }
 
-// InitRedisSentinelClient 初始化哨兵模式 Redis 客户端
+// InitRedisSentinelClient initializes a sentinel mode Redis client
 func InitRedisSentinelClient(
 	masterName string,
 	sentinelAddrs []string,
@@ -201,13 +201,13 @@ func InitRedisSentinelClient(
 	return nil
 }
 
-// Close 关闭 Redis 客户端
+// Close closes the Redis client
 func Close() error {
 	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
-	// 根据不同的客户端类型进行关闭
+	// Close according to different client types
 	switch client := redisClient.(type) {
 	case *redis.Client:
 		return client.Close()
@@ -237,12 +237,12 @@ func serialKey(keys ...string) string {
 	), ":")
 }
 
-// Store 存储键值对
+// Store stores key-value pair
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	return store(serialKey(key), value, time, context...)
 }
 
-// store 存储键值对，不使用序列化 key
+// store stores key-value pair without serializing key
 func store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -259,7 +259,7 @@ func store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 	return getCmdable(context...).Set(ctx, key, value, time).Err()
 }
 
-// Get 获取键值
+// Get retrieves a value by key
 func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	return get[T](serialKey(key), context...)
 }
@@ -285,7 +285,7 @@ func get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	return &result, err
 }
 
-// GetString 获取字符串类型的键值
+// GetString retrieves a string value by key
 func GetString(key string, context ...redis.Cmdable) (string, error) {
 	if redisClient == nil {
 		return "", ErrDBNotInit
@@ -301,7 +301,7 @@ func GetString(key string, context ...redis.Cmdable) (string, error) {
 	return v, err
 }
 
-// Del 删除键
+// Del deletes a key
 func Del(key string, context ...redis.Cmdable) (int64, error) {
 	return del(serialKey(key), context...)
 }
@@ -315,7 +315,7 @@ func del(key string, context ...redis.Cmdable) (int64, error) {
 	return v, err
 }
 
-// Exist 检查键是否存在
+// Exist checks if a key exists
 func Exist(key string, context ...redis.Cmdable) (int64, error) {
 	if redisClient == nil {
 		return 0, ErrDBNotInit
@@ -324,7 +324,7 @@ func Exist(key string, context ...redis.Cmdable) (int64, error) {
 	return getCmdable(context...).Exists(ctx, serialKey(key)).Result()
 }
 
-// Increase 增加键的值
+// Increase increments the value of a key
 func Increase(key string, context ...redis.Cmdable) (int64, error) {
 	if redisClient == nil {
 		return 0, ErrDBNotInit
@@ -341,7 +341,7 @@ func Increase(key string, context ...redis.Cmdable) (int64, error) {
 	return num, nil
 }
 
-// Decrease 减少键的值
+// Decrease decrements the value of a key
 func Decrease(key string, context ...redis.Cmdable) (int64, error) {
 	if redisClient == nil {
 		return 0, ErrDBNotInit
@@ -350,7 +350,7 @@ func Decrease(key string, context ...redis.Cmdable) (int64, error) {
 	return getCmdable(context...).Decr(ctx, serialKey(key)).Result()
 }
 
-// SetExpire 设置键的过期时间
+// SetExpire sets the expiration time for a key
 func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -359,7 +359,7 @@ func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Err()
 }
 
-// SetMapField 设置哈希表字段
+// SetMapField sets hash fields
 func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -368,7 +368,7 @@ func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
 	return getCmdable(context...).HMSet(ctx, serialKey(key), v).Err()
 }
 
-// SetMapOneField 设置哈希表单个字段
+// SetMapOneField sets a single hash field
 func SetMapOneField(key string, field string, value any, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -381,7 +381,7 @@ func SetMapOneField(key string, field string, value any, context ...redis.Cmdabl
 	return getCmdable(context...).HSet(ctx, serialKey(key), field, value).Err()
 }
 
-// GetMapField 获取哈希表字段
+// GetMapField retrieves a hash field
 func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T, error) {
 	if redisClient == nil {
 		return nil, ErrDBNotInit
@@ -399,7 +399,7 @@ func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T,
 	return &result, err
 }
 
-// GetMapFieldString 获取哈希表字段字符串
+// GetMapFieldString retrieves a hash field as string
 func GetMapFieldString(key string, field string, context ...redis.Cmdable) (string, error) {
 	if redisClient == nil {
 		return "", ErrDBNotInit
@@ -416,7 +416,7 @@ func GetMapFieldString(key string, field string, context ...redis.Cmdable) (stri
 	return val, nil
 }
 
-// DelMapField 删除哈希表字段
+// DelMapField deletes a hash field
 func DelMapField(key string, field string, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -425,7 +425,7 @@ func DelMapField(key string, field string, context ...redis.Cmdable) error {
 	return getCmdable(context...).HDel(ctx, serialKey(key), field).Err()
 }
 
-// GetMap 获取整个哈希表
+// GetMap retrieves the entire hash
 func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	if redisClient == nil {
 		return nil, ErrDBNotInit
@@ -452,7 +452,7 @@ func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	return result, nil
 }
 
-// ScanKeys 扫描匹配的键
+// ScanKeys scans for matching keys
 func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
 	if redisClient == nil {
 		return nil, ErrDBNotInit
@@ -470,7 +470,7 @@ func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
 	return result, nil
 }
 
-// ScanKeysAsync 异步扫描匹配的键
+// ScanKeysAsync asynchronously scans for matching keys
 func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -498,7 +498,7 @@ func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdab
 	return nil
 }
 
-// ScanMap 扫描匹配的哈希表字段
+// ScanMap scans for matching hash fields
 func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[string]V, error) {
 	if redisClient == nil {
 		return nil, ErrDBNotInit
@@ -517,7 +517,7 @@ func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[str
 	return result, nil
 }
 
-// ScanMapAsync 异步扫描匹配的哈希表字段
+// ScanMapAsync asynchronously scans for matching hash fields
 func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -558,13 +558,13 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 	return nil
 }
 
-// SetNX 设置键值对，仅当键不存在时
+// SetNX sets a key-value pair only if the key does not exist
 func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cmdable) (bool, error) {
 	if redisClient == nil {
 		return false, ErrDBNotInit
 	}
 
-	// 序列化值
+	// Serialize value
 	bytes, err := parser.MarshalCBOR(value)
 	if err != nil {
 		return false, err
@@ -577,7 +577,7 @@ var (
 	ErrLockTimeout = errors.New("lock timeout")
 )
 
-// Lock 加锁
+// Lock acquires a lock
 func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -602,7 +602,7 @@ func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, contex
 	return nil
 }
 
-// Unlock 解锁
+// Unlock releases a lock
 func Unlock(key string, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -620,16 +620,16 @@ func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, err
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
 }
 
-// Transaction 执行事务
+// Transaction executes a transaction
 func Transaction(fn func(redis.Pipeliner) error) error {
 	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
-	// 判断客户端类型
+	// Determine client type
 	switch client := redisClient.(type) {
 	case *redis.Client:
-		// 单实例 Redis 支持原子性事务
+		// Standalone Redis supports atomic transactions
 		return client.Watch(ctx, func(tx *redis.Tx) error {
 			_, err := tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
 				return fn(p)
@@ -640,7 +640,7 @@ func Transaction(fn func(redis.Pipeliner) error) error {
 			return err
 		})
 	case *redis.ClusterClient:
-		// 集群模式下使用管道，不保证原子性
+		// In cluster mode, use pipeline without atomicity guarantees
 		pipe := client.Pipeline()
 		err := fn(pipe)
 		if err != nil {
@@ -657,7 +657,7 @@ func Transaction(fn func(redis.Pipeliner) error) error {
 	}
 }
 
-// Publish 发布消息到频道
+// Publish publishes a message to a channel
 func Publish(channel string, message any, context ...redis.Cmdable) error {
 	if redisClient == nil {
 		return ErrDBNotInit
@@ -670,7 +670,7 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 	return getCmdable(context...).Publish(ctx, channel, message).Err()
 }
 
-// Subscribe 订阅频道
+// Subscribe subscribes to a channel
 func Subscribe[T any](channel string) (<-chan T, func()) {
 	ch := make(chan T)
 	connectionEstablished := make(chan bool)
@@ -681,7 +681,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		return ch, func() {}
 	}
 
-	// 根据不同的客户端类型获取 PubSub
+	// Get PubSub based on different client types
 	var pubsub *redis.PubSub
 	switch client := redisClient.(type) {
 	case *redis.Client:
@@ -724,7 +724,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		}
 	}()
 
-	// 等待连接建立
+	// Wait for connection to be established
 	<-connectionEstablished
 
 	return ch, func() {

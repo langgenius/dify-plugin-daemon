@@ -180,10 +180,10 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		if err := cache.InitRedisSentinelClient(
 			configuration.RedisSentinelServiceName,
 			configuration.RedisSentinels,
-			configuration.RedisUser,             // 对主从服务器使用原有的用户名
-			configuration.RedisPass,             // 对主从服务器使用原有的密码
-			configuration.RedisSentinelUsername, // 连接哨兵服务器的用户名
-			configuration.RedisSentinelPassword, // 连接哨兵服务器的密码
+			configuration.RedisUser,             // Username for Redis master-slave servers
+			configuration.RedisPass,             // Password for Redis master-slave servers
+			configuration.RedisSentinelUsername, // Username for connecting to sentinel servers
+			configuration.RedisSentinelPassword, // Password for connecting to sentinel servers
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
 			configuration.RedisSentinelSocketTimeout,
