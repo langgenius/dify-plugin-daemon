@@ -89,8 +89,7 @@ Now you can start to implement your Plugin, by following these examples, you can
 You may already noticed that a `.env.example` file in the root directory of your Plugin, just copy it to `.env` and fill in the corresponding values, there are some environment variables you need to set if you want to debug your Plugin locally.
 
 - `INSTALL_METHOD`: Set this to `remote`, your plugin will connect to a Dify instance through the network.
-- `REMOTE_INSTALL_HOST`: The host of your Dify instance, you can use our SaaS instance `https://debug.dify.ai`, or self-hosted Dify instance.
-- `REMOTE_INSTALL_PORT`: The port of your Dify instance, default is 5003
+- `REMOTE_INSTALL_URL`: The URL of debugging host and port of plugin-daemon service from your Dify instance, eg. `debug.dify.ai:5003`. Either the [Dify SaaS](https://debug.dify.ai) or [self-hosted Dify instance](https://docs.dify.ai/en/getting-started/install-self-hosted/readme) can be used.
 - `REMOTE_INSTALL_KEY`: You should get your debugging key from the Dify instance you used, at the right top of the plugin management page, you can see a button with a `debug` icon, click it and you will get the key.
 
 Run the following command to start your Plugin:
