@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,13 +14,52 @@ import (
 )
 
 var (
-	client *redis.Client
-	ctx    = context.Background()
+	redisClient redis.Cmdable
+	ctx         = context.Background()
 
 	ErrDBNotInit = errors.New("redis client not init")
 	ErrNotFound  = errors.New("key not found")
 )
 
+// RedisInterface is an abstract interface for Redis client
+type RedisInterface interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+	Exists(ctx context.Context, keys ...string) *redis.IntCmd
+	Incr(ctx context.Context, key string) *redis.IntCmd
+	Decr(ctx context.Context, key string) *redis.IntCmd
+	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
+	HMSet(ctx context.Context, key string, values ...interface{}) *redis.StatusCmd
+	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
+	HGet(ctx context.Context, key, field string) *redis.StringCmd
+	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
+	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
+	Scan(ctx context.Context, cursor uint64, match string, count int64) *redis.ScanCmd
+	HScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd
+	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
+	Publish(ctx context.Context, channel string, message interface{}) *redis.IntCmd
+	Subscribe(ctx context.Context, channels ...string) *redis.PubSub
+	Pipeline() redis.Pipeliner
+	Close() error
+}
+
+// StandaloneRedis wraps the standalone Redis client
+type StandaloneRedis struct {
+	*redis.Client
+}
+
+// ClusterRedis wraps the cluster Redis client
+type ClusterRedis struct {
+	*redis.ClusterClient
+}
+
+// Pipeline wraps the Pipeline method to ensure ClusterRedis implements the interface
+func (c *ClusterRedis) Pipeline() redis.Pipeliner {
+	return c.ClusterClient.Pipeline()
+}
+
+// Create Redis standalone config options
 func getRedisOptions(addr, username, password string, useSsl bool, db int) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
@@ -33,24 +73,149 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int) *redi
 	return opts
 }
 
-func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
+// InitStandaloneClient initializes a standalone Redis client (internal use)
+func InitStandaloneClient(addr, username, password string, useSsl bool, db int) (redis.Cmdable, error) {
 	opts := getRedisOptions(addr, username, password, useSsl, db)
-	client = redis.NewClient(opts)
+	client := redis.NewClient(opts)
 
-	if _, err := client.Ping(ctx).Result(); err != nil {
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// InitClusterClient initializes a cluster Redis client (internal use)
+func InitClusterClient(addrs []string, password string, useSsl bool) (redis.Cmdable, error) {
+	opts := &redis.ClusterOptions{
+		Addrs:    addrs,
+		Password: password,
+	}
+
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+
+	client := redis.NewClusterClient(opts)
+
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// InitSentinelClient initializes a sentinel mode Redis client (internal use)
+func InitSentinelClient(
+	masterName string,
+	sentinelAddrs []string,
+	username string, // Username for Redis master-slave servers
+	password string, // Password for Redis master-slave servers
+	sentinelUsername string, // Username for connecting to sentinel servers
+	sentinelPassword string, // Password for connecting to sentinel servers
+	useSsl bool,
+	db int,
+	socketTimeout float64,
+) (redis.Cmdable, error) {
+	opts := &redis.FailoverOptions{
+		MasterName:       masterName,
+		SentinelAddrs:    sentinelAddrs,
+		Username:         username,         // Username for Redis master-slave servers
+		Password:         password,         // Password for Redis master-slave servers
+		SentinelUsername: sentinelUsername, // Username for connecting to sentinel servers
+		SentinelPassword: sentinelPassword, // Password for connecting to sentinel servers
+		DB:               db,
+	}
+
+	// Set socket timeout
+	if socketTimeout > 0 {
+		opts.DialTimeout = time.Duration(socketTimeout * float64(time.Second))
+	}
+
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+
+	client := redis.NewFailoverClient(opts)
+
+	// Print client type for debugging
+	log.Info("Redis failover client type: %T", client)
+
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// InitRedisClient initializes a standalone Redis client
+func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
+	client, err := InitStandaloneClient(addr, username, password, useSsl, db)
+	if err != nil {
 		return err
 	}
 
+	redisClient = client
 	return nil
 }
 
-// Close the redis client
+// InitRedisClusterClient initializes a cluster Redis client
+func InitRedisClusterClient(addrs []string, password string, useSsl bool) error {
+	client, err := InitClusterClient(addrs, password, useSsl)
+	if err != nil {
+		return err
+	}
+
+	redisClient = client
+	return nil
+}
+
+// InitRedisSentinelClient initializes a sentinel mode Redis client
+func InitRedisSentinelClient(
+	masterName string,
+	sentinelAddrs []string,
+	username string,
+	password string,
+	sentinelUsername string,
+	sentinelPassword string,
+	useSsl bool,
+	db int,
+	socketTimeout float64,
+) error {
+	client, err := InitSentinelClient(
+		masterName,
+		sentinelAddrs,
+		username,
+		password,
+		sentinelUsername,
+		sentinelPassword,
+		useSsl,
+		db,
+		socketTimeout,
+	)
+	if err != nil {
+		return err
+	}
+
+	redisClient = client
+	return nil
+}
+
+// Close closes the Redis client
 func Close() error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
-	return client.Close()
+	// Close according to different client types
+	switch client := redisClient.(type) {
+	case *redis.Client:
+		return client.Close()
+	case *redis.ClusterClient:
+		return client.Close()
+	default:
+		return fmt.Errorf("unknown redis client type: %T", client)
+	}
 }
 
 func getCmdable(context ...redis.Cmdable) redis.Cmdable {
@@ -58,7 +223,11 @@ func getCmdable(context ...redis.Cmdable) redis.Cmdable {
 		return context[0]
 	}
 
-	return client
+	if redisClient == nil {
+		return nil
+	}
+
+	return redisClient
 }
 
 func serialKey(keys ...string) string {
@@ -68,14 +237,14 @@ func serialKey(keys ...string) string {
 	), ":")
 }
 
-// Store the key-value pair
+// Store stores key-value pair
 func Store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
 	return store(serialKey(key), value, time, context...)
 }
 
-// store the key-value pair, without serialKey
+// store stores key-value pair without serializing key
 func store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
@@ -90,13 +259,13 @@ func store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 	return getCmdable(context...).Set(ctx, key, value, time).Err()
 }
 
-// Get the value with key
+// Get retrieves a value by key
 func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	return get[T](serialKey(key), context...)
 }
 
 func get[T any](key string, context ...redis.Cmdable) (*T, error) {
-	if client == nil {
+	if redisClient == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -116,9 +285,9 @@ func get[T any](key string, context ...redis.Cmdable) (*T, error) {
 	return &result, err
 }
 
-// GetString get the string with key
+// GetString retrieves a string value by key
 func GetString(key string, context ...redis.Cmdable) (string, error) {
-	if client == nil {
+	if redisClient == nil {
 		return "", ErrDBNotInit
 	}
 
@@ -132,13 +301,13 @@ func GetString(key string, context ...redis.Cmdable) (string, error) {
 	return v, err
 }
 
-// Del the key
+// Del deletes a key
 func Del(key string, context ...redis.Cmdable) (int64, error) {
 	return del(serialKey(key), context...)
 }
 
 func del(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if redisClient == nil {
 		return 0, ErrDBNotInit
 	}
 
@@ -146,18 +315,18 @@ func del(key string, context ...redis.Cmdable) (int64, error) {
 	return v, err
 }
 
-// Exist check the key exist or not
+// Exist checks if a key exists
 func Exist(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if redisClient == nil {
 		return 0, ErrDBNotInit
 	}
 
 	return getCmdable(context...).Exists(ctx, serialKey(key)).Result()
 }
 
-// Increase the key
+// Increase increments the value of a key
 func Increase(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if redisClient == nil {
 		return 0, ErrDBNotInit
 	}
 
@@ -172,36 +341,36 @@ func Increase(key string, context ...redis.Cmdable) (int64, error) {
 	return num, nil
 }
 
-// Decrease the key
+// Decrease decrements the value of a key
 func Decrease(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if redisClient == nil {
 		return 0, ErrDBNotInit
 	}
 
 	return getCmdable(context...).Decr(ctx, serialKey(key)).Result()
 }
 
-// SetExpire set the expire time for the key
+// SetExpire sets the expiration time for a key
 func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Err()
 }
 
-// SetMapField set the map field with key
+// SetMapField sets hash fields
 func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
 	return getCmdable(context...).HMSet(ctx, serialKey(key), v).Err()
 }
 
-// SetMapOneField set the map field with key
+// SetMapOneField sets a single hash field
 func SetMapOneField(key string, field string, value any, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
@@ -212,9 +381,9 @@ func SetMapOneField(key string, field string, value any, context ...redis.Cmdabl
 	return getCmdable(context...).HSet(ctx, serialKey(key), field, value).Err()
 }
 
-// GetMapField get the map field with key
+// GetMapField retrieves a hash field
 func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T, error) {
-	if client == nil {
+	if redisClient == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -230,9 +399,9 @@ func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T,
 	return &result, err
 }
 
-// GetMapFieldString get the string
+// GetMapFieldString retrieves a hash field as string
 func GetMapFieldString(key string, field string, context ...redis.Cmdable) (string, error) {
-	if client == nil {
+	if redisClient == nil {
 		return "", ErrDBNotInit
 	}
 
@@ -247,18 +416,18 @@ func GetMapFieldString(key string, field string, context ...redis.Cmdable) (stri
 	return val, nil
 }
 
-// DelMapField delete the map field with key
+// DelMapField deletes a hash field
 func DelMapField(key string, field string, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
 	return getCmdable(context...).HDel(ctx, serialKey(key), field).Err()
 }
 
-// GetMap get the map with key
+// GetMap retrieves the entire hash
 func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
-	if client == nil {
+	if redisClient == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -283,9 +452,9 @@ func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 	return result, nil
 }
 
-// ScanKeys scan the keys with match pattern
+// ScanKeys scans for matching keys
 func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
-	if client == nil {
+	if redisClient == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -301,9 +470,9 @@ func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
 	return result, nil
 }
 
-// ScanKeysAsync scan the keys with match pattern, format like "key*"
+// ScanKeysAsync asynchronously scans for matching keys
 func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
@@ -329,9 +498,9 @@ func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdab
 	return nil
 }
 
-// ScanMap scan the map with match pattern, format like "key*"
+// ScanMap scans for matching hash fields
 func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[string]V, error) {
-	if client == nil {
+	if redisClient == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -348,9 +517,9 @@ func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[str
 	return result, nil
 }
 
-// ScanMapAsync scan the map with match pattern, format like "key*"
+// ScanMapAsync asynchronously scans for matching hash fields
 func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
@@ -389,13 +558,13 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 	return nil
 }
 
-// SetNX set the key-value pair with expire time
+// SetNX sets a key-value pair only if the key does not exist
 func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cmdable) (bool, error) {
-	if client == nil {
+	if redisClient == nil {
 		return false, ErrDBNotInit
 	}
 
-	// marshal the value
+	// Serialize value
 	bytes, err := parser.MarshalCBOR(value)
 	if err != nil {
 		return false, err
@@ -408,10 +577,9 @@ var (
 	ErrLockTimeout = errors.New("lock timeout")
 )
 
-// Lock key, expire time takes responsibility for expiration time
-// try_lock_timeout takes responsibility for the timeout of trying to lock
+// Lock acquires a lock
 func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
@@ -434,40 +602,64 @@ func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, contex
 	return nil
 }
 
+// Unlock releases a lock
 func Unlock(key string, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
 	return getCmdable(context...).Del(ctx, serialKey(key)).Err()
 }
 
+// Expire 设置过期时间
 func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, error) {
-	if client == nil {
+	if redisClient == nil {
 		return false, ErrDBNotInit
 	}
 
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
 }
 
+// Transaction executes a transaction
 func Transaction(fn func(redis.Pipeliner) error) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
-	return client.Watch(ctx, func(tx *redis.Tx) error {
-		_, err := tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
-			return fn(p)
+	// Determine client type
+	switch client := redisClient.(type) {
+	case *redis.Client:
+		// Standalone Redis supports atomic transactions
+		return client.Watch(ctx, func(tx *redis.Tx) error {
+			_, err := tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
+				return fn(p)
+			})
+			if err == redis.Nil {
+				return nil
+			}
+			return err
 		})
+	case *redis.ClusterClient:
+		// In cluster mode, use pipeline without atomicity guarantees
+		pipe := client.Pipeline()
+		err := fn(pipe)
+		if err != nil {
+			return err
+		}
+
+		_, err = pipe.Exec(ctx)
 		if err == redis.Nil {
 			return nil
 		}
 		return err
-	})
+	default:
+		return fmt.Errorf("unknown redis client type: %T", client)
+	}
 }
 
+// Publish publishes a message to a channel
 func Publish(channel string, message any, context ...redis.Cmdable) error {
-	if client == nil {
+	if redisClient == nil {
 		return ErrDBNotInit
 	}
 
@@ -478,10 +670,30 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 	return getCmdable(context...).Publish(ctx, channel, message).Err()
 }
 
+// Subscribe subscribes to a channel
 func Subscribe[T any](channel string) (<-chan T, func()) {
-	pubsub := client.Subscribe(ctx, channel)
 	ch := make(chan T)
 	connectionEstablished := make(chan bool)
+
+	if redisClient == nil {
+		close(ch)
+		close(connectionEstablished)
+		return ch, func() {}
+	}
+
+	// Get PubSub based on different client types
+	var pubsub *redis.PubSub
+	switch client := redisClient.(type) {
+	case *redis.Client:
+		pubsub = client.Subscribe(ctx, channel)
+	case *redis.ClusterClient:
+		pubsub = client.Subscribe(ctx, channel)
+	default:
+		log.Error("unknown redis client type: %T", client)
+		close(ch)
+		close(connectionEstablished)
+		return ch, func() {}
+	}
 
 	go func() {
 		defer close(ch)
@@ -512,7 +724,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		}
 	}()
 
-	// wait for the connection to be established
+	// Wait for connection to be established
 	<-connectionEstablished
 
 	return ch, func() {

@@ -175,14 +175,44 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	log.Info("start plugin manager daemon...")
 
 	// init redis client
-	if err := cache.InitRedisClient(
-		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
-		configuration.RedisUser,
-		configuration.RedisPass,
-		configuration.RedisUseSsl,
-		configuration.RedisDB,
-	); err != nil {
-		log.Panic("init redis client failed: %s", err.Error())
+	if configuration.RedisUseSentinel {
+		// use redis sentinel mode
+		if err := cache.InitRedisSentinelClient(
+			configuration.RedisSentinelServiceName,
+			configuration.RedisSentinels,
+			configuration.RedisUser,             // Username for Redis master-slave servers
+			configuration.RedisPass,             // Password for Redis master-slave servers
+			configuration.RedisSentinelUsername, // Username for connecting to sentinel servers
+			configuration.RedisSentinelPassword, // Password for connecting to sentinel servers
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+			configuration.RedisSentinelSocketTimeout,
+		); err != nil {
+			log.Panic("init redis sentinel client failed: %s", err.Error())
+		}
+		log.Info("redis sentinel client initialized")
+	} else if configuration.RedisUseClusters {
+		// use redis cluster mode
+		if err := cache.InitRedisClusterClient(
+			configuration.RedisClusters,
+			configuration.RedisClustersPassword,
+			configuration.RedisUseSsl,
+		); err != nil {
+			log.Panic("init redis cluster client failed: %s", err.Error())
+		}
+		log.Info("redis cluster client initialized")
+	} else {
+		// use redis standalone mode
+		if err := cache.InitRedisClient(
+			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
+			configuration.RedisUser,
+			configuration.RedisPass,
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+		); err != nil {
+			log.Panic("init redis client failed: %s", err.Error())
+		}
+		log.Info("redis standalone client initialized")
 	}
 
 	invocation, err := real.NewDifyInvocationDaemon(
