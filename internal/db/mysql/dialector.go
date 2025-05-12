@@ -35,7 +35,8 @@ func (migrator myMigrator) FullDataTypeOf(field *schema.Field) clause.Expr {
 	if field.DataType == "uuid" {
 		field.DataType = "char(36)"
 		if field.HasDefaultValue && field.DefaultValue == "uuid_generate_v4()" {
-			field.HasDefaultValue = false
+			// issue: https://github.com/go-gorm/gorm/issues/5893
+			// field.HasDefaultValue = false
 			field.DefaultValue = ""
 			var fieldsWithDefault []*schema.Field
 			for _, fieldWithDefault := range field.Schema.FieldsWithDefaultDBValue {
