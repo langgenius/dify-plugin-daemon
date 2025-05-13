@@ -12,11 +12,11 @@ settings:
       pt_BR: Please input your API key
 endpoints:
   - endpoints/{{ .PluginName }}.yaml
-{{ if .CustomSetupEnabled }}
+{{- if .CustomSetupEnabled }}
 custom_initialize_process_enabled: true
-{{ end }}
-{{ if .CustomSetupEnabled }}
+{{- end }}
+{{- if .CustomSetupEnabled }}
 extra:
   python:
     source: "group/{{ .PluginName }}.py"
-{{ end }}
+{{- end }}

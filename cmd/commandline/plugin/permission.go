@@ -270,7 +270,7 @@ func (p permission) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 		case "tab":
 			p.edit()
 		case "enter":
-			if p.cursor == "endpoint.enabled" {
+			if (p.cursor == "endpoint.enabled" && !p.permission.AllowRegisterEndpoint()) || p.cursor == "endpoint.setup_enabled" {
 				p.cursor = permissionKeySeq[0]
 				p.updateStorageSize()
 				return p, SUB_MENU_EVENT_NEXT, nil
