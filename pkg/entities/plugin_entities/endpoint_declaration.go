@@ -47,6 +47,9 @@ type EndpointProviderDeclaration struct {
 	Settings      []ProviderConfig      `json:"settings" yaml:"settings" validate:"omitempty,dive"`
 	Endpoints     []EndpointDeclaration `json:"endpoints" yaml:"endpoint_declarations" validate:"omitempty,dive"`
 	EndpointFiles []string              `json:"-" yaml:"-"`
+
+	// support in PluginSDK v0.3.0
+	CustomInitialize bool `json:"custom_initialize_process_enabled" yaml:"custom_initialize_process_enabled" validate:"omitempty"`
 }
 
 func (e *EndpointProviderDeclaration) UnmarshalYAML(node *yaml.Node) error {

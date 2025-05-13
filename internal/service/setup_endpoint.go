@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
@@ -14,9 +17,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
 
 func SetupEndpoint(
+	ctx *gin.Context,
 	tenant_id string,
 	user_id string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
@@ -53,6 +58,55 @@ func SetupEndpoint(
 	// check settings
 	if err := plugin_entities.ValidateProviderConfigs(settings, pluginDeclaration.Endpoint.Settings); err != nil {
 		return exception.BadRequestError(fmt.Errorf("failed to validate settings: %v", err)).ToResponse()
+	}
+
+	// check if custom initialize process is enabled
+	if pluginDeclaration.Endpoint.CustomInitialize {
+		request := &plugin_entities.InvokePluginRequest[requests.RequestSetupEndpoint]{
+			BasePluginIdentifier: plugin_entities.BasePluginIdentifier{
+				PluginID: pluginUniqueIdentifier.PluginID(),
+			},
+			InvokePluginUserIdentity: plugin_entities.InvokePluginUserIdentity{
+				TenantId: tenant_id,
+				UserId:   user_id,
+			},
+			UniqueIdentifier: pluginUniqueIdentifier,
+			Data: requests.RequestSetupEndpoint{
+				Settings: settings,
+			},
+		}
+
+		session, err := createSession(
+			request,
+			access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
+			access_types.PLUGIN_ACCESS_ACTION_SETUP_ENDPOINT,
+			ctx.GetString("cluster_id"),
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		response, err := plugin_daemon.SetupEndpoint(
+			session,
+			&request.Data,
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		defer response.Close()
+		for response.Next() {
+			ser, err := response.Read()
+			if err != nil {
+				return exception.InternalServerError(err).ToResponse()
+			}
+
+			if !ser.Success {
+				return exception.BadRequestError(errors.New(
+					"failed to setup endpoint, got success = False from plugin",
+				)).ToResponse()
+			}
+		}
 	}
 
 	endpoint, err := install_service.InstallEndpoint(

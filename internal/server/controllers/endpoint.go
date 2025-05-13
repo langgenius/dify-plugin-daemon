@@ -23,7 +23,7 @@ func SetupEndpoint(ctx *gin.Context) {
 		name := request.Name
 
 		ctx.JSON(200, service.SetupEndpoint(
-			tenantId, userId, pluginUniqueIdentifier, name, settings,
+			ctx, tenantId, userId, pluginUniqueIdentifier, name, settings,
 		))
 	})
 }

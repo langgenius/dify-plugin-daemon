@@ -218,7 +218,6 @@ func Endpoint(
 }
 
 func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-
 	if err := install_service.EnabledEndpoint(endpoint_id, tenant_id); err != nil {
 		return exception.InternalServerError(errors.New("failed to enable endpoint")).ToResponse()
 	}

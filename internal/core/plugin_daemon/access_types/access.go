@@ -33,6 +33,7 @@ const (
 	PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS PluginAccessAction = "validate_provider_credentials"
 	PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS    PluginAccessAction = "validate_model_credentials"
 	PLUGIN_ACCESS_ACTION_INVOKE_ENDPOINT               PluginAccessAction = "invoke_endpoint"
+	PLUGIN_ACCESS_ACTION_SETUP_ENDPOINT                PluginAccessAction = "setup_endpoint"
 	PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES          PluginAccessAction = "get_tts_model_voices"
 	PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS PluginAccessAction = "get_text_embedding_num_tokens"
 	PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS          PluginAccessAction = "get_ai_model_schemas"
