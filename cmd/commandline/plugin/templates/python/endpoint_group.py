@@ -1,4 +1,5 @@
 from typing import Mapping
+from dify_plugin.errors.endpoint import EndpointSetupFailedError
 from dify_plugin.interfaces.endpoint import EndpointGroup
 
 
