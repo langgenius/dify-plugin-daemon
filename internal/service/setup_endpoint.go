@@ -98,7 +98,7 @@ func SetupEndpoint(
 		for response.Next() {
 			ser, err := response.Read()
 			if err != nil {
-				return exception.InternalServerError(err).ToResponse()
+				return exception.InvokePluginError(err).ToResponse()
 			}
 
 			if !ser.Success {
@@ -193,7 +193,10 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 	return entities.NewSuccessResponse(true)
 }
 
-func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name string, settings map[string]any) *entities.Response {
+func UpdateEndpoint(
+	ctx *gin.Context,
+	endpoint_id string, tenant_id string, user_id string, name string, settings map[string]any,
+) *entities.Response {
 	// get endpoint
 	endpoint, err := db.GetOne[models.Endpoint](
 		db.Equal("id", endpoint_id),
@@ -283,6 +286,55 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 	// check settings
 	if err := plugin_entities.ValidateProviderConfigs(settings, pluginDeclaration.Endpoint.Settings); err != nil {
 		return exception.BadRequestError(fmt.Errorf("failed to validate settings: %v", err)).ToResponse()
+	}
+
+	// check if custom initialize process is enabled
+	if pluginDeclaration.Endpoint.CustomInitialize {
+		request := &plugin_entities.InvokePluginRequest[requests.RequestSetupEndpoint]{
+			BasePluginIdentifier: plugin_entities.BasePluginIdentifier{
+				PluginID: pluginUniqueIdentifier.PluginID(),
+			},
+			InvokePluginUserIdentity: plugin_entities.InvokePluginUserIdentity{
+				TenantId: tenant_id,
+				UserId:   user_id,
+			},
+			UniqueIdentifier: pluginUniqueIdentifier,
+			Data: requests.RequestSetupEndpoint{
+				Settings: settings,
+			},
+		}
+
+		session, err := createSession(
+			request,
+			access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
+			access_types.PLUGIN_ACCESS_ACTION_SETUP_ENDPOINT,
+			ctx.GetString("cluster_id"),
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		response, err := plugin_daemon.SetupEndpoint(
+			session,
+			&request.Data,
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		defer response.Close()
+		for response.Next() {
+			ser, err := response.Read()
+			if err != nil {
+				return exception.InvokePluginError(err).ToResponse()
+			}
+
+			if !ser.Success {
+				return exception.BadRequestError(errors.New(
+					"failed to setup endpoint, got success = False from plugin",
+				)).ToResponse()
+			}
+		}
 	}
 
 	// encrypt settings

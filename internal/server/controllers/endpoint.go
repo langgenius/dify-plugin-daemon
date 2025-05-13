@@ -84,7 +84,9 @@ func UpdateEndpoint(ctx *gin.Context) {
 		settings := request.Settings
 		name := request.Name
 
-		ctx.JSON(200, service.UpdateEndpoint(endpointId, tenantId, userId, name, settings))
+		ctx.JSON(200, service.UpdateEndpoint(
+			ctx, endpointId, tenantId, userId, name, settings,
+		))
 	})
 }
 
