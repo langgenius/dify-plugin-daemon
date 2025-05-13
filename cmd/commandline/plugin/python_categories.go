@@ -3,11 +3,9 @@ package plugin
 import (
 	"fmt"
 	"path/filepath"
-
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func createPythonTool(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonTool(root string, manifest *ManifestWithExtra) error {
 	toolFileContent, err := renderTemplate(PYTHON_TOOL_PY_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
@@ -29,7 +27,7 @@ func createPythonTool(root string, manifest *plugin_entities.PluginDeclaration) 
 	return nil
 }
 
-func createPythonToolProvider(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonToolProvider(root string, manifest *ManifestWithExtra) error {
 	toolProviderFileContent, err := renderTemplate(PYTHON_TOOL_PROVIDER_PY_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
@@ -51,20 +49,32 @@ func createPythonToolProvider(root string, manifest *plugin_entities.PluginDecla
 	return nil
 }
 
-func createPythonEndpointGroup(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonEndpointGroup(root string, manifest *ManifestWithExtra) error {
 	endpointGroupFileContent, err := renderTemplate(PYTHON_ENDPOINT_GROUP_MANIFEST_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
 	}
+
 	endpointGroupFilePath := filepath.Join(root, "group", fmt.Sprintf("%s.yaml", manifest.Name))
 	if err := writeFile(endpointGroupFilePath, endpointGroupFileContent); err != nil {
 		return err
 	}
 
+	if manifest.customSetupEnabled {
+		endpointGroupPyFileContent, err := renderTemplate(PYTHON_ENDPOINT_GROUP_PY_TEMPLATE, manifest, []string{""})
+		if err != nil {
+			return err
+		}
+		endpointGroupPyFilePath := filepath.Join(root, "group", fmt.Sprintf("%s.py", manifest.Name))
+		if err := writeFile(endpointGroupPyFilePath, endpointGroupPyFileContent); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func createPythonEndpoint(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonEndpoint(root string, manifest *ManifestWithExtra) error {
 	endpointFileContent, err := renderTemplate(PYTHON_ENDPOINT_MANIFEST_TEMPLATE, manifest, []string{""})
 	if err != nil {
 		return err
@@ -86,7 +96,7 @@ func createPythonEndpoint(root string, manifest *plugin_entities.PluginDeclarati
 	return nil
 }
 
-func createPythonLLM(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonLLM(root string, manifest *ManifestWithExtra) error {
 	llmFileContent, err := renderTemplate(PYTHON_LLM_MANIFEST_TEMPLATE, manifest, []string{"llm"})
 	if err != nil {
 		return err
@@ -108,7 +118,7 @@ func createPythonLLM(root string, manifest *plugin_entities.PluginDeclaration) e
 	return nil
 }
 
-func createPythonTextEmbedding(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonTextEmbedding(root string, manifest *ManifestWithExtra) error {
 	textEmbeddingFileContent, err := renderTemplate(PYTHON_TEXT_EMBEDDING_MANIFEST_TEMPLATE, manifest, []string{"text_embedding"})
 	if err != nil {
 		return err
@@ -130,7 +140,7 @@ func createPythonTextEmbedding(root string, manifest *plugin_entities.PluginDecl
 	return nil
 }
 
-func createPythonRerank(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonRerank(root string, manifest *ManifestWithExtra) error {
 	rerankFileContent, err := renderTemplate(PYTHON_RERANK_MANIFEST_TEMPLATE, manifest, []string{"rerank"})
 	if err != nil {
 		return err
@@ -152,7 +162,7 @@ func createPythonRerank(root string, manifest *plugin_entities.PluginDeclaration
 	return nil
 }
 
-func createPythonTTS(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonTTS(root string, manifest *ManifestWithExtra) error {
 	ttsFileContent, err := renderTemplate(PYTHON_TTS_MANIFEST_TEMPLATE, manifest, []string{"tts"})
 	if err != nil {
 		return err
@@ -174,7 +184,7 @@ func createPythonTTS(root string, manifest *plugin_entities.PluginDeclaration) e
 	return nil
 }
 
-func createPythonSpeech2Text(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonSpeech2Text(root string, manifest *ManifestWithExtra) error {
 	speech2textFileContent, err := renderTemplate(PYTHON_SPEECH2TEXT_MANIFEST_TEMPLATE, manifest, []string{"speech2text"})
 	if err != nil {
 		return err
@@ -196,7 +206,7 @@ func createPythonSpeech2Text(root string, manifest *plugin_entities.PluginDeclar
 	return nil
 }
 
-func createPythonModeration(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonModeration(root string, manifest *ManifestWithExtra) error {
 	moderationFileContent, err := renderTemplate(PYTHON_MODERATION_MANIFEST_TEMPLATE, manifest, []string{"moderation"})
 	if err != nil {
 		return err
@@ -218,7 +228,7 @@ func createPythonModeration(root string, manifest *plugin_entities.PluginDeclara
 	return nil
 }
 
-func createPythonModelProvider(root string, manifest *plugin_entities.PluginDeclaration, supported_model_types []string) error {
+func createPythonModelProvider(root string, manifest *ManifestWithExtra, supported_model_types []string) error {
 	providerFileContent, err := renderTemplate(PYTHON_MODEL_PROVIDER_PY_TEMPLATE, manifest, supported_model_types)
 	if err != nil {
 		return err
@@ -240,7 +250,7 @@ func createPythonModelProvider(root string, manifest *plugin_entities.PluginDecl
 	return nil
 }
 
-func createPythonAgentStrategy(root string, manifest *plugin_entities.PluginDeclaration) error {
+func createPythonAgentStrategy(root string, manifest *ManifestWithExtra) error {
 	agentFileContent, err := renderTemplate(PYTHON_AGENT_PROVIDER_MANIFEST_TEMPLATE, manifest, []string{"agent"})
 	if err != nil {
 		return err

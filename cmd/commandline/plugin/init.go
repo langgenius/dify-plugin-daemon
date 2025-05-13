@@ -326,7 +326,7 @@ func (m model) View() string {
 }
 
 func (m model) createPlugin() {
-	permission := m.subMenus[SUB_MENU_KEY_PERMISSION].(permission).Permission()
+	permissionObj := m.subMenus[SUB_MENU_KEY_PERMISSION].(permission).Permission()
 
 	manifest := &plugin_entities.PluginDeclaration{
 		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
@@ -339,7 +339,7 @@ func (m model) createPlugin() {
 			CreatedAt:   time.Now(),
 			Resource: plugin_entities.PluginResourceRequirement{
 				Memory:     1024 * 1024 * 256, // 256MB
-				Permission: &permission,
+				Permission: &permissionObj,
 			},
 			Label:   plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name()),
 			Privacy: parser.ToPtr("PRIVACY.md"),
@@ -396,6 +396,13 @@ func (m model) createPlugin() {
 		return
 	}
 
+	manifestWithExtra := &ManifestWithExtra{
+		PluginDeclaration: *manifest,
+	}
+
+	// set custom setup enabled
+	manifestWithExtra.customSetupEnabled = m.subMenus[SUB_MENU_KEY_PERMISSION].(permission).custom_setup_enabled
+
 	success := false
 
 	clear := func() {
@@ -427,7 +434,7 @@ func (m model) createPlugin() {
 	}
 
 	// create README.md
-	readme, err := renderTemplate(README, manifest, []string{})
+	readme, err := renderTemplate(README, manifestWithExtra, []string{})
 	if err != nil {
 		log.Error("failed to render README template: %s", err)
 		return
@@ -457,7 +464,7 @@ func (m model) createPlugin() {
 	err = createPythonEnvironment(
 		pluginDir,
 		manifest.Meta.Runner.Entrypoint,
-		manifest,
+		manifestWithExtra,
 		m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category(),
 	)
 	if err != nil {

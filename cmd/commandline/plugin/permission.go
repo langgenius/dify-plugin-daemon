@@ -27,12 +27,14 @@ var permissionKeySeq = []string{
 	"storage.enabled",
 	"storage.size",
 	"endpoint.enabled",
+	"endpoint.setup_enabled",
 }
 
 type permission struct {
 	cursor string
 
-	permission plugin_entities.PluginPermissionRequirement
+	permission           plugin_entities.PluginPermissionRequirement
+	custom_setup_enabled bool
 
 	storageSizeEditor ti.Model
 }
@@ -47,6 +49,10 @@ func newPermission(defaultPermission plugin_entities.PluginPermissionRequirement
 
 func (p permission) Permission() plugin_entities.PluginPermissionRequirement {
 	return p.permission
+}
+
+func (p permission) CustomSetupEnabled() bool {
+	return p.custom_setup_enabled
 }
 
 func (p permission) View() string {
@@ -89,7 +95,12 @@ func (p permission) View() string {
 	}
 
 	s += "Endpoints:\n"
-	s += fmt.Sprintf("  %sEnabled: %v %s Ability to register endpoints %s\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegisterEndpoint()), YELLOW, RESET)
+	if p.permission.AllowRegisterEndpoint() {
+		s += fmt.Sprintf("  %sEnabled: %v %s Ability to register endpoints %s\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegisterEndpoint()), YELLOW, RESET)
+		s += fmt.Sprintf("  %sSetup Enabled: %v %s Whether to use custom setup process %s\n", cursor("endpoint.setup_enabled"), checked(p.custom_setup_enabled), YELLOW, RESET)
+	} else {
+		s += fmt.Sprintf("  %sEnabled: %v %s Ability to register endpoints %s\n", cursor("endpoint.enabled"), checked(p.permission.AllowRegisterEndpoint()), YELLOW, RESET)
+	}
 	return s
 }
 
@@ -194,6 +205,14 @@ func (p *permission) edit() {
 			p.permission.Endpoint = &plugin_entities.PluginPermissionEndpointRequirement{
 				Enabled: true,
 			}
+		}
+	}
+
+	if p.cursor == "endpoint.setup_enabled" {
+		if p.custom_setup_enabled {
+			p.custom_setup_enabled = false
+		} else {
+			p.custom_setup_enabled = true
 		}
 	}
 }

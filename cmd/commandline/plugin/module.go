@@ -255,13 +255,21 @@ func ModuleAppendTools(pluginPath string) {
 
 	manifest.Plugins.Tools = append(manifest.Plugins.Tools, fmt.Sprintf("provider/%s.yaml", manifest.Name))
 
+	manifestWithExtra := ManifestWithExtra{
+		PluginDeclaration: manifest,
+	}
+
+	if manifestWithExtra.Endpoint != nil {
+		manifestWithExtra.customSetupEnabled = manifestWithExtra.Endpoint.CustomInitialize
+	}
+
 	if manifest.Meta.Runner.Language == constants.Python {
-		if err := createPythonTool(pluginPath, &manifest); err != nil {
+		if err := createPythonTool(pluginPath, &manifestWithExtra); err != nil {
 			log.Error("failed to create python tool: %s", err)
 			return
 		}
 
-		if err := createPythonToolProvider(pluginPath, &manifest); err != nil {
+		if err := createPythonToolProvider(pluginPath, &manifestWithExtra); err != nil {
 			log.Error("failed to create python tool provider: %s", err)
 			return
 		}
@@ -308,13 +316,17 @@ func ModuleAppendEndpoints(pluginPath string) {
 
 	manifest.Plugins.Endpoints = append(manifest.Plugins.Endpoints, fmt.Sprintf("group/%s.yaml", manifest.Name))
 
+	manifestWithExtra := ManifestWithExtra{
+		PluginDeclaration: manifest,
+	}
+
 	if manifest.Meta.Runner.Language == constants.Python {
-		if err := createPythonEndpoint(pluginPath, &manifest); err != nil {
+		if err := createPythonEndpoint(pluginPath, &manifestWithExtra); err != nil {
 			log.Error("failed to create python endpoint: %s", err)
 			return
 		}
 
-		if err := createPythonEndpointGroup(pluginPath, &manifest); err != nil {
+		if err := createPythonEndpointGroup(pluginPath, &manifestWithExtra); err != nil {
 			log.Error("failed to create python group: %s", err)
 			return
 		}

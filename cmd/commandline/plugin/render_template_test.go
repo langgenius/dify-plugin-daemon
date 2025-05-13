@@ -8,12 +8,14 @@ import (
 )
 
 func TestRenderPythonToolTemplate(t *testing.T) {
-	manifest := &plugin_entities.PluginDeclaration{
-		PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
-			Name:   "test",
-			Author: "test",
-			Description: plugin_entities.I18nObject{
-				EnUS: "test",
+	manifest := &ManifestWithExtra{
+		PluginDeclaration: plugin_entities.PluginDeclaration{
+			PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+				Name:   "test",
+				Author: "test",
+				Description: plugin_entities.I18nObject{
+					EnUS: "test",
+				},
 			},
 		},
 	}
