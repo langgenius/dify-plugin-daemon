@@ -199,7 +199,7 @@ func runOnce(
 var openaiPluginZip []byte
 
 func BenchmarkLocalOpenAILLMInvocation(b *testing.B) {
-	log.SetShowLog(false)
+	log.SetLogVisibility(false)
 
 	routine.InitPool(10000)
 

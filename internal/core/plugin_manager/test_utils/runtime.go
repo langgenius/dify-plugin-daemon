@@ -29,11 +29,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
-const (
-	_testingPath = "./integration_test_cwd"
-)
-
-func GetRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
+// GetRuntime returns a runtime for a plugin
+// Please ensure cwd is a valid directory without any file in it
+func GetRuntime(pluginZip []byte, cwd string) (*local_runtime.LocalPluginRuntime, error) {
 	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
@@ -54,7 +52,7 @@ func GetRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	}
 
 	// check if the working directory exists, if not, create it, otherwise, launch it directly
-	pluginWorkingPath := path.Join(_testingPath, fmt.Sprintf("%s@%s", identity, checksum))
+	pluginWorkingPath := path.Join(cwd, fmt.Sprintf("%s@%s", identity, checksum))
 	if _, err := os.Stat(pluginWorkingPath); err != nil {
 		if err := decoder.ExtractTo(pluginWorkingPath); err != nil {
 			return nil, errors.Join(err, fmt.Errorf("extract plugin to working directory error"))
@@ -128,8 +126,8 @@ func GetRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	return localPluginRuntime, nil
 }
 
-func ClearTestingPath() {
-	os.RemoveAll(_testingPath)
+func ClearTestingPath(cwd string) {
+	os.RemoveAll(cwd)
 }
 
 type RunOnceRequest interface {

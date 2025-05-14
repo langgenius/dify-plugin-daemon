@@ -42,7 +42,7 @@ func writeLog(level string, format string, stdout bool, v ...interface{}) {
 	}
 }
 
-func SetShowLog(show bool) {
+func SetLogVisibility(show bool) {
 	show_log = show
 }
 

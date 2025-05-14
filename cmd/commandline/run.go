@@ -2,7 +2,10 @@
 
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/run"
+	"github.com/spf13/cobra"
+)
 
 /*
  Test is a very important component of Dify plugins, to ensure every plugin is working as expected
@@ -16,17 +19,26 @@ import "github.com/spf13/cobra"
 */
 
 var (
+	runPluginPayload run.RunPluginPayload
+)
+
+var (
 	runPluginCommand = &cobra.Command{
-		Use:   "run",
+		Use:   "run [plugin_package_path]",
 		Short: "run",
-		Long:  "Launch a plugin locally and communicate through stdin/stdout",
+		Long:  "Launch a plugin locally and communicate through stdin/stdout or TCP",
 		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
+			runPluginPayload.PluginPath = args[0]
 			// launch plugin
+			run.RunPlugin(runPluginPayload)
 		},
 	}
 )
 
 func init() {
 	rootCommand.AddCommand(runPluginCommand)
+
+	runPluginCommand.Flags().StringVarP(&runPluginPayload.RunMode, "mode", "m", "stdio", "run mode, stdio or tcp")
+	runPluginCommand.Flags().BoolVarP(&runPluginPayload.EnableLogs, "enable-logs", "l", false, "enable logs")
 }
