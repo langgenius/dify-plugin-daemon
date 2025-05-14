@@ -42,17 +42,17 @@ func RunPlugin(payload RunPluginPayload) error {
 	}
 	defer test_utils.ClearTestingPath(dir)
 
-	// try decode the plugin
+	// try decode the plugin zip file
 	pluginFile, err := os.ReadFile(payload.PluginPath)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("read plugin file error"))
 	}
-
 	_, err = decoder.NewZipPluginDecoder(pluginFile)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("decode plugin file error"))
 	}
 
+	// launch the plugin locally and returns a local runtime
 	runtime, err := test_utils.GetRuntime(pluginFile, dir)
 	if err != nil {
 		return err
@@ -60,8 +60,12 @@ func RunPlugin(payload RunPluginPayload) error {
 
 	var stream *stream.Stream[client]
 	if payload.RunMode == RUN_MODE_STDIO {
+		// create a stream of clients that are connected to the plugin through stdin and stdout
+		// NOTE: for stdio, there will only be one client and the stream will never close
 		stream = createStdioServer(payload)
 	} else if payload.RunMode == RUN_MODE_TCP {
+		// create a stream of clients that are connected to the plugin through a TCP connection
+		// NOTE: for tcp, there will be multiple clients and the stream will close when the client is closed
 		stream, err = createTcpServer(payload)
 		if err != nil {
 			return err
