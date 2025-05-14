@@ -24,7 +24,6 @@ func GenericInvokePlugin[Req any, Rsp any](
 	}
 
 	response := stream.NewStream[Rsp](response_buffer_size)
-
 	listener := runtime.Listen(session.ID)
 	listener.Listen(func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {

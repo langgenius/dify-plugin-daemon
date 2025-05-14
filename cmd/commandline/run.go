@@ -37,7 +37,7 @@ var (
 )
 
 func init() {
-	rootCommand.AddCommand(runPluginCommand)
+	pluginCommand.AddCommand(runPluginCommand)
 
 	runPluginCommand.Flags().StringVarP(&runPluginPayload.RunMode, "mode", "m", "stdio", "run mode, stdio or tcp")
 	runPluginCommand.Flags().BoolVarP(&runPluginPayload.EnableLogs, "enable-logs", "l", false, "enable logs")

@@ -8,9 +8,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 )
 
-// createTcpServer creates a stream of clients that are connected to the plugin through a TCP connection
+// createTCPServer creates a stream of clients that are connected to the plugin through a TCP connection
 // It continuously accepts new connections and sends them to the stream
-func createTcpServer(payload RunPluginPayload) (*stream.Stream[client], error) {
+func createTCPServer(payload RunPluginPayload) (*stream.Stream[client], error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", payload.TcpServerHost, payload.TcpServerPort))
 	if err != nil {
 		return nil, err

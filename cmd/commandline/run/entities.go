@@ -3,6 +3,8 @@ package run
 import (
 	"context"
 	"io"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 )
 
 type RunMode = string
@@ -34,5 +36,23 @@ func (c *client) OnClose(fn func()) {
 	c.onClose = fn
 }
 
-type protocol struct {
+type InvokePluginPayload struct {
+	Type   access_types.PluginAccessType   `json:"type"`
+	Action access_types.PluginAccessAction `json:"action"`
+
+	Request map[string]any `json:"request"`
+}
+
+type GenericResponseType = string
+
+const (
+	GENERIC_RESPONSE_TYPE_INFO            GenericResponseType = "info"
+	GENERIC_RESPONSE_TYPE_ERROR           GenericResponseType = "error"
+	GENERIC_RESPONSE_TYPE_PLUGIN_RESPONSE GenericResponseType = "plugin_response"
+)
+
+type GenericResponse struct {
+	Type GenericResponseType `json:"type"`
+
+	Response map[string]any `json:"response"`
 }

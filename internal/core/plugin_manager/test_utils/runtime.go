@@ -12,16 +12,13 @@ import (
 	_ "embed"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/lifecycle"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -135,9 +132,27 @@ type RunOnceRequest interface {
 		requests.RequestInvokeTTS | requests.RequestInvokeSpeech2Text | requests.RequestInvokeModeration |
 		requests.RequestValidateProviderCredentials | requests.RequestValidateModelCredentials |
 		requests.RequestGetTTSModelVoices | requests.RequestGetTextEmbeddingNumTokens |
-		requests.RequestGetLLMNumTokens | requests.RequestGetAIModelSchema | requests.RequestInvokeAgentStrategy
+		requests.RequestGetLLMNumTokens | requests.RequestGetAIModelSchema | requests.RequestInvokeAgentStrategy |
+		requests.RequestOAuthGetAuthorizationURL | requests.RequestOAuthGetCredentials |
+		requests.RequestInvokeEndpoint |
+		map[string]any
 }
 
+// RunOnceWithSession sends a request to plugin and returns a stream of responses
+// It requires a session to be provided
+func RunOnceWithSession[T RunOnceRequest, R any](
+	runtime *local_runtime.LocalPluginRuntime,
+	session *session_manager.Session,
+	request T,
+) (*stream.Stream[R], error) {
+	// bind the runtime to the session, plugin_daemon.GenericInvokePlugin uses it
+	session.BindRuntime(runtime)
+
+	return plugin_daemon.GenericInvokePlugin[T, R](session, &request, 1024)
+}
+
+// RunOnce sends a request to plugin and returns a stream of responses
+// It automatically generates a session for the request
 func RunOnce[T RunOnceRequest, R any](
 	runtime *local_runtime.LocalPluginRuntime,
 	accessType access_types.PluginAccessType,
@@ -157,71 +172,6 @@ func RunOnce[T RunOnceRequest, R any](
 			IgnoreCache:            true,
 		},
 	)
-	session.BindRuntime(runtime)
 
-	response := stream.NewStream[R](1024)
-
-	listener := runtime.Listen(session.ID)
-	listener.Listen(func(chunk plugin_entities.SessionMessage) {
-		switch chunk.Type {
-		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
-			chunk, err := parser.UnmarshalJsonBytes[R](chunk.Data)
-			if err != nil {
-				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "unmarshal_error1",
-					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
-				})))
-				response.Close()
-				return
-			} else {
-				response.Write(chunk)
-			}
-		case plugin_entities.SESSION_MESSAGE_TYPE_END:
-			response.Close()
-		case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
-			e, err := parser.UnmarshalJsonBytes[plugin_entities.ErrorResponse](chunk.Data)
-			if err != nil {
-				break
-			}
-			response.WriteError(errors.New(e.Error()))
-			response.Close()
-		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
-			if err := backwards_invocation.InvokeDify(
-				runtime.Configuration(),
-				session.InvokeFrom,
-				session,
-				transaction.NewFullDuplexEventWriter(session),
-				chunk.Data,
-			); err != nil {
-				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "invoke_dify_error",
-					"message":    fmt.Sprintf("invoke dify failed: %s", err.Error()),
-				})))
-				response.Close()
-				return
-			}
-		default:
-			response.WriteError(errors.New(parser.MarshalJson(map[string]string{
-				"error_type": "unknown_stream_message_type",
-				"message":    "unknown stream message type: " + string(chunk.Type),
-			})))
-			response.Close()
-		}
-	})
-
-	// close the listener if stream outside is closed due to close of connection
-	response.OnClose(func() {
-		listener.Close()
-	})
-
-	session.Write(
-		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
-		session.Action,
-		generic_invoke.GetInvokePluginMap(
-			session,
-			request,
-		),
-	)
-
-	return response, nil
+	return RunOnceWithSession[T, R](runtime, session, request)
 }
