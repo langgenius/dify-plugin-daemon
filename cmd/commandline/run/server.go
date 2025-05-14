@@ -10,11 +10,15 @@ import (
 
 // createTCPServer creates a stream of clients that are connected to the plugin through a TCP connection
 // It continuously accepts new connections and sends them to the stream
-func createTCPServer(payload RunPluginPayload) (*stream.Stream[client], error) {
+func createTCPServer(payload *RunPluginPayload) (*stream.Stream[client], error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", payload.TcpServerHost, payload.TcpServerPort))
 	if err != nil {
 		return nil, err
 	}
+
+	addr := listener.Addr().(*net.TCPAddr)
+	payload.TcpServerHost = addr.IP.String()
+	payload.TcpServerPort = addr.Port
 
 	stream := stream.NewStream[client](30)
 
@@ -35,7 +39,7 @@ func createTCPServer(payload RunPluginPayload) (*stream.Stream[client], error) {
 }
 
 // createStdioServer creates a stream of clients that are connected to the plugin through stdin and stdout
-func createStdioServer(payload RunPluginPayload) *stream.Stream[client] {
+func createStdioServer() *stream.Stream[client] {
 	reader, writer := os.Stdin, os.Stdout
 	stream := stream.NewStream[client](1)
 	stream.Write(client{reader: reader, writer: writer, cancel: func() {}})

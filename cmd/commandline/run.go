@@ -41,4 +41,5 @@ func init() {
 
 	runPluginCommand.Flags().StringVarP(&runPluginPayload.RunMode, "mode", "m", "stdio", "run mode, stdio or tcp")
 	runPluginCommand.Flags().BoolVarP(&runPluginPayload.EnableLogs, "enable-logs", "l", false, "enable logs")
+	runPluginCommand.Flags().StringVarP(&runPluginPayload.ResponseFormat, "response-format", "r", "text", "response format, text or json")
 }

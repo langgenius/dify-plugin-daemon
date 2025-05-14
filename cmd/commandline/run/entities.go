@@ -21,10 +21,11 @@ type RunPluginPayload struct {
 
 	TcpServerPort int
 	TcpServerHost string
+
+	ResponseFormat string
 }
 
 type client struct {
-	id     string
 	reader io.ReadCloser
 	writer io.WriteCloser
 	cancel context.CancelFunc
