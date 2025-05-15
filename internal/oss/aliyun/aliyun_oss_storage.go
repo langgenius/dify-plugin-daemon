@@ -81,56 +81,57 @@ func (s *AliyunOSSStorage) fullPath(key string) string {
 
 func (s *AliyunOSSStorage) Save(key string, data []byte) error {
 	fullPath := s.fullPath(key)
-	err := s.bucket.PutObject(fullPath, bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("failed to put object to Aliyun OSS: %w", err)
-	}
-	return nil
+	return s.bucket.PutObject(fullPath, bytes.NewReader(data))
 }
 
 func (s *AliyunOSSStorage) Load(key string) ([]byte, error) {
 	fullPath := s.fullPath(key)
 	object, err := s.bucket.GetObject(fullPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get object from Aliyun OSS: %w", err)
+		return nil, err
 	}
+	// Ensure object is closed after reading
 	defer object.Close()
 
 	data, err := io.ReadAll(object)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read object data from Aliyun OSS: %w", err)
+		return nil, err
 	}
 	return data, nil
 }
 
 func (s *AliyunOSSStorage) Exists(key string) (bool, error) {
 	fullPath := s.fullPath(key)
-	exist, err := s.bucket.IsObjectExist(fullPath)
-	if err != nil {
-		return false, fmt.Errorf("failed to check if object exists in Aliyun OSS: %w", err)
-	}
-	return exist, nil
+	return s.bucket.IsObjectExist(fullPath)
 }
 
 func (s *AliyunOSSStorage) State(key string) (dify_oss.OSSState, error) {
 	fullPath := s.fullPath(key)
 	meta, err := s.bucket.GetObjectMeta(fullPath)
 	if err != nil {
-		return dify_oss.OSSState{}, fmt.Errorf("failed to get object meta from Aliyun OSS: %w", err)
+		return dify_oss.OSSState{}, err
 	}
 
 	// Get content length
 	size := int64(0)
 	contentLength := meta.Get("Content-Length")
 	if contentLength != "" {
-		fmt.Sscanf(contentLength, "%d", &size)
+		_, err := fmt.Sscanf(contentLength, "%d", &size)
+		if err != nil {
+			// Return zero size if parsing fails
+			size = 0
+		}
 	}
 
 	// Get last modified time
 	lastModified := time.Time{}
 	lastModifiedStr := meta.Get("Last-Modified")
 	if lastModifiedStr != "" {
-		lastModified, _ = time.Parse(time.RFC1123, lastModifiedStr)
+		lastModified, err = time.Parse(time.RFC1123, lastModifiedStr)
+		if err != nil {
+			// Return zero time if parsing fails
+			lastModified = time.Time{}
+		}
 	}
 
 	return dify_oss.OSSState{
@@ -141,52 +142,34 @@ func (s *AliyunOSSStorage) State(key string) (dify_oss.OSSState, error) {
 
 func (s *AliyunOSSStorage) List(prefix string) ([]dify_oss.OSSPath, error) {
 	// combine given prefix with path
-	fullPrefix := path.Join(s.path, prefix)
+	fullPrefix := s.fullPath(prefix)
 
 	// Ensure the prefix ends with a slash for directories
 	if !strings.HasSuffix(fullPrefix, "/") {
 		fullPrefix = fullPrefix + "/"
 	}
 
-	var paths []dify_oss.OSSPath
+	var keys []dify_oss.OSSPath
 	marker := ""
 	for {
-		lsRes, err := s.bucket.ListObjects(oss.Marker(marker), oss.Prefix(fullPrefix), oss.Delimiter("/"))
+		lsRes, err := s.bucket.ListObjects(oss.Marker(marker), oss.Prefix(fullPrefix))
 		if err != nil {
 			return nil, fmt.Errorf("failed to list objects in Aliyun OSS: %w", err)
 		}
 
-		// Add files
 		for _, object := range lsRes.Objects {
 			if object.Key == fullPrefix {
 				continue
 			}
 			// remove path and prefix from full path, only keep relative path
 			key := strings.TrimPrefix(object.Key, fullPrefix)
-			// Skip empty keys
-			if key == "" {
+			// Skip empty keys and directories (keys ending with /)
+			if key == "" || strings.HasSuffix(key, "/") {
 				continue
 			}
-			paths = append(paths, dify_oss.OSSPath{
+			keys = append(keys, dify_oss.OSSPath{
 				Path:  key,
 				IsDir: false,
-			})
-		}
-
-		// Add directories
-		for _, commonPrefix := range lsRes.CommonPrefixes {
-			if commonPrefix == fullPrefix {
-				continue
-			}
-			// remove path and prefix from full path, only keep relative path
-			dirPath := strings.TrimPrefix(commonPrefix, fullPrefix)
-			dirPath = strings.TrimSuffix(dirPath, "/")
-			if dirPath == "" {
-				continue
-			}
-			paths = append(paths, dify_oss.OSSPath{
-				Path:  dirPath,
-				IsDir: true,
 			})
 		}
 
@@ -198,16 +181,12 @@ func (s *AliyunOSSStorage) List(prefix string) ([]dify_oss.OSSPath, error) {
 		}
 	}
 
-	return paths, nil
+	return keys, nil
 }
 
 func (s *AliyunOSSStorage) Delete(key string) error {
 	fullPath := s.fullPath(key)
-	err := s.bucket.DeleteObject(fullPath)
-	if err != nil {
-		return fmt.Errorf("failed to delete object from Aliyun OSS: %w", err)
-	}
-	return nil
+	return s.bucket.DeleteObject(fullPath)
 }
 
 func (s *AliyunOSSStorage) Type() string {
