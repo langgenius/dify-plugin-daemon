@@ -1,4 +1,4 @@
-package plugin_manager
+package plugin_manager_test
 
 import (
 	"errors"
@@ -12,17 +12,13 @@ import (
 
 	_ "embed"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/lifecycle"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/test_utils"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -121,80 +117,6 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	return localPluginRuntime, nil
 }
 
-func runOnce(
-	b *testing.B,
-	runtime *local_runtime.LocalPluginRuntime,
-	request requests.RequestInvokeLLM,
-) {
-	session := session_manager.NewSession(
-		session_manager.NewSessionPayload{
-			UserID:                 "test",
-			TenantID:               "test",
-			PluginUniqueIdentifier: plugin_entities.PluginUniqueIdentifier(""),
-			ClusterID:              "test",
-			InvokeFrom:             access_types.PLUGIN_ACCESS_TYPE_MODEL,
-			Action:                 access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
-			Declaration:            nil,
-			BackwardsInvocation:    tester.NewMockedDifyInvocation(),
-			IgnoreCache:            true,
-		},
-	)
-	session.BindRuntime(runtime)
-
-	response := stream.NewStream[model_entities.LLMResultChunk](1024)
-
-	listener := runtime.Listen(session.ID)
-	listener.Listen(func(chunk plugin_entities.SessionMessage) {
-		switch chunk.Type {
-		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
-			chunk, err := parser.UnmarshalJsonBytes[model_entities.LLMResultChunk](chunk.Data)
-			if err != nil {
-				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "unmarshal_error",
-					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
-				})))
-				response.Close()
-				return
-			} else {
-				response.Write(chunk)
-			}
-		case plugin_entities.SESSION_MESSAGE_TYPE_END:
-			response.Close()
-		case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
-			e, err := parser.UnmarshalJsonBytes[plugin_entities.ErrorResponse](chunk.Data)
-			if err != nil {
-				break
-			}
-			response.WriteError(errors.New(e.Error()))
-			response.Close()
-		default:
-			response.WriteError(errors.New(parser.MarshalJson(map[string]string{
-				"error_type": "unknown_stream_message_type",
-				"message":    "unknown stream message type: " + string(chunk.Type),
-			})))
-			response.Close()
-		}
-	})
-
-	// close the listener if stream outside is closed due to close of connection
-	response.OnClose(func() {
-		listener.Close()
-	})
-
-	session.Write(
-		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
-		session.Action,
-		generic_invoke.GetInvokePluginMap(
-			session,
-			request,
-		),
-	)
-
-	for response.Next() {
-		response.Read()
-	}
-}
-
 //go:embed testdata/openai.difypkg
 var openaiPluginZip []byte
 
@@ -232,33 +154,46 @@ func BenchmarkLocalOpenAILLMInvocation(b *testing.B) {
 				<-sem
 				wg.Done()
 			}()
-			runOnce(b, runtime, requests.RequestInvokeLLM{
-				BaseRequestInvokeModel: requests.BaseRequestInvokeModel{
-					Provider: "openai",
-					Model:    "gpt-3.5-turbo",
-				},
-				Credentials: requests.Credentials{
-					Credentials: map[string]any{
-						"openai_api_key":  "test",
-						"openai_api_base": fmt.Sprintf("http://localhost:%d", port),
+			response, err := test_utils.RunOnce[requests.RequestInvokeLLM, model_entities.LLMResultChunk](
+				runtime,
+				access_types.PLUGIN_ACCESS_TYPE_MODEL,
+				access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
+				requests.RequestInvokeLLM{
+					BaseRequestInvokeModel: requests.BaseRequestInvokeModel{
+						Provider: "openai",
+						Model:    "gpt-3.5-turbo",
 					},
-				},
-				InvokeLLMSchema: requests.InvokeLLMSchema{
-					ModelParameters: map[string]any{
-						"temperature": 0.5,
-					},
-					PromptMessages: []model_entities.PromptMessage{
-						{
-							Role:    "user",
-							Content: "Hello, world!",
+					Credentials: requests.Credentials{
+						Credentials: map[string]any{
+							"openai_api_key":  "test",
+							"openai_api_base": fmt.Sprintf("http://localhost:%d", port),
 						},
 					},
-					Tools:  []model_entities.PromptMessageTool{},
-					Stop:   []string{},
-					Stream: true,
+					InvokeLLMSchema: requests.InvokeLLMSchema{
+						ModelParameters: map[string]any{
+							"temperature": 0.5,
+						},
+						PromptMessages: []model_entities.PromptMessage{
+							{
+								Role:    "user",
+								Content: "Hello, world!",
+							},
+						},
+						Tools:  []model_entities.PromptMessageTool{},
+						Stop:   []string{},
+						Stream: true,
+					},
+					ModelType: model_entities.MODEL_TYPE_LLM,
 				},
-				ModelType: model_entities.MODEL_TYPE_LLM,
-			})
+			)
+
+			if err != nil {
+				log.Error("run once error: %v", err)
+			}
+
+			for response.Next() {
+				response.Read()
+			}
 		}()
 	}
 

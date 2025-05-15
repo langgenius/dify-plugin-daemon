@@ -1,4 +1,4 @@
-package plugin_manager
+package plugin_manager_test
 
 import (
 	"context"
