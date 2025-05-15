@@ -19,6 +19,7 @@ func LaunchPlugin(
 	originPackage []byte,
 	decoder decoder.PluginDecoder,
 	timeout int, // in seconds
+	ignoreIdempotent bool, // if true, never check if the plugin has launched
 ) (*stream.Stream[LaunchFunctionResponse], error) {
 	checksum, err := decoder.Checksum()
 	if err != nil {
@@ -36,28 +37,30 @@ func LaunchPlugin(
 		return nil, err
 	}
 
-	function, err := FetchFunction(manifest, checksum)
-	if err != nil {
-		if err != ErrFunctionNotFound {
-			return nil, err
+	if !ignoreIdempotent {
+		function, err := FetchFunction(manifest, checksum)
+		if err != nil {
+			if err != ErrFunctionNotFound {
+				return nil, err
+			}
+		} else {
+			// found, return directly
+			response := stream.NewStream[LaunchFunctionResponse](3)
+			response.Write(LaunchFunctionResponse{
+				Event:   FunctionUrl,
+				Message: function.FunctionURL,
+			})
+			response.Write(LaunchFunctionResponse{
+				Event:   Function,
+				Message: function.FunctionName,
+			})
+			response.Write(LaunchFunctionResponse{
+				Event:   Done,
+				Message: "",
+			})
+			response.Close()
+			return response, nil
 		}
-	} else {
-		// found, return directly
-		response := stream.NewStream[LaunchFunctionResponse](3)
-		response.Write(LaunchFunctionResponse{
-			Event:   FunctionUrl,
-			Message: function.FunctionURL,
-		})
-		response.Write(LaunchFunctionResponse{
-			Event:   Function,
-			Message: function.FunctionName,
-		})
-		response.Write(LaunchFunctionResponse{
-			Event:   Done,
-			Message: "",
-		})
-		response.Close()
-		return response, nil
 	}
 
 	response, err := SetupFunction(manifest, checksum, bytes.NewReader(originPackage), timeout)

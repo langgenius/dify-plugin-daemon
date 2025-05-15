@@ -34,7 +34,8 @@ func (p *PluginManager) InstallToAWSFromPkg(
 		return nil, err
 	}
 
-	response, err := serverless.LaunchPlugin(originalPackager, decoder, p.serverlessConnectorLaunchTimeout)
+	// serverless.LaunchPlugin will check if the plugin has already been launched, if so, it returns directly
+	response, err := serverless.LaunchPlugin(originalPackager, decoder, p.serverlessConnectorLaunchTimeout, false)
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +95,123 @@ func (p *PluginManager) InstallToAWSFromPkg(
 					newResponse.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  "Failed to check if the plugin is already installed",
+					})
+					return
+				}
+
+				newResponse.Write(PluginInstallResponse{
+					Event: PluginInstallEventDone,
+					Data:  "Installed",
+				})
+			} else if r.Event == serverless.Error {
+				newResponse.Write(PluginInstallResponse{
+					Event: PluginInstallEventError,
+					Data:  "Internal server error",
+				})
+			} else if r.Event == serverless.FunctionUrl {
+				functionUrl = r.Message
+			} else if r.Event == serverless.Function {
+				functionName = r.Message
+			} else {
+				newResponse.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
+			}
+		})
+	})
+
+	return newResponse, nil
+}
+
+/*
+ * Reinstall a plugin to AWS Lambda, update function url and name
+ */
+func (p *PluginManager) ReinstallToAWSFromPkg(
+	originalPackager []byte,
+	decoder decoder.PluginDecoder,
+) (
+	*stream.Stream[PluginInstallResponse], error,
+) {
+	checksum, err := decoder.Checksum()
+	if err != nil {
+		return nil, err
+	}
+	// check valid manifest
+	_, err = decoder.Manifest()
+	if err != nil {
+		return nil, err
+	}
+	uniqueIdentity, err := decoder.UniqueIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	// check if serverless runtime exists
+	serverlessRuntime, err := db.GetOne[models.ServerlessRuntime](
+		db.Equal("plugin_unique_identifier", uniqueIdentity.String()),
+	)
+	if err == db.ErrDatabaseNotFound {
+		return nil, fmt.Errorf("plugin not exists")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := serverless.LaunchPlugin(
+		originalPackager,
+		decoder,
+		p.serverlessConnectorLaunchTimeout,
+		true, // ignoreIdempotent, true means always reinstall
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	newResponse := stream.NewStream[PluginInstallResponse](128)
+	routine.Submit(map[string]string{
+		"module":          "plugin_manager",
+		"function":        "ReinstallToAWSFromPkg",
+		"checksum":        checksum,
+		"unique_identity": uniqueIdentity.String(),
+	}, func() {
+		defer func() {
+			newResponse.Close()
+		}()
+
+		functionUrl := ""
+		functionName := ""
+
+		response.Async(func(r serverless.LaunchFunctionResponse) {
+			if r.Event == serverless.Info {
+				newResponse.Write(PluginInstallResponse{
+					Event: PluginInstallEventInfo,
+					Data:  "Installing...",
+				})
+			} else if r.Event == serverless.Done {
+				if functionUrl == "" || functionName == "" {
+					newResponse.Write(PluginInstallResponse{
+						Event: PluginInstallEventError,
+						Data:  "Internal server error, failed to get lambda url or function name",
+					})
+					return
+				}
+
+				// update serverless runtime
+				serverlessRuntime.FunctionURL = functionUrl
+				serverlessRuntime.FunctionName = functionName
+				err = db.Update(&serverlessRuntime)
+				if err != nil {
+					newResponse.Write(PluginInstallResponse{
+						Event: PluginInstallEventError,
+						Data:  "Failed to update serverless runtime",
+					})
+					return
+				}
+
+				// clear cache
+				err = p.clearServerlessRuntimeCache(uniqueIdentity)
+				if err != nil {
+					newResponse.Write(PluginInstallResponse{
+						Event: PluginInstallEventError,
+						Data:  "Failed to clear serverless runtime cache",
 					})
 					return
 				}

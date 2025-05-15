@@ -170,3 +170,14 @@ func (app *App) InitClusterID() gin.HandlerFunc {
 		ctx.Next()
 	}
 }
+
+func (app *App) AdminAPIKey(key string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if ctx.GetHeader(constants.X_ADMIN_API_KEY) != key {
+			ctx.AbortWithStatusJSON(401, exception.UnauthorizedError().ToResponse())
+			return
+		}
+
+		ctx.Next()
+	}
+}
