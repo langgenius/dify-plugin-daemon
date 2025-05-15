@@ -181,7 +181,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 }
 
 func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
-	group.POST("/plugins/reinstall", controllers.ReinstallPluginFromIdentifier(config))
+	group.POST("/plugin/serverless/reinstall", controllers.ReinstallPluginFromIdentifier(config))
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
