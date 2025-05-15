@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 
 	"github.com/go-playground/validator/v10"
@@ -11,6 +12,10 @@ type Config struct {
 	// server
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
+
+	// admin api enable
+	AdminApiEnabled bool   `envconfig:"ADMIN_API_ENABLED" default:"false"`
+	AdminApiKey     string `envconfig:"ADMIN_API_KEY"`
 
 	// dify inner api
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`

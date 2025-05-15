@@ -35,12 +35,12 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 
 		tenantId := c.Param("tenant_id")
 		if tenantId == "" {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("Tenant ID is required")).ToResponse())
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("tenant ID is required")).ToResponse())
 			return
 		}
 
 		if difyPkgFileHeader.Size > app.MaxPluginPackageSize {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("File size exceeds the maximum limit")).ToResponse())
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("file size exceeds the maximum limit")).ToResponse())
 			return
 		}
 
@@ -67,12 +67,12 @@ func UploadBundle(app *app.Config) gin.HandlerFunc {
 
 		tenantId := c.Param("tenant_id")
 		if tenantId == "" {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("Tenant ID is required")).ToResponse())
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("tenant ID is required")).ToResponse())
 			return
 		}
 
 		if difyBundleFileHeader.Size > app.MaxBundlePackageSize {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("File size exceeds the maximum limit")).ToResponse())
+			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("file size exceeds the maximum limit")).ToResponse())
 			return
 		}
 
@@ -136,6 +136,16 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
 				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
+		})
+	}
+}
+
+func ReinstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		BindRequest(c, func(request struct {
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		}) {
+			service.ReinstallPluginFromIdentifier(c, app, request.PluginUniqueIdentifier)
 		})
 	}
 }

@@ -34,6 +34,17 @@ func (app *App) server(config *app.Config) func() {
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
 
+	if config.AdminApiEnabled {
+		if len(config.AdminApiKey) < 10 {
+			log.Panic("length of admin api key must be greater than 10")
+		}
+
+		adminGroup := engine.Group("/admin")
+		adminGroup.Use(app.AdminAPIKey(config.AdminApiKey))
+
+		app.adminGroup(adminGroup, config)
+	}
+
 	if config.SentryEnabled {
 		// setup sentry for all groups
 		sentryGroup := []*gin.RouterGroup{
@@ -167,6 +178,10 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
+}
+
+func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
+	group.POST("/plugin/serverless/reinstall", controllers.ReinstallPluginFromIdentifier(config))
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {

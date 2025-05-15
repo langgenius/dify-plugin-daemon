@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -333,6 +334,38 @@ func InstallPluginFromIdentifiers(
 	}
 
 	return entities.NewSuccessResponse(response)
+}
+
+/*
+ * Reinstall a plugin from a given identifier, no tenant_id is needed
+ */
+func ReinstallPluginFromIdentifier(
+	ctx *gin.Context,
+	config *app.Config,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) {
+	baseSSEService(func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
+		if config.Platform != app.PLATFORM_SERVERLESS {
+			return nil, fmt.Errorf("reinstall is only supported on serverless platform")
+		}
+
+		manager := plugin_manager.Manager()
+		pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to get package"))
+		}
+
+		zipDecoder, err := decoder.NewZipPluginDecoder(pkgFile)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to create zip decoder"))
+		}
+		stream, err := manager.ReinstallToAWSFromPkg(pkgFile, zipDecoder)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to reinstall plugin"))
+		}
+
+		return stream, nil
+	}, ctx, 1800)
 }
 
 func UpgradePlugin(
