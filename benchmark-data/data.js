@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747293983804,
+  "lastUpdate": 1747295197351,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -2952,6 +2952,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "978430635 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a22b9c17f004e0fb044242a2bc7df67f8ff3f169",
+          "message": "feat: add fake OpenAI server for local runtime benchmarking (#286)\n\n- Introduced a new test file to implement a fake OpenAI server that streams responses for benchmarking purposes.\n- Updated the existing benchmark test to utilize the new fake server, enhancing the testing environment for local plugin runtime invocations.\n- Refactored the package name in the benchmark test file for clarity and consistency.",
+          "timestamp": "2025-05-15T15:42:43+08:00",
+          "tree_id": "67880350c0534a9bce91fb14245a402afcc46a7c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a22b9c17f004e0fb044242a2bc7df67f8ff3f169"
+        },
+        "date": 1747295196431,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138286130,
+            "unit": "ns/op\t 1593643 B/op\t   28316 allocs/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138286130,
+            "unit": "ns/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593643,
+            "unit": "B/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "255 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.25,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "993018589 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.25,
+            "unit": "ns/op",
+            "extra": "993018589 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "993018589 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "993018589 times\n4 procs"
           }
         ]
       }
