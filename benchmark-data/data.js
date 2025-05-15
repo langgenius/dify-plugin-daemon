@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747127869207,
+  "lastUpdate": 1747293983804,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -2880,6 +2880,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d884cab8aec86ab9a27c5c3ca1ebd5686c8e3db7",
+          "message": "feat: add plugin reinstallation functionality and admin API support (#285)\n\n* feat: add plugin reinstallation functionality and admin API support\n\n- Implemented ReinstallToAWSFromPkg method to allow reinstallation of plugins on AWS Lambda, updating function URL and name.\n- Added clearServerlessRuntimeCache method to manage serverless runtime cache.\n- Enhanced LaunchPlugin to support an ignoreIdempotent flag for forced reinstallation.\n- Introduced admin API endpoints for plugin reinstallation, secured with an API key validation middleware.\n- Updated configuration to include AdminApiEnabled and AdminApiKey settings.\n\n* refactor: update plugin reinstallation endpoint and improve unauthorized response\n\n- Changed the plugin reinstallation endpoint from \"/plugins/reinstall\" to \"/plugin/serverless/reinstall\" for better clarity.\n- Modified the unauthorized response in the AdminAPIKey middleware to return a more descriptive JSON message.",
+          "timestamp": "2025-05-15T15:22:25+08:00",
+          "tree_id": "c0db8072e3ec38f9edb9b6da8e46a75be9bb2ced",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/d884cab8aec86ab9a27c5c3ca1ebd5686c8e3db7"
+        },
+        "date": 1747293983258,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139910451,
+            "unit": "ns/op\t 1593534 B/op\t   28316 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139910451,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593534,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.58,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "978430635 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.58,
+            "unit": "ns/op",
+            "extra": "978430635 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "978430635 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "978430635 times\n4 procs"
           }
         ]
       }
