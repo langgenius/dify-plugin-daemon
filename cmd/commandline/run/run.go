@@ -29,8 +29,14 @@ func logResponse(response GenericResponse, responseFormat string, client client)
 		responseBytes = []byte(fmt.Sprintf("[%s] %s\n", response.Type, response.Response))
 	}
 
+	// add a newline to the response
+	responseBytes = append(responseBytes, '\n')
+
 	if _, err := client.writer.Write(responseBytes); err != nil {
-		log.Error("write response to client error", "error", err)
+		systemLog(GenericResponse{
+			Type:     GENERIC_RESPONSE_TYPE_ERROR,
+			Response: map[string]any{"error": err.Error()},
+		}, responseFormat)
 	}
 }
 
@@ -69,11 +75,22 @@ func handleClient(
 	// mocked invocation
 	mockedInvocation := tester.NewMockedDifyInvocation()
 
+	logResponse(GenericResponse{
+		Type:     GENERIC_RESPONSE_TYPE_PLUGIN_READY,
+		Response: map[string]any{"info": "plugin loaded"},
+	}, responseFormat, client)
+
 	for scanner.Scan() {
 		payload := scanner.Bytes()
+		logResponse(GenericResponse{
+			Type:     GENERIC_RESPONSE_TYPE_INFO,
+			Response: map[string]any{"info": "received request"},
+		}, responseFormat, client)
+
 		invokePayload, err := parser.UnmarshalJsonBytes[InvokePluginPayload](payload)
 		if err != nil {
 			logResponse(GenericResponse{
+				InvokeID: invokePayload.InvokeID,
 				Type:     GENERIC_RESPONSE_TYPE_ERROR,
 				Response: map[string]any{"error": err.Error()},
 			}, responseFormat, client)
@@ -82,6 +99,7 @@ func handleClient(
 
 		if invokePayload.Action == "" || invokePayload.Type == "" {
 			logResponse(GenericResponse{
+				InvokeID: invokePayload.InvokeID,
 				Type:     GENERIC_RESPONSE_TYPE_ERROR,
 				Response: map[string]any{"error": "action and type are required"},
 			}, responseFormat, client)
@@ -110,27 +128,32 @@ func handleClient(
 
 		if err != nil {
 			logResponse(GenericResponse{
+				InvokeID: invokePayload.InvokeID,
 				Type:     GENERIC_RESPONSE_TYPE_ERROR,
 				Response: map[string]any{"error": err.Error()},
 			}, responseFormat, client)
 			continue
 		}
 
-		for stream.Next() {
-			response, err := stream.Read()
-			if err != nil {
-				logResponse(GenericResponse{
-					Type:     GENERIC_RESPONSE_TYPE_ERROR,
-					Response: map[string]any{"error": err.Error()},
-				}, responseFormat, client)
-				continue
-			}
+		routine.Submit(nil, func() {
+			for stream.Next() {
+				response, err := stream.Read()
+				if err != nil {
+					logResponse(GenericResponse{
+						InvokeID: invokePayload.InvokeID,
+						Type:     GENERIC_RESPONSE_TYPE_ERROR,
+						Response: map[string]any{"error": err.Error()},
+					}, responseFormat, client)
+					continue
+				}
 
-			logResponse(GenericResponse{
-				Type:     GENERIC_RESPONSE_TYPE_PLUGIN_RESPONSE,
-				Response: response,
-			}, responseFormat, client)
-		}
+				logResponse(GenericResponse{
+					InvokeID: invokePayload.InvokeID,
+					Type:     GENERIC_RESPONSE_TYPE_PLUGIN_RESPONSE,
+					Response: response,
+				}, responseFormat, client)
+			}
+		})
 	}
 
 }
@@ -208,11 +231,6 @@ func runPlugin(payload RunPluginPayload) error {
 	if err != nil {
 		return err
 	}
-
-	systemLog(GenericResponse{
-		Type:     GENERIC_RESPONSE_TYPE_INFO,
-		Response: map[string]any{"info": "plugin loaded"},
-	}, payload.ResponseFormat)
 
 	// check the identity of the plugin
 	_, err = runtime.Identity()

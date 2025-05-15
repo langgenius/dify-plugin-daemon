@@ -29,9 +29,13 @@ func createTCPServer(payload *RunPluginPayload) (*stream.Stream[client], error) 
 				continue
 			}
 
-			stream.Write(client{reader: conn, writer: conn, cancel: func() {
-				conn.Close()
-			}})
+			stream.Write(client{
+				reader: conn,
+				writer: conn,
+				cancel: func() {
+					conn.Close()
+				},
+			})
 		}
 	}()
 
@@ -42,7 +46,14 @@ func createTCPServer(payload *RunPluginPayload) (*stream.Stream[client], error) 
 func createStdioServer() *stream.Stream[client] {
 	reader, writer := os.Stdin, os.Stdout
 	stream := stream.NewStream[client](1)
-	stream.Write(client{reader: reader, writer: writer, cancel: func() {}})
+	stream.Write(client{
+		reader: reader,
+		writer: writer,
+		cancel: func() {
+			reader.Close()
+			writer.Close()
+		},
+	})
 
 	return stream
 }

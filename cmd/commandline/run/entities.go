@@ -29,17 +29,12 @@ type client struct {
 	reader io.ReadCloser
 	writer io.WriteCloser
 	cancel context.CancelFunc
-
-	onClose func()
-}
-
-func (c *client) OnClose(fn func()) {
-	c.onClose = fn
 }
 
 type InvokePluginPayload struct {
-	Type   access_types.PluginAccessType   `json:"type"`
-	Action access_types.PluginAccessAction `json:"action"`
+	InvokeID string                          `json:"invoke_id"`
+	Type     access_types.PluginAccessType   `json:"type"`
+	Action   access_types.PluginAccessAction `json:"action"`
 
 	Request map[string]any `json:"request"`
 }
@@ -48,12 +43,14 @@ type GenericResponseType = string
 
 const (
 	GENERIC_RESPONSE_TYPE_INFO            GenericResponseType = "info"
+	GENERIC_RESPONSE_TYPE_PLUGIN_READY    GenericResponseType = "plugin_ready"
 	GENERIC_RESPONSE_TYPE_ERROR           GenericResponseType = "error"
 	GENERIC_RESPONSE_TYPE_PLUGIN_RESPONSE GenericResponseType = "plugin_response"
 )
 
 type GenericResponse struct {
-	Type GenericResponseType `json:"type"`
+	InvokeID string              `json:"invoke_id"`
+	Type     GenericResponseType `json:"type"`
 
 	Response map[string]any `json:"response"`
 }
