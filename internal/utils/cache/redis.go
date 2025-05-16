@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	client *redis.Client
+	client redis.UniversalClient
 	ctx    = context.Background()
 
 	ErrDBNotInit = errors.New("redis client not init")
@@ -36,6 +36,34 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int) *redi
 func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
 	opts := getRedisOptions(addr, username, password, useSsl, db)
 	client = redis.NewClient(opts)
+
+	if _, err := client.Ping(ctx).Result(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func InitRedisSentinelClient(sentinels []string, masterName, username, password, sentinelUsername, sentinelPassword string, useSsl bool, db int, socketTimeout float64) error {
+	opts := &redis.FailoverOptions{
+		MasterName:       masterName,
+		SentinelAddrs:    sentinels,
+		Username:         username,
+		Password:         password,
+		DB:               db,
+		SentinelUsername: sentinelUsername,
+		SentinelPassword: sentinelPassword,
+	}
+
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+
+	if socketTimeout > 0 {
+		opts.DialTimeout = time.Duration(socketTimeout * float64(time.Second))
+	}
+
+	client = redis.NewFailoverClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
