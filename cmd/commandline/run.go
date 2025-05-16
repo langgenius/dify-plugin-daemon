@@ -1,5 +1,3 @@
-//go:build fullfeatures
-
 package main
 
 import (
