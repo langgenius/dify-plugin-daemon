@@ -42,10 +42,11 @@ type InvokePluginPayload struct {
 type GenericResponseType = string
 
 const (
-	GENERIC_RESPONSE_TYPE_INFO            GenericResponseType = "info"
-	GENERIC_RESPONSE_TYPE_PLUGIN_READY    GenericResponseType = "plugin_ready"
-	GENERIC_RESPONSE_TYPE_ERROR           GenericResponseType = "error"
-	GENERIC_RESPONSE_TYPE_PLUGIN_RESPONSE GenericResponseType = "plugin_response"
+	GENERIC_RESPONSE_TYPE_INFO              GenericResponseType = "info"
+	GENERIC_RESPONSE_TYPE_PLUGIN_READY      GenericResponseType = "plugin_ready"
+	GENERIC_RESPONSE_TYPE_ERROR             GenericResponseType = "error"
+	GENERIC_RESPONSE_TYPE_PLUGIN_RESPONSE   GenericResponseType = "plugin_response"
+	GENERIC_RESPONSE_TYPE_PLUGIN_INVOKE_END GenericResponseType = "plugin_invoke_end"
 )
 
 type GenericResponse struct {

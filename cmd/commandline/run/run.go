@@ -153,6 +153,12 @@ func handleClient(
 					Response: response,
 				}, responseFormat, client)
 			}
+
+			logResponse(GenericResponse{
+				InvokeID: invokePayload.InvokeID,
+				Type:     GENERIC_RESPONSE_TYPE_PLUGIN_INVOKE_END,
+				Response: map[string]any{"info": "plugin invoke end"},
+			}, responseFormat, client)
 		})
 	}
 
