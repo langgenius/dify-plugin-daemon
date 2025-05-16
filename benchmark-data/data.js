@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747295197351,
+  "lastUpdate": 1747376657336,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3024,6 +3024,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "993018589 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "31d7c7417ebeb878041e63af46bcb7fed242713a",
+          "message": "feat[0.1.0]: introduce 'run' command for local plugin execution (#283)\n\n* feat: introduce 'run' command for local plugin execution\n\n- Added a new command `run` to launch plugins locally, allowing communication through stdin/stdout.\n- Removed the previous `test` command and its associated functionality to streamline the plugin testing process.\n\n* feat: enhance 'run' command with TCP support\n\n- Introduced a new `RunPluginPayload` structure to encapsulate plugin execution parameters.\n- Added TCP communication mode to the `run` command, allowing multiple client connections.\n- Updated command flags to configure run mode and logging options.\n- Implemented client handling and server creation for both stdin/stdout and TCP modes.\n\n* docs: improve comments in RunPlugin function for clarity\n\n- Enhanced comments to provide clearer explanations of the plugin decoding process and the creation of client streams for both stdin/stdout and TCP modes.\n- Updated comments to reflect the functionality and behavior of the plugin execution flow.\n\n* refactor: update command structure and enhance plugin invocation handling\n\n- Changed the command structure to add `runPluginCommand` under `pluginCommand` for better organization.\n- Introduced `InvokePluginPayload` type to encapsulate plugin invocation details.\n- Enhanced `RunPlugin` function to handle responses and errors more effectively, including logging to stdout.\n- Updated client handling to support session management and improved error handling during plugin invocation.\n- Renamed TCP server creation function for consistency.\n\n* feat: enhance plugin response handling and logging capabilities\n\n- Added a new flag `--response-format` to specify the output format (text or json) for plugin responses.\n- Introduced a `logger` to manage logging output to stdout with timestamps and file information.\n- Updated `logResponse` and `systemLog` functions to handle different response formats.\n- Enhanced `handleClient` and `RunPlugin` functions to utilize the new response format feature.\n- Implemented signal handling to clean up temporary directories on shutdown.\n\n* feat: enhance plugin response structure and logging\n\n- Added `InvokeID` to `InvokePluginPayload` and `GenericResponse` for better tracking of plugin invocations.\n- Updated `logResponse` to include `InvokeID` in error responses for improved debugging.\n- Enhanced client handling in `handleClient` to log plugin readiness and received requests.\n- Refactored client stream creation for better readability and consistency.\n\n* feat: add plugin invoke end response type and logging\n\n- Introduced `GENERIC_RESPONSE_TYPE_PLUGIN_INVOKE_END` to enhance response tracking for plugin invocations.\n- Updated `handleClient` to log the end of plugin invocation, improving visibility into the plugin lifecycle.\n\n* chore: remove fullfeature tags",
+          "timestamp": "2025-05-16T14:20:29+08:00",
+          "tree_id": "f833b2ce84ada4d54052b434824dd87c8b7286cc",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/31d7c7417ebeb878041e63af46bcb7fed242713a"
+        },
+        "date": 1747376656380,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139743469,
+            "unit": "ns/op\t 1594128 B/op\t   28318 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139743469,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1594128,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28318,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.47,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "974906042 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.47,
+            "unit": "ns/op",
+            "extra": "974906042 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "974906042 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "974906042 times\n4 procs"
           }
         ]
       }
