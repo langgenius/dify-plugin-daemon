@@ -23,7 +23,7 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 		}, nil))
 	}
 
-	log.SetShowLog(false)
+	log.SetLogVisibility(false)
 
 	routine.InitPool(1024)
 

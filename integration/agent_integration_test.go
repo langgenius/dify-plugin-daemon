@@ -19,12 +19,16 @@ var difyOfficialAgent []byte
 //go:embed testdata/invoke_agent_strategy_json.json
 var invokeAgentStrategyJson []byte
 
+const (
+	_testingPath = "./integration_test_cwd"
+)
+
 func TestDifyOfficialAgentIntegration(t *testing.T) {
 	routine.InitPool(10000)
 
-	defer test_utils.ClearTestingPath()
+	defer test_utils.ClearTestingPath(_testingPath)
 
-	runtime, err := test_utils.GetRuntime(difyOfficialAgent)
+	runtime, err := test_utils.GetRuntime(difyOfficialAgent, _testingPath)
 	assert.NoError(t, err)
 
 	invokePayload, err := parser.UnmarshalJsonBytes2Map(invokeAgentStrategyJson)
