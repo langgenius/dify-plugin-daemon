@@ -1,9 +1,10 @@
-package decoder
+package decoder_test
 
 import (
 	_ "embed"
 	"testing"
 
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +15,7 @@ var pluginPackageWithoutVerificationField []byte
 Formerly, the plugin is all signed by langgenius but has no authorized category
 */
 func TestVerifyPluginWithoutVerificationField(t *testing.T) {
-	decoder, err := NewZipPluginDecoder(pluginPackageWithoutVerificationField)
+	decoder, err := decoder.NewZipPluginDecoder(pluginPackageWithoutVerificationField)
 	assert.NoError(t, err)
 
 	verification, err := decoder.Verification(false)
