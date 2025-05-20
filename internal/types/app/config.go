@@ -84,6 +84,14 @@ type Config struct {
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
 	RedisDB     int    `envconfig:"REDIS_DB"`
 
+	// redis sentinel
+	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
+	RedisSentinels             string  `envconfig:"REDIS_SENTINELS"`
+	RedisSentinelServiceName   string  `envconfig:"REDIS_SENTINEL_SERVICE_NAME"`
+	RedisSentinelUsername      string  `envconfig:"REDIS_SENTINEL_USERNAME"`
+	RedisSentinelPassword      string  `envconfig:"REDIS_SENTINEL_PASSWORD"`
+	RedisSentinelSocketTimeout float64 `envconfig:"REDIS_SENTINEL_SOCKET_TIMEOUT"`
+
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
 	DBUsername        string `envconfig:"DB_USERNAME" validate:"required"`

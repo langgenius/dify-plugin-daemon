@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
@@ -175,14 +176,32 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	log.Info("start plugin manager daemon...")
 
 	// init redis client
-	if err := cache.InitRedisClient(
-		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
-		configuration.RedisUser,
-		configuration.RedisPass,
-		configuration.RedisUseSsl,
-		configuration.RedisDB,
-	); err != nil {
-		log.Panic("init redis client failed: %s", err.Error())
+	if configuration.RedisUseSentinel {
+		// use Redis Sentinel
+		sentinels := strings.Split(configuration.RedisSentinels, ",")
+		if err := cache.InitRedisSentinelClient(
+			sentinels,
+			configuration.RedisSentinelServiceName,
+			configuration.RedisUser,
+			configuration.RedisPass,
+			configuration.RedisSentinelUsername,
+			configuration.RedisSentinelPassword,
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+			configuration.RedisSentinelSocketTimeout,
+		); err != nil {
+			log.Panic("init redis sentinel client failed: %s", err.Error())
+		}
+	} else {
+		if err := cache.InitRedisClient(
+			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
+			configuration.RedisUser,
+			configuration.RedisPass,
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+		); err != nil {
+			log.Panic("init redis client failed: %s", err.Error())
+		}
 	}
 
 	invocation, err := real.NewDifyInvocationDaemon(
