@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747376657336,
+  "lastUpdate": 1747721753676,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3096,6 +3096,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "974906042 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "62681807+bravomark@users.noreply.github.com",
+            "name": "bravomark",
+            "username": "bravomark"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "458542ca9fd325337475c553a34f953b0d0e8716",
+          "message": "fix: Fix the issue where the List method of Alibaba Cloud OSS did not correctly return plugin file paths. (#287)",
+          "timestamp": "2025-05-20T14:11:57+08:00",
+          "tree_id": "5c34dea98de36875ab9327434cd93aaf863fa205",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/458542ca9fd325337475c553a34f953b0d0e8716"
+        },
+        "date": 1747721753278,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141360653,
+            "unit": "ns/op\t 1593336 B/op\t   28317 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141360653,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593336,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.52,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "994082896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.52,
+            "unit": "ns/op",
+            "extra": "994082896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "994082896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "994082896 times\n4 procs"
           }
         ]
       }
