@@ -12,6 +12,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/license/public_key"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
@@ -108,9 +109,12 @@ func VerifyPluginWithPublicKeys(decoder PluginDecoder, publicKeys []*rsa.PublicK
 
 	if verification != nil {
 		// marshal
+		log.Info("verification %v", verification)
 		verificationBytes := parser.MarshalJsonBytes(verification)
 		data.Write(verificationBytes)
 	}
+
+	log.Info("data %v", data.Bytes())
 
 	sigBytes, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -427,7 +426,6 @@ func (p *PluginDecoderHelper) verified(decoder PluginDecoder) bool {
 			return verified
 		} else {
 			verified := VerifyPlugin(decoder) == nil
-			log.Info("err %v", VerifyPlugin(decoder))
 			p.verifiedFlag = &verified
 			return verified
 		}
