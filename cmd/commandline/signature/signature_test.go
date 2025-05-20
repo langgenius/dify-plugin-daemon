@@ -8,6 +8,8 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer"
+	"github.com/stretchr/testify/assert"
 )
 
 //go:embed testdata/dummy_plugin.difypkg
@@ -246,4 +248,35 @@ func TestVerifyTampered(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected verification of tampered file to fail, but it succeeded")
 	}
+}
+
+/*
+Formerly, the plugin is all signed by langgenius but has no authorized category
+*/
+func TestVerifyPluginWithoutVerificationField(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// extract the minimal plugin content from the embedded data to a file
+	dummyPluginPath := filepath.Join(tempDir, "dummy_plugin.difypkg")
+	if err := os.WriteFile(dummyPluginPath, dummyPlugin, 0644); err != nil {
+		t.Fatalf("Failed to create dummy plugin file: %v", err)
+	}
+
+	pluginPackageWithoutVerificationField, err := signer.TraditionalSignPlugin(dummyPlugin)
+	if err != nil {
+		t.Fatalf("Failed to sign plugin: %v", err)
+	}
+
+	// sign a plugin
+	decoder, err := decoder.NewZipPluginDecoder(
+		pluginPackageWithoutVerificationField,
+	)
+	assert.NoError(t, err)
+
+	verification, err := decoder.Verification(false)
+	assert.NoError(t, err)
+	assert.Nil(t, verification)
+
+	verified := decoder.Verified()
+	assert.True(t, verified)
 }
