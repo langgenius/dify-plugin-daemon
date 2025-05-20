@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"io"
 	"path"
 	"strconv"
@@ -18,10 +19,18 @@ import (
 
 // SignPluginWithPrivateKey is a function that signs a plugin
 // It takes a plugin as a stream of bytes and a private key to sign it with RSA-4096
-func SignPluginWithPrivateKey(plugin []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
+func SignPluginWithPrivateKey(
+	plugin []byte,
+	verification *decoder.Verification,
+	privateKey *rsa.PrivateKey,
+) ([]byte, error) {
 	decoder, err := decoder.NewZipPluginDecoder(plugin)
 	if err != nil {
 		return nil, err
+	}
+
+	if verification == nil {
+		return nil, errors.New("verification cannot be nil")
 	}
 
 	// create a new zip writer
@@ -73,6 +82,12 @@ func SignPluginWithPrivateKey(plugin []byte, privateKey *rsa.PrivateKey) ([]byte
 	// write the time into data
 	data.Write([]byte(timeString))
 
+	// json marshal the verification
+	verificationBytes := parser.MarshalJsonBytes(verification)
+
+	// write the verification into data
+	data.Write(verificationBytes)
+
 	// sign the data
 	signature, err := encryption.RSASign(privateKey, data.Bytes())
 	if err != nil {
@@ -81,8 +96,9 @@ func SignPluginWithPrivateKey(plugin []byte, privateKey *rsa.PrivateKey) ([]byte
 
 	// write the signature into the comment field of the zip file
 	comments := parser.MarshalJson(map[string]any{
-		"signature": base64.StdEncoding.EncodeToString(signature),
-		"time":      ct,
+		"signature":    base64.StdEncoding.EncodeToString(signature),
+		"time":         ct,
+		"verification": verification,
 	})
 
 	// write signature

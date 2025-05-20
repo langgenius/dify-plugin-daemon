@@ -5,18 +5,21 @@ import (
 	"os"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer"
 )
 
 func main() {
 	var (
-		in_path  string
-		out_path string
-		help     bool
+		in_path             string
+		out_path            string
+		help                bool
+		authorized_category string
 	)
 
 	flag.StringVar(&in_path, "in", "", "input plugin file path")
 	flag.StringVar(&out_path, "out", "", "output plugin file path")
+	flag.StringVar(&authorized_category, "authorized_category", "", "authorized category")
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.Parse()
 
@@ -32,7 +35,9 @@ func main() {
 	}
 
 	// sign plugin
-	pluginFile, err := signer.SignPlugin(plugin)
+	pluginFile, err := signer.SignPlugin(plugin, &decoder.Verification{
+		AuthorizedCategory: decoder.AuthorizedCategory(authorized_category),
+	})
 	if err != nil {
 		log.Panic("failed to sign plugin %v", err)
 	}

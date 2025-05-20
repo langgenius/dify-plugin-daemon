@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 //go:embed testdata/dummy_plugin.difypkg
@@ -77,6 +78,7 @@ func TestSignAndVerify(t *testing.T) {
 		signKeyPath   string
 		verifyKeyPath string
 		expectSuccess bool
+		verification  *decoder.Verification
 	}
 
 	// test cases
@@ -86,36 +88,54 @@ func TestSignAndVerify(t *testing.T) {
 			signKeyPath:   privateKey1Path,
 			verifyKeyPath: publicKey1Path,
 			expectSuccess: true,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair1, verify with keypair2",
 			signKeyPath:   privateKey1Path,
 			verifyKeyPath: publicKey2Path,
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair2, verify with keypair2",
 			signKeyPath:   privateKey2Path,
 			verifyKeyPath: publicKey2Path,
 			expectSuccess: true,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair2, verify with keypair1",
 			signKeyPath:   privateKey2Path,
 			verifyKeyPath: publicKey1Path,
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair1, verify without key",
 			signKeyPath:   privateKey1Path,
 			verifyKeyPath: "",
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair2, verify without key",
 			signKeyPath:   privateKey2Path,
 			verifyKeyPath: "",
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 	}
 
@@ -129,7 +149,7 @@ func TestSignAndVerify(t *testing.T) {
 			}
 
 			// sign the plugin
-			Sign(testPluginPath, tt.signKeyPath)
+			Sign(testPluginPath, tt.signKeyPath, tt.verification)
 
 			// get the path of the signed plugin
 			dir := filepath.Dir(testPluginPath)
@@ -195,7 +215,9 @@ func TestVerifyTampered(t *testing.T) {
 	publicKeyPath := keyPairName + ".public.pem"
 
 	// Sign the plugin
-	Sign(dummyPluginPath, privateKeyPath)
+	Sign(dummyPluginPath, privateKeyPath, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	})
 
 	// Get the path of the signed plugin
 	dir := filepath.Dir(dummyPluginPath)

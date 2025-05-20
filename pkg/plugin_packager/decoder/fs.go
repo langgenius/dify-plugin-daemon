@@ -169,6 +169,10 @@ func (d *FSPluginDecoder) CreateTime() (int64, error) {
 	return 0, nil
 }
 
+func (d *FSPluginDecoder) Verification(ignoreVerifySignature bool) (*Verification, error) {
+	return nil, nil
+}
+
 func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
 	return d.PluginDecoderHelper.Manifest(d)
 }
@@ -188,4 +192,8 @@ func (d *FSPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifi
 
 func (d *FSPluginDecoder) CheckAssetsValid() error {
 	return d.PluginDecoderHelper.CheckAssetsValid(d)
+}
+
+func (d *FSPluginDecoder) Verified() bool {
+	return d.PluginDecoderHelper.verified(d)
 }

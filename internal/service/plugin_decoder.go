@@ -61,9 +61,17 @@ func UploadPluginPkg(
 		}
 	}
 
+	verification, _ := decoderInstance.Verification(false)
+	if verification == nil && decoderInstance.Verified() {
+		verification = &decoder.Verification{
+			AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+		}
+	}
+
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": pluginUniqueIdentifier,
 		"manifest":          declaration,
+		"verification":      verification,
 	})
 }
 

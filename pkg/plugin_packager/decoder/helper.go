@@ -13,6 +13,8 @@ import (
 type PluginDecoderHelper struct {
 	pluginDeclaration *plugin_entities.PluginDeclaration
 	checksum          string
+
+	verifiedFlag *bool // used to store the verified flag, avoid calling verified function multiple times
 }
 
 func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.PluginDeclaration, error) {
@@ -271,22 +273,7 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 
 	dec.FillInDefaultValues()
 
-	// verify signature
-	// for ZipPluginDecoder, use the third party signature verification if it is enabled
-	if zipDecoder, ok := decoder.(*ZipPluginDecoder); ok {
-		config := zipDecoder.thirdPartySignatureVerificationConfig
-		if config != nil && config.Enabled && len(config.PublicKeyPaths) > 0 {
-			dec.Verified = VerifyPluginWithPublicKeyPaths(decoder, config.PublicKeyPaths) == nil
-		} else {
-			dec.Verified = VerifyPlugin(decoder) == nil
-		}
-	} else {
-		dec.Verified = VerifyPlugin(decoder) == nil
-	}
-
-	if err := dec.ManifestValidate(); err != nil {
-		return plugin_entities.PluginDeclaration{}, err
-	}
+	dec.Verified = p.verified(decoder)
 
 	p.pluginDeclaration = &dec
 	return dec, nil
@@ -422,4 +409,29 @@ func (p *PluginDecoderHelper) CheckAssetsValid(decoder PluginDecoder) error {
 	}
 
 	return nil
+}
+
+func (p *PluginDecoderHelper) verified(decoder PluginDecoder) bool {
+	if p.verifiedFlag != nil {
+		return *p.verifiedFlag
+	}
+
+	// verify signature
+	// for ZipPluginDecoder, use the third party signature verification if it is enabled
+	if zipDecoder, ok := decoder.(*ZipPluginDecoder); ok {
+		config := zipDecoder.thirdPartySignatureVerificationConfig
+		if config != nil && config.Enabled && len(config.PublicKeyPaths) > 0 {
+			verified := VerifyPluginWithPublicKeyPaths(decoder, config.PublicKeyPaths) == nil
+			p.verifiedFlag = &verified
+			return verified
+		} else {
+			verified := VerifyPlugin(decoder) == nil
+			p.verifiedFlag = &verified
+			return verified
+		}
+	} else {
+		verified := VerifyPlugin(decoder) == nil
+		p.verifiedFlag = &verified
+		return verified
+	}
 }
