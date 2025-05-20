@@ -109,12 +109,11 @@ func VerifyPluginWithPublicKeys(decoder PluginDecoder, publicKeys []*rsa.PublicK
 
 	if verification != nil {
 		// marshal
-		log.Info("verification %v", verification)
 		verificationBytes := parser.MarshalJsonBytes(verification)
 		data.Write(verificationBytes)
 	}
 
-	log.Info("data %v", data.Bytes())
+	log.Info("verification %v", parser.MarshalJsonBytes((verification)))
 
 	sigBytes, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
