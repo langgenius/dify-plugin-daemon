@@ -17,9 +17,9 @@ import (
 // and install it to the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
 func InstallPlugin(
-	tenant_id string,
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	install_type plugin_entities.PluginRuntimeType,
+	tenantId string,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	installType plugin_entities.PluginRuntimeType,
 	declaration *plugin_entities.PluginDeclaration,
 	source string,
 	meta map[string]any,
@@ -32,8 +32,8 @@ func InstallPlugin(
 
 	// check if already installed
 	_, err := db.GetOne[models.PluginInstallation](
-		db.Equal("plugin_id", plugin_unique_identifier.PluginID()),
-		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
+		db.Equal("tenant_id", tenantId),
 	)
 
 	if err == nil {
@@ -43,21 +43,21 @@ func InstallPlugin(
 	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
-			db.Equal("plugin_id", plugin_unique_identifier.PluginID()),
-			db.Equal("install_type", string(install_type)),
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+			db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
+			db.Equal("install_type", string(installType)),
 			db.WLock(),
 		)
 
 		if err == db.ErrDatabaseNotFound {
 			plugin := &models.Plugin{
-				PluginID:               plugin_unique_identifier.PluginID(),
-				PluginUniqueIdentifier: plugin_unique_identifier.String(),
-				InstallType:            install_type,
+				PluginID:               pluginUniqueIdentifier.PluginID(),
+				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+				InstallType:            installType,
 				Refers:                 1,
 			}
 
-			if install_type == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+			if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
 				plugin.RemoteDeclaration = *declaration
 			}
 
@@ -82,8 +82,8 @@ func InstallPlugin(
 		if err := db.DeleteByCondition(
 			models.PluginInstallation{
 				PluginID:    pluginToBeReturns.PluginID,
-				RuntimeType: string(install_type),
-				TenantID:    tenant_id,
+				RuntimeType: string(installType),
+				TenantID:    tenantId,
 			},
 			tx,
 		); err != nil {
@@ -93,8 +93,8 @@ func InstallPlugin(
 		installation := &models.PluginInstallation{
 			PluginID:               pluginToBeReturns.PluginID,
 			PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
-			TenantID:               tenant_id,
-			RuntimeType:            string(install_type),
+			TenantID:               tenantId,
+			RuntimeType:            string(installType),
 			Source:                 source,
 			Meta:                   meta,
 		}
@@ -111,7 +111,7 @@ func InstallPlugin(
 			toolInstallation := &models.ToolInstallation{
 				PluginID:               pluginToBeReturns.PluginID,
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
-				TenantID:               tenant_id,
+				TenantID:               tenantId,
 				Provider:               declaration.Tool.Identity.Name,
 			}
 
@@ -126,7 +126,7 @@ func InstallPlugin(
 			agentStrategyInstallation := &models.AgentStrategyInstallation{
 				PluginID:               pluginToBeReturns.PluginID,
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
-				TenantID:               tenant_id,
+				TenantID:               tenantId,
 				Provider:               declaration.AgentStrategy.Identity.Name,
 			}
 
@@ -141,7 +141,7 @@ func InstallPlugin(
 			modelInstallation := &models.AIModelInstallation{
 				PluginID:               pluginToBeReturns.PluginID,
 				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
-				TenantID:               tenant_id,
+				TenantID:               tenantId,
 				Provider:               declaration.Model.Provider,
 			}
 
@@ -174,26 +174,26 @@ type DeletePluginResponse struct {
 // and uninstall it from the tenant, return the plugin and the installation
 // if the plugin has been created before, return the plugin which has been created before
 func UninstallPlugin(
-	tenant_id string,
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	installation_id string,
+	tenantId string,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	installationId string,
 	declaration *plugin_entities.PluginDeclaration,
 ) (*DeletePluginResponse, error) {
 	var pluginToBeReturns *models.Plugin
 	var installationToBeReturns *models.PluginInstallation
 
 	_, err := db.GetOne[models.PluginInstallation](
-		db.Equal("id", installation_id),
-		db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
-		db.Equal("tenant_id", tenant_id),
+		db.Equal("id", installationId),
+		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+		db.Equal("tenant_id", tenantId),
 	)
 
 	pluginInstallationCacheKey := strings.Join(
 		[]string{
 			"plugin_id",
-			plugin_unique_identifier.PluginID(),
+			pluginUniqueIdentifier.PluginID(),
 			"tenant_id",
-			tenant_id,
+			tenantId,
 		},
 		":",
 	)
@@ -211,7 +211,7 @@ func UninstallPlugin(
 	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 			db.WLock(),
 		)
 
@@ -230,8 +230,8 @@ func UninstallPlugin(
 
 		installation, err := db.GetOne[models.PluginInstallation](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", plugin_unique_identifier.String()),
-			db.Equal("tenant_id", tenant_id),
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+			db.Equal("tenant_id", tenantId),
 		)
 
 		if err == db.ErrDatabaseNotFound {
@@ -250,7 +250,7 @@ func UninstallPlugin(
 		if declaration.Tool != nil {
 			toolInstallation := &models.ToolInstallation{
 				PluginID: pluginToBeReturns.PluginID,
-				TenantID: tenant_id,
+				TenantID: tenantId,
 			}
 
 			err := db.DeleteByCondition(&toolInstallation, tx)
@@ -263,7 +263,7 @@ func UninstallPlugin(
 		if declaration.AgentStrategy != nil {
 			agentStrategyInstallation := &models.AgentStrategyInstallation{
 				PluginID: pluginToBeReturns.PluginID,
-				TenantID: tenant_id,
+				TenantID: tenantId,
 			}
 
 			err := db.DeleteByCondition(&agentStrategyInstallation, tx)
@@ -276,7 +276,7 @@ func UninstallPlugin(
 		if declaration.Model != nil {
 			modelInstallation := &models.AIModelInstallation{
 				PluginID: pluginToBeReturns.PluginID,
-				TenantID: tenant_id,
+				TenantID: tenantId,
 			}
 
 			err := db.DeleteByCondition(&modelInstallation, tx)
@@ -318,12 +318,12 @@ type UpgradePluginResponse struct {
 // and uninstall the original plugin and install the new plugin, but keep the original installation information
 // like endpoint_setups, etc.
 func UpgradePlugin(
-	tenant_id string,
-	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	tenantId string,
+	originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	newPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	originalDeclaration *plugin_entities.PluginDeclaration,
 	newDeclaration *plugin_entities.PluginDeclaration,
-	install_type plugin_entities.PluginRuntimeType,
+	installType plugin_entities.PluginRuntimeType,
 	source string,
 	meta map[string]any,
 ) (*UpgradePluginResponse, error) {
@@ -332,8 +332,8 @@ func UpgradePlugin(
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		installation, err := db.GetOne[models.PluginInstallation](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
-			db.Equal("tenant_id", tenant_id),
+			db.Equal("plugin_unique_identifier", originalPluginUniqueIdentifier.String()),
+			db.Equal("tenant_id", tenantId),
 			db.WLock(),
 		)
 
@@ -346,15 +346,15 @@ func UpgradePlugin(
 		// check if the new plugin has existed
 		plugin, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", new_plugin_unique_identifier.String()),
+			db.Equal("plugin_unique_identifier", newPluginUniqueIdentifier.String()),
 		)
 
 		if err == db.ErrDatabaseNotFound {
 			// create new plugin
 			plugin = models.Plugin{
-				PluginID:               new_plugin_unique_identifier.PluginID(),
-				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
-				InstallType:            install_type,
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				InstallType:            installType,
 				Refers:                 0,
 				ManifestType:           manifest_entities.PluginType,
 			}
@@ -368,7 +368,7 @@ func UpgradePlugin(
 		}
 
 		// update exists installation
-		installation.PluginUniqueIdentifier = new_plugin_unique_identifier.String()
+		installation.PluginUniqueIdentifier = newPluginUniqueIdentifier.String()
 		installation.Meta = meta
 		err = db.Update(installation, tx)
 		if err != nil {
@@ -379,7 +379,7 @@ func UpgradePlugin(
 		err = db.Run(
 			db.WithTransactionContext(tx),
 			db.Model(&models.Plugin{}),
-			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
+			db.Equal("plugin_unique_identifier", originalPluginUniqueIdentifier.String()),
 			db.Inc(map[string]int{"refers": -1}),
 		)
 
@@ -390,7 +390,7 @@ func UpgradePlugin(
 		// delete the original plugin if the refers is 0
 		originalPlugin, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", original_plugin_unique_identifier.String()),
+			db.Equal("plugin_unique_identifier", originalPluginUniqueIdentifier.String()),
 		)
 
 		if err == nil && originalPlugin.Refers == 0 {
@@ -408,7 +408,7 @@ func UpgradePlugin(
 		err = db.Run(
 			db.WithTransactionContext(tx),
 			db.Model(&models.Plugin{}),
-			db.Equal("plugin_unique_identifier", new_plugin_unique_identifier.String()),
+			db.Equal("plugin_unique_identifier", newPluginUniqueIdentifier.String()),
 			db.Inc(map[string]int{"refers": 1}),
 		)
 
@@ -420,8 +420,8 @@ func UpgradePlugin(
 		if originalDeclaration.Model != nil {
 			// delete the original ai model installation
 			err := db.DeleteByCondition(&models.AIModelInstallation{
-				PluginID: original_plugin_unique_identifier.PluginID(),
-				TenantID: tenant_id,
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
 			}, tx)
 
 			if err != nil {
@@ -432,10 +432,10 @@ func UpgradePlugin(
 		if newDeclaration.Model != nil {
 			// create the new ai model installation
 			modelInstallation := &models.AIModelInstallation{
-				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
-				TenantID:               tenant_id,
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
 				Provider:               newDeclaration.Model.Provider,
-				PluginID:               new_plugin_unique_identifier.PluginID(),
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
 			}
 
 			err := db.Create(modelInstallation, tx)
@@ -448,8 +448,8 @@ func UpgradePlugin(
 		if originalDeclaration.Tool != nil {
 			// delete the original tool installation
 			err := db.DeleteByCondition(&models.ToolInstallation{
-				PluginID: original_plugin_unique_identifier.PluginID(),
-				TenantID: tenant_id,
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
 			}, tx)
 
 			if err != nil {
@@ -460,10 +460,10 @@ func UpgradePlugin(
 		if newDeclaration.Tool != nil {
 			// create the new tool installation
 			toolInstallation := &models.ToolInstallation{
-				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
-				TenantID:               tenant_id,
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
 				Provider:               newDeclaration.Tool.Identity.Name,
-				PluginID:               new_plugin_unique_identifier.PluginID(),
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
 			}
 
 			err := db.Create(toolInstallation, tx)
@@ -476,8 +476,8 @@ func UpgradePlugin(
 		if originalDeclaration.AgentStrategy != nil {
 			// delete the original agent installation
 			err := db.DeleteByCondition(&models.AgentStrategyInstallation{
-				PluginID: original_plugin_unique_identifier.PluginID(),
-				TenantID: tenant_id,
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
 			}, tx)
 
 			if err != nil {
@@ -488,10 +488,10 @@ func UpgradePlugin(
 		if newDeclaration.AgentStrategy != nil {
 			// create the new agent installation
 			agentStrategyInstallation := &models.AgentStrategyInstallation{
-				PluginUniqueIdentifier: new_plugin_unique_identifier.String(),
-				TenantID:               tenant_id,
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
 				Provider:               newDeclaration.AgentStrategy.Identity.Name,
-				PluginID:               new_plugin_unique_identifier.PluginID(),
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
 			}
 
 			err := db.Create(agentStrategyInstallation, tx)
