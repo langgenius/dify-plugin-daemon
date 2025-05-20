@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747722354129,
+  "lastUpdate": 1747732659022,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3240,6 +3240,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "989552910 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c799d90e884dc73cb62fecd0df901380c224d14c",
+          "message": "chore: coding style (#291)\n\n- Renamed parameters for consistency and clarity, changing `tenant_id`, `plugin_unique_identifier`, and `install_type` to `tenantId`, `pluginUniqueIdentifier`, and `installType` respectively across multiple functions.\n- Updated corresponding database queries to reflect the new parameter names, enhancing code readability and maintainability.",
+          "timestamp": "2025-05-20T17:14:44+08:00",
+          "tree_id": "d2d740a6ee22dc3a7453ded8d258f27ea022ff36",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/c799d90e884dc73cb62fecd0df901380c224d14c"
+        },
+        "date": 1747732658537,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141348315,
+            "unit": "ns/op\t 1593802 B/op\t   28317 allocs/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141348315,
+            "unit": "ns/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593802,
+            "unit": "B/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.52,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "987837642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.52,
+            "unit": "ns/op",
+            "extra": "987837642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "987837642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "987837642 times\n4 procs"
           }
         ]
       }
