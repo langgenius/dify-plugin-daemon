@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747732659022,
+  "lastUpdate": 1747829319462,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3312,6 +3312,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "987837642 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a1da25d5901b22a79502bce6c252a7350dc4bd0",
+          "message": "feat: Enhance plugin signing with authorized category verification (#293)\n\n* feat: Enhance plugin signing with authorized category verification\n\n- Added support for an `authorized_category` flag in the signature command to validate the category before signing.\n- Updated the `Sign` function to accept a verification parameter, allowing for category-based signing.\n- Enhanced error handling for invalid categories during the signing process.\n- Updated tests to cover new verification scenarios and ensure proper functionality with the authorized category.\n\n* fix\n\n* fix\n\n* test\n\n* test: Add unit test for plugin verification without verification field\n\n- Introduced a new test case to verify the behavior of plugins that lack a verification field.\n- Updated the signature_test.go file to include the test, ensuring proper functionality of the signing process.\n- Removed the outdated verifier_test.go file and associated test data to streamline the codebase.",
+          "timestamp": "2025-05-21T20:05:45+08:00",
+          "tree_id": "777d56028899195576ddd65c6f7459404b87efe6",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/9a1da25d5901b22a79502bce6c252a7350dc4bd0"
+        },
+        "date": 1747829318508,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 144759148,
+            "unit": "ns/op\t 1594139 B/op\t   28318 allocs/op",
+            "extra": "238 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 144759148,
+            "unit": "ns/op",
+            "extra": "238 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1594139,
+            "unit": "B/op",
+            "extra": "238 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28318,
+            "unit": "allocs/op",
+            "extra": "238 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.53,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "986140659 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.53,
+            "unit": "ns/op",
+            "extra": "986140659 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "986140659 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "986140659 times\n4 procs"
           }
         ]
       }
