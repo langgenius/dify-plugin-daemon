@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer"
+	"github.com/stretchr/testify/assert"
 )
 
 //go:embed testdata/dummy_plugin.difypkg
@@ -77,6 +80,7 @@ func TestSignAndVerify(t *testing.T) {
 		signKeyPath   string
 		verifyKeyPath string
 		expectSuccess bool
+		verification  *decoder.Verification
 	}
 
 	// test cases
@@ -86,36 +90,54 @@ func TestSignAndVerify(t *testing.T) {
 			signKeyPath:   privateKey1Path,
 			verifyKeyPath: publicKey1Path,
 			expectSuccess: true,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair1, verify with keypair2",
 			signKeyPath:   privateKey1Path,
 			verifyKeyPath: publicKey2Path,
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair2, verify with keypair2",
 			signKeyPath:   privateKey2Path,
 			verifyKeyPath: publicKey2Path,
 			expectSuccess: true,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair2, verify with keypair1",
 			signKeyPath:   privateKey2Path,
 			verifyKeyPath: publicKey1Path,
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair1, verify without key",
 			signKeyPath:   privateKey1Path,
 			verifyKeyPath: "",
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 		{
 			name:          "sign with keypair2, verify without key",
 			signKeyPath:   privateKey2Path,
 			verifyKeyPath: "",
 			expectSuccess: false,
+			verification: &decoder.Verification{
+				AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+			},
 		},
 	}
 
@@ -129,7 +151,7 @@ func TestSignAndVerify(t *testing.T) {
 			}
 
 			// sign the plugin
-			Sign(testPluginPath, tt.signKeyPath)
+			Sign(testPluginPath, tt.signKeyPath, tt.verification)
 
 			// get the path of the signed plugin
 			dir := filepath.Dir(testPluginPath)
@@ -195,7 +217,9 @@ func TestVerifyTampered(t *testing.T) {
 	publicKeyPath := keyPairName + ".public.pem"
 
 	// Sign the plugin
-	Sign(dummyPluginPath, privateKeyPath)
+	Sign(dummyPluginPath, privateKeyPath, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	})
 
 	// Get the path of the signed plugin
 	dir := filepath.Dir(dummyPluginPath)
@@ -224,4 +248,35 @@ func TestVerifyTampered(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected verification of tampered file to fail, but it succeeded")
 	}
+}
+
+/*
+Formerly, the plugin is all signed by langgenius but has no authorized category
+*/
+func TestVerifyPluginWithoutVerificationField(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// extract the minimal plugin content from the embedded data to a file
+	dummyPluginPath := filepath.Join(tempDir, "dummy_plugin.difypkg")
+	if err := os.WriteFile(dummyPluginPath, dummyPlugin, 0644); err != nil {
+		t.Fatalf("Failed to create dummy plugin file: %v", err)
+	}
+
+	pluginPackageWithoutVerificationField, err := signer.TraditionalSignPlugin(dummyPlugin)
+	if err != nil {
+		t.Fatalf("Failed to sign plugin: %v", err)
+	}
+
+	// sign a plugin
+	decoder, err := decoder.NewZipPluginDecoder(
+		pluginPackageWithoutVerificationField,
+	)
+	assert.NoError(t, err)
+
+	verification, err := decoder.Verification(false)
+	assert.NoError(t, err)
+	assert.Nil(t, verification)
+
+	verified := decoder.Verified()
+	assert.True(t, verified)
 }
