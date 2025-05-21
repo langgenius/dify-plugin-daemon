@@ -8,6 +8,7 @@ const (
 	PLUGIN_ACCESS_TYPE_ENDPOINT       PluginAccessType = "endpoint"
 	PLUGIN_ACCESS_TYPE_AGENT_STRATEGY PluginAccessType = "agent_strategy"
 	PLUGIN_ACCESS_TYPE_OAUTH          PluginAccessType = "oauth"
+	PLUGIN_ACCESS_TYPE_DATASOURCE     PluginAccessType = "datasource"
 )
 
 func (p PluginAccessType) IsValid() bool {
@@ -15,7 +16,8 @@ func (p PluginAccessType) IsValid() bool {
 		p == PLUGIN_ACCESS_TYPE_MODEL ||
 		p == PLUGIN_ACCESS_TYPE_ENDPOINT ||
 		p == PLUGIN_ACCESS_TYPE_AGENT_STRATEGY ||
-		p == PLUGIN_ACCESS_TYPE_OAUTH
+		p == PLUGIN_ACCESS_TYPE_OAUTH ||
+		p == PLUGIN_ACCESS_TYPE_DATASOURCE
 }
 
 type PluginAccessAction string
@@ -40,6 +42,9 @@ const (
 	PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY         PluginAccessAction = "invoke_agent_strategy"
 	PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL         PluginAccessAction = "get_authorization_url"
 	PLUGIN_ACCESS_ACTION_GET_CREDENTIALS               PluginAccessAction = "get_credentials"
+	PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS          PluginAccessAction = "validate_datasource_credentials"
+	PLUGIN_ACCESS_ACTION_INVOKE_DATASOURCE_FIRST_STEP  PluginAccessAction = "invoke_datasource_first_step"
+	PLUGIN_ACCESS_ACTION_INVOKE_DATASOURCE_SECOND_STEP PluginAccessAction = "invoke_datasource_second_step"
 )
 
 func (p PluginAccessAction) IsValid() bool {
@@ -61,5 +66,8 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
-		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS
+		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS ||
+		p == PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS ||
+		p == PLUGIN_ACCESS_ACTION_INVOKE_DATASOURCE_FIRST_STEP ||
+		p == PLUGIN_ACCESS_ACTION_INVOKE_DATASOURCE_SECOND_STEP
 }

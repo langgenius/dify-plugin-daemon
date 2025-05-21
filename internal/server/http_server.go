@@ -115,6 +115,9 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.POST("/model/schema", controllers.GetAIModelSchema(config))
 	group.POST("/oauth/get_authorization_url", controllers.OAuthGetAuthorizationURL(config))
 	group.POST("/oauth/get_credentials", controllers.OAuthGetCredentials(config))
+	group.POST("/datasource/validate_credentials", controllers.DatasourceValidateCredentials(config))
+	group.POST("/datasource/first_step", controllers.DatasourceInvokeFirstStep(config))
+	group.POST("/datasource/second_step", controllers.DatasourceInvokeSecondStep(config))
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
