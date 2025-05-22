@@ -27,37 +27,3 @@ func InvokeTool(
 		max_timeout_seconds,
 	)
 }
-
-func ValidateToolCredentials(
-	r *plugin_entities.InvokePluginRequest[requests.RequestValidateToolCredentials],
-	ctx *gin.Context,
-	max_timeout_seconds int,
-) {
-	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[tool_entities.ValidateCredentialsResult], error) {
-			return plugin_daemon.ValidateToolCredentials(session, &r.Data)
-		},
-		access_types.PLUGIN_ACCESS_TYPE_TOOL,
-		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
-		r,
-		ctx,
-		max_timeout_seconds,
-	)
-}
-
-func GetToolRuntimeParameters(
-	r *plugin_entities.InvokePluginRequest[requests.RequestGetToolRuntimeParameters],
-	ctx *gin.Context,
-	max_timeout_seconds int,
-) {
-	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[tool_entities.GetToolRuntimeParametersResponse], error) {
-			return plugin_daemon.GetToolRuntimeParameters(session, &r.Data)
-		},
-		access_types.PLUGIN_ACCESS_TYPE_TOOL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_TOOL_RUNTIME_PARAMETERS,
-		r,
-		ctx,
-		max_timeout_seconds,
-	)
-}
