@@ -27,7 +27,7 @@ const (
 	// each node will also update its own status to remain active. If a node becomes inactive, it will be removed from the cluster.
 	NODE_VOTE_INTERVAL          = time.Second * 30 // interval to vote the ips of the nodes
 	UPDATE_NODE_STATUS_INTERVAL = time.Second * 5  // interval to update the status of the node
-	NODE_DISCONNECTED_TIMEOUT   = time.Second * 10 // once a node is no longer active, it will be removed from the cluster
+	NODE_DISCONNECTED_TIMEOUT   = time.Second * 25 // once a node is no longer active, it will be removed from the cluster
 
 	// plugin scheduler
 	// each node will schedule its plugins every $PLUGIN_SCHEDULER_INTERVAL time
