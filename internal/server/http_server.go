@@ -1,9 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +23,33 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
+
+	engine.Use(func(c *gin.Context) {
+		requestId := uuid.New().String()
+		start := time.Now()
+		request := c.Request
+		path := request.URL.Path
+		raw := request.URL.RawQuery
+		if raw != "" {
+			path = path + "?" + raw
+		}
+
+		// 记录请求日志
+		logRequest(c, requestId, request, path)
+
+		responseWriter := &responseBodyWriter{
+			ResponseWriter: c.Writer,
+			body:           &bytes.Buffer{},
+		}
+		c.Writer = responseWriter
+
+		//execute the next handler
+		c.Next()
+
+		// 记录响应日志
+		logResponse(c, requestId, responseWriter, start)
+	})
+
 	if *config.HealthApiLogEnabled {
 		engine.Use(gin.Logger())
 	} else {
@@ -203,5 +234,63 @@ func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
 		group.GET("/block", controllers.PprofBlock)
 		group.GET("/mutex", controllers.PprofMutex)
 		group.GET("/threadcreate", controllers.PprofThreadcreate)
+	}
+}
+
+// 自定义响应写入器
+type responseBodyWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (r *responseBodyWriter) Write(b []byte) (int, error) {
+	r.body.Write(b)
+	return r.ResponseWriter.Write(b)
+}
+
+func (r *responseBodyWriter) WriteString(s string) (int, error) {
+	r.body.WriteString(s)
+	return r.ResponseWriter.WriteString(s)
+}
+
+// logRequest 记录请求日志
+func logRequest(c *gin.Context, requestId string, request *http.Request, path string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("HTTP Request logging panic: %v", r)
+		}
+	}()
+
+	requestContentType := strings.ToLower(request.Header.Get("Content-Type"))
+
+	// 如果是 JSON 请求，记录请求体
+	if request.Body != nil && strings.Contains(requestContentType, "application/json") {
+		body, err := io.ReadAll(request.Body)
+		if err != nil {
+			log.Error("Failed to read request body: %v", err)
+		} else {
+			request.Body = io.NopCloser(bytes.NewBuffer(body))
+			log.Debug("HTTP Request(%s): %s %s, content-type: %s body: %s", requestId, request.Method, path, requestContentType, string(body))
+		}
+	} else {
+		log.Debug("HTTP Request(%s): %s %s, content-type: %s", requestId, request.Method, path, requestContentType)
+	}
+}
+
+// logResponse 记录响应日志
+func logResponse(c *gin.Context, requestId string, responseWriter *responseBodyWriter, start time.Time) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("HTTP Response logging panic: %v", r)
+		}
+	}()
+
+	latency := time.Since(start)
+	statusCode := c.Writer.Status()
+	responseContentType := strings.ToLower(c.Writer.Header().Get("Content-Type"))
+	if responseWriter.body != nil && strings.Contains(responseContentType, "application/json") {
+		log.Debug("HTTP Response(%s) status: %d, content-type: %s, time elapsed: %v, body: %s", requestId, statusCode, responseContentType, latency, responseWriter.body.String())
+	} else {
+		log.Debug("HTTP Response(%s) status: %d, content-type: %s, time elapsed: %v", requestId, statusCode, responseContentType, latency)
 	}
 }
