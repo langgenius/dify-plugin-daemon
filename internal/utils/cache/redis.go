@@ -83,7 +83,7 @@ func InitRedisClusterClient(addrs []string, password string, useSsl bool) error 
 		opts.TLSConfig = &tls.Config{}
 	}
 
-	client := redis.NewClusterClient(opts)
+	client = redis.NewClusterClient(opts)
 
 	if _, err := client.Ping(context.Background()).Result(); err != nil {
 		return err
@@ -526,8 +526,15 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 }
 
 func Subscribe[T any](channel string) (<-chan T, func()) {
-	pubsub := client.Subscribe(ctx, channel)
 	ch := make(chan T)
+
+	if client == nil {
+		log.Error("redis client not initialized")
+		close(ch)
+		return ch, func() {}
+	}
+
+	pubsub := client.Subscribe(ctx, channel)
 	connectionEstablished := make(chan bool)
 
 	go func() {

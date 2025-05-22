@@ -10,7 +10,7 @@ import (
 
 // Set the value with key
 func AutoSet[T any](key string, value T, context ...redis.Cmdable) error {
-	if redisClient == nil {
+	if client == nil {
 		return ErrDBNotInit
 	}
 
@@ -32,7 +32,7 @@ func AutoGet[T any](key string, context ...redis.Cmdable) (*T, error) {
 
 // Get the value with key, fallback to getter if not found, and set the value to cache
 func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...redis.Cmdable) (*T, error) {
-	if redisClient == nil {
+	if client == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -66,7 +66,7 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 
 // Delete the value with key
 func AutoDelete[T any](key string, context ...redis.Cmdable) (int64, error) {
-	if redisClient == nil {
+	if client == nil {
 		return 0, ErrDBNotInit
 	}
 
