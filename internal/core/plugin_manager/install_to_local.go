@@ -63,16 +63,24 @@ func (p *PluginManager) InstallToLocal(
 			case err := <-errChan:
 				if err != nil {
 					// if error occurs, delete the plugin from local and stop the plugin
-					identity, err := runtime.Identity()
-					if err != nil {
-						log.Error("get plugin identity failed: %s", err.Error())
+					identity, er := runtime.Identity()
+					if er != nil {
+						log.Error("get plugin identity failed: %s", er.Error())
 					}
-					if err := p.installedBucket.Delete(identity); err != nil {
-						log.Error("delete plugin from local failed: %s", err.Error())
+					if er := p.installedBucket.Delete(identity); er != nil {
+						log.Error("delete plugin from local failed: %s", er.Error())
+					}
+					var errorMsg string
+					if er != nil {
+						errorMsg = er.Error()
+					} else if err != nil {
+						errorMsg = err.Error()
+					} else {
+						errorMsg = "Unknown error"
 					}
 					response.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
-						Data:  err.Error(),
+						Data:  errorMsg,
 					})
 					runtime.Stop()
 					return
