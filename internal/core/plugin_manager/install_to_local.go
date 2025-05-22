@@ -3,6 +3,7 @@ package plugin_manager
 import (
 	"time"
 
+	"errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -70,14 +71,14 @@ func (p *PluginManager) InstallToLocal(
 					if er := p.installedBucket.Delete(identity); er != nil {
 						log.Error("delete plugin from local failed: %s", er.Error())
 					}
+
 					var errorMsg string
 					if er != nil {
-						errorMsg = er.Error()
-					} else if err != nil {
-						errorMsg = err.Error()
+						errorMsg = errors.Join(err, er).Error()
 					} else {
-						errorMsg = "Unknown error"
+						errorMsg = err.Error()
 					}
+
 					response.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
 						Data:  errorMsg,
