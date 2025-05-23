@@ -98,23 +98,9 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.Use(app.InitClusterID())
 
 	group.POST("/tool/invoke", controllers.InvokeTool(config))
-	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials(config))
-	group.POST("/tool/get_runtime_parameters", controllers.GetToolRuntimeParameters(config))
 	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
-	group.POST("/llm/invoke", controllers.InvokeLLM(config))
-	group.POST("/llm/num_tokens", controllers.GetLLMNumTokens(config))
-	group.POST("/text_embedding/invoke", controllers.InvokeTextEmbedding(config))
-	group.POST("/text_embedding/num_tokens", controllers.GetTextEmbeddingNumTokens(config))
-	group.POST("/rerank/invoke", controllers.InvokeRerank(config))
-	group.POST("/tts/invoke", controllers.InvokeTTS(config))
-	group.POST("/tts/model/voices", controllers.GetTTSModelVoices(config))
-	group.POST("/speech2text/invoke", controllers.InvokeSpeech2Text(config))
-	group.POST("/moderation/invoke", controllers.InvokeModeration(config))
-	group.POST("/model/validate_provider_credentials", controllers.ValidateProviderCredentials(config))
-	group.POST("/model/validate_model_credentials", controllers.ValidateModelCredentials(config))
-	group.POST("/model/schema", controllers.GetAIModelSchema(config))
-	group.POST("/oauth/get_authorization_url", controllers.OAuthGetAuthorizationURL(config))
-	group.POST("/oauth/get_credentials", controllers.OAuthGetCredentials(config))
+
+	app.setupGeneratedRoutes(group, config)
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
