@@ -109,18 +109,26 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		"module":   "http_requests",
 		"function": "RequestAndParseStream",
 	}, func() {
-		scanner := bufio.NewScanner(resp.Body)
+		reader := bufio.NewReader(resp.Body)
 		defer resp.Body.Close()
 
-		for scanner.Scan() {
-			data := scanner.Bytes()
+		for {
+			data, err := reader.ReadBytes('\n')
+			if err != nil {
+				if err != io.EOF {
+					log.Warn("stream read error: %v", err)
+					ch.WriteError(err)
+				}
+				break
+			}
+
+			data = bytes.TrimSpace(data)
 			if len(data) == 0 {
 				continue
 			}
 
 			if bytes.HasPrefix(data, []byte("data:")) {
-				// split
-				data = data[5:]
+				data = bytes.TrimSpace(data[5:])
 			}
 
 			if bytes.HasPrefix(data, []byte("event:")) {
@@ -128,10 +136,6 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 				continue
 			}
 
-			// trim space
-			data = bytes.TrimSpace(data)
-
-			// unmarshal
 			t, err := parser.UnmarshalJsonBytes[T](data)
 			if err != nil {
 				if raiseErrorWhenStreamDataNotMatch {
