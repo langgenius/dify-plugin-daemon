@@ -118,29 +118,3 @@ func bindToolValidator(
 		}
 	})
 }
-
-func ValidateToolCredentials(
-	session *session_manager.Session,
-	request *requests.RequestValidateToolCredentials,
-) (
-	*stream.Stream[tool_entities.ValidateCredentialsResult], error,
-) {
-	return GenericInvokePlugin[requests.RequestValidateToolCredentials, tool_entities.ValidateCredentialsResult](
-		session,
-		request,
-		1,
-	)
-}
-
-func GetToolRuntimeParameters(
-	session *session_manager.Session,
-	request *requests.RequestGetToolRuntimeParameters,
-) (
-	*stream.Stream[tool_entities.GetToolRuntimeParametersResponse], error,
-) {
-	return GenericInvokePlugin[requests.RequestGetToolRuntimeParameters, tool_entities.GetToolRuntimeParametersResponse](
-		session,
-		request,
-		1,
-	)
-}
