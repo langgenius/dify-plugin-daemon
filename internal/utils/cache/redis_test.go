@@ -2,12 +2,15 @@ package cache
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -312,4 +315,40 @@ func TestSetAndGet(t *testing.T) {
 	if err != ErrNotFound {
 		t.Fatalf("Get[\"key\"] should be ErrNotFound")
 	}
+}
+
+func TestLock(t *testing.T) {
+	if err := InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0); err != nil {
+		t.Fatal(err)
+	}
+	defer Close()
+
+	const CONCURRENCY = 10
+	const SINGLE_TURN_TIME = 100
+
+	wg := sync.WaitGroup{}
+	wg.Add(CONCURRENCY)
+
+	waitMilliseconds := int32(0)
+
+	foo := func() {
+		Lock("test-lock", SINGLE_TURN_TIME*time.Millisecond*1000, SINGLE_TURN_TIME*time.Millisecond*1000)
+		started := time.Now()
+		time.Sleep(SINGLE_TURN_TIME * time.Millisecond)
+		defer func() {
+			Unlock("test-lock")
+			atomic.AddInt32(&waitMilliseconds, int32(time.Since(started).Milliseconds()))
+			wg.Done()
+		}()
+	}
+
+	for range CONCURRENCY {
+		go foo()
+	}
+
+	wg.Wait()
+
+	fmt.Println("waitSeconds", waitMilliseconds)
+
+	assert.GreaterOrEqual(t, waitMilliseconds, int32(100*CONCURRENCY))
 }
