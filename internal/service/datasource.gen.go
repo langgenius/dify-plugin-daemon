@@ -65,12 +65,12 @@ func DatasourceGetOnlineDocumentPages(
 }
 
 func DatasourceGetOnlineDocumentPageContent(
-	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeDatasourceSecondStep],
+	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeOnlineDocumentDatasourceGetContent],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceInvokeSecondStepResponse], error) {
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse], error) {
 			return plugin_daemon.DatasourceGetOnlineDocumentPageContent(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,

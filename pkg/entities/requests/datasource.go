@@ -24,3 +24,10 @@ type RequestInvokeDatasourceSecondStep struct {
 
 	DatasourceParameters map[string]any `json:"datasource_parameters" validate:"required"`
 }
+
+type RequestInvokeOnlineDocumentDatasourceGetContent struct {
+	Credentials
+	BaseRequestInvokeDatasource
+
+	Page map[string]any `json:"page" validate:"required"`
+}

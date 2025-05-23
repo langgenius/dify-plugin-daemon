@@ -259,8 +259,8 @@ var PluginDispatchers = []PluginDispatcher{
 	},
 	{
 		Name:               "DatasourceGetOnlineDocumentPageContent",
-		RequestType:        requests.RequestInvokeDatasourceSecondStep{},
-		ResponseType:       datasource_entities.DataSourceInvokeSecondStepResponse{},
+		RequestType:        requests.RequestInvokeOnlineDocumentDatasourceGetContent{},
+		ResponseType:       datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",

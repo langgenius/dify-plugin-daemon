@@ -50,7 +50,7 @@ func DatasourceGetOnlineDocumentPages(config *app.Config) gin.HandlerFunc {
 }
 
 func DatasourceGetOnlineDocumentPageContent(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeDatasourceSecondStep]
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeOnlineDocumentDatasourceGetContent]
 
 	return func(c *gin.Context) {
 		BindPluginDispatchRequest(

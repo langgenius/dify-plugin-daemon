@@ -11,3 +11,7 @@ type DataSourceInvokeFirstStepResponse struct {
 type DataSourceInvokeSecondStepResponse struct {
 	Result []map[string]any `json:"result"`
 }
+
+type DatasourceInvokeOnlineDocumentGetContentResponse struct {
+	Result map[string]any `json:"result"`
+}

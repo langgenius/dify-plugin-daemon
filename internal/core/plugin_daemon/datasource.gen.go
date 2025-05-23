@@ -50,11 +50,11 @@ func DatasourceGetOnlineDocumentPages(
 
 func DatasourceGetOnlineDocumentPageContent(
 	session *session_manager.Session,
-	request *requests.RequestInvokeDatasourceSecondStep,
+	request *requests.RequestInvokeOnlineDocumentDatasourceGetContent,
 ) (
-	*stream.Stream[datasource_entities.DataSourceInvokeSecondStepResponse], error,
+	*stream.Stream[datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse], error,
 ) {
-	return GenericInvokePlugin[requests.RequestInvokeDatasourceSecondStep, datasource_entities.DataSourceInvokeSecondStepResponse](
+	return GenericInvokePlugin[requests.RequestInvokeOnlineDocumentDatasourceGetContent, datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse](
 		session,
 		request,
 		1,
