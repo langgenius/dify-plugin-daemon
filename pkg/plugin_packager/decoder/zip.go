@@ -24,8 +24,9 @@ type ZipPluginDecoder struct {
 	reader *zip.Reader
 	err    error
 
-	sig        string
-	createTime int64
+	sig          string
+	createTime   int64
+	verification *Verification
 
 	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig
 }
@@ -35,7 +36,10 @@ type ThirdPartySignatureVerificationConfig struct {
 	PublicKeyPaths []string
 }
 
-func newZipPluginDecoder(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
+func newZipPluginDecoder(
+	binary []byte,
+	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig,
+) (*ZipPluginDecoder, error) {
 	reader, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary)))
 	if err != nil {
 		return nil, errors.New(strings.ReplaceAll(err.Error(), "zip", "difypkg"))
@@ -66,7 +70,10 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 
 // NewZipPluginDecoderWithThirdPartySignatureVerificationConfig is a helper function
 // to create a ZipPluginDecoder with a third party signature verification
-func NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
+func NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
+	binary []byte,
+	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig,
+) (*ZipPluginDecoder, error) {
 	return newZipPluginDecoder(binary, thirdPartySignatureVerificationConfig)
 }
 
@@ -177,18 +184,22 @@ func (z *ZipPluginDecoder) decode() error {
 	}
 
 	signatureData, err := parser.UnmarshalJson[struct {
-		Signature string `json:"signature"`
-		Time      int64  `json:"time"`
+		Signature    string        `json:"signature"`
+		Time         int64         `json:"time"`
+		Verification *Verification `json:"verification"`
 	}](z.reader.Comment)
+
 	if err != nil {
 		return err
 	}
 
 	pluginSig := signatureData.Signature
 	pluginTime := signatureData.Time
+	pluginVerification := signatureData.Verification
 
 	z.sig = pluginSig
 	z.createTime = pluginTime
+	z.verification = pluginVerification
 
 	return nil
 }
@@ -225,6 +236,25 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 	}
 
 	return z.createTime, nil
+}
+
+func (z *ZipPluginDecoder) Verification(ignoreVerifySignature bool) (*Verification, error) {
+	if !ignoreVerifySignature && !z.Verified() {
+		return nil, errors.New("plugin is not verified")
+	}
+
+	if z.verification != nil {
+		return z.verification, nil
+	}
+
+	err := z.decode()
+	if err != nil {
+		return nil, err
+	}
+
+	// if the plugin is verified but the verification is nil
+	// it's historical reason that all plugins are signed by langgenius
+	return nil, nil
 }
 
 func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
@@ -278,4 +308,8 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 
 func (z *ZipPluginDecoder) CheckAssetsValid() error {
 	return z.PluginDecoderHelper.CheckAssetsValid(z)
+}
+
+func (z *ZipPluginDecoder) Verified() bool {
+	return z.PluginDecoderHelper.verified(z)
 }

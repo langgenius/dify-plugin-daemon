@@ -12,6 +12,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/license/public_key"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 )
 
 // VerifyPlugin is a function that verifies the signature of a plugin
@@ -95,8 +96,21 @@ func VerifyPluginWithPublicKeys(decoder PluginDecoder, publicKeys []*rsa.PublicK
 		return err
 	}
 
+	// get the verification, at this point, verification is used to verify checksum
+	// just ignore verifying signature
+	verification, err := decoder.Verification(true)
+	if err != nil {
+		return err
+	}
+
 	// write the time into data
 	data.Write([]byte(strconv.FormatInt(createdAt, 10)))
+
+	if verification != nil {
+		// marshal
+		verificationBytes := parser.MarshalJsonBytes(verification)
+		data.Write(verificationBytes)
+	}
 
 	sigBytes, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
