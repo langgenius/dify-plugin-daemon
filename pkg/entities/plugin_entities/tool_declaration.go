@@ -33,11 +33,6 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("tool_identity_name", isToolIdentityName)
 }
 
-type ToolParameterOption struct {
-	Value string     `json:"value" yaml:"value" validate:"required"`
-	Label I18nObject `json:"label" yaml:"label" validate:"required"`
-}
-
 type ToolParameterType string
 
 const (
@@ -134,7 +129,7 @@ type ToolParameter struct {
 	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
 	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
 	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options          []ToolParameterOption  `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type ToolDescription struct {

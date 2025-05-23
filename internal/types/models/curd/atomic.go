@@ -151,6 +151,21 @@ func InstallPlugin(
 			}
 		}
 
+		// create datasource installation
+		if declaration.Datasource != nil {
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenantId,
+				Provider:               declaration.Datasource.Identity.Name,
+			}
+
+			err := db.Create(datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -495,6 +510,34 @@ func UpgradePlugin(
 			}
 
 			err := db.Create(agentStrategyInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update datasource installation
+		if originalDeclaration.Datasource != nil {
+			// delete the original datasource installation
+			err := db.DeleteByCondition(&models.DatasourceInstallation{
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Datasource != nil {
+			// create the new datasource installation
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
+				Provider:               newDeclaration.Datasource.Identity.Name,
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
+			}
+
+			err := db.Create(datasourceInstallation, tx)
 			if err != nil {
 				return err
 			}
