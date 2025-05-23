@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747982554634,
+  "lastUpdate": 1747983714667,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3528,6 +3528,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "977214750 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d28e0ceed2bcca29dd5e92596c906f71fbb995a",
+          "message": "feat: Add code generation for plugin controllers and services (#301)\n\n* feat: Add code generation for plugin controllers and services\n\n- Introduced a code generation mechanism for plugin controllers and services, allowing for automatic generation based on defined dispatchers.\n- Created new files for generated controllers, services, and templates to streamline the plugin invocation process.\n- Removed outdated functions related to tool validation and runtime parameters, consolidating functionality into generated files.\n- Updated dependencies in go.mod and go.sum to include necessary packages for the new code generation features.\n\n* fix",
+          "timestamp": "2025-05-23T14:57:56+08:00",
+          "tree_id": "8758f4b182d8f18b81d0015f47c754068de5dbfe",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/3d28e0ceed2bcca29dd5e92596c906f71fbb995a"
+        },
+        "date": 1747983714286,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139162389,
+            "unit": "ns/op\t 1593493 B/op\t   28318 allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139162389,
+            "unit": "ns/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593493,
+            "unit": "B/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28318,
+            "unit": "allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.97,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "988813171 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.97,
+            "unit": "ns/op",
+            "extra": "988813171 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "988813171 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "988813171 times\n4 procs"
           }
         ]
       }
