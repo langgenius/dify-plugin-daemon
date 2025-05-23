@@ -211,7 +211,7 @@ var PluginDispatchers = []PluginDispatcher{
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_OAUTH",
 		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL",
 		BufferSize:         1,
-		Path:               "/oauth/authorization_url",
+		Path:               "/oauth/get_authorization_url",
 	},
 	{
 		Name:               "GetCredentials",
@@ -222,7 +222,7 @@ var PluginDispatchers = []PluginDispatcher{
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_OAUTH",
 		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_GET_CREDENTIALS",
 		BufferSize:         1,
-		Path:               "/oauth/credentials",
+		Path:               "/oauth/get_credentials",
 	},
 	{
 		Name:               "DatasourceValidateCredentials",
