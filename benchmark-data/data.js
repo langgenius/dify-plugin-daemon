@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747983714667,
+  "lastUpdate": 1747985426363,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3600,6 +3600,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "988813171 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6906f7eb5c3b311f4f29215d625f32e829350b4",
+          "message": "feat: Generate HTTP server routes from template (#306)\n\n* feat: Generate HTTP server routes from template\n\n- Added a new file `http_server.gen.go` to automatically generate HTTP server routes based on defined dispatchers.\n- Refactored existing route definitions in `http_server.go` to utilize the generated routes, improving maintainability.\n- Introduced a code generation function in `generator.go` to create the HTTP server file, enhancing the plugin development workflow.\n- Updated the template for HTTP server generation to streamline route creation for various controllers.\n\n* fix: Update OAuth paths in PluginDispatchers for consistency\n\n- Changed the path for authorization URL from `/oauth/authorization_url` to `/oauth/get_authorization_url`.\n- Updated the path for credentials from `/oauth/credentials` to `/oauth/get_credentials` to align with naming conventions.",
+          "timestamp": "2025-05-23T15:27:43+08:00",
+          "tree_id": "81a21c026e60a66e16272c6da05e27cae94024da",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b6906f7eb5c3b311f4f29215d625f32e829350b4"
+        },
+        "date": 1747985426000,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139205345,
+            "unit": "ns/op\t 1593467 B/op\t   28317 allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139205345,
+            "unit": "ns/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593467,
+            "unit": "B/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.01,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "984414014 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.01,
+            "unit": "ns/op",
+            "extra": "984414014 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "984414014 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "984414014 times\n4 procs"
           }
         ]
       }
