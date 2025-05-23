@@ -5,9 +5,9 @@ type DataSourceValidateCredentialsResponse struct {
 }
 
 type DataSourceInvokeFirstStepResponse struct {
-	Response map[string]any `json:"response"`
+	Result []map[string]any `json:"result"`
 }
 
 type DataSourceInvokeSecondStepResponse struct {
-	Response map[string]any `json:"response"`
+	Result []map[string]any `json:"result"`
 }

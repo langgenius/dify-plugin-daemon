@@ -40,7 +40,7 @@ func DatasourceInvokeFirstStep(
 			return plugin_daemon.InvokeDatasourceFirstStep(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_DATASOURCE_FIRST_STEP,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL,
 		r,
 		ctx,
 		int(maxExecutionTimeout.Seconds()),
@@ -57,7 +57,7 @@ func DatasourceInvokeSecondStep(
 			return plugin_daemon.InvokeDatasourceSecondStep(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_DATASOURCE_SECOND_STEP,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES,
 		r,
 		ctx,
 		int(maxExecutionTimeout.Seconds()),
