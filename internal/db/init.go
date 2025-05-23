@@ -15,6 +15,7 @@ func autoMigrate() error {
 		models.PluginDeclaration{},
 		models.Endpoint{},
 		models.ServerlessRuntime{},
+		models.DatasourceInstallation{},
 		models.ToolInstallation{},
 		models.AIModelInstallation{},
 		models.InstallTask{},
