@@ -39,3 +39,8 @@ func isBasicType(fl validator.FieldLevel) bool {
 
 	return false
 }
+
+type ParameterOption struct {
+	Value string     `json:"value" yaml:"value" validate:"required"`
+	Label I18nObject `json:"label" yaml:"label" validate:"required"`
+}
