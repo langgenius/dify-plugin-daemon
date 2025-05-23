@@ -11,6 +11,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers/definitions"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"golang.org/x/tools/imports"
 )
 
@@ -153,6 +154,50 @@ func GeneratePluginDaemon(accessType access_types.PluginAccessType, dispatchers 
 	return nil
 }
 
+// GenerateHTTPServer generates a http server file for the given access type
+func GenerateHTTPServer(dispatchers []*definitions.PluginDispatcher) error {
+	// Create template
+	tmpl := template.Must(template.New("httpServer").Parse(httpServerTemplate))
+
+	// Create output file
+	outputPath := filepath.Join("internal", "server", "http_server.gen.go")
+
+	// Execute template
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, struct {
+		Dispatchers []*definitions.PluginDispatcher
+	}{
+		Dispatchers: dispatchers,
+	}); err != nil {
+		return fmt.Errorf("failed to execute template: %v", err)
+	}
+
+	// Format code
+	src, err := format.Source([]byte(buf.String()))
+	if err != nil {
+		return fmt.Errorf("failed to format code: %v", err)
+	}
+
+	// imports necessary packages
+	output, err := imports.Process(outputPath, src, nil)
+	if err != nil {
+		return fmt.Errorf("failed to process imports: %v", err)
+	}
+
+	f, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %v", err)
+	}
+	defer f.Close()
+
+	// Write to file
+	if _, err := f.Write(output); err != nil {
+		return fmt.Errorf("failed to write file: %v", err)
+	}
+
+	return nil
+}
+
 // GenerateAll generates all controller and service files based on dispatchers
 func GenerateAll() error {
 	// Group dispatchers by access type
@@ -181,5 +226,17 @@ func GenerateAll() error {
 			return fmt.Errorf("failed to generate plugin daemon for %s: %v", accessType, err)
 		}
 	}
+
+	if err := GenerateHTTPServer(
+		mapping.MapArray(
+			definitions.PluginDispatchers,
+			func(dispatcher definitions.PluginDispatcher) *definitions.PluginDispatcher {
+				return &dispatcher
+			},
+		),
+	); err != nil {
+		return fmt.Errorf("failed to generate http server: %v", err)
+	}
+
 	return nil
 }
