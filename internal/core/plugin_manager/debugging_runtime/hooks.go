@@ -275,7 +275,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			if !runtime.modelsRegistrationTransferred &&
 				!runtime.endpointsRegistrationTransferred &&
 				!runtime.toolsRegistrationTransferred &&
-				!runtime.agentStrategyRegistrationTransferred {
+				!runtime.agentStrategyRegistrationTransferred &&
+				!runtime.datasourceRegistrationTransferred {
 				closeConn([]byte("no registration transferred, cannot initialize\n"))
 				return
 			}
@@ -421,6 +422,24 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			if len(agents) > 0 {
 				declaration := runtime.Config
 				declaration.AgentStrategy = &agents[0]
+				runtime.Config = declaration
+			}
+		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_DATASOURCE_DECLARATION {
+			if runtime.datasourceRegistrationTransferred {
+				return
+			}
+
+			datasources, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.DatasourceProviderDeclaration](registerPayload.Data)
+			if err != nil {
+				closeConn([]byte(fmt.Sprintf("datasources register failed, invalid datasources declaration: %v\n", err)))
+				return
+			}
+
+			runtime.datasourceRegistrationTransferred = true
+
+			if len(datasources) > 0 {
+				declaration := runtime.Config
+				declaration.Datasource = &datasources[0]
 				runtime.Config = declaration
 			}
 		}
