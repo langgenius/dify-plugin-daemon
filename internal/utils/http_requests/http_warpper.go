@@ -109,11 +109,19 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		"module":   "http_requests",
 		"function": "RequestAndParseStream",
 	}, func() {
-		scanner := bufio.NewScanner(resp.Body)
+		reader := bufio.NewReaderSize(resp.Body, 4*1024) // init with 4KB buffer
 		defer resp.Body.Close()
+		for {
+			// read line by line
+			data, err := reader.ReadBytes('\n')
+			if err != nil {
+				if err != io.EOF {
+					log.Error("read body err:", err)
+				}
+				break
+			}
 
-		for scanner.Scan() {
-			data := scanner.Bytes()
+			data = bytes.TrimSpace(data)
 			if len(data) == 0 {
 				continue
 			}
