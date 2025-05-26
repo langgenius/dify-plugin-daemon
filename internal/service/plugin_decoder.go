@@ -61,11 +61,9 @@ func UploadPluginPkg(
 		}
 	}
 
-	verification, _ := decoderInstance.Verification(false)
+	verification, _ := decoderInstance.Verification()
 	if verification == nil && decoderInstance.Verified() {
-		verification = &decoder.Verification{
-			AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
-		}
+		verification = decoder.DefaultVerification()
 	}
 
 	return entities.NewSuccessResponse(map[string]any{

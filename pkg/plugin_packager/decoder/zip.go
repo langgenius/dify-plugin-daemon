@@ -15,6 +15,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
 )
 
 type ZipPluginDecoder struct {
@@ -184,9 +185,8 @@ func (z *ZipPluginDecoder) decode() error {
 	}
 
 	signatureData, err := parser.UnmarshalJson[struct {
-		Signature    string        `json:"signature"`
-		Time         int64         `json:"time"`
-		Verification *Verification `json:"verification"`
+		Signature string `json:"signature"`
+		Time      int64  `json:"time"`
 	}](z.reader.Comment)
 
 	if err != nil {
@@ -195,11 +195,31 @@ func (z *ZipPluginDecoder) decode() error {
 
 	pluginSig := signatureData.Signature
 	pluginTime := signatureData.Time
-	pluginVerification := signatureData.Verification
+
+	var verification *Verification
+
+	// try to read the verification file
+	verificationData, err := z.ReadFile(consts.VERIFICATION_FILE)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
+		// if the verification file is not found, set the verification to nil
+		verification = nil
+	} else {
+		// unmarshal the verification data
+		verificationData, err := parser.UnmarshalJsonBytes[Verification](verificationData)
+		if err != nil {
+			return err
+		}
+
+		verification = &verificationData
+	}
 
 	z.sig = pluginSig
 	z.createTime = pluginTime
-	z.verification = pluginVerification
+	z.verification = verification
 
 	return nil
 }
@@ -238,8 +258,8 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 	return z.createTime, nil
 }
 
-func (z *ZipPluginDecoder) Verification(ignoreVerifySignature bool) (*Verification, error) {
-	if !ignoreVerifySignature && !z.Verified() {
+func (z *ZipPluginDecoder) Verification() (*Verification, error) {
+	if !z.Verified() {
 		return nil, errors.New("plugin is not verified")
 	}
 

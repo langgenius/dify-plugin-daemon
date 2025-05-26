@@ -172,6 +172,29 @@ func TestSignAndVerify(t *testing.T) {
 			} else if !tt.expectSuccess && err == nil {
 				t.Errorf("Expected verification to fail, but it succeeded")
 			}
+
+			// check the verification
+			pluginData, err := os.ReadFile(dummyPluginPath)
+			assert.NoError(t, err)
+
+			decoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
+				pluginData,
+				&decoder.ThirdPartySignatureVerificationConfig{
+					Enabled:        true,
+					PublicKeyPaths: []string{tt.verifyKeyPath},
+				},
+			)
+			assert.NoError(t, err)
+
+			if tt.expectSuccess {
+				verification, err := decoder.Verification()
+				assert.NoError(t, err)
+				assert.Equal(t, tt.verification.AuthorizedCategory, verification.AuthorizedCategory)
+			} else {
+				verification, err := decoder.Verification()
+				assert.Error(t, err)
+				assert.Nil(t, verification)
+			}
 		})
 	}
 }
@@ -273,7 +296,7 @@ func TestVerifyPluginWithoutVerificationField(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	verification, err := decoder.Verification(false)
+	verification, err := decoder.Verification()
 	assert.NoError(t, err)
 	assert.Nil(t, verification)
 
