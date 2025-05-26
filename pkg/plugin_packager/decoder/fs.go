@@ -169,7 +169,7 @@ func (d *FSPluginDecoder) CreateTime() (int64, error) {
 	return 0, nil
 }
 
-func (d *FSPluginDecoder) Verification(ignoreVerifySignature bool) (*Verification, error) {
+func (d *FSPluginDecoder) Verification() (*Verification, error) {
 	return nil, nil
 }
 

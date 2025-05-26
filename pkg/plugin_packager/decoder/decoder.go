@@ -45,7 +45,7 @@ type PluginDecoder interface {
 
 	// Verification returns the verification of the plugin, if available
 	// Error will only returns if the plugin is not verified
-	Verification(ignoreVerifySignature bool) (*Verification, error)
+	Verification() (*Verification, error)
 
 	// CreateTime returns the creation time of the plugin as a Unix timestamp
 	CreateTime() (int64, error)

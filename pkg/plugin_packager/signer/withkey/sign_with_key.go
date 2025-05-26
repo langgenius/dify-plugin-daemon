@@ -14,6 +14,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
@@ -73,6 +74,31 @@ func SignPluginWithPrivateKey(
 		return nil, err
 	}
 
+	// write the verification into data
+	// NOTE: .verification.dify.json is a special file that contains the verification information
+	// and it will be placed at the end of the zip file, checksum is calculated using it also
+	verificationBytes := parser.MarshalJsonBytes(verification)
+
+	// write verification into the zip file
+	fileWriter, err := zipWriter.Create(consts.VERIFICATION_FILE)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := fileWriter.Write(verificationBytes); err != nil {
+		return nil, err
+	}
+
+	// hash the verification
+	hash := sha256.New()
+	hash.Write(verificationBytes)
+	hashed := hash.Sum(nil)
+
+	// write the hash into data
+	if _, err := data.Write(hashed); err != nil {
+		return nil, err
+	}
+
 	// get current time
 	ct := time.Now().Unix()
 
@@ -82,12 +108,6 @@ func SignPluginWithPrivateKey(
 	// write the time into data
 	data.Write([]byte(timeString))
 
-	// json marshal the verification
-	verificationBytes := parser.MarshalJsonBytes(verification)
-
-	// write the verification into data
-	data.Write(verificationBytes)
-
 	// sign the data
 	signature, err := encryption.RSASign(privateKey, data.Bytes())
 	if err != nil {
@@ -96,9 +116,8 @@ func SignPluginWithPrivateKey(
 
 	// write the signature into the comment field of the zip file
 	comments := parser.MarshalJson(map[string]any{
-		"signature":    base64.StdEncoding.EncodeToString(signature),
-		"time":         ct,
-		"verification": verification,
+		"signature": base64.StdEncoding.EncodeToString(signature),
+		"time":      ct,
 	})
 
 	// write signature

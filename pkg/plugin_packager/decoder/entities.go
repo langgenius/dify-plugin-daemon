@@ -11,3 +11,9 @@ const (
 type Verification struct {
 	AuthorizedCategory AuthorizedCategory `json:"authorized_category"`
 }
+
+func DefaultVerification() *Verification {
+	return &Verification{
+		AuthorizedCategory: AUTHORIZED_CATEGORY_LANGGENIUS,
+	}
+}
