@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	MaxPluginPackageSize = int64(52428800) // 50MB
+	MaxPluginPackageSize = int64(50 * 1024 * 1024) // 50 MB
 )
 
 func PackagePlugin(inputPath string, outputPath string) {
@@ -24,7 +24,7 @@ func PackagePlugin(inputPath string, outputPath string) {
 	zipFile, err := packager.Pack(MaxPluginPackageSize)
 
 	if err != nil {
-		log.Error("failed to package plugin %v", err)
+		log.Error("failed to package plugin: %v", err)
 		os.Exit(1)
 		return
 	}
