@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747985426363,
+  "lastUpdate": 1748230081492,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3672,6 +3672,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "984414014 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "15627489+NeatGuyCoding@users.noreply.github.com",
+            "name": "NeatGuyCoding",
+            "username": "NeatGuyCoding"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6b7172d6a60ac4aa6c4d7ca1ab191dca930ab2ec",
+          "message": "fix: errChan failed to write response because of panic nil (#296) (#297)\n\n* fix: errChan failed to write response because of panic nil (#296)\n\n* fix: join err and er into a single error using errors.Join, thanks @Yeuoly (#296)\n\n---------\n\nCo-authored-by: NeatGuyCoding <cto@sb>",
+          "timestamp": "2025-05-26T11:25:11+08:00",
+          "tree_id": "ed39b6d007bc6f3699ea5ac3eaa47e645290d89f",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/6b7172d6a60ac4aa6c4d7ca1ab191dca930ab2ec"
+        },
+        "date": 1748230081161,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137694237,
+            "unit": "ns/op\t 1593097 B/op\t   28317 allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137694237,
+            "unit": "ns/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593097,
+            "unit": "B/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.25,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "964228320 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.25,
+            "unit": "ns/op",
+            "extra": "964228320 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "964228320 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "964228320 times\n4 procs"
           }
         ]
       }
