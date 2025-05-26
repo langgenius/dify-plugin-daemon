@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748230081492,
+  "lastUpdate": 1748236422856,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3744,6 +3744,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "964228320 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "478c98da5c7d44108ef98c80e44eebf5a93944d8",
+          "message": "fix: signature dose not work as expected, if upload new pkg to old dify (#311)\n\n- Updated the  method in the  interface to remove the  parameter, simplifying its usage.\n- Introduced a new  function to provide a default verification structure.\n- Added a  file to store verification data, improving the plugin signing process.\n- Enhanced tests in  to validate the verification process, ensuring proper handling of success and failure scenarios.\n- Refactored related code to accommodate the new verification structure and improve overall maintainability.",
+          "timestamp": "2025-05-26T13:10:34+08:00",
+          "tree_id": "8c5bff5c8cc3cf163e0b4ae843164491d8585aeb",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/478c98da5c7d44108ef98c80e44eebf5a93944d8"
+        },
+        "date": 1748236422389,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139348281,
+            "unit": "ns/op\t 1593558 B/op\t   28317 allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139348281,
+            "unit": "ns/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593558,
+            "unit": "B/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.07,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "974817550 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.07,
+            "unit": "ns/op",
+            "extra": "974817550 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "974817550 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "974817550 times\n4 procs"
           }
         ]
       }
