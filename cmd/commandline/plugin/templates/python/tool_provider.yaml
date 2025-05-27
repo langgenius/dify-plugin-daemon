@@ -1,15 +1,15 @@
 identity:
-  author: {{ .Author }}
-  name: {{ .PluginName }}
+  author: "{{ .Author }}"
+  name: "{{ .PluginName }}"
   label:
-    en_US: {{ .PluginName }}
-    zh_Hans: {{ .PluginName }}
-    pt_BR: {{ .PluginName }}
+    en_US: "{{ .PluginName }}"
+    zh_Hans: "{{ .PluginName }}"
+    pt_BR: "{{ .PluginName }}"
   description:
-    en_US: {{ .PluginDescription }}
-    zh_Hans: {{ .PluginDescription }}
-    pt_BR: {{ .PluginDescription }}
-  icon: icon.svg
+    en_US: "{{ .PluginDescription }}"
+    zh_Hans: "{{ .PluginDescription }}"
+    pt_BR: "{{ .PluginDescription }}"
+  icon: "icon.svg"
 tools:
   - tools/{{ .PluginName }}.yaml
 extra:
