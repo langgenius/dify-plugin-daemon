@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748322312705,
+  "lastUpdate": 1748346659889,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -3960,6 +3960,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "986288181 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3918b377f2888f772b7a86f2e32d019eea4625df",
+          "message": "refactor: streamline plugin initialization and update YAML templates for consistency (#313)\n\n- Removed redundant flag retrieval in the plugin initialization process, simplifying the code.\n- Updated permission handling to use a single `permissionRequirement` structure for better clarity and maintainability.\n- Enhanced YAML templates by adding quotes around dynamic values to ensure proper formatting and prevent potential parsing issues.",
+          "timestamp": "2025-05-27T19:48:11+08:00",
+          "tree_id": "1c3420182b9385b5233f1f082da2a4a8622ab1a5",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/3918b377f2888f772b7a86f2e32d019eea4625df"
+        },
+        "date": 1748346659470,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137211823,
+            "unit": "ns/op\t 1593935 B/op\t   28317 allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137211823,
+            "unit": "ns/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1593935,
+            "unit": "B/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28317,
+            "unit": "allocs/op",
+            "extra": "252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.96,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "999987208 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.96,
+            "unit": "ns/op",
+            "extra": "999987208 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "999987208 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "999987208 times\n4 procs"
           }
         ]
       }
