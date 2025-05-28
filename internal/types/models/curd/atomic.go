@@ -203,6 +203,14 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenantId),
 	)
 
+	if err != nil {
+		if err == db.ErrDatabaseNotFound {
+			return nil, errors.New("plugin has not been installed")
+		} else {
+			return nil, err
+		}
+	}
+
 	pluginInstallationCacheKey := strings.Join(
 		[]string{
 			"plugin_id",
@@ -214,14 +222,6 @@ func UninstallPlugin(
 	)
 
 	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
-
-	if err != nil {
-		if err == db.ErrDatabaseNotFound {
-			return nil, errors.New("plugin has not been installed")
-		} else {
-			return nil, err
-		}
-	}
 
 	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
@@ -295,6 +295,19 @@ func UninstallPlugin(
 			}
 
 			err := db.DeleteByCondition(&modelInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete datasource installation
+		if declaration.Datasource != nil {
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginID: pluginToBeReturns.PluginID,
+				TenantID: tenantId,
+			}
+
+			err := db.DeleteByCondition(&datasourceInstallation, tx)
 			if err != nil {
 				return err
 			}
