@@ -4,8 +4,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
+	"fmt"
 	"path/filepath"
-	"strconv"
+	"sort"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
@@ -34,16 +35,32 @@ func (p *Packager) Pack(maxSize int64) ([]byte, error) {
 
 	totalSize := int64(0)
 
+	var files []FileInfoWithPath
+
 	err = p.decoder.Walk(func(filename, dir string) error {
 		fullPath := filepath.Join(dir, filename)
 		file, err := p.decoder.ReadFile(fullPath)
 		if err != nil {
 			return err
 		}
-
-		totalSize += int64(len(file))
+		fileSize := int64(len(file))
+		files = append(files, FileInfoWithPath{Path: fullPath, Size: fileSize})
+		totalSize += fileSize
 		if totalSize > maxSize {
-			return errors.New("plugin package size is too large, please ensure the uncompressed size is less than " + strconv.FormatInt(maxSize, 10) + " bytes")
+			sort.Slice(files, func(i, j int) bool {
+				return files[i].Size > files[j].Size
+			})
+			fileTop5Info := ""
+			top := 5
+			if len(files) < 5 {
+				top = len(files)
+			}
+			for i := 0; i < top; i++ {
+				fileTop5Info += fmt.Sprintf("%d. name: %s, size: %d bytes\n", i+1, files[i].Path, files[i].Size)
+			}
+			errMsg := fmt.Sprintf("Plugin package size is too large. Please ensure the uncompressed size is less than %d bytes.\nPackaged file info:\n%s",
+				maxSize, fileTop5Info)
+			return errors.New(errMsg)
 		}
 
 		// ISSUES: Windows path separator is \, but zip requires /, to avoid this we just simply replace all \ with / for now
@@ -73,4 +90,9 @@ func (p *Packager) Pack(maxSize int64) ([]byte, error) {
 	}
 
 	return zipBuffer.Bytes(), nil
+}
+
+type FileInfoWithPath struct {
+	Path string
+	Size int64
 }

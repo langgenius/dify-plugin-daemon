@@ -34,8 +34,23 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		Meta                   map[string]any                     `json:"meta"`
 	}
 
+	type responseData struct {
+		List  []installation `json:"list"`
+		Total int64          `json:"total"`
+  }
+
+	// get total count
+	totalCount, err := db.GetCount[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
 	pluginInstallations, err := db.GetAll[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
+		db.OrderBy("created_at", true),
 		db.Page(page, page_size),
 	)
 
@@ -81,7 +96,12 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		})
 	}
 
-	return entities.NewSuccessResponse(data)
+	finalData := responseData{
+		List: 	data,
+		Total: 	totalCount,
+  }
+
+	return entities.NewSuccessResponse(finalData)
 }
 
 // Using plugin_ids to fetch plugin installations

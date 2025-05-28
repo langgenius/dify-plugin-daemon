@@ -2,9 +2,9 @@ identity:
   name: {{ .PluginName }}
   author: {{ .Author }}
   label:
-    en_US: {{ .PluginName | SnakeToCamel }}
+    en_US: "{{ .PluginName | SnakeToCamel }}"
 description:
-  en_US: {{ .PluginName | SnakeToCamel }}
+  en_US: "{{ .PluginName | SnakeToCamel }}"
 parameters:
   - name: model
     type: model-selector
