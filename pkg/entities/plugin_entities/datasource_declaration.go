@@ -95,7 +95,7 @@ type DatasourceProviderIdentity struct {
 type DatasourceProviderDeclaration struct {
 	Identity          DatasourceProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
 	CredentialsSchema []ProviderConfig           `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
-	OAuthSchema       *OAuthSchema               `json:"oauth_schema" yaml:"oauth_schema" validate:"omitempty,dive"`
+	OAuthSchema       *OAuthSchema               `json:"oauth_schema" yaml:"oauth_schema" validate:"omitempty"`
 	ProviderType      DatasourceType             `json:"provider_type" yaml:"provider_type" validate:"required,datasource_provider_type"`
 	Datasources       []DatasourceDeclaration    `json:"datasources" yaml:"datasources" validate:"required,dive"`
 	DatasourceFiles   []string                   `json:"-" yaml:"-"`
