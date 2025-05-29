@@ -90,7 +90,7 @@ func (s *VolcengineTOSStorage) List(prefix string) ([]oss.OSSPath, error) {
 		resp, err := s.client.ListObjectsType2(context.Background(), &tos.ListObjectsType2Input{
 			Bucket:            s.bucket,
 			Prefix:            prefix,
-			MaxKeys:           1,
+			MaxKeys:           1000,
 			ContinuationToken: continuationToken,
 		})
 		if err != nil {
