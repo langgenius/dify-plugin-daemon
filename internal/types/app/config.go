@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-cloud-kit/oss"
 )
 
 type Config struct {
@@ -236,44 +235,6 @@ func (c *Config) Validate() error {
 
 	if c.PluginPackageCachePath == "" {
 		return fmt.Errorf("plugin package cache path is empty")
-	}
-
-	if c.PluginStorageType == oss.OSS_TYPE_S3 {
-		if c.PluginStorageOSSBucket == "" {
-			return fmt.Errorf("plugin storage bucket is empty")
-		}
-
-		if c.AWSRegion == "" {
-			return fmt.Errorf("aws region is empty")
-		}
-	}
-
-	if c.PluginStorageType == oss.OSS_TYPE_AZURE_BLOB {
-		if c.AzureBlobStorageConnectionString == "" {
-			return fmt.Errorf("azure blob storage connection string is empty")
-		}
-
-		if c.AzureBlobStorageContainerName == "" {
-			return fmt.Errorf("azure blob storage container name is empty")
-		}
-	}
-
-	if c.PluginStorageType == oss.OSS_TYPE_ALIYUN_OSS {
-		if c.PluginStorageOSSBucket == "" {
-			return fmt.Errorf("plugin storage bucket is empty")
-		}
-
-		if c.AliyunOSSEndpoint == "" {
-			return fmt.Errorf("aliyun oss endpoint is empty")
-		}
-
-		if c.AliyunOSSAccessKeyID == "" {
-			return fmt.Errorf("aliyun oss access key id is empty")
-		}
-
-		if c.AliyunOSSAccessKeySecret == "" {
-			return fmt.Errorf("aliyun oss access key secret is empty")
-		}
 	}
 
 	return nil
