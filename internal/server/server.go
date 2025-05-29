@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/langgenius/dify-plugin-daemon/internal/oss/volcengine_tos"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
@@ -60,6 +61,14 @@ func initOSS(config *app.Config) oss.OSS {
 			config.AliyunOSSAccessKeySecret,
 			config.AliyunOSSAuthVersion,
 			config.AliyunOSSPath,
+			config.PluginStorageOSSBucket,
+		)
+	case oss.OSS_TYPE_VOLCENGINE_TOS:
+		storage, err = volcengine_tos.NewVolcengineTOSStorage(
+			config.VolcengineTOSEndpoint,
+			config.VolcengineTOSRegion,
+			config.VolcengineTOSAccessKey,
+			config.VolcengineTOSSecretKey,
 			config.PluginStorageOSSBucket,
 		)
 	default:

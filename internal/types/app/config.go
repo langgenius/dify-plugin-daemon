@@ -42,7 +42,12 @@ type Config struct {
 	AliyunOSSAuthVersion     string `envconfig:"ALIYUN_OSS_AUTH_VERSION" default:"v4"`
 	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob gcs aliyun_oss"`
+	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
+	VolcengineTOSAccessKey string `envconfig:"VOLCENGINE_TOS_ACCESS_KEY"`
+	VolcengineTOSSecretKey string `envconfig:"VOLCENGINE_TOS_SECRET_KEY"`
+	VolcengineTOSRegion    string `envconfig:"VOLCENGINE_TOS_REGION"`
+
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob gcs aliyun_oss volcengine_tos"`
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
@@ -252,6 +257,24 @@ func (c *Config) Validate() error {
 
 		if c.AliyunOSSAccessKeySecret == "" {
 			return fmt.Errorf("aliyun oss access key secret is empty")
+		}
+	}
+
+	if c.PluginStorageType == oss.OSS_TYPE_VOLCENGINE_TOS {
+		if c.PluginStorageOSSBucket == "" {
+			return fmt.Errorf("plugin storage bucket is empty")
+		}
+
+		if c.VolcengineTOSEndpoint == "" {
+			return fmt.Errorf("volcengine tos endpoint is empty")
+		}
+
+		if c.VolcengineTOSSecretKey == "" {
+			return fmt.Errorf("volcengine tos secret key is empty")
+		}
+
+		if c.VolcengineTOSAccessKey == "" {
+			return fmt.Errorf("volcengine tos access key is empty")
 		}
 	}
 

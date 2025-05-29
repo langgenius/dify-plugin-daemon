@@ -25,6 +25,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.62
+	github.com/volcengine/ve-tos-golang-sdk/v2 v2.7.12
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/oauth2 v0.28.0
 	golang.org/x/tools v0.22.0

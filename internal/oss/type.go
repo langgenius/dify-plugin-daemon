@@ -12,6 +12,7 @@ const (
 	OSS_TYPE_AZURE_BLOB  = "azure_blob"
 	OSS_TYPE_GCS         = "gcs"
 	OSS_TYPE_ALIYUN_OSS  = "aliyun_oss"
+	OSS_TYPE_VOLCENGINE_TOS = "volcengine_tos"
 )
 
 type OSSState struct {
