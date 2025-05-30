@@ -75,6 +75,44 @@ func PatchAndParse[T any](client *http.Client, url string, options ...HttpOption
 	return RequestAndParse[T](client, url, "PATCH", options...)
 }
 
+func readBodyStream(resp io.ReadCloser, callback func(data []byte) error) error {
+	reader := bufio.NewReaderSize(resp, 4*1024) // init with 4KB buffer
+	defer resp.Close()
+	for {
+		// read line by line
+		data, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				log.Error("read body err:", err)
+			}
+			break
+		}
+
+		data = bytes.TrimSpace(data)
+		if len(data) == 0 {
+			continue
+		}
+
+		if bytes.HasPrefix(data, []byte("data:")) {
+			// split
+			data = data[5:]
+		}
+
+		if bytes.HasPrefix(data, []byte("event:")) {
+			// TODO: handle event
+			continue
+		}
+
+		// trim space
+		data = bytes.TrimSpace(data)
+		if err := callback(data); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func RequestAndParseStream[T any](client *http.Client, url string, method string, options ...HttpOptions) (*stream.Stream[T], error) {
 	resp, err := Request(client, url, method, options...)
 	if err != nil {
@@ -109,42 +147,21 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		"module":   "http_requests",
 		"function": "RequestAndParseStream",
 	}, func() {
-		scanner := bufio.NewScanner(resp.Body)
-		defer resp.Body.Close()
-
-		for scanner.Scan() {
-			data := scanner.Bytes()
-			if len(data) == 0 {
-				continue
-			}
-
-			if bytes.HasPrefix(data, []byte("data:")) {
-				// split
-				data = data[5:]
-			}
-
-			if bytes.HasPrefix(data, []byte("event:")) {
-				// TODO: handle event
-				continue
-			}
-
-			// trim space
-			data = bytes.TrimSpace(data)
-
+		readBodyStream(resp.Body, func(data []byte) error {
 			// unmarshal
 			t, err := parser.UnmarshalJsonBytes[T](data)
 			if err != nil {
 				if raiseErrorWhenStreamDataNotMatch {
 					ch.WriteError(err)
-					break
+					return err
 				} else {
 					log.Warn("stream data not match for %s, got %s", url, string(data))
 				}
-				continue
 			}
 
 			ch.Write(t)
-		}
+			return nil
+		})
 
 		ch.Close()
 	})
