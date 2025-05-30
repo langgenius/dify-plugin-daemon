@@ -66,7 +66,7 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 	},
 	)
 	if err != nil {
-		t.Errorf("failed to load local storage", err.Error())
+		t.Error("failed to load local storage", err.Error())
 	}
 
 	// start plugin server

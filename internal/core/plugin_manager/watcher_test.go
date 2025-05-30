@@ -120,7 +120,7 @@ func TestRemotePluginWatcherPluginStoredToManager(t *testing.T) {
 	},
 	)
 	if err != nil {
-		t.Errorf("failed to load local storage", err.Error())
+		t.Error("failed to load local storage", err.Error())
 	}
 
 	pm := InitGlobalManager(oss, config)
