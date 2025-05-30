@@ -3,8 +3,6 @@ package app
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/oss"
-
 	"github.com/go-playground/validator/v10"
 )
 
@@ -21,6 +19,12 @@ type Config struct {
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
+	// storage config
+	// https://github.com/langgenius/dify-cloud-kit/blob/main/oss/factory/factory.go
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required"`
+	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
+
+	// aws s3
 	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"true"`
 	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
 	S3UsePathStyle     bool   `envconfig:"S3_USE_PATH_STYLE" default:"true"`
@@ -28,13 +32,16 @@ type Config struct {
 	AWSSecretKey       string `envconfig:"AWS_SECRET_KEY"`
 	AWSRegion          string `envconfig:"AWS_REGION"`
 
+	// tencent cos
 	TencentCOSSecretKey string `envconfig:"TENCENT_COS_SECRET_KEY"`
 	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
 	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
 
+	// azure blob
 	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
 	AzureBlobStorageConnectionString string `envconfig:"AZURE_BLOB_STORAGE_CONNECTION_STRING"`
 
+	// aliyun oss
 	AliyunOSSRegion          string `envconfig:"ALIYUN_OSS_REGION"`
 	AliyunOSSEndpoint        string `envconfig:"ALIYUN_OSS_ENDPOINT"`
 	AliyunOSSAccessKeyID     string `envconfig:"ALIYUN_OSS_ACCESS_KEY_ID"`
@@ -42,8 +49,21 @@ type Config struct {
 	AliyunOSSAuthVersion     string `envconfig:"ALIYUN_OSS_AUTH_VERSION" default:"v4"`
 	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob gcs aliyun_oss"`
-	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
+	// google gcs
+	GoogleCloudStorageCredentialsB64 string `envConfig:"GCS_CREDENTIALS"`
+
+	// huawei obs
+	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
+	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
+	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
+
+	// volcengine tos
+	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
+	VolcengineTOSAccessKey string `envconfig:"VOLCENGINE_TOS_ACCESS_KEY"`
+	VolcengineTOSSecretKey string `envconfig:"VOLCENGINE_TOS_SECRET_KEY"`
+	VolcengineTOSRegion    string `envconfig:"VOLCENGINE_TOS_REGION"`
+
+	// local
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
 	// plugin remote installing
@@ -215,44 +235,6 @@ func (c *Config) Validate() error {
 
 	if c.PluginPackageCachePath == "" {
 		return fmt.Errorf("plugin package cache path is empty")
-	}
-
-	if c.PluginStorageType == oss.OSS_TYPE_S3 {
-		if c.PluginStorageOSSBucket == "" {
-			return fmt.Errorf("plugin storage bucket is empty")
-		}
-
-		if c.AWSRegion == "" {
-			return fmt.Errorf("aws region is empty")
-		}
-	}
-
-	if c.PluginStorageType == oss.OSS_TYPE_AZURE_BLOB {
-		if c.AzureBlobStorageConnectionString == "" {
-			return fmt.Errorf("azure blob storage connection string is empty")
-		}
-
-		if c.AzureBlobStorageContainerName == "" {
-			return fmt.Errorf("azure blob storage container name is empty")
-		}
-	}
-
-	if c.PluginStorageType == oss.OSS_TYPE_ALIYUN_OSS {
-		if c.PluginStorageOSSBucket == "" {
-			return fmt.Errorf("plugin storage bucket is empty")
-		}
-
-		if c.AliyunOSSEndpoint == "" {
-			return fmt.Errorf("aliyun oss endpoint is empty")
-		}
-
-		if c.AliyunOSSAccessKeyID == "" {
-			return fmt.Errorf("aliyun oss access key id is empty")
-		}
-
-		if c.AliyunOSSAccessKeySecret == "" {
-			return fmt.Errorf("aliyun oss access key secret is empty")
-		}
 	}
 
 	return nil

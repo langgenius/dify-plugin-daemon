@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	cloudoss "github.com/langgenius/dify-cloud-kit/oss"
+
+	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -111,7 +113,16 @@ func TestRemotePluginWatcherPluginStoredToManager(t *testing.T) {
 	config := &app.Config{}
 	config.SetDefault()
 	routine.InitPool(1024)
-	oss := local.NewLocalStorage("./storage")
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	},
+	)
+	if err != nil {
+		t.Error("failed to load local storage", err.Error())
+	}
+
 	pm := InitGlobalManager(oss, config)
 	pm.remotePluginServer = &fakeRemotePluginServer{}
 	pm.startRemoteWatcher(config)

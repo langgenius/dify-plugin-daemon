@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	cloudoss "github.com/langgenius/dify-cloud-kit/oss"
+	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
@@ -58,8 +59,15 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 		t.Errorf("failed to get random port: %s", err.Error())
 		return nil, 0
 	}
-
-	oss := local.NewLocalStorage("./storage")
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	},
+	)
+	if err != nil {
+		t.Error("failed to load local storage", err.Error())
+	}
 
 	// start plugin server
 	return NewRemotePluginServer(&app.Config{
