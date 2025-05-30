@@ -11,12 +11,13 @@ const (
 	TOOL_TYPE_BUILTIN  ToolType = "builtin"
 	TOOL_TYPE_WORKFLOW ToolType = "workflow"
 	TOOL_TYPE_API      ToolType = "api"
+	TOOL_TYPE_MCP      ToolType = "mcp"
 )
 
 func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("tool_type", func(fl validator.FieldLevel) bool {
 		switch fl.Field().String() {
-		case string(TOOL_TYPE_BUILTIN), string(TOOL_TYPE_WORKFLOW), string(TOOL_TYPE_API):
+		case string(TOOL_TYPE_BUILTIN), string(TOOL_TYPE_WORKFLOW), string(TOOL_TYPE_API), string(TOOL_TYPE_MCP):
 			return true
 		}
 		return false
