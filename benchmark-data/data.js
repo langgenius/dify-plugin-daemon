@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748599875878,
+  "lastUpdate": 1748602334666,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -4320,6 +4320,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "977488501 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "052cd0c410873ac879f5f59119b545d2fff2f7d6",
+          "message": "fix: remove redundant Content-Type header for payloadReader in HTTP request builder (#320)",
+          "timestamp": "2025-05-30T18:49:19+08:00",
+          "tree_id": "6a93c6b738ee129831471002e494902fdbc107d9",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/052cd0c410873ac879f5f59119b545d2fff2f7d6"
+        },
+        "date": 1748602334305,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 142701271,
+            "unit": "ns/op\t 1591773 B/op\t   28315 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 142701271,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1591773,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28315,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.31,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "993598309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.31,
+            "unit": "ns/op",
+            "extra": "993598309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "993598309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "993598309 times\n4 procs"
           }
         ]
       }
