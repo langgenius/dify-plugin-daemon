@@ -27,14 +27,14 @@ import (
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
 
-	// max size of a plugin package
-	maxPluginPackageSize int64
+	// // max size of a plugin package
+	// maxPluginPackageSize int64
 
-	// where the plugin finally running
-	workingDirectory string
+	// // where the plugin finally running
+	// workingDirectory string
 
-	// where the plugin finally installed but not running
-	pluginStoragePath string
+	// // where the plugin finally installed but not running
+	// pluginStoragePath string
 
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
@@ -54,34 +54,36 @@ type PluginManager struct {
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
 
-	// python interpreter path
-	pythonInterpreterPath string
+	config *app.Config
 
-	// uv path
-	uvPath string
+	// // python interpreter path
+	// pythonInterpreterPath string
 
-	// python env init timeout
-	pythonEnvInitTimeout int
+	// // uv path
+	// uvPath string
 
-	// proxy settings
-	HttpProxy  string
-	HttpsProxy string
-	NoProxy    string
+	// // python env init timeout
+	// pythonEnvInitTimeout int
 
-	// pip mirror url
-	pipMirrorUrl string
+	// // proxy settings
+	// HttpProxy  string
+	// HttpsProxy string
+	// NoProxy    string
 
-	// pip prefer binary
-	pipPreferBinary bool
+	// // pip mirror url
+	// pipMirrorUrl string
 
-	// pip verbose
-	pipVerbose bool
+	// // pip prefer binary
+	// pipPreferBinary bool
+
+	// // pip verbose
+	// pipVerbose bool
 
 	// pip extra args
-	pipExtraArgs string
+	// pipExtraArgs string
 
-	// python compileall extra args
-	pythonCompileAllExtraArgs string
+	// // python compileall extra args
+	// pythonCompileAllExtraArgs string
 
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
@@ -92,14 +94,14 @@ type PluginManager struct {
 	// platform, local or serverless
 	platform app.PlatformType
 
-	// serverless connector launch timeout
-	serverlessConnectorLaunchTimeout int
+	// // serverless connector launch timeout
+	// serverlessConnectorLaunchTimeout int
 
-	pluginMaxExecutionTimeout int
+	// pluginMaxExecutionTimeout int
 
-	// plugin stdio buffer size
-	pluginStdioBufferSize    int
-	pluginStdioMaxBufferSize int
+	// // plugin stdio buffer size
+	// pluginStdioBufferSize    int
+	// pluginStdioMaxBufferSize int
 }
 
 var (
@@ -108,9 +110,6 @@ var (
 
 func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
-		maxPluginPackageSize: configuration.MaxPluginPackageSize,
-		pluginStoragePath:    configuration.PluginInstalledPath,
-		workingDirectory:     configuration.PluginWorkingPath,
 		mediaBucket: media_transport.NewAssetsBucket(
 			oss,
 			configuration.PluginMediaCachePath,
@@ -124,24 +123,9 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			oss,
 			configuration.PluginInstalledPath,
 		),
-		localPluginLaunchingLock:         lock.NewGranularityLock(),
-		maxLaunchingLock:                 make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
-		pythonInterpreterPath:            configuration.PythonInterpreterPath,
-		uvPath:                           configuration.UvPath,
-		pythonEnvInitTimeout:             configuration.PythonEnvInitTimeout,
-		pythonCompileAllExtraArgs:        configuration.PythonCompileAllExtraArgs,
-		platform:                         configuration.Platform,
-		HttpProxy:                        configuration.HttpProxy,
-		HttpsProxy:                       configuration.HttpsProxy,
-		NoProxy:                          configuration.NoProxy,
-		pipMirrorUrl:                     configuration.PipMirrorUrl,
-		pipPreferBinary:                  *configuration.PipPreferBinary,
-		pipVerbose:                       *configuration.PipVerbose,
-		pipExtraArgs:                     configuration.PipExtraArgs,
-		serverlessConnectorLaunchTimeout: configuration.DifyPluginServerlessConnectorLaunchTimeout,
-		pluginStdioBufferSize:            configuration.PluginStdioBufferSize,
-		pluginStdioMaxBufferSize:         configuration.PluginStdioMaxBufferSize,
-		pluginMaxExecutionTimeout:        configuration.PluginMaxExecutionTimeout,
+		localPluginLaunchingLock: lock.NewGranularityLock(),
+		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
+		config:                   configuration,
 	}
 
 	return manager
