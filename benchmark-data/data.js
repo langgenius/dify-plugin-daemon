@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748594938223,
+  "lastUpdate": 1748599875878,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -4248,6 +4248,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "981895969 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f8914412d9a55dcc55f8130da85d9318617d222a",
+          "message": "fix: support serverless plugin management with execution timeout (#318)\n\n- Added `pluginMaxExecutionTimeout` to `PluginManager` for configurable execution limits.\n- Updated `ServerlessPluginRuntime` to utilize the new timeout setting in HTTP requests.\n- Refactored AWSPluginRuntime references to ServerlessPluginRuntime for consistency across the codebase.",
+          "timestamp": "2025-05-30T18:08:24+08:00",
+          "tree_id": "f78751f1ff86f08c5fdcfe21c384901d64a85ac6",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f8914412d9a55dcc55f8130da85d9318617d222a"
+        },
+        "date": 1748599875538,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141204710,
+            "unit": "ns/op\t 1591796 B/op\t   28315 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141204710,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1591796,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28315,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.84,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "977488501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.84,
+            "unit": "ns/op",
+            "extra": "977488501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "977488501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "977488501 times\n4 procs"
           }
         ]
       }
