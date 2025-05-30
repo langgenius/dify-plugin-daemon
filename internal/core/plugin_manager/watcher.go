@@ -13,7 +13,7 @@ import (
 
 func (p *PluginManager) startLocalWatcher() {
 	go func() {
-		log.Info("start to handle new plugins in path: %s", p.pluginStoragePath)
+		log.Info("start to handle new plugins in path: %s", p.config.PluginInstalledPath)
 		p.handleNewLocalPlugins()
 		for range time.NewTicker(time.Second * 30).C {
 			p.handleNewLocalPlugins()

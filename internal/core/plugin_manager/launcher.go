@@ -48,7 +48,7 @@ func (p *PluginManager) getLocalPluginRuntime(pluginUniqueIdentifier plugin_enti
 
 	identity := manifest.Identity()
 	identity = strings.ReplaceAll(identity, ":", "-")
-	pluginWorkingPath := path.Join(p.workingDirectory, fmt.Sprintf("%s@%s", identity, checksum))
+	pluginWorkingPath := path.Join(p.config.PluginWorkingPath, fmt.Sprintf("%s@%s", identity, checksum))
 	return &pluginRuntimeWithDecoder{
 		runtime: plugin_entities.PluginRuntime{
 			Config: manifest,
@@ -130,18 +130,18 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 	}
 
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
-		PythonInterpreterPath:     p.pythonInterpreterPath,
-		UvPath:                    p.uvPath,
-		PythonEnvInitTimeout:      p.pythonEnvInitTimeout,
-		PythonCompileAllExtraArgs: p.pythonCompileAllExtraArgs,
-		HttpProxy:                 p.HttpProxy,
-		HttpsProxy:                p.HttpsProxy,
-		NoProxy:                   p.NoProxy,
-		PipMirrorUrl:              p.pipMirrorUrl,
-		PipPreferBinary:           p.pipPreferBinary,
-		PipExtraArgs:              p.pipExtraArgs,
-		StdoutBufferSize:          p.pluginStdioBufferSize,
-		StdoutMaxBufferSize:       p.pluginStdioMaxBufferSize,
+		PythonInterpreterPath:     p.config.PythonInterpreterPath,
+		UvPath:                    p.config.UvPath,
+		PythonEnvInitTimeout:      p.config.PythonEnvInitTimeout,
+		PythonCompileAllExtraArgs: p.config.PythonCompileAllExtraArgs,
+		HttpProxy:                 p.config.HttpProxy,
+		HttpsProxy:                p.config.HttpsProxy,
+		NoProxy:                   p.config.NoProxy,
+		PipMirrorUrl:              p.config.PipMirrorUrl,
+		PipPreferBinary:           *p.config.PipPreferBinary,
+		PipExtraArgs:              p.config.PipExtraArgs,
+		StdoutBufferSize:          p.config.PluginStdioBufferSize,
+		StdoutMaxBufferSize:       p.config.PluginStdioMaxBufferSize,
 	})
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
