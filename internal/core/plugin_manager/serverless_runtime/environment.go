@@ -9,7 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *AWSPluginRuntime) InitEnvironment() error {
+func (r *ServerlessPluginRuntime) InitEnvironment() error {
 	// init http client
 	r.client = &http.Client{
 		Transport: &http.Transport{
@@ -24,7 +24,7 @@ func (r *AWSPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
-func (r *AWSPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
+func (r *ServerlessPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
 	checksum, err := r.Checksum()
 	if err != nil {
 		return "", err

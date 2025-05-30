@@ -9,7 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-type AWSPluginRuntime struct {
+type ServerlessPluginRuntime struct {
 	basic_runtime.BasicChecksum
 	plugin_entities.PluginRuntime
 
@@ -21,4 +21,6 @@ type AWSPluginRuntime struct {
 	listeners mapping.Map[string, *entities.Broadcast[plugin_entities.SessionMessage]]
 
 	client *http.Client
+
+	PluginMaxExecutionTimeout int // in seconds
 }
