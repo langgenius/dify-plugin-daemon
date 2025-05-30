@@ -27,15 +27,6 @@ import (
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
 
-	// // max size of a plugin package
-	// maxPluginPackageSize int64
-
-	// // where the plugin finally running
-	// workingDirectory string
-
-	// // where the plugin finally installed but not running
-	// pluginStoragePath string
-
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
 
@@ -56,52 +47,11 @@ type PluginManager struct {
 
 	config *app.Config
 
-	// // python interpreter path
-	// pythonInterpreterPath string
-
-	// // uv path
-	// uvPath string
-
-	// // python env init timeout
-	// pythonEnvInitTimeout int
-
-	// // proxy settings
-	// HttpProxy  string
-	// HttpsProxy string
-	// NoProxy    string
-
-	// // pip mirror url
-	// pipMirrorUrl string
-
-	// // pip prefer binary
-	// pipPreferBinary bool
-
-	// // pip verbose
-	// pipVerbose bool
-
-	// pip extra args
-	// pipExtraArgs string
-
-	// // python compileall extra args
-	// pythonCompileAllExtraArgs string
-
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
-
-	// platform, local or serverless
-	platform app.PlatformType
-
-	// // serverless connector launch timeout
-	// serverlessConnectorLaunchTimeout int
-
-	// pluginMaxExecutionTimeout int
-
-	// // plugin stdio buffer size
-	// pluginStdioBufferSize    int
-	// pluginStdioMaxBufferSize int
 }
 
 var (
@@ -138,7 +88,7 @@ func Manager() *PluginManager {
 func (p *PluginManager) Get(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginLifetime, error) {
-	if identity.RemoteLike() || p.platform == app.PLATFORM_LOCAL {
+	if identity.RemoteLike() || p.config.Platform == app.PLATFORM_LOCAL {
 		// check if it's a debugging plugin or a local plugin
 		if v, ok := p.m.Load(identity.String()); ok {
 			return v, nil
