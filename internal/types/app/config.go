@@ -50,7 +50,7 @@ type Config struct {
 	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
 
 	// google gcs
-	GoogleCloudStorageCredentialsB64 string `envConfig:"GCS_CREDENTIALS"`
+	GoogleCloudStorageCredentialsB64 string `envconfig:"GCS_CREDENTIALS"`
 
 	// huawei obs
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
