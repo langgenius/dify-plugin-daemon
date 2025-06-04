@@ -52,7 +52,7 @@ func (p *PluginManager) getServerlessPluginRuntime(
 		PluginRuntime:             runtimeEntity,
 		LambdaURL:                 model.FunctionURL,
 		LambdaName:                model.FunctionName,
-		PluginMaxExecutionTimeout: p.pluginMaxExecutionTimeout,
+		PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
 	}
 
 	if err := pluginRuntime.InitEnvironment(); err != nil {
