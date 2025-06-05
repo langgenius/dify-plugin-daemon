@@ -123,6 +123,7 @@ func (t *DatasourceProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		CredentialsSchema yaml.Node                  `yaml:"credentials_schema"`
 		Datasources       yaml.Node                  `yaml:"datasources"`
 		OAuthSchema       *OAuthSchema               `yaml:"oauth_schema"`
+		ProviderType      DatasourceType             `yaml:"provider_type"`
 	}
 
 	var temp alias
@@ -137,6 +138,9 @@ func (t *DatasourceProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 
 	// apply oauth_schema
 	t.OAuthSchema = temp.OAuthSchema
+
+	// apply provider_type
+	t.ProviderType = temp.ProviderType
 
 	// check if credentials_schema is a map
 	if temp.CredentialsSchema.Kind != yaml.MappingNode {
@@ -207,6 +211,7 @@ func (t *DatasourceProviderDeclaration) UnmarshalJSON(data []byte) error {
 		CredentialsSchema json.RawMessage   `json:"credentials_schema"`
 		Datasources       []json.RawMessage `json:"datasources"`
 		OAuthSchema       *OAuthSchema      `json:"oauth_schema"`
+		ProviderType      DatasourceType    `json:"provider_type"`
 	}
 
 	if err := json.Unmarshal(data, &temp); err != nil {
