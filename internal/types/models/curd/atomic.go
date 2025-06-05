@@ -151,6 +151,21 @@ func InstallPlugin(
 			}
 		}
 
+		// create datasource installation
+		if declaration.Datasource != nil {
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenantId,
+				Provider:               declaration.Datasource.Identity.Name,
+			}
+
+			err := db.Create(datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -188,6 +203,14 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenantId),
 	)
 
+	if err != nil {
+		if err == db.ErrDatabaseNotFound {
+			return nil, errors.New("plugin has not been installed")
+		} else {
+			return nil, err
+		}
+	}
+
 	pluginInstallationCacheKey := strings.Join(
 		[]string{
 			"plugin_id",
@@ -199,14 +222,6 @@ func UninstallPlugin(
 	)
 
 	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
-
-	if err != nil {
-		if err == db.ErrDatabaseNotFound {
-			return nil, errors.New("plugin has not been installed")
-		} else {
-			return nil, err
-		}
-	}
 
 	err = db.WithTransaction(func(tx *gorm.DB) error {
 		p, err := db.GetOne[models.Plugin](
@@ -280,6 +295,19 @@ func UninstallPlugin(
 			}
 
 			err := db.DeleteByCondition(&modelInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete datasource installation
+		if declaration.Datasource != nil {
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginID: pluginToBeReturns.PluginID,
+				TenantID: tenantId,
+			}
+
+			err := db.DeleteByCondition(&datasourceInstallation, tx)
 			if err != nil {
 				return err
 			}
@@ -495,6 +523,34 @@ func UpgradePlugin(
 			}
 
 			err := db.Create(agentStrategyInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update datasource installation
+		if originalDeclaration.Datasource != nil {
+			// delete the original datasource installation
+			err := db.DeleteByCondition(&models.DatasourceInstallation{
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Datasource != nil {
+			// create the new datasource installation
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
+				Provider:               newDeclaration.Datasource.Identity.Name,
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
+			}
+
+			err := db.Create(datasourceInstallation, tx)
 			if err != nil {
 				return err
 			}
