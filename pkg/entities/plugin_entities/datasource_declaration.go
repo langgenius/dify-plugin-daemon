@@ -2,7 +2,6 @@ package plugin_entities
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
@@ -208,10 +207,7 @@ func (t *DatasourceProviderDeclaration) UnmarshalJSON(data []byte) error {
 
 	var temp struct {
 		alias
-		CredentialsSchema json.RawMessage   `json:"credentials_schema"`
-		Datasources       []json.RawMessage `json:"datasources"`
-		OAuthSchema       *OAuthSchema      `json:"oauth_schema"`
-		ProviderType      DatasourceType    `json:"provider_type"`
+		Datasources []json.RawMessage `json:"datasources"`
 	}
 
 	if err := json.Unmarshal(data, &temp); err != nil {
@@ -219,26 +215,6 @@ func (t *DatasourceProviderDeclaration) UnmarshalJSON(data []byte) error {
 	}
 
 	*t = DatasourceProviderDeclaration(temp.alias)
-
-	// Determine the type of CredentialsSchema
-	var raw_message map[string]json.RawMessage
-	if err := json.Unmarshal(temp.CredentialsSchema, &raw_message); err == nil {
-		// It's an object
-		credentialsSchemaObject := make(map[string]ProviderConfig)
-		if err := json.Unmarshal(temp.CredentialsSchema, &credentialsSchemaObject); err != nil {
-			return fmt.Errorf("failed to unmarshal credentials_schema as object: %v", err)
-		}
-		for _, value := range credentialsSchemaObject {
-			t.CredentialsSchema = append(t.CredentialsSchema, value)
-		}
-	} else {
-		// It's likely an array
-		var credentials_schema_array []ProviderConfig
-		if err := json.Unmarshal(temp.CredentialsSchema, &credentials_schema_array); err != nil {
-			return fmt.Errorf("failed to unmarshal credentials_schema as array: %v", err)
-		}
-		t.CredentialsSchema = credentials_schema_array
-	}
 
 	if t.DatasourceFiles == nil {
 		t.DatasourceFiles = []string{}
