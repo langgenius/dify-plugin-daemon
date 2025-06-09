@@ -75,6 +75,7 @@ func (p *PluginManager) handleNewLocalPlugins() {
 	}
 
 	for _, plugin := range plugins {
+		log.Debug("launching local plugin: %s", plugin)
 		_, launchedChan, errChan, err := p.launchLocal(plugin)
 		if err != nil {
 			log.Error("launch local plugin failed: %s", err.Error())
@@ -85,8 +86,11 @@ func (p *PluginManager) handleNewLocalPlugins() {
 			log.Error("plugin launch error: %s", err.Error())
 		}
 
-		// wait for plugin launched
-		<-launchedChan
+		// skip if error occurred
+		if launchedChan != nil {
+			// wait for plugin launched
+			<-launchedChan
+		}
 	}
 }
 
