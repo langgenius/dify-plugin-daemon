@@ -25,7 +25,8 @@ type Config struct {
 	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
 
 	// aws s3
-	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"true"`
+	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"false"`
+	UseAwsS3           bool   `envconfig:"USE_AWS_S3" default:"true"`
 	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
 	S3UsePathStyle     bool   `envconfig:"S3_USE_PATH_STYLE" default:"true"`
 	AWSAccessKey       string `envconfig:"AWS_ACCESS_KEY"`

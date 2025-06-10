@@ -22,13 +22,14 @@ func initOSS(config *app.Config) oss.OSS {
 			Path: config.PluginStorageLocalRoot,
 		},
 		S3: &oss.S3{
-			UseAws:       config.S3UseAwsManagedIam,
+			UseAws:       config.UseAwsS3,
 			Endpoint:     config.S3Endpoint,
 			UsePathStyle: config.S3UsePathStyle,
 			AccessKey:    config.AWSAccessKey,
 			SecretKey:    config.AWSSecretKey,
 			Bucket:       config.PluginStorageOSSBucket,
 			Region:       config.AWSRegion,
+			UseIamRole:   config.S3UseAwsManagedIam,
 		},
 		TencentCOS: &oss.TencentCOS{
 			Region:    config.TencentCOSRegion,
