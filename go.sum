@@ -250,6 +250,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/langgenius/dify-cloud-kit v0.0.0-20250529060017-553b38edd48f h1:gcWAkRfPlwqf/7MiLQiHy22ykzeAd9nPvCIBCDhNHug=
 github.com/langgenius/dify-cloud-kit v0.0.0-20250529060017-553b38edd48f/go.mod h1:VCtfHs++R61MXdyrfVtPk1VwTM4JHjtY+pYUKO8QdtQ=
+github.com/langgenius/dify-cloud-kit v0.0.0-20250610083317-681efb7762a4 h1:83W6fr7f6Ydqq0wLzPSmIaWVhVeAsOB/jGiH09qzdDg=
+github.com/langgenius/dify-cloud-kit v0.0.0-20250610083317-681efb7762a4/go.mod h1:VCtfHs++R61MXdyrfVtPk1VwTM4JHjtY+pYUKO8QdtQ=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
