@@ -36,7 +36,7 @@ func DatasourceGetWebsiteCrawl(
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceInvokeFirstStepResponse], error) {
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceResponseChunk], error) {
 			return plugin_daemon.DatasourceGetWebsiteCrawl(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
@@ -70,7 +70,7 @@ func DatasourceGetOnlineDocumentPageContent(
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse], error) {
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceResponseChunk], error) {
 			return plugin_daemon.DatasourceGetOnlineDocumentPageContent(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,

@@ -26,9 +26,9 @@ func DatasourceGetWebsiteCrawl(
 	session *session_manager.Session,
 	request *requests.RequestInvokeDatasourceFirstStep,
 ) (
-	*stream.Stream[datasource_entities.DataSourceInvokeFirstStepResponse], error,
+	*stream.Stream[datasource_entities.DataSourceResponseChunk], error,
 ) {
-	return GenericInvokePlugin[requests.RequestInvokeDatasourceFirstStep, datasource_entities.DataSourceInvokeFirstStepResponse](
+	return GenericInvokePlugin[requests.RequestInvokeDatasourceFirstStep, datasource_entities.DataSourceResponseChunk](
 		session,
 		request,
 		1,
@@ -52,9 +52,9 @@ func DatasourceGetOnlineDocumentPageContent(
 	session *session_manager.Session,
 	request *requests.RequestInvokeOnlineDocumentDatasourceGetContent,
 ) (
-	*stream.Stream[datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse], error,
+	*stream.Stream[datasource_entities.DataSourceResponseChunk], error,
 ) {
-	return GenericInvokePlugin[requests.RequestInvokeOnlineDocumentDatasourceGetContent, datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse](
+	return GenericInvokePlugin[requests.RequestInvokeOnlineDocumentDatasourceGetContent, datasource_entities.DataSourceResponseChunk](
 		session,
 		request,
 		1,

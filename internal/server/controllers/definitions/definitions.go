@@ -238,7 +238,7 @@ var PluginDispatchers = []PluginDispatcher{
 	{
 		Name:               "DatasourceGetWebsiteCrawl",
 		RequestType:        requests.RequestInvokeDatasourceFirstStep{},
-		ResponseType:       datasource_entities.DataSourceInvokeFirstStepResponse{},
+		ResponseType:       datasource_entities.DataSourceResponseChunk{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
@@ -260,7 +260,7 @@ var PluginDispatchers = []PluginDispatcher{
 	{
 		Name:               "DatasourceGetOnlineDocumentPageContent",
 		RequestType:        requests.RequestInvokeOnlineDocumentDatasourceGetContent{},
-		ResponseType:       datasource_entities.DatasourceInvokeOnlineDocumentGetContentResponse{},
+		ResponseType:       datasource_entities.DataSourceResponseChunk{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
