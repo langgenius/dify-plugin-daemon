@@ -14,7 +14,7 @@ All requests from Dify api based on HTTP protocol, but depends on the runtime ty
 
 - For local runtime, daemon will start plugin as the subprocess and communicate with the plugin via STDIN/STDOUT.
 - For debug runtime, daemon wait for a plugin to connect and communicate in full-duplex way, it's TCP based.
-- For serverless runtime, plugin will be packaged to a third-party service like AWS Lambda and then be invoked by the daemon via HTTP protocol.
+- For serverless runtime, plugin will be packaged to a third-party service like AWS Lambda and then be invoked by the daemon via HTTP protocol. You may refer to [SRI Docs](./docs/runtime/sri.md) for more detailed information.
 
 For more detailed introduction about Dify plugin, please refer to our docs [https://docs.dify.ai/plugins/introduction](https://docs.dify.ai/plugins/introduction).
 
