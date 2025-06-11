@@ -152,14 +152,22 @@ func InitPluginWithFlags(
 
 	// Update permissions
 	perm := m.subMenus[SUB_MENU_KEY_PERMISSION].(permission)
-	perm.UpdatePermission(plugin_entities.PluginPermissionRequirement{
-		Endpoint: &plugin_entities.PluginPermissionEndpointRequirement{
+	permissionRequirement := &plugin_entities.PluginPermissionRequirement{}
+
+	if allowRegisterEndpoint {
+		permissionRequirement.Endpoint = &plugin_entities.PluginPermissionEndpointRequirement{
 			Enabled: allowRegisterEndpoint,
-		},
-		Tool: &plugin_entities.PluginPermissionToolRequirement{
+		}
+	}
+
+	if allowInvokeTool {
+		permissionRequirement.Tool = &plugin_entities.PluginPermissionToolRequirement{
 			Enabled: allowInvokeTool,
-		},
-		Model: &plugin_entities.PluginPermissionModelRequirement{
+		}
+	}
+
+	if allowInvokeModel {
+		permissionRequirement.Model = &plugin_entities.PluginPermissionModelRequirement{
 			Enabled:       allowInvokeModel,
 			LLM:           allowInvokeLLM,
 			TextEmbedding: allowInvokeTextEmbedding,
@@ -167,18 +175,29 @@ func InitPluginWithFlags(
 			TTS:           allowInvokeTTS,
 			Speech2text:   allowInvokeSpeech2Text,
 			Moderation:    allowInvokeModeration,
-		},
-		Node: &plugin_entities.PluginPermissionNodeRequirement{
+		}
+	}
+
+	if allowInvokeNode {
+		permissionRequirement.Node = &plugin_entities.PluginPermissionNodeRequirement{
 			Enabled: allowInvokeNode,
-		},
-		App: &plugin_entities.PluginPermissionAppRequirement{
+		}
+	}
+
+	if allowInvokeApp {
+		permissionRequirement.App = &plugin_entities.PluginPermissionAppRequirement{
 			Enabled: allowInvokeApp,
-		},
-		Storage: &plugin_entities.PluginPermissionStorageRequirement{
+		}
+	}
+
+	if allowUseStorage {
+		permissionRequirement.Storage = &plugin_entities.PluginPermissionStorageRequirement{
 			Enabled: allowUseStorage,
 			Size:    storageSize,
-		},
-	})
+		}
+	}
+
+	perm.UpdatePermission(*permissionRequirement)
 	m.subMenus[SUB_MENU_KEY_PERMISSION] = perm
 
 	// If quick mode is enabled, skip interactive mode

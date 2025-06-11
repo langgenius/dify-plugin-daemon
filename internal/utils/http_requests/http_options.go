@@ -37,6 +37,11 @@ func HttpPayloadText(payload string) HttpOptions {
 }
 
 // which is used for POST method only
+func HttpPayloadReader(reader io.ReadCloser) HttpOptions {
+	return HttpOptions{"payloadReader", reader}
+}
+
+// which is used for POST method only
 func HttpPayloadJson(payload interface{}) HttpOptions {
 	return HttpOptions{"payloadJson", payload}
 }

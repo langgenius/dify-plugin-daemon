@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/langgenius/dify-cloud-kit/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -26,15 +26,6 @@ import (
 
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
-
-	// max size of a plugin package
-	maxPluginPackageSize int64
-
-	// where the plugin finally running
-	workingDirectory string
-
-	// where the plugin finally installed but not running
-	pluginStoragePath string
 
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
@@ -54,50 +45,13 @@ type PluginManager struct {
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
 
-	// python interpreter path
-	pythonInterpreterPath string
-
-	// uv path
-	uvPath string
-
-	// python env init timeout
-	pythonEnvInitTimeout int
-
-	// proxy settings
-	HttpProxy  string
-	HttpsProxy string
-	NoProxy    string
-
-	// pip mirror url
-	pipMirrorUrl string
-
-	// pip prefer binary
-	pipPreferBinary bool
-
-	// pip verbose
-	pipVerbose bool
-
-	// pip extra args
-	pipExtraArgs string
-
-	// python compileall extra args
-	pythonCompileAllExtraArgs string
+	config *app.Config
 
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
-
-	// platform, local or serverless
-	platform app.PlatformType
-
-	// serverless connector launch timeout
-	serverlessConnectorLaunchTimeout int
-
-	// plugin stdio buffer size
-	pluginStdioBufferSize    int
-	pluginStdioMaxBufferSize int
 }
 
 var (
@@ -106,9 +60,6 @@ var (
 
 func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
-		maxPluginPackageSize: configuration.MaxPluginPackageSize,
-		pluginStoragePath:    configuration.PluginInstalledPath,
-		workingDirectory:     configuration.PluginWorkingPath,
 		mediaBucket: media_transport.NewAssetsBucket(
 			oss,
 			configuration.PluginMediaCachePath,
@@ -122,23 +73,9 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			oss,
 			configuration.PluginInstalledPath,
 		),
-		localPluginLaunchingLock:         lock.NewGranularityLock(),
-		maxLaunchingLock:                 make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
-		pythonInterpreterPath:            configuration.PythonInterpreterPath,
-		uvPath:                           configuration.UvPath,
-		pythonEnvInitTimeout:             configuration.PythonEnvInitTimeout,
-		pythonCompileAllExtraArgs:        configuration.PythonCompileAllExtraArgs,
-		platform:                         configuration.Platform,
-		HttpProxy:                        configuration.HttpProxy,
-		HttpsProxy:                       configuration.HttpsProxy,
-		NoProxy:                          configuration.NoProxy,
-		pipMirrorUrl:                     configuration.PipMirrorUrl,
-		pipPreferBinary:                  *configuration.PipPreferBinary,
-		pipVerbose:                       *configuration.PipVerbose,
-		pipExtraArgs:                     configuration.PipExtraArgs,
-		serverlessConnectorLaunchTimeout: configuration.DifyPluginServerlessConnectorLaunchTimeout,
-		pluginStdioBufferSize:            configuration.PluginStdioBufferSize,
-		pluginStdioMaxBufferSize:         configuration.PluginStdioMaxBufferSize,
+		localPluginLaunchingLock: lock.NewGranularityLock(),
+		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
+		config:                   configuration,
 	}
 
 	return manager
@@ -151,7 +88,7 @@ func Manager() *PluginManager {
 func (p *PluginManager) Get(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginLifetime, error) {
-	if identity.RemoteLike() || p.platform == app.PLATFORM_LOCAL {
+	if identity.RemoteLike() || p.config.Platform == app.PLATFORM_LOCAL {
 		// check if it's a debugging plugin or a local plugin
 		if v, ok := p.m.Load(identity.String()); ok {
 			return v, nil

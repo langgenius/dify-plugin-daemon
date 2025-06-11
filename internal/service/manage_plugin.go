@@ -34,8 +34,23 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		Meta                   map[string]any                     `json:"meta"`
 	}
 
+	type responseData struct {
+		List  []installation `json:"list"`
+		Total int64          `json:"total"`
+	}
+
+	// get total count
+	totalCount, err := db.GetCount[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
 	pluginInstallations, err := db.GetAll[models.PluginInstallation](
 		db.Equal("tenant_id", tenant_id),
+		db.OrderBy("created_at", true),
 		db.Page(page, page_size),
 	)
 
@@ -81,7 +96,12 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		})
 	}
 
-	return entities.NewSuccessResponse(data)
+	finalData := responseData{
+		List: 	data,
+		Total: 	totalCount,
+	}
+
+	return entities.NewSuccessResponse(finalData)
 }
 
 // Using plugin_ids to fetch plugin installations
@@ -375,6 +395,7 @@ func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Re
 		models.AgentStrategyInstallation // pointer to avoid deep copy
 
 		Declaration *plugin_entities.AgentStrategyProviderDeclaration `json:"declaration"`
+		Meta        plugin_entities.PluginMeta                        `json:"meta"`
 	}
 
 	providers, err := db.GetAll[models.AgentStrategyInstallation](
@@ -409,6 +430,7 @@ func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Re
 		data = append(data, AgentStrategy{
 			AgentStrategyInstallation: provider,
 			Declaration:               declaration.AgentStrategy,
+			Meta:                      declaration.Meta,
 		})
 	}
 
@@ -420,6 +442,7 @@ func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *enti
 		models.AgentStrategyInstallation // pointer to avoid deep copy
 
 		Declaration *plugin_entities.AgentStrategyProviderDeclaration `json:"declaration"`
+		Meta        plugin_entities.PluginMeta                        `json:"meta"`
 	}
 
 	agent_strategy, err := db.GetOne[models.AgentStrategyInstallation](
@@ -459,5 +482,6 @@ func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *enti
 	return entities.NewSuccessResponse(AgentStrategy{
 		AgentStrategyInstallation: agent_strategy,
 		Declaration:               declaration.AgentStrategy,
+		Meta:                      declaration.Meta,
 	})
 }

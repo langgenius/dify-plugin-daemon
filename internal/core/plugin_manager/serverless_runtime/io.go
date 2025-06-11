@@ -3,13 +3,12 @@ package serverless_runtime
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"fmt"
-	"net/http"
+	"io"
 	"net/url"
-	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -17,7 +16,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *AWSPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
+func (r *ServerlessPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
 	l := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	// store the listener
 	r.listeners.Store(sessionId, l)
@@ -25,7 +24,7 @@ func (r *AWSPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_e
 }
 
 // For AWS Lambda, write is equivalent to http request, it's not a normal stream like stdio and tcp
-func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
+func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
 		log.Error("session %s not found", sessionId)
@@ -46,22 +45,6 @@ func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAcc
 		return
 	}
 
-	url += "?action=" + string(action)
-
-	connectTime := 240 * time.Second
-
-	// create a new http request
-	ctx, cancel := context.WithTimeout(context.Background(), connectTime)
-	time.AfterFunc(connectTime, cancel)
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))
-	if err != nil {
-		r.Error(fmt.Sprintf("Error creating request: %v", err))
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "text/event-stream")
-	req.Header.Set("Dify-Plugin-Session-ID", sessionId)
-
 	routine.Submit(map[string]string{
 		"module":     "serverless_runtime",
 		"function":   "Write",
@@ -76,7 +59,19 @@ func (r *AWSPluginRuntime) Write(sessionId string, action access_types.PluginAcc
 			Data: []byte(""),
 		})
 
-		response, err := r.client.Do(req)
+		// create a new http request to serverless runtimes
+		url += "?action=" + string(action)
+		response, err := http_requests.Request(
+			r.client, url, "POST",
+			http_requests.HttpHeader(map[string]string{
+				"Content-Type":           "application/json",
+				"Accept":                 "text/event-stream",
+				"Dify-Plugin-Session-ID": sessionId,
+			}),
+			http_requests.HttpPayloadReader(io.NopCloser(bytes.NewReader(data))),
+			http_requests.HttpWriteTimeout(int64(r.PluginMaxExecutionTimeout*1000)),
+			http_requests.HttpReadTimeout(int64(r.PluginMaxExecutionTimeout*1000)),
+		)
 		if err != nil {
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,

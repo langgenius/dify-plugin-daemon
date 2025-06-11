@@ -449,7 +449,9 @@ func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, contex
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if _, err := getCmdable(context...).SetNX(ctx, serialKey(key), "1", expire).Result(); err == nil {
+		if success, err := getCmdable(context...).SetNX(ctx, serialKey(key), "1", expire).Result(); err != nil {
+			return err
+		} else if success {
 			return nil
 		}
 

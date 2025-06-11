@@ -75,6 +75,8 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 		case "payloadText":
 			req.Body = io.NopCloser(strings.NewReader(option.Value.(string)))
 			req.Header.Set("Content-Type", "text/plain")
+		case "payloadReader":
+			req.Body = option.Value.(io.ReadCloser)
 		case "payloadJson":
 			jsonStr, err := json.Marshal(option.Value)
 			if err != nil {

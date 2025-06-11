@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-cloud-kit/oss"
 	"golang.org/x/exp/constraints"
 )
 

@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"testing"
 
+	cloudoss "github.com/langgenius/dify-cloud-kit/oss"
+	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/oss/local"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
@@ -31,7 +32,15 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	})
 	defer db.Close()
 
-	oss := local.NewLocalStorage("./storage")
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	},
+	)
+	if err != nil {
+		t.Error("failed to load local storage", err.Error())
+	}
 
 	InitPersistence(oss, &app.Config{
 		PersistenceStoragePath:    "./persistence_storage",
@@ -75,7 +84,14 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 	})
 	defer db.Close()
 
-	InitPersistence(local.NewLocalStorage("./storage"), &app.Config{
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	assert.Nil(t, err)
+
+	InitPersistence(oss, &app.Config{
 		PersistenceStoragePath:    "./persistence_storage",
 		PersistenceStorageMaxSize: 1024 * 1024 * 1024,
 	})
@@ -102,7 +118,12 @@ func TestPersistenceDelete(t *testing.T) {
 	})
 	defer db.Close()
 
-	oss := local.NewLocalStorage("./storage")
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	assert.Nil(t, err)
 
 	InitPersistence(oss, &app.Config{
 		PersistenceStoragePath:    "./persistence_storage",
@@ -148,7 +169,12 @@ func TestPersistencePathTraversal(t *testing.T) {
 	})
 	defer db.Close()
 
-	oss := local.NewLocalStorage("./storage")
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	assert.Nil(t, err)
 
 	InitPersistence(oss, &app.Config{
 		PersistenceStoragePath:    "./persistence_storage",
