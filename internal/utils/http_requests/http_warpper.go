@@ -1,7 +1,6 @@
 package http_requests
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -37,7 +36,7 @@ func RequestAndParse[T any](client *http.Client, url string, method string, opti
 	// get read timeout
 	readTimeout := int64(60000)
 	for _, option := range options {
-		if option.Type == "read_timeout" {
+		if option.Type == HttpOptionTypeReadTimeout {
 			readTimeout = option.Value.(int64)
 			break
 		}
@@ -92,12 +91,15 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	// get read timeout
 	readTimeout := int64(60000)
 	raiseErrorWhenStreamDataNotMatch := false
+	usingLengthPrefixed := false
 	for _, option := range options {
-		if option.Type == "read_timeout" {
+		if option.Type == HttpOptionTypeReadTimeout {
 			readTimeout = option.Value.(int64)
 			break
-		} else if option.Type == "raiseErrorWhenStreamDataNotMatch" {
+		} else if option.Type == HttpOptionTypeRaiseErrorWhenStreamDataNotMatch {
 			raiseErrorWhenStreamDataNotMatch = option.Value.(bool)
+		} else if option.Type == HttpOptionTypeUsingLengthPrefixed {
+			usingLengthPrefixed = option.Value.(bool)
 		}
 	}
 	time.AfterFunc(time.Millisecond*time.Duration(readTimeout), func() {
@@ -105,45 +107,58 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		resp.Body.Close()
 	})
 
+	// Common data processor function to reduce code duplication
+	processData := func(data []byte) error {
+		// unmarshal
+		t, err := parser.UnmarshalJsonBytes[T](data)
+		if err != nil {
+			if raiseErrorWhenStreamDataNotMatch {
+				return err
+			} else {
+				log.Warn("stream data not match for %s, got %s", url, string(data))
+				return nil
+			}
+		}
+
+		ch.Write(t)
+		return nil
+	}
+
 	routine.Submit(map[string]string{
 		"module":   "http_requests",
 		"function": "RequestAndParseStream",
 	}, func() {
-		scanner := bufio.NewScanner(resp.Body)
 		defer resp.Body.Close()
 
-		for scanner.Scan() {
-			data := scanner.Bytes()
-			if len(data) == 0 {
-				continue
-			}
-
-			if bytes.HasPrefix(data, []byte("data:")) {
-				// split
-				data = data[5:]
-			}
-
-			if bytes.HasPrefix(data, []byte("event:")) {
-				// TODO: handle event
-				continue
-			}
-
-			// trim space
-			data = bytes.TrimSpace(data)
-
-			// unmarshal
-			t, err := parser.UnmarshalJsonBytes[T](data)
-			if err != nil {
-				if raiseErrorWhenStreamDataNotMatch {
-					ch.WriteError(err)
-					break
-				} else {
-					log.Warn("stream data not match for %s, got %s", url, string(data))
+		var err error
+		if usingLengthPrefixed {
+			// at most 30MB a single chunk
+			err = parser.LengthPrefixedChunking(resp.Body, 0x0f, 1024*1024*30, processData)
+		} else {
+			err = parser.LineBasedChunking(resp.Body, 1024*1024*30, func(data []byte) error {
+				if len(data) == 0 {
+					return nil
 				}
-				continue
-			}
 
-			ch.Write(t)
+				if bytes.HasPrefix(data, []byte("data:")) {
+					// split
+					data = data[5:]
+				}
+
+				if bytes.HasPrefix(data, []byte("event:")) {
+					// TODO: handle event
+					return nil
+				}
+
+				// trim space
+				data = bytes.TrimSpace(data)
+
+				return processData(data)
+			})
+		}
+
+		if err != nil {
+			ch.WriteError(err)
 		}
 
 		ch.Close()
