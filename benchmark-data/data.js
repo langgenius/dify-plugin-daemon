@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749624496375,
+  "lastUpdate": 1749629088769,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -4968,6 +4968,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "991475038 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1e260eedf4f07b81a47f79228604a88d58b4da2d",
+          "message": "refactor: using length-prefixed chunking for Backwards invocations (#342)\n\n- Adjusted the header byte manipulation in chunking functions to correctly use the first four bytes for data length.\n- Modified the HTTP request streaming function to include the length-prefixed option for improved data handling.",
+          "timestamp": "2025-06-11T16:01:53+08:00",
+          "tree_id": "15aa4eb112025f3d803074e80bb22512eb94a85c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1e260eedf4f07b81a47f79228604a88d58b4da2d"
+        },
+        "date": 1749629088152,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137274710,
+            "unit": "ns/op\t 1591120 B/op\t   28315 allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137274710,
+            "unit": "ns/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1591120,
+            "unit": "B/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28315,
+            "unit": "allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.93,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "988449916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.93,
+            "unit": "ns/op",
+            "extra": "988449916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "988449916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "988449916 times\n4 procs"
           }
         ]
       }
