@@ -252,6 +252,8 @@ github.com/langgenius/dify-cloud-kit v0.0.0-20250529060017-553b38edd48f h1:gcWAk
 github.com/langgenius/dify-cloud-kit v0.0.0-20250529060017-553b38edd48f/go.mod h1:VCtfHs++R61MXdyrfVtPk1VwTM4JHjtY+pYUKO8QdtQ=
 github.com/langgenius/dify-cloud-kit v0.0.0-20250610083317-681efb7762a4 h1:83W6fr7f6Ydqq0wLzPSmIaWVhVeAsOB/jGiH09qzdDg=
 github.com/langgenius/dify-cloud-kit v0.0.0-20250610083317-681efb7762a4/go.mod h1:VCtfHs++R61MXdyrfVtPk1VwTM4JHjtY+pYUKO8QdtQ=
+github.com/langgenius/dify-cloud-kit v0.0.0-20250610144923-1b8f6a174d64 h1:YT4fJv3Idf7PzUzaNMl1ieALyyPszydhpUWFbYJ4+54=
+github.com/langgenius/dify-cloud-kit v0.0.0-20250610144923-1b8f6a174d64/go.mod h1:VCtfHs++R61MXdyrfVtPk1VwTM4JHjtY+pYUKO8QdtQ=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
