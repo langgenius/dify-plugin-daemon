@@ -137,7 +137,7 @@ func TestLengthPrefixedChunking(t *testing.T) {
 				// First 4 bytes are already used for data length placeholder
 				// Write data length in bytes 4-7 (little endian)
 				dataLen := uint32(len(chunk))
-				binary.LittleEndian.PutUint32(header[4:8], dataLen)
+				binary.LittleEndian.PutUint32(header[:4], dataLen)
 				// Remaining 6 bytes are reserved (already zero)
 
 				buf.Write(header)
@@ -247,7 +247,7 @@ func TestLengthPrefixedChunking_DataTooLarge(t *testing.T) {
 
 	// Create header with large data size
 	header := make([]byte, 10)
-	binary.LittleEndian.PutUint32(header[4:8], largeDataSize)
+	binary.LittleEndian.PutUint32(header[:4], largeDataSize)
 
 	buf.Write(header)
 

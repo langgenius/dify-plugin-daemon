@@ -57,9 +57,15 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		}),
 		http_requests.HttpWriteTimeout(i.writeTimeout),
 		http_requests.HttpReadTimeout(i.readTimeout),
+		http_requests.HttpUsingLengthPrefixed(true),
 	)
 
-	response, err := http_requests.RequestAndParseStream[BaseBackwardsInvocationResponse[T]](i.client, i.difyPath(path), method, options...)
+	response, err := http_requests.RequestAndParseStream[BaseBackwardsInvocationResponse[T]](
+		i.client,
+		i.difyPath(path),
+		method,
+		options...,
+	)
 	if err != nil {
 		return nil, err
 	}

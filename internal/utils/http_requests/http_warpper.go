@@ -95,7 +95,6 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	for _, option := range options {
 		if option.Type == HttpOptionTypeReadTimeout {
 			readTimeout = option.Value.(int64)
-			break
 		} else if option.Type == HttpOptionTypeRaiseErrorWhenStreamDataNotMatch {
 			raiseErrorWhenStreamDataNotMatch = option.Value.(bool)
 		} else if option.Type == HttpOptionTypeUsingLengthPrefixed {

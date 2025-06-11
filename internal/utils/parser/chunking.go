@@ -83,7 +83,7 @@ func LengthPrefixedChunking(
 		}
 
 		// decoding data length
-		dataLength := binary.LittleEndian.Uint32(header[4:8])
+		dataLength := binary.LittleEndian.Uint32(header[:4])
 		if dataLength > maxChunkSize {
 			return fmt.Errorf("data length is too long: %d", dataLength)
 		}
