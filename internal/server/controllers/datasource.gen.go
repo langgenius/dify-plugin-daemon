@@ -24,7 +24,7 @@ func DatasourceValidateCredentials(config *app.Config) gin.HandlerFunc {
 }
 
 func DatasourceGetWebsiteCrawl(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeDatasourceFirstStep]
+	type request = plugin_entities.InvokePluginRequest[requests.RequestDatasourceGetWebsiteCrawl]
 
 	return func(c *gin.Context) {
 		BindPluginDispatchRequest(
@@ -37,7 +37,7 @@ func DatasourceGetWebsiteCrawl(config *app.Config) gin.HandlerFunc {
 }
 
 func DatasourceGetOnlineDocumentPages(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeDatasourceFirstStep]
+	type request = plugin_entities.InvokePluginRequest[requests.RequestDatasourceGetOnlineDocumentPages]
 
 	return func(c *gin.Context) {
 		BindPluginDispatchRequest(

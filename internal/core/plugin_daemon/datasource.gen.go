@@ -24,11 +24,11 @@ func DatasourceValidateCredentials(
 
 func DatasourceGetWebsiteCrawl(
 	session *session_manager.Session,
-	request *requests.RequestInvokeDatasourceFirstStep,
+	request *requests.RequestDatasourceGetWebsiteCrawl,
 ) (
-	*stream.Stream[datasource_entities.DataSourceResponseChunk], error,
+	*stream.Stream[datasource_entities.WebsiteCrawlChunk], error,
 ) {
-	return GenericInvokePlugin[requests.RequestInvokeDatasourceFirstStep, datasource_entities.DataSourceResponseChunk](
+	return GenericInvokePlugin[requests.RequestDatasourceGetWebsiteCrawl, datasource_entities.WebsiteCrawlChunk](
 		session,
 		request,
 		1,
@@ -37,11 +37,11 @@ func DatasourceGetWebsiteCrawl(
 
 func DatasourceGetOnlineDocumentPages(
 	session *session_manager.Session,
-	request *requests.RequestInvokeDatasourceFirstStep,
+	request *requests.RequestDatasourceGetOnlineDocumentPages,
 ) (
-	*stream.Stream[datasource_entities.DataSourceInvokeFirstStepResponse], error,
+	*stream.Stream[datasource_entities.OnlineDocumentPageChunk], error,
 ) {
-	return GenericInvokePlugin[requests.RequestInvokeDatasourceFirstStep, datasource_entities.DataSourceInvokeFirstStepResponse](
+	return GenericInvokePlugin[requests.RequestDatasourceGetOnlineDocumentPages, datasource_entities.OnlineDocumentPageChunk](
 		session,
 		request,
 		1,

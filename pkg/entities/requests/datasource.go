@@ -11,19 +11,15 @@ type RequestValidateDatasourceCredentials struct {
 	Provider string `json:"provider" validate:"required"`
 }
 
-type RequestInvokeDatasourceFirstStep struct {
+type RequestInvokeDatasourceRequest struct {
 	Credentials
 	BaseRequestInvokeDatasource
 
 	DatasourceParameters map[string]any `json:"datasource_parameters" validate:"required"`
 }
 
-type RequestInvokeDatasourceSecondStep struct {
-	Credentials
-	BaseRequestInvokeDatasource
-
-	DatasourceParameters map[string]any `json:"datasource_parameters" validate:"required"`
-}
+type RequestDatasourceGetWebsiteCrawl RequestInvokeDatasourceRequest
+type RequestDatasourceGetOnlineDocumentPages RequestInvokeDatasourceRequest
 
 type RequestInvokeOnlineDocumentDatasourceGetContent struct {
 	Credentials

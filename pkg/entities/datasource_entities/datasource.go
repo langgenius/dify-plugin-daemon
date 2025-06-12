@@ -9,10 +9,6 @@ type DataSourceValidateCredentialsResponse struct {
 	Result bool `json:"result"`
 }
 
-type DataSourceInvokeFirstStepResponse struct {
-	Result []map[string]any `json:"result"`
-}
-
 type DataSourceResponseChunkType string
 
 const (
@@ -60,4 +56,12 @@ type DataSourceResponseChunk struct {
 	Type    DataSourceResponseChunkType `json:"type" validate:"required,is_valid_data_source_response_chunk_type"`
 	Message map[string]any              `json:"message"`
 	Meta    map[string]any              `json:"meta"`
+}
+
+type WebsiteCrawlChunk struct {
+	Result []map[string]any `json:"result"`
+}
+
+type OnlineDocumentPageChunk struct {
+	Result []map[string]any `json:"result"`
 }

@@ -31,12 +31,12 @@ func DatasourceValidateCredentials(
 }
 
 func DatasourceGetWebsiteCrawl(
-	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeDatasourceFirstStep],
+	r *plugin_entities.InvokePluginRequest[requests.RequestDatasourceGetWebsiteCrawl],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceResponseChunk], error) {
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.WebsiteCrawlChunk], error) {
 			return plugin_daemon.DatasourceGetWebsiteCrawl(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
@@ -48,12 +48,12 @@ func DatasourceGetWebsiteCrawl(
 }
 
 func DatasourceGetOnlineDocumentPages(
-	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeDatasourceFirstStep],
+	r *plugin_entities.InvokePluginRequest[requests.RequestDatasourceGetOnlineDocumentPages],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceInvokeFirstStepResponse], error) {
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.OnlineDocumentPageChunk], error) {
 			return plugin_daemon.DatasourceGetOnlineDocumentPages(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
