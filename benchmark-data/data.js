@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749629088769,
+  "lastUpdate": 1749798857359,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -5040,6 +5040,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "988449916 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "18e91bbb37834a0e924926d02fbab096d8b7bd0d",
+          "message": "fix s3 client path style not used (#344)\n\n* bump cloud-kit version to fix #343\n\n* change env name USE_AWS_S3 to S3_USE_AWS\n\n* update s3_use_aws default value to true\n\n* update readme about the upgrade notice",
+          "timestamp": "2025-06-13T15:10:21+08:00",
+          "tree_id": "9f4f8621e2ca753639b5b4dfc57e0b8525b5d212",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/18e91bbb37834a0e924926d02fbab096d8b7bd0d"
+        },
+        "date": 1749798856382,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138662448,
+            "unit": "ns/op\t 1592104 B/op\t   28316 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138662448,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1592104,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 28316,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.52,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "967655902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.52,
+            "unit": "ns/op",
+            "extra": "967655902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "967655902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "967655902 times\n4 procs"
           }
         ]
       }
