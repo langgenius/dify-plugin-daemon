@@ -1,0 +1,29 @@
+package requests
+
+type BaseRequestInvokeDatasource struct {
+	Provider   string `json:"provider" validate:"required"`
+	Datasource string `json:"datasource" validate:"required"`
+}
+
+type RequestValidateDatasourceCredentials struct {
+	Credentials
+
+	Provider string `json:"provider" validate:"required"`
+}
+
+type RequestInvokeDatasourceRequest struct {
+	Credentials
+	BaseRequestInvokeDatasource
+
+	DatasourceParameters map[string]any `json:"datasource_parameters" validate:"required"`
+}
+
+type RequestDatasourceGetWebsiteCrawl RequestInvokeDatasourceRequest
+type RequestDatasourceGetOnlineDocumentPages RequestInvokeDatasourceRequest
+
+type RequestInvokeOnlineDocumentDatasourceGetContent struct {
+	Credentials
+	BaseRequestInvokeDatasource
+
+	Page map[string]any `json:"page" validate:"required"`
+}
