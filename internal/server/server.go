@@ -22,7 +22,7 @@ func initOSS(config *app.Config) oss.OSS {
 			Path: config.PluginStorageLocalRoot,
 		},
 		S3: &oss.S3{
-			UseAws:       config.UseAwsS3,
+			UseAws:       config.S3UseAWS,
 			Endpoint:     config.S3Endpoint,
 			UsePathStyle: config.S3UsePathStyle,
 			AccessKey:    config.AWSAccessKey,

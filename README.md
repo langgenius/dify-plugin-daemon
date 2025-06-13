@@ -48,9 +48,12 @@ Firstly copy the `.env.example` file to `.env` and set the correct environment v
 cp .env.example .env
 ```
 
+If you were using a non-AWS S3 storage before version 0.1.2, you need to manually set the S3_USE_AWS environment variable to false in the .env file.
+
 Attention that the `PYTHON_INTERPRETER_PATH` is the path to the python interpreter, please specify the correct path according to your python installation and make sure the python version is 3.11 or higher, as dify-plugin-sdk requires.
 
 We recommend you to use `vscode` to debug the daemon,  and a `launch.json` file is provided in the `.vscode` directory.
+
 
 ### Python environment
 #### UV
