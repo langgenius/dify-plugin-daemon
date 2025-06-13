@@ -59,9 +59,9 @@ type DataSourceResponseChunk struct {
 }
 
 type WebsiteCrawlChunk struct {
-	Result []map[string]any `json:"result"`
+	Result map[string]any `json:"result"`
 }
 
 type OnlineDocumentPageChunk struct {
-	Result []map[string]any `json:"result"`
+	Result map[string]any `json:"result"`
 }
