@@ -58,31 +58,35 @@ func autoMigrate() error {
 func Init(config *app.Config) {
 	var err error
 	if config.DBType == "postgresql" {
-		DifyPluginDB, err = pg.InitPluginDB(
-			config.DBHost,
-			int(config.DBPort),
-			config.DBDatabase,
-			config.DBDefaultDatabase,
-			config.DBUsername,
-			config.DBPassword,
-			config.DBSslMode,
-			config.DBMaxIdleConns,
-			config.DBMaxOpenConns,
-			config.DBConnMaxLifetime,
-		)
+		DifyPluginDB, err = pg.InitPluginDB(&pg.PGConfig{
+			Host:            config.DBHost,
+			Port:            int(config.DBPort),
+			DBName:          config.DBDatabase,
+			DefaultDBName:   config.DBDefaultDatabase,
+			User:            config.DBUsername,
+			Pass:            config.DBPassword,
+			SSLMode:         config.DBSslMode,
+			MaxIdleConns:    config.DBMaxIdleConns,
+			MaxOpenConns:    config.DBMaxOpenConns,
+			ConnMaxLifetime: config.DBConnMaxLifetime,
+			Charset:         config.DBCharset,
+			Extras:          config.DBExtras,
+		})
 	} else if config.DBType == "mysql" {
-		DifyPluginDB, err = mysql.InitPluginDB(
-			config.DBHost,
-			int(config.DBPort),
-			config.DBDatabase,
-			config.DBDefaultDatabase,
-			config.DBUsername,
-			config.DBPassword,
-			config.DBSslMode,
-			config.DBMaxIdleConns,
-			config.DBMaxOpenConns,
-			config.DBConnMaxLifetime,
-		)
+		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
+			Host:            config.DBHost,
+			Port:            int(config.DBPort),
+			DBName:          config.DBDatabase,
+			DefaultDBName:   config.DBDefaultDatabase,
+			User:            config.DBUsername,
+			Pass:            config.DBPassword,
+			SSLMode:         config.DBSslMode,
+			MaxIdleConns:    config.DBMaxIdleConns,
+			MaxOpenConns:    config.DBMaxOpenConns,
+			ConnMaxLifetime: config.DBConnMaxLifetime,
+			Charset:         config.DBCharset,
+			Extras:          config.DBExtras,
+		})
 	} else {
 		log.Panic("unsupported database type: %v", config.DBType)
 	}
