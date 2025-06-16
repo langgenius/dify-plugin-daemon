@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749798857359,
+  "lastUpdate": 1750070067686,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -5112,6 +5112,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "967655902 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guanz42@163.com",
+            "name": "Nevermore",
+            "username": "guanz42"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6cea2d401e1d7c08572918e5b79fa0eda6354e51",
+          "message": "refactor(local_runtime): optimize listener lookup in stdioHolder (#345)\n\nDirectly fetch and invoke the listener for a given session_id instead of iterating over the entire listener map.\n\nSigned-off-by: guanz42 <guanz42@163.com>",
+          "timestamp": "2025-06-16T18:31:46+08:00",
+          "tree_id": "82904c1ea38ef7a89ad12183badd4c28c1ccf716",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/6cea2d401e1d7c08572918e5b79fa0eda6354e51"
+        },
+        "date": 1750070067301,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139767604,
+            "unit": "ns/op\t 1569512 B/op\t   27514 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139767604,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569512,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.88,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "988686522 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.88,
+            "unit": "ns/op",
+            "extra": "988686522 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "988686522 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "988686522 times\n4 procs"
           }
         ]
       }
