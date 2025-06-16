@@ -81,12 +81,15 @@ func (p *PluginManager) handleNewLocalPlugins() {
 			log.Error("launch local plugin failed: %s", err.Error())
 		}
 
-		// consume error, avoid deadlock
-		for err := range errChan {
-			log.Error("plugin launch error: %s", err.Error())
+		// avoid receiving nil channel
+		if errChan != nil {
+			// consume error, avoid deadlock
+			for err := range errChan {
+				log.Error("plugin launch error: %s", err.Error())
+			}
 		}
 
-		// skip if error occurred
+		// avoid receiving nil channel
 		if launchedChan != nil {
 			// wait for plugin launched
 			<-launchedChan
