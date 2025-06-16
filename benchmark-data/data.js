@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750070067686,
+  "lastUpdate": 1750072685588,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -5184,6 +5184,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "988686522 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nghuutho74@gmail.com",
+            "name": "Rhys",
+            "username": "nht1206"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d1e2aba0e7014a9c001969fa82623a4f571dc6e",
+          "message": "fix: skip waiting if error occured (#337)\n\n* fix: skip waiting if error occured\n\n* Update internal/core/plugin_manager/watcher.go\n\nCo-authored-by: Rhys <nghuutho74@gmail.com>\n\n* fix: handle nil error channels in plugin manager\n\n---------\n\nCo-authored-by: Yeuoly <45712896+Yeuoly@users.noreply.github.com>\nCo-authored-by: Yeuoly <admin@srmxy.cn>",
+          "timestamp": "2025-06-16T19:15:15+08:00",
+          "tree_id": "af7e5b516702df49c17b71fa9a8c07479a47e8f1",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/3d1e2aba0e7014a9c001969fa82623a4f571dc6e"
+        },
+        "date": 1750072684893,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141008034,
+            "unit": "ns/op\t 1569164 B/op\t   27514 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141008034,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569164,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.18,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "976018207 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.18,
+            "unit": "ns/op",
+            "extra": "976018207 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "976018207 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "976018207 times\n4 procs"
           }
         ]
       }
