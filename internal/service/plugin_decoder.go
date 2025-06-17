@@ -20,11 +20,11 @@ import (
 func UploadPluginPkg(
 	config *app.Config,
 	c *gin.Context,
-	tenant_id string,
-	dify_pkg_file multipart.File,
-	verify_signature bool,
+	tenantId string,
+	difyPkgFile multipart.File,
+	verifySignature bool,
 ) *entities.Response {
-	pluginFile, err := io.ReadAll(dify_pkg_file)
+	pluginFile, err := io.ReadAll(difyPkgFile)
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
@@ -53,7 +53,7 @@ func UploadPluginPkg(
 		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
 
-	if config.ForceVerifyingSignature != nil && *config.ForceVerifyingSignature || verify_signature {
+	if config.ForceVerifyingSignature != nil && *config.ForceVerifyingSignature || verifySignature {
 		if !declaration.Verified {
 			return exception.BadRequestError(errors.Join(err, errors.New(
 				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
