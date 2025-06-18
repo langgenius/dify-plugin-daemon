@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750072685588,
+  "lastUpdate": 1750219906832,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -5256,6 +5256,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "976018207 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dfc9622e9117a372f4e8f7de4fed39761ab82cbc",
+          "message": "feat(db): enhance database configuration with charset and extras support (#347)\n\n- Updated .env.example to include DB_EXTRAS and DB_CHARSET variables.\n- Refactored InitPluginDB functions for PostgreSQL and MySQL to accept a configuration struct, allowing for more flexible database connection settings.\n- Adjusted connection pool settings to utilize new configuration options for charset and extras.\n\nThis change improves the configurability of database connections and prepares the codebase for future enhancements.",
+          "timestamp": "2025-06-18T12:08:56+08:00",
+          "tree_id": "d57b51968d946b517eadf549a162b6dd1ee1ce77",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/dfc9622e9117a372f4e8f7de4fed39761ab82cbc"
+        },
+        "date": 1750219906139,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 140116664,
+            "unit": "ns/op\t 1569247 B/op\t   27514 allocs/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 140116664,
+            "unit": "ns/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569247,
+            "unit": "B/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "247 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.52,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "961885954 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.52,
+            "unit": "ns/op",
+            "extra": "961885954 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "961885954 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "961885954 times\n4 procs"
           }
         ]
       }
