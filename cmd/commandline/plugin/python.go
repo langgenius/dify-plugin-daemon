@@ -10,7 +10,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 //go:embed templates/python/main.py
@@ -76,6 +75,9 @@ var PYTHON_MODERATION_MANIFEST_TEMPLATE []byte
 //go:embed templates/python/endpoint_group.yaml
 var PYTHON_ENDPOINT_GROUP_MANIFEST_TEMPLATE []byte
 
+//go:embed templates/python/endpoint_group.py
+var PYTHON_ENDPOINT_GROUP_PY_TEMPLATE []byte
+
 //go:embed templates/python/endpoint.py
 var PYTHON_ENDPOINT_TEMPLATE []byte
 
@@ -101,7 +103,7 @@ var PYTHON_DIFYIGNORE []byte
 var PYTHON_GITIGNORE []byte
 
 func renderTemplate(
-	original_template []byte, manifest *plugin_entities.PluginDeclaration, supported_model_types []string,
+	original_template []byte, manifest *ManifestWithExtra, supported_model_types []string,
 ) (string, error) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"SnakeToCamel": parser.SnakeToCamel,
@@ -118,6 +120,7 @@ func renderTemplate(
 		"SupportedModelTypes": supported_model_types,
 		"Version":             manifest.Version,
 		"Category":            manifest.Category(),
+		"CustomSetupEnabled":  manifest.customSetupEnabled,
 	}); err != nil {
 		return "", err
 	}
@@ -133,7 +136,7 @@ func writeFile(path string, content string) error {
 }
 
 func createPythonEnvironment(
-	root string, entrypoint string, manifest *plugin_entities.PluginDeclaration, category string,
+	root string, entrypoint string, manifest *ManifestWithExtra, category string,
 ) error {
 	guide, err := renderTemplate(PYTHON_GUIDE, manifest, []string{})
 	if err != nil {
