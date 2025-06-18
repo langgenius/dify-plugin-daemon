@@ -45,10 +45,6 @@ func IsValidDataSourceResponseChunkType(fl validator.FieldLevel) bool {
 	}
 }
 
-type DataSourceInvokeFirstStepResponse struct {
-	Result []map[string]any `json:"result"`
-}
-
 func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation(
 		"is_valid_data_source_response_chunk_type",
