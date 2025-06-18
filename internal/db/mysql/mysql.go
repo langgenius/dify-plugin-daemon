@@ -8,31 +8,47 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitPluginDB(host string, port int, dbName string, defaultDbName string, user string, password string, sslMode string, maxIdleConns int, maxOpenConns int, connMaxLifetime int) (*gorm.DB, error) {
+type MySQLConfig struct {
+	Host            string
+	Port            int
+	DBName          string
+	DefaultDBName   string
+	User            string
+	Pass            string
+	SSLMode         string
+	MaxIdleConns    int
+	MaxOpenConns    int
+	ConnMaxLifetime int
+	Charset         string
+	Extras          string
+}
+
+func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
+	// TODO: MySQL dose not support DB_EXTRAS now
 	initializer := mysqlDbInitializer{
-		host:     host,
-		port:     port,
-		user:     user,
-		password: password,
-		sslMode:  sslMode,
+		host:     config.Host,
+		port:     config.Port,
+		user:     config.User,
+		password: config.Pass,
+		sslMode:  config.SSLMode,
 	}
 
 	// first try to connect to target database
-	db, err := initializer.connect(dbName)
+	db, err := initializer.connect(config.DBName)
 	if err != nil {
 		// if connection fails, try to create database
-		db, err = initializer.connect(defaultDbName)
+		db, err = initializer.connect(config.DefaultDBName)
 		if err != nil {
 			return nil, err
 		}
 
-		err = initializer.createDatabaseIfNotExists(db, dbName)
+		err = initializer.createDatabaseIfNotExists(db, config.DBName)
 		if err != nil {
 			return nil, err
 		}
 
 		// connect to the new db
-		db, err = initializer.connect(dbName)
+		db, err = initializer.connect(config.DBName)
 		if err != nil {
 			return nil, err
 		}
@@ -44,9 +60,9 @@ func InitPluginDB(host string, port int, dbName string, defaultDbName string, us
 	}
 
 	// configure connection pool
-	pool.SetMaxIdleConns(maxIdleConns)
-	pool.SetMaxOpenConns(maxOpenConns)
-	pool.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
+	pool.SetMaxIdleConns(config.MaxIdleConns)
+	pool.SetMaxOpenConns(config.MaxOpenConns)
+	pool.SetConnMaxLifetime(time.Duration(config.ConnMaxLifetime) * time.Second)
 
 	return db, nil
 }

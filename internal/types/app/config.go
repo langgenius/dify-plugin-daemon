@@ -124,9 +124,11 @@ type Config struct {
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	// database connection pool settings
-	DBMaxIdleConns    int `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
-	DBMaxOpenConns    int `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
-	DBConnMaxLifetime int `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
+	DBMaxIdleConns    int    `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
+	DBMaxOpenConns    int    `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
+	DBConnMaxLifetime int    `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
+	DBExtras          string `envconfig:"DB_EXTRAS"`
+	DBCharset         string `envconfig:"DB_CHARSET"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`
