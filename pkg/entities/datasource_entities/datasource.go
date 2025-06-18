@@ -63,5 +63,5 @@ type WebsiteCrawlChunk struct {
 }
 
 type OnlineDocumentPageChunk struct {
-	Result map[string]any `json:"result"`
+	Result []map[string]any `json:"result"`
 }
