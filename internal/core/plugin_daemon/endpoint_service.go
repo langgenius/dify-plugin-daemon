@@ -11,6 +11,19 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
 
+func SetupEndpoint(
+	session *session_manager.Session,
+	request *requests.RequestSetupEndpoint,
+) (
+	*stream.Stream[endpoint_entities.SetupEndpointResponse], error,
+) {
+	return GenericInvokePlugin[requests.RequestSetupEndpoint, endpoint_entities.SetupEndpointResponse](
+		session,
+		request,
+		1,
+	)
+}
+
 func InvokeEndpoint(
 	session *session_manager.Session,
 	request *requests.RequestInvokeEndpoint,
