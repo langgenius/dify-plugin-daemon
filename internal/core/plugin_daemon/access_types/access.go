@@ -3,12 +3,12 @@ package access_types
 type PluginAccessType string
 
 const (
-	PLUGIN_ACCESS_TYPE_TOOL           PluginAccessType = "tool"
-	PLUGIN_ACCESS_TYPE_MODEL          PluginAccessType = "model"
-	PLUGIN_ACCESS_TYPE_ENDPOINT       PluginAccessType = "endpoint"
-	PLUGIN_ACCESS_TYPE_AGENT_STRATEGY PluginAccessType = "agent_strategy"
-	PLUGIN_ACCESS_TYPE_OAUTH          PluginAccessType = "oauth"
-	PLUGIN_ACCESS_TYPE_DYNAMIC_SELECT PluginAccessType = "dynamic_select"
+	PLUGIN_ACCESS_TYPE_TOOL              PluginAccessType = "tool"
+	PLUGIN_ACCESS_TYPE_MODEL             PluginAccessType = "model"
+	PLUGIN_ACCESS_TYPE_ENDPOINT          PluginAccessType = "endpoint"
+	PLUGIN_ACCESS_TYPE_AGENT_STRATEGY    PluginAccessType = "agent_strategy"
+	PLUGIN_ACCESS_TYPE_OAUTH             PluginAccessType = "oauth"
+	PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER PluginAccessType = "dynamic_parameter"
 )
 
 func (p PluginAccessType) IsValid() bool {
@@ -17,7 +17,7 @@ func (p PluginAccessType) IsValid() bool {
 		p == PLUGIN_ACCESS_TYPE_ENDPOINT ||
 		p == PLUGIN_ACCESS_TYPE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_TYPE_OAUTH ||
-		p == PLUGIN_ACCESS_TYPE_DYNAMIC_SELECT
+		p == PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER
 }
 
 type PluginAccessAction string

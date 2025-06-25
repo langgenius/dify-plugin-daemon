@@ -228,7 +228,7 @@ var PluginDispatchers = []PluginDispatcher{
 		Name:               "FetchDynamicParameterOptions",
 		RequestType:        requests.RequestDynamicParameterSelect{},
 		ResponseType:       dynamic_select_entities.DynamicSelectResult{},
-		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_SELECT,
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_SELECT",
 		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS",
