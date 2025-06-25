@@ -2,6 +2,7 @@ package pg
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -25,39 +26,11 @@ type PGConfig struct {
 
 func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 	// first try to connect to target database
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		config.Host,
-		config.Port,
-		config.User,
-		config.Pass,
-		config.DBName,
-		config.SSLMode,
-	)
-	if config.Charset != "" {
-		dsn = fmt.Sprintf("%s client_encoding=%s", dsn, config.Charset)
-	}
-	if config.Extras != "" {
-		dsn = fmt.Sprintf("%s %s", dsn, config.Extras)
-	}
-
+	dsn := buildDSN(config, false)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		// if connection fails, try to create database
-		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-			config.Host,
-			config.Port,
-			config.User,
-			config.Pass,
-			config.DefaultDBName,
-			config.SSLMode,
-		)
-		if config.Charset != "" {
-			dsn = fmt.Sprintf("%s client_encoding=%s", dsn, config.Charset)
-		}
-		if config.Extras != "" {
-			dsn = fmt.Sprintf("%s %s", dsn, config.Extras)
-		}
-
+		dsn = buildDSN(config, true)
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			return nil, err
@@ -116,4 +89,28 @@ func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 	pgsqlDB.SetConnMaxLifetime(time.Duration(config.ConnMaxLifetime) * time.Second)
 
 	return db, nil
+}
+
+func buildDSN(config *PGConfig, useDefaultDB bool) string {
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Host,
+		config.Port,
+		config.User,
+		config.Pass,
+		func() string {
+			if useDefaultDB {
+				return config.DefaultDBName
+			}
+			return config.DBName
+		}(),
+		config.SSLMode,
+	)
+	if config.Charset != "" {
+		dsn = fmt.Sprintf("%s client_encoding=%s", dsn, config.Charset)
+	}
+	if config.Extras != "" {
+		extra := strings.ReplaceAll(config.Extras, "options=", "")
+		dsn = fmt.Sprintf("%s options='%s'", dsn, extra)
+	}
+	return dsn
 }
