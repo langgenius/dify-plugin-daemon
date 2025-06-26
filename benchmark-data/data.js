@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750910327670,
+  "lastUpdate": 1750911162486,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -5832,6 +5832,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "970923838 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f80d8a8946e6ab7b7b3149aab123a3d2cd2d5638",
+          "message": "feat: add pull request template for improved contribution guidelines (#366)\n\n- Introduced a new pull request template to standardize contributions.\n- The template includes sections for description, type of change, essential checklist, and additional information to assist reviewers.",
+          "timestamp": "2025-06-26T12:09:55+08:00",
+          "tree_id": "68f56717e6031ad4ba748768b55ef8b06c77cf26",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f80d8a8946e6ab7b7b3149aab123a3d2cd2d5638"
+        },
+        "date": 1750911162063,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141236840,
+            "unit": "ns/op\t 1569511 B/op\t   27514 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141236840,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569511,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.87,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "954974404 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.87,
+            "unit": "ns/op",
+            "extra": "954974404 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "954974404 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "954974404 times\n4 procs"
           }
         ]
       }
