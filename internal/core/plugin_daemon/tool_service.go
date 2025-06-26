@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -14,6 +15,7 @@ import (
 func InvokeTool(
 	session *session_manager.Session,
 	request *requests.RequestInvokeTool,
+	config *app.Config,
 ) (
 	*stream.Stream[tool_entities.ToolResponseChunk], error,
 ) {
@@ -27,7 +29,7 @@ func InvokeTool(
 	](
 		session,
 		request,
-		128,
+		config.ToolResponseBufferSize,
 	)
 
 	if err != nil {

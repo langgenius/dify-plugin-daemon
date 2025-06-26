@@ -4,6 +4,7 @@ package plugin_daemon
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -12,13 +13,14 @@ import (
 func InvokeLLM(
 	session *session_manager.Session,
 	request *requests.RequestInvokeLLM,
+	config *app.Config,
 ) (
 	*stream.Stream[model_entities.LLMResultChunk], error,
 ) {
 	return GenericInvokePlugin[requests.RequestInvokeLLM, model_entities.LLMResultChunk](
 		session,
 		request,
-		512,
+		config.LlmResponseBufferSize,
 	)
 }
 

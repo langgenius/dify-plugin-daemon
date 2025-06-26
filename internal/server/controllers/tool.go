@@ -17,7 +17,7 @@ func InvokeTool(config *app.Config) gin.HandlerFunc {
 		BindPluginDispatchRequest(
 			c,
 			func(itr request) {
-				service.InvokeTool(&itr, c, config.PluginMaxExecutionTimeout)
+				service.InvokeTool(&itr, c, config)
 			},
 		)
 	}

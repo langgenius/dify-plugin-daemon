@@ -7,6 +7,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -16,17 +17,17 @@ import (
 func InvokeLLM(
 	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeLLM],
 	ctx *gin.Context,
-	max_timeout_seconds int,
+	config *app.Config,
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.LLMResultChunk], error) {
-			return plugin_daemon.InvokeLLM(session, &r.Data)
+			return plugin_daemon.InvokeLLM(session, &r.Data, config)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
 		r,
 		ctx,
-		max_timeout_seconds,
+		config.PluginMaxExecutionTimeout,
 	)
 }
 
