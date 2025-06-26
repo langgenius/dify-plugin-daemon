@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750911162486,
+  "lastUpdate": 1750931323412,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -5904,6 +5904,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "954974404 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jingfelix@outlook.com",
+            "name": "Tianyi Jing",
+            "username": "jingfelix"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "af3fec6f327df8192fbfd7ce52b7b8406400a7d2",
+          "message": "fix: prevent duplicate packaging (#367)\n\nfixes: https://github.com/langgenius/dify-plugins/issues/612\nfixes: https://github.com/langgenius/dify-plugins/issues/234\n\nSigned-off-by: jingfelix <jingfelix@outlook.com>",
+          "timestamp": "2025-06-26T17:45:59+08:00",
+          "tree_id": "c61870b8a93b5e5df3486ad6643a29f817a9ced9",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/af3fec6f327df8192fbfd7ce52b7b8406400a7d2"
+        },
+        "date": 1750931322974,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137632589,
+            "unit": "ns/op\t 1569203 B/op\t   27514 allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137632589,
+            "unit": "ns/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569203,
+            "unit": "B/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.27,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "984038859 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.27,
+            "unit": "ns/op",
+            "extra": "984038859 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "984038859 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "984038859 times\n4 procs"
           }
         ]
       }
