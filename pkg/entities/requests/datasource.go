@@ -28,8 +28,7 @@ type RequestInvokeOnlineDocumentDatasourceGetContent struct {
 	Page map[string]any `json:"page" validate:"required"`
 }
 
-// Online driver file request structures
-type RequestOnlineDriverBrowseFiles struct {
+type RequestOnlineDriveBrowseFiles struct {
 	Credentials
 	BaseRequestInvokeDatasource
 
@@ -39,7 +38,7 @@ type RequestOnlineDriverBrowseFiles struct {
 	StartAfter *string `json:"start_after" validate:"omitempty"` // Pagination token for continuing from a specific file eg: 'docs/dify/1.txt'
 }
 
-type RequestOnlineDriverDownloadFile struct {
+type RequestOnlineDriveDownloadFile struct {
 	Credentials
 	BaseRequestInvokeDatasource
 

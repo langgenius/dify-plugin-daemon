@@ -28,6 +28,6 @@ func (app *App) setupGeneratedRoutes(group *gin.RouterGroup, config *app.Config)
 	group.POST("/datasource/get_website_crawl", controllers.DatasourceGetWebsiteCrawl(config))
 	group.POST("/datasource/get_online_document_pages", controllers.DatasourceGetOnlineDocumentPages(config))
 	group.POST("/datasource/get_online_document_page_content", controllers.DatasourceGetOnlineDocumentPageContent(config))
-	group.POST("/datasource/online_driver_browse_files", controllers.DatasourceOnlineDriverBrowseFiles(config))
-	group.POST("/datasource/online_driver_download_file", controllers.DatasourceOnlineDriverDownloadFile(config))
+	group.POST("/datasource/online_drive_browse_files", controllers.DatasourceOnlineDriveBrowseFiles(config))
+	group.POST("/datasource/online_drive_download_file", controllers.DatasourceOnlineDriveDownloadFile(config))
 }

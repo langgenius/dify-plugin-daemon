@@ -69,17 +69,17 @@ type OnlineDocumentPageChunk struct {
 	Result []map[string]any `json:"result"`
 }
 
-type OnlineDriverFile struct {
+type OnlineDriveFile struct {
 	Key  string `json:"key" validate:"required"`
 	Size int    `json:"size" validate:"required"`
 }
 
-type OnlineDriverFileBucket struct {
-	Bucket      string             `json:"bucket" validate:"required"`
-	Files       []OnlineDriverFile `json:"files" validate:"required"`
-	IsTruncated bool               `json:"is_truncated" validate:"required"`
+type OnlineDriveFileBucket struct {
+	Bucket      string            `json:"bucket" validate:"required"`
+	Files       []OnlineDriveFile `json:"files" validate:"required"`
+	IsTruncated bool              `json:"is_truncated" validate:"required"`
 }
 
-type GetOnlineDriverBrowseFilesResponse struct {
-	Result []OnlineDriverFileBucket `json:"result" validate:"required"`
+type GetOnlineDriveBrowseFilesResponse struct {
+	Result []OnlineDriveFileBucket `json:"result" validate:"required"`
 }
