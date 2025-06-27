@@ -74,7 +74,7 @@ uses docker volume to share the directory with the host machine, it's better for
 
 ### Kubernetes
 
-For now, Daemon community edition dose not support smoothly scale out with the number of replicas, If you are interested in this feature, please contact us. we have a more production-ready version for enterprise users.
+For now, Daemon community edition does not support smoothly scale out with the number of replicas, If you are interested in this feature, please contact us. we have a more production-ready version for enterprise users.
 
 ## Benchmark
 
