@@ -88,6 +88,15 @@ type Config struct {
 	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
+	// tool response buffer size
+	ToolResponseBufferSize int `envconfig:"TOOL_RESPONSE_BUFFER_SIZE"`
+
+	// llm response buffer size
+	LlmResponseBufferSize int `envconfig:"LLM_RESPONSE_BUFFER_SIZE"`
+
+	// strategy response buffer size
+	AgentStrategyResponseBufferSize int `envconfig:"AGENT_STRATEGY_RESPONSE_BUFFER_SIZE"`
+
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/agent_entities"
@@ -18,6 +19,7 @@ import (
 func InvokeAgentStrategy(
 	session *session_manager.Session,
 	r *requests.RequestInvokeAgentStrategy,
+	config *app.Config,
 ) (*stream.Stream[agent_entities.AgentStrategyResponseChunk], error) {
 	runtime := session.Runtime()
 	if runtime == nil {
@@ -29,7 +31,7 @@ func InvokeAgentStrategy(
 	](
 		session,
 		r,
-		128,
+		config.AgentStrategyResponseBufferSize,
 	)
 
 	if err != nil {

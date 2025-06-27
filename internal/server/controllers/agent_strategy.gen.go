@@ -17,7 +17,7 @@ func InvokeAgentStrategy(config *app.Config) gin.HandlerFunc {
 		BindPluginDispatchRequest(
 			c,
 			func(itr request) {
-				service.InvokeAgentStrategy(&itr, c, config.PluginMaxExecutionTimeout)
+				service.InvokeAgentStrategy(&itr, c, config)
 			},
 		)
 	}

@@ -17,7 +17,7 @@ func InvokeLLM(config *app.Config) gin.HandlerFunc {
 		BindPluginDispatchRequest(
 			c,
 			func(itr request) {
-				service.InvokeLLM(&itr, c, config.PluginMaxExecutionTimeout)
+				service.InvokeLLM(&itr, c, config)
 			},
 		)
 	}
