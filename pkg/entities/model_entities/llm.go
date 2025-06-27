@@ -188,6 +188,15 @@ type LLMResultChunk struct {
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
 }
 
+type LLMStructuredOutput struct {
+	StructuredOutput map[string]any `json:"structured_output" validate:"omitempty"`
+}
+
+type LLMResultChunkWithStructuredOutput struct {
+	LLMResultChunk
+	LLMStructuredOutput
+}
+
 /*
 This is a compatibility layer for the old LLMResultChunk format.
 The old one has the `PromptMessages` field, we need to ensure the new one is backward compatible.
