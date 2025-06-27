@@ -163,29 +163,25 @@ func (m *MockedDifyInvocation) InvokeLLMWithStructuredOutput(payload *dify_invoc
 	routine.Submit(nil, func() {
 		for i, part := range parts {
 			stream.Write(model_entities.LLMResultChunkWithStructuredOutput{
-				LLMResultChunk: model_entities.LLMResultChunk{
-					Model:             model_entities.LLMModel(payload.Model),
-					SystemFingerprint: "test",
-					Delta: model_entities.LLMResultChunkDelta{
-						Index: &[]int{i}[0],
-						Message: model_entities.PromptMessage{
-							Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-							Content:   part,
-							Name:      "test",
-							ToolCalls: []model_entities.PromptMessageToolCall{},
-						},
+				Model:             model_entities.LLMModel(payload.Model),
+				SystemFingerprint: "test",
+				Delta: model_entities.LLMResultChunkDelta{
+					Index: &[]int{i}[0],
+					Message: model_entities.PromptMessage{
+						Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+						Content:   part,
+						Name:      "test",
+						ToolCalls: []model_entities.PromptMessageToolCall{},
 					},
 				},
 			})
 		}
 		// write the last part
 		stream.Write(model_entities.LLMResultChunkWithStructuredOutput{
-			LLMResultChunk: model_entities.LLMResultChunk{
-				Model:             model_entities.LLMModel(payload.Model),
-				SystemFingerprint: "test",
-				Delta: model_entities.LLMResultChunkDelta{
-					Index: &[]int{10}[0],
-				},
+			Model:             model_entities.LLMModel(payload.Model),
+			SystemFingerprint: "test",
+			Delta: model_entities.LLMResultChunkDelta{
+				Index: &[]int{10}[0],
 			},
 			LLMStructuredOutput: model_entities.LLMStructuredOutput{
 				StructuredOutput: structuredOutput,
