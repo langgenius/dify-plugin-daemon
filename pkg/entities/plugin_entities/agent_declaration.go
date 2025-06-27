@@ -70,7 +70,7 @@ type AgentStrategyParameter struct {
 	Min          *float64                   `json:"min" yaml:"min" validate:"omitempty"`
 	Max          *float64                   `json:"max" yaml:"max" validate:"omitempty"`
 	Precision    *int                       `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options      []ToolParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Options      []ParameterOption          `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type AgentStrategyOutputSchema map[string]any
