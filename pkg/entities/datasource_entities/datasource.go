@@ -69,30 +69,17 @@ type OnlineDocumentPageChunk struct {
 	Result []map[string]any `json:"result"`
 }
 
-// Online driver file structures
-type OnlineDriverFilePath struct {
-	Key  string `json:"key" validate:"required"`  // The key of the file
-	Size int    `json:"size" validate:"required"` // The size of the file
+type OnlineDriverFile struct {
+	Key  string `json:"key" validate:"required"`
+	Size int    `json:"size" validate:"required"`
 }
 
 type OnlineDriverFileBucket struct {
-	Bucket      string                 `json:"bucket" validate:"required"`       // The bucket of the file
-	Files       []OnlineDriverFilePath `json:"files" validate:"required"`        // The files of the bucket
-	IsTruncated bool                   `json:"is_truncated" validate:"required"` // Whether the bucket has more files
+	Bucket      string             `json:"bucket" validate:"required"`
+	Files       []OnlineDriverFile `json:"files" validate:"required"`
+	IsTruncated bool               `json:"is_truncated" validate:"required"`
 }
 
-type GetOnlineDriverFileListResponse struct {
-	Result []OnlineDriverFileBucket `json:"result" validate:"required"` // The bucket of the files
-}
-
-type OnlineDriverFile struct {
-	ID        string `json:"id" validate:"required"`         // The id of the file
-	TenantID  string `json:"tenant_id" validate:"required"`  // The tenant id of the file
-	Type      string `json:"type" validate:"required"`       // The type of the file
-	RemoteURL string `json:"remote_url" validate:"required"` // The remote url of the file
-	RelatedID string `json:"related_id" validate:"required"` // The related id of the file
-	Filename  string `json:"filename" validate:"required"`   // The name of the file
-	Extension string `json:"extension" validate:"required"`  // The extension of the file
-	MimeType  string `json:"mime_type" validate:"required"`  // The mime type of the file
-	Size      int    `json:"size" validate:"required"`       // The size of the file
+type GetOnlineDriverBrowseFilesResponse struct {
+	Result []OnlineDriverFileBucket `json:"result" validate:"required"`
 }

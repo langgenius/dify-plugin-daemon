@@ -61,26 +61,26 @@ func DatasourceGetOnlineDocumentPageContent(
 	)
 }
 
-func DatasourceGetOnlineDriverFileList(
+func DatasourceOnlineDriverBrowseFiles(
 	session *session_manager.Session,
-	request *requests.RequestGetOnlineDriverFileList,
+	request *requests.RequestOnlineDriverBrowseFiles,
 ) (
-	*stream.Stream[datasource_entities.GetOnlineDriverFileListResponse], error,
+	*stream.Stream[datasource_entities.GetOnlineDriverBrowseFilesResponse], error,
 ) {
-	return GenericInvokePlugin[requests.RequestGetOnlineDriverFileList, datasource_entities.GetOnlineDriverFileListResponse](
+	return GenericInvokePlugin[requests.RequestOnlineDriverBrowseFiles, datasource_entities.GetOnlineDriverBrowseFilesResponse](
 		session,
 		request,
 		1,
 	)
 }
 
-func DatasourceGetOnlineDriverFile(
+func DatasourceOnlineDriverDownloadFile(
 	session *session_manager.Session,
-	request *requests.RequestGetOnlineDriverFile,
+	request *requests.RequestOnlineDriverDownloadFile,
 ) (
 	*stream.Stream[datasource_entities.DataSourceResponseChunk], error,
 ) {
-	return GenericInvokePlugin[requests.RequestGetOnlineDriverFile, datasource_entities.DataSourceResponseChunk](
+	return GenericInvokePlugin[requests.RequestOnlineDriverDownloadFile, datasource_entities.DataSourceResponseChunk](
 		session,
 		request,
 		1,

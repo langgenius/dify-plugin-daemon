@@ -81,34 +81,34 @@ func DatasourceGetOnlineDocumentPageContent(
 	)
 }
 
-func DatasourceGetOnlineDriverFileList(
-	r *plugin_entities.InvokePluginRequest[requests.RequestGetOnlineDriverFileList],
+func DatasourceOnlineDriverBrowseFiles(
+	r *plugin_entities.InvokePluginRequest[requests.RequestOnlineDriverBrowseFiles],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.GetOnlineDriverFileListResponse], error) {
-			return plugin_daemon.DatasourceGetOnlineDriverFileList(session, &r.Data)
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.GetOnlineDriverBrowseFilesResponse], error) {
+			return plugin_daemon.DatasourceOnlineDriverBrowseFiles(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_GET_FILE_LIST,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_BROWSE_FILES,
 		r,
 		ctx,
 		max_timeout_seconds,
 	)
 }
 
-func DatasourceGetOnlineDriverFile(
-	r *plugin_entities.InvokePluginRequest[requests.RequestGetOnlineDriverFile],
+func DatasourceOnlineDriverDownloadFile(
+	r *plugin_entities.InvokePluginRequest[requests.RequestOnlineDriverDownloadFile],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceResponseChunk], error) {
-			return plugin_daemon.DatasourceGetOnlineDriverFile(session, &r.Data)
+			return plugin_daemon.DatasourceOnlineDriverDownloadFile(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_GET_FILE,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_DOWNLOAD_FILE,
 		r,
 		ctx,
 		max_timeout_seconds,

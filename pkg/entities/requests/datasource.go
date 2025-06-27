@@ -29,7 +29,7 @@ type RequestInvokeOnlineDocumentDatasourceGetContent struct {
 }
 
 // Online driver file request structures
-type RequestGetOnlineDriverFileList struct {
+type RequestOnlineDriverBrowseFiles struct {
 	Credentials
 	BaseRequestInvokeDatasource
 
@@ -39,7 +39,7 @@ type RequestGetOnlineDriverFileList struct {
 	StartAfter *string `json:"start_after" validate:"omitempty"` // Pagination token for continuing from a specific file eg: 'docs/dify/1.txt'
 }
 
-type RequestGetOnlineDriverFile struct {
+type RequestOnlineDriverDownloadFile struct {
 	Credentials
 	BaseRequestInvokeDatasource
 

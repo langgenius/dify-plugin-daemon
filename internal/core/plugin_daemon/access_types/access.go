@@ -46,8 +46,8 @@ const (
 	PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL                PluginAccessAction = "invoke_website_datasource_get_crawl"
 	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES        PluginAccessAction = "invoke_online_document_datasource_get_pages"
 	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT PluginAccessAction = "invoke_online_document_datasource_get_page_content"
-	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_GET_FILE_LIST                 PluginAccessAction = "invoke_online_driver_get_file_list"
-	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_GET_FILE                      PluginAccessAction = "invoke_online_driver_get_file"
+	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_BROWSE_FILES                  PluginAccessAction = "invoke_online_driver_browse_files"
+	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_DOWNLOAD_FILE                 PluginAccessAction = "invoke_online_driver_download_file"
 )
 
 func (p PluginAccessAction) IsValid() bool {
@@ -74,6 +74,6 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT ||
-		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_GET_FILE_LIST ||
-		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_GET_FILE
+		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_BROWSE_FILES ||
+		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVER_DOWNLOAD_FILE
 }
