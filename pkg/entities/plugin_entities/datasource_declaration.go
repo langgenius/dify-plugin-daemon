@@ -14,13 +14,15 @@ type DatasourceType string
 const (
 	DatasourceTypeWebsiteCrawl   DatasourceType = "website_crawl"
 	DatasourceTypeOnlineDocument DatasourceType = "online_document"
+	DatasourceTypeOnlineDriver   DatasourceType = "online_driver"
 )
 
 func isDatasourceProviderType(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
 	switch value {
 	case string(DatasourceTypeWebsiteCrawl),
-		string(DatasourceTypeOnlineDocument):
+		string(DatasourceTypeOnlineDocument),
+		string(DatasourceTypeOnlineDriver):
 		return true
 	}
 	return false
