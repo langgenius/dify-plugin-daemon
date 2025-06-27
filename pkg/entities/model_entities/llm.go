@@ -193,7 +193,14 @@ type LLMStructuredOutput struct {
 }
 
 type LLMResultChunkWithStructuredOutput struct {
-	LLMResultChunk
+	// You might argue that why not embed LLMResultChunk directly?
+	// `LLMResultChunk` has implemented interface `MarshalJSON`, due to Golang's type embedding,
+	// it also effectively implements the `MarshalJSON` method of `LLMResultChunkWithStructuredOutput`,
+	// resulting in a unexpected JSON marshaling of `LLMResultChunkWithStructuredOutput`
+	Model             LLMModel            `json:"model" validate:"required"`
+	SystemFingerprint string              `json:"system_fingerprint" validate:"omitempty"`
+	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
+
 	LLMStructuredOutput
 }
 
