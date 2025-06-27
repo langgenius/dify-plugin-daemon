@@ -61,3 +61,29 @@ func DatasourceGetOnlineDocumentPageContent(config *app.Config) gin.HandlerFunc 
 		)
 	}
 }
+
+func DatasourceGetOnlineDriverFileList(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetOnlineDriverFileList]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(
+			c,
+			func(itr request) {
+				service.DatasourceGetOnlineDriverFileList(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
+
+func DatasourceGetOnlineDriverFile(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestGetOnlineDriverFile]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(
+			c,
+			func(itr request) {
+				service.DatasourceGetOnlineDriverFile(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
