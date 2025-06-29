@@ -156,7 +156,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 
 	// start local watcher
 	if configuration.Platform == app.PLATFORM_LOCAL {
-		p.startLocalWatcher()
+		p.startLocalWatcher(configuration)
 	}
 
 	// launch serverless connector

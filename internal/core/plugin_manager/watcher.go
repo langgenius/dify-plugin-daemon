@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
@@ -11,12 +12,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (p *PluginManager) startLocalWatcher() {
+func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
 		log.Info("start to handle new plugins in path: %s", p.config.PluginInstalledPath)
-		p.handleNewLocalPlugins()
+		p.handleNewLocalPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
-			p.handleNewLocalPlugins()
+			p.handleNewLocalPlugins(config)
 			p.removeUninstalledLocalPlugins()
 		}
 	}()
@@ -66,7 +67,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 	}
 }
 
-func (p *PluginManager) handleNewLocalPlugins() {
+func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 	// walk through all plugins
 	plugins, err := p.installedBucket.List()
 	if err != nil {
@@ -74,26 +75,39 @@ func (p *PluginManager) handleNewLocalPlugins() {
 		return
 	}
 
+	var wg sync.WaitGroup
+	maxConcurrency := config.PluginLocalLaunchingConcurrent
+	sem := make(chan struct{}, maxConcurrency)
+
+	log.Info("Launching %d plugins with max concurrency: %d", len(plugins), maxConcurrency)
+
 	for _, plugin := range plugins {
-		_, launchedChan, errChan, err := p.launchLocal(plugin)
-		if err != nil {
-			log.Error("launch local plugin failed: %s", err.Error())
-		}
+		wg.Add(1)
+		go func(plugin plugin_entities.PluginUniqueIdentifier) {
+			defer wg.Done()
 
-		// avoid receiving nil channel
-		if errChan != nil {
-			// consume error, avoid deadlock
-			for err := range errChan {
-				log.Error("plugin launch error: %s", err.Error())
+			// Acquire semaphore in child goroutine to avoid blocking main goroutine
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			_, launchedChan, errChan, err := p.launchLocal(plugin)
+			if err != nil {
+				log.Error("launch local plugin failed: %s", err.Error())
+				return
 			}
-		}
 
-		// avoid receiving nil channel
-		if launchedChan != nil {
-			// wait for plugin launched
+			// Consume errors asynchronously to avoid blocking
+			go func() {
+				for err := range errChan {
+					log.Error("plugin launch error: %s", err.Error())
+				}
+			}()
+
+			// Wait for plugin to complete startup
 			<-launchedChan
-		}
+		}(plugin)
 	}
+	wg.Wait()
 }
 
 // an async function to remove uninstalled local plugins
