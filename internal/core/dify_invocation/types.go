@@ -18,6 +18,7 @@ type InvokeType string
 
 const (
 	INVOKE_TYPE_LLM                      InvokeType = "llm"
+	INVOKE_TYPE_LLM_STRUCTURED_OUTPUT    InvokeType = "llm_structured_output"
 	INVOKE_TYPE_TEXT_EMBEDDING           InvokeType = "text_embedding"
 	INVOKE_TYPE_RERANK                   InvokeType = "rerank"
 	INVOKE_TYPE_TTS                      InvokeType = "tts"
@@ -49,6 +50,15 @@ type InvokeLLMRequest struct {
 	// requests.InvokeLLMSchema,
 	// TODO: as completion_params in requests.InvokeLLMSchema is "model_parameters", we declare another one here
 	InvokeLLMSchema
+}
+
+type InvokeLLMWithStructuredOutputRequest struct {
+	BaseInvokeDifyRequest
+	requests.BaseRequestInvokeModel
+	// requests.InvokeLLMSchema
+	// TODO: as completion_params in requests.InvokeLLMSchema is "model_parameters", we declare another one here
+	InvokeLLMSchema
+	StructuredOutputSchema map[string]any `json:"structured_output_schema" validate:"required"`
 }
 
 type InvokeTextEmbeddingRequest struct {

@@ -188,6 +188,22 @@ type LLMResultChunk struct {
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
 }
 
+type LLMStructuredOutput struct {
+	StructuredOutput map[string]any `json:"structured_output" validate:"omitempty"`
+}
+
+type LLMResultChunkWithStructuredOutput struct {
+	// You might argue that why not embed LLMResultChunk directly?
+	// `LLMResultChunk` has implemented interface `MarshalJSON`, due to Golang's type embedding,
+	// it also effectively implements the `MarshalJSON` method of `LLMResultChunkWithStructuredOutput`,
+	// resulting in a unexpected JSON marshaling of `LLMResultChunkWithStructuredOutput`
+	Model             LLMModel            `json:"model" validate:"required"`
+	SystemFingerprint string              `json:"system_fingerprint" validate:"omitempty"`
+	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
+
+	LLMStructuredOutput
+}
+
 /*
 This is a compatibility layer for the old LLMResultChunk format.
 The old one has the `PromptMessages` field, we need to ensure the new one is backward compatible.

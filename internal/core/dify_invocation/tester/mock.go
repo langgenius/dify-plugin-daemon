@@ -136,6 +136,62 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 	return stream, nil
 }
 
+func (m *MockedDifyInvocation) InvokeLLMWithStructuredOutput(payload *dify_invocation.InvokeLLMWithStructuredOutputRequest) (
+	*stream.Stream[model_entities.LLMResultChunkWithStructuredOutput], error,
+) {
+	// generate json from payload.StructuredOutputSchema
+	structuredOutput, err := jsonschema.GenerateValidateJson(payload.StructuredOutputSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	// marshal jsonSchema to string
+	structuredOutputString := parser.MarshalJson(structuredOutput)
+
+	// split structuredOutputString into 10 parts and write them to the stream
+	parts := []string{}
+	for i := 0; i < 10; i++ {
+		start := i * len(structuredOutputString) / 10
+		end := (i + 1) * len(structuredOutputString) / 10
+		if i == 9 { // last part
+			end = len(structuredOutputString)
+		}
+		parts = append(parts, structuredOutputString[start:end])
+	}
+
+	stream := stream.NewStream[model_entities.LLMResultChunkWithStructuredOutput](11)
+	routine.Submit(nil, func() {
+		for i, part := range parts {
+			stream.Write(model_entities.LLMResultChunkWithStructuredOutput{
+				Model:             model_entities.LLMModel(payload.Model),
+				SystemFingerprint: "test",
+				Delta: model_entities.LLMResultChunkDelta{
+					Index: &[]int{i}[0],
+					Message: model_entities.PromptMessage{
+						Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+						Content:   part,
+						Name:      "test",
+						ToolCalls: []model_entities.PromptMessageToolCall{},
+					},
+				},
+			})
+		}
+		// write the last part
+		stream.Write(model_entities.LLMResultChunkWithStructuredOutput{
+			Model:             model_entities.LLMModel(payload.Model),
+			SystemFingerprint: "test",
+			Delta: model_entities.LLMResultChunkDelta{
+				Index: &[]int{10}[0],
+			},
+			LLMStructuredOutput: model_entities.LLMStructuredOutput{
+				StructuredOutput: structuredOutput,
+			},
+		})
+		stream.Close()
+	})
+	return stream, nil
+}
+
 func (m *MockedDifyInvocation) InvokeTextEmbedding(payload *dify_invocation.InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error) {
 	result := model_entities.TextEmbeddingResult{
 		Model: payload.Model,
