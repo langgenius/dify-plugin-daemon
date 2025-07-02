@@ -152,6 +152,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/install/tasks/:id/delete", controllers.DeletePluginInstallationTask)
 	group.POST("/install/tasks/:id/delete/*identifier", controllers.DeletePluginInstallationItemFromTask)
 	group.GET("/install/tasks", controllers.FetchPluginInstallationTasks)
+	group.GET("/decode/from_identifier", controllers.DecodePluginFromIdentifier(config))
 	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/uninstall", controllers.UninstallPlugin)

@@ -14,4 +14,12 @@ const (
 	// TOOL_SELECTOR  = "tool-selector"
 	TOOLS_SELECTOR = "array[tools]"
 	ANY            = "any"
+	// DynamicSelect
+	DYNAMIC_SELECT = "dynamic-select"
 )
+
+type ParameterOption struct {
+	Value string     `json:"value" yaml:"value" validate:"required"`
+	Label I18nObject `json:"label" yaml:"label" validate:"required"`
+	Icon  string     `json:"icon" yaml:"icon" validate:"omitempty"`
+}

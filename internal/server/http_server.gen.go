@@ -30,4 +30,5 @@ func (app *App) setupGeneratedRoutes(group *gin.RouterGroup, config *app.Config)
 	group.POST("/datasource/get_online_document_page_content", controllers.DatasourceGetOnlineDocumentPageContent(config))
 	group.POST("/datasource/online_drive_browse_files", controllers.DatasourceOnlineDriveBrowseFiles(config))
 	group.POST("/datasource/online_drive_download_file", controllers.DatasourceOnlineDriveDownloadFile(config))
+	group.POST("/dynamic_select/fetch_parameter_options", controllers.FetchDynamicParameterOptions(config))
 }

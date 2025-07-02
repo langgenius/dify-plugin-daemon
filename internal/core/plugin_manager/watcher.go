@@ -13,7 +13,7 @@ import (
 
 func (p *PluginManager) startLocalWatcher() {
 	go func() {
-		log.Info("start to handle new plugins in path: %s", p.pluginStoragePath)
+		log.Info("start to handle new plugins in path: %s", p.config.PluginInstalledPath)
 		p.handleNewLocalPlugins()
 		for range time.NewTicker(time.Second * 30).C {
 			p.handleNewLocalPlugins()
@@ -80,13 +80,19 @@ func (p *PluginManager) handleNewLocalPlugins() {
 			log.Error("launch local plugin failed: %s", err.Error())
 		}
 
-		// consume error, avoid deadlock
-		for err := range errChan {
-			log.Error("plugin launch error: %s", err.Error())
+		// avoid receiving nil channel
+		if errChan != nil {
+			// consume error, avoid deadlock
+			for err := range errChan {
+				log.Error("plugin launch error: %s", err.Error())
+			}
 		}
 
-		// wait for plugin launched
-		<-launchedChan
+		// avoid receiving nil channel
+		if launchedChan != nil {
+			// wait for plugin launched
+			<-launchedChan
+		}
 	}
 }
 

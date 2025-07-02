@@ -154,6 +154,12 @@ var (
 			},
 			"error": "permission denied, you need to enable app access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_LLM_STRUCTURED_OUTPUT: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeLLM()
+			},
+			"error": "permission denied, you need to enable llm access in plugin manifest",
+		},
 	}
 )
 
@@ -250,6 +256,9 @@ var (
 		dify_invocation.INVOKE_TYPE_FETCH_APP: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationFetchAppTask)
 		},
+		dify_invocation.INVOKE_TYPE_LLM_STRUCTURED_OUTPUT: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationLLMStructuredOutputTask)
+		},
 	}
 )
 
@@ -333,6 +342,26 @@ func executeDifyInvocationLLMTask(
 			return
 		}
 
+		handle.WriteResponse("stream", value)
+	}
+}
+
+func executeDifyInvocationLLMStructuredOutputTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeLLMWithStructuredOutputRequest,
+) {
+	response, err := handle.backwardsInvocation.InvokeLLMWithStructuredOutput(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke llm with structured output model failed: %s", err.Error()))
+		return
+	}
+
+	for response.Next() {
+		value, err := response.Read()
+		if err != nil {
+			handle.WriteError(fmt.Errorf("read llm with structured output model failed: %s", err.Error()))
+			return
+		}
 		handle.WriteResponse("stream", value)
 	}
 }

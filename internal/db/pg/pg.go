@@ -2,19 +2,35 @@ package pg
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func InitPluginDB(host string, port int, db_name string, default_db_name string, user string, pass string, sslmode string, maxIdleConns int, maxOpenConns int, connMaxLifetime int) (*gorm.DB, error) {
+type PGConfig struct {
+	Host            string
+	Port            int
+	DBName          string
+	DefaultDBName   string
+	User            string
+	Pass            string
+	SSLMode         string
+	MaxIdleConns    int
+	MaxOpenConns    int
+	ConnMaxLifetime int
+	Charset         string
+	Extras          string
+}
+
+func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 	// first try to connect to target database
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, db_name, sslmode)
+	dsn := buildDSN(config, false)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		// if connection fails, try to create database
-		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, default_db_name, sslmode)
+		dsn = buildDSN(config, true)
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			return nil, err
@@ -27,21 +43,21 @@ func InitPluginDB(host string, port int, db_name string, default_db_name string,
 		defer pgsqlDB.Close()
 
 		// check if the db exists
-		rows, err := pgsqlDB.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s'", db_name))
+		rows, err := pgsqlDB.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s'", config.DBName))
 		if err != nil {
 			return nil, err
 		}
 
 		if !rows.Next() {
 			// create database
-			_, err = pgsqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", db_name))
+			_, err = pgsqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", config.DBName))
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		// connect to the new db
-		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, db_name, sslmode)
+		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", config.Host, config.Port, config.User, config.Pass, config.DBName, config.SSLMode)
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			return nil, err
@@ -68,9 +84,33 @@ func InitPluginDB(host string, port int, db_name string, default_db_name string,
 	}
 
 	// configure connection pool
-	pgsqlDB.SetMaxIdleConns(maxIdleConns)
-	pgsqlDB.SetMaxOpenConns(maxOpenConns)
-	pgsqlDB.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
-	
+	pgsqlDB.SetMaxIdleConns(config.MaxIdleConns)
+	pgsqlDB.SetMaxOpenConns(config.MaxOpenConns)
+	pgsqlDB.SetConnMaxLifetime(time.Duration(config.ConnMaxLifetime) * time.Second)
+
 	return db, nil
+}
+
+func buildDSN(config *PGConfig, useDefaultDB bool) string {
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Host,
+		config.Port,
+		config.User,
+		config.Pass,
+		func() string {
+			if useDefaultDB {
+				return config.DefaultDBName
+			}
+			return config.DBName
+		}(),
+		config.SSLMode,
+	)
+	if config.Charset != "" {
+		dsn = fmt.Sprintf("%s client_encoding=%s", dsn, config.Charset)
+	}
+	if config.Extras != "" {
+		extra := strings.ReplaceAll(config.Extras, "options=", "")
+		dsn = fmt.Sprintf("%s options='%s'", dsn, extra)
+	}
+	return dsn
 }

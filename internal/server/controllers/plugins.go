@@ -150,6 +150,16 @@ func ReinstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	}
 }
 
+func DecodePluginFromIdentifier(app *app.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		BindRequest(c, func(request struct {
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		}) {
+			c.JSON(http.StatusOK, service.DecodePluginFromIdentifier(app, request.PluginUniqueIdentifier))
+		})
+	}
+}
+
 func FetchPluginInstallationTasks(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`

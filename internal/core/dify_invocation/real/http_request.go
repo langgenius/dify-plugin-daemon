@@ -57,9 +57,15 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		}),
 		http_requests.HttpWriteTimeout(i.writeTimeout),
 		http_requests.HttpReadTimeout(i.readTimeout),
+		http_requests.HttpUsingLengthPrefixed(true),
 	)
 
-	response, err := http_requests.RequestAndParseStream[BaseBackwardsInvocationResponse[T]](i.client, i.difyPath(path), method, options...)
+	response, err := http_requests.RequestAndParseStream[BaseBackwardsInvocationResponse[T]](
+		i.client,
+		i.difyPath(path),
+		method,
+		options...,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +113,12 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 
 func (i *RealBackwardsInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
 	return StreamResponse[model_entities.LLMResultChunk](i, "POST", "invoke/llm", http_requests.HttpPayloadJson(payload))
+}
+
+func (i *RealBackwardsInvocation) InvokeLLMWithStructuredOutput(payload *dify_invocation.InvokeLLMWithStructuredOutputRequest) (
+	*stream.Stream[model_entities.LLMResultChunkWithStructuredOutput], error,
+) {
+	return StreamResponse[model_entities.LLMResultChunkWithStructuredOutput](i, "POST", "/invoke/llm/structured-output", http_requests.HttpPayloadJson(payload))
 }
 
 func (i *RealBackwardsInvocation) InvokeTextEmbedding(payload *dify_invocation.InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error) {

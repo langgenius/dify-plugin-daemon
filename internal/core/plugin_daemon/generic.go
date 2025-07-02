@@ -37,7 +37,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 				response.Close()
 				return
 			} else {
-				response.Write(chunk)
+				response.WriteBlocking(chunk)
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
 			// check if the request contains a aws_event_id

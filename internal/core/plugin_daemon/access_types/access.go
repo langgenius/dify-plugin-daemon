@@ -9,6 +9,7 @@ const (
 	PLUGIN_ACCESS_TYPE_AGENT_STRATEGY PluginAccessType = "agent_strategy"
 	PLUGIN_ACCESS_TYPE_OAUTH          PluginAccessType = "oauth"
 	PLUGIN_ACCESS_TYPE_DATASOURCE     PluginAccessType = "datasource"
+	PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER PluginAccessType = "dynamic_parameter"
 )
 
 func (p PluginAccessType) IsValid() bool {
@@ -17,6 +18,7 @@ func (p PluginAccessType) IsValid() bool {
 		p == PLUGIN_ACCESS_TYPE_ENDPOINT ||
 		p == PLUGIN_ACCESS_TYPE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_TYPE_OAUTH ||
+		p == PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER ||
 		p == PLUGIN_ACCESS_TYPE_DATASOURCE
 }
 
@@ -48,6 +50,7 @@ const (
 	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT PluginAccessAction = "invoke_online_document_datasource_get_page_content"
 	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_BROWSE_FILES                   PluginAccessAction = "invoke_online_drive_browse_files"
 	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_DOWNLOAD_FILE                  PluginAccessAction = "invoke_online_drive_download_file"
+	PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS PluginAccessAction = "fetch_parameter_options"
 )
 
 func (p PluginAccessAction) IsValid() bool {
@@ -70,6 +73,7 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
 		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS ||
+		p == PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS ||
 		p == PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES ||
