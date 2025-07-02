@@ -115,6 +115,12 @@ func (i *RealBackwardsInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRe
 	return StreamResponse[model_entities.LLMResultChunk](i, "POST", "invoke/llm", http_requests.HttpPayloadJson(payload))
 }
 
+func (i *RealBackwardsInvocation) InvokeLLMWithStructuredOutput(payload *dify_invocation.InvokeLLMWithStructuredOutputRequest) (
+	*stream.Stream[model_entities.LLMResultChunkWithStructuredOutput], error,
+) {
+	return StreamResponse[model_entities.LLMResultChunkWithStructuredOutput](i, "POST", "/invoke/llm/structured-output", http_requests.HttpPayloadJson(payload))
+}
+
 func (i *RealBackwardsInvocation) InvokeTextEmbedding(payload *dify_invocation.InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error) {
 	return Request[model_entities.TextEmbeddingResult](i, "POST", "invoke/text-embedding", http_requests.HttpPayloadJson(payload))
 }

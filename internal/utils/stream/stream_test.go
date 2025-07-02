@@ -141,6 +141,8 @@ func TestStreamCloseBlockingWrite(t *testing.T) {
 		close(done)
 	}()
 
+	// wait for the blocking write to happen
+	time.Sleep(1 * time.Second)
 	response.Close()
 
 	select {

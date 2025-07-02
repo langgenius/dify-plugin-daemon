@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/dynamic_select_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/oauth_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -222,5 +223,16 @@ var PluginDispatchers = []PluginDispatcher{
 		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_GET_CREDENTIALS",
 		BufferSize:         1,
 		Path:               "/oauth/get_credentials",
+	},
+	{
+		Name:               "FetchDynamicParameterOptions",
+		RequestType:        requests.RequestDynamicParameterSelect{},
+		ResponseType:       dynamic_select_entities.DynamicSelectResult{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_SELECT",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS",
+		BufferSize:         1,
+		Path:               "/dynamic_select/fetch_parameter_options",
 	},
 }
