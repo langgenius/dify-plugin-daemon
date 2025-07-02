@@ -74,7 +74,7 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			configuration.PluginInstalledPath,
 		),
 		localPluginLaunchingLock: lock.NewGranularityLock(),
-		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
+		maxLaunchingLock:         make(chan bool, configuration.PluginLocalLaunchingConcurrent), // by default, we allow 2 plugins launching at the same time
 		config:                   configuration,
 	}
 
