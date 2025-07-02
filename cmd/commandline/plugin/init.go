@@ -352,6 +352,7 @@ func (m model) createPlugin() {
 			Version:     manifest_entities.Version("0.0.1"),
 			Type:        manifest_entities.PluginType,
 			Icon:        "icon.svg",
+			IconDark:    "icon.svg",
 			Author:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
 			Name:        m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
 			Description: plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Description()),
