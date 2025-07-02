@@ -39,9 +39,9 @@ func DatasourceGetOnlineDocumentPages(
 	session *session_manager.Session,
 	request *requests.RequestDatasourceGetOnlineDocumentPages,
 ) (
-	*stream.Stream[datasource_entities.OnlineDocumentPageChunk], error,
+	*stream.Stream[datasource_entities.DatasourceGetPagesResponse], error,
 ) {
-	return GenericInvokePlugin[requests.RequestDatasourceGetOnlineDocumentPages, datasource_entities.OnlineDocumentPageChunk](
+	return GenericInvokePlugin[requests.RequestDatasourceGetOnlineDocumentPages, datasource_entities.DatasourceGetPagesResponse](
 		session,
 		request,
 		1,

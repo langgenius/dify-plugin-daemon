@@ -35,12 +35,9 @@ func isBasicType(fl validator.FieldLevel) bool {
 		if fl.Field().IsNil() {
 			return true
 		}
+	default:
+		panic("unhandled default case" + fl.Field().Kind().String())
 	}
 
 	return false
-}
-
-type ParameterOption struct {
-	Value string     `json:"value" yaml:"value" validate:"required"`
-	Label I18nObject `json:"label" yaml:"label" validate:"required"`
 }

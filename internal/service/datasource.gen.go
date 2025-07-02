@@ -53,7 +53,7 @@ func DatasourceGetOnlineDocumentPages(
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[datasource_entities.OnlineDocumentPageChunk], error) {
+		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DatasourceGetPagesResponse], error) {
 			return plugin_daemon.DatasourceGetOnlineDocumentPages(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,

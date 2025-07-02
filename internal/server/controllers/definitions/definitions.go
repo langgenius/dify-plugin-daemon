@@ -261,7 +261,7 @@ var PluginDispatchers = []PluginDispatcher{
 	{
 		Name:               "DatasourceGetOnlineDocumentPages",
 		RequestType:        requests.RequestDatasourceGetOnlineDocumentPages{},
-		ResponseType:       datasource_entities.OnlineDocumentPageChunk{},
+		ResponseType:       datasource_entities.DatasourceGetPagesResponse{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
