@@ -97,11 +97,13 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 			}
 
 			// Consume errors asynchronously to avoid blocking
-			go func() {
-				for err := range errChan {
-					log.Error("plugin launch error: %s", err.Error())
-				}
-			}()
+			if errChan != nil {
+				go func() {
+					for err := range errChan {
+						log.Error("plugin launch error: %s", err.Error())
+					}
+				}()
+			}
 
 			// Wait for plugin to complete startup
 			<-launchedChan
