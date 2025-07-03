@@ -28,20 +28,28 @@ type RequestInvokeOnlineDocumentDatasourceGetContent struct {
 	Page map[string]any `json:"page" validate:"required"`
 }
 
-type RequestOnlineDriveBrowseFiles struct {
+type DatasourceOnlineDriveBrowseFilesRequest struct {
 	Credentials
 	BaseRequestInvokeDatasource
 
+	Request OnlineDriveBrowseFilesRequest `json:"request" validate:"required"`
+}
+
+type OnlineDriveBrowseFilesRequest struct {
 	Prefix     *string `json:"prefix" validate:"omitempty"`      // File path prefix for filtering eg: 'docs/dify/'
 	Bucket     *string `json:"bucket" validate:"omitempty"`      // Storage bucket name
 	MaxKeys    int     `json:"max_keys" validate:"required"`     // Maximum number of files to return
 	StartAfter *string `json:"start_after" validate:"omitempty"` // Pagination token for continuing from a specific file eg: 'docs/dify/1.txt'
 }
 
-type RequestOnlineDriveDownloadFile struct {
+type OnlineDriveDownloadFileRequest struct {
+	Key    string  `json:"key" validate:"required"`     // The name of the file
+	Bucket *string `json:"bucket" validate:"omitempty"` // The name of the bucket
+}
+
+type DatasourceOnlineDriveDownloadFileRequest struct {
 	Credentials
 	BaseRequestInvokeDatasource
 
-	Key    string  `json:"key" validate:"required"`     // The name of the file
-	Bucket *string `json:"bucket" validate:"omitempty"` // The name of the bucket
+	Request OnlineDriveDownloadFileRequest `json:"request" validate:"required"`
 }

@@ -63,11 +63,11 @@ func DatasourceGetOnlineDocumentPageContent(
 
 func DatasourceOnlineDriveBrowseFiles(
 	session *session_manager.Session,
-	request *requests.RequestOnlineDriveBrowseFiles,
+	request *requests.DatasourceOnlineDriveBrowseFilesRequest,
 ) (
 	*stream.Stream[datasource_entities.GetOnlineDriveBrowseFilesResponse], error,
 ) {
-	return GenericInvokePlugin[requests.RequestOnlineDriveBrowseFiles, datasource_entities.GetOnlineDriveBrowseFilesResponse](
+	return GenericInvokePlugin[requests.DatasourceOnlineDriveBrowseFilesRequest, datasource_entities.GetOnlineDriveBrowseFilesResponse](
 		session,
 		request,
 		1,
@@ -76,11 +76,11 @@ func DatasourceOnlineDriveBrowseFiles(
 
 func DatasourceOnlineDriveDownloadFile(
 	session *session_manager.Session,
-	request *requests.RequestOnlineDriveDownloadFile,
+	request *requests.DatasourceOnlineDriveDownloadFileRequest,
 ) (
 	*stream.Stream[datasource_entities.DataSourceResponseChunk], error,
 ) {
-	return GenericInvokePlugin[requests.RequestOnlineDriveDownloadFile, datasource_entities.DataSourceResponseChunk](
+	return GenericInvokePlugin[requests.DatasourceOnlineDriveDownloadFileRequest, datasource_entities.DataSourceResponseChunk](
 		session,
 		request,
 		1,

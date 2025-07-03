@@ -63,7 +63,7 @@ func DatasourceGetOnlineDocumentPageContent(config *app.Config) gin.HandlerFunc 
 }
 
 func DatasourceOnlineDriveBrowseFiles(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.RequestOnlineDriveBrowseFiles]
+	type request = plugin_entities.InvokePluginRequest[requests.DatasourceOnlineDriveBrowseFilesRequest]
 
 	return func(c *gin.Context) {
 		BindPluginDispatchRequest(
@@ -76,7 +76,7 @@ func DatasourceOnlineDriveBrowseFiles(config *app.Config) gin.HandlerFunc {
 }
 
 func DatasourceOnlineDriveDownloadFile(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.RequestOnlineDriveDownloadFile]
+	type request = plugin_entities.InvokePluginRequest[requests.DatasourceOnlineDriveDownloadFileRequest]
 
 	return func(c *gin.Context) {
 		BindPluginDispatchRequest(
