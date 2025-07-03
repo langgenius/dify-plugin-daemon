@@ -82,7 +82,7 @@ func DatasourceGetOnlineDocumentPageContent(
 }
 
 func DatasourceOnlineDriveBrowseFiles(
-	r *plugin_entities.InvokePluginRequest[requests.RequestOnlineDriveBrowseFiles],
+	r *plugin_entities.InvokePluginRequest[requests.DatasourceOnlineDriveBrowseFilesRequest],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
@@ -99,7 +99,7 @@ func DatasourceOnlineDriveBrowseFiles(
 }
 
 func DatasourceOnlineDriveDownloadFile(
-	r *plugin_entities.InvokePluginRequest[requests.RequestOnlineDriveDownloadFile],
+	r *plugin_entities.InvokePluginRequest[requests.DatasourceOnlineDriveDownloadFileRequest],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {

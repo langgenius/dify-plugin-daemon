@@ -282,7 +282,7 @@ var PluginDispatchers = []PluginDispatcher{
 	},
 	{
 		Name:               "DatasourceOnlineDriveBrowseFiles",
-		RequestType:        requests.RequestOnlineDriveBrowseFiles{},
+		RequestType:        requests.DatasourceOnlineDriveBrowseFilesRequest{},
 		ResponseType:       datasource_entities.GetOnlineDriveBrowseFilesResponse{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_BROWSE_FILES,
@@ -293,7 +293,7 @@ var PluginDispatchers = []PluginDispatcher{
 	},
 	{
 		Name:               "DatasourceOnlineDriveDownloadFile",
-		RequestType:        requests.RequestOnlineDriveDownloadFile{},
+		RequestType:        requests.DatasourceOnlineDriveDownloadFileRequest{},
 		ResponseType:       datasource_entities.DataSourceResponseChunk{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_DOWNLOAD_FILE,
