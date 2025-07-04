@@ -27,6 +27,7 @@ func (app *App) server(config *app.Config) func() {
 		}))
 	}
 	engine.Use(gin.Recovery())
+	engine.Use(controllers.CollectActiveRequests())
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
@@ -93,6 +94,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(controllers.CollectActiveDispatchRequests())
 	group.Use(app.FetchPluginInstallation())
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
