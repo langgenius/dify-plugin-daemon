@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751557609478,
+  "lastUpdate": 1751630430082,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6264,6 +6264,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "981172118 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "56fcd686e122c6fded53f45ab73598d58d267368",
+          "message": "feat: add active request tracking to health check and dispatch routes (#384)\n\n- Implemented middleware to track active requests and active dispatch requests using atomic counters.\n- Updated health check response to include counts of active requests and active dispatch requests.\n- Integrated the new middleware into the HTTP server and plugin dispatch group for improved monitoring.",
+          "timestamp": "2025-07-04T19:56:42+08:00",
+          "tree_id": "dfc6aa00b0f98c5646a9c550c6896ef0d3918511",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/56fcd686e122c6fded53f45ab73598d58d267368"
+        },
+        "date": 1751630429697,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141911834,
+            "unit": "ns/op\t 1569709 B/op\t   27514 allocs/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141911834,
+            "unit": "ns/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569709,
+            "unit": "B/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.03,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "958459635 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.03,
+            "unit": "ns/op",
+            "extra": "958459635 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "958459635 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "958459635 times\n4 procs"
           }
         ]
       }
