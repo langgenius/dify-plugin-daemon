@@ -77,18 +77,21 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 
 	var wg sync.WaitGroup
 	maxConcurrency := config.PluginLocalLaunchingConcurrent
-	sem := make(chan struct{}, maxConcurrency)
 
 	log.Info("Launching %d plugins with max concurrency: %d", len(plugins), maxConcurrency)
 
 	for _, plugin := range plugins {
 		wg.Add(1)
-		go func(plugin plugin_entities.PluginUniqueIdentifier) {
-			defer wg.Done()
-
-			// Acquire semaphore in child goroutine to avoid blocking main goroutine
-			sem <- struct{}{}
-			defer func() { <-sem }()
+		routine.Submit(map[string]string{
+			"module":   "plugin_manager",
+			"function": "handleNewLocalPlugins",
+		}, func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Error("plugin launch runtime error: %v", err)
+				}
+				wg.Done()
+			}()
 
 			_, launchedChan, errChan, err := p.launchLocal(plugin)
 			if err != nil {
@@ -96,19 +99,21 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 				return
 			}
 
-			// Consume errors asynchronously to avoid blocking
+			// consume error, avoid deadlock
 			if errChan != nil {
-				go func() {
-					for err := range errChan {
-						log.Error("plugin launch error: %s", err.Error())
-					}
-				}()
+				for err := range errChan {
+					log.Error("plugin launch error: %s", err.Error())
+				}
 			}
 
 			// Wait for plugin to complete startup
-			<-launchedChan
-		}(plugin)
+			if launchedChan != nil {
+				<-launchedChan
+			}
+		})
 	}
+
+	// wait for all plugins to be launched
 	wg.Wait()
 }
 
