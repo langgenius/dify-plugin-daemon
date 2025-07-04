@@ -2,13 +2,11 @@ package http_requests
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
-	"time"
 )
 
 func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.Request, error) {
@@ -19,11 +17,6 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 
 	for _, option := range options {
 		switch option.Type {
-		case "write_timeout":
-			timeout := time.Second * time.Duration(option.Value.(int64))
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			time.AfterFunc(timeout, cancel) // release resources associated with context asynchronously
-			req = req.WithContext(ctx)
 		case "header":
 			for k, v := range option.Value.(map[string]string) {
 				req.Header.Set(k, v)

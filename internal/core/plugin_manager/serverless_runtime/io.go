@@ -69,7 +69,6 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 				"Dify-Plugin-Session-ID": sessionId,
 			}),
 			http_requests.HttpPayloadReader(io.NopCloser(bytes.NewReader(data))),
-			http_requests.HttpWriteTimeout(int64(r.PluginMaxExecutionTimeout*1000)),
 			http_requests.HttpReadTimeout(int64(r.PluginMaxExecutionTimeout*1000)),
 		)
 		if err != nil {
