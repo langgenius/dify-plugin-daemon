@@ -147,6 +147,7 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Label       I18nObject                         `json:"label" yaml:"label" validate:"required"`
 	Description I18nObject                         `json:"description" yaml:"description" validate:"required"`
 	Icon        string                             `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
+	IconDark    string                             `json:"icon_dark" yaml:"icon_dark,omitempty" validate:"omitempty,max=128"`
 	Resource    PluginResourceRequirement          `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins     PluginExtensions                   `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
 	Meta        PluginMeta                         `json:"meta" yaml:"meta,omitempty" validate:"required"`
