@@ -97,8 +97,10 @@ func FullDuplex(
 			<-c
 		}
 
-		// restart plugin in 5s
-		time.Sleep(5 * time.Second)
+		// restart plugin in 5s (skip for debugging runtime)
+		if r.Type() != plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+			time.Sleep(5 * time.Second)
+		}
 
 		// add restart times
 		r.AddRestarts()
