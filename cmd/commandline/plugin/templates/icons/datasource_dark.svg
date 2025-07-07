@@ -1,3 +1,21 @@
+<!--
+  ~ Dify Marketplace Template Icon
+  ~ Dify 市场模板图标
+  ~ Dify マーケットプレイステンプレートアイコン
+  ~
+  ~ WARNING / 警告 / 警告:
+  ~ 
+  ~ English: This is a TEMPLATE icon from Dify Marketplace only. You MUST NOT use this default icon in any way.
+  ~ Please replace it with your own custom icon before submit this plugin.
+  ~ 
+  ~ 中文: 这只是来自 Dify 市场的模板图标。您绝对不能以任何方式使用此默认图标。
+  ~ 请在提交此插件之前将其替换为您自己的自定义图标。
+  ~ 
+  ~ 日本語: これは Dify マーケットプレイスのテンプレートアイコンです。このデフォルトアイコンをいかなる方法でも使用してはいけません。
+  ~ このプラグインを提出する前に、独自のカスタムアイコンに置き換えてください。
+  ~ 
+  ~ DIFY_MARKETPLACE_TEMPLATE_ICON_DO_NOT_USE
+  -->
 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_15253_95099)">
 <rect width="40" height="40" fill="#0033FF"/>
