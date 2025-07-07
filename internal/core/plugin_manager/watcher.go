@@ -90,12 +90,11 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 		}, func() {
 			// Acquire sem inside goroutine
 			sem <- struct{}{}
-			defer func() { <-sem }()
-
 			defer func() {
 				if err := recover(); err != nil {
 					log.Error("plugin launch runtime error: %v", err)
 				}
+				<-sem
 				wg.Done()
 			}()
 
@@ -105,13 +104,11 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 				return
 			}
 
-			// Handle error channel in a separate goroutine to avoid blocking
+			// Handle error channel
 			if errChan != nil {
-				go func() {
-					for err := range errChan {
-						log.Error("plugin launch error: %s", err.Error())
-					}
-				}()
+				for err := range errChan {
+					log.Error("plugin launch error: %s", err.Error())
+				}
 			}
 
 			// Wait for plugin to complete startup
