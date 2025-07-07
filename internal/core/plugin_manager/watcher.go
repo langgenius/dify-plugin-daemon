@@ -14,7 +14,11 @@ import (
 
 func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
-		log.Info("start to handle new plugins in path: %s", p.config.PluginInstalledPath)
+		log.Info(
+			"Start to handle new plugins in path: %s with max concurrency: %d",
+			p.config.PluginInstalledPath, config.PluginLocalLaunchingConcurrent,
+		)
+
 		p.handleNewLocalPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
 			p.handleNewLocalPlugins(config)
@@ -76,9 +80,6 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 	}
 
 	var wg sync.WaitGroup
-	maxConcurrency := config.PluginLocalLaunchingConcurrent
-
-	log.Info("Launching %d plugins with max concurrency: %d", len(plugins), maxConcurrency)
 
 	for _, plugin := range plugins {
 		wg.Add(1)
