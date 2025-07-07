@@ -15,6 +15,7 @@ import (
 func (p *PluginManager) startLocalWatcher(config *app.Config) {
 	go func() {
 		log.Info("start to handle new plugins in path: %s", p.config.PluginInstalledPath)
+		log.Info("Launching plugins with max concurrency: %d", p.config.PluginLocalLaunchingConcurrent)
 		p.handleNewLocalPlugins(config)
 		for range time.NewTicker(time.Second * 30).C {
 			p.handleNewLocalPlugins(config)
@@ -77,15 +78,20 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 
 	var wg sync.WaitGroup
 	maxConcurrency := config.PluginLocalLaunchingConcurrent
-
-	log.Info("Launching %d plugins with max concurrency: %d", len(plugins), maxConcurrency)
+	sem := make(chan struct{}, maxConcurrency)
 
 	for _, plugin := range plugins {
 		wg.Add(1)
+		// Fix closure issue: create local variable copy
+		currentPlugin := plugin
 		routine.Submit(map[string]string{
 			"module":   "plugin_manager",
 			"function": "handleNewLocalPlugins",
 		}, func() {
+			// Acquire sem inside goroutine
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
 			defer func() {
 				if err := recover(); err != nil {
 					log.Error("plugin launch runtime error: %v", err)
@@ -93,17 +99,19 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 				wg.Done()
 			}()
 
-			_, launchedChan, errChan, err := p.launchLocal(plugin)
+			_, launchedChan, errChan, err := p.launchLocal(currentPlugin)
 			if err != nil {
 				log.Error("launch local plugin failed: %s", err.Error())
 				return
 			}
 
-			// consume error, avoid deadlock
+			// Handle error channel in a separate goroutine to avoid blocking
 			if errChan != nil {
-				for err := range errChan {
-					log.Error("plugin launch error: %s", err.Error())
-				}
+				go func() {
+					for err := range errChan {
+						log.Error("plugin launch error: %s", err.Error())
+					}
+				}()
 			}
 
 			// Wait for plugin to complete startup
