@@ -23,7 +23,6 @@ func (r *ServerlessPluginRuntime) InitEnvironment() error {
 				if err != nil {
 					return nil, err
 				}
-				conn.SetWriteDeadline(time.Now().Add(time.Duration(r.PluginMaxExecutionTimeout) * time.Second))
 				return conn, nil
 			},
 		},
