@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751950361532,
+  "lastUpdate": 1751973206250,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6480,6 +6480,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "973384834 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "454690042@qq.com",
+            "name": "homejim",
+            "username": "homejim"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6ae762ba1146695653c18e5534a186d710949e8e",
+          "message": "feat(plugin_manager): optimize local plugin startup with concurrency (#375)\n\n* feat(plugin_manager): optimize local plugin startup with concurrent control\n\n- Add semaphore-based concurrency control for plugin launches\n- Implement parallel plugin startup using goroutines\n- Optimize error handling to prevent goroutine blocking\n- Add concurrency metrics logging\n\nNote: handleNewLocalPlugins now accepts config parameter with default concurrency limit\n\n* feat(plugin_manager): make local plugin launching concurrency configurable\n\n* fix(plugin_manager): optimize comment and error handling\n\n- Updated comments to clarify the concurrent plugin launching configuration.\n- Added a nil check for the error channel during plugin startup to improve code robustness.\n\n* refactor(plugin_manager): refactor plugin startup logic\n\n- Remove the semaphore mechanism and switch to using routine.Submit for concurrency management\n\n* fix(plugin_manager): Optimize plugin startup logs and concurrency control\n\n- Added log output for maximum concurrency when starting local plugins\n- Implemented a channel-based concurrency control mechanism to ensure limits are not exceeded\n- Fixed closure variable capture issue to prevent incorrect plugin information\n- Improved error handling to avoid deadlocks during startup\n\n* fix(plugin_manager): simplify error channel handling and semaphore release logic\n\n---------\n\nCo-authored-by: jim02.he <jim02.he@vipshop.com>",
+          "timestamp": "2025-07-08T19:09:31+08:00",
+          "tree_id": "bd5010065a49c23813ade3b5f01f50b354918933",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/6ae762ba1146695653c18e5534a186d710949e8e"
+        },
+        "date": 1751973205252,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 140443350,
+            "unit": "ns/op\t 1569418 B/op\t   27514 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 140443350,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569418,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.85,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "965073944 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.85,
+            "unit": "ns/op",
+            "extra": "965073944 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "965073944 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "965073944 times\n4 procs"
           }
         ]
       }
