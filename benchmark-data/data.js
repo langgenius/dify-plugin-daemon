@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751883657528,
+  "lastUpdate": 1751950361532,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6408,6 +6408,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "962009116 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b97cce716751cc1185273657c87037dad51e4692",
+          "message": "enhance(cli/icon): add multiple categories default plugin icons (#388)\n\n* feat: add support for dark icon\n\n- Introduced IconDark field in PluginDeclaration and related structures to support dark mode icons.\n- Updated the installation process to handle dark icons.\n- Enhanced asset validation to check for the presence of dark icons.\n\nThis change improves the visual consistency of plugins in dark mode environments.\n\n* enhance(cli/icon): add plugin icon support with multiple categories\n\n- Added support for light and dark icons for various plugin categories including agent, datasource, extension, model, tool, and trigger.\n- Replaced the previous single icon implementation with a structured map for better organization and retrieval of icons based on category and theme.\n- Removed the old Python icon file to streamline asset management.\n\nThis update improves the visual representation of plugins across different themes, enhancing user experience.\n\n* change icons\n\n* fix\n\n* fix\n\n* comments",
+          "timestamp": "2025-07-08T12:48:48+08:00",
+          "tree_id": "e45414b4afe26508e4bded8f56fc4bbcbd54210d",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b97cce716751cc1185273657c87037dad51e4692"
+        },
+        "date": 1751950361118,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139991344,
+            "unit": "ns/op\t 1569968 B/op\t   27514 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139991344,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569968,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.93,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "973384834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.93,
+            "unit": "ns/op",
+            "extra": "973384834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "973384834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "973384834 times\n4 procs"
           }
         ]
       }
