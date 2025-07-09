@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752052016185,
+  "lastUpdate": 1752054440461,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6624,6 +6624,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "963478232 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33c023b37507cfc9f179d4bffbaebf70b7a00664",
+          "message": "refactor(plugin_manager): enhance HTTP client timeout handling in ser… (#385)\n\n* refactor(plugin_manager): enhance HTTP client timeout handling in serverless runtime with DialContext\n\n- Updated the HTTP client in the ServerlessPluginRuntime to use a context-aware DialContext for better timeout management.\n- Removed the write timeout option from the HTTP request builder, streamlining the request handling process.\n- Improved connection handling by setting write deadlines based on the PluginMaxExecutionTimeout.\n\nThis change enhances the reliability of network operations within the serverless runtime environment.\n\n* refactor(plugin_manager): remove write deadline setting in serverless runtime connection initialization\n\n- Eliminated the write deadline setting from the connection initialization in the ServerlessPluginRuntime.\n- This change simplifies the connection handling process and aligns with the recent enhancements to timeout management.\n\nThis update contributes to a more streamlined and efficient network operation within the serverless environment.\n\n* refactor(plugin_manager): adjust HTTP client timeout settings in serverless runtime\n\n- Modified the HTTP client configuration in the ServerlessPluginRuntime to set the TLS handshake timeout based on PluginMaxExecutionTimeout.\n- Retained the IdleConnTimeout setting to ensure consistent connection management.\n\nThis update improves the timeout handling for secure connections, enhancing overall network reliability in the serverless environment.",
+          "timestamp": "2025-07-09T17:43:24+08:00",
+          "tree_id": "62d581add1436cd66db05defd32b43c3633f7197",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/33c023b37507cfc9f179d4bffbaebf70b7a00664"
+        },
+        "date": 1752054440048,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139927545,
+            "unit": "ns/op\t 1568897 B/op\t   27514 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139927545,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1568897,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.55,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "955520791 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.55,
+            "unit": "ns/op",
+            "extra": "955520791 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "955520791 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "955520791 times\n4 procs"
           }
         ]
       }
