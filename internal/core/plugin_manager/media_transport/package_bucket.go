@@ -18,7 +18,11 @@ func NewPackageBucket(oss oss.OSS, package_path string) *PackageBucket {
 // Save saves a file to the package bucket
 func (m *PackageBucket) Save(name string, file []byte) error {
 	filePath := path.Join(m.packagePath, name)
-
+	if exists, err := m.oss.Exists(filePath); err != nil {
+		return err
+	} else if exists {
+		return nil
+	}
 	return m.oss.Save(filePath, file)
 }
 
