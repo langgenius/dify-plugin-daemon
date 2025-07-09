@@ -197,3 +197,7 @@ func (d *FSPluginDecoder) CheckAssetsValid() error {
 func (d *FSPluginDecoder) Verified() bool {
 	return d.PluginDecoderHelper.verified(d)
 }
+
+func (d *FSPluginDecoder) AvailableI18nReadme() (map[string]string, error) {
+	return d.PluginDecoderHelper.AvailableI18nReadme(d, string(filepath.Separator))
+}
