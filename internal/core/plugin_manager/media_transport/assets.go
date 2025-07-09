@@ -34,62 +34,38 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 	var err error
 
 	if declaration.Model != nil {
-		if declaration.Model.IconSmall != nil {
-			if declaration.Model.IconSmall.EnUS != "" {
-				declaration.Model.IconSmall.EnUS, err = remap(declaration.Model.IconSmall.EnUS)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small en_US"))
-				}
-			}
-
-			if declaration.Model.IconSmall.ZhHans != "" {
-				declaration.Model.IconSmall.ZhHans, err = remap(declaration.Model.IconSmall.ZhHans)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small zh_Hans"))
-				}
-			}
-
-			if declaration.Model.IconSmall.JaJp != "" {
-				declaration.Model.IconSmall.JaJp, err = remap(declaration.Model.IconSmall.JaJp)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small ja_JP"))
-				}
-			}
-
-			if declaration.Model.IconSmall.PtBr != "" {
-				declaration.Model.IconSmall.PtBr, err = remap(declaration.Model.IconSmall.PtBr)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon small pt_BR"))
-				}
-			}
+		iconFields := []struct {
+			icon      *plugin_entities.I18nObject
+			iconType  string
+			fieldName string
+		}{
+			{declaration.Model.IconSmall, "model icon small", ""},
+			{declaration.Model.IconLarge, "model icon large", ""},
+			{declaration.Model.IconSmallDark, "model icon small dark", ""},
+			{declaration.Model.IconLargeDark, "model icon large dark", ""},
 		}
 
-		if declaration.Model.IconLarge != nil {
-			if declaration.Model.IconLarge.EnUS != "" {
-				declaration.Model.IconLarge.EnUS, err = remap(declaration.Model.IconLarge.EnUS)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large en_US"))
-				}
-			}
+		langFields := []struct {
+			get    func(*plugin_entities.I18nObject) *string
+			suffix string
+		}{
+			{func(i *plugin_entities.I18nObject) *string { return &i.EnUS }, "en_US"},
+			{func(i *plugin_entities.I18nObject) *string { return &i.ZhHans }, "zh_Hans"},
+			{func(i *plugin_entities.I18nObject) *string { return &i.JaJp }, "ja_JP"},
+			{func(i *plugin_entities.I18nObject) *string { return &i.PtBr }, "pt_BR"},
+		}
 
-			if declaration.Model.IconLarge.ZhHans != "" {
-				declaration.Model.IconLarge.ZhHans, err = remap(declaration.Model.IconLarge.ZhHans)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large zh_Hans"))
-				}
+		for _, iconField := range iconFields {
+			if iconField.icon == nil {
+				continue
 			}
-
-			if declaration.Model.IconLarge.JaJp != "" {
-				declaration.Model.IconLarge.JaJp, err = remap(declaration.Model.IconLarge.JaJp)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large ja_JP"))
-				}
-			}
-
-			if declaration.Model.IconLarge.PtBr != "" {
-				declaration.Model.IconLarge.PtBr, err = remap(declaration.Model.IconLarge.PtBr)
-				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap model icon large pt_BR"))
+			for _, langField := range langFields {
+				valPtr := langField.get(iconField.icon)
+				if valPtr != nil && *valPtr != "" {
+					*valPtr, err = remap(*valPtr)
+					if err != nil {
+						return nil, errors.Join(err, fmt.Errorf("failed to remap %s %s", iconField.iconType, langField.suffix))
+					}
 				}
 			}
 		}
@@ -102,6 +78,13 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 				return nil, errors.Join(err, fmt.Errorf("failed to remap tool icon"))
 			}
 		}
+
+		if declaration.Tool.Identity.IconDark != "" {
+			declaration.Tool.Identity.IconDark, err = remap(declaration.Tool.Identity.IconDark)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("failed to remap tool icon dark"))
+			}
+		}
 	}
 
 	if declaration.AgentStrategy != nil {
@@ -109,6 +92,13 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 			declaration.AgentStrategy.Identity.Icon, err = remap(declaration.AgentStrategy.Identity.Icon)
 			if err != nil {
 				return nil, errors.Join(err, fmt.Errorf("failed to remap agent icon"))
+			}
+		}
+
+		if declaration.AgentStrategy.Identity.IconDark != "" {
+			declaration.AgentStrategy.Identity.IconDark, err = remap(declaration.AgentStrategy.Identity.IconDark)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("failed to remap agent icon dark"))
 			}
 		}
 	}
