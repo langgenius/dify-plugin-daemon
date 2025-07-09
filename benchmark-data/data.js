@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751973206250,
+  "lastUpdate": 1752052016185,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6552,6 +6552,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "965073944 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7bc3b7565e89dc52e75cf0650582a9df040ebfd4",
+          "message": "feat(plugin_manager): enhance asset remapping for icons (#392)\n\n- Refactored the RemapAssets function to streamline the remapping of icon fields for both models and tools, including support for dark mode icons.\n- Introduced new fields IconSmallDark and IconLargeDark in the ModelProviderDeclaration and added IconDark in ToolProviderIdentity to accommodate dark mode assets.\n- Improved error handling during the remapping process for better clarity and maintainability.",
+          "timestamp": "2025-07-09T17:02:57+08:00",
+          "tree_id": "351bb1d9c09515f8ef242bc9aa2244a8749181e3",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/7bc3b7565e89dc52e75cf0650582a9df040ebfd4"
+        },
+        "date": 1752052015108,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141015552,
+            "unit": "ns/op\t 1569267 B/op\t   27514 allocs/op",
+            "extra": "243 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141015552,
+            "unit": "ns/op",
+            "extra": "243 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569267,
+            "unit": "B/op",
+            "extra": "243 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27514,
+            "unit": "allocs/op",
+            "extra": "243 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.74,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "963478232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.74,
+            "unit": "ns/op",
+            "extra": "963478232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "963478232 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "963478232 times\n4 procs"
           }
         ]
       }
