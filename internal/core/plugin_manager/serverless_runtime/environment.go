@@ -1,6 +1,7 @@
 package serverless_runtime
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,11 +14,18 @@ func (r *ServerlessPluginRuntime) InitEnvironment() error {
 	// init http client
 	r.client = &http.Client{
 		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 120 * time.Second,
-			}).Dial,
-			IdleConnTimeout: 120 * time.Second,
+			TLSHandshakeTimeout: time.Duration(r.PluginMaxExecutionTimeout) * time.Second,
+			IdleConnTimeout:     120 * time.Second,
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				conn, err := (&net.Dialer{
+					Timeout:   time.Duration(r.PluginMaxExecutionTimeout) * time.Second,
+					KeepAlive: 120 * time.Second,
+				}).DialContext(ctx, network, addr)
+				if err != nil {
+					return nil, err
+				}
+				return conn, nil
+			},
 		},
 	}
 
