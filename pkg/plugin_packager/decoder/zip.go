@@ -333,3 +333,7 @@ func (z *ZipPluginDecoder) CheckAssetsValid() error {
 func (z *ZipPluginDecoder) Verified() bool {
 	return z.PluginDecoderHelper.verified(z)
 }
+
+func (z *ZipPluginDecoder) AvailableI18nReadme() (map[string]string, error) {
+	return z.PluginDecoderHelper.AvailableI18nReadme(z, "/")
+}

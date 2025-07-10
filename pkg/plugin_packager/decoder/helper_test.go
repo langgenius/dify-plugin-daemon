@@ -17,10 +17,17 @@ func (d *UnixPluginDecoder) ReadFile(filename string) ([]byte, error) {
 }
 
 func (d *UnixPluginDecoder) ReadDir(dirname string) ([]string, error) {
-	return []string{
-		"_assets/test.txt",
-		"_assets/test2.txt",
-	}, nil
+	if dirname == "_assets" {
+		return []string{
+			"_assets/test.txt",
+			"_assets/test2.txt",
+		}, nil
+	} else if dirname == "readme" {
+		return []string{
+			"readme/README_zh_Hans.md",
+		}, nil
+	}
+	return nil, nil
 }
 
 func (d *UnixPluginDecoder) Close() error {
@@ -45,6 +52,10 @@ func (d *UnixPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error
 
 func (d *UnixPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifier, error) {
 	return plugin_entities.PluginUniqueIdentifier(""), nil
+}
+
+func (d *UnixPluginDecoder) AvailableI18nReadme() (map[string]string, error) {
+	return d.PluginDecoderHelper.AvailableI18nReadme(d, "/")
 }
 
 type WindowsPluginDecoder struct {
@@ -78,4 +89,14 @@ func TestRemapAssets(t *testing.T) {
 	}
 	assert.Equal(t, remappedAssets["test.txt"], []byte("test"))
 	assert.Equal(t, remappedAssets["test2.txt"], []byte("test"))
+}
+
+func TestAvailableI18nReadme(t *testing.T) {
+	decoder := UnixPluginDecoder{}
+	readmes, err := decoder.AvailableI18nReadme()
+	if err != nil {
+		t.Fatalf("Failed to get available i18n readme: %v", err)
+	}
+	assert.Equal(t, readmes["en_US"], "test")
+	assert.Equal(t, readmes["zh_Hans"], "test")
 }

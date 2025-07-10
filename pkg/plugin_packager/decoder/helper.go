@@ -3,7 +3,9 @@ package decoder
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -440,4 +442,47 @@ func (p *PluginDecoderHelper) verified(decoder PluginDecoder) bool {
 		p.verifiedFlag = &verified
 		return verified
 	}
+}
+
+var (
+	readmeRegexp = regexp.MustCompile(`^README_([a-z]{2}_[A-Za-z]{2,})\.md$`)
+)
+
+// Only the en_US readme should be at the root as README.md;
+// all other readmes should be placed in the readme folder and named in the format README_$language_code.md.
+// The separator is the separator of the file path, it's "/" for zip plugin and os.Separator for fs plugin.
+func (p *PluginDecoderHelper) AvailableI18nReadme(decoder PluginDecoder, separator string) (map[string]string, error) {
+	readmes := make(map[string]string)
+	// read the en_US readme
+	enUSReadme, err := decoder.ReadFile("README.md")
+	if err != nil {
+		// this file must exist or it's not a valid plugin
+		return nil, errors.Join(err, fmt.Errorf("en_US readme not found"))
+	}
+	readmes["en_US"] = string(enUSReadme)
+
+	readmeFiles, err := decoder.ReadDir("readme")
+	if errors.Is(err, os.ErrNotExist) {
+		return readmes, nil
+	} else if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("an unexpected error occurred while reading readme folder"))
+	}
+
+	for _, file := range readmeFiles {
+		// trim the readme folder prefix
+		file, _ = strings.CutPrefix(file, "readme"+separator)
+		// using regexp to match the file name
+		match := readmeRegexp.FindStringSubmatch(file)
+		if len(match) == 0 {
+			continue
+		}
+		language := match[1]
+		readme, err := decoder.ReadFile(filepath.Join("readme", file))
+		if err != nil {
+			return nil, errors.Join(err, fmt.Errorf("failed to read readme file: %s", file))
+		}
+		readmes[language] = string(readme)
+	}
+
+	return readmes, nil
 }

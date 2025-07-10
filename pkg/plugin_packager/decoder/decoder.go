@@ -64,4 +64,8 @@ type PluginDecoder interface {
 
 	// Check Assets valid
 	CheckAssetsValid() error
+
+	// AvailableI18nReadme returns a map of available readme i18n, the key is the language, the value is the readme.
+	// The language code is in the format of IETF BCP 47 language tag
+	AvailableI18nReadme() (map[string]string, error)
 }
