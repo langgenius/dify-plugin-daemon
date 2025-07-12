@@ -230,7 +230,8 @@ func (r *InvokeEncryptRequest) EncryptRequired(settings map[string]any) bool {
 
 type InvokeToolRequest struct {
 	BaseInvokeDifyRequest
-	ToolType requests.ToolType `json:"tool_type" validate:"required,tool_type"`
+	ToolType     requests.ToolType `json:"tool_type" validate:"required,tool_type"`
+	CredentialId string            `json:"credential_id" validate:"omitempty"`
 	requests.InvokeToolSchema
 }
 

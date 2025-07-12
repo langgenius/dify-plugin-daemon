@@ -18,6 +18,7 @@ type InvokePluginRequest[T any] struct {
 	MessageID        *string                `json:"message_id"`
 	AppID            *string                `json:"app_id"`
 	EndpointID       *string                `json:"endpoint_id"`
+	Context          map[string]any         `json:"context"`
 
 	Data T `json:"data" validate:"required"`
 }

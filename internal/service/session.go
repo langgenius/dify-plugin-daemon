@@ -42,6 +42,7 @@ func createSession[T any](
 			MessageID:              r.MessageID,
 			AppID:                  r.AppID,
 			EndpointID:             r.EndpointID,
+			Context:                r.Context,
 		},
 	)
 
