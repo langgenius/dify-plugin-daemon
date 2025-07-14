@@ -2,9 +2,9 @@ package curd
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -188,15 +188,7 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenantId),
 	)
 
-	pluginInstallationCacheKey := strings.Join(
-		[]string{
-			"plugin_id",
-			pluginUniqueIdentifier.PluginID(),
-			"tenant_id",
-			tenantId,
-		},
-		":",
-	)
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenantId)
 
 	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
