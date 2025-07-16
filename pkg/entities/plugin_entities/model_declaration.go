@@ -628,6 +628,8 @@ type ModelProviderDeclaration struct {
 	Description              *I18nObject                      `json:"description" yaml:"description,omitempty" validate:"omitempty"`
 	IconSmall                *I18nObject                      `json:"icon_small" yaml:"icon_small,omitempty" validate:"omitempty"`
 	IconLarge                *I18nObject                      `json:"icon_large" yaml:"icon_large,omitempty" validate:"omitempty"`
+	IconSmallDark            *I18nObject                      `json:"icon_small_dark" yaml:"icon_small_dark,omitempty" validate:"omitempty"`
+	IconLargeDark            *I18nObject                      `json:"icon_large_dark" yaml:"icon_large_dark,omitempty" validate:"omitempty"`
 	Background               *string                          `json:"background" yaml:"background,omitempty" validate:"omitempty"`
 	Help                     *ModelProviderHelpEntity         `json:"help" yaml:"help,omitempty" validate:"omitempty"`
 	SupportedModelTypes      []ModelType                      `json:"supported_model_types" yaml:"supported_model_types" validate:"required,lte=16,dive,model_type"`

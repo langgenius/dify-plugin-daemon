@@ -408,6 +408,12 @@ func (p *PluginDecoderHelper) CheckAssetsValid(decoder PluginDecoder) error {
 		}
 	}
 
+	if declaration.IconDark != "" {
+		if _, ok := assets[declaration.IconDark]; !ok {
+			return errors.Join(err, fmt.Errorf("plugin dark icon not found"))
+		}
+	}
+
 	return nil
 }
 

@@ -74,8 +74,9 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			configuration.PluginInstalledPath,
 		),
 		localPluginLaunchingLock: lock.NewGranularityLock(),
-		maxLaunchingLock:         make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
-		config:                   configuration,
+		// By default, we allow up to configuration.PluginLocalLaunchingConcurrent plugins to be launched concurrently; if not configured, the default is 2.
+		maxLaunchingLock: make(chan bool, configuration.PluginLocalLaunchingConcurrent),
+		config:           configuration,
 	}
 
 	return manager
@@ -156,7 +157,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 
 	// start local watcher
 	if configuration.Platform == app.PLATFORM_LOCAL {
-		p.startLocalWatcher()
+		p.startLocalWatcher(configuration)
 	}
 
 	// launch serverless connector
