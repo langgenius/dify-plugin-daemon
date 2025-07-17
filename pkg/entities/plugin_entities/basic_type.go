@@ -35,6 +35,8 @@ func isBasicType(fl validator.FieldLevel) bool {
 		if fl.Field().IsNil() {
 			return true
 		}
+	default:
+		return false
 	}
 
 	return false

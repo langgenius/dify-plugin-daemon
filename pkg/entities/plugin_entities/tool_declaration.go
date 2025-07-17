@@ -221,7 +221,7 @@ func init() {
 type ToolProviderDeclaration struct {
 	Identity          ToolProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
 	CredentialsSchema []ProviderConfig     `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
-	OAuthSchema       *OAuthSchema         `json:"oauth_schema" yaml:"oauth_schema" validate:"omitempty,dive"`
+	OAuthSchema       *OAuthSchema         `json:"oauth_schema" yaml:"oauth_schema" validate:"omitempty"`
 	Tools             []ToolDeclaration    `json:"tools" yaml:"tools" validate:"required,dive"`
 	ToolFiles         []string             `json:"-" yaml:"-"`
 }
