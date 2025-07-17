@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752054440461,
+  "lastUpdate": 1752741147785,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6696,6 +6696,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "955520791 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "xh001x@hotmail.com",
+            "name": "Maries",
+            "username": "Mairuis"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a0414b30e66f33138da75dc4649ef965f7e7a135",
+          "message": "0.2.0 (#402)\n\n* feat(oauth): add RedirectURI field to OAuth request structures\n\n* feat(oauth): update OAuthSchema validation\n\n* feat: add Context field to request and session structures\n\n* feat: add CredentialType field to Credentials and InvokeToolRequest structures\n\n* fix: handle unhandled default case in basic_type.go\n\n* feat: add support for build branches in build-push.yml",
+          "timestamp": "2025-07-17T16:28:43+08:00",
+          "tree_id": "6cde80a358d9c658662bfe3bd9bee06af1c559a7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a0414b30e66f33138da75dc4649ef965f7e7a135"
+        },
+        "date": 1752741147394,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139158591,
+            "unit": "ns/op\t 1569606 B/op\t   27524 allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139158591,
+            "unit": "ns/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569606,
+            "unit": "B/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27524,
+            "unit": "allocs/op",
+            "extra": "253 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.51,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "950798575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.51,
+            "unit": "ns/op",
+            "extra": "950798575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "950798575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "950798575 times\n4 procs"
           }
         ]
       }
