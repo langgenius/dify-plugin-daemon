@@ -25,6 +25,11 @@ func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key stri
 
 func (s *wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	if exists, err := s.oss.Exists(filePath); err != nil {
+		return err
+	} else if exists {
+		return nil
+	}
 	return s.oss.Save(filePath, data)
 }
 

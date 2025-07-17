@@ -37,9 +37,12 @@ func (m *MediaBucket) Upload(name string, file []byte) (string, error) {
 
 	// store locally
 	filePath := path.Join(m.mediaPath, filename)
-	err := m.oss.Save(filePath, file)
-	if err != nil {
+	if exists, err := m.oss.Exists(filePath); err != nil {
 		return "", err
+	} else if !exists {
+		if err := m.oss.Save(filePath, file); err != nil {
+			return "", err
+		}
 	}
 
 	return filename, nil

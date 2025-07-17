@@ -34,7 +34,13 @@ func (b *InstalledBucket) Save(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	file []byte,
 ) error {
-	return b.oss.Save(filepath.Join(b.installedPath, pluginUniqueIdentifier.String()), file)
+	filePath := filepath.Join(b.installedPath, pluginUniqueIdentifier.String())
+	if exists, err := b.oss.Exists(filePath); err != nil {
+		return err
+	} else if exists {
+		return nil
+	}
+	return b.oss.Save(filePath, file)
 }
 
 // Exists checks if the plugin exists in the installed bucket
