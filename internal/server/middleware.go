@@ -9,6 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -39,10 +41,20 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		// fetch plugin installation
-		installation, err := db.GetOne[models.PluginInstallation](
-			db.Equal("tenant_id", tenantId),
-			db.Equal("plugin_id", pluginId),
+		// fetch plugin installation with caching
+		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
+		installation, err := cache.AutoGetWithGetter(
+			cacheKey,
+			func() (*models.PluginInstallation, error) {
+				inst, err := db.GetOne[models.PluginInstallation](
+					db.Equal("tenant_id", tenantId),
+					db.Equal("plugin_id", pluginId),
+				)
+				if err != nil {
+					return nil, err
+				}
+				return &inst, nil
+			},
 		)
 
 		if err == db.ErrDatabaseNotFound {
@@ -61,7 +73,7 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, installation)
+		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
 		ctx.Next()
 	}

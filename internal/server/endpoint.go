@@ -2,9 +2,11 @@ package server
 
 import (
 	"errors"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"strings"
 	"time"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -70,15 +72,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 	}
 
 	// get plugin installation
-	pluginInstallationCacheKey := strings.Join(
-		[]string{
-			"plugin_id",
-			endpoint.PluginID,
-			"tenant_id",
-			endpoint.TenantID,
-		},
-		":",
-	)
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(endpoint.PluginID, endpoint.TenantID)
 	pluginInstallation, err := cache.AutoGetWithGetter[models.PluginInstallation](
 		pluginInstallationCacheKey,
 		func() (*models.PluginInstallation, error) {
