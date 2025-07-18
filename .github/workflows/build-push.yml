@@ -5,6 +5,7 @@ on:
     branches:
       - "main"
       - "deploy/dev"
+      - "build/**"
   pull_request:
     branches:
       - "main"
@@ -28,7 +29,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Set matrix
         id: set-matrix
         run: |

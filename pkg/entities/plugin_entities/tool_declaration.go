@@ -202,6 +202,7 @@ type ToolProviderIdentity struct {
 	Name        string                        `json:"name" validate:"required,tool_provider_identity_name"`
 	Description I18nObject                    `json:"description"`
 	Icon        string                        `json:"icon" validate:"required"`
+	IconDark    string                        `json:"icon_dark" validate:"omitempty"`
 	Label       I18nObject                    `json:"label" validate:"required"`
 	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
 }

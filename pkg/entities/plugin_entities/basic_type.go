@@ -36,8 +36,7 @@ func isBasicType(fl validator.FieldLevel) bool {
 			return true
 		}
 	default:
-		panic("unhandled default case" + fl.Field().Kind().String())
+		return false
 	}
-
 	return false
 }

@@ -16,8 +16,51 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-//go:embed templates/python/icon.svg
-var icon []byte
+var (
+	//go:embed templates/icons/agent_light.svg
+	agentLight []byte
+	//go:embed templates/icons/agent_dark.svg
+	agentDark []byte
+	//go:embed templates/icons/datasource_light.svg
+	datasourceLight []byte
+	//go:embed templates/icons/datasource_dark.svg
+	datasourceDark []byte
+	//go:embed templates/icons/extension_light.svg
+	extensionLight []byte
+	//go:embed templates/icons/extension_dark.svg
+	extensionDark []byte
+	//go:embed templates/icons/model_light.svg
+	modelLight []byte
+	//go:embed templates/icons/model_dark.svg
+	modelDark []byte
+	//go:embed templates/icons/tool_light.svg
+	toolLight []byte
+	//go:embed templates/icons/tool_dark.svg
+	toolDark []byte
+	//go:embed templates/icons/trigger_light.svg
+	triggerLight []byte
+	//go:embed templates/icons/trigger_dark.svg
+	triggerDark []byte
+)
+
+var icon = map[string]map[string][]byte{
+	"light": {
+		"agent-strategy": agentLight,
+		"datasource":     datasourceLight,
+		"extension":      extensionLight,
+		"model":          modelLight,
+		"tool":           toolLight,
+		"trigger":        triggerLight,
+	},
+	"dark": {
+		"agent-strategy": agentDark,
+		"datasource":     datasourceDark,
+		"extension":      extensionDark,
+		"model":          modelDark,
+		"tool":           toolDark,
+		"trigger":        triggerDark,
+	},
+}
 
 func InitPlugin() {
 	m := initialize()
@@ -352,6 +395,7 @@ func (m model) createPlugin() {
 			Version:     manifest_entities.Version("0.0.1"),
 			Type:        manifest_entities.PluginType,
 			Icon:        "icon.svg",
+			IconDark:    "icon-dark.svg",
 			Author:      m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Author(),
 			Name:        m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Name(),
 			Description: plugin_entities.NewI18nObject(m.subMenus[SUB_MENU_KEY_PROFILE].(profile).Description()),
@@ -439,9 +483,27 @@ func (m model) createPlugin() {
 		return
 	}
 
+	// get icon and icon-dark
+	iconLight := icon["light"][string(manifest.Category())]
+	if iconLight == nil {
+		log.Error("icon not found for category: %s", manifest.Category())
+		return
+	}
+	iconDark := icon["dark"][string(manifest.Category())]
+	if iconDark == nil {
+		log.Error("icon-dark not found for category: %s", manifest.Category())
+		return
+	}
+
 	// create icon.svg
-	if err := writeFile(filepath.Join(pluginDir, "_assets", "icon.svg"), string(icon)); err != nil {
+	if err := writeFile(filepath.Join(pluginDir, "_assets", "icon.svg"), string(iconLight)); err != nil {
 		log.Error("failed to write icon file: %s", err)
+		return
+	}
+
+	// create icon-dark.svg
+	if err := writeFile(filepath.Join(pluginDir, "_assets", "icon-dark.svg"), string(iconDark)); err != nil {
+		log.Error("failed to write icon-dark file: %s", err)
 		return
 	}
 

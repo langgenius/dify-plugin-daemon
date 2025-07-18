@@ -35,10 +35,11 @@ type Session struct {
 	Declaration            *plugin_entities.PluginDeclaration     `json:"declaration"`
 
 	// information about incoming request
-	ConversationID *string `json:"conversation_id"`
-	MessageID      *string `json:"message_id"`
-	AppID          *string `json:"app_id"`
-	EndpointID     *string `json:"endpoint_id"`
+	ConversationID *string        `json:"conversation_id"`
+	MessageID      *string        `json:"message_id"`
+	AppID          *string        `json:"app_id"`
+	EndpointID     *string        `json:"endpoint_id"`
+	Context        map[string]any `json:"context"`
 }
 
 func sessionKey(id string) string {
@@ -59,6 +60,7 @@ type NewSessionPayload struct {
 	MessageID              *string                                `json:"message_id"`
 	AppID                  *string                                `json:"app_id"`
 	EndpointID             *string                                `json:"endpoint_id"`
+	Context                map[string]any                         `json:"context"`
 }
 
 func NewSession(payload NewSessionPayload) *Session {
@@ -76,6 +78,7 @@ func NewSession(payload NewSessionPayload) *Session {
 		MessageID:              payload.MessageID,
 		AppID:                  payload.AppID,
 		EndpointID:             payload.EndpointID,
+		Context:                payload.Context,
 	}
 
 	session_lock.Lock()
@@ -172,6 +175,7 @@ func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 		"message_id":      s.MessageID,
 		"app_id":          s.AppID,
 		"endpoint_id":     s.EndpointID,
+		"context":         s.Context,
 		"event":           event,
 		"data":            data,
 	})

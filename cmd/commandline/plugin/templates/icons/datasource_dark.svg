@@ -1,0 +1,55 @@
+<!--
+  ~ Dify Marketplace Template Icon
+  ~ Dify 市场模板图标
+  ~ Dify マーケットプレイステンプレートアイコン
+  ~
+  ~ WARNING / 警告 / 警告:
+  ~ 
+  ~ English: This is a TEMPLATE icon from Dify Marketplace only. You MUST NOT use this default icon in any way.
+  ~ Please replace it with your own custom icon before submit this plugin.
+  ~ 
+  ~ 中文: 这只是来自 Dify 市场的模板图标。您绝对不能以任何方式使用此默认图标。
+  ~ 请在提交此插件之前将其替换为您自己的自定义图标。
+  ~ 
+  ~ 日本語: これは Dify マーケットプレイスのテンプレートアイコンです。このデフォルトアイコンをいかなる方法でも使用してはいけません。
+  ~ このプラグインを提出する前に、独自のカスタムアイコンに置き換えてください。
+  ~ 
+  ~ DIFY_MARKETPLACE_TEMPLATE_ICON_DO_NOT_USE
+  -->
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_15253_95099)">
+<rect width="40" height="40" fill="#0033FF"/>
+<g filter="url(#filter0_n_15253_95099)">
+<rect width="40" height="40" fill="url(#paint0_linear_15253_95099)"/>
+</g>
+<path d="M13 20.5C13 20.8134 13.461 21.3584 14.5305 21.8931C15.9141 22.5849 17.8768 23 20 23C22.1232 23 24.0859 22.5849 25.4695 21.8931C26.539 21.3584 27 20.8134 27 20.5V18.3287C25.35 19.3482 22.8273 20 20 20C17.1727 20 14.65 19.3482 13 18.3287V20.5ZM27 23.3287C25.35 24.3482 22.8273 25 20 25C17.1727 25 14.65 24.3482 13 23.3287V25.5C13 25.8134 13.461 26.3584 14.5305 26.8931C15.9141 27.5849 17.8768 28 20 28C22.1232 28 24.0859 27.5849 25.4695 26.8931C26.539 26.3584 27 25.8134 27 25.5V23.3287ZM11 25.5V15.5C11 13.0147 15.0294 11 20 11C24.9706 11 29 13.0147 29 15.5V25.5C29 27.9853 24.9706 30 20 30C15.0294 30 11 27.9853 11 25.5ZM20 18C22.1232 18 24.0859 17.5849 25.4695 16.8931C26.539 16.3584 27 15.8134 27 15.5C27 15.1866 26.539 14.6416 25.4695 14.1069C24.0859 13.4151 22.1232 13 20 13C17.8768 13 15.9141 13.4151 14.5305 14.1069C13.461 14.6416 13 15.1866 13 15.5C13 15.8134 13.461 16.3584 14.5305 16.8931C15.9141 17.5849 17.8768 18 20 18Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_n_15253_95099" x="0" y="0" width="40" height="40" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="2 2" stitchTiles="stitch" numOctaves="3" result="noise" seed="8033" />
+<feComponentTransfer in="noise" result="coloredNoise1">
+<feFuncR type="linear" slope="2" intercept="-0.5" />
+<feFuncG type="linear" slope="2" intercept="-0.5" />
+<feFuncB type="linear" slope="2" intercept="-0.5" />
+<feFuncA type="discrete" tableValues="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+<feComponentTransfer in="noise1Clipped" result="color1">
+<feFuncA type="table" tableValues="0 0.06" />
+</feComponentTransfer>
+<feMerge result="effect1_noise_15253_95099">
+<feMergeNode in="shape" />
+<feMergeNode in="color1" />
+</feMerge>
+</filter>
+<linearGradient id="paint0_linear_15253_95099" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1443FF"/>
+<stop offset="1" stop-color="#0031F5"/>
+</linearGradient>
+<clipPath id="clip0_15253_95099">
+<rect width="40" height="40" fill="white"/>
+</clipPath>
+</defs>
+</svg>
