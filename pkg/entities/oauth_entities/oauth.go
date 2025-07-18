@@ -5,5 +5,6 @@ type OAuthGetAuthorizationURLResult struct {
 }
 
 type OAuthGetCredentialsResult struct {
+	Metadata    map[string]any `json:"metadata,omitempty"`
 	Credentials map[string]any `json:"credentials"`
 }
