@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753083665293,
+  "lastUpdate": 1753085185805,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6840,6 +6840,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "981566634 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7f463e32f6e1a609f64c0eb49f23b3187055cfdd",
+          "message": "feat(plugin_decoder): add support for internationalized readme files (#393)\n\n* feat(plugin_decoder): add support for internationalized readme files\n\n- Introduced the AvailableI18nReadme method in the PluginDecoder interface to retrieve available readme files in multiple languages.\n- Implemented the method in FSPluginDecoder and ZipPluginDecoder to read localized readme files from the filesystem and zip archives.\n- Enhanced UnixPluginDecoder to handle readme files in a structured manner, including support for reading from a dedicated \"readme\" directory.\n- Added unit tests to verify the functionality of the AvailableI18nReadme method and ensure correct retrieval of localized readme content.\n\n* feat(plugin): add support for multilingual README generation\n\n- Introduced functionality to create README files in multiple languages (Simplified Chinese, Japanese, Portuguese) based on user selection.\n- Enhanced the profile management to include options for enabling internationalized README and selecting languages.\n- Added new language choice structure to manage language options and their selection state.\n- Implemented rendering and writing of language-specific README files during plugin creation.\n- Included new README template files for each supported language.\n\n* feat(plugin): add README command and list functionality\n\n- Introduced a new `readme` command to the plugin CLI for managing README files.\n- Added `list` subcommand to display available README languages for a specified plugin path.\n- Implemented functionality to read and list supported README languages in a tabular format.\n- Enhanced error handling for plugin file reading and decoding processes.",
+          "timestamp": "2025-07-21T16:02:26+08:00",
+          "tree_id": "7c98741d6e8893dd6b6c535348593616f7fbe76b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/7f463e32f6e1a609f64c0eb49f23b3187055cfdd"
+        },
+        "date": 1753085184731,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137919768,
+            "unit": "ns/op\t 1569586 B/op\t   27524 allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137919768,
+            "unit": "ns/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569586,
+            "unit": "B/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27524,
+            "unit": "allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.41,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "981902931 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.41,
+            "unit": "ns/op",
+            "extra": "981902931 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "981902931 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "981902931 times\n4 procs"
           }
         ]
       }
