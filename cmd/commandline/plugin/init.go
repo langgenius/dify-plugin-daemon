@@ -41,6 +41,13 @@ var (
 	triggerLight []byte
 	//go:embed templates/icons/trigger_dark.svg
 	triggerDark []byte
+
+	//go:embed templates/readme/zh_Hans.md
+	zhHansReadme []byte
+	//go:embed templates/readme/ja_JP.md
+	jaJpReadme []byte
+	//go:embed templates/readme/pt_BR.md
+	ptBrReadme []byte
 )
 
 var icon = map[string]map[string][]byte{
@@ -516,6 +523,42 @@ func (m model) createPlugin() {
 	if err := writeFile(filepath.Join(pluginDir, "README.md"), readme); err != nil {
 		log.Error("failed to write README file: %s", err)
 		return
+	}
+
+	// create multilingual README files if enabled
+	profileMenu := m.subMenus[SUB_MENU_KEY_PROFILE].(profile)
+	if profileMenu.EnableI18nReadme() {
+		selectedLanguages := profileMenu.SelectedLanguages()
+
+		// Define language template mapping
+		languageTemplates := map[string][]byte{
+			"zh_Hans": zhHansReadme,
+			"ja_JP":   jaJpReadme,
+			"pt_BR":   ptBrReadme,
+		}
+
+		for _, lang := range selectedLanguages {
+			if lang == "en" {
+				// English README is already created as README.md
+				continue
+			}
+
+			if template, exists := languageTemplates[lang]; exists {
+				// Render the template for this language
+				langReadme, err := renderTemplate(template, manifest, []string{})
+				if err != nil {
+					log.Error("failed to render %s README template: %s", lang, err)
+					return
+				}
+
+				// Write the language-specific README file
+				readmeFilename := fmt.Sprintf("README_%s.md", lang)
+				if err := writeFile(filepath.Join(pluginDir, "readme", readmeFilename), langReadme); err != nil {
+					log.Error("failed to write %s README file: %s", lang, err)
+					return
+				}
+			}
+		}
 	}
 
 	// create .env.example

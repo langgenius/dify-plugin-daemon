@@ -155,6 +155,23 @@ If no parameters are provided, an interactive mode will be started.`,
 		},
 	}
 
+	pluginReadmeCommand = &cobra.Command{
+		Use:   "readme",
+		Short: "Readme",
+		Long:  "Readme",
+	}
+
+	pluginReadmeListCommand = &cobra.Command{
+		Use:   "list [plugin_path]",
+		Short: "List available README languages",
+		Long:  "List available README languages in the specified plugin",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginPath := args[0]
+			plugin.ListReadme(pluginPath)
+		},
+	}
+
 	// NOTE: tester is deprecated, maybe, in several months, we will support this again
 	// pluginTestCommand = &cobra.Command{
 	// 	Use:   "test [-i inputs] [-t timeout] package_path invoke_type invoke_action",
@@ -207,10 +224,12 @@ func init() {
 	pluginCommand.AddCommand(pluginChecksumCommand)
 	pluginCommand.AddCommand(pluginEditPermissionCommand)
 	pluginCommand.AddCommand(pluginModuleCommand)
+	pluginCommand.AddCommand(pluginReadmeCommand)
 	pluginModuleCommand.AddCommand(pluginModuleListCommand)
 	pluginModuleCommand.AddCommand(pluginModuleAppendCommand)
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendToolsCommand)
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendEndpointsCommand)
+	pluginReadmeCommand.AddCommand(pluginReadmeListCommand)
 
 	pluginInitCommand.Flags().StringVar(&author, "author", "", "Author name (1-64 characters, lowercase letters, numbers, dashes and underscores only)")
 	pluginInitCommand.Flags().StringVar(&name, "name", "", "Plugin name (1-128 characters, lowercase letters, numbers, dashes and underscores only)")
