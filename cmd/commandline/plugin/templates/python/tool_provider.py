@@ -43,3 +43,11 @@ class {{ .PluginName | SnakeToCamel }}Provider(ToolProvider):
     #     except Exception as e:
     #         raise ToolProviderOAuthError(str(e))
     #     return dict()
+
+    # def _oauth_refresh_credentials(
+    #     self, redirect_uri: str, system_credentials: Mapping[str, Any], credentials: Mapping[str, Any]
+    # ) -> OAuthCredentials:
+    #     """
+    #     Refresh the credentials
+    #     """
+    #     return OAuthCredentials(credentials=credentials, expires_at=-1)

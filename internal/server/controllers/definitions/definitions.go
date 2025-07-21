@@ -225,6 +225,17 @@ var PluginDispatchers = []PluginDispatcher{
 		Path:               "/oauth/get_credentials",
 	},
 	{
+		Name:               "RefreshCredentials",
+		RequestType:        requests.RequestOAuthRefreshCredentials{},
+		ResponseType:       oauth_entities.OAuthRefreshCredentialsResult{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_OAUTH,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_OAUTH",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS",
+		BufferSize:         1,
+		Path:               "/oauth/refresh_credentials",
+	},
+	{
 		Name:               "FetchDynamicParameterOptions",
 		RequestType:        requests.RequestDynamicParameterSelect{},
 		ResponseType:       dynamic_select_entities.DynamicSelectResult{},
