@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753250136092,
+  "lastUpdate": 1753259207286,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7056,6 +7056,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "972268657 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "80389be55b8b703e07505bbde2dd7154a45802d3",
+          "message": "chore(deps): update go-git and golang.org/x/tools dependencies (#410)\n\n- Updated github.com/go-git/go-git from v4.7.0 to v5.16.2.\n- Bumped golang.org/x/tools from v0.22.0 to v0.35.0.\n- Added indirect dependencies for github.com/go-git/gcfg and github.com/go-git/go-billy.\n- Updated various indirect dependencies including golang.org/x/net, golang.org/x/sys, and golang.org/x/text.",
+          "timestamp": "2025-07-23T16:22:48+08:00",
+          "tree_id": "95b05cfa203f89e30b35430d79710130039673df",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/80389be55b8b703e07505bbde2dd7154a45802d3"
+        },
+        "date": 1753259206328,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 140160859,
+            "unit": "ns/op\t 1569775 B/op\t   27524 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 140160859,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569775,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27524,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.02,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "993541242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.02,
+            "unit": "ns/op",
+            "extra": "993541242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "993541242 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "993541242 times\n4 procs"
           }
         ]
       }
