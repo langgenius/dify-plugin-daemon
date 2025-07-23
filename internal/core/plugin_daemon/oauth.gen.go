@@ -34,3 +34,16 @@ func GetCredentials(
 		1,
 	)
 }
+
+func RefreshCredentials(
+	session *session_manager.Session,
+	request *requests.RequestOAuthRefreshCredentials,
+) (
+	*stream.Stream[oauth_entities.OAuthRefreshCredentialsResult], error,
+) {
+	return GenericInvokePlugin[requests.RequestOAuthRefreshCredentials, oauth_entities.OAuthRefreshCredentialsResult](
+		session,
+		request,
+		1,
+	)
+}

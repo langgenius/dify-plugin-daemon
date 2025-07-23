@@ -42,6 +42,7 @@ const (
 	PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY           PluginAccessAction = "invoke_agent_strategy"
 	PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL           PluginAccessAction = "get_authorization_url"
 	PLUGIN_ACCESS_ACTION_GET_CREDENTIALS                 PluginAccessAction = "get_credentials"
+	PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS             PluginAccessAction = "refresh_credentials"
 	PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS PluginAccessAction = "fetch_parameter_options"
 )
 
@@ -65,5 +66,6 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
 		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS ||
+		p == PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS ||
 		p == PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS
 }

@@ -24,5 +24,6 @@ func (app *App) setupGeneratedRoutes(group *gin.RouterGroup, config *app.Config)
 	group.POST("/model/schema", controllers.GetAIModelSchema(config))
 	group.POST("/oauth/get_authorization_url", controllers.GetAuthorizationURL(config))
 	group.POST("/oauth/get_credentials", controllers.GetCredentials(config))
+	group.POST("/oauth/refresh_credentials", controllers.RefreshCredentials(config))
 	group.POST("/dynamic_select/fetch_parameter_options", controllers.FetchDynamicParameterOptions(config))
 }
