@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753259207286,
+  "lastUpdate": 1753266276563,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7128,6 +7128,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "993541242 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "178e7649ba98f58721db13c9c217707b1281a397",
+          "message": "fix(env): update REMOTE_INSTALL_URL format in .env.example (#412)\n\n- Combined REMOTE_INSTALL_URL and REMOTE_INSTALL_PORT into a single line for clarity.\n- This change improves the configuration format for easier understanding and usage.",
+          "timestamp": "2025-07-23T18:21:42+08:00",
+          "tree_id": "3d3219536253e764c361b2f843f98405433e9494",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/178e7649ba98f58721db13c9c217707b1281a397"
+        },
+        "date": 1753266275496,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139686616,
+            "unit": "ns/op\t 1570095 B/op\t   27524 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139686616,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1570095,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27524,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.15,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "971733394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.15,
+            "unit": "ns/op",
+            "extra": "971733394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "971733394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "971733394 times\n4 procs"
           }
         ]
       }
