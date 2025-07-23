@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753085185805,
+  "lastUpdate": 1753247737818,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -6912,6 +6912,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "981902931 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bace3bfb580f845f3bbe690d84cda5232a33b3ef",
+          "message": "feat(oauth): implement refresh credentials functionality (#408)\n\n* feat(oauth): implement refresh credentials functionality\n\n- Added RefreshCredentials endpoint to handle OAuth credential refresh requests.\n- Introduced RequestOAuthRefreshCredentials structure for request validation.\n- Updated access types and actions to include refresh credentials.\n- Enhanced server routing and controller logic to support the new functionality.\n- Updated OAuth entities to include expiration handling for refreshed credentials.\n\n* feat(oauth): add metadata field to OAuthGetCredentialsResult\n\n---------\n\nCo-authored-by: Harry <xh001x@hotmail.com>",
+          "timestamp": "2025-07-23T13:11:36+08:00",
+          "tree_id": "480f3aad74cae0b665785c581a281665c0e17e5b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/bace3bfb580f845f3bbe690d84cda5232a33b3ef"
+        },
+        "date": 1753247736699,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 142665650,
+            "unit": "ns/op\t 1569593 B/op\t   27524 allocs/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 142665650,
+            "unit": "ns/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569593,
+            "unit": "B/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27524,
+            "unit": "allocs/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.48,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "964223156 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.48,
+            "unit": "ns/op",
+            "extra": "964223156 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "964223156 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "964223156 times\n4 procs"
           }
         ]
       }
