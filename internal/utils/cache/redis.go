@@ -72,6 +72,25 @@ func InitRedisSentinelClient(sentinels []string, masterName, username, password,
 	return nil
 }
 
+// InitRedisClusterClient 初始化集群 Redis 客户端
+func InitRedisClusterClient(addrs []string, password string, useSsl bool) error {
+	opts := &redis.ClusterOptions{
+		Addrs:    addrs,
+		Password: password,
+	}
+
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+
+	client = redis.NewClusterClient(opts)
+
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close the redis client
 func Close() error {
 	if client == nil {
@@ -509,8 +528,15 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 }
 
 func Subscribe[T any](channel string) (<-chan T, func()) {
-	pubsub := client.Subscribe(ctx, channel)
 	ch := make(chan T)
+
+	if client == nil {
+		log.Error("redis client not initialized")
+		close(ch)
+		return ch, func() {}
+	}
+
+	pubsub := client.Subscribe(ctx, channel)
 	connectionEstablished := make(chan bool)
 
 	go func() {
