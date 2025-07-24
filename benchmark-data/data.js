@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753266276563,
+  "lastUpdate": 1753335807346,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7200,6 +7200,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "971733394 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "222ab80a6b5767327c8e529bb6c73fa56c4273e6",
+          "message": "refactor(session_manager): update GetSession function to return error (#413)\n\n- Modified GetSession to return an error alongside the session, improving error handling when a session is not found.\n- Updated invocation of GetSession in AWS event handler to handle the new error return value.\n- Removed logging statements in favor of returning errors directly for better error propagation.",
+          "timestamp": "2025-07-24T13:40:38+08:00",
+          "tree_id": "bce30900f1221539a631b603a0b2cf00aceae10b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/222ab80a6b5767327c8e529bb6c73fa56c4273e6"
+        },
+        "date": 1753335806805,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 135145928,
+            "unit": "ns/op\t 1569452 B/op\t   27523 allocs/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 135145928,
+            "unit": "ns/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569452,
+            "unit": "B/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27523,
+            "unit": "allocs/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 35.61,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.61,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
           }
         ]
       }
