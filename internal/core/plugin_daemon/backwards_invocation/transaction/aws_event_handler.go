@@ -83,13 +83,13 @@ func (h *AWSTransactionHandler) Handle(
 				return
 			}
 
-			session := session_manager.GetSession(session_manager.GetSessionPayload{
+			session, err := session_manager.GetSession(session_manager.GetSessionPayload{
 				ID: session_id,
 			})
-			if session == nil {
-				log.Error("session not found: %s", session_id)
+
+			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusInternalServerError)
-				ctx.Writer.Write([]byte("session not found"))
+				ctx.Writer.Write([]byte(err.Error()))
 				writer.Close()
 				return
 			}
