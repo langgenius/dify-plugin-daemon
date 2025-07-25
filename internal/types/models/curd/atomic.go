@@ -3,9 +3,6 @@ package curd
 import (
 	"errors"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
@@ -287,8 +284,6 @@ func UninstallPlugin(
 		return nil, err
 	}
 
-	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenantId)
-	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
 	return &DeletePluginResponse{
 		Plugin:          pluginToBeReturns,
@@ -498,9 +493,6 @@ func UpgradePlugin(
 		return nil, err
 	}
 
-	// invalidate original plugin installation cache
-	cacheKey := helper.PluginInstallationCacheKey(originalPluginUniqueIdentifier.PluginID(), tenantId)
-	_, _ = cache.AutoDelete[models.PluginInstallation](cacheKey)
 
 	return &response, nil
 }

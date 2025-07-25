@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -488,6 +489,10 @@ func UpgradePlugin(
 				return err
 			}
 
+			// invalidate plugin installation cache
+			pluginInstallationCacheKey := helper.PluginInstallationCacheKey(original_plugin_unique_identifier.PluginID(), tenant_id)
+			_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
+
 			if upgradeResponse.IsOriginalPluginDeleted {
 				// delete the plugin if no installation left
 				manager := plugin_manager.Manager()
@@ -686,6 +691,10 @@ func UninstallPlugin(
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()
 	}
+
+	// invalidate plugin installation cache
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenant_id)
+	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
 	if deleteResponse.IsPluginDeleted {
 		// delete the plugin if no installation left

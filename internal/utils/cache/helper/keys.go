@@ -13,3 +13,13 @@ func PluginInstallationCacheKey(pluginId, tenantId string) string {
 		":",
 	)
 }
+
+func EndpointCacheKey(hookId string) string {
+	return strings.Join(
+		[]string{
+			"hook_id",
+			hookId,
+		},
+		":",
+	)
+}
