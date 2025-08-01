@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
+	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -62,8 +63,25 @@ func isDatasourceParameterType(fl validator.FieldLevel) bool {
 	return false
 }
 
+func isDatasourceOutputSchema(fl validator.FieldLevel) bool {
+	// get schema from interface
+	schemaMapInf := fl.Field().Interface()
+	// convert to map[string]any
+	datasourceSchemaMap, ok := schemaMapInf.(DatasourceOutputSchema)
+	if !ok {
+		return false
+	}
+	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(datasourceSchemaMap))
+	if err != nil {
+		return false
+	}
+
+	return err == nil
+}
+
 func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("datasource_parameter_type", isDatasourceParameterType)
+	validators.GlobalEntitiesValidator.RegisterValidation("datasource_output_schema", isDatasourceOutputSchema)
 }
 
 type DatasourceParameter struct {
@@ -82,10 +100,13 @@ type DatasourceParameter struct {
 	Description  I18nObject              `json:"description" yaml:"description" validate:"required"`
 }
 
+type DatasourceOutputSchema map[string]any
+
 type DatasourceDeclaration struct {
-	Identity    DatasourceIdentity    `json:"identity" yaml:"identity" validate:"required"`
-	Parameters  []DatasourceParameter `json:"parameters" yaml:"parameters" validate:"required,dive"`
-	Description I18nObject            `json:"description" yaml:"description" validate:"required"`
+	Identity     DatasourceIdentity     `json:"identity" yaml:"identity" validate:"required"`
+	Parameters   []DatasourceParameter  `json:"parameters" yaml:"parameters" validate:"required,dive"`
+	Description  I18nObject             `json:"description" yaml:"description" validate:"required"`
+	OutputSchema DatasourceOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,datasource_output_schema"`
 }
 
 type DatasourceProviderIdentity struct {
