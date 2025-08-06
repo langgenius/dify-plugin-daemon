@@ -289,7 +289,19 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read datasource file: %s", datasourceFile))
 			}
 
-			datasourceDec, err := parser.UnmarshalYamlBytes[plugin_entities.DatasourceDeclaration](datasourceFileContent)
+			yamlData, err := parser.UnmarshalYamlBytes[map[string]any](datasourceFileContent)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal datasource file as map: %s", datasourceFile))
+			}
+
+			processedData, err := plugin_entities.ProcessDatasourceYAML(yamlData)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to process datasource YAML: %s", datasourceFile))
+			}
+
+			processedYAML := parser.MarshalYamlBytes(processedData)
+
+			datasourceDec, err := parser.UnmarshalYamlBytes[plugin_entities.DatasourceDeclaration](processedYAML)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal datasource file: %s", datasourceFile))
 			}
