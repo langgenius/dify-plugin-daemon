@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-git/go-git/plumbing/format/gitignore"
+	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -196,4 +196,8 @@ func (d *FSPluginDecoder) CheckAssetsValid() error {
 
 func (d *FSPluginDecoder) Verified() bool {
 	return d.PluginDecoderHelper.verified(d)
+}
+
+func (d *FSPluginDecoder) AvailableI18nReadme() (map[string]string, error) {
+	return d.PluginDecoderHelper.AvailableI18nReadme(d, string(filepath.Separator))
 }

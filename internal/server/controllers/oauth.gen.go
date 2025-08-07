@@ -35,3 +35,16 @@ func GetCredentials(config *app.Config) gin.HandlerFunc {
 		)
 	}
 }
+
+func RefreshCredentials(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestOAuthRefreshCredentials]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(
+			c,
+			func(itr request) {
+				service.RefreshCredentials(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}

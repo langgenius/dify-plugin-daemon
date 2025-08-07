@@ -46,3 +46,20 @@ func GetCredentials(
 		max_timeout_seconds,
 	)
 }
+
+func RefreshCredentials(
+	r *plugin_entities.InvokePluginRequest[requests.RequestOAuthRefreshCredentials],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthRefreshCredentialsResult], error) {
+			return plugin_daemon.RefreshCredentials(session, &r.Data)
+		},
+		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
+		access_types.PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS,
+		r,
+		ctx,
+		max_timeout_seconds,
+	)
+}
