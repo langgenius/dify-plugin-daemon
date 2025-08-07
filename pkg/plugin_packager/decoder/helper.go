@@ -56,7 +56,19 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool_file))
 			}
 
-			toolFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolDeclaration](toolFileContent)
+			yamlData, err := parser.UnmarshalYamlBytes[map[string]any](toolFileContent)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file as map: %s", tool_file))
+			}
+
+			processedData, err := plugin_entities.ProcessToolYAML(yamlData)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to process tool YAML: %s", tool_file))
+			}
+
+			processedYAML := parser.MarshalYamlBytes(processedData)
+
+			toolFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolDeclaration](processedYAML)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file: %s", tool_file))
 			}

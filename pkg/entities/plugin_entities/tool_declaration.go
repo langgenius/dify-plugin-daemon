@@ -11,6 +11,7 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities/builtin_schema"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
@@ -445,4 +446,9 @@ func UnmarshalToolProviderDeclaration(data []byte) (*ToolProviderDeclaration, er
 	}
 
 	return &obj, nil
+}
+
+// ProcessToolYAML processes tool YAML data by resolving output_schema references
+func ProcessToolYAML(yamlData map[string]any) (map[string]any, error) {
+	return builtin_schema.ProcessToolYAML(yamlData)
 }

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities/builtin_schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFullFunctionToolProvider_Validate(t *testing.T) {
@@ -1324,4 +1326,251 @@ func TestToolName_Validate(t *testing.T) {
 	if _, err := parser.UnmarshalJsonBytes[ToolIdentity](data); err == nil {
 		t.Errorf("TestToolName_Validate() error = %v", err)
 	}
+}
+
+// Tests for schema reference processing in tools
+func TestProcessToolYAML(t *testing.T) {
+	t.Run("process output_schema with refs", func(t *testing.T) {
+		yamlData := map[string]any{
+			"output_schema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"result": map[string]any{
+						"$ref": "#/$defs/file",
+					},
+				},
+			},
+		}
+
+		processed, err := ProcessToolYAML(yamlData)
+		assert.NoError(t, err)
+
+		outputSchema := processed["output_schema"].(map[string]any)
+		result := outputSchema["properties"].(map[string]any)["result"].(map[string]any)
+		assert.Equal(t, "object", result["type"])
+		assert.Contains(t, result, "properties")
+		
+		// Verify the file schema was resolved correctly
+		props := result["properties"].(map[string]any)
+		assert.Contains(t, props, "name")
+		assert.Contains(t, props, "dify_builtin_type")
+	})
+
+	t.Run("process mixed user and builtin definitions", func(t *testing.T) {
+		yamlData := map[string]any{
+			"output_schema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"file": map[string]any{
+						"$ref": "#/$defs/file",
+					},
+					"custom": map[string]any{
+						"$ref": "#/$defs/my_type",
+					},
+				},
+			},
+			"definitions": map[string]any{
+				"my_type": map[string]any{
+					"type": "string",
+					"description": "Custom type",
+				},
+			},
+		}
+
+		processed, err := ProcessToolYAML(yamlData)
+		assert.NoError(t, err)
+
+		// Definitions should be removed after processing
+		assert.NotContains(t, processed, "definitions")
+
+		outputSchema := processed["output_schema"].(map[string]any)
+		props := outputSchema["properties"].(map[string]any)
+
+		// Check builtin file type was resolved
+		fileRef := props["file"].(map[string]any)
+		assert.Equal(t, "object", fileRef["type"])
+		assert.Contains(t, fileRef, "properties")
+
+		// Check custom type was resolved
+		customRef := props["custom"].(map[string]any)
+		assert.Equal(t, "string", customRef["type"])
+		assert.Equal(t, "Custom type", customRef["description"])
+	})
+
+	t.Run("process complex nested refs", func(t *testing.T) {
+		yamlData := map[string]any{
+			"output_schema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"files": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"$ref": "#/$defs/file",
+						},
+					},
+					"crawl_result": map[string]any{
+						"$ref": "#/$defs/website_crawl",
+					},
+				},
+			},
+		}
+
+		processed, err := ProcessToolYAML(yamlData)
+		assert.NoError(t, err)
+
+		outputSchema := processed["output_schema"].(map[string]any)
+		props := outputSchema["properties"].(map[string]any)
+
+		// Check array of files
+		filesArray := props["files"].(map[string]any)
+		fileItems := filesArray["items"].(map[string]any)
+		assert.Equal(t, "object", fileItems["type"])
+		assert.Contains(t, fileItems, "properties")
+
+		// Check website crawl result
+		crawlResult := props["crawl_result"].(map[string]any)
+		assert.Equal(t, "object", crawlResult["type"])
+		crawlProps := crawlResult["properties"].(map[string]any)
+		assert.Contains(t, crawlProps, "source_url")
+		assert.Contains(t, crawlProps, "content")
+	})
+
+	t.Run("no output_schema should remain unchanged", func(t *testing.T) {
+		yamlData := map[string]any{
+			"identity": map[string]any{
+				"name": "test_tool",
+			},
+			"description": map[string]any{
+				"human": map[string]any{
+					"en_US": "Test tool",
+				},
+				"llm": "A test tool",
+			},
+		}
+
+		processed, err := ProcessToolYAML(yamlData)
+		assert.NoError(t, err)
+
+		// Data should remain unchanged
+		assert.Equal(t, yamlData, processed)
+	})
+
+	t.Run("error on non-existent ref", func(t *testing.T) {
+		yamlData := map[string]any{
+			"output_schema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"result": map[string]any{
+						"$ref": "#/$defs/non_existent_type",
+					},
+				},
+			},
+		}
+
+		_, err := ProcessToolYAML(yamlData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not found")
+	})
+}
+
+func TestToolSchemaRefsIntegration(t *testing.T) {
+	t.Run("test with various builtin types", func(t *testing.T) {
+		builtinTypes := []string{
+			"file",
+			"website_crawl", 
+			"online_document",
+			"general_structure_chunk",
+			"parent_child_structure_chunk",
+			"qa_structure_chunk",
+		}
+
+		for _, typeName := range builtinTypes {
+			t.Run("builtin_type_"+typeName, func(t *testing.T) {
+				yamlData := map[string]any{
+					"output_schema": map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"result": map[string]any{
+								"$ref": "#/$defs/" + typeName,
+							},
+						},
+					},
+				}
+
+				processed, err := ProcessToolYAML(yamlData)
+				assert.NoError(t, err)
+
+				outputSchema := processed["output_schema"].(map[string]any)
+				result := outputSchema["properties"].(map[string]any)["result"].(map[string]any)
+				assert.Equal(t, "object", result["type"])
+				
+				// All builtin types should have dify_builtin_type
+				props := result["properties"].(map[string]any)
+				assert.Contains(t, props, "dify_builtin_type")
+				
+				builtinType := props["dify_builtin_type"].(map[string]any)
+				assert.Contains(t, builtinType, "enum")
+			})
+		}
+	})
+
+	t.Run("user definitions override builtin", func(t *testing.T) {
+		yamlData := map[string]any{
+			"output_schema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"result": map[string]any{
+						"$ref": "#/$defs/file",
+					},
+				},
+			},
+			"definitions": map[string]any{
+				"file": map[string]any{
+					"type": "string",
+					"description": "Custom file type",
+				},
+			},
+		}
+
+		processed, err := ProcessToolYAML(yamlData)
+		assert.NoError(t, err)
+
+		outputSchema := processed["output_schema"].(map[string]any)
+		result := outputSchema["properties"].(map[string]any)["result"].(map[string]any)
+		
+		// Should use user definition, not builtin
+		assert.Equal(t, "string", result["type"])
+		assert.Equal(t, "Custom file type", result["description"])
+		assert.NotContains(t, result, "properties") // builtin file has properties
+	})
+}
+
+func TestBuiltinSchemaAccessFromTool(t *testing.T) {
+	t.Run("builtin definitions should be accessible", func(t *testing.T) {
+		// Test that we can access builtin definitions from tool context
+		assert.Contains(t, builtin_schema.BuiltinDefinitions, "file")
+		assert.Contains(t, builtin_schema.BuiltinDefinitions, "website_crawl")
+		
+		fileDef := builtin_schema.BuiltinDefinitions["file"].(map[string]any)
+		assert.Equal(t, "object", fileDef["type"])
+		assert.Contains(t, fileDef, "properties")
+	})
+
+	t.Run("resolve schema refs should work directly", func(t *testing.T) {
+		schema := map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"upload": map[string]any{
+					"$ref": "#/$defs/file",
+				},
+			},
+		}
+
+		resolved, err := builtin_schema.ResolveSchemaRefs(schema, builtin_schema.BuiltinDefinitions)
+		assert.NoError(t, err)
+
+		props := resolved.(map[string]any)["properties"].(map[string]any)
+		upload := props["upload"].(map[string]any)
+		assert.Equal(t, "object", upload["type"])
+	})
 }

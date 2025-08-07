@@ -3,6 +3,7 @@ package plugin_entities
 import (
 	"testing"
 
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities/builtin_schema"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,9 +18,9 @@ func TestBuiltinDefinitions(t *testing.T) {
 	}
 
 	for _, typeName := range requiredTypes {
-		assert.Contains(t, BuiltinDefinitions, typeName, "missing builtin type: %s", typeName)
+		assert.Contains(t, builtin_schema.BuiltinDefinitions, typeName, "missing builtin type: %s", typeName)
 
-		def := BuiltinDefinitions[typeName].(map[string]any)
+		def := builtin_schema.BuiltinDefinitions[typeName].(map[string]any)
 		assert.Equal(t, "object", def["type"], "type %s should be object", typeName)
 		assert.Contains(t, def, "properties", "type %s missing properties", typeName)
 
@@ -34,7 +35,7 @@ func TestResolveSchemaRefs(t *testing.T) {
 			"$ref": "#/$defs/file",
 		}
 
-		resolved, err := ResolveSchemaRefs(schema, BuiltinDefinitions)
+		resolved, err := builtin_schema.ResolveSchemaRefs(schema, builtin_schema.BuiltinDefinitions)
 		assert.NoError(t, err)
 		assert.Equal(t, "object", resolved.(map[string]any)["type"])
 		assert.Contains(t, resolved.(map[string]any)["properties"].(map[string]any), "name")
@@ -53,7 +54,7 @@ func TestResolveSchemaRefs(t *testing.T) {
 			},
 		}
 
-		resolved, err := ResolveSchemaRefs(schema, BuiltinDefinitions)
+		resolved, err := builtin_schema.ResolveSchemaRefs(schema, builtin_schema.BuiltinDefinitions)
 		assert.NoError(t, err)
 
 		props := resolved.(map[string]any)["properties"].(map[string]any)
