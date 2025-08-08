@@ -81,6 +81,11 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 	sem := make(chan struct{}, maxConcurrency)
 
 	for _, plugin := range plugins {
+		_, exist := p.m.Load(plugin.String())
+		if exist {
+			continue
+		}
+
 		wg.Add(1)
 		// Fix closure issue: create local variable copy
 		currentPlugin := plugin
