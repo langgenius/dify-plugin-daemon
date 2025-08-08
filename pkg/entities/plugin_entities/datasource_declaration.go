@@ -2,6 +2,7 @@ package plugin_entities
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
@@ -110,14 +111,27 @@ func (d *DatasourceOutputSchema) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
-	// Only use built-in definitions, ignore any custom definitions
+	// If rawData is empty, just use it as is
+	if len(rawData) == 0 {
+		*d = DatasourceOutputSchema(rawData)
+		return nil
+	}
+
 	// Process the schema with built-in definitions only
+	// ProcessSchema will check internally if processing is needed
 	processedSchema, err := ProcessSchema(rawData, map[string]any{})
 	if err != nil {
 		return err
 	}
 
-	*d = DatasourceOutputSchema(processedSchema.(map[string]any))
+	// Ensure the result is a map
+	if processedMap, ok := processedSchema.(map[string]any); ok {
+		*d = DatasourceOutputSchema(processedMap)
+	} else {
+		// If not a map, return error
+		return fmt.Errorf("processed schema is not a map[string]any")
+	}
+
 	return nil
 }
 
@@ -129,14 +143,27 @@ func (d *DatasourceOutputSchema) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Only use built-in definitions, ignore any custom definitions
+	// If temp is empty, just use it as is
+	if len(temp) == 0 {
+		*d = DatasourceOutputSchema(temp)
+		return nil
+	}
+
 	// Process the schema with built-in definitions only
+	// ProcessSchema will check internally if processing is needed
 	processedSchema, err := ProcessSchema(temp, map[string]any{})
 	if err != nil {
 		return err
 	}
 
-	*d = DatasourceOutputSchema(processedSchema.(map[string]any))
+	// Ensure the result is a map
+	if processedMap, ok := processedSchema.(map[string]any); ok {
+		*d = DatasourceOutputSchema(processedMap)
+	} else {
+		// If not a map, return error
+		return fmt.Errorf("processed schema is not a map[string]any")
+	}
+
 	return nil
 }
 

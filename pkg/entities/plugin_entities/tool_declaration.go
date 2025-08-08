@@ -149,14 +149,27 @@ func (t *ToolOutputSchema) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
-	// Only use built-in definitions, ignore any custom definitions
+	// If rawData is empty, just use it as is
+	if len(rawData) == 0 {
+		*t = ToolOutputSchema(rawData)
+		return nil
+	}
+
 	// Process the schema with built-in definitions only
+	// ProcessSchema will check internally if processing is needed
 	processedSchema, err := ProcessSchema(rawData, map[string]any{})
 	if err != nil {
 		return err
 	}
 
-	*t = ToolOutputSchema(processedSchema.(map[string]any))
+	// Ensure the result is a map
+	if processedMap, ok := processedSchema.(map[string]any); ok {
+		*t = ToolOutputSchema(processedMap)
+	} else {
+		// If not a map, return error
+		return fmt.Errorf("processed schema is not a map[string]any")
+	}
+
 	return nil
 }
 
@@ -168,14 +181,27 @@ func (t *ToolOutputSchema) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Only use built-in definitions, ignore any custom definitions
+	// If temp is empty, just use it as is
+	if len(temp) == 0 {
+		*t = ToolOutputSchema(temp)
+		return nil
+	}
+
 	// Process the schema with built-in definitions only
+	// ProcessSchema will check internally if processing is needed
 	processedSchema, err := ProcessSchema(temp, map[string]any{})
 	if err != nil {
 		return err
 	}
 
-	*t = ToolOutputSchema(processedSchema.(map[string]any))
+	// Ensure the result is a map
+	if processedMap, ok := processedSchema.(map[string]any); ok {
+		*t = ToolOutputSchema(processedMap)
+	} else {
+		// If not a map, return error
+		return fmt.Errorf("processed schema is not a map[string]any")
+	}
+
 	return nil
 }
 

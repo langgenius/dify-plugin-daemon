@@ -104,9 +104,36 @@ func ProcessDatasourceData(data map[string]any) (map[string]any, error) {
 	return ProcessDataWithRefs(data, "output_schema")
 }
 
+// containsRef recursively checks if a data structure contains any $ref fields
+func containsRef(data any) bool {
+	switch v := data.(type) {
+	case map[string]any:
+		for key, value := range v {
+			if key == "$ref" {
+				return true
+			}
+			if containsRef(value) {
+				return true
+			}
+		}
+	case []any:
+		for _, item := range v {
+			if containsRef(item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // ProcessSchema processes a schema by resolving $refs with definitions
 // This function is designed to be used directly by custom unmarshaling methods
 func ProcessSchema(schema any, definitions map[string]any) (any, error) {
+	// If schema doesn't contain any $ref, return it as is
+	if !containsRef(schema) {
+		return schema, nil
+	}
+
 	// Merge builtin definitions with user definitions
 	allDefinitions := make(map[string]any)
 	for k, v := range BuiltinDefinitions {
