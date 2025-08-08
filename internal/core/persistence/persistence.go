@@ -3,6 +3,8 @@ package persistence
 import (
 	"encoding/hex"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -24,7 +26,19 @@ func (c *Persistence) getCacheKey(tenantId string, pluginId string, key string) 
 	return fmt.Sprintf("%s:%s:%s:%s", CACHE_KEY_PREFIX, tenantId, pluginId, key)
 }
 
+func (c *Persistence) checkPathTraversal(key string) error {
+	key = path.Clean(key)
+	if strings.Contains(key, "..") || strings.Contains(key, "//") || strings.Contains(key, "\\") {
+		return fmt.Errorf("invalid key: path traversal attempt detected")
+	}
+	return nil
+}
+
 func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key string, data []byte) error {
+	if err := c.checkPathTraversal(key); err != nil {
+		return err
+	}
+
 	if len(key) > 256 {
 		return fmt.Errorf("key length must be less than 256 characters")
 	}
@@ -77,11 +91,18 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 	}
 
 	// delete from cache
-	return cache.Del(c.getCacheKey(tenantId, pluginId, key))
+	if _, err = cache.Del(c.getCacheKey(tenantId, pluginId, key)); err == cache.ErrNotFound {
+		return nil
+	}
+	return err
 }
 
 // TODO: raises specific error to avoid confusion
 func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte, error) {
+	if err := c.checkPathTraversal(key); err != nil {
+		return nil, err
+	}
+
 	// check if the key exists in cache
 	h, err := cache.GetString(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil && err != cache.ErrNotFound {
@@ -103,22 +124,22 @@ func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte
 	return data, nil
 }
 
-func (c *Persistence) Delete(tenantId string, pluginId string, key string) error {
+func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int64, error) {
 	// delete from cache and storage
-	err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
+	deletedNum, err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// state size
 	size, err := c.storage.StateSize(tenantId, pluginId, key)
 	if err != nil {
-		return nil
+		return 0, err
 	}
 
 	err = c.storage.Delete(tenantId, pluginId, key)
 	if err != nil {
-		return nil
+		return 0, err
 	}
 
 	// update storage size
@@ -129,8 +150,27 @@ func (c *Persistence) Delete(tenantId string, pluginId string, key string) error
 		db.Dec(map[string]int64{"size": size}),
 	)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return deletedNum, nil
+}
+
+func (c *Persistence) Exist(tenantId string, pluginId string, key string) (int64, error) {
+	existNum, err := cache.Exist(c.getCacheKey(tenantId, pluginId, key))
+	if err != nil {
+		return 0, err
+	}
+	if existNum > 0 {
+		return existNum, nil
+	}
+
+	isExist, err := c.storage.Exists(tenantId, pluginId, key)
+	if err != nil {
+		return 0, err
+	}
+	if isExist {
+		return 1, nil
+	}
+	return 0, nil
 }

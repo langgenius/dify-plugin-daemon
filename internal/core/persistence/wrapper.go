@@ -3,7 +3,7 @@ package persistence
 import (
 	"path"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-cloud-kit/oss"
 )
 
 type wrapper struct {
@@ -19,19 +19,23 @@ func NewWrapper(oss oss.OSS, persistenceStoragePath string) *wrapper {
 }
 
 func (s *wrapper) getFilePath(tenant_id string, plugin_checksum string, key string) string {
+	key = path.Clean(key)
 	return path.Join(s.persistenceStoragePath, tenant_id, plugin_checksum, key)
 }
 
 func (s *wrapper) Save(tenant_id string, plugin_checksum string, key string, data []byte) error {
-	// save to s3
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
 	return s.oss.Save(filePath, data)
 }
 
 func (s *wrapper) Load(tenant_id string, plugin_checksum string, key string) ([]byte, error) {
-	// load from s3
 	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
 	return s.oss.Load(filePath)
+}
+
+func (s *wrapper) Exists(tenant_id string, plugin_checksum string, key string) (bool, error) {
+	filePath := s.getFilePath(tenant_id, plugin_checksum, key)
+	return s.oss.Exists(filePath)
 }
 
 func (s *wrapper) Delete(tenant_id string, plugin_checksum string, key string) error {

@@ -11,26 +11,60 @@ type Config struct {
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
+	// admin api enable
+	AdminApiEnabled bool   `envconfig:"ADMIN_API_ENABLED" default:"false"`
+	AdminApiKey     string `envconfig:"ADMIN_API_KEY"`
+
 	// dify inner api
 	DifyInnerApiURL string `envconfig:"DIFY_INNER_API_URL" validate:"required"`
 	DifyInnerApiKey string `envconfig:"DIFY_INNER_API_KEY" validate:"required"`
 
-	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"true"`
+	// storage config
+	// https://github.com/langgenius/dify-cloud-kit/blob/main/oss/factory/factory.go
+	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required"`
+	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
+
+	// aws s3
+	S3UseAwsManagedIam bool   `envconfig:"S3_USE_AWS_MANAGED_IAM" default:"false"`
+	S3UseAWS           bool   `envconfig:"S3_USE_AWS" default:"true"`
 	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
 	S3UsePathStyle     bool   `envconfig:"S3_USE_PATH_STYLE" default:"true"`
 	AWSAccessKey       string `envconfig:"AWS_ACCESS_KEY"`
 	AWSSecretKey       string `envconfig:"AWS_SECRET_KEY"`
 	AWSRegion          string `envconfig:"AWS_REGION"`
 
+	// tencent cos
 	TencentCOSSecretKey string `envconfig:"TENCENT_COS_SECRET_KEY"`
 	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
 	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
 
+	// azure blob
 	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
 	AzureBlobStorageConnectionString string `envconfig:"AZURE_BLOB_STORAGE_CONNECTION_STRING"`
 
-	PluginStorageType      string `envconfig:"PLUGIN_STORAGE_TYPE" validate:"required,oneof=local aws_s3 tencent_cos azure_blob"`
-	PluginStorageOSSBucket string `envconfig:"PLUGIN_STORAGE_OSS_BUCKET"`
+	// aliyun oss
+	AliyunOSSRegion          string `envconfig:"ALIYUN_OSS_REGION"`
+	AliyunOSSEndpoint        string `envconfig:"ALIYUN_OSS_ENDPOINT"`
+	AliyunOSSAccessKeyID     string `envconfig:"ALIYUN_OSS_ACCESS_KEY_ID"`
+	AliyunOSSAccessKeySecret string `envconfig:"ALIYUN_OSS_ACCESS_KEY_SECRET"`
+	AliyunOSSAuthVersion     string `envconfig:"ALIYUN_OSS_AUTH_VERSION" default:"v4"`
+	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
+
+	// google gcs
+	GoogleCloudStorageCredentialsB64 string `envconfig:"GCS_CREDENTIALS"`
+
+	// huawei obs
+	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
+	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
+	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
+
+	// volcengine tos
+	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
+	VolcengineTOSAccessKey string `envconfig:"VOLCENGINE_TOS_ACCESS_KEY"`
+	VolcengineTOSSecretKey string `envconfig:"VOLCENGINE_TOS_SECRET_KEY"`
+	VolcengineTOSRegion    string `envconfig:"VOLCENGINE_TOS_REGION"`
+
+	// local
 	PluginStorageLocalRoot string `envconfig:"PLUGIN_STORAGE_LOCAL_ROOT"`
 
 	// plugin remote installing
@@ -64,11 +98,20 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	// redis
-	RedisHost   string `envconfig:"REDIS_HOST" validate:"required"`
-	RedisPort   uint16 `envconfig:"REDIS_PORT" validate:"required"`
+	RedisHost   string `envconfig:"REDIS_HOST"`
+	RedisPort   uint16 `envconfig:"REDIS_PORT"`
 	RedisPass   string `envconfig:"REDIS_PASSWORD"`
+	RedisUser   string `envconfig:"REDIS_USERNAME"`
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
 	RedisDB     int    `envconfig:"REDIS_DB"`
+
+	// redis sentinel
+	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
+	RedisSentinels             string  `envconfig:"REDIS_SENTINELS"`
+	RedisSentinelServiceName   string  `envconfig:"REDIS_SENTINEL_SERVICE_NAME"`
+	RedisSentinelUsername      string  `envconfig:"REDIS_SENTINEL_USERNAME"`
+	RedisSentinelPassword      string  `envconfig:"REDIS_SENTINEL_PASSWORD"`
+	RedisSentinelSocketTimeout float64 `envconfig:"REDIS_SENTINEL_SOCKET_TIMEOUT"`
 
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
@@ -79,6 +122,13 @@ type Config struct {
 	DBDatabase        string `envconfig:"DB_DATABASE" validate:"required"`
 	DBDefaultDatabase string `envconfig:"DB_DEFAULT_DATABASE" validate:"required"`
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
+
+	// database connection pool settings
+	DBMaxIdleConns    int    `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
+	DBMaxOpenConns    int    `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
+	DBConnMaxLifetime int    `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
+	DBExtras          string `envconfig:"DB_EXTRAS"`
+	DBCharset         string `envconfig:"DB_CHARSET"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`
@@ -99,20 +149,25 @@ type Config struct {
 
 	DifyInvocationConnectionIdleTimeout int `envconfig:"DIFY_INVOCATION_CONNECTION_IDLE_TIMEOUT" validate:"required"`
 
-	DifyPluginServerlessConnectorURL    *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL"`
-	DifyPluginServerlessConnectorAPIKey *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
+	DifyPluginServerlessConnectorURL           *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL"`
+	DifyPluginServerlessConnectorAPIKey        *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
+	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
+	UvPath                    string `envconfig:"UV_PATH"  default:""`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
 	PipPreferBinary           *bool  `envconfig:"PIP_PREFER_BINARY"`
 	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
+
+	PluginStdioBufferSize    int `envconfig:"PLUGIN_STDIO_BUFFER_SIZE" default:"1024"`
+	PluginStdioMaxBufferSize int `envconfig:"PLUGIN_STDIO_MAX_BUFFER_SIZE" default:"5242880"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
@@ -128,9 +183,15 @@ type Config struct {
 	// proxy settings
 	HttpProxy  string `envconfig:"HTTP_PROXY"`
 	HttpsProxy string `envconfig:"HTTPS_PROXY"`
+	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
 	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`
+
+	// dify invocation write timeout in milliseconds
+	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
+	// dify invocation read timeout in milliseconds
+	DifyInvocationReadTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_READ_TIMEOUT" default:"240000"`
 }
 
 func (c *Config) Validate() error {
@@ -177,26 +238,6 @@ func (c *Config) Validate() error {
 
 	if c.PluginPackageCachePath == "" {
 		return fmt.Errorf("plugin package cache path is empty")
-	}
-
-	if c.PluginStorageType == "aws_s3" {
-		if c.PluginStorageOSSBucket == "" {
-			return fmt.Errorf("plugin storage bucket is empty")
-		}
-
-		if c.AWSRegion == "" {
-			return fmt.Errorf("aws region is empty")
-		}
-	}
-
-	if c.PluginStorageType == "azure_blob" {
-		if c.AzureBlobStorageConnectionString == "" {
-			return fmt.Errorf("azure blob storage connection string is empty")
-		}
-
-		if c.AzureBlobStorageContainerName == "" {
-			return fmt.Errorf("azure blob storage container name is empty")
-		}
 	}
 
 	return nil

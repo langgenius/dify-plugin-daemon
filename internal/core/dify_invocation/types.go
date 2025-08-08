@@ -18,6 +18,7 @@ type InvokeType string
 
 const (
 	INVOKE_TYPE_LLM                      InvokeType = "llm"
+	INVOKE_TYPE_LLM_STRUCTURED_OUTPUT    InvokeType = "llm_structured_output"
 	INVOKE_TYPE_TEXT_EMBEDDING           InvokeType = "text_embedding"
 	INVOKE_TYPE_RERANK                   InvokeType = "rerank"
 	INVOKE_TYPE_TTS                      InvokeType = "tts"
@@ -31,6 +32,7 @@ const (
 	INVOKE_TYPE_ENCRYPT                  InvokeType = "encrypt"
 	INVOKE_TYPE_SYSTEM_SUMMARY           InvokeType = "system_summary"
 	INVOKE_TYPE_UPLOAD_FILE              InvokeType = "upload_file"
+	INVOKE_TYPE_FETCH_APP                InvokeType = "fetch_app"
 )
 
 type InvokeLLMSchema struct {
@@ -48,6 +50,15 @@ type InvokeLLMRequest struct {
 	// requests.InvokeLLMSchema,
 	// TODO: as completion_params in requests.InvokeLLMSchema is "model_parameters", we declare another one here
 	InvokeLLMSchema
+}
+
+type InvokeLLMWithStructuredOutputRequest struct {
+	BaseInvokeDifyRequest
+	requests.BaseRequestInvokeModel
+	// requests.InvokeLLMSchema
+	// TODO: as completion_params in requests.InvokeLLMSchema is "model_parameters", we declare another one here
+	InvokeLLMSchema
+	StructuredOutputSchema map[string]any `json:"structured_output_schema" validate:"required"`
 }
 
 type InvokeTextEmbeddingRequest struct {
@@ -96,14 +107,15 @@ type InvokeAppSchema struct {
 type StorageOpt string
 
 const (
-	STORAGE_OPT_GET StorageOpt = "get"
-	STORAGE_OPT_SET StorageOpt = "set"
-	STORAGE_OPT_DEL StorageOpt = "del"
+	STORAGE_OPT_GET   StorageOpt = "get"
+	STORAGE_OPT_SET   StorageOpt = "set"
+	STORAGE_OPT_DEL   StorageOpt = "del"
+	STORAGE_OPT_EXIST StorageOpt = "exist"
 )
 
 func isStorageOpt(fl validator.FieldLevel) bool {
 	opt := StorageOpt(fl.Field().String())
-	return opt == STORAGE_OPT_GET || opt == STORAGE_OPT_SET || opt == STORAGE_OPT_DEL
+	return opt == STORAGE_OPT_GET || opt == STORAGE_OPT_SET || opt == STORAGE_OPT_DEL || opt == STORAGE_OPT_EXIST
 }
 
 func init() {
@@ -218,7 +230,9 @@ func (r *InvokeEncryptRequest) EncryptRequired(settings map[string]any) bool {
 
 type InvokeToolRequest struct {
 	BaseInvokeDifyRequest
-	ToolType requests.ToolType `json:"tool_type" validate:"required,tool_type"`
+	ToolType       requests.ToolType `json:"tool_type" validate:"required,tool_type"`
+	CredentialId   string            `json:"credential_id" validate:"omitempty"`
+	CredentialType string            `json:"credential_type" validate:"omitempty"`
 	requests.InvokeToolSchema
 }
 
@@ -255,4 +269,9 @@ type UploadFileRequest struct {
 
 type UploadFileResponse struct {
 	URL string `json:"url"`
+}
+
+type FetchAppRequest struct {
+	BaseInvokeDifyRequest
+	AppId string `json:"app_id" validate:"required"`
 }

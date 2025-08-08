@@ -33,11 +33,6 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("tool_identity_name", isToolIdentityName)
 }
 
-type ToolParameterOption struct {
-	Value string     `json:"value" yaml:"value" validate:"required"`
-	Label I18nObject `json:"label" yaml:"label" validate:"required"`
-}
-
 type ToolParameterType string
 
 const (
@@ -51,6 +46,8 @@ const (
 	TOOL_PARAMETER_TYPE_APP_SELECTOR   ToolParameterType = APP_SELECTOR
 	TOOL_PARAMETER_TYPE_MODEL_SELECTOR ToolParameterType = MODEL_SELECTOR
 	// TOOL_PARAMETER_TYPE_TOOL_SELECTOR  ToolParameterType = TOOL_SELECTOR
+	TOOL_PARAMETER_TYPE_ANY            ToolParameterType = ANY
+	TOOL_PARAMETER_TYPE_DYNAMIC_SELECT ToolParameterType = DYNAMIC_SELECT
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -65,7 +62,9 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_FILES),
 		// string(TOOL_PARAMETER_TYPE_TOOL_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_APP_SELECTOR),
-		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR):
+		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR),
+		string(TOOL_PARAMETER_TYPE_ANY),
+		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT):
 		return true
 	}
 	return false
@@ -132,7 +131,7 @@ type ToolParameter struct {
 	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
 	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
 	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options          []ToolParameterOption  `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type ToolDescription struct {
@@ -203,6 +202,7 @@ type ToolProviderIdentity struct {
 	Name        string                        `json:"name" validate:"required,tool_provider_identity_name"`
 	Description I18nObject                    `json:"description"`
 	Icon        string                        `json:"icon" validate:"required"`
+	IconDark    string                        `json:"icon_dark" validate:"omitempty"`
 	Label       I18nObject                    `json:"label" validate:"required"`
 	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
 }
@@ -221,6 +221,7 @@ func init() {
 type ToolProviderDeclaration struct {
 	Identity          ToolProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
 	CredentialsSchema []ProviderConfig     `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
+	OAuthSchema       *OAuthSchema         `json:"oauth_schema" yaml:"oauth_schema" validate:"omitempty"`
 	Tools             []ToolDeclaration    `json:"tools" yaml:"tools" validate:"required,dive"`
 	ToolFiles         []string             `json:"-" yaml:"-"`
 }
@@ -243,6 +244,7 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		CredentialsSchema      yaml.Node            `yaml:"credentials_schema"`
 		CredentialsForProvider yaml.Node            `yaml:"credentials_for_provider"`
 		Tools                  yaml.Node            `yaml:"tools"`
+		OAuthSchema            *OAuthSchema         `yaml:"oauth_schema"`
 	}
 
 	var temp alias
@@ -260,6 +262,9 @@ func (t *ToolProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 
 	// apply identity
 	t.Identity = temp.Identity
+
+	// apply oauth_schema
+	t.OAuthSchema = temp.OAuthSchema
 
 	// check if credentials_schema is a map
 	if temp.CredentialsSchema.Kind != yaml.MappingNode {

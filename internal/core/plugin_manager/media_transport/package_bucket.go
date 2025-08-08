@@ -3,7 +3,7 @@ package media_transport
 import (
 	"path"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/oss"
+	"github.com/langgenius/dify-cloud-kit/oss"
 )
 
 type PackageBucket struct {

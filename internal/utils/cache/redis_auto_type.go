@@ -65,9 +65,9 @@ func AutoGetWithGetter[T any](key string, getter func() (*T, error), context ...
 }
 
 // Delete the value with key
-func AutoDelete[T any](key string, context ...redis.Cmdable) error {
+func AutoDelete[T any](key string, context ...redis.Cmdable) (int64, error) {
 	if client == nil {
-		return ErrDBNotInit
+		return 0, ErrDBNotInit
 	}
 
 	var result_tmpl T

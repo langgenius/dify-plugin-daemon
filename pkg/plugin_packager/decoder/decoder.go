@@ -40,6 +40,13 @@ type PluginDecoder interface {
 	// Signature returns the signature of the plugin, if available
 	Signature() (string, error)
 
+	// Verified returns true if the plugin is verified
+	Verified() bool
+
+	// Verification returns the verification of the plugin, if available
+	// Error will only returns if the plugin is not verified
+	Verification() (*Verification, error)
+
 	// CreateTime returns the creation time of the plugin as a Unix timestamp
 	CreateTime() (int64, error)
 
@@ -57,4 +64,8 @@ type PluginDecoder interface {
 
 	// Check Assets valid
 	CheckAssetsValid() error
+
+	// AvailableI18nReadme returns a map of available readme i18n, the key is the language, the value is the readme.
+	// The language code is in the format of IETF BCP 47 language tag
+	AvailableI18nReadme() (map[string]string, error)
 }

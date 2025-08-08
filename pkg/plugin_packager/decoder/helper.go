@@ -3,7 +3,9 @@ package decoder
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
@@ -13,6 +15,8 @@ import (
 type PluginDecoderHelper struct {
 	pluginDeclaration *plugin_entities.PluginDeclaration
 	checksum          string
+
+	verifiedFlag *bool // used to store the verified flag, avoid calling verified function multiple times
 }
 
 func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.PluginDeclaration, error) {
@@ -271,28 +275,13 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 
 	dec.FillInDefaultValues()
 
-	// verify signature
-	// for ZipPluginDecoder, use the third party signature verification if it is enabled
-	if zipDecoder, ok := decoder.(*ZipPluginDecoder); ok {
-		config := zipDecoder.thirdPartySignatureVerificationConfig
-		if config != nil && config.Enabled && len(config.PublicKeyPaths) > 0 {
-			dec.Verified = VerifyPluginWithPublicKeyPaths(decoder, config.PublicKeyPaths) == nil
-		} else {
-			dec.Verified = VerifyPlugin(decoder) == nil
-		}
-	} else {
-		dec.Verified = VerifyPlugin(decoder) == nil
-	}
-
-	if err := dec.ManifestValidate(); err != nil {
-		return plugin_entities.PluginDeclaration{}, err
-	}
+	dec.Verified = p.verified(decoder)
 
 	p.pluginDeclaration = &dec
 	return dec, nil
 }
 
-func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, error) {
+func (p *PluginDecoderHelper) Assets(decoder PluginDecoder, separator string) (map[string][]byte, error) {
 	files, err := decoder.ReadDir("_assets")
 	if err != nil {
 		return nil, err
@@ -305,7 +294,7 @@ func (p *PluginDecoderHelper) Assets(decoder PluginDecoder) (map[string][]byte, 
 			return nil, err
 		}
 		// trim _assets
-		file, _ = strings.CutPrefix(file, "_assets"+string(filepath.Separator))
+		file, _ = strings.CutPrefix(file, "_assets"+separator)
 		assets[file] = content
 	}
 
@@ -421,5 +410,79 @@ func (p *PluginDecoderHelper) CheckAssetsValid(decoder PluginDecoder) error {
 		}
 	}
 
+	if declaration.IconDark != "" {
+		if _, ok := assets[declaration.IconDark]; !ok {
+			return errors.Join(err, fmt.Errorf("plugin dark icon not found"))
+		}
+	}
+
 	return nil
+}
+
+func (p *PluginDecoderHelper) verified(decoder PluginDecoder) bool {
+	if p.verifiedFlag != nil {
+		return *p.verifiedFlag
+	}
+
+	// verify signature
+	// for ZipPluginDecoder, use the third party signature verification if it is enabled
+	if zipDecoder, ok := decoder.(*ZipPluginDecoder); ok {
+		config := zipDecoder.thirdPartySignatureVerificationConfig
+		if config != nil && config.Enabled && len(config.PublicKeyPaths) > 0 {
+			verified := VerifyPluginWithPublicKeyPaths(decoder, config.PublicKeyPaths) == nil
+			p.verifiedFlag = &verified
+			return verified
+		} else {
+			verified := VerifyPlugin(decoder) == nil
+			p.verifiedFlag = &verified
+			return verified
+		}
+	} else {
+		verified := VerifyPlugin(decoder) == nil
+		p.verifiedFlag = &verified
+		return verified
+	}
+}
+
+var (
+	readmeRegexp = regexp.MustCompile(`^README_([a-z]{2}_[A-Za-z]{2,})\.md$`)
+)
+
+// Only the en_US readme should be at the root as README.md;
+// all other readmes should be placed in the readme folder and named in the format README_$language_code.md.
+// The separator is the separator of the file path, it's "/" for zip plugin and os.Separator for fs plugin.
+func (p *PluginDecoderHelper) AvailableI18nReadme(decoder PluginDecoder, separator string) (map[string]string, error) {
+	readmes := make(map[string]string)
+	// read the en_US readme
+	enUSReadme, err := decoder.ReadFile("README.md")
+	if err != nil {
+		// this file must exist or it's not a valid plugin
+		return nil, errors.Join(err, fmt.Errorf("en_US readme not found"))
+	}
+	readmes["en_US"] = string(enUSReadme)
+
+	readmeFiles, err := decoder.ReadDir("readme")
+	if errors.Is(err, os.ErrNotExist) {
+		return readmes, nil
+	} else if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("an unexpected error occurred while reading readme folder"))
+	}
+
+	for _, file := range readmeFiles {
+		// trim the readme folder prefix
+		file, _ = strings.CutPrefix(file, "readme"+separator)
+		// using regexp to match the file name
+		match := readmeRegexp.FindStringSubmatch(file)
+		if len(match) == 0 {
+			continue
+		}
+		language := match[1]
+		readme, err := decoder.ReadFile(filepath.Join("readme", file))
+		if err != nil {
+			return nil, errors.Join(err, fmt.Errorf("failed to read readme file: %s", file))
+		}
+		readmes[language] = string(readme)
+	}
+
+	return readmes, nil
 }

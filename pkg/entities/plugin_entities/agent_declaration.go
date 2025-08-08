@@ -30,6 +30,7 @@ const (
 	AGENT_STRATEGY_PARAMETER_TYPE_APP_SELECTOR   AgentStrategyParameterType = APP_SELECTOR
 	AGENT_STRATEGY_PARAMETER_TYPE_MODEL_SELECTOR AgentStrategyParameterType = MODEL_SELECTOR
 	AGENT_STRATEGY_PARAMETER_TYPE_TOOLS_SELECTOR AgentStrategyParameterType = TOOLS_SELECTOR
+	AGENT_STRATEGY_PARAMETER_TYPE_ANY            AgentStrategyParameterType = ANY
 )
 
 func isAgentStrategyParameterType(fl validator.FieldLevel) bool {
@@ -45,7 +46,8 @@ func isAgentStrategyParameterType(fl validator.FieldLevel) bool {
 		// string(TOOL_PARAMETER_TYPE_TOOL_SELECTOR),
 		string(AGENT_STRATEGY_PARAMETER_TYPE_APP_SELECTOR),
 		string(AGENT_STRATEGY_PARAMETER_TYPE_MODEL_SELECTOR),
-		string(AGENT_STRATEGY_PARAMETER_TYPE_TOOLS_SELECTOR):
+		string(AGENT_STRATEGY_PARAMETER_TYPE_TOOLS_SELECTOR),
+		string(AGENT_STRATEGY_PARAMETER_TYPE_ANY):
 		return true
 	}
 	return false
@@ -58,6 +60,7 @@ func init() {
 type AgentStrategyParameter struct {
 	Name         string                     `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
 	Label        I18nObject                 `json:"label" yaml:"label" validate:"required"`
+	Help         I18nObject                 `json:"help" yaml:"help" validate:"omitempty"`
 	Type         AgentStrategyParameterType `json:"type" yaml:"type" validate:"required,agent_strategy_parameter_type"`
 	AutoGenerate *ParameterAutoGenerate     `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
 	Template     *ParameterTemplate         `json:"template" yaml:"template" validate:"omitempty"`
@@ -67,7 +70,7 @@ type AgentStrategyParameter struct {
 	Min          *float64                   `json:"min" yaml:"min" validate:"omitempty"`
 	Max          *float64                   `json:"max" yaml:"max" validate:"omitempty"`
 	Precision    *int                       `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options      []ToolParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Options      []ParameterOption          `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
 
 type AgentStrategyOutputSchema map[string]any

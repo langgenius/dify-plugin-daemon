@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-git/go-git/plumbing/format/gitignore"
+	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -169,12 +169,17 @@ func (d *FSPluginDecoder) CreateTime() (int64, error) {
 	return 0, nil
 }
 
+func (d *FSPluginDecoder) Verification() (*Verification, error) {
+	return nil, nil
+}
+
 func (d *FSPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
 	return d.PluginDecoderHelper.Manifest(d)
 }
 
 func (d *FSPluginDecoder) Assets() (map[string][]byte, error) {
-	return d.PluginDecoderHelper.Assets(d)
+	// use filepath.Separator as the separator to make it os-independent
+	return d.PluginDecoderHelper.Assets(d, string(filepath.Separator))
 }
 
 func (d *FSPluginDecoder) Checksum() (string, error) {
@@ -187,4 +192,12 @@ func (d *FSPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentifi
 
 func (d *FSPluginDecoder) CheckAssetsValid() error {
 	return d.PluginDecoderHelper.CheckAssetsValid(d)
+}
+
+func (d *FSPluginDecoder) Verified() bool {
+	return d.PluginDecoderHelper.verified(d)
+}
+
+func (d *FSPluginDecoder) AvailableI18nReadme() (map[string]string, error) {
+	return d.PluginDecoderHelper.AvailableI18nReadme(d, string(filepath.Separator))
 }

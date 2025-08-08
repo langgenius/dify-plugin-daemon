@@ -169,3 +169,8 @@ cython_debug/
 
 # Vscode
 .vscode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

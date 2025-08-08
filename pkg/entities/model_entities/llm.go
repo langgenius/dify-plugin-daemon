@@ -105,7 +105,7 @@ type PromptMessageContent struct {
 	EncodeFormat string                   `json:"encode_format"`
 	Format       string                   `json:"format"`
 	MimeType     string                   `json:"mime_type"`
-	Detail       string                   `json:"detail"`      // for multi-modal data
+	Detail       string                   `json:"detail"` // for multi-modal data
 }
 
 type PromptMessageToolCall struct {
@@ -184,9 +184,40 @@ type PromptMessageTool struct {
 
 type LLMResultChunk struct {
 	Model             LLMModel            `json:"model" validate:"required"`
-	PromptMessages    []PromptMessage     `json:"prompt_messages" validate:"required,dive"`
 	SystemFingerprint string              `json:"system_fingerprint" validate:"omitempty"`
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
+}
+
+type LLMStructuredOutput struct {
+	StructuredOutput map[string]any `json:"structured_output" validate:"omitempty"`
+}
+
+type LLMResultChunkWithStructuredOutput struct {
+	// You might argue that why not embed LLMResultChunk directly?
+	// `LLMResultChunk` has implemented interface `MarshalJSON`, due to Golang's type embedding,
+	// it also effectively implements the `MarshalJSON` method of `LLMResultChunkWithStructuredOutput`,
+	// resulting in a unexpected JSON marshaling of `LLMResultChunkWithStructuredOutput`
+	Model             LLMModel            `json:"model" validate:"required"`
+	SystemFingerprint string              `json:"system_fingerprint" validate:"omitempty"`
+	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
+
+	LLMStructuredOutput
+}
+
+/*
+This is a compatibility layer for the old LLMResultChunk format.
+The old one has the `PromptMessages` field, we need to ensure the new one is backward compatible.
+*/
+func (l LLMResultChunk) MarshalJSON() ([]byte, error) {
+	type Alias LLMResultChunk
+	type LLMResultChunk struct {
+		Alias
+		PromptMessages []any `json:"prompt_messages"`
+	}
+	return json.Marshal(LLMResultChunk{
+		Alias:          (Alias)(l),
+		PromptMessages: []any{},
+	})
 }
 
 type LLMUsage struct {

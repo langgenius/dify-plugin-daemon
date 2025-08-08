@@ -16,10 +16,6 @@ import (
 
 // gc performs garbage collection for the LocalPluginRuntime
 func (r *LocalPluginRuntime) gc() {
-	if r.ioIdentity != "" {
-		removeStdioHandler(r.ioIdentity)
-	}
-
 	if r.waitChan != nil {
 		close(r.waitChan)
 		r.waitChan = nil
@@ -42,6 +38,9 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 		}
 		if r.HttpProxy != "" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.HttpProxy))
+		}
+		if r.NoProxy != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", r.NoProxy))
 		}
 		return cmd, nil
 	}
@@ -109,7 +108,12 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		return fmt.Errorf("start plugin failed: %s", err.Error())
 	}
 
-	var stdio *stdioHolder
+	// setup stdio
+	r.stdioHolder = newStdioHolder(r.Config.Identity(), stdin, stdout, stderr, &StdioHolderConfig{
+		StdoutBufferSize:    r.stdoutBufferSize,
+		StdoutMaxBufferSize: r.stdoutMaxBufferSize,
+	})
+	defer r.stdioHolder.Stop()
 
 	defer func() {
 		// wait for plugin to exit
@@ -117,8 +121,8 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		if originalErr != nil {
 			// get stdio
 			var err error
-			if stdio != nil {
-				stdioErr := stdio.Error()
+			if r.stdioHolder != nil {
+				stdioErr := r.stdioHolder.Error()
 				if stdioErr != nil {
 					err = errors.Join(originalErr, stdioErr)
 				} else {
@@ -142,11 +146,6 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	log.Info("plugin %s started", r.Config.Identity())
 
-	// setup stdio
-	stdio = registerStdioHandler(r.Config.Identity(), stdin, stdout, stderr)
-	r.ioIdentity = stdio.GetID()
-	defer stdio.Stop()
-
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -157,7 +156,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		"function": "StartStdout",
 	}, func() {
 		defer wg.Done()
-		stdio.StartStdout(func() {})
+		r.stdioHolder.StartStdout(func() {})
 	})
 
 	// listen to plugin stderr
@@ -167,7 +166,7 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		"function": "StartStderr",
 	}, func() {
 		defer wg.Done()
-		stdio.StartStderr()
+		r.stdioHolder.StartStderr()
 	})
 
 	// send started event
@@ -181,9 +180,9 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 	r.waitChanLock.Unlock()
 
 	// wait for plugin to exit
-	err = stdio.Wait()
+	err = r.stdioHolder.Wait()
 	if err != nil {
-		return errors.Join(err, stdio.Error())
+		return errors.Join(err, r.stdioHolder.Error())
 	}
 	wg.Wait()
 
@@ -223,8 +222,7 @@ func (r *LocalPluginRuntime) Stop() {
 	r.PluginRuntime.Stop()
 
 	// get stdio
-	stdio := getStdioHandler(r.ioIdentity)
-	if stdio != nil {
-		stdio.Stop()
+	if r.stdioHolder != nil {
+		r.stdioHolder.Stop()
 	}
 }

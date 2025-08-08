@@ -27,12 +27,24 @@ func (app *App) server(config *app.Config) func() {
 		}))
 	}
 	engine.Use(gin.Recovery())
+	engine.Use(controllers.CollectActiveRequests())
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
 	awsLambdaTransactionGroup := engine.Group("/backwards-invocation")
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
+
+	if config.AdminApiEnabled {
+		if len(config.AdminApiKey) < 10 {
+			log.Panic("length of admin api key must be greater than 10")
+		}
+
+		adminGroup := engine.Group("/admin")
+		adminGroup.Use(app.AdminAPIKey(config.AdminApiKey))
+
+		app.adminGroup(adminGroup, config)
+	}
 
 	if config.SentryEnabled {
 		// setup sentry for all groups
@@ -82,26 +94,15 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(controllers.CollectActiveDispatchRequests())
 	group.Use(app.FetchPluginInstallation())
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 
 	group.POST("/tool/invoke", controllers.InvokeTool(config))
-	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials(config))
-	group.POST("/tool/get_runtime_parameters", controllers.GetToolRuntimeParameters(config))
 	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
-	group.POST("/llm/invoke", controllers.InvokeLLM(config))
-	group.POST("/llm/num_tokens", controllers.GetLLMNumTokens(config))
-	group.POST("/text_embedding/invoke", controllers.InvokeTextEmbedding(config))
-	group.POST("/text_embedding/num_tokens", controllers.GetTextEmbeddingNumTokens(config))
-	group.POST("/rerank/invoke", controllers.InvokeRerank(config))
-	group.POST("/tts/invoke", controllers.InvokeTTS(config))
-	group.POST("/tts/model/voices", controllers.GetTTSModelVoices(config))
-	group.POST("/speech2text/invoke", controllers.InvokeSpeech2Text(config))
-	group.POST("/moderation/invoke", controllers.InvokeModeration(config))
-	group.POST("/model/validate_provider_credentials", controllers.ValidateProviderCredentials(config))
-	group.POST("/model/validate_model_credentials", controllers.ValidateModelCredentials(config))
-	group.POST("/model/schema", controllers.GetAIModelSchema(config))
+
+	app.setupGeneratedRoutes(group, config)
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
@@ -153,6 +154,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/install/tasks/:id/delete", controllers.DeletePluginInstallationTask)
 	group.POST("/install/tasks/:id/delete/*identifier", controllers.DeletePluginInstallationItemFromTask)
 	group.GET("/install/tasks", controllers.FetchPluginInstallationTasks)
+	group.GET("/decode/from_identifier", controllers.DecodePluginFromIdentifier(config))
 	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
 	group.POST("/uninstall", controllers.UninstallPlugin)
@@ -165,6 +167,10 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
+}
+
+func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
+	group.POST("/plugin/serverless/reinstall", controllers.ReinstallPluginFromIdentifier(config))
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {

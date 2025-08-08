@@ -9,10 +9,17 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 )
 
-func NewDifyInvocationDaemon(base string, calling_key string) (dify_invocation.BackwardsInvocation, error) {
+type NewDifyInvocationDaemonPayload struct {
+	BaseUrl      string
+	CallingKey   string
+	WriteTimeout int64
+	ReadTimeout  int64
+}
+
+func NewDifyInvocationDaemon(payload NewDifyInvocationDaemonPayload) (dify_invocation.BackwardsInvocation, error) {
 	var err error
 	invocation := &RealBackwardsInvocation{}
-	baseurl, err := url.Parse(base)
+	baseurl, err := url.Parse(payload.BaseUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +36,9 @@ func NewDifyInvocationDaemon(base string, calling_key string) (dify_invocation.B
 
 	invocation.difyInnerApiBaseurl = baseurl
 	invocation.client = client
-	invocation.difyInnerApiKey = calling_key
+	invocation.difyInnerApiKey = payload.CallingKey
+	invocation.writeTimeout = payload.WriteTimeout
+	invocation.readTimeout = payload.ReadTimeout
 
 	return invocation, nil
 }

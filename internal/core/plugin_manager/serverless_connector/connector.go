@@ -108,6 +108,7 @@ func SetupFunction(
 	manifest plugin_entities.PluginDeclaration,
 	checksum string,
 	context io.Reader,
+	timeout int, // in seconds
 ) (*stream.Stream[LaunchFunctionResponse], error) {
 	url, err := url.JoinPath(baseurl.String(), "/v1/launch")
 	if err != nil {
@@ -121,8 +122,8 @@ func SetupFunction(
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
-		http_requests.HttpReadTimeout(240000),
-		http_requests.HttpWriteTimeout(240000),
+		http_requests.HttpReadTimeout(int64(timeout)*1000),
+		http_requests.HttpWriteTimeout(int64(timeout)*1000),
 		http_requests.HttpPayloadMultipart(
 			map[string]string{
 				"verified": func() string {

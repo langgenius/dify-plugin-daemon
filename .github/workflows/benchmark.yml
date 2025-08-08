@@ -1,0 +1,50 @@
+name: Benchmark
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: benchmark-${{ github.event_name == 'pull_request' && github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      # setup uv and get uv path to env
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "UV_PATH=$(which uv)" >> $GITHUB_ENV
+      
+      - name: Setup License
+        run: go run cmd/license/generate/main.go
+
+      - name: Run benchmark
+        env:
+          UV_PATH: ${{ env.UV_PATH }}
+        run: |
+          go test -run=^$ -bench=. -benchmem -benchtime=30s ./... > result.txt
+
+      - name: Remove License
+        run: git stash
+
+      - name: Store benchmark result
+        uses: rhysd/github-action-benchmark@v1
+        with:
+          name: Go Benchmark
+          tool: "go"
+          output-file-path: result.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          benchmark-data-dir-path: "benchmark-data"
+          auto-push: true

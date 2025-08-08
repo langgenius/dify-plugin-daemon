@@ -173,7 +173,9 @@ func TestPackagerAndVerifier(t *testing.T) {
 	}
 
 	// sign
-	signed, err := signer.SignPlugin(zip)
+	signed, err := signer.SignPlugin(zip, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	})
 	if err != nil {
 		t.Errorf("failed to sign: %s", err.Error())
 		return
@@ -213,7 +215,9 @@ func TestWrongSign(t *testing.T) {
 	}
 
 	// sign
-	signed, err := signer.SignPlugin(zip)
+	signed, err := signer.SignPlugin(zip, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	})
 	if err != nil {
 		t.Errorf("failed to sign: %s", err.Error())
 		return
@@ -293,7 +297,9 @@ func TestSignPluginWithPrivateKey(t *testing.T) {
 	}
 
 	// sign with private key 1 and create decoder
-	signed1, err := withkey.SignPluginWithPrivateKey(zip, privateKey1)
+	signed1, err := withkey.SignPluginWithPrivateKey(zip, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	}, privateKey1)
 	if err != nil {
 		t.Errorf("failed to sign with private key 1: %s", err.Error())
 		return
@@ -305,7 +311,9 @@ func TestSignPluginWithPrivateKey(t *testing.T) {
 	}
 
 	// sign with private key 2 and create decoder
-	signed2, err := withkey.SignPluginWithPrivateKey(zip, privateKey2)
+	signed2, err := withkey.SignPluginWithPrivateKey(zip, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	}, privateKey2)
 	if err != nil {
 		t.Errorf("failed to sign with private key 2: %s", err.Error())
 		return
@@ -416,7 +424,9 @@ func TestVerifyPluginWithThirdPartyKeys(t *testing.T) {
 	}
 
 	// sign with private key 1 and create decoder
-	signed1, err := withkey.SignPluginWithPrivateKey(zip, privateKey1)
+	signed1, err := withkey.SignPluginWithPrivateKey(zip, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	}, privateKey1)
 	if err != nil {
 		t.Errorf("failed to sign with private key 1: %s", err.Error())
 		return
@@ -428,7 +438,9 @@ func TestVerifyPluginWithThirdPartyKeys(t *testing.T) {
 	}
 
 	// sign with private key 2 and create decoder
-	signed2, err := withkey.SignPluginWithPrivateKey(zip, privateKey2)
+	signed2, err := withkey.SignPluginWithPrivateKey(zip, &decoder.Verification{
+		AuthorizedCategory: decoder.AUTHORIZED_CATEGORY_LANGGENIUS,
+	}, privateKey2)
 	if err != nil {
 		t.Errorf("failed to sign with private key 2: %s", err.Error())
 		return

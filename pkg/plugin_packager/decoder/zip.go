@@ -15,6 +15,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
 )
 
 type ZipPluginDecoder struct {
@@ -24,26 +25,30 @@ type ZipPluginDecoder struct {
 	reader *zip.Reader
 	err    error
 
-	sig        string
-	createTime int64
+	sig          string
+	createTime   int64
+	verification *Verification
 
 	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig
 }
 
 type ThirdPartySignatureVerificationConfig struct {
-    Enabled bool
-    PublicKeyPaths []string
+	Enabled        bool
+	PublicKeyPaths []string
 }
 
-func newZipPluginDecoder(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
+func newZipPluginDecoder(
+	binary []byte,
+	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig,
+) (*ZipPluginDecoder, error) {
 	reader, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary)))
 	if err != nil {
 		return nil, errors.New(strings.ReplaceAll(err.Error(), "zip", "difypkg"))
 	}
 
 	decoder := &ZipPluginDecoder{
-		reader: reader,
-		err:    err,
+		reader:                                reader,
+		err:                                   err,
 		thirdPartySignatureVerificationConfig: thirdPartySignatureVerificationConfig,
 	}
 
@@ -66,7 +71,10 @@ func NewZipPluginDecoder(binary []byte) (*ZipPluginDecoder, error) {
 
 // NewZipPluginDecoderWithThirdPartySignatureVerificationConfig is a helper function
 // to create a ZipPluginDecoder with a third party signature verification
-func NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(binary []byte, thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig) (*ZipPluginDecoder, error) {
+func NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
+	binary []byte,
+	thirdPartySignatureVerificationConfig *ThirdPartySignatureVerificationConfig,
+) (*ZipPluginDecoder, error) {
 	return newZipPluginDecoder(binary, thirdPartySignatureVerificationConfig)
 }
 
@@ -180,6 +188,7 @@ func (z *ZipPluginDecoder) decode() error {
 		Signature string `json:"signature"`
 		Time      int64  `json:"time"`
 	}](z.reader.Comment)
+
 	if err != nil {
 		return err
 	}
@@ -187,8 +196,30 @@ func (z *ZipPluginDecoder) decode() error {
 	pluginSig := signatureData.Signature
 	pluginTime := signatureData.Time
 
+	var verification *Verification
+
+	// try to read the verification file
+	verificationData, err := z.ReadFile(consts.VERIFICATION_FILE)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
+		// if the verification file is not found, set the verification to nil
+		verification = nil
+	} else {
+		// unmarshal the verification data
+		verificationData, err := parser.UnmarshalJsonBytes[Verification](verificationData)
+		if err != nil {
+			return err
+		}
+
+		verification = &verificationData
+	}
+
 	z.sig = pluginSig
 	z.createTime = pluginTime
+	z.verification = verification
 
 	return nil
 }
@@ -227,12 +258,33 @@ func (z *ZipPluginDecoder) CreateTime() (int64, error) {
 	return z.createTime, nil
 }
 
+func (z *ZipPluginDecoder) Verification() (*Verification, error) {
+	if !z.Verified() {
+		return nil, errors.New("plugin is not verified")
+	}
+
+	if z.verification != nil {
+		return z.verification, nil
+	}
+
+	err := z.decode()
+	if err != nil {
+		return nil, err
+	}
+
+	// if the plugin is verified but the verification is nil
+	// it's historical reason that all plugins are signed by langgenius
+	return nil, nil
+}
+
 func (z *ZipPluginDecoder) Manifest() (plugin_entities.PluginDeclaration, error) {
 	return z.PluginDecoderHelper.Manifest(z)
 }
 
 func (z *ZipPluginDecoder) Assets() (map[string][]byte, error) {
-	return z.PluginDecoderHelper.Assets(z)
+	// FIXES: https://github.com/langgenius/dify-plugin-daemon/issues/166
+	// zip file is os-independent, `/` is the separator
+	return z.PluginDecoderHelper.Assets(z, "/")
 }
 
 func (z *ZipPluginDecoder) Checksum() (string, error) {
@@ -276,4 +328,12 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 
 func (z *ZipPluginDecoder) CheckAssetsValid() error {
 	return z.PluginDecoderHelper.CheckAssetsValid(z)
+}
+
+func (z *ZipPluginDecoder) Verified() bool {
+	return z.PluginDecoderHelper.verified(z)
+}
+
+func (z *ZipPluginDecoder) AvailableI18nReadme() (map[string]string, error) {
+	return z.PluginDecoderHelper.AvailableI18nReadme(z, "/")
 }

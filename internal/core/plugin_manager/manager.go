@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/langgenius/dify-cloud-kit/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -25,15 +26,6 @@ import (
 
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
-
-	// max size of a plugin package
-	maxPluginPackageSize int64
-
-	// where the plugin finally running
-	workingDirectory string
-
-	// where the plugin finally installed but not running
-	pluginStoragePath string
 
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
@@ -53,39 +45,13 @@ type PluginManager struct {
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
 
-	// python interpreter path
-	pythonInterpreterPath string
-
-	// python env init timeout
-	pythonEnvInitTimeout int
-
-	// proxy settings
-	HttpProxy  string
-	HttpsProxy string
-
-	// pip mirror url
-	pipMirrorUrl string
-
-	// pip prefer binary
-	pipPreferBinary bool
-
-	// pip verbose
-	pipVerbose bool
-
-	// pip extra args
-	pipExtraArgs string
-
-	// python compileall extra args
-	pythonCompileAllExtraArgs string
+	config *app.Config
 
 	// remote plugin server
 	remotePluginServer debugging_runtime.RemotePluginServerInterface
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool
-
-	// platform, local or serverless
-	platform app.PlatformType
 }
 
 var (
@@ -94,9 +60,6 @@ var (
 
 func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 	manager = &PluginManager{
-		maxPluginPackageSize: configuration.MaxPluginPackageSize,
-		pluginStoragePath:    configuration.PluginInstalledPath,
-		workingDirectory:     configuration.PluginWorkingPath,
 		mediaBucket: media_transport.NewAssetsBucket(
 			oss,
 			configuration.PluginMediaCachePath,
@@ -110,18 +73,10 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 			oss,
 			configuration.PluginInstalledPath,
 		),
-		localPluginLaunchingLock:  lock.NewGranularityLock(),
-		maxLaunchingLock:          make(chan bool, 2), // by default, we allow 2 plugins launching at the same time
-		pythonInterpreterPath:     configuration.PythonInterpreterPath,
-		pythonEnvInitTimeout:      configuration.PythonEnvInitTimeout,
-		pythonCompileAllExtraArgs: configuration.PythonCompileAllExtraArgs,
-		platform:                  configuration.Platform,
-		HttpProxy:                 configuration.HttpProxy,
-		HttpsProxy:                configuration.HttpsProxy,
-		pipMirrorUrl:              configuration.PipMirrorUrl,
-		pipPreferBinary:           *configuration.PipPreferBinary,
-		pipVerbose:                *configuration.PipVerbose,
-		pipExtraArgs:              configuration.PipExtraArgs,
+		localPluginLaunchingLock: lock.NewGranularityLock(),
+		// By default, we allow up to configuration.PluginLocalLaunchingConcurrent plugins to be launched concurrently; if not configured, the default is 2.
+		maxLaunchingLock: make(chan bool, configuration.PluginLocalLaunchingConcurrent),
+		config:           configuration,
 	}
 
 	return manager
@@ -134,7 +89,7 @@ func Manager() *PluginManager {
 func (p *PluginManager) Get(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginLifetime, error) {
-	if identity.RemoteLike() || p.platform == app.PLATFORM_LOCAL {
+	if identity.RemoteLike() || p.config.Platform == app.PLATFORM_LOCAL {
 		// check if it's a debugging plugin or a local plugin
 		if v, ok := p.m.Load(identity.String()); ok {
 			return v, nil
@@ -159,17 +114,41 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	log.Info("start plugin manager daemon...")
 
 	// init redis client
-	if err := cache.InitRedisClient(
-		fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
-		configuration.RedisPass,
-		configuration.RedisUseSsl,
-		configuration.RedisDB,
-	); err != nil {
-		log.Panic("init redis client failed: %s", err.Error())
+	if configuration.RedisUseSentinel {
+		// use Redis Sentinel
+		sentinels := strings.Split(configuration.RedisSentinels, ",")
+		if err := cache.InitRedisSentinelClient(
+			sentinels,
+			configuration.RedisSentinelServiceName,
+			configuration.RedisUser,
+			configuration.RedisPass,
+			configuration.RedisSentinelUsername,
+			configuration.RedisSentinelPassword,
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+			configuration.RedisSentinelSocketTimeout,
+		); err != nil {
+			log.Panic("init redis sentinel client failed: %s", err.Error())
+		}
+	} else {
+		if err := cache.InitRedisClient(
+			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
+			configuration.RedisUser,
+			configuration.RedisPass,
+			configuration.RedisUseSsl,
+			configuration.RedisDB,
+		); err != nil {
+			log.Panic("init redis client failed: %s", err.Error())
+		}
 	}
 
 	invocation, err := real.NewDifyInvocationDaemon(
-		configuration.DifyInnerApiURL, configuration.DifyInnerApiKey,
+		real.NewDifyInvocationDaemonPayload{
+			BaseUrl:      configuration.DifyInnerApiURL,
+			CallingKey:   configuration.DifyInnerApiKey,
+			WriteTimeout: configuration.DifyInvocationWriteTimeout,
+			ReadTimeout:  configuration.DifyInvocationReadTimeout,
+		},
 	)
 	if err != nil {
 		log.Panic("init dify invocation daemon failed: %s", err.Error())
@@ -178,7 +157,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 
 	// start local watcher
 	if configuration.Platform == app.PLATFORM_LOCAL {
-		p.startLocalWatcher()
+		p.startLocalWatcher(configuration)
 	}
 
 	// launch serverless connector

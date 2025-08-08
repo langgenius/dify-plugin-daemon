@@ -426,6 +426,6 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 		}
 	} else {
 		// continue handle messages if handshake completed
-		runtime.response.Write(message)
+		runtime.response.WriteBlocking(message)
 	}
 }

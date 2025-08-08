@@ -9,7 +9,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/panjf2000/ants"
+	"github.com/panjf2000/ants/v2"
 )
 
 var (

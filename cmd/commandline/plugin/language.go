@@ -73,3 +73,12 @@ func (l language) Update(msg tea.Msg) (subMenu, subMenuEvent, tea.Cmd) {
 func (l language) Init() tea.Cmd {
 	return nil
 }
+
+func (l *language) SetLanguage(lang string) {
+	for i, v := range languages {
+		if string(v) == lang {
+			l.cursor = i
+			return
+		}
+	}
+}

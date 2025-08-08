@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -80,6 +81,7 @@ func InstallPluginRuntimeToTenant(
 			PluginID:               pluginUniqueIdentifier.PluginID(),
 			Status:                 models.InstallTaskStatusPending,
 			Icon:                   pluginDeclaration.Icon,
+			IconDark:               pluginDeclaration.IconDark,
 			Labels:                 pluginDeclaration.Label,
 			Message:                "",
 		})
@@ -333,6 +335,82 @@ func InstallPluginFromIdentifiers(
 	}
 
 	return entities.NewSuccessResponse(response)
+}
+
+/*
+ * Reinstall a plugin from a given identifier, no tenant_id is needed
+ */
+func ReinstallPluginFromIdentifier(
+	ctx *gin.Context,
+	config *app.Config,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) {
+	baseSSEService(func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
+		if config.Platform != app.PLATFORM_SERVERLESS {
+			return nil, fmt.Errorf("reinstall is only supported on serverless platform")
+		}
+
+		manager := plugin_manager.Manager()
+		pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to get package"))
+		}
+
+		zipDecoder, err := decoder.NewZipPluginDecoder(pkgFile)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to create zip decoder"))
+		}
+		stream, err := manager.ReinstallToAWSFromPkg(pkgFile, zipDecoder)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to reinstall plugin"))
+		}
+
+		return stream, nil
+	}, ctx, 1800)
+}
+
+/*
+ * Decode a plugin from a given identifier, no tenant_id is needed
+ * When upload local plugin inside Dify, the second step need to ensure that the plugin is valid
+ * So we need to provide a way to decode the plugin and verify the signature
+ */
+func DecodePluginFromIdentifier(
+	config *app.Config,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) *entities.Response {
+	// get plugin package and decode again
+	manager := plugin_manager.Manager()
+	pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
+	if err != nil {
+		return exception.BadRequestError(err).ToResponse()
+	}
+
+	zipDecoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
+		pkgFile,
+		&decoder.ThirdPartySignatureVerificationConfig{
+			Enabled:        config.ThirdPartySignatureVerificationEnabled,
+			PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
+		},
+	)
+	if err != nil {
+		return exception.BadRequestError(err).ToResponse()
+	}
+
+	verification, _ := zipDecoder.Verification()
+	if verification == nil && zipDecoder.Verified() {
+		verification = decoder.DefaultVerification()
+	}
+
+	declaration, err := zipDecoder.Manifest()
+	if err != nil {
+		return exception.BadRequestError(err).ToResponse()
+	}
+
+	return entities.NewSuccessResponse(map[string]any{
+		"unique_identifier": pluginUniqueIdentifier,
+		"manifest":          declaration,
+		"verification":      verification,
+	})
 }
 
 func UpgradePlugin(

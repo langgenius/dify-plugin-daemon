@@ -126,9 +126,10 @@ type PluginRunner struct {
 }
 
 type PluginMeta struct {
-	Version string           `json:"version" yaml:"version" validate:"required,version"`
-	Arch    []constants.Arch `json:"arch" yaml:"arch" validate:"required,dive,is_available_arch"`
-	Runner  PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
+	Version            string           `json:"version" yaml:"version" validate:"required,version"`
+	Arch               []constants.Arch `json:"arch" yaml:"arch" validate:"required,dive,is_available_arch"`
+	Runner             PluginRunner     `json:"runner" yaml:"runner" validate:"required"`
+	MinimumDifyVersion *string          `json:"minimum_dify_version" yaml:"minimum_dify_version"`
 }
 
 type PluginExtensions struct {
@@ -146,12 +147,14 @@ type PluginDeclarationWithoutAdvancedFields struct {
 	Label       I18nObject                         `json:"label" yaml:"label" validate:"required"`
 	Description I18nObject                         `json:"description" yaml:"description" validate:"required"`
 	Icon        string                             `json:"icon" yaml:"icon,omitempty" validate:"required,max=128"`
+	IconDark    string                             `json:"icon_dark" yaml:"icon_dark,omitempty" validate:"omitempty,max=128"`
 	Resource    PluginResourceRequirement          `json:"resource" yaml:"resource,omitempty" validate:"required"`
 	Plugins     PluginExtensions                   `json:"plugins" yaml:"plugins,omitempty" validate:"required"`
 	Meta        PluginMeta                         `json:"meta" yaml:"meta,omitempty" validate:"required"`
 	Tags        []manifest_entities.PluginTag      `json:"tags" yaml:"tags,omitempty" validate:"omitempty,dive,plugin_tag,max=128"`
 	CreatedAt   time.Time                          `json:"created_at" yaml:"created_at,omitempty" validate:"required"`
 	Privacy     *string                            `json:"privacy,omitempty" yaml:"privacy,omitempty" validate:"omitempty"`
+	Repo        *string                            `json:"repo,omitempty" yaml:"repo,omitempty" validate:"omitempty,url"`
 }
 
 func (p *PluginDeclarationWithoutAdvancedFields) UnmarshalJSON(data []byte) error {

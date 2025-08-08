@@ -44,14 +44,15 @@ func (p *PluginManager) getServerlessPluginRuntime(
 	runtimeEntity.InitState()
 
 	// convert to plugin runtime
-	pluginRuntime := serverless_runtime.AWSPluginRuntime{
+	pluginRuntime := serverless_runtime.ServerlessPluginRuntime{
 		BasicChecksum: basic_runtime.BasicChecksum{
 			MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),
 			InnerChecksum:  model.Checksum,
 		},
-		PluginRuntime: runtimeEntity,
-		LambdaURL:     model.FunctionURL,
-		LambdaName:    model.FunctionName,
+		PluginRuntime:             runtimeEntity,
+		LambdaURL:                 model.FunctionURL,
+		LambdaName:                model.FunctionName,
+		PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
 	}
 
 	if err := pluginRuntime.InitEnvironment(); err != nil {
@@ -92,4 +93,11 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 	}
 
 	return runtime, nil
+}
+
+func (p *PluginManager) clearServerlessRuntimeCache(
+	identity plugin_entities.PluginUniqueIdentifier,
+) error {
+	_, err := cache.Del(p.getServerlessRuntimeCacheKey(identity))
+	return err
 }

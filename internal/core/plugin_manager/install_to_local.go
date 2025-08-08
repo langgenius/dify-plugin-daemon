@@ -3,6 +3,8 @@ package plugin_manager
 import (
 	"time"
 
+	"errors"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -61,10 +63,25 @@ func (p *PluginManager) InstallToLocal(
 				return
 			case err := <-errChan:
 				if err != nil {
-					// if error occurs, stop the plugin
+					// if error occurs, delete the plugin from local and stop the plugin
+					identity, er := runtime.Identity()
+					if er != nil {
+						log.Error("get plugin identity failed: %s", er.Error())
+					}
+					if er := p.installedBucket.Delete(identity); er != nil {
+						log.Error("delete plugin from local failed: %s", er.Error())
+					}
+
+					var errorMsg string
+					if er != nil {
+						errorMsg = errors.Join(err, er).Error()
+					} else {
+						errorMsg = err.Error()
+					}
+
 					response.Write(PluginInstallResponse{
 						Event: PluginInstallEventError,
-						Data:  err.Error(),
+						Data:  errorMsg,
 					})
 					runtime.Stop()
 					return

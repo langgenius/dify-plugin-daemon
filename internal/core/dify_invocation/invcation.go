@@ -9,6 +9,9 @@ import (
 type BackwardsInvocation interface {
 	// InvokeLLM
 	InvokeLLM(payload *InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error)
+	// InvokeLLMWithStructuredOutput
+	InvokeLLMWithStructuredOutput(payload *InvokeLLMWithStructuredOutputRequest) (
+		*stream.Stream[model_entities.LLMResultChunkWithStructuredOutput], error)
 	// InvokeTextEmbedding
 	InvokeTextEmbedding(payload *InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error)
 	// InvokeRerank
@@ -33,4 +36,6 @@ type BackwardsInvocation interface {
 	InvokeSummary(payload *InvokeSummaryRequest) (*InvokeSummaryResponse, error)
 	// UploadFile
 	UploadFile(payload *UploadFileRequest) (*UploadFileResponse, error)
+	// FetchApp
+	FetchApp(payload *FetchAppRequest) (map[string]any, error)
 }

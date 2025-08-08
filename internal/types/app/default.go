@@ -1,6 +1,9 @@
 package app
 
-import "golang.org/x/exp/constraints"
+import (
+	"github.com/langgenius/dify-cloud-kit/oss"
+	"golang.org/x/exp/constraints"
+)
 
 func (config *Config) SetDefault() {
 	setDefaultInt(&config.ServerPort, 5002)
@@ -15,8 +18,9 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.MaxBundlePackageSize, 52428800*12)
 	setDefaultInt(&config.MaxServerlessTransactionTimeout, 300)
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 10*60)
-	setDefaultString(&config.PluginStorageType, "local")
+	setDefaultString(&config.PluginStorageType, oss.OSS_TYPE_LOCAL)
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
+	setDefaultInt(&config.DifyPluginServerlessConnectorLaunchTimeout, 240)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
 	setDefaultBoolPtr(&config.PluginRemoteInstallingEnabled, true)
 	setDefaultBoolPtr(&config.PluginEndpointEnabled, true)
@@ -33,6 +37,8 @@ func (config *Config) SetDefault() {
 	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
 	setDefaultBoolPtr(&config.PipPreferBinary, true)
 	setDefaultBoolPtr(&config.PipVerbose, true)
+	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
+	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
 	if config.DBType == "postgresql" {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
 	} else if config.DBType == "mysql" {

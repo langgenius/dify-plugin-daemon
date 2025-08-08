@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	jsonschema "github.com/langgenius/dify-plugin-daemon/internal/utils/json_schema"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
@@ -19,68 +21,107 @@ func NewMockedDifyInvocation() dify_invocation.BackwardsInvocation {
 func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {
 	stream := stream.NewStream[model_entities.LLMResultChunk](5)
 	routine.Submit(nil, func() {
+		if len(payload.Tools) > 0 {
+			tool := payload.Tools[0]
+			// generate a valid arguments json string
+			arguments, err := jsonschema.GenerateValidateJson(tool.Parameters)
+			if err != nil {
+				stream.WriteError(err)
+				return
+			}
+
+			stream.WriteBlocking(model_entities.LLMResultChunk{
+				Model:             model_entities.LLMModel(payload.Model),
+				SystemFingerprint: "test",
+				Delta: model_entities.LLMResultChunkDelta{
+					Index: parser.ToPtr(0),
+					Message: model_entities.PromptMessage{
+						Role: model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+						ToolCalls: []model_entities.PromptMessageToolCall{
+							{
+								ID:   "oshiawaseni", // お幸せに
+								Type: "function",
+								Function: struct {
+									Name      string "json:\"name\""
+									Arguments string "json:\"arguments\""
+								}{
+									Name:      tool.Name,
+									Arguments: parser.MarshalJson(arguments),
+								},
+							},
+						},
+					},
+				},
+			})
+		}
+
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{1}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: "hello",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   "hello",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{1}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: " world",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " world",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{2}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: " world",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " world",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{3}[0],
 				Message: model_entities.PromptMessage{
-					Role:    model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
-					Content: " !",
-					Name:    "test",
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " !",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
 				},
 			},
 		})
 		time.Sleep(100 * time.Millisecond)
 		stream.Write(model_entities.LLMResultChunk{
 			Model:             model_entities.LLMModel(payload.Model),
-			PromptMessages:    payload.PromptMessages,
 			SystemFingerprint: "test",
 			Delta: model_entities.LLMResultChunkDelta{
 				Index: &[]int{3}[0],
+				Message: model_entities.PromptMessage{
+					Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+					Content:   " !",
+					Name:      "test",
+					ToolCalls: []model_entities.PromptMessageToolCall{},
+				},
 				Usage: &model_entities.LLMUsage{
 					PromptTokens:     &[]int{100}[0],
 					CompletionTokens: &[]int{100}[0],
@@ -88,6 +129,62 @@ func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMReque
 					Latency:          &[]float64{0.4}[0],
 					Currency:         &[]string{"USD"}[0],
 				},
+			},
+		})
+		stream.Close()
+	})
+	return stream, nil
+}
+
+func (m *MockedDifyInvocation) InvokeLLMWithStructuredOutput(payload *dify_invocation.InvokeLLMWithStructuredOutputRequest) (
+	*stream.Stream[model_entities.LLMResultChunkWithStructuredOutput], error,
+) {
+	// generate json from payload.StructuredOutputSchema
+	structuredOutput, err := jsonschema.GenerateValidateJson(payload.StructuredOutputSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	// marshal jsonSchema to string
+	structuredOutputString := parser.MarshalJson(structuredOutput)
+
+	// split structuredOutputString into 10 parts and write them to the stream
+	parts := []string{}
+	for i := 0; i < 10; i++ {
+		start := i * len(structuredOutputString) / 10
+		end := (i + 1) * len(structuredOutputString) / 10
+		if i == 9 { // last part
+			end = len(structuredOutputString)
+		}
+		parts = append(parts, structuredOutputString[start:end])
+	}
+
+	stream := stream.NewStream[model_entities.LLMResultChunkWithStructuredOutput](11)
+	routine.Submit(nil, func() {
+		for i, part := range parts {
+			stream.Write(model_entities.LLMResultChunkWithStructuredOutput{
+				Model:             model_entities.LLMModel(payload.Model),
+				SystemFingerprint: "test",
+				Delta: model_entities.LLMResultChunkDelta{
+					Index: &[]int{i}[0],
+					Message: model_entities.PromptMessage{
+						Role:      model_entities.PROMPT_MESSAGE_ROLE_ASSISTANT,
+						Content:   part,
+						Name:      "test",
+						ToolCalls: []model_entities.PromptMessageToolCall{},
+					},
+				},
+			})
+		}
+		// write the last part
+		stream.Write(model_entities.LLMResultChunkWithStructuredOutput{
+			Model:             model_entities.LLMModel(payload.Model),
+			SystemFingerprint: "test",
+			Delta: model_entities.LLMResultChunkDelta{
+				Index: &[]int{10}[0],
+			},
+			LLMStructuredOutput: model_entities.LLMStructuredOutput{
+				StructuredOutput: structuredOutput,
 			},
 		})
 		stream.Close()
@@ -323,5 +420,11 @@ func (m *MockedDifyInvocation) InvokeSummary(payload *dify_invocation.InvokeSumm
 func (m *MockedDifyInvocation) UploadFile(payload *dify_invocation.UploadFileRequest) (*dify_invocation.UploadFileResponse, error) {
 	return &dify_invocation.UploadFileResponse{
 		URL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+	}, nil
+}
+
+func (m *MockedDifyInvocation) FetchApp(payload *dify_invocation.FetchAppRequest) (map[string]any, error) {
+	return map[string]any{
+		"name": "test",
 	}, nil
 }
