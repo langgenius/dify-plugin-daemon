@@ -12,11 +12,6 @@ var BuiltinDefinitions = map[string]any{
 	"file": map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"dify_builtin_type": map[string]any{
-				"type":        "string",
-				"enum":        []string{"File"},
-				"description": "Business type identifier for frontend",
-			},
 			"name": map[string]any{
 				"type":        "string",
 				"description": "file name",
@@ -52,64 +47,9 @@ var BuiltinDefinitions = map[string]any{
 		},
 		"required": []string{"name"},
 	},
-	"website_crawl": map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"dify_builtin_type": map[string]any{
-				"type":        "string",
-				"enum":        []string{"WebsiteCrawl"},
-				"description": "Business type identifier for frontend",
-			},
-			"source_url": map[string]any{
-				"type":        "string",
-				"description": "The URL of the crawled website",
-			},
-			"content": map[string]any{
-				"type":        "string",
-				"description": "The content of the crawled website",
-			},
-			"title": map[string]any{
-				"type":        "string",
-				"description": "The title of the crawled website",
-			},
-			"description": map[string]any{
-				"type":        "string",
-				"description": "The description of the crawled website",
-			},
-		},
-		"required": []string{"source_url", "content"},
-	},
-	"online_document": map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"dify_builtin_type": map[string]any{
-				"type":        "string",
-				"enum":        []string{"OnlineDocument"},
-				"description": "Business type identifier for frontend",
-			},
-			"workspace_id": map[string]any{
-				"type":        "string",
-				"description": "The ID of the workspace where the document is stored",
-			},
-			"page_id": map[string]any{
-				"type":        "string",
-				"description": "The ID of the page in the document",
-			},
-			"content": map[string]any{
-				"type":        "string",
-				"description": "The content of the online document",
-			},
-		},
-		"required": []string{"content"},
-	},
 	"general_structure_chunk": map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"dify_builtin_type": map[string]any{
-				"type":        "string",
-				"enum":        []string{"GeneralStructureChunk"},
-				"description": "Business type identifier for frontend",
-			},
 			"general_chunks": map[string]any{
 				"type": "array",
 				"items": map[string]any{
@@ -123,11 +63,6 @@ var BuiltinDefinitions = map[string]any{
 	"parent_child_structure_chunk": map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"dify_builtin_type": map[string]any{
-				"type":        "string",
-				"enum":        []string{"ParentChildStructureChunk"},
-				"description": "Business type identifier for frontend",
-			},
 			"parent_mode": map[string]any{
 				"type":        "string",
 				"description": "The mode of parent-child relationship",
@@ -159,11 +94,6 @@ var BuiltinDefinitions = map[string]any{
 	"qa_structure_chunk": map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"dify_builtin_type": map[string]any{
-				"type":        "string",
-				"enum":        []string{"QAStructureChunk"},
-				"description": "Business type identifier for frontend",
-			},
 			"qa_chunks": map[string]any{
 				"type": "array",
 				"items": map[string]any{
