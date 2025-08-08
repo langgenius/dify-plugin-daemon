@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities/builtin_schema"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
@@ -102,6 +101,44 @@ type DatasourceParameter struct {
 }
 
 type DatasourceOutputSchema map[string]any
+
+// UnmarshalYAML handles YAML unmarshaling with automatic $ref resolution
+func (d *DatasourceOutputSchema) UnmarshalYAML(value *yaml.Node) error {
+	// Unmarshal into a temporary map to capture all data
+	var rawData map[string]any
+	if err := value.Decode(&rawData); err != nil {
+		return err
+	}
+
+	// Only use built-in definitions, ignore any custom definitions
+	// Process the schema with built-in definitions only
+	processedSchema, err := ProcessSchema(rawData, map[string]any{})
+	if err != nil {
+		return err
+	}
+
+	*d = DatasourceOutputSchema(processedSchema.(map[string]any))
+	return nil
+}
+
+// UnmarshalJSON handles JSON unmarshaling with automatic $ref resolution
+func (d *DatasourceOutputSchema) UnmarshalJSON(data []byte) error {
+	// First, unmarshal into a temporary map to capture all data
+	var temp map[string]any
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Only use built-in definitions, ignore any custom definitions
+	// Process the schema with built-in definitions only
+	processedSchema, err := ProcessSchema(temp, map[string]any{})
+	if err != nil {
+		return err
+	}
+
+	*d = DatasourceOutputSchema(processedSchema.(map[string]any))
+	return nil
+}
 
 type DatasourceDeclaration struct {
 	Identity     DatasourceIdentity     `json:"identity" yaml:"identity" validate:"required"`
@@ -268,10 +305,4 @@ func (t *DatasourceProviderDeclaration) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-}
-
-
-
-func ProcessDatasourceYAML(yamlData map[string]any) (map[string]any, error) {
-	return builtin_schema.ProcessDatasourceYAML(yamlData)
 }

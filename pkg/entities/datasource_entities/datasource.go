@@ -70,16 +70,19 @@ type DatasourceGetPagesResponse struct {
 }
 
 type OnlineDriveFile struct {
-	Key  string `json:"key" validate:"required"`
-	Size int    `json:"size" validate:"required"`
+	ID   string `json:"id" validate:"required"`   // The file ID
+	Name string `json:"name" validate:"required"` // The file name
+	Size int    `json:"size" validate:"required"` // The file size
+	Type string `json:"type" validate:"required"` // The file type: folder or file
 }
 
 type OnlineDriveFileBucket struct {
-	Bucket      string            `json:"bucket" validate:"required"`
-	Files       []OnlineDriveFile `json:"files" validate:"required"`
-	IsTruncated bool              `json:"is_truncated" validate:"required"`
+	Bucket             *string                `json:"bucket" validate:"omitempty"`               // The file bucket (optional)
+	Files              []OnlineDriveFile      `json:"files" validate:"required"`                 // The file list
+	IsTruncated        bool                   `json:"is_truncated" validate:"required"`          // Whether the result is truncated
+	NextPageParameters map[string]interface{} `json:"next_page_parameters" validate:"omitempty"` // Parameters for fetching the next page
 }
 
 type GetOnlineDriveBrowseFilesResponse struct {
-	Result []OnlineDriveFileBucket `json:"result" validate:"required"`
+	Result []OnlineDriveFileBucket `json:"result" validate:"required"` // The list of file buckets
 }

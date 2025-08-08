@@ -11,7 +11,6 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities/builtin_schema"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
@@ -141,6 +140,44 @@ type ToolDescription struct {
 }
 
 type ToolOutputSchema map[string]any
+
+// UnmarshalYAML handles YAML unmarshaling with automatic $ref resolution
+func (t *ToolOutputSchema) UnmarshalYAML(value *yaml.Node) error {
+	// Unmarshal into a temporary map to capture all data
+	var rawData map[string]any
+	if err := value.Decode(&rawData); err != nil {
+		return err
+	}
+
+	// Only use built-in definitions, ignore any custom definitions
+	// Process the schema with built-in definitions only
+	processedSchema, err := ProcessSchema(rawData, map[string]any{})
+	if err != nil {
+		return err
+	}
+
+	*t = ToolOutputSchema(processedSchema.(map[string]any))
+	return nil
+}
+
+// UnmarshalJSON handles JSON unmarshaling with automatic $ref resolution
+func (t *ToolOutputSchema) UnmarshalJSON(data []byte) error {
+	// First, unmarshal into a temporary map to capture all data
+	var temp map[string]any
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Only use built-in definitions, ignore any custom definitions
+	// Process the schema with built-in definitions only
+	processedSchema, err := ProcessSchema(temp, map[string]any{})
+	if err != nil {
+		return err
+	}
+
+	*t = ToolOutputSchema(processedSchema.(map[string]any))
+	return nil
+}
 
 type ToolDeclaration struct {
 	Identity             ToolIdentity     `json:"identity" yaml:"identity" validate:"required"`
@@ -446,9 +483,4 @@ func UnmarshalToolProviderDeclaration(data []byte) (*ToolProviderDeclaration, er
 	}
 
 	return &obj, nil
-}
-
-// ProcessToolYAML processes tool YAML data by resolving output_schema references
-func ProcessToolYAML(yamlData map[string]any) (map[string]any, error) {
-	return builtin_schema.ProcessToolYAML(yamlData)
 }

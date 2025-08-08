@@ -56,19 +56,7 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool_file))
 			}
 
-			yamlData, err := parser.UnmarshalYamlBytes[map[string]any](toolFileContent)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file as map: %s", tool_file))
-			}
-
-			processedData, err := plugin_entities.ProcessToolYAML(yamlData)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to process tool YAML: %s", tool_file))
-			}
-
-			processedYAML := parser.MarshalYamlBytes(processedData)
-
-			toolFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolDeclaration](processedYAML)
+			toolFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolDeclaration](toolFileContent)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file: %s", tool_file))
 			}
@@ -303,19 +291,7 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read datasource file: %s", datasourceFile))
 			}
 
-			yamlData, err := parser.UnmarshalYamlBytes[map[string]any](datasourceFileContent)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal datasource file as map: %s", datasourceFile))
-			}
-
-			processedData, err := plugin_entities.ProcessDatasourceYAML(yamlData)
-			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to process datasource YAML: %s", datasourceFile))
-			}
-
-			processedYAML := parser.MarshalYamlBytes(processedData)
-
-			datasourceDec, err := parser.UnmarshalYamlBytes[plugin_entities.DatasourceDeclaration](processedYAML)
+			datasourceDec, err := parser.UnmarshalYamlBytes[plugin_entities.DatasourceDeclaration](datasourceFileContent)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal datasource file: %s", datasourceFile))
 			}

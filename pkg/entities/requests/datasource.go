@@ -36,15 +36,15 @@ type DatasourceOnlineDriveBrowseFilesRequest struct {
 }
 
 type OnlineDriveBrowseFilesRequest struct {
-	Prefix     *string `json:"prefix" validate:"omitempty"`      // File path prefix for filtering eg: 'docs/dify/'
-	Bucket     *string `json:"bucket" validate:"omitempty"`      // Storage bucket name
-	MaxKeys    int     `json:"max_keys" validate:"required"`     // Maximum number of files to return
-	StartAfter *string `json:"start_after" validate:"omitempty"` // Pagination token for continuing from a specific file eg: 'docs/dify/1.txt'
+	Bucket             *string                `json:"bucket" validate:"omitempty"`               // The file bucket (optional)
+	Prefix             string                 `json:"prefix" validate:"required"`                // The parent folder ID
+	MaxKeys            int                    `json:"max_keys" validate:"required"`              // Page size for pagination
+	NextPageParameters map[string]interface{} `json:"next_page_parameters" validate:"omitempty"` // Parameters for fetching the next page
 }
 
 type OnlineDriveDownloadFileRequest struct {
-	Key    string  `json:"key" validate:"required"`     // The name of the file
-	Bucket *string `json:"bucket" validate:"omitempty"` // The name of the bucket
+	Bucket *string `json:"bucket" validate:"omitempty"` // The file bucket (optional)
+	ID     string  `json:"id" validate:"required"`      // The file ID
 }
 
 type DatasourceOnlineDriveDownloadFileRequest struct {
