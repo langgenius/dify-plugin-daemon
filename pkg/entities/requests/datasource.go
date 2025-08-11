@@ -37,7 +37,7 @@ type DatasourceOnlineDriveBrowseFilesRequest struct {
 
 type OnlineDriveBrowseFilesRequest struct {
 	Bucket             *string                `json:"bucket" validate:"omitempty"`               // The file bucket (optional)
-	Prefix             string                 `json:"prefix" validate:"required"`                // The parent folder ID
+	Prefix             string                 `json:"prefix" validate:"omitempty"`               // The parent folder ID
 	MaxKeys            int                    `json:"max_keys" validate:"required"`              // Page size for pagination
 	NextPageParameters map[string]interface{} `json:"next_page_parameters" validate:"omitempty"` // Parameters for fetching the next page
 }
