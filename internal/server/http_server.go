@@ -157,6 +157,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/decode/from_identifier", controllers.DecodePluginFromIdentifier(config))
 	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
+	group.GET("/fetch/readme", controllers.FetchPluginReadme)
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", controllers.ListPlugins)
 	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)

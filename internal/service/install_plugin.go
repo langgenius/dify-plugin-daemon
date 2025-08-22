@@ -702,3 +702,9 @@ func UninstallPlugin(
 
 	return entities.NewSuccessResponse(true)
 }
+
+func FetchPluginReadme(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	language string,
+) *entities.Response {
+}

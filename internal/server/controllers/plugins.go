@@ -222,6 +222,15 @@ func FetchPluginManifest(c *gin.Context) {
 	})
 }
 
+func FetchPluginReadme(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		Language               string                                 `form:"language" validate:"omitempty"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginReadme(request.PluginUniqueIdentifier, request.Language))
+	})
+}
+
 func UninstallPlugin(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID             string `uri:"tenant_id" validate:"required"`
