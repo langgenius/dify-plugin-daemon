@@ -48,6 +48,8 @@ const (
 	// TOOL_PARAMETER_TYPE_TOOL_SELECTOR  ToolParameterType = TOOL_SELECTOR
 	TOOL_PARAMETER_TYPE_ANY            ToolParameterType = ANY
 	TOOL_PARAMETER_TYPE_DYNAMIC_SELECT ToolParameterType = DYNAMIC_SELECT
+	TOOL_PARAMETER_ARRAY               ToolParameterType = ARRAY
+	TOOL_PARAMETER_OBJECT              ToolParameterType = OBJECT
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -64,7 +66,9 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_APP_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_ANY),
-		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT):
+		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT),
+		string(TOOL_PARAMETER_ARRAY),
+		string(TOOL_PARAMETER_OBJECT):
 		return true
 	}
 	return false
