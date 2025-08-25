@@ -2,12 +2,10 @@ package plugin_entities
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
-	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,25 +62,8 @@ func isDatasourceParameterType(fl validator.FieldLevel) bool {
 	return false
 }
 
-func isDatasourceOutputSchema(fl validator.FieldLevel) bool {
-	// get schema from interface
-	schemaMapInf := fl.Field().Interface()
-	// convert to map[string]any
-	datasourceSchemaMap, ok := schemaMapInf.(DatasourceOutputSchema)
-	if !ok {
-		return false
-	}
-	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(datasourceSchemaMap))
-	if err != nil {
-		return false
-	}
-
-	return err == nil
-}
-
 func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("datasource_parameter_type", isDatasourceParameterType)
-	validators.GlobalEntitiesValidator.RegisterValidation("datasource_output_schema", isDatasourceOutputSchema)
 }
 
 type DatasourceParameter struct {
@@ -103,67 +84,23 @@ type DatasourceParameter struct {
 
 type DatasourceOutputSchema map[string]any
 
-// UnmarshalYAML handles YAML unmarshaling with automatic $ref resolution
+// UnmarshalYAML handles YAML unmarshaling
 func (d *DatasourceOutputSchema) UnmarshalYAML(value *yaml.Node) error {
-	// Unmarshal into a temporary map to capture all data
 	var rawData map[string]any
 	if err := value.Decode(&rawData); err != nil {
 		return err
 	}
-
-	// If rawData is empty, just use it as is
-	if len(rawData) == 0 {
-		*d = DatasourceOutputSchema(rawData)
-		return nil
-	}
-
-	// Process the schema with built-in definitions only
-	// ProcessSchema will check internally if processing is needed
-	processedSchema, err := ProcessSchema(rawData, map[string]any{})
-	if err != nil {
-		return err
-	}
-
-	// Ensure the result is a map
-	if processedMap, ok := processedSchema.(map[string]any); ok {
-		*d = DatasourceOutputSchema(processedMap)
-	} else {
-		// If not a map, return error
-		return fmt.Errorf("processed schema is not a map[string]any")
-	}
-
+	*d = DatasourceOutputSchema(rawData)
 	return nil
 }
 
-// UnmarshalJSON handles JSON unmarshaling with automatic $ref resolution
+// UnmarshalJSON handles JSON unmarshaling
 func (d *DatasourceOutputSchema) UnmarshalJSON(data []byte) error {
-	// First, unmarshal into a temporary map to capture all data
 	var temp map[string]any
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
-
-	// If temp is empty, just use it as is
-	if len(temp) == 0 {
-		*d = DatasourceOutputSchema(temp)
-		return nil
-	}
-
-	// Process the schema with built-in definitions only
-	// ProcessSchema will check internally if processing is needed
-	processedSchema, err := ProcessSchema(temp, map[string]any{})
-	if err != nil {
-		return err
-	}
-
-	// Ensure the result is a map
-	if processedMap, ok := processedSchema.(map[string]any); ok {
-		*d = DatasourceOutputSchema(processedMap)
-	} else {
-		// If not a map, return error
-		return fmt.Errorf("processed schema is not a map[string]any")
-	}
-
+	*d = DatasourceOutputSchema(temp)
 	return nil
 }
 
@@ -171,7 +108,7 @@ type DatasourceDeclaration struct {
 	Identity     DatasourceIdentity     `json:"identity" yaml:"identity" validate:"required"`
 	Parameters   []DatasourceParameter  `json:"parameters" yaml:"parameters" validate:"required,dive"`
 	Description  I18nObject             `json:"description" yaml:"description" validate:"required"`
-	OutputSchema DatasourceOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,datasource_output_schema"`
+	OutputSchema DatasourceOutputSchema `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 }
 
 type DatasourceProviderIdentity struct {

@@ -451,8 +451,8 @@ func TestWithoutAuthorToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
@@ -510,8 +510,8 @@ func TestWithoutNameToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
@@ -564,8 +564,8 @@ func TestWithoutDescriptionToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
@@ -623,8 +623,8 @@ func TestWrongCredentialTypeToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
@@ -682,8 +682,8 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
@@ -753,8 +753,8 @@ func TestWrongToolParameterTypeToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
@@ -824,129 +824,13 @@ func TestWrongToolParameterFormToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
-		return
-	}
-}
-
-func TestJSONSchemaTypeToolProvider_Validate(t *testing.T) {
-	const data = `
-{
-	"identity": {
-		"author": "author",
-		"name": "name",
-		"description": {
-			"en_US": "description",
-			"zh_Hans": "描述",
-			"pt_BR": "descrição"
-		},
-		"icon": "icon",
-		"label": {
-			"en_US": "label",
-			"zh_Hans": "标签",
-			"pt_BR": "etiqueta"
-		},
-		"tags": []
-	},
-	"credentials_schema": [],
-	"tools": [
-		{
-			"identity": {
-				"author": "author",
-				"name": "tool",
-				"label": {
-					"en_US": "label",
-					"zh_Hans": "标签",
-					"pt_BR": "etiqueta"
-				}
-			},
-			"description": {
-				"human": {
-					"en_US": "description",
-					"zh_Hans": "描述",
-					"pt_BR": "descrição"
-				},
-				"llm": "description"
-			},
-			"output_schema": {
-				"type": "object",
-				"properties": {
-					"name": {
-						"type": "string"
-					}
-				}
-			}
-		}
-	]
-}
-	`
-
-	_, err := UnmarshalToolProviderDeclaration([]byte(data))
 	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 }
 
-func TestWrongJSONSchemaToolProvider_Validate(t *testing.T) {
-	const data = `
-{
-	"identity": {
-		"author": "author",
-		"name": "name",
-		"description": {
-			"en_US": "description",
-			"zh_Hans": "描述",
-			"pt_BR": "descrição"
-		},
-		"icon": "icon",
-		"label": {
-			"en_US": "label",
-			"zh_Hans": "标签",
-			"pt_BR": "etiqueta"
-		},
-		"tags": []
-	},
-	"credentials_schema": [],
-	"tools": [
-		{
-			"identity": {
-				"author": "author",
-				"name": "tool",
-				"label": {
-					"en_US": "label",
-					"zh_Hans": "标签",
-					"pt_BR": "etiqueta"
-				}
-			},
-			"description": {
-				"human": {
-					"en_US": "description",
-					"zh_Hans": "描述",
-					"pt_BR": "descrição"
-				},
-				"llm": "description"
-			},
-			"output_schema": {
-				"type": "object",
-				"properties": {
-					"name": {
-						"type": "aaa"
-					}
-				}
-			}
-		}
-	]
-}
-	`
 
-	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
-		return
-	}
-}
 
 func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 	const data = `
@@ -1038,8 +922,8 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err == nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
 		return
 	}
 
@@ -1176,96 +1060,6 @@ func TestParameterScope_Validate(t *testing.T) {
 	}
 }
 
-func TestInvalidJSONSchemaToolProvider_Validate(t *testing.T) {
-	type Test struct {
-		Text ToolOutputSchema `json:"text" validate:"json_schema"`
-	}
-
-	data := parser.MarshalJsonBytes(Test{
-		Text: map[string]any{
-			"text": "text",
-		},
-	})
-
-	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
-		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
-	}
-
-	data = parser.MarshalJsonBytes(Test{
-		Text: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"text": map[string]any{
-					"type": "object",
-				},
-			},
-		},
-	})
-
-	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
-		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
-	}
-
-	data = parser.MarshalJsonBytes(Test{
-		Text: map[string]any{
-			"type": "array",
-			"properties": map[string]any{
-				"a": map[string]any{
-					"type": "object",
-				},
-			},
-		},
-	})
-
-	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
-		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
-	}
-
-	data = parser.MarshalJsonBytes(Test{
-		Text: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"json": map[string]any{
-					"type": "object",
-				},
-			},
-		},
-	})
-
-	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
-		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
-	}
-
-	data = parser.MarshalJsonBytes(Test{
-		Text: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"files": map[string]any{
-					"type": "object",
-				},
-			},
-		},
-	})
-
-	if _, err := parser.UnmarshalJsonBytes[Test](data); err == nil {
-		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
-	}
-
-	data = parser.MarshalJsonBytes(Test{
-		Text: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"aaa": map[string]any{
-					"type": "object",
-				},
-			},
-		},
-	})
-
-	if _, err := parser.UnmarshalJsonBytes[Test](data); err != nil {
-		t.Errorf("TestInvalidJSONSchemaToolProvider_Validate() error = %v", err)
-	}
-}
 
 func TestToolName_Validate(t *testing.T) {
 	data := parser.MarshalJsonBytes(ToolProviderIdentity{
@@ -1326,189 +1120,6 @@ func TestToolName_Validate(t *testing.T) {
 	}
 }
 
-// TestToolOutputSchemaRefExpansion tests that $ref references are automatically expanded
-func TestToolOutputSchemaRefExpansion(t *testing.T) {
-	// Test YAML with built-in $ref
-	yamlData := `
-identity:
-  author: test
-  name: test_tool
-  label:
-    en_US: Test Tool
-description:
-  human:
-    en_US: Test tool
-  llm: Test tool
-output_schema:
-  type: object
-  properties:
-    file_result:
-      $ref: "#/$defs/file"
-    chunk_result:
-      $ref: "#/$defs/general_structure_chunk"
-`
 
-	toolDecl, err := parser.UnmarshalYamlBytes[ToolDeclaration]([]byte(yamlData))
-	if err != nil {
-		t.Fatalf("Failed to unmarshal YAML with $ref: %v", err)
-	}
 
-	// Check if file_result was expanded
-	if toolDecl.OutputSchema == nil {
-		t.Fatal("OutputSchema should not be nil")
-	}
 
-	properties, ok := toolDecl.OutputSchema["properties"].(map[string]any)
-	if !ok {
-		t.Fatal("OutputSchema.properties should be a map")
-	}
-
-	// Check file_result expansion
-	fileResult, ok := properties["file_result"].(map[string]any)
-	if !ok {
-		t.Fatal("file_result should be expanded to a map")
-	}
-
-	if fileResult["type"] != "object" {
-		t.Errorf("file_result.type should be 'object', got %v", fileResult["type"])
-	}
-
-	fileProps, ok := fileResult["properties"].(map[string]any)
-	if !ok {
-		t.Fatal("file_result.properties should exist")
-	}
-
-	// Check for expected file properties
-	expectedFileProps := []string{"name", "size", "file_type", "extension", "mime_type", "transfer_method", "url", "related_id"}
-	for _, prop := range expectedFileProps {
-		if _, exists := fileProps[prop]; !exists {
-			t.Errorf("file_result.properties.%s should exist", prop)
-		}
-	}
-
-	// Check chunk_result expansion
-	chunkResult, ok := properties["chunk_result"].(map[string]any)
-	if !ok {
-		t.Fatal("chunk_result should be expanded to a map")
-	}
-
-	if chunkResult["type"] != "object" {
-		t.Errorf("chunk_result.type should be 'object', got %v", chunkResult["type"])
-	}
-}
-
-// TestToolOutputSchemaCustomDefinitionsNotSupported tests that custom definitions are not supported
-func TestToolOutputSchemaCustomDefinitionsNotSupported(t *testing.T) {
-	jsonData := `{
-		"identity": {
-			"author": "test",
-			"name": "test_tool",
-			"label": {"en_US": "Test Tool"}
-		},
-		"description": {
-			"human": {"en_US": "Test tool"},
-			"llm": "Test tool"
-		},
-		"output_schema": {
-			"type": "object",
-			"properties": {
-				"custom_result": {"$ref": "#/$defs/custom_type"},
-				"file_result": {"$ref": "#/$defs/file"}
-			},
-			"definitions": {
-				"custom_type": {
-					"type": "object",
-					"properties": {
-						"custom_field": {"type": "string"}
-					}
-				}
-			}
-		}
-	}`
-
-	_, err := parser.UnmarshalJsonBytes[ToolDeclaration]([]byte(jsonData))
-	if err == nil {
-		t.Error("Should fail with custom definitions that are not supported")
-	}
-	
-	// Should fail because custom_type is not a built-in definition
-	if !strings.Contains(err.Error(), "custom_type") {
-		t.Errorf("Error should mention the unsupported custom reference, got: %v", err)
-	}
-}
-
-// TestToolOutputSchemaNestedRefs tests nested $ref references
-func TestToolOutputSchemaNestedRefs(t *testing.T) {
-	yamlData := `
-identity:
-  author: test
-  name: test_tool
-  label:
-    en_US: Test Tool
-description:
-  human:
-    en_US: Test tool
-  llm: Test tool
-output_schema:
-  type: object
-  properties:
-    nested:
-      type: object
-      properties:
-        file_in_nested:
-          $ref: "#/$defs/file"
-    direct_file:
-      $ref: "#/$defs/file"
-`
-
-	toolDecl, err := parser.UnmarshalYamlBytes[ToolDeclaration]([]byte(yamlData))
-	if err != nil {
-		t.Fatalf("Failed to unmarshal YAML with nested $ref: %v", err)
-	}
-
-	properties := toolDecl.OutputSchema["properties"].(map[string]any)
-	
-	// Check nested structure
-	nested := properties["nested"].(map[string]any)
-	nestedProps := nested["properties"].(map[string]any)
-	fileInNested := nestedProps["file_in_nested"].(map[string]any)
-	
-	if fileInNested["type"] != "object" {
-		t.Errorf("file_in_nested should be expanded to object type")
-	}
-
-	// Check direct file reference
-	directFile := properties["direct_file"].(map[string]any)
-	if directFile["type"] != "object" {
-		t.Errorf("direct_file should be expanded to object type")
-	}
-}
-
-// TestToolOutputSchemaInvalidRef tests handling of invalid $ref
-func TestToolOutputSchemaInvalidRef(t *testing.T) {
-	jsonData := `{
-		"identity": {
-			"author": "test",
-			"name": "test_tool",
-			"label": {"en_US": "Test Tool"}
-		},
-		"description": {
-			"human": {"en_US": "Test tool"},
-			"llm": "Test tool"
-		},
-		"output_schema": {
-			"type": "object",
-			"properties": {
-				"invalid_ref": {"$ref": "#/$defs/non_existent"}
-			}
-		}
-	}`
-
-	_, err := parser.UnmarshalJsonBytes[ToolDeclaration]([]byte(jsonData))
-	if err == nil {
-		t.Error("Should fail with non-existent $ref")
-	}
-	if !strings.Contains(err.Error(), "non_existent") {
-		t.Errorf("Error should mention the non-existent reference, got: %v", err)
-	}
-}

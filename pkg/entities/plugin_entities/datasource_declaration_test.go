@@ -55,96 +55,6 @@ func TestDatasourceDeclarationBasic(t *testing.T) {
 	}
 }
 
-// TestDatasourceOutputSchemaRefExpansion tests $ref expansion in datasource output schema
-func TestDatasourceOutputSchemaRefExpansion(t *testing.T) {
-	yamlData := `
-identity:
-  author: test_author
-  name: test_datasource
-  label:
-    en_US: Test Datasource
-    zh_Hans: 测试数据源
-parameters: []
-description:
-  en_US: A test datasource
-  zh_Hans: 测试数据源
-output_schema:
-  type: object
-  properties:
-    file_result:
-      $ref: "#/$defs/file"
-    qa_chunks:
-      $ref: "#/$defs/qa_structure_chunk"
-    parent_child_chunks:
-      $ref: "#/$defs/parent_child_structure_chunk"
-`
-
-	datasourceDecl, err := parser.UnmarshalYamlBytes[DatasourceDeclaration]([]byte(yamlData))
-	if err != nil {
-		t.Fatalf("Failed to unmarshal YAML with $ref: %v", err)
-	}
-
-	if datasourceDecl.OutputSchema == nil {
-		t.Fatal("OutputSchema should not be nil")
-	}
-
-	properties, ok := datasourceDecl.OutputSchema["properties"].(map[string]any)
-	if !ok {
-		t.Fatal("OutputSchema.properties should be a map")
-	}
-
-	// Check file_result expansion
-	fileResult, ok := properties["file_result"].(map[string]any)
-	if !ok {
-		t.Fatal("file_result should be expanded to a map")
-	}
-
-	if fileResult["type"] != "object" {
-		t.Errorf("file_result.type should be 'object', got %v", fileResult["type"])
-	}
-
-	fileProps, ok := fileResult["properties"].(map[string]any)
-	if !ok {
-		t.Fatal("file_result.properties should exist")
-	}
-
-	// Check for expected file properties
-	expectedProps := []string{"name", "size", "file_type", "extension"}
-	for _, prop := range expectedProps {
-		if _, exists := fileProps[prop]; !exists {
-			t.Errorf("file_result.properties.%s should exist", prop)
-		}
-	}
-
-	// Check qa_chunks expansion
-	qaChunks, ok := properties["qa_chunks"].(map[string]any)
-	if !ok {
-		t.Fatal("qa_chunks should be expanded to a map")
-	}
-
-	if qaChunks["type"] != "object" {
-		t.Errorf("qa_chunks.type should be 'object', got %v", qaChunks["type"])
-	}
-
-	qaProps, ok := qaChunks["properties"].(map[string]any)
-	if !ok {
-		t.Fatal("qa_chunks.properties should exist")
-	}
-
-	if _, exists := qaProps["qa_chunks"]; !exists {
-		t.Error("qa_chunks.properties.qa_chunks should exist")
-	}
-
-	// Check parent_child_chunks expansion
-	parentChildChunks, ok := properties["parent_child_chunks"].(map[string]any)
-	if !ok {
-		t.Fatal("parent_child_chunks should be expanded to a map")
-	}
-
-	if parentChildChunks["type"] != "object" {
-		t.Errorf("parent_child_chunks.type should be 'object', got %v", parentChildChunks["type"])
-	}
-}
 
 // TestDatasourceProviderDeclaration tests the full provider declaration
 func TestDatasourceProviderDeclaration(t *testing.T) {
@@ -184,7 +94,7 @@ datasources:
       type: object
       properties:
         result:
-          $ref: "#/$defs/file"
+          type: object
 `
 
 	providerDecl, err := parser.UnmarshalYamlBytes[DatasourceProviderDeclaration]([]byte(yamlData))
@@ -204,43 +114,8 @@ datasources:
 		t.Fatalf("Expected 1 datasource, got %d", len(providerDecl.Datasources))
 	}
 
-	// Check that $ref in nested datasource was expanded
-	datasource := providerDecl.Datasources[0]
-	if datasource.OutputSchema != nil {
-		properties := datasource.OutputSchema["properties"].(map[string]any)
-		result := properties["result"].(map[string]any)
-		if result["type"] != "object" {
-			t.Errorf("Result should be expanded to object type")
-		}
-	}
 }
 
-// TestDatasourceOutputSchemaInvalidRef tests handling of invalid references
-func TestDatasourceOutputSchemaInvalidRef(t *testing.T) {
-	jsonData := `{
-		"identity": {
-			"author": "test_author",
-			"name": "test_datasource",
-			"label": {"en_US": "Test Datasource"}
-		},
-		"parameters": [],
-		"description": {"en_US": "Test datasource"},
-		"output_schema": {
-			"type": "object",
-			"properties": {
-				"bad_ref": {"$ref": "#/$defs/does_not_exist"}
-			}
-		}
-	}`
-
-	_, err := parser.UnmarshalJsonBytes[DatasourceDeclaration]([]byte(jsonData))
-	if err == nil {
-		t.Error("Should fail with non-existent $ref")
-	}
-	if !strings.Contains(err.Error(), "does_not_exist") {
-		t.Errorf("Error should mention the non-existent reference, got: %v", err)
-	}
-}
 
 // TestDatasourceParameterValidation tests parameter validation
 func TestDatasourceParameterValidation(t *testing.T) {
