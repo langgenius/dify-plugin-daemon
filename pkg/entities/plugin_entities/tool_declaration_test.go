@@ -451,8 +451,8 @@ func TestWithoutAuthorToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
@@ -510,8 +510,8 @@ func TestWithoutNameToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
@@ -564,8 +564,8 @@ func TestWithoutDescriptionToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
@@ -623,8 +623,8 @@ func TestWrongCredentialTypeToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
@@ -682,8 +682,8 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
@@ -753,8 +753,8 @@ func TestWrongToolParameterTypeToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
@@ -824,13 +824,70 @@ func TestWrongToolParameterFormToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 }
 
+func TestJSONSchemaTypeToolProvider_Validate(t *testing.T) {
+	const data = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description",
+			"zh_Hans": "描述",
+			"pt_BR": "descrição"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label",
+			"zh_Hans": "标签",
+			"pt_BR": "etiqueta"
+		},
+		"tags": []
+	},
+	"credentials_schema": [],
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label",
+					"zh_Hans": "标签",
+					"pt_BR": "etiqueta"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description",
+					"zh_Hans": "描述",
+					"pt_BR": "descrição"
+				},
+				"llm": "description"
+			},
+			"output_schema": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	]
+}
+	`
 
+	_, err := UnmarshalToolProviderDeclaration([]byte(data))
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
+		return
+	}
+}
 
 func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 	const data = `
@@ -922,8 +979,8 @@ func TestWrongAppSelectorScopeToolProvider_Validate(t *testing.T) {
 	`
 
 	_, err := UnmarshalToolProviderDeclaration([]byte(data))
-	if err != nil {
-		t.Errorf("UnmarshalToolProviderConfiguration() should succeed now, error = %v", err)
+	if err == nil {
+		t.Errorf("UnmarshalToolProviderConfiguration() error = %v, wantErr %v", err, true)
 		return
 	}
 
@@ -1060,7 +1117,6 @@ func TestParameterScope_Validate(t *testing.T) {
 	}
 }
 
-
 func TestToolName_Validate(t *testing.T) {
 	data := parser.MarshalJsonBytes(ToolProviderIdentity{
 		Author: "author",
@@ -1119,7 +1175,3 @@ func TestToolName_Validate(t *testing.T) {
 		t.Errorf("TestToolName_Validate() error = %v", err)
 	}
 }
-
-
-
-
