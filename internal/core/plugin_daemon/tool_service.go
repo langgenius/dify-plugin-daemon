@@ -2,6 +2,7 @@ package plugin_daemon
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -58,6 +59,7 @@ func bindToolValidator(
 ) {
 	// check if the tool_output_schema is valid
 	variables := make(map[string]any)
+	var mu sync.RWMutex
 
 	response.Filter(func(trc tool_entities.ToolResponseChunk) error {
 		if trc.Type == tool_entities.ToolResponseChunkTypeVariable {
@@ -69,6 +71,9 @@ func bindToolValidator(
 			if !ok {
 				return errors.New("stream is not a boolean")
 			}
+
+			mu.Lock()
+			defer mu.Unlock()
 
 			if stream {
 				// ensure variable_value is a string
@@ -105,8 +110,16 @@ func bindToolValidator(
 			return
 		}
 
+		// Create a copy of variables for validation to avoid concurrent access
+		mu.RLock()
+		variablesCopy := make(map[string]any)
+		for k, v := range variables {
+			variablesCopy[k] = v
+		}
+		mu.RUnlock()
+
 		// validate the variables
-		result, err := schema.Validate(gojsonschema.NewGoLoader(variables))
+		result, err := schema.Validate(gojsonschema.NewGoLoader(variablesCopy))
 		if err != nil {
 			response.WriteError(err)
 			return
