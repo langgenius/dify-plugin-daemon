@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755946591628,
+  "lastUpdate": 1756211952000,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7416,6 +7416,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "975150644 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b286be778ea05f357a1caef27fd2fdb851e36619",
+          "message": "chore: remove JSON schema validation from tool and agent services (#430)\n\n* chore: remove JSON schema validation from tool and agent services\n\n- Remove bindAgentStrategyValidator and bindToolValidator functions\n- Remove gojsonschema dependency\n- Simplify InvokeAgentStrategy by removing validation logic\n- Consolidate tool invocation into generated code\n- Remove redundant tool_service.go and related test files\n- Move InvokeTool to generated files for consistency\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n\n* fix: remove duplicated routes\n\n---------\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2025-08-26T20:36:25+08:00",
+          "tree_id": "f9388f9220fb5dfbc661d06ca9a9df8ab9005cb3",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b286be778ea05f357a1caef27fd2fdb851e36619"
+        },
+        "date": 1756211951574,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139310020,
+            "unit": "ns/op\t 1569421 B/op\t   27516 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139310020,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569421,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27516,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.26,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "997509908 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.26,
+            "unit": "ns/op",
+            "extra": "997509908 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "997509908 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "997509908 times\n4 procs"
           }
         ]
       }
