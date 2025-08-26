@@ -12,7 +12,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
-	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -145,60 +144,32 @@ type ToolDescription struct {
 
 type ToolOutputSchema map[string]any
 
+// UnmarshalYAML handles YAML unmarshaling
+func (t *ToolOutputSchema) UnmarshalYAML(value *yaml.Node) error {
+	var rawData map[string]any
+	if err := value.Decode(&rawData); err != nil {
+		return err
+	}
+	*t = ToolOutputSchema(rawData)
+	return nil
+}
+
+// UnmarshalJSON handles JSON unmarshaling
+func (t *ToolOutputSchema) UnmarshalJSON(data []byte) error {
+	var temp map[string]any
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	*t = ToolOutputSchema(temp)
+	return nil
+}
+
 type ToolDeclaration struct {
 	Identity             ToolIdentity     `json:"identity" yaml:"identity" validate:"required"`
 	Description          ToolDescription  `json:"description" yaml:"description" validate:"required"`
 	Parameters           []ToolParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	OutputSchema         ToolOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
+	OutputSchema         ToolOutputSchema `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 	HasRuntimeParameters bool             `json:"has_runtime_parameters" yaml:"has_runtime_parameters"`
-}
-
-func isJSONSchema(fl validator.FieldLevel) bool {
-	// get schema from interface
-	schemaMapInf := fl.Field().Interface()
-	// convert to map[string]any
-	var schemaMap map[string]any
-	toolSchemaMap, ok := schemaMapInf.(ToolOutputSchema)
-	if !ok {
-		agentSchemaMap, ok := schemaMapInf.(AgentStrategyOutputSchema)
-		if !ok {
-			return false
-		}
-		schemaMap = agentSchemaMap
-	} else {
-		schemaMap = toolSchemaMap
-	}
-
-	// validate root schema must be object type
-	rootType, ok := schemaMap["type"].(string)
-	if !ok || rootType != "object" {
-		return false
-	}
-
-	// validate properties
-	properties, ok := schemaMap["properties"].(map[string]any)
-	if !ok {
-		return false
-	}
-
-	// disallow text, json, files as property names
-	disallowedProps := []string{"text", "json", "files"}
-	for _, prop := range disallowedProps {
-		if _, exists := properties[prop]; exists {
-			return false
-		}
-	}
-
-	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(fl.Field().Interface()))
-	if err != nil {
-		return false
-	}
-
-	return err == nil
-}
-
-func init() {
-	validators.GlobalEntitiesValidator.RegisterValidation("json_schema", isJSONSchema)
 }
 
 type ToolProviderIdentity struct {

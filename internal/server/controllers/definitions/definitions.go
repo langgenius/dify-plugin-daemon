@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/datasource_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/dynamic_select_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/oauth_entities"
@@ -245,5 +246,71 @@ var PluginDispatchers = []PluginDispatcher{
 		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS",
 		BufferSize:         1,
 		Path:               "/dynamic_select/fetch_parameter_options",
+	},
+	{
+		Name:               "DatasourceValidateCredentials",
+		RequestType:        requests.RequestValidateDatasourceCredentials{},
+		ResponseType:       datasource_entities.DataSourceValidateCredentialsResponse{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS",
+		BufferSize:         1,
+		Path:               "/datasource/validate_credentials",
+	},
+	{
+		Name:               "DatasourceGetWebsiteCrawl",
+		RequestType:        requests.RequestDatasourceGetWebsiteCrawl{},
+		ResponseType:       datasource_entities.WebsiteCrawlChunk{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL",
+		BufferSize:         1,
+		Path:               "/datasource/get_website_crawl",
+	},
+	{
+		Name:               "DatasourceGetOnlineDocumentPages",
+		RequestType:        requests.RequestDatasourceGetOnlineDocumentPages{},
+		ResponseType:       datasource_entities.DatasourceGetPagesResponse{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES",
+		BufferSize:         1,
+		Path:               "/datasource/get_online_document_pages",
+	},
+	{
+		Name:               "DatasourceGetOnlineDocumentPageContent",
+		RequestType:        requests.RequestInvokeOnlineDocumentDatasourceGetContent{},
+		ResponseType:       datasource_entities.DataSourceResponseChunk{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT",
+		BufferSize:         1,
+		Path:               "/datasource/get_online_document_page_content",
+	},
+	{
+		Name:               "DatasourceOnlineDriveBrowseFiles",
+		RequestType:        requests.DatasourceOnlineDriveBrowseFilesRequest{},
+		ResponseType:       datasource_entities.GetOnlineDriveBrowseFilesResponse{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_BROWSE_FILES,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_BROWSE_FILES",
+		BufferSize:         1,
+		Path:               "/datasource/online_drive_browse_files",
+	},
+	{
+		Name:               "DatasourceOnlineDriveDownloadFile",
+		RequestType:        requests.DatasourceOnlineDriveDownloadFileRequest{},
+		ResponseType:       datasource_entities.DataSourceResponseChunk{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_DOWNLOAD_FILE,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_DATASOURCE",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_DOWNLOAD_FILE",
+		BufferSize:         1,
+		Path:               "/datasource/online_drive_download_file",
 	},
 }

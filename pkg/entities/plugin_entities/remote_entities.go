@@ -17,6 +17,7 @@ const (
 	REGISTER_EVENT_TYPE_MODEL_DECLARATION          RemotePluginRegisterEventType = "model_declaration"
 	REGISTER_EVENT_TYPE_ENDPOINT_DECLARATION       RemotePluginRegisterEventType = "endpoint_declaration"
 	REGISTER_EVENT_TYPE_AGENT_STRATEGY_DECLARATION RemotePluginRegisterEventType = "agent_strategy_declaration"
+	REGISTER_EVENT_TYPE_DATASOURCE_DECLARATION     RemotePluginRegisterEventType = "datasource_declaration"
 	REGISTER_EVENT_TYPE_END                        RemotePluginRegisterEventType = "end"
 )
 

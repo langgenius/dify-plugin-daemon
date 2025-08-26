@@ -166,6 +166,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
+	group.GET("/datasources", controllers.ListDatasources)
+	group.GET("/datasource", controllers.GetDatasource)
 }
 
 func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
