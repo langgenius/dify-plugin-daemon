@@ -99,7 +99,6 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 
-	group.POST("/tool/invoke", controllers.InvokeTool(config))
 	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
 
 	app.setupGeneratedRoutes(group, config)
