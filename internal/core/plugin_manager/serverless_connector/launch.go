@@ -6,6 +6,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
@@ -16,6 +17,7 @@ var (
 // LaunchPlugin uploads the plugin to specific serverless connector
 // return the function url and name
 func LaunchPlugin(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	originPackage []byte,
 	decoder decoder.PluginDecoder,
 	timeout int, // in seconds
@@ -63,7 +65,7 @@ func LaunchPlugin(
 		}
 	}
 
-	response, err := SetupFunction(manifest, checksum, bytes.NewReader(originPackage), timeout)
+	response, err := SetupFunction(pluginUniqueIdentifier, manifest, checksum, bytes.NewReader(originPackage), timeout)
 	if err != nil {
 		return nil, err
 	}

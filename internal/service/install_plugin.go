@@ -361,7 +361,7 @@ func ReinstallPluginFromIdentifier(
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to create zip decoder"))
 		}
-		stream, err := manager.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
+		stream, err := manager.ReinstallToServerlessFromPkg(pluginUniqueIdentifier, pkgFile, zipDecoder)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to reinstall plugin"))
 		}

@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
@@ -35,7 +36,7 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 	}
 
 	// serverless.LaunchPlugin will check if the plugin has already been launched, if so, it returns directly
-	response, err := serverless.LaunchPlugin(originalPackager, decoder, p.config.DifyPluginServerlessConnectorLaunchTimeout, false)
+	response, err := serverless.LaunchPlugin(uniqueIdentity, originalPackager, decoder, p.config.DifyPluginServerlessConnectorLaunchTimeout, false)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +126,7 @@ func (p *PluginManager) InstallToServerlessFromPkg(
  * Reinstall a plugin to Serverless, update function url and name
  */
 func (p *PluginManager) ReinstallToServerlessFromPkg(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	originalPackager []byte,
 	decoder decoder.PluginDecoder,
 ) (
@@ -156,6 +158,7 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 	}
 
 	response, err := serverless.LaunchPlugin(
+		pluginUniqueIdentifier,
 		originalPackager,
 		decoder,
 		p.config.DifyPluginServerlessConnectorLaunchTimeout,
