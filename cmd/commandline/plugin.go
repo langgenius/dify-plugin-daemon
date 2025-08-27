@@ -172,50 +172,6 @@ If no parameters are provided, an interactive mode will be started.`,
 		},
 	}
 
-	// NOTE: tester is deprecated, maybe, in several months, we will support this again
-	// pluginTestCommand = &cobra.Command{
-	// 	Use:   "test [-i inputs] [-t timeout] package_path invoke_type invoke_action",
-	// 	Short: "",
-	// 	Long: "Test runs the given plugin package locally, and you can specify the inputs using json format, if not specified, will use default inputs\n" +
-	// 		"type: invoke type, available values: \n" +
-	// 		"[\n" +
-	// 		"	tool, model, endpoint\n" +
-	// 		"]\n" +
-	// 		"action: invoke action, available values: \n" +
-	// 		"[\n" +
-	// 		"	invoke_tool, validate_tool_credentials, \n" +
-	// 		"	invoke_endpoint\n" +
-	// 		"	invoke_llm, invoke_text_embedding, invoke_rerank, invoke_tts, invoke_speech2text, invoke_moderation, \n" +
-	// 		"	validate_provider_credentials, validate_model_credentials, get_tts_model_voices, \n" +
-	// 		"	get_text_embedding_num_tokens, get_ai_model_schemas, get_llm_num_tokens\n" +
-	// 		"]\n",
-	// 	Run: func(cmd *cobra.Command, args []string) {
-	// 		if len(args) < 3 {
-	// 			log.Error("invalid args, please specify package_path, invoke_type, invoke_action")
-	// 			return
-	// 		}
-	// 		// get package path
-	// 		package_path_str := args[0]
-	// 		// get invoke type
-	// 		invoke_type_str := args[1]
-	// 		// get invoke action
-	// 		invoke_action_str := args[2]
-	// 		// get inputs if specified
-	// 		inputs := map[string]any{}
-	// 		if cmd.Flag("inputs") != nil {
-	// 			inputs_str := cmd.Flag("inputs").Value.String()
-	// 			err := json.Unmarshal([]byte(inputs_str), &inputs)
-	// 			if err != nil {
-	// 				log.Error("failed to unmarshal inputs, inputs: %s, error: %v", inputs_str, err)
-	// 				return
-	// 			}
-	// 		}
-	// 		// parse flag
-	// 		timeout := ""
-	// 		if cmd.Flag("timeout") != nil {
-	// 			timeout = cmd.Flag("timeout").Value.String()
-	// 		}
-
 )
 
 func init() {
