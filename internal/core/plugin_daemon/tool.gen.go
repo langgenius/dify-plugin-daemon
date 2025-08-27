@@ -9,6 +9,19 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
 )
 
+func InvokeTool(
+	session *session_manager.Session,
+	request *requests.RequestInvokeTool,
+) (
+	*stream.Stream[tool_entities.ToolResponseChunk], error,
+) {
+	return GenericInvokePlugin[requests.RequestInvokeTool, tool_entities.ToolResponseChunk](
+		session,
+		request,
+		1024,
+	)
+}
+
 func ValidateToolCredentials(
 	session *session_manager.Session,
 	request *requests.RequestValidateToolCredentials,

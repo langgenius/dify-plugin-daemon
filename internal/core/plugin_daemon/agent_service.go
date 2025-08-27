@@ -9,10 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/agent_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
-	"github.com/xeipuuv/gojsonschema"
 )
 
 func InvokeAgentStrategy(
@@ -36,26 +34,12 @@ func InvokeAgentStrategy(
 		return nil, err
 	}
 
-	agentStrategyDeclaration := runtime.Configuration().AgentStrategy
-	if agentStrategyDeclaration == nil {
-		return nil, errors.New("agent declaration not found")
-	}
-
-	var agentStrategyOutputSchema plugin_entities.AgentStrategyOutputSchema
-	for _, v := range agentStrategyDeclaration.Strategies {
-		if v.Identity.Name == r.AgentStrategy {
-			agentStrategyOutputSchema = v.OutputSchema
-		}
-	}
-
 	newResponse := stream.NewStream[agent_entities.AgentStrategyResponseChunk](128)
+	files := make(map[string]*bytes.Buffer)
+
 	routine.Submit(map[string]string{
-		"module":                  "plugin_daemon",
-		"function":                "InvokeAgentStrategy",
-		"agent_strategy_name":     r.AgentStrategy,
-		"agent_strategy_provider": r.AgentStrategyProvider,
+		"agent_service": "invoke_agent_strategy",
 	}, func() {
-		files := make(map[string]*bytes.Buffer)
 		defer newResponse.Close()
 
 		for response.Next() {
@@ -130,76 +114,5 @@ func InvokeAgentStrategy(
 		}
 	})
 
-	// bind json schema validator
-	bindAgentStrategyValidator(response, agentStrategyOutputSchema)
-
 	return newResponse, nil
-}
-
-// TODO: reduce implementation of bindAgentValidator, it's a copy of bindToolValidator now
-func bindAgentStrategyValidator(
-	response *stream.Stream[agent_entities.AgentStrategyResponseChunk],
-	agentStrategyOutputSchema plugin_entities.AgentStrategyOutputSchema,
-) {
-	// check if the tool_output_schema is valid
-	variables := make(map[string]any)
-
-	response.Filter(func(trc agent_entities.AgentStrategyResponseChunk) error {
-		if trc.Type == tool_entities.ToolResponseChunkTypeVariable {
-			variableName, ok := trc.Message["variable_name"].(string)
-			if !ok {
-				return errors.New("variable name is not a string")
-			}
-			stream, ok := trc.Message["stream"].(bool)
-			if !ok {
-				return errors.New("stream is not a boolean")
-			}
-
-			if stream {
-				// ensure variable_value is a string
-				variableValue, ok := trc.Message["variable_value"].(string)
-				if !ok {
-					return errors.New("variable value is not a string")
-				}
-
-				// create it if not exists
-				if _, ok := variables[variableName]; !ok {
-					variables[variableName] = ""
-				}
-
-				originalValue, ok := variables[variableName].(string)
-				if !ok {
-					return errors.New("variable value is not a string")
-				}
-
-				// add the variable value to the variable
-				variables[variableName] = originalValue + variableValue
-			} else {
-				variables[variableName] = trc.Message["variable_value"]
-			}
-		}
-
-		return nil
-	})
-
-	response.BeforeClose(func() {
-		// validate the variables
-		schema, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(agentStrategyOutputSchema))
-		if err != nil {
-			response.WriteError(err)
-			return
-		}
-
-		// validate the variables
-		result, err := schema.Validate(gojsonschema.NewGoLoader(variables))
-		if err != nil {
-			response.WriteError(err)
-			return
-		}
-
-		if !result.Valid() {
-			response.WriteError(errors.New("tool output schema is not valid"))
-			return
-		}
-	})
 }
