@@ -21,6 +21,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -227,10 +229,14 @@ func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 }
 
 func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-
-	if err := install_service.DisabledEndpoint(endpoint_id, tenant_id); err != nil {
+	endpoint, err := install_service.DisabledEndpoint(endpoint_id, tenant_id)
+	if err != nil {
 		return exception.InternalServerError(errors.New("failed to disable endpoint")).ToResponse()
 	}
+
+	// invalidate endpoint cache
+	endpointCacheKey := helper.EndpointCacheKey(endpoint.HookID)
+	_, _ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
 
 	return entities.NewSuccessResponse(true)
 }

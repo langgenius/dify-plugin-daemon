@@ -2,9 +2,6 @@ package curd
 
 import (
 	"errors"
-	"strings"
-
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -188,18 +185,6 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenantId),
 	)
 
-	pluginInstallationCacheKey := strings.Join(
-		[]string{
-			"plugin_id",
-			pluginUniqueIdentifier.PluginID(),
-			"tenant_id",
-			tenantId,
-		},
-		":",
-	)
-
-	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
-
 	if err != nil {
 		if err == db.ErrDatabaseNotFound {
 			return nil, errors.New("plugin has not been installed")
@@ -298,6 +283,7 @@ func UninstallPlugin(
 	if err != nil {
 		return nil, err
 	}
+
 
 	return &DeletePluginResponse{
 		Plugin:          pluginToBeReturns,
@@ -506,6 +492,7 @@ func UpgradePlugin(
 	if err != nil {
 		return nil, err
 	}
+
 
 	return &response, nil
 }
