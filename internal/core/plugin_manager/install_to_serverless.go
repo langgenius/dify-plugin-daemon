@@ -8,7 +8,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
@@ -126,7 +125,6 @@ func (p *PluginManager) InstallToAWSFromPkg(
  * Reinstall a plugin to AWS Lambda, update function url and name
  */
 func (p *PluginManager) ReinstallToAWSFromPkg(
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	originalPackager []byte,
 	decoder decoder.PluginDecoder,
 ) (
@@ -158,7 +156,7 @@ func (p *PluginManager) ReinstallToAWSFromPkg(
 	}
 
 	response, err := serverless.LaunchPlugin(
-		pluginUniqueIdentifier,
+		uniqueIdentity,
 		originalPackager,
 		decoder,
 		p.config.DifyPluginServerlessConnectorLaunchTimeout,

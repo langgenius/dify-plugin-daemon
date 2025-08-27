@@ -360,7 +360,7 @@ func ReinstallPluginFromIdentifier(
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to create zip decoder"))
 		}
-		stream, err := manager.ReinstallToAWSFromPkg(pluginUniqueIdentifier, pkgFile, zipDecoder)
+		stream, err := manager.ReinstallToAWSFromPkg(pkgFile, zipDecoder)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to reinstall plugin"))
 		}
