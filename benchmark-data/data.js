@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1756275564549,
+  "lastUpdate": 1756275575608,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7632,6 +7632,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "966277957 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "37723456+Blackoutta@users.noreply.github.com",
+            "name": "Blackoutta",
+            "username": "Blackoutta"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b86f12fbaac0f70a177dd13ac5a86ae64d09db44",
+          "message": "Add Redis caching to FetchPluginInstallation middleware for performance optimization (#400)\n\n* add caching to fetch plugin installation middleware\n\n* invalidate plugin inst cache after successfully upgrading or uninstalling operations\n\n* optimize: refactored cache invalidation ops from curd layer to service layer\n\n---------\n\nCo-authored-by: yangyi.hu593671 <yangyi.hu593671@seres.cn>",
+          "timestamp": "2025-08-27T14:16:52+08:00",
+          "tree_id": "635630d8b72d2d0bbc409bb1e845f2270bd365b8",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b86f12fbaac0f70a177dd13ac5a86ae64d09db44"
+        },
+        "date": 1756275575203,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138504316,
+            "unit": "ns/op\t 1569367 B/op\t   27517 allocs/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138504316,
+            "unit": "ns/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569367,
+            "unit": "B/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.07,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "946082406 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.07,
+            "unit": "ns/op",
+            "extra": "946082406 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "946082406 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "946082406 times\n4 procs"
           }
         ]
       }
