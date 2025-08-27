@@ -76,6 +76,23 @@ uses docker volume to share the directory with the host machine, it's better for
 
 For now, Daemon community edition does not support smoothly scale out with the number of replicas, If you are interested in this feature, please contact us. we have a more production-ready version for enterprise users.
 
+## Documentation
+
+### Development Guide
+
+For developers working on this codebase, see our comprehensive development documentation:
+
+- **[CLAUDE.md](CLAUDE.md)** - Main development guide with architecture, code style, and setup
+- **[Database Operations](docs/claude/database.md)** - Query builder patterns, models, and transactions
+- **[Cache Operations](docs/claude/cache.md)** - Redis caching, pub/sub, and distributed locks
+- **[Stream Operations](docs/claude/stream.md)** - Async streaming patterns and SSE handling
+- **[Generic Types](docs/claude/generics.md)** - Type-safe patterns used throughout the codebase
+- **[HTTP Requests](docs/claude/http-requests.md)** - HTTP client utilities and request handling
+
+### Runtime Documentation
+
+- **[SRI Docs](docs/runtime/sri.md)** - Serverless Runtime Interface documentation
+
 ## Benchmark
 
 Refer to [Benchmark](https://langgenius.github.io/dify-plugin-daemon/benchmark-data/)
