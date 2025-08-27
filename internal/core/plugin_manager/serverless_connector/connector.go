@@ -1,6 +1,7 @@
 package serverless
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -105,12 +106,20 @@ type LaunchFunctionResponse struct {
 // and build it a docker image, then run it on serverless platform like AWS Lambda
 // it returns a event stream, the caller should consider it as a async operation
 func SetupFunction(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	manifest plugin_entities.PluginDeclaration,
 	checksum string,
 	context io.Reader,
 	timeout int, // in seconds
 ) (*stream.Stream[LaunchFunctionResponse], error) {
 	url, err := url.JoinPath(baseurl.String(), "/v1/launch")
+	if err != nil {
+		return nil, err
+	}
+
+	metadata, err := json.Marshal(map[string]string{
+		"plugin_unique_identifier": pluginUniqueIdentifier.String(),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +141,7 @@ func SetupFunction(
 					}
 					return "false"
 				}(),
+				"metadata": string(metadata),
 			},
 			map[string]http_requests.HttpPayloadMultipartFile{
 				"context": {
