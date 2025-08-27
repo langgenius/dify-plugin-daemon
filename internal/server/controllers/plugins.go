@@ -276,3 +276,19 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 		c.JSON(http.StatusOK, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
 	})
 }
+
+func ExtractPluginAsset(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string                                 `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `uri:"plugin_unique_identifier" validate:"required"`
+		FilePath               string                                 `uri:"file_path" validate:"required"`
+	}) {
+		manager := plugin_manager.Manager()
+		asset, err := manager.ExtractPluginAsset(request.PluginUniqueIdentifier, request.FilePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, exception.InternalServerError(err).ToResponse())
+			return
+		}
+		c.Data(http.StatusOK, "application/octet-stream", asset)
+	})
+}

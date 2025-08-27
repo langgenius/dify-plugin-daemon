@@ -175,6 +175,7 @@ func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
 	group.GET("/:id", controllers.GetAsset)
+	group.GET("/extract", controllers.ExtractPluginAsset)
 }
 
 func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
