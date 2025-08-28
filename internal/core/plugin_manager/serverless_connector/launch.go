@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	AWS_LAUNCH_LOCK_PREFIX = "aws_launch_lock_"
+	SERVERLESS_LAUNCH_LOCK_PREFIX = "serverless_launch_lock_"
 )
 
 // LaunchPlugin uploads the plugin to specific serverless connector
@@ -27,10 +27,10 @@ func LaunchPlugin(
 	}
 
 	// check if the plugin has already been initialized, at most 300s
-	if err := cache.Lock(AWS_LAUNCH_LOCK_PREFIX+checksum, 300*time.Second, 300*time.Second); err != nil {
+	if err := cache.Lock(SERVERLESS_LAUNCH_LOCK_PREFIX+checksum, 300*time.Second, 300*time.Second); err != nil {
 		return nil, err
 	}
-	defer cache.Unlock(AWS_LAUNCH_LOCK_PREFIX + checksum)
+	defer cache.Unlock(SERVERLESS_LAUNCH_LOCK_PREFIX + checksum)
 
 	manifest, err := decoder.Manifest()
 	if err != nil {

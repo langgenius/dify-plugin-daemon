@@ -215,7 +215,7 @@ func InstallPluginRuntimeToTenant(
 					})
 					return
 				}
-				stream, err = manager.InstallToAWSFromPkg(pkgFile, zipDecoder, source, metas[i])
+				stream, err = manager.InstallToServerlessFromPkg(pkgFile, zipDecoder, source, metas[i])
 			} else if config.Platform == app.PLATFORM_LOCAL {
 				stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, metas[i])
 			} else {
@@ -360,7 +360,7 @@ func ReinstallPluginFromIdentifier(
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to create zip decoder"))
 		}
-		stream, err := manager.ReinstallToAWSFromPkg(pkgFile, zipDecoder)
+		stream, err := manager.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to reinstall plugin"))
 		}

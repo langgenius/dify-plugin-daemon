@@ -5,7 +5,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 )
 
-func HandleAWSPluginTransaction(handler *transaction.AWSTransactionHandler) gin.HandlerFunc {
+func HandleServerlessPluginTransaction(handler *transaction.ServerlessTransactionHandler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get session id from the context
 		sessionId := c.Request.Header.Get("Dify-Plugin-Session-ID")
