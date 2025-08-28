@@ -11,8 +11,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
-// InstallToAWSFromPkg installs a plugin to AWS Lambda
-func (p *PluginManager) InstallToAWSFromPkg(
+// InstallToServerlessFromPkg installs a plugin to Serverless
+func (p *PluginManager) InstallToServerlessFromPkg(
 	originalPackager []byte,
 	decoder decoder.PluginDecoder,
 	source string,
@@ -43,7 +43,7 @@ func (p *PluginManager) InstallToAWSFromPkg(
 	newResponse := stream.NewStream[PluginInstallResponse](128)
 	routine.Submit(map[string]string{
 		"module":          "plugin_manager",
-		"function":        "InstallToAWSFromPkg",
+		"function":        "InstallToServerlessFromPkg",
 		"checksum":        checksum,
 		"unique_identity": uniqueIdentity.String(),
 		"source":          source,
@@ -122,9 +122,9 @@ func (p *PluginManager) InstallToAWSFromPkg(
 }
 
 /*
- * Reinstall a plugin to AWS Lambda, update function url and name
+ * Reinstall a plugin to Serverless, update function url and name
  */
-func (p *PluginManager) ReinstallToAWSFromPkg(
+func (p *PluginManager) ReinstallToServerlessFromPkg(
 	originalPackager []byte,
 	decoder decoder.PluginDecoder,
 ) (
@@ -168,7 +168,7 @@ func (p *PluginManager) ReinstallToAWSFromPkg(
 	newResponse := stream.NewStream[PluginInstallResponse](128)
 	routine.Submit(map[string]string{
 		"module":          "plugin_manager",
-		"function":        "ReinstallToAWSFromPkg",
+		"function":        "ReinstallToServerlessFromPkg",
 		"checksum":        checksum,
 		"unique_identity": uniqueIdentity.String(),
 	}, func() {

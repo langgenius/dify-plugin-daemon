@@ -15,17 +15,17 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-type AWSTransactionHandler struct {
+type ServerlessTransactionHandler struct {
 	maxTimeout time.Duration
 }
 
-func NewAWSTransactionHandler(maxTimeout time.Duration) *AWSTransactionHandler {
-	return &AWSTransactionHandler{
+func NewServerlessTransactionHandler(maxTimeout time.Duration) *ServerlessTransactionHandler {
+	return &ServerlessTransactionHandler{
 		maxTimeout: maxTimeout,
 	}
 }
 
-type awsTransactionWriteCloser struct {
+type serverlessTransactionWriteCloser struct {
 	done   chan bool
 	closed int32
 
@@ -33,26 +33,26 @@ type awsTransactionWriteCloser struct {
 	flush  func()
 }
 
-func (a *awsTransactionWriteCloser) Write(data []byte) (int, error) {
+func (a *serverlessTransactionWriteCloser) Write(data []byte) (int, error) {
 	return a.writer(data)
 }
 
-func (a *awsTransactionWriteCloser) Flush() {
+func (a *serverlessTransactionWriteCloser) Flush() {
 	a.flush()
 }
 
-func (w *awsTransactionWriteCloser) Close() error {
+func (w *serverlessTransactionWriteCloser) Close() error {
 	if atomic.CompareAndSwapInt32(&w.closed, 0, 1) {
 		close(w.done)
 	}
 	return nil
 }
 
-func (h *AWSTransactionHandler) Handle(
+func (h *ServerlessTransactionHandler) Handle(
 	ctx *gin.Context,
 	session_id string,
 ) {
-	writer := &awsTransactionWriteCloser{
+	writer := &serverlessTransactionWriteCloser{
 		writer: ctx.Writer.Write,
 		flush:  ctx.Writer.Flush,
 		done:   make(chan bool),
@@ -88,7 +88,7 @@ func (h *AWSTransactionHandler) Handle(
 			})
 
 			if err != nil {
-				ctx.Writer.WriteHeader(http.StatusInternalServerError)
+				ctx.Writer.WriteHeader(http.StatusBadRequest)
 				ctx.Writer.Write([]byte(err.Error()))
 				writer.Close()
 				return
@@ -98,13 +98,13 @@ func (h *AWSTransactionHandler) Handle(
 			plugin_manager := plugin_manager.Manager()
 			session.BindBackwardsInvocation(plugin_manager.BackwardsInvocation())
 
-			awsResponseWriter := NewAWSTransactionWriter(session, writer)
+			serverlessResponseWriter := NewServerlessTransactionWriter(session, writer)
 
 			if err := backwards_invocation.InvokeDify(
 				session.Declaration,
 				session.InvokeFrom,
 				session,
-				awsResponseWriter,
+				serverlessResponseWriter,
 				sessionMessage.Data,
 			); err != nil {
 				ctx.Writer.WriteHeader(http.StatusInternalServerError)
