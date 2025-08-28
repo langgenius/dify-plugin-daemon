@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1756275575608,
+  "lastUpdate": 1756376837010,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7704,6 +7704,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "946082406 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "604da5d495eb42280077c9039dc1abbbad46a454",
+          "message": "refactor: rename AWS references to Serverless in plugin daemon (#437)\n\n- Updated AWS-related types and functions to reflect Serverless terminology, including renaming `AWSTransactionHandler` to `ServerlessTransactionHandler` and `AWSTransactionWriter` to `ServerlessTransactionWriter`.\n- Adjusted error messages and comments to align with the new naming conventions.\n- Modified installation functions to use Serverless terminology for clarity and consistency across the codebase.",
+          "timestamp": "2025-08-28T18:24:22+08:00",
+          "tree_id": "93e7dea29a0988d46ac13dc06f749f60a12ae632",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/604da5d495eb42280077c9039dc1abbbad46a454"
+        },
+        "date": 1756376836560,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 136749625,
+            "unit": "ns/op\t 1569755 B/op\t   27517 allocs/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 136749625,
+            "unit": "ns/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569755,
+            "unit": "B/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.51,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "973396792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.51,
+            "unit": "ns/op",
+            "extra": "973396792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "973396792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "973396792 times\n4 procs"
           }
         ]
       }
