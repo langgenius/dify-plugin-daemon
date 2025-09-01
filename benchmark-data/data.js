@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1756376837010,
+  "lastUpdate": 1756704329764,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -7776,6 +7776,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "973396792 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "anatolii@clearhavencm.com",
+            "name": "toli-ch",
+            "username": "toli-ch"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "880dc703453d2ea503bb38d8c1696cfea9dd26ba",
+          "message": "Fix OS and architecture detection for Windows (#432)",
+          "timestamp": "2025-09-01T13:21:29+08:00",
+          "tree_id": "98a3583ca23297f52e25513875761d8a106008d7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/880dc703453d2ea503bb38d8c1696cfea9dd26ba"
+        },
+        "date": 1756704329199,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141628345,
+            "unit": "ns/op\t 1569289 B/op\t   27517 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141628345,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569289,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.87,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "943166908 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.87,
+            "unit": "ns/op",
+            "extra": "943166908 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "943166908 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "943166908 times\n4 procs"
           }
         ]
       }
