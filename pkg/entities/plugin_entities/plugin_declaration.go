@@ -20,6 +20,7 @@ const (
 	PLUGIN_CATEGORY_MODEL          PluginCategory = "model"
 	PLUGIN_CATEGORY_EXTENSION      PluginCategory = "extension"
 	PLUGIN_CATEGORY_AGENT_STRATEGY PluginCategory = "agent-strategy"
+	PLUGIN_CATEGORY_TRIGGER        PluginCategory = "trigger"
 )
 
 type PluginPermissionRequirement struct {
@@ -137,6 +138,7 @@ type PluginExtensions struct {
 	Models          []string `json:"models" yaml:"models,omitempty" validate:"omitempty,dive,max=128"`
 	Endpoints       []string `json:"endpoints" yaml:"endpoints,omitempty" validate:"omitempty,dive,max=128"`
 	AgentStrategies []string `json:"agent_strategies" yaml:"agent_strategies,omitempty" validate:"omitempty,dive,max=128"`
+	Triggers        []string `json:"triggers" yaml:"triggers,omitempty" validate:"omitempty,dive,max=128"`
 }
 
 type PluginDeclarationWithoutAdvancedFields struct {
@@ -183,6 +185,7 @@ type PluginDeclaration struct {
 	Model                                  *ModelProviderDeclaration         `json:"model,omitempty" yaml:"model,omitempty" validate:"omitempty"`
 	Tool                                   *ToolProviderDeclaration          `json:"tool,omitempty" yaml:"tool,omitempty" validate:"omitempty"`
 	AgentStrategy                          *AgentStrategyProviderDeclaration `json:"agent_strategy,omitempty" yaml:"agent_strategy,omitempty" validate:"omitempty"`
+	Trigger                                *TriggerProviderDeclaration       `json:"trigger,omitempty" yaml:"trigger,omitempty" validate:"omitempty"`
 }
 
 func (p *PluginDeclaration) Category() PluginCategory {
@@ -194,6 +197,9 @@ func (p *PluginDeclaration) Category() PluginCategory {
 	}
 	if p.AgentStrategy != nil || len(p.Plugins.AgentStrategies) != 0 {
 		return PLUGIN_CATEGORY_AGENT_STRATEGY
+	}
+	if p.Trigger != nil || len(p.Plugins.Triggers) != 0 {
+		return PLUGIN_CATEGORY_TRIGGER
 	}
 	return PLUGIN_CATEGORY_EXTENSION
 }
@@ -211,6 +217,7 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 		Model         *ModelProviderDeclaration         `json:"model,omitempty"`
 		Tool          *ToolProviderDeclaration          `json:"tool,omitempty"`
 		AgentStrategy *AgentStrategyProviderDeclaration `json:"agent_strategy,omitempty"`
+		Trigger       *TriggerProviderDeclaration       `json:"trigger,omitempty"`
 	}
 
 	var extra PluginExtra
@@ -223,6 +230,7 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 	p.Model = extra.Model
 	p.Tool = extra.Tool
 	p.AgentStrategy = extra.AgentStrategy
+	p.Trigger = extra.Trigger
 
 	return nil
 }
@@ -250,8 +258,8 @@ func (p *PluginDeclaration) Identity() string {
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {
-	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil {
-		return fmt.Errorf("at least one of endpoint, model, tool, or agent_strategy must be provided")
+	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil && p.Trigger == nil {
+		return fmt.Errorf("at least one of endpoint, model, tool, agent_strategy, or trigger must be provided")
 	}
 
 	if p.Model != nil && p.Tool != nil {
@@ -263,8 +271,14 @@ func (p *PluginDeclaration) ManifestValidate() error {
 	}
 
 	if p.AgentStrategy != nil {
+		if p.Tool != nil || p.Model != nil || p.Endpoint != nil || p.Trigger != nil {
+			return fmt.Errorf("agent_strategy and tool, model, endpoint, or trigger cannot be provided at the same time")
+		}
+	}
+
+	if p.Trigger != nil {
 		if p.Tool != nil || p.Model != nil || p.Endpoint != nil {
-			return fmt.Errorf("agent_strategy and tool, model, or endpoint cannot be provided at the same time")
+			return fmt.Errorf("trigger and tool, model, or endpoint cannot be provided at the same time")
 		}
 	}
 
@@ -286,6 +300,16 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 		if p.Model.Description == nil {
 			deepCopiedDescription := p.Description
 			p.Model.Description = &deepCopiedDescription
+		}
+	}
+
+	if p.Trigger != nil {
+		if p.Trigger.Identity.Description.EnUS == "" {
+			p.Trigger.Identity.Description = p.Description
+		}
+
+		if len(p.Trigger.Identity.Tags) == 0 {
+			p.Trigger.Identity.Tags = p.Tags
 		}
 	}
 

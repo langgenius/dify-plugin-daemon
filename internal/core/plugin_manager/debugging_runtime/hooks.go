@@ -275,7 +275,8 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			if !runtime.modelsRegistrationTransferred &&
 				!runtime.endpointsRegistrationTransferred &&
 				!runtime.toolsRegistrationTransferred &&
-				!runtime.agentStrategyRegistrationTransferred {
+				!runtime.agentStrategyRegistrationTransferred &&
+				!runtime.triggersRegistrationTransferred {
 				closeConn([]byte("no registration transferred, cannot initialize\n"))
 				return
 			}
@@ -421,6 +422,24 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			if len(agents) > 0 {
 				declaration := runtime.Config
 				declaration.AgentStrategy = &agents[0]
+				runtime.Config = declaration
+			}
+		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_TRIGGER_DECLARATION {
+			if runtime.triggersRegistrationTransferred {
+				return
+			}
+
+			triggers, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.TriggerProviderDeclaration](registerPayload.Data)
+			if err != nil {
+				closeConn([]byte(fmt.Sprintf("triggers register failed, invalid triggers declaration: %v\n", err)))
+				return
+			}
+
+			runtime.triggersRegistrationTransferred = true
+
+			if len(triggers) > 0 {
+				declaration := runtime.Config
+				declaration.Trigger = &triggers[0]
 				runtime.Config = declaration
 			}
 		}
