@@ -35,7 +35,7 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 	}
 
 	// serverless.LaunchPlugin will check if the plugin has already been launched, if so, it returns directly
-	response, err := serverless.LaunchPlugin(originalPackager, decoder, p.config.DifyPluginServerlessConnectorLaunchTimeout, false)
+	response, err := serverless.LaunchPlugin(uniqueIdentity, originalPackager, decoder, p.config.DifyPluginServerlessConnectorLaunchTimeout, false)
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +156,7 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 	}
 
 	response, err := serverless.LaunchPlugin(
+		uniqueIdentity,
 		originalPackager,
 		decoder,
 		p.config.DifyPluginServerlessConnectorLaunchTimeout,
