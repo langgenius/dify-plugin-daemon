@@ -81,12 +81,13 @@ type TriggerParameter struct {
 
 // TriggerProviderIdentity represents the identity of the trigger provider
 type TriggerProviderIdentity struct {
-	Author      string                        `json:"author" yaml:"author" validate:"required"`
-	Name        string                        `json:"name" yaml:"name" validate:"required,trigger_provider_identity_name"`
-	Label       I18nObject                    `json:"label" yaml:"label" validate:"required"`
-	Description I18nObject                    `json:"description" yaml:"description" validate:"required"`
-	Icon        *string                       `json:"icon,omitempty" yaml:"icon,omitempty"`
-	Tags        []manifest_entities.PluginTag `json:"tags" yaml:"tags" validate:"omitempty,dive,plugin_tag"`
+	Author      string                        `json:"author" validate:"required"`
+	Name        string                        `json:"name" validate:"required,tool_provider_identity_name"`
+	Description I18nObject                    `json:"description"`
+	Icon        string                        `json:"icon" validate:"required"`
+	IconDark    string                        `json:"icon_dark" validate:"omitempty"`
+	Label       I18nObject                    `json:"label" validate:"required"`
+	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
 }
 
 var triggerProviderIdentityNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
@@ -124,8 +125,8 @@ type TriggerDescription struct {
 	LLM   I18nObject `json:"llm" yaml:"llm" validate:"required"`
 }
 
-// TriggerConfiguration represents the configuration of a trigger
-type TriggerConfiguration struct {
+// TriggerDeclaration represents the configuration of a trigger
+type TriggerDeclaration struct {
 	Identity     TriggerIdentity    `json:"identity" yaml:"identity" validate:"required"`
 	Parameters   []TriggerParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
 	Description  TriggerDescription `json:"description" yaml:"description" validate:"required"`
@@ -134,17 +135,17 @@ type TriggerConfiguration struct {
 
 // SubscriptionSchema represents the subscription schema of the trigger provider
 type SubscriptionSchema struct {
-	ParametersSchema []ProviderConfig `json:"parameters_schema" yaml:"parameters_schema" validate:"omitempty,dive"`
-	PropertiesSchema []ProviderConfig `json:"properties_schema" yaml:"properties_schema" validate:"omitempty,dive"`
+	ParametersSchema []TriggerParameter `json:"parameters_schema" yaml:"parameters_schema" validate:"omitempty,dive"`
+	PropertiesSchema []ProviderConfig   `json:"properties_schema" yaml:"properties_schema" validate:"omitempty,dive"`
 }
 
-// TriggerProviderConfiguration represents the configuration of a trigger provider
-type TriggerProviderConfiguration struct {
+// TriggerProviderDeclaration represents the configuration of a trigger provider
+type TriggerProviderDeclaration struct {
 	Identity           TriggerProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
 	CredentialsSchema  []ProviderConfig        `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
 	OAuthSchema        *OAuthSchema            `json:"oauth_schema,omitempty" yaml:"oauth_schema,omitempty" validate:"omitempty"`
 	SubscriptionSchema SubscriptionSchema      `json:"subscription_schema" yaml:"subscription_schema" validate:"required"`
-	Triggers           []TriggerConfiguration  `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
+	Triggers           []TriggerDeclaration    `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
 	TriggerFiles       []string                `json:"-" yaml:"-"`
 }
 
@@ -163,20 +164,20 @@ type Unsubscription struct {
 }
 
 // MarshalJSON implements custom JSON marshalling for TriggerProviderConfiguration
-func (t *TriggerProviderConfiguration) MarshalJSON() ([]byte, error) {
-	type alias TriggerProviderConfiguration
+func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
+	type alias TriggerProviderDeclaration
 	p := alias(*t)
 	if p.CredentialsSchema == nil {
 		p.CredentialsSchema = []ProviderConfig{}
 	}
 	if p.Triggers == nil {
-		p.Triggers = []TriggerConfiguration{}
+		p.Triggers = []TriggerDeclaration{}
 	}
 	return json.Marshal(p)
 }
 
 // UnmarshalYAML implements custom YAML unmarshalling for TriggerProviderConfiguration
-func (t *TriggerProviderConfiguration) UnmarshalYAML(value *yaml.Node) error {
+func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
 		Identity           TriggerProviderIdentity `yaml:"identity"`
 		CredentialsSchema  yaml.Node               `yaml:"credentials_schema"`
@@ -235,7 +236,7 @@ func (t *TriggerProviderConfiguration) UnmarshalYAML(value *yaml.Node) error {
 	t.SubscriptionSchema = subscriptionSchema
 
 	// decode triggers
-	triggers := make([]TriggerConfiguration, 0)
+	triggers := make([]TriggerDeclaration, 0)
 	if temp.Triggers.Kind == yaml.SequenceNode {
 		// is a sequence
 		if err := temp.Triggers.Decode(&triggers); err != nil {
@@ -246,7 +247,3 @@ func (t *TriggerProviderConfiguration) UnmarshalYAML(value *yaml.Node) error {
 
 	return nil
 }
-
-// Legacy type aliases for backward compatibility
-type TriggerDeclaration = TriggerConfiguration
-type TriggerProviderDeclaration = TriggerProviderConfiguration
