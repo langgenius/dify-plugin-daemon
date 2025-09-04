@@ -88,6 +88,9 @@ func InstallPluginRuntimeToTenant(
 		})
 
 		if err == nil {
+			if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenant_id, runtimeType, pluginDeclaration, source, metas[i]); err != nil {
+				return nil, err
+			}
 			if err := onDone(pluginUniqueIdentifier, pluginDeclaration, metas[i]); err != nil {
 				return nil, errors.Join(err, errors.New("failed on plugin installation"))
 			} else {
@@ -258,6 +261,14 @@ func InstallPluginRuntimeToTenant(
 				}
 
 				if message.Event == plugin_manager.PluginInstallEventDone {
+					if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenant_id, runtimeType, declaration, source, metas[i]); err != nil {
+						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+							task.Status = models.InstallTaskStatusFailed
+							plugin.Status = models.InstallTaskStatusFailed
+							plugin.Message = err.Error()
+						})
+						return
+					}
 					if err := onDone(pluginUniqueIdentifier, declaration, metas[i]); err != nil {
 						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 							task.Status = models.InstallTaskStatusFailed
@@ -316,15 +327,7 @@ func InstallPluginFromIdentifiers(
 			default:
 				return fmt.Errorf("unsupported platform: %s", config.Platform)
 			}
-
-			_, _, err := curd.InstallPlugin(
-				tenant_id,
-				pluginUniqueIdentifier,
-				runtimeType,
-				declaration,
-				source,
-				meta,
-			)
+			_, _, err := curd.InstallPlugin(tenant_id, pluginUniqueIdentifier, runtimeType, declaration, source, meta)
 			return err
 		},
 	)
@@ -472,7 +475,6 @@ func UpgradePlugin(
 			if err != nil {
 				return err
 			}
-
 			// uninstall the original plugin
 			upgradeResponse, err := curd.UpgradePlugin(
 				tenant_id,
