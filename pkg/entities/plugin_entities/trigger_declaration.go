@@ -235,14 +235,39 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	}
 	t.SubscriptionSchema = subscriptionSchema
 
-	// decode triggers
-	triggers := make([]TriggerDeclaration, 0)
+	// initialize TriggerFiles
+	if t.TriggerFiles == nil {
+		t.TriggerFiles = []string{}
+	}
+
+	// unmarshal triggers - support both file paths and direct declarations
 	if temp.Triggers.Kind == yaml.SequenceNode {
-		// is a sequence
-		if err := temp.Triggers.Decode(&triggers); err != nil {
-			return err
+		for _, item := range temp.Triggers.Content {
+			if item.Kind == yaml.ScalarNode {
+				// It's a string (file path), add to TriggerFiles
+				t.TriggerFiles = append(t.TriggerFiles, item.Value)
+			} else if item.Kind == yaml.MappingNode {
+				// It's an object (direct trigger declaration), parse and add to Triggers
+				trigger := TriggerDeclaration{}
+				if err := item.Decode(&trigger); err != nil {
+					return err
+				}
+				t.Triggers = append(t.Triggers, trigger)
+			}
 		}
-		t.Triggers = triggers
+	}
+
+	// initialize empty arrays if nil
+	if t.CredentialsSchema == nil {
+		t.CredentialsSchema = []ProviderConfig{}
+	}
+
+	if t.Triggers == nil {
+		t.Triggers = []TriggerDeclaration{}
+	}
+
+	if t.Identity.Tags == nil {
+		t.Identity.Tags = []manifest_entities.PluginTag{}
 	}
 
 	return nil
