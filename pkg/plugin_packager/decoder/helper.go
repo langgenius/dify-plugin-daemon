@@ -273,6 +273,36 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		dec.AgentStrategy = &pluginDec
 	}
 
+	for _, trigger := range plugins.Triggers {
+		// read yaml
+		pluginYaml, err := decoder.ReadFile(trigger)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read trigger file: %s", trigger))
+		}
+
+		pluginDec, err := parser.UnmarshalYamlBytes[plugin_entities.TriggerProviderDeclaration](pluginYaml)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", trigger))
+		}
+
+		// read triggers
+		for _, trigger_file := range pluginDec.TriggerFiles {
+			triggerFileContent, err := decoder.ReadFile(trigger_file)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read trigger file: %s", trigger_file))
+			}
+
+			triggerFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.TriggerDeclaration](triggerFileContent)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal trigger file: %s", trigger_file))
+			}
+
+			pluginDec.Triggers = append(pluginDec.Triggers, triggerFileDec)
+		}
+
+		dec.Trigger = &pluginDec
+	}
+
 	dec.FillInDefaultValues()
 
 	dec.Verified = p.verified(decoder)
@@ -400,6 +430,14 @@ func (p *PluginDecoderHelper) CheckAssetsValid(decoder PluginDecoder) error {
 		if declaration.Tool.Identity.Icon != "" {
 			if _, ok := assets[declaration.Tool.Identity.Icon]; !ok {
 				return errors.Join(err, fmt.Errorf("tool icon not found"))
+			}
+		}
+	}
+
+	if declaration.Trigger != nil {
+		if declaration.Trigger.Identity.Icon != "" {
+			if _, ok := assets[declaration.Trigger.Identity.Icon]; !ok {
+				return errors.Join(err, fmt.Errorf("trigger icon not found"))
 			}
 		}
 	}

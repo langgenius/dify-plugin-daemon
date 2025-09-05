@@ -163,6 +163,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/models", controllers.ListModels)
 	group.GET("/tools", controllers.ListTools)
 	group.GET("/tool", controllers.GetTool)
+	group.GET("/triggers", controllers.ListTriggers)
+	group.GET("/trigger", controllers.GetTrigger)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
