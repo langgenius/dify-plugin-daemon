@@ -28,22 +28,30 @@ func LaunchPlugin(
 		return nil, err
 	}
 
-	// check if the plugin has already been initialized, at most 300s
-	if err := cache.Lock(SERVERLESS_LAUNCH_LOCK_PREFIX+checksum, 300*time.Second, 300*time.Second); err != nil {
+	// check if the plugin has already been initialized
+	if err := cache.Lock(
+		SERVERLESS_LAUNCH_LOCK_PREFIX+checksum,
+		time.Duration(timeout)*time.Second,
+		time.Duration(timeout)*time.Second,
+	); err != nil {
 		return nil, err
 	}
-	defer cache.Unlock(SERVERLESS_LAUNCH_LOCK_PREFIX + checksum)
+
+	unlock := func(e error) error {
+		cache.Unlock(SERVERLESS_LAUNCH_LOCK_PREFIX + checksum)
+		return e
+	}
 
 	manifest, err := decoder.Manifest()
 	if err != nil {
-		return nil, err
+		return nil, unlock(err)
 	}
 
 	if !ignoreIdempotent {
 		function, err := FetchFunction(manifest, checksum)
 		if err != nil {
 			if err != ErrFunctionNotFound {
-				return nil, err
+				return nil, unlock(err)
 			}
 		} else {
 			// found, return directly
@@ -61,14 +69,15 @@ func LaunchPlugin(
 				Message: "",
 			})
 			response.Close()
-			return response, nil
+			return response, unlock(nil)
 		}
 	}
 
 	response, err := SetupFunction(pluginUniqueIdentifier, manifest, checksum, bytes.NewReader(originPackage), timeout)
 	if err != nil {
-		return nil, err
+		return nil, unlock(err)
 	}
 
+	response.BeforeClose(func() { unlock(nil) })
 	return response, nil
 }
