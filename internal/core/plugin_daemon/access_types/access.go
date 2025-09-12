@@ -9,6 +9,7 @@ const (
 	PLUGIN_ACCESS_TYPE_AGENT_STRATEGY    PluginAccessType = "agent_strategy"
 	PLUGIN_ACCESS_TYPE_OAUTH             PluginAccessType = "oauth"
 	PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER PluginAccessType = "dynamic_parameter"
+	PLUGIN_ACCESS_TYPE_TRIGGER           PluginAccessType = "trigger"
 )
 
 func (p PluginAccessType) IsValid() bool {
@@ -17,7 +18,8 @@ func (p PluginAccessType) IsValid() bool {
 		p == PLUGIN_ACCESS_TYPE_ENDPOINT ||
 		p == PLUGIN_ACCESS_TYPE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_TYPE_OAUTH ||
-		p == PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER
+		p == PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER ||
+		p == PLUGIN_ACCESS_TYPE_TRIGGER
 }
 
 type PluginAccessAction string
@@ -44,6 +46,12 @@ const (
 	PLUGIN_ACCESS_ACTION_GET_CREDENTIALS                 PluginAccessAction = "get_credentials"
 	PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS             PluginAccessAction = "refresh_credentials"
 	PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS PluginAccessAction = "fetch_parameter_options"
+	PLUGIN_ACCESS_ACTION_INVOKE_TRIGGER                  PluginAccessAction = "invoke_trigger"
+	PLUGIN_ACCESS_ACTION_DISPATCH_TRIGGER_EVENT          PluginAccessAction = "dispatch_trigger_event"
+	PLUGIN_ACCESS_ACTION_SUBSCRIBE_TRIGGER               PluginAccessAction = "subscribe_trigger"
+	PLUGIN_ACCESS_ACTION_UNSUBSCRIBE_TRIGGER             PluginAccessAction = "unsubscribe_trigger"
+	PLUGIN_ACCESS_ACTION_REFRESH_TRIGGER                 PluginAccessAction = "refresh_trigger"
+	PLUGIN_ACCESS_ACTION_VALIDATE_TRIGGER_CREDENTIALS    PluginAccessAction = "validate_trigger_credentials"
 )
 
 func (p PluginAccessAction) IsValid() bool {
@@ -67,5 +75,11 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
 		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS ||
 		p == PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS ||
-		p == PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS
+		p == PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS ||
+		p == PLUGIN_ACCESS_ACTION_INVOKE_TRIGGER ||
+		p == PLUGIN_ACCESS_ACTION_DISPATCH_TRIGGER_EVENT ||
+		p == PLUGIN_ACCESS_ACTION_SUBSCRIBE_TRIGGER ||
+		p == PLUGIN_ACCESS_ACTION_UNSUBSCRIBE_TRIGGER ||
+		p == PLUGIN_ACCESS_ACTION_REFRESH_TRIGGER ||
+		p == PLUGIN_ACCESS_ACTION_VALIDATE_TRIGGER_CREDENTIALS
 }
