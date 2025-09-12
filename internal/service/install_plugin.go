@@ -18,6 +18,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"gorm.io/gorm"
@@ -33,6 +34,203 @@ type InstallPluginOnDoneHandler func(
 	declaration *plugin_entities.PluginDeclaration,
 	meta map[string]any,
 ) error
+
+type InstallPluginOnMessageHandler func(
+	message plugin_manager.PluginInstallResponse,
+)
+
+func doInstallPluginRuntime(
+	runtimeType plugin_entities.PluginRuntimeType,
+	manager *plugin_manager.PluginManager,
+	config *app.Config,
+	tenant_id string,
+	source string,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	meta map[string]any,
+	task *models.InstallTask,
+	declaration *plugin_entities.PluginDeclaration,
+	reinstall bool,
+	onMessage InstallPluginOnMessageHandler,
+	onDone InstallPluginOnDoneHandler,
+) {
+	var err error
+	updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
+
+		if err := db.WithTransaction(func(tx *gorm.DB) error {
+			task, err := db.GetOne[models.InstallTask](
+				db.WithTransactionContext(tx),
+				db.Equal("id", task.ID),
+				db.WLock(), // write lock, multiple tasks can't update the same task
+			)
+
+			if err == db.ErrDatabaseNotFound {
+				return nil
+			}
+
+			if err != nil {
+				return err
+			}
+
+			taskPointer := &task
+			var pluginStatus *models.InstallTaskPluginStatus
+			for i := range task.Plugins {
+				if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
+					pluginStatus = &task.Plugins[i]
+					break
+				}
+			}
+
+			if pluginStatus == nil {
+				return nil
+			}
+
+			modifier(taskPointer, pluginStatus)
+
+			successes := 0
+			for _, plugin := range taskPointer.Plugins {
+				if plugin.Status == models.InstallTaskStatusSuccess {
+					successes++
+				}
+			}
+
+			if successes == len(taskPointer.Plugins) {
+				// update status
+				taskPointer.Status = models.InstallTaskStatusSuccess
+				// delete the task after 120 seconds without transaction
+				time.AfterFunc(120*time.Second, func() {
+					db.Delete(taskPointer)
+				})
+			}
+			return db.Update(taskPointer, tx)
+		}); err != nil {
+			log.Error("failed to update install task status %s", err.Error())
+		}
+	}
+
+	updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+		plugin.Status = models.InstallTaskStatusRunning
+		plugin.Message = "Installing"
+	})
+
+	var stream *stream.Stream[plugin_manager.PluginInstallResponse]
+	if config.Platform == app.PLATFORM_SERVERLESS {
+		var zipDecoder *decoder.ZipPluginDecoder
+		var pkgFile []byte
+
+		pkgFile, err = manager.GetPackage(pluginUniqueIdentifier)
+		if err != nil {
+			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+				task.Status = models.InstallTaskStatusFailed
+				plugin.Status = models.InstallTaskStatusFailed
+				plugin.Message = "Failed to read plugin package"
+				onMessage(plugin_manager.PluginInstallResponse{
+					Event: plugin_manager.PluginInstallEventError,
+					Data:  plugin.Message,
+				})
+			})
+			return
+		}
+
+		zipDecoder, err = decoder.NewZipPluginDecoder(pkgFile)
+		if err != nil {
+			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+				task.Status = models.InstallTaskStatusFailed
+				plugin.Status = models.InstallTaskStatusFailed
+				plugin.Message = err.Error()
+				onMessage(plugin_manager.PluginInstallResponse{
+					Event: plugin_manager.PluginInstallEventError,
+					Data:  plugin.Message,
+				})
+			})
+			return
+		}
+		if reinstall {
+			stream, err = manager.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
+		} else {
+			stream, err = manager.InstallToServerlessFromPkg(pkgFile, zipDecoder, source, meta)
+		}
+	} else if config.Platform == app.PLATFORM_LOCAL {
+		if reinstall {
+			log.Warn("reinstall is not supported on local platform, will do install")
+		}
+		stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, meta)
+	} else {
+		updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+			task.Status = models.InstallTaskStatusFailed
+			plugin.Status = models.InstallTaskStatusFailed
+			plugin.Message = "Unsupported platform"
+			onMessage(plugin_manager.PluginInstallResponse{
+				Event: plugin_manager.PluginInstallEventError,
+				Data:  plugin.Message,
+			})
+		})
+		return
+	}
+
+	if err != nil {
+		updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+			task.Status = models.InstallTaskStatusFailed
+			plugin.Status = models.InstallTaskStatusFailed
+			plugin.Message = err.Error()
+			onMessage(plugin_manager.PluginInstallResponse{
+				Event: plugin_manager.PluginInstallEventError,
+				Data:  plugin.Message,
+			})
+		})
+		return
+	}
+
+	for stream.Next() {
+		message, err := stream.Read()
+		if err != nil {
+			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+				task.Status = models.InstallTaskStatusFailed
+				plugin.Status = models.InstallTaskStatusFailed
+				plugin.Message = err.Error()
+			})
+			return
+		}
+		onMessage(message)
+		if message.Event == plugin_manager.PluginInstallEventError {
+			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+				task.Status = models.InstallTaskStatusFailed
+				plugin.Status = models.InstallTaskStatusFailed
+				plugin.Message = message.Data
+			})
+			return
+		}
+
+		if message.Event == plugin_manager.PluginInstallEventDone {
+			if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenant_id, runtimeType, declaration, source, meta); err != nil {
+				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+					task.Status = models.InstallTaskStatusFailed
+					plugin.Status = models.InstallTaskStatusFailed
+					plugin.Message = err.Error()
+				})
+				return
+			}
+			if err := onDone(pluginUniqueIdentifier, declaration, meta); err != nil {
+				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+					task.Status = models.InstallTaskStatusFailed
+					plugin.Status = models.InstallTaskStatusFailed
+					plugin.Message = "Failed to create plugin, perhaps it's already installed"
+				})
+				return
+			}
+		}
+	}
+
+	updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+		plugin.Status = models.InstallTaskStatusSuccess
+		plugin.Message = "Installed"
+		task.CompletedPlugins++
+
+		// check if all plugins are installed
+		if task.CompletedPlugins == task.TotalPlugins {
+			task.Status = models.InstallTaskStatusSuccess
+		}
+	})
+}
 
 func InstallPluginRuntimeToTenant(
 	config *app.Config,
@@ -88,6 +286,9 @@ func InstallPluginRuntimeToTenant(
 		})
 
 		if err == nil {
+			if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenant_id, runtimeType, pluginDeclaration, source, metas[i]); err != nil {
+				return nil, err
+			}
 			if err := onDone(pluginUniqueIdentifier, pluginDeclaration, metas[i]); err != nil {
 				return nil, errors.Join(err, errors.New("failed on plugin installation"))
 			} else {
@@ -122,9 +323,6 @@ func InstallPluginRuntimeToTenant(
 
 	tasks := []func(){}
 	for i, pluginUniqueIdentifier := range pluginsWaitForInstallation {
-		// copy the variable to avoid race condition
-		pluginUniqueIdentifier := pluginUniqueIdentifier
-
 		declaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
 			runtimeType,
@@ -135,150 +333,19 @@ func InstallPluginRuntimeToTenant(
 
 		i := i
 		tasks = append(tasks, func() {
-			updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
-				if err := db.WithTransaction(func(tx *gorm.DB) error {
-					task, err := db.GetOne[models.InstallTask](
-						db.WithTransactionContext(tx),
-						db.Equal("id", task.ID),
-						db.WLock(), // write lock, multiple tasks can't update the same task
-					)
-
-					if err == db.ErrDatabaseNotFound {
-						return nil
-					}
-
-					if err != nil {
-						return err
-					}
-
-					taskPointer := &task
-					var pluginStatus *models.InstallTaskPluginStatus
-					for i := range task.Plugins {
-						if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
-							pluginStatus = &task.Plugins[i]
-							break
-						}
-					}
-
-					if pluginStatus == nil {
-						return nil
-					}
-
-					modifier(taskPointer, pluginStatus)
-
-					successes := 0
-					for _, plugin := range taskPointer.Plugins {
-						if plugin.Status == models.InstallTaskStatusSuccess {
-							successes++
-						}
-					}
-
-					if successes == len(taskPointer.Plugins) {
-						// update status
-						taskPointer.Status = models.InstallTaskStatusSuccess
-						// delete the task after 120 seconds without transaction
-						time.AfterFunc(120*time.Second, func() {
-							db.Delete(taskPointer)
-						})
-					}
-					return db.Update(taskPointer, tx)
-				}); err != nil {
-					log.Error("failed to update install task status %s", err.Error())
-				}
-			}
-
-			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-				plugin.Status = models.InstallTaskStatusRunning
-				plugin.Message = "Installing"
-			})
-
-			var stream *stream.Stream[plugin_manager.PluginInstallResponse]
-			if config.Platform == app.PLATFORM_SERVERLESS {
-				var zipDecoder *decoder.ZipPluginDecoder
-				var pkgFile []byte
-
-				pkgFile, err = manager.GetPackage(pluginUniqueIdentifier)
-				if err != nil {
-					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-						task.Status = models.InstallTaskStatusFailed
-						plugin.Status = models.InstallTaskStatusFailed
-						plugin.Message = "Failed to read plugin package"
-					})
-					return
-				}
-
-				zipDecoder, err = decoder.NewZipPluginDecoder(pkgFile)
-				if err != nil {
-					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-						task.Status = models.InstallTaskStatusFailed
-						plugin.Status = models.InstallTaskStatusFailed
-						plugin.Message = err.Error()
-					})
-					return
-				}
-				stream, err = manager.InstallToServerlessFromPkg(pkgFile, zipDecoder, source, metas[i])
-			} else if config.Platform == app.PLATFORM_LOCAL {
-				stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, metas[i])
-			} else {
-				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-					task.Status = models.InstallTaskStatusFailed
-					plugin.Status = models.InstallTaskStatusFailed
-					plugin.Message = "Unsupported platform"
-				})
-				return
-			}
-
-			if err != nil {
-				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-					task.Status = models.InstallTaskStatusFailed
-					plugin.Status = models.InstallTaskStatusFailed
-					plugin.Message = err.Error()
-				})
-				return
-			}
-
-			for stream.Next() {
-				message, err := stream.Read()
-				if err != nil {
-					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-						task.Status = models.InstallTaskStatusFailed
-						plugin.Status = models.InstallTaskStatusFailed
-						plugin.Message = err.Error()
-					})
-					return
-				}
-
-				if message.Event == plugin_manager.PluginInstallEventError {
-					updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-						task.Status = models.InstallTaskStatusFailed
-						plugin.Status = models.InstallTaskStatusFailed
-						plugin.Message = message.Data
-					})
-					return
-				}
-
-				if message.Event == plugin_manager.PluginInstallEventDone {
-					if err := onDone(pluginUniqueIdentifier, declaration, metas[i]); err != nil {
-						updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-							task.Status = models.InstallTaskStatusFailed
-							plugin.Status = models.InstallTaskStatusFailed
-							plugin.Message = "Failed to create plugin, perhaps it's already installed"
-						})
-						return
-					}
-				}
-			}
-
-			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-				plugin.Status = models.InstallTaskStatusSuccess
-				plugin.Message = "Installed"
-				task.CompletedPlugins++
-
-				// check if all plugins are installed
-				if task.CompletedPlugins == task.TotalPlugins {
-					task.Status = models.InstallTaskStatusSuccess
-				}
-			})
+			doInstallPluginRuntime(
+				runtimeType,
+				manager,
+				config,
+				tenant_id,
+				source,
+				pluginUniqueIdentifier,
+				metas[i],
+				task,
+				declaration,
+				false,
+				func(message plugin_manager.PluginInstallResponse) {},
+				onDone)
 		})
 	}
 
@@ -316,15 +383,7 @@ func InstallPluginFromIdentifiers(
 			default:
 				return fmt.Errorf("unsupported platform: %s", config.Platform)
 			}
-
-			_, _, err := curd.InstallPlugin(
-				tenant_id,
-				pluginUniqueIdentifier,
-				runtimeType,
-				declaration,
-				source,
-				meta,
-			)
+			_, _, err := curd.InstallPlugin(tenant_id, pluginUniqueIdentifier, runtimeType, declaration, source, meta)
 			return err
 		},
 	)
@@ -347,26 +406,67 @@ func ReinstallPluginFromIdentifier(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) {
 	baseSSEService(func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
-		if config.Platform != app.PLATFORM_SERVERLESS {
-			return nil, fmt.Errorf("reinstall is only supported on serverless platform")
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS,
+		)
+		if err != nil {
+			return nil, err
 		}
 
-		manager := plugin_manager.Manager()
-		pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
+		plugin, err := db.GetOne[models.Plugin](
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+		)
 		if err != nil {
-			return nil, errors.Join(err, errors.New("failed to get package"))
+			return nil, err
 		}
 
-		zipDecoder, err := decoder.NewZipPluginDecoder(pkgFile)
-		if err != nil {
-			return nil, errors.Join(err, errors.New("failed to create zip decoder"))
+		retStream := stream.NewStream[plugin_manager.PluginInstallResponse](128)
+
+		task := &models.InstallTask{
+			Status:           models.InstallTaskStatusRunning,
+			TenantID:         constants.GlobalTenantId,
+			TotalPlugins:     1,
+			CompletedPlugins: 0,
+			Plugins:          []models.InstallTaskPluginStatus{},
 		}
-		stream, err := manager.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
+		task.Plugins = append(task.Plugins, models.InstallTaskPluginStatus{
+			PluginUniqueIdentifier: pluginUniqueIdentifier,
+			PluginID:               pluginUniqueIdentifier.PluginID(),
+			Status:                 models.InstallTaskStatusPending,
+			Icon:                   pluginDeclaration.Icon,
+			IconDark:               pluginDeclaration.IconDark,
+			Labels:                 pluginDeclaration.Label,
+			Message:                "",
+		})
+
+		err = db.Create(task)
 		if err != nil {
-			return nil, errors.Join(err, errors.New("failed to reinstall plugin"))
+			return nil, err
 		}
 
-		return stream, nil
+		f := func() {
+			doInstallPluginRuntime(
+				plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS,
+				plugin_manager.Manager(),
+				config,
+				constants.GlobalTenantId,
+				plugin.Source,
+				pluginUniqueIdentifier,
+				map[string]any{},
+				task,
+				pluginDeclaration,
+				true,
+				func(message plugin_manager.PluginInstallResponse) {
+					retStream.Write(message)
+				},
+				func(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier, declaration *plugin_entities.PluginDeclaration, meta map[string]any) error {
+					retStream.Close()
+					return nil
+				})
+		}
+		routine.Submit(nil, f)
+		return retStream, nil
 	}, ctx, 1800)
 }
 
@@ -472,7 +572,6 @@ func UpgradePlugin(
 			if err != nil {
 				return err
 			}
-
 			// uninstall the original plugin
 			upgradeResponse, err := curd.UpgradePlugin(
 				tenant_id,

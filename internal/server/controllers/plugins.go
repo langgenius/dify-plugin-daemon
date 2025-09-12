@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -98,6 +99,10 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 			Source                         string                                 `json:"source" validate:"required"`
 			Meta                           map[string]any                         `json:"meta" validate:"omitempty"`
 		}) {
+			if request.TenantID == constants.GlobalTenantId && !app.PluginAllowOrphans {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("orphan plugin is not allowed")).ToResponse())
+				return
+			}
 			c.JSON(http.StatusOK, service.UpgradePlugin(
 				app,
 				request.TenantID,
@@ -120,6 +125,10 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 		}) {
 			if request.Metas == nil {
 				request.Metas = []map[string]any{}
+			}
+			if request.TenantID == constants.GlobalTenantId && !app.PluginAllowOrphans {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("orphan plugin is not allowed")).ToResponse())
+				return
 			}
 
 			if len(request.Metas) != len(request.PluginUniqueIdentifiers) {
