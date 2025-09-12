@@ -8,11 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/packager"
 )
 
-var (
-	MaxPluginPackageSize = int64(50 * 1024 * 1024) // 50 MB
-)
-
-func PackagePlugin(inputPath string, outputPath string) {
+func PackagePlugin(inputPath string, outputPath string, maxSizeBytes int64) {
 	decoder, err := decoder.NewFSPluginDecoder(inputPath)
 	if err != nil {
 		log.Error("failed to create plugin decoder , plugin path: %s, error: %v", inputPath, err)
@@ -21,7 +17,7 @@ func PackagePlugin(inputPath string, outputPath string) {
 	}
 
 	packager := packager.NewPackager(decoder)
-	zipFile, err := packager.Pack(MaxPluginPackageSize)
+	zipFile, err := packager.Pack(maxSizeBytes)
 
 	if err != nil {
 		log.Error("failed to package plugin: %v", err)
