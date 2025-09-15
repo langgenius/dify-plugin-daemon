@@ -71,6 +71,7 @@ type TriggerParameter struct {
 	Template     *ParameterTemplate       `json:"template,omitempty" yaml:"template,omitempty"`
 	Scope        *string                  `json:"scope,omitempty" yaml:"scope,omitempty"`
 	Required     bool                     `json:"required" yaml:"required"`
+	Multiple     bool                     `json:"multiple,omitempty" yaml:"multiple,omitempty"`
 	Default      any                      `json:"default,omitempty" yaml:"default,omitempty"`
 	Min          *float64                 `json:"min,omitempty" yaml:"min,omitempty"`
 	Max          *float64                 `json:"max,omitempty" yaml:"max,omitempty"`
