@@ -17,27 +17,6 @@ class {{ .PluginName | SnakeToCamel }}Provider(DatasourceProvider):
         except Exception as e:
             raise ToolProviderCredentialValidationError(str(e))
 
-    def _oauth_get_authorization_url(self, redirect_uri: str, system_credentials: Mapping[str, Any]) -> str:
-        """
-        Generate the authorization URL for Box OAuth 2.0.
-        
-        Args:
-            redirect_uri: The redirect URI after authorization
-            system_credentials: System credentials containing client_id and client_secret
-            
-        Returns:
-            Authorization URL string
-        """
-        state = secrets.token_urlsafe(32)
-        params = {
-            "client_id": system_credentials["client_id"],
-            "redirect_uri": redirect_uri,
-            "response_type": "code",
-            "scope": self._REQUIRED_SCOPES,
-            "state": state,
-        }
-        return f"{self._AUTH_URL}?{urllib.parse.urlencode(params)}"
-
 
     #########################################################################################
     # If OAuth is supported, uncomment the following functions.

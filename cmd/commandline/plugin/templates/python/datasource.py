@@ -47,7 +47,6 @@ class {{ .PluginName | SnakeToCamel }}DataSource(OnlineDocumentDatasource):
         yield self.create_variable_message("content", "")
         yield self.create_variable_message("page_id", "")
         yield self.create_variable_message("workspace_id", "")
-        yield self.create_variable_message("title", "")
 
 
 # For website crawl, you can use the following code:
