@@ -103,6 +103,27 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		}
 	}
 
+	if declaration.Datasource != nil {
+		if declaration.Datasource.Identity.Icon != "" {
+			declaration.Datasource.Identity.Icon, err = remap(declaration.Datasource.Identity.Icon)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("failed to remap datasource icon"))
+			}
+		}
+
+		for i, datasource := range declaration.Datasource.Datasources {
+			if datasource.Identity.Icon != "" {
+				remappedIcon, err := remap(datasource.Identity.Icon)
+				if err != nil {
+					return nil, errors.Join(err, fmt.Errorf("failed to remap datasource step icon"))
+				}
+
+				identityPointer := &declaration.Datasource.Datasources[i].Identity
+				identityPointer.Icon = remappedIcon
+			}
+		}
+	}
+
 	if declaration.Icon != "" {
 		declaration.Icon, err = remap(declaration.Icon)
 		if err != nil {
