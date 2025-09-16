@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1757680720262,
+  "lastUpdate": 1758015379368,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -8280,6 +8280,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "971132616 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "878edde4559a2955fdb785004d3a53ce91d02b96",
+          "message": "feat(datasource): Implement datasource validation and invocation steps (#295)\n\n* feat(datasource): Implement datasource validation and invocation steps\n\n- Added new functionality for validating datasource credentials and invoking the first and second steps of the datasource process.\n- Introduced new API endpoints for datasource operations in the HTTP server.\n- Created corresponding service and controller methods to handle datasource requests.\n- Defined new request and response structures for datasource operations in the entities package.\n\n* feat: add routes\n\n* feat(datasource): Add initial datasource models and validation\n\n- Introduced new `DatasourceInstallation` model to represent datasource installations with relevant fields.\n- Created `datasource.go` file for future datasource service implementation.\n- Enhanced `datasource_declaration.go` with new types and validation functions for datasource provider and parameters.\n- Updated `plugin_declaration.go` to include datasource support in plugin structures.\n- Refactored `agent_declaration.go` and `tool_declaration.go` to use a unified `ParameterOption` type for options.\n\n* refactor(datasource): Update request and response types for online document content retrieval\n\n- Renamed and updated request and response types for the `DatasourceGetOnlineDocumentPageContent` function to improve clarity and consistency.\n- Introduced `RequestInvokeOnlineDocumentDatasourceGetContent` and `DatasourceInvokeOnlineDocumentGetContentResponse` types.\n- Adjusted related function signatures and dispatchers to reflect the new types across the datasource service and controller implementations.\n\n* feat(datasource): Implement datasource installation handling\n\n- Added functionality to create and update `DatasourceInstallation` records during plugin installation and upgrade processes.\n- Enhanced the `InstallPlugin` function to create a new datasource installation if a datasource declaration is present.\n- Updated the `UpgradePlugin` function to handle the deletion of the original datasource installation and creation of a new one if the datasource declaration changes.\n\n* feat(datasource): Add datasource registration handling in plugin runtime\n\n- Introduced handling for datasource declarations in the plugin runtime.\n- Updated `RemotePluginRuntime` to track datasource registration status.\n- Enhanced message processing to include validation and assignment of datasource declarations.\n\n* feat(datasource): Implement datasource listing and retrieval endpoints\n\n- Added `ListDatasources` and `GetDatasource` functions to the service layer for handling datasource queries.\n- Created corresponding controller methods to process HTTP requests for listing and retrieving datasources.\n- Implemented request validation for tenant ID, page, page size, plugin ID, and provider parameters.\n\n* add datasource routes\n\n* feat(datasource): Add icon remapping for datasource declarations\n\n- Implemented functionality to remap icons for both the main datasource and its individual datasources within the plugin declaration.\n- Enhanced error handling to provide clearer feedback when remapping fails.\n\n* fix(datasource): update OAuthSchema validation to remove unnecessary 'dive' tag\n\n- Modified the validation tag for OAuthSchema in DatasourceProviderDeclaration to simplify the validation process by removing the 'dive' requirement.\n\n* feat(tests): add datasource declaration parsing and output\n\n- Introduced a new main.go file for testing datasource declaration parsing.\n- Implemented JSON unmarshalling for RemotePluginRegisterPayload and DatasourceProviderDeclaration.\n- Added a sample datasource declaration for testing purposes.\n\n* fix(plugin): improve error handling in UninstallPlugin and add datasource deletion\n\n- Enhanced error handling to return a specific message when a plugin is not installed.\n- Added functionality to delete the associated datasource installation during the uninstallation process.\n\n* feat(datasource): add support for decoding datasource provider declaration\n\n- Added custom JSON marshalling and unmarshalling methods to handle CredentialsSchema and Datasources more effectively.\n- Improved error handling during YAML unmarshalling to support both object and array formats for CredentialsSchema.\n- Ensured proper initialization of DatasourceFiles and Tags to prevent nil references.\n\n* fix: provider type\n\n* refactor(datasource): simplify JSON unmarshalling for CredentialsSchema\n\n- Removed complex handling of CredentialsSchema in the UnmarshalJSON method, focusing on the Datasources field.\n- Streamlined the code to improve readability and maintainability by eliminating unnecessary checks and logic related to CredentialsSchema.\n\n* feat: streaming datasource\n\n* feat: datasource\n\n* feat: datasource\n\n* feat:datasource\n\n* feat:datasource\n\n* feat:datasource\n\n* feat: add redirect_uri field to OAuth request structs\n\n* feat: add online driver file request and response structures\n\n* feat: add online driver file request and response structures\n\n* feat: add online_driver datasource type to validation\n\n* feat: rename online driver to online drive and update related classes and methods :)\n\n* refactor: rename OnlineDocumentPageChunk to DatasourceGetPagesResponse and update related references\n\n* feat: update request types for online drive browsing and downloading\n\n* feat: add metadata field to OAuthGetCredentialsResult\n\n* feat: built-in json schema definations\n\n* feat(plugin_entities): add built-in schema definitions and processing for datasource YAML\n\n* test(plugin_entities): add unit tests for schema definitions and YAML processing\n\n* refactor(plugin_entities): centralize built-in schema definitions and processing\n\n* refactor(plugin_entities): remove unused properties from built-in schema definitions\n\n* refactor(plugin_entities): built-in schema & new datasource structure\n\n* refactor(plugin_entities): enhance schema processing with  checks and error handling\n\n* refactor(plugin_entities): update validation for OnlineDriveBrowseFilesRequest prefix field to be optional\n\n* refactor(json_schema): remove json schema definitions and validation\n\n* fix(plugin_entities): remove output_schema validation tests\n\n* feat: add rag tag\n\n---------\n\nCo-authored-by: Harry <xh001x@hotmail.com>\nCo-authored-by: Dongyu Li <544104925@qq.com>\nCo-authored-by: Novice <novice12185727@gmail.com>",
+          "timestamp": "2025-09-16T17:32:14+08:00",
+          "tree_id": "b2fefb814d803f68b6e32ecb697742f20015dc22",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/878edde4559a2955fdb785004d3a53ce91d02b96"
+        },
+        "date": 1758015378688,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138501775,
+            "unit": "ns/op\t 1569414 B/op\t   27517 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138501775,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569414,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.86,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "969006132 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.86,
+            "unit": "ns/op",
+            "extra": "969006132 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "969006132 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "969006132 times\n4 procs"
           }
         ]
       }
