@@ -270,3 +270,25 @@ func createPythonAgentStrategy(root string, manifest *plugin_entities.PluginDecl
 
 	return nil
 }
+
+func createPythonDatasource(root string, manifest *plugin_entities.PluginDeclaration) error {
+	datasourceFileContent, err := renderTemplate(PYTHON_DATASOURCE_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	datasourceFilePath := filepath.Join(root, "datasources", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(datasourceFilePath, datasourceFileContent); err != nil {
+		return err
+	}
+
+	datasourceManifestFilePath := filepath.Join(root, "datasources", fmt.Sprintf("%s.yaml", manifest.Name))
+	datasourceManifestFileContent, err := renderTemplate(PYTHON_DATASOURCE_MANIFEST_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	if err := writeFile(datasourceManifestFilePath, datasourceManifestFileContent); err != nil {
+		return err
+	}
+
+	return nil
+}

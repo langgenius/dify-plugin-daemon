@@ -91,6 +91,18 @@ var PYTHON_AGENT_STRATEGY_MANIFEST_TEMPLATE []byte
 //go:embed templates/python/agent_strategy.py
 var PYTHON_AGENT_STRATEGY_TEMPLATE []byte
 
+//go:embed templates/python/datasource.yaml
+var PYTHON_DATASOURCE_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/datasource.py
+var PYTHON_DATASOURCE_TEMPLATE []byte
+
+//go:embed templates/python/datasource_provider.yaml
+var PYTHON_DATASOURCE_PROVIDER_MANIFEST_TEMPLATE []byte
+
+//go:embed templates/python/datasource_provider.py
+var PYTHON_DATASOURCE_PROVIDER_PY_TEMPLATE []byte
+
 //go:embed templates/python/GUIDE.md
 var PYTHON_GUIDE []byte
 
@@ -227,6 +239,12 @@ func createPythonEnvironment(
 
 	if category == "agent-strategy" {
 		if err := createPythonAgentStrategy(root, manifest); err != nil {
+			return err
+		}
+	}
+
+	if category == "datasource" {
+		if err := createPythonDatasource(root, manifest); err != nil {
 			return err
 		}
 	}

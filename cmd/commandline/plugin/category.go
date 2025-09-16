@@ -47,6 +47,7 @@ var categories = []string{
 	"speech2text",
 	"moderation",
 	"extension",
+	"datasource",
 }
 
 func newCategory() category {
