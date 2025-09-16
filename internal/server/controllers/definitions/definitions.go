@@ -27,17 +27,17 @@ type PluginDispatcher struct {
 
 // Define all plugin dispatchers
 var PluginDispatchers = []PluginDispatcher{
-	// { // No need to implement this for now, it has its special implementation in the agent service
-	// 	Name:               "InvokeTool",
-	// 	RequestType:        requests.RequestInvokeTool{},
-	// 	ResponseType:       tool_entities.ToolResponseChunk{},
-	// 	AccessType:         access_types.PLUGIN_ACCESS_TYPE_TOOL,
-	// 	AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL,
-	// 	AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_TOOL",
-	// 	AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL",
-	// 	BufferSize:         1024,
-	// 	Path:               "/tool/invoke",
-	// },
+	{ // No need to implement this for now, it has its special implementation in the agent service
+		Name:               "InvokeTool",
+		RequestType:        requests.RequestInvokeTool{},
+		ResponseType:       tool_entities.ToolResponseChunk{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_TOOL,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_TOOL",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL",
+		BufferSize:         1024,
+		Path:               "/tool/invoke",
+	},
 	{
 		Name:               "ValidateToolCredentials",
 		RequestType:        requests.RequestValidateToolCredentials{},

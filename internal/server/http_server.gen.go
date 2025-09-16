@@ -8,6 +8,7 @@ import (
 )
 
 func (app *App) setupGeneratedRoutes(group *gin.RouterGroup, config *app.Config) {
+	group.POST("/tool/invoke", controllers.InvokeTool(config))
 	group.POST("/tool/validate_credentials", controllers.ValidateToolCredentials(config))
 	group.POST("/tool/get_runtime_parameters", controllers.GetToolRuntimeParameters(config))
 	group.POST("/llm/invoke", controllers.InvokeLLM(config))

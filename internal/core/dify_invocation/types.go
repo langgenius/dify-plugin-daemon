@@ -232,7 +232,7 @@ type InvokeToolRequest struct {
 	BaseInvokeDifyRequest
 	ToolType       requests.ToolType `json:"tool_type" validate:"required,tool_type"`
 	CredentialId   string            `json:"credential_id" validate:"omitempty"`
-	CredentialType string            `json:"credential_type" validate:"omitempty"`
+	CredentialType string            `json:"credential_type,omitempty" validate:"omitempty"`
 	requests.InvokeToolSchema
 }
 
