@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758015379368,
+  "lastUpdate": 1758073454280,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -8352,6 +8352,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "969006132 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jingfelix@outlook.com",
+            "name": "Tianyi Jing",
+            "username": "jingfelix"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1dacb201ff6e51f1b782f6e66263e57409542c33",
+          "message": "feat(cmd): add datasource template (#449)\n\n* feat: add template for datasource plugins\n\nSigned-off-by: jingfelix <jingfelix@outlook.com>\n\n* fix: description and missing category\n\nSigned-off-by: jingfelix <jingfelix@outlook.com>\n\n---------\n\nSigned-off-by: jingfelix <jingfelix@outlook.com>",
+          "timestamp": "2025-09-17T09:40:09+08:00",
+          "tree_id": "5462c183cf6b4b837721f7500c798d7eabe977a3",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1dacb201ff6e51f1b782f6e66263e57409542c33"
+        },
+        "date": 1758073453178,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 141731784,
+            "unit": "ns/op\t 1569578 B/op\t   27517 allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 141731784,
+            "unit": "ns/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569578,
+            "unit": "B/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "249 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 37.12,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "966010688 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.12,
+            "unit": "ns/op",
+            "extra": "966010688 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "966010688 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "966010688 times\n4 procs"
           }
         ]
       }
