@@ -93,6 +93,10 @@ For developers working on this codebase, see our comprehensive development docum
 
 - **[SRI Docs](docs/runtime/sri.md)** - Serverless Runtime Interface documentation
 
+### Storage Migration
+
+- **[Storage Migration Guide](docs/storage-migration/guide.md)** - Migrate local plugin storage to cloud
+
 ## Benchmark
 
 Refer to [Benchmark](https://langgenius.github.io/dify-plugin-daemon/benchmark-data/)
