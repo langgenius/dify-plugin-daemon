@@ -23,7 +23,7 @@ func (r *ServerlessPluginRuntime) Listen(sessionId string) *entities.Broadcast[p
 	return l
 }
 
-// For AWS Lambda, write is equivalent to http request, it's not a normal stream like stdio and tcp
+// For Serverless, write is equivalent to http request, it's not a normal stream like stdio and tcp
 func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
@@ -76,10 +76,10 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
 					ErrorType: "PluginDaemonInnerError",
-					Message:   fmt.Sprintf("Error sending request to aws lambda: %v", err),
+					Message:   fmt.Sprintf("Error sending request to serverless: %v", err),
 				}),
 			})
-			r.Error(fmt.Sprintf("Error sending request to aws lambda: %v", err))
+			r.Error(fmt.Sprintf("Error sending request to serverless: %v", err))
 			return
 		}
 

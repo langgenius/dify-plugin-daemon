@@ -31,7 +31,7 @@ func (app *App) server(config *app.Config) func() {
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
-	awsLambdaTransactionGroup := engine.Group("/backwards-invocation")
+	serverlessTransactionGroup := engine.Group("/backwards-invocation")
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
 
@@ -50,7 +50,7 @@ func (app *App) server(config *app.Config) func() {
 		// setup sentry for all groups
 		sentryGroup := []*gin.RouterGroup{
 			endpointGroup,
-			awsLambdaTransactionGroup,
+			serverlessTransactionGroup,
 			pluginGroup,
 		}
 		for _, group := range sentryGroup {
@@ -61,7 +61,7 @@ func (app *App) server(config *app.Config) func() {
 	}
 
 	app.endpointGroup(endpointGroup, config)
-	app.awsLambdaTransactionGroup(awsLambdaTransactionGroup, config)
+	app.serverlessTransactionGroup(serverlessTransactionGroup, config)
 	app.pluginGroup(pluginGroup, config)
 	app.pprofGroup(pprofGroup, config)
 
@@ -121,14 +121,14 @@ func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
 	}
 }
 
-func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app.Config) {
+func (appRef *App) serverlessTransactionGroup(group *gin.RouterGroup, config *app.Config) {
 	if config.Platform == app.PLATFORM_SERVERLESS {
-		appRef.awsTransactionHandler = transaction.NewAWSTransactionHandler(
+		appRef.serverlessTransactionHandler = transaction.NewServerlessTransactionHandler(
 			time.Duration(config.MaxServerlessTransactionTimeout) * time.Second,
 		)
 		group.POST(
 			"/transaction",
-			service.HandleAWSPluginTransaction(appRef.awsTransactionHandler),
+			service.HandleServerlessPluginTransaction(appRef.serverlessTransactionHandler),
 		)
 	}
 }
@@ -167,6 +167,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
+	group.GET("/datasources", controllers.ListDatasources)
+	group.GET("/datasource", controllers.GetDatasource)
 }
 
 func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {

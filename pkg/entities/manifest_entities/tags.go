@@ -24,6 +24,7 @@ const (
 	PLUGIN_TAG_ENTERTAINMENT PluginTag = "entertainment"
 	PLUGIN_TAG_UTILITIES     PluginTag = "utilities"
 	PLUGIN_TAG_AGENT         PluginTag = "agent"
+	PLUGIN_TAG_RAG           PluginTag = "rag"
 	PLUGIN_TAG_OTHER         PluginTag = "other"
 )
 
@@ -46,7 +47,8 @@ func isPluginTag(fl validator.FieldLevel) bool {
 		string(PLUGIN_TAG_ENTERTAINMENT),
 		string(PLUGIN_TAG_UTILITIES),
 		string(PLUGIN_TAG_OTHER),
-		string(PLUGIN_TAG_AGENT):
+		string(PLUGIN_TAG_AGENT),
+		string(PLUGIN_TAG_RAG):
 		return true
 	}
 	return false

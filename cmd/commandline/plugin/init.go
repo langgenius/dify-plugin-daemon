@@ -156,6 +156,7 @@ func InitPluginWithFlags(
 			"tts",
 			"extension",
 			"agent-strategy",
+			"datasource",
 		}
 		valid := false
 		for _, cat := range validCategories {
@@ -441,6 +442,10 @@ func (m model) createPlugin() {
 
 	if categoryString == "agent-strategy" {
 		manifest.Plugins.AgentStrategies = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
+	}
+
+	if categoryString == "datasource" {
+		manifest.Plugins.Datasources = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
 	manifest.Meta = plugin_entities.PluginMeta{

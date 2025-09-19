@@ -30,8 +30,8 @@ var (
 	language                 string
 	minDifyVersion           string
 	quick                    bool
-
-	pluginInitCommand = &cobra.Command{
+	maxSizeMB                int64
+	pluginInitCommand        = &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a new plugin",
 		Long: `Initialize a new plugin with the given parameters.
@@ -95,7 +95,16 @@ If no parameters are provided, an interactive mode will be started.`,
 				outputPath = base + ".difypkg"
 			}
 
-			plugin.PackagePlugin(inputPath, outputPath)
+			// read max-size flag (in MB), default 50
+			maxSizeMB, err := cmd.Flags().GetInt64("max-size")
+			if err != nil {
+				maxSizeMB = 50
+			}
+			if maxSizeMB <= 0 {
+				maxSizeMB = 50
+			}
+			maxSizeBytes := maxSizeMB * 1024 * 1024
+			plugin.PackagePlugin(inputPath, outputPath, maxSizeBytes)
 		},
 	}
 
@@ -264,4 +273,5 @@ func init() {
 	pluginInitCommand.Flags().BoolVar(&quick, "quick", false, "Skip interactive mode and create plugin directly")
 
 	pluginPackageCommand.Flags().StringP("output_path", "o", "", "output path")
+	pluginPackageCommand.Flags().Int64Var(&maxSizeMB, "max-size", 50, "Maximum uncompressed size in MB")
 }

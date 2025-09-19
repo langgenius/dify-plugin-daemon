@@ -18,7 +18,7 @@ type BackwardsInvocationWriter interface {
 // For different plugin runtime type, stream handler is different
 //  1. Local and Remote: they are both full duplex, multiplexing could be implemented by different session
 //     different session share the same physical channel.
-//  2. AWS: it is half duplex, one request could have multiple channels, we need to combine them into one stream
+//  2. Serverless: it is half duplex, one request could have multiple channels, we need to combine them into one stream
 //
 // That's why it has a writer, for different transaction, the writer is unique
 type BackwardsInvocation struct {

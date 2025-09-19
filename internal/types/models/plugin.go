@@ -15,6 +15,8 @@ type Plugin struct {
 	InstallType       plugin_entities.PluginRuntimeType  `json:"install_type" gorm:"size:127;index"`
 	ManifestType      manifest_entities.DifyManifestType `json:"manifest_type" gorm:"size:127"`
 	RemoteDeclaration plugin_entities.PluginDeclaration  `json:"remote_declaration" gorm:"serializer:json;type:text;size:65535"` // enabled when plugin is remote
+	// source of first installation. installations created by enterprise console will inherit this.
+	Source string `json:"source" gorm:"size:63;default:''"`
 }
 
 type ServerlessRuntimeType string
