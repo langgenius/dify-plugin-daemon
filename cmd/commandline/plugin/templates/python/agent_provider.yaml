@@ -3,8 +3,12 @@ identity:
   name: {{ .PluginName }}
   label:
     en_US: "{{ .PluginName | SnakeToCamel }}"
+    zh_Hans: "{{ .PluginName | SnakeToCamel }}"
+    ja_JP: "{{ .PluginName | SnakeToCamel }}"
   description:
     en_US: "{{ .PluginName | SnakeToCamel }}"
+    zh_Hans: "{{ .PluginName | SnakeToCamel }}"
+    ja_JP: "{{ .PluginName | SnakeToCamel }}"
   icon: icon.svg
 strategies:
   - strategies/{{ .PluginName }}.yaml
