@@ -5,11 +5,13 @@ identity:
     en_US: "{{ .PluginName }}"
     zh_Hans: "{{ .PluginName }}"
     pt_BR: "{{ .PluginName }}"
+    ja_JP: "{{ .PluginName }}"
 description:
   human:
     en_US: "{{ .PluginDescription }}"
     zh_Hans: "{{ .PluginDescription }}"
     pt_BR: "{{ .PluginDescription }}"
+    ja_JP: "{{ .PluginDescription }}"
   llm: "{{ .PluginDescription }}"
 
 # For website crawl, you can use the following code:
@@ -21,10 +23,12 @@ parameters:
       en_US: Query string
       zh_Hans: 查询语句
       pt_BR: Query string
+      ja_JP: クエリ文字列
     human_description:
       en_US: "{{ .PluginDescription }}"
       zh_Hans: "{{ .PluginDescription }}"
       pt_BR: "{{ .PluginDescription }}"
+      ja_JP: "{{ .PluginDescription }}"
     llm_description: "{{ .PluginDescription }}"
     form: llm
 output_schema:
