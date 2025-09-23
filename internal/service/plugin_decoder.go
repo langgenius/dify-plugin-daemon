@@ -66,7 +66,7 @@ func UploadPluginPkg(
 		verification = decoder.DefaultVerification()
 	}
 
-	if config.DisableUnauthorizedLanggenius {
+	if config.EnforceLanggeniusSignatures {
 		if isUnauthorizedLanggenius(declaration, verification) {
 			return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
 		}
@@ -169,7 +169,7 @@ func UploadPluginBundle(
 						verification = decoder.DefaultVerification()
 					}
 
-					if config.DisableUnauthorizedLanggenius {
+					if config.EnforceLanggeniusSignatures {
 						if isUnauthorizedLanggenius(declaration, verification) {
 							return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
 						}

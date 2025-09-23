@@ -8,6 +8,9 @@ import (
 )
 
 func TestIsUnauthorizedLanggenius(t *testing.T) {
+	// Tests for isUnauthorizedLanggenius function
+	// This function is used when ENFORCE_LANGGENIUS_PLUGIN_SIGNATURES=true (default)
+	// to prevent unauthorized plugins from impersonating Langgenius
 	tests := []struct {
 		name         string
 		author       string

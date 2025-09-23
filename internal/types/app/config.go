@@ -146,8 +146,8 @@ type Config struct {
 	// a comma-separated list of file paths to public keys in addition to the official public key for signature verification
 	ThirdPartySignatureVerificationPublicKeys []string `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_PUBLIC_KEYS"  default:""`
 
-	// Block installation of plugins falsely claiming Langgenius authorship
-	DisableUnauthorizedLanggenius bool `envconfig:"DISABLE_UNAUTHORIZED_LANGGENIUS_PACKAGE" default:"true"`
+	// Enforce signature verification for plugins claiming Langgenius authorship
+	EnforceLanggeniusSignatures bool `envconfig:"ENFORCE_LANGGENIUS_PLUGIN_SIGNATURES" default:"true"`
 
 	// lifetime state management
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
