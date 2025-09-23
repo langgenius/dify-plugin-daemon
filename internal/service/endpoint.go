@@ -385,9 +385,7 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		}
 
 		if pluginDeclaration.Endpoint == nil {
-			return exception.InternalServerError(
-				fmt.Errorf("plugin %s does not have endpoint configuration", pluginUniqueIdentifier),
-			).ToResponse()
+			return exception.NotFoundError(errors.New("plugin does not have an endpoint")).ToResponse()
 		}
 
 		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
