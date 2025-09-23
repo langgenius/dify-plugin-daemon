@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758615510039,
+  "lastUpdate": 1758643035342,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -8568,6 +8568,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "982948614 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "xh001x@hotmail.com",
+            "name": "Maries",
+            "username": "Mairuis"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "64738319b8cbc0dd0eeeb2cba91f93a838810f73",
+          "message": "Fix/json schema (#460)\n\n* fix(agent_declaration): remove unnecessary 'json_schema' validation from OutputSchema\n\n* fix(endpoint): add error handling for missing endpoint configuration in ListPluginEndpoints\n\n* fix(endpoint): update error handling for missing endpoint configuration in ListPluginEndpoints",
+          "timestamp": "2025-09-23T23:53:21+08:00",
+          "tree_id": "a8dce7972dd2b882c18403ac864dd3b0c5ac26d7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/64738319b8cbc0dd0eeeb2cba91f93a838810f73"
+        },
+        "date": 1758643034316,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139063073,
+            "unit": "ns/op\t 1569736 B/op\t   27517 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139063073,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569736,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.57,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "990837170 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.57,
+            "unit": "ns/op",
+            "extra": "990837170 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "990837170 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "990837170 times\n4 procs"
           }
         ]
       }
