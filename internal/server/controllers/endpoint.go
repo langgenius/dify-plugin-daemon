@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"os/user"
 )
 
 func SetupEndpoint(ctx *gin.Context) {
@@ -31,20 +32,23 @@ func SetupEndpoint(ctx *gin.Context) {
 func ListEndpoints(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`
+		UserID   string `form:"user_id" validate:"required"`
 		Page     int    `form:"page" validate:"required"`
 		PageSize int    `form:"page_size" validate:"required,max=100"`
 	}) {
 		tenantId := request.TenantID
 		page := request.Page
 		pageSize := request.PageSize
+		userId := request.UserID
 
-		ctx.JSON(200, service.ListEndpoints(tenantId, page, pageSize))
+		ctx.JSON(200, service.ListEndpoints(tenantId, userId, page, pageSize))
 	})
 }
 
 func ListPluginEndpoints(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`
+		UserID   string `form:"user_id" validate:"required"`
 		PluginID string `form:"plugin_id" validate:"required"`
 		Page     int    `form:"page" validate:"required"`
 		PageSize int    `form:"page_size" validate:"required,max=100"`
@@ -53,8 +57,9 @@ func ListPluginEndpoints(ctx *gin.Context) {
 		pluginId := request.PluginID
 		page := request.Page
 		pageSize := request.PageSize
+		userId := request.UserID
 
-		ctx.JSON(200, service.ListPluginEndpoints(tenantId, pluginId, page, pageSize))
+		ctx.JSON(200, service.ListPluginEndpoints(tenantId, pluginId, userId, page, pageSize))
 	})
 }
 
@@ -62,11 +67,13 @@ func RemoveEndpoint(ctx *gin.Context) {
 	BindRequest(ctx, func(request struct {
 		EndpointID string `json:"endpoint_id" validate:"required"`
 		TenantID   string `uri:"tenant_id" validate:"required"`
+		UserID     string `json:"user_id" validate:"required"`
 	}) {
 		endpointId := request.EndpointID
 		tenantId := request.TenantID
+		userId := request.UserID
 
-		ctx.JSON(200, service.RemoveEndpoint(endpointId, tenantId))
+		ctx.JSON(200, service.RemoveEndpoint(endpointId, tenantId, userId))
 	})
 }
 

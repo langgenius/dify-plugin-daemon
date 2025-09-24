@@ -62,7 +62,7 @@ func SetupEndpoint(
 		tenant_id,
 		user_id,
 		name,
-		map[string]any{},
+		settings,
 	)
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to setup endpoint: %v", err)).ToResponse()
@@ -102,7 +102,7 @@ func SetupEndpoint(
 	return entities.NewSuccessResponse(true)
 }
 
-func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
+func RemoveEndpoint(endpoint_id string, tenant_id string, user_id string) *entities.Response {
 	endpoint, err := install_service.UninstallEndpoint(endpoint_id, tenant_id)
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to remove endpoint: %v", err)).ToResponse()
@@ -121,7 +121,7 @@ func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 	if _, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: tenant_id,
-			UserId:   "",
+			UserId:   user_id,
 			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
 		},
 		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{

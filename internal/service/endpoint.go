@@ -128,7 +128,7 @@ func Endpoint(
 	settings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: endpoint.TenantID,
-			UserId:   "",
+			UserId:   endpoint.UserID,
 			Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
 		},
 		InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
@@ -241,7 +241,7 @@ func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
 	return entities.NewSuccessResponse(true)
 }
 
-func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response {
+func ListEndpoints(tenant_id string, user_id string, page int, page_size int) *entities.Response {
 	endpoints, err := db.GetAll[models.Endpoint](
 		db.Equal("tenant_id", tenant_id),
 		db.OrderBy("created_at", true),
@@ -301,7 +301,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
-				UserId:   "",
+				UserId:   user_id,
 				Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
 			},
 			InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
@@ -330,7 +330,7 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 	return entities.NewSuccessResponse(endpoints)
 }
 
-func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size int) *entities.Response {
+func ListPluginEndpoints(tenant_id string, plugin_id string, user_id string, page int, page_size int) *entities.Response {
 	endpoints, err := db.GetAll[models.Endpoint](
 		db.Equal("plugin_id", plugin_id),
 		db.Equal("tenant_id", tenant_id),
@@ -391,7 +391,7 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
 			BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 				TenantId: tenant_id,
-				UserId:   "",
+				UserId:   user_id,
 				Type:     dify_invocation.INVOKE_TYPE_ENCRYPT,
 			},
 			InvokeEncryptSchema: dify_invocation.InvokeEncryptSchema{
