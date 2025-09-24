@@ -66,6 +66,12 @@ func UploadPluginPkg(
 		verification = decoder.DefaultVerification()
 	}
 
+	if config.EnforceLanggeniusSignatures {
+		if isUnauthorizedLanggenius(declaration, verification) {
+			return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
+		}
+	}
+
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": pluginUniqueIdentifier,
 		"manifest":          declaration,
@@ -155,6 +161,17 @@ func UploadPluginBundle(
 							return exception.BadRequestError(errors.Join(errors.New(
 								"plugin verification has been enabled, and the plugin you want to install has a bad signature",
 							), err)).ToResponse()
+						}
+					}
+
+					verification, _ := decoderInstance.Verification()
+					if verification == nil && decoderInstance.Verified() {
+						verification = decoder.DefaultVerification()
+					}
+
+					if config.EnforceLanggeniusSignatures {
+						if isUnauthorizedLanggenius(declaration, verification) {
+							return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
 						}
 					}
 
