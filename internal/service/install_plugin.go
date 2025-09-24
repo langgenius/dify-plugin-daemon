@@ -131,7 +131,13 @@ func doInstallPluginRuntime(
 			return
 		}
 
-		zipDecoder, err = decoder.NewZipPluginDecoder(pkgFile)
+		zipDecoder, err = decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
+			pkgFile,
+			&decoder.ThirdPartySignatureVerificationConfig{
+				Enabled:        config.ThirdPartySignatureVerificationEnabled,
+				PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
+			},
+		)
 		if err != nil {
 			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 				task.Status = models.InstallTaskStatusFailed
