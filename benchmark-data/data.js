@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758643035342,
+  "lastUpdate": 1758684760483,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -8640,6 +8640,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "990837170 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b85253f773a51e39418dd2b7f7685c63421caad2",
+          "message": "feat(plugin): implement unauthorized Langgenius plugin blocking (#458)\n\n* feat(plugin): implement unauthorized Langgenius plugin blocking\n\n- Added configuration option to disable installation of plugins falsely claiming Langgenius authorship.\n- Introduced new error handling for unauthorized Langgenius claims during plugin installation.\n- Implemented tests to validate unauthorized Langgenius detection logic.\n- Updated environment configuration and service files to support the new feature.\n\n* fix: typo\n\n* refactor(plugin): update Langgenius plugin signature enforcement\n\n- Renamed configuration option from DISABLE_UNAUTHORIZED_LANGGENIUS_PACKAGE to ENFORCE_LANGGENIUS_PLUGIN_SIGNATURES for clarity.\n- Updated error messages and logic in the plugin installation process to reflect the new configuration.\n- Enhanced tests to validate the behavior of unauthorized Langgenius plugin detection with the new enforcement setting.",
+          "timestamp": "2025-09-24T11:28:41+08:00",
+          "tree_id": "041f34003dc4c1c83749a9a71e8880781a31d7d6",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b85253f773a51e39418dd2b7f7685c63421caad2"
+        },
+        "date": 1758684759772,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 139310303,
+            "unit": "ns/op\t 1569546 B/op\t   27516 allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 139310303,
+            "unit": "ns/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569546,
+            "unit": "B/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27516,
+            "unit": "allocs/op",
+            "extra": "254 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.92,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "966922350 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.92,
+            "unit": "ns/op",
+            "extra": "966922350 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "966922350 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "966922350 times\n4 procs"
           }
         ]
       }
