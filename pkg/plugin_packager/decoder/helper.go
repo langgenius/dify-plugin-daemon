@@ -273,6 +273,35 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		dec.AgentStrategy = &pluginDec
 	}
 
+	for _, datasource := range plugins.Datasources {
+		// read yaml
+		pluginYaml, err := decoder.ReadFile(datasource)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read datasource file: %s", datasource))
+		}
+
+		pluginDec, err := parser.UnmarshalYamlBytes[plugin_entities.DatasourceProviderDeclaration](pluginYaml)
+		if err != nil {
+			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", datasource))
+		}
+
+		for _, datasourceFile := range pluginDec.DatasourceFiles {
+			datasourceFileContent, err := decoder.ReadFile(datasourceFile)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read datasource file: %s", datasourceFile))
+			}
+
+			datasourceDec, err := parser.UnmarshalYamlBytes[plugin_entities.DatasourceDeclaration](datasourceFileContent)
+			if err != nil {
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal datasource file: %s", datasourceFile))
+			}
+
+			pluginDec.Datasources = append(pluginDec.Datasources, datasourceDec)
+		}
+
+		dec.Datasource = &pluginDec
+	}
+
 	for _, trigger := range plugins.Triggers {
 		// read yaml
 		pluginYaml, err := decoder.ReadFile(trigger)
@@ -438,6 +467,14 @@ func (p *PluginDecoderHelper) CheckAssetsValid(decoder PluginDecoder) error {
 		if declaration.Trigger.Identity.Icon != "" {
 			if _, ok := assets[declaration.Trigger.Identity.Icon]; !ok {
 				return errors.Join(err, fmt.Errorf("trigger icon not found"))
+			}
+		}
+	}
+
+	if declaration.Datasource != nil {
+		if declaration.Datasource.Identity.Icon != "" {
+			if _, ok := assets[declaration.Datasource.Identity.Icon]; !ok {
+				return errors.Join(err, fmt.Errorf("datasource icon not found"))
 			}
 		}
 	}

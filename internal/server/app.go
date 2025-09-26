@@ -14,7 +14,7 @@ type App struct {
 	// customize behavior of endpoint
 	endpointHandler EndpointHandler
 
-	// aws transaction handler
-	// accept aws transaction request and forward to the plugin daemon
-	awsTransactionHandler *transaction.AWSTransactionHandler
+	// serverless transaction handler
+	// accept serverless transaction request and forward to the plugin daemon
+	serverlessTransactionHandler *transaction.ServerlessTransactionHandler
 }

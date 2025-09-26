@@ -91,6 +91,10 @@ type Config struct {
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
 
+	// add a global reference to plugins to prevent them from being garbage collected
+	// not allowed for local mode
+	PluginAllowOrphans bool `envconfig:"PLUGIN_ALLOW_ORPHANS" default:"false"`
+
 	// platform like local or aws lambda
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
 
@@ -141,6 +145,9 @@ type Config struct {
 	ThirdPartySignatureVerificationEnabled bool `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_ENABLED"  default:"false"`
 	// a comma-separated list of file paths to public keys in addition to the official public key for signature verification
 	ThirdPartySignatureVerificationPublicKeys []string `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_PUBLIC_KEYS"  default:""`
+
+	// Enforce signature verification for plugins claiming Langgenius authorship
+	EnforceLanggeniusSignatures bool `envconfig:"ENFORCE_LANGGENIUS_PLUGIN_SIGNATURES" default:"true"`
 
 	// lifetime state management
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
@@ -231,6 +238,9 @@ func (c *Config) Validate() error {
 	} else if c.Platform == PLATFORM_LOCAL {
 		if c.PluginWorkingPath == "" {
 			return fmt.Errorf("plugin working path is empty")
+		}
+		if c.PluginAllowOrphans {
+			return fmt.Errorf("orphan plugins are not allowed in local mode")
 		}
 	} else {
 		return fmt.Errorf("invalid platform")

@@ -5,11 +5,27 @@ set -x
 VERSION=${VERSION:-v0.0.1}
 
 # Detect OS and architecture
-OS="${OS:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
-ARCH="${ARCH:-$(uname -m)}"
+UNAME_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+UNAME_ARCH=$(uname -m)
 
-GOOS=${OS} GOARCH=${ARCH} \
+# Map OS
+case "$UNAME_OS" in
+  linux*)   GOOS=linux ;;
+  darwin*)  GOOS=darwin ;;
+  msys*|mingw*|cygwin*|windows*) GOOS=windows ;;
+  *)        GOOS="$UNAME_OS" ;;
+esac
+
+# Map ARCH
+case "$UNAME_ARCH" in
+  x86_64|amd64) GOARCH=amd64 ;;
+  i386|i686)    GOARCH=386 ;;
+  aarch64)      GOARCH=arm64 ;;
+  armv7l)       GOARCH=arm ;;
+  *)            GOARCH="$UNAME_ARCH" ;;
+esac
+
 go build \
     -ldflags "\
     -X 'main.VersionX=${VERSION}' "\
-    -o dify-plugin-cli-${OS}-${ARCH} ./cmd/commandline
+    -o "dify-plugin-cli-${GOOS}-${GOARCH}" ./cmd/commandline

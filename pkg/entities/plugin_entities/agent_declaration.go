@@ -79,7 +79,7 @@ type AgentStrategyDeclaration struct {
 	Identity     AgentStrategyIdentity     `json:"identity" yaml:"identity" validate:"required"`
 	Description  I18nObject                `json:"description" yaml:"description" validate:"required"`
 	Parameters   []AgentStrategyParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	OutputSchema AgentStrategyOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
+	OutputSchema AgentStrategyOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty"`
 	Features     []string                  `json:"features" yaml:"features" validate:"omitempty,dive,lt=256"`
 }
 
