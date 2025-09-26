@@ -267,23 +267,30 @@ func (p *PluginDeclaration) Identity() string {
 
 func (p *PluginDeclaration) ManifestValidate() error {
 	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil && p.Datasource == nil && p.Trigger == nil {
-		return fmt.Errorf("at least one of endpoint, model, tool, agent_strategy, or datasource must be provided")
+		return fmt.Errorf("at least one of endpoint, model, tool, agent_strategy, trigger, or datasource must be provided")
+	}
 
 	if p.Model != nil {
-		if p.Datasource != nil || p.Tool != nil || p.Endpoint != nil || p.AgentStrategy != nil {
-			return fmt.Errorf("model and datasource, tool, endpoint, or agent_strategy cannot be provided at the same time")
+		if p.Datasource != nil || p.Tool != nil || p.Endpoint != nil || p.AgentStrategy != nil || p.Trigger != nil {
+			return fmt.Errorf("model and datasource, tool, endpoint, trigger, or agent_strategy cannot be provided at the same time")
 		}
 	}
 
 	if p.AgentStrategy != nil {
-		if p.Tool != nil || p.Model != nil || p.Endpoint != nil || p.Datasource != nil {
-			return fmt.Errorf("agent_strategy and tool, model, endpoint, or datasource cannot be provided at the same time")
+		if p.Tool != nil || p.Model != nil || p.Endpoint != nil || p.Datasource != nil || p.Trigger != nil {
+			return fmt.Errorf("agent_strategy and tool, model, endpoint, trigger, or datasource cannot be provided at the same time")
 		}
 	}
 
 	if p.Datasource != nil {
-		if p.Tool != nil || p.Model != nil || p.Endpoint != nil || p.AgentStrategy != nil {
-			return fmt.Errorf("datasource and tool, model, endpoint, or agent_strategy cannot be provided at the same time")
+		if p.Tool != nil || p.Model != nil || p.Endpoint != nil || p.AgentStrategy != nil || p.Trigger != nil {
+			return fmt.Errorf("datasource and tool, model, endpoint, trigger, or agent_strategy cannot be provided at the same time")
+		}
+	}
+
+	if p.Trigger != nil {
+		if p.Tool != nil || p.Model != nil || p.Endpoint != nil || p.AgentStrategy != nil || p.Datasource != nil {
+			return fmt.Errorf("trigger and tool, model, endpoint, or agent_strategy cannot be provided at the same time")
 		}
 	}
 
