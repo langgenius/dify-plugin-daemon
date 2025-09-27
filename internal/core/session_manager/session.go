@@ -25,6 +25,8 @@ type Session struct {
 	ID                  string                              `json:"id"`
 	runtime             plugin_entities.PluginLifetime      `json:"-"`
 	backwardsInvocation dify_invocation.BackwardsInvocation `json:"-"`
+	releaseRuntime      func()
+	releaseOnce         sync.Once
 
 	TenantID               string                                 `json:"tenant_id"`
 	UserID                 string                                 `json:"user_id"`
@@ -138,14 +140,22 @@ type CloseSessionPayload struct {
 }
 
 func (s *Session) Close(payload CloseSessionPayload) {
+	s.releaseOnce.Do(func() {
+		if s.releaseRuntime != nil {
+			s.releaseRuntime()
+		}
+	})
 	DeleteSession(DeleteSessionPayload{
 		ID:          s.ID,
 		IgnoreCache: payload.IgnoreCache,
 	})
 }
 
-func (s *Session) BindRuntime(runtime plugin_entities.PluginLifetime) {
+func (s *Session) BindRuntime(runtime plugin_entities.PluginLifetime, release func()) {
 	s.runtime = runtime
+	if release != nil {
+		s.releaseRuntime = release
+	}
 }
 
 func (s *Session) Runtime() plugin_entities.PluginLifetime {

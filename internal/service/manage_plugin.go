@@ -2,8 +2,10 @@ package service
 
 import (
 	"errors"
+	"sort"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -97,8 +99,8 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	finalData := responseData{
-		List: 	data,
-		Total: 	totalCount,
+		List:  data,
+		Total: totalCount,
 	}
 
 	return entities.NewSuccessResponse(finalData)
@@ -572,4 +574,85 @@ func GetDatasource(tenant_id string, plugin_id string, provider string) *entitie
 		DatasourceInstallation: datasource,
 		Declaration:            declaration.Datasource,
 	})
+}
+
+type RuntimeConnectionDetail struct {
+	PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
+	Connections            int64  `json:"connections"`
+}
+
+type PluginRuntimeConnectionSnapshot struct {
+	PluginID         string `json:"plugin_id"`
+	TotalConnections int64  `json:"total_connections"`
+	BlueGreen        bool   `json:"blue_green"`
+	// the version currently serving traffic (the "new" version in blue-green).
+	ActiveVersion *RuntimeConnectionDetail `json:"active_version,omitempty"`
+	// list of old versions being phased out (empty if none).
+	DrainingVersions []RuntimeConnectionDetail `json:"draining_versions,omitempty"`
+}
+
+type PluginRuntimeConnectionsResponse struct {
+	List []PluginRuntimeConnectionSnapshot `json:"list"`
+}
+
+func ListPluginRuntimeConnections(pluginID string) *entities.Response {
+	manager := plugin_manager.Manager()
+	reports := manager.CollectRuntimeTraffic(pluginID)
+
+	// 先按 plugin_id 聚合 active/draining，最后根据 BlueGreen 决定填充字段
+	type tmpGroup struct {
+		active   []RuntimeConnectionDetail
+		draining []RuntimeConnectionDetail
+		total    int64
+	}
+	tmp := map[string]*tmpGroup{}
+
+	for _, report := range reports {
+		detail := RuntimeConnectionDetail{
+			PluginUniqueIdentifier: report.Identity,
+			Connections:            report.Sessions,
+		}
+		g, ok := tmp[report.PluginID]
+		if !ok {
+			g = &tmpGroup{}
+			tmp[report.PluginID] = g
+		}
+		g.total += report.Sessions
+		if report.Draining {
+			g.draining = append(g.draining, detail)
+		} else {
+			g.active = append(g.active, detail)
+		}
+	}
+
+	list := make([]PluginRuntimeConnectionSnapshot, 0, len(tmp))
+	for pluginID, g := range tmp {
+		snapshot := PluginRuntimeConnectionSnapshot{
+			PluginID:         pluginID,
+			TotalConnections: g.total,
+			DrainingVersions: make([]RuntimeConnectionDetail, 0),
+		}
+		if len(g.draining) > 0 {
+			snapshot.BlueGreen = true
+			// 蓝绿场景：任选一个 active 作为 active_version（通常唯一）
+			if len(g.active) > 0 {
+				d := g.active[0]
+				snapshot.ActiveVersion = &d
+			}
+			snapshot.DrainingVersions = append(snapshot.DrainingVersions, g.draining...)
+		} else {
+			// 非蓝绿：只返回 active_version
+			if len(g.active) > 0 {
+				d := g.active[0]
+				snapshot.ActiveVersion = &d
+			}
+		}
+		list = append(list, snapshot)
+	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].PluginID < list[j].PluginID
+	})
+
+	return entities.NewSuccessResponse(PluginRuntimeConnectionsResponse{List: list})
 }

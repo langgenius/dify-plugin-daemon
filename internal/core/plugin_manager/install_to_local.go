@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"errors"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -12,23 +13,25 @@ import (
 
 // InstallToLocal installs a plugin to local
 func (p *PluginManager) InstallToLocal(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	source string,
-	meta map[string]any,
+    plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+    source string,
+    meta map[string]any,
+    options InstallOptions,
 ) (
-	*stream.Stream[PluginInstallResponse], error,
+    *stream.Stream[PluginInstallResponse], error,
 ) {
-	packageFile, err := p.packageBucket.Get(plugin_unique_identifier.String())
-	if err != nil {
-		return nil, err
-	}
+    log.Info("[install] start InstallToLocal: uid=%s source=%s blue_green=%v", plugin_unique_identifier.String(), source, options.BlueGreen)
+    packageFile, err := p.packageBucket.Get(plugin_unique_identifier.String())
+    if err != nil {
+        return nil, err
+    }
 
 	err = p.installedBucket.Save(plugin_unique_identifier, packageFile)
 	if err != nil {
 		return nil, err
 	}
 
-	runtime, launchedChan, errChan, err := p.launchLocal(plugin_unique_identifier)
+	runtime, _, errChan, err := p.launchLocal(plugin_unique_identifier, options)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +47,9 @@ func (p *PluginManager) InstallToLocal(
 		defer ticker.Stop()
 		timer := time.NewTimer(time.Second * 240) // timeout after 240 seconds
 		defer timer.Stop()
+
+		// wait for plugin to fully start to ensure traffic cutover is safe
+        startedCh := runtime.WaitStarted()
 
 		for {
 			select {
@@ -61,10 +67,11 @@ func (p *PluginManager) InstallToLocal(
 				})
 				runtime.Stop()
 				return
-			case err := <-errChan:
-				if err != nil {
-					// if error occurs, delete the plugin from local and stop the plugin
-					identity, er := runtime.Identity()
+            case err := <-errChan:
+                if err != nil {
+                    log.Error("[install] failed during launching: uid=%s err=%s", plugin_unique_identifier.String(), err.Error())
+                    // if error occurs, delete the plugin from local and stop the plugin
+                    identity, er := runtime.Identity()
 					if er != nil {
 						log.Error("get plugin identity failed: %s", er.Error())
 					}
@@ -86,14 +93,15 @@ func (p *PluginManager) InstallToLocal(
 					runtime.Stop()
 					return
 				}
-			case <-launchedChan:
-				response.Write(PluginInstallResponse{
-					Event: PluginInstallEventDone,
-					Data:  "Installed",
-				})
-				return
-			}
-		}
+            case <-startedCh:
+                log.Info("[install] runtime started: uid=%s", plugin_unique_identifier.String())
+                response.Write(PluginInstallResponse{
+                    Event: PluginInstallEventDone,
+                    Data:  "Installed",
+                })
+                return
+            }
+        }
 
 	})
 

@@ -169,15 +169,16 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 		r.stdioHolder.StartStderr()
 	})
 
-	// send started event
-	r.waitChanLock.Lock()
-	for _, c := range r.waitStartedChan {
-		select {
-		case c <- true:
-		default:
-		}
-	}
-	r.waitChanLock.Unlock()
+    // send started event and mark started=true
+    r.waitChanLock.Lock()
+    r.started = true
+    for _, c := range r.waitStartedChan {
+        select {
+        case c <- true:
+        default:
+        }
+    }
+    r.waitChanLock.Unlock()
 
 	// wait for plugin to exit
 	err = r.stdioHolder.Wait()
@@ -200,20 +201,28 @@ func (r *LocalPluginRuntime) Wait() (<-chan bool, error) {
 
 // WaitStarted returns a channel that will receive true when the plugin starts
 func (r *LocalPluginRuntime) WaitStarted() <-chan bool {
-	c := make(chan bool)
-	r.waitChanLock.Lock()
-	r.waitStartedChan = append(r.waitStartedChan, c)
-	r.waitChanLock.Unlock()
-	return c
+    r.waitChanLock.Lock()
+    defer r.waitChanLock.Unlock()
+    // use buffered channel to avoid dropping event due to non-blocking send
+    c := make(chan bool, 1)
+    if r.started {
+        c <- true
+        // optionally close to signal finality
+        close(c)
+        return c
+    }
+    r.waitStartedChan = append(r.waitStartedChan, c)
+    return c
 }
 
 // WaitStopped returns a channel that will receive true when the plugin stops
 func (r *LocalPluginRuntime) WaitStopped() <-chan bool {
-	c := make(chan bool)
-	r.waitChanLock.Lock()
-	r.waitStoppedChan = append(r.waitStoppedChan, c)
-	r.waitChanLock.Unlock()
-	return c
+    // buffered channel to avoid race with non-blocking send
+    c := make(chan bool, 1)
+    r.waitChanLock.Lock()
+    r.waitStoppedChan = append(r.waitStoppedChan, c)
+    r.waitChanLock.Unlock()
+    return c
 }
 
 // Stop stops the plugin

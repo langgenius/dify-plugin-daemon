@@ -69,7 +69,10 @@ func (p *PluginManager) getLocalPluginRuntime(pluginUniqueIdentifier plugin_enti
 // caller should always handle both the channels to avoid deadlock
 // 1. for launched channel, launch process will close the channel to notify the caller, just wait for it
 // 2. for error channel, it will be closed also, but no more error will be sent, caller should consume all errors
-func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) (
+func (p *PluginManager) launchLocal(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	options InstallOptions,
+) (
 	plugin_entities.PluginFullDuplexLifetime, <-chan bool, <-chan error, error,
 ) {
 	plugin, err := p.getLocalPluginRuntime(pluginUniqueIdentifier)
@@ -160,6 +163,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 	success = true
 
 	p.m.Store(identity.String(), localPluginRuntime)
+	p.registerRuntime(identity, registerRuntimeOptions{blueGreen: options.BlueGreen})
 
 	// NOTE: you should always keep the size of the channel to 0
 	// we use this to synchronize the plugin launch process
@@ -176,6 +180,7 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 				log.Error("plugin runtime panic: %v", r)
 			}
 			p.m.Delete(identity.String())
+			p.cleanupRuntime(identity.String())
 		}()
 
 		// add max launching lock to prevent too many plugins launching at the same time

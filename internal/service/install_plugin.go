@@ -47,12 +47,14 @@ func doInstallPluginRuntime(
 	source string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	meta map[string]any,
+	blueGreen bool,
 	task *models.InstallTask,
 	declaration *plugin_entities.PluginDeclaration,
 	reinstall bool,
 	onMessage InstallPluginOnMessageHandler,
 	onDone InstallPluginOnDoneHandler,
 ) {
+	log.Info("[install] begin doInstallPluginRuntime: tenant=%s uid=%s runtime=%s source=%s blue_green=%v reinstall=%v", tenant_id, pluginUniqueIdentifier.String(), string(runtimeType), source, blueGreen, reinstall)
 	var err error
 	updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
 
@@ -153,13 +155,25 @@ func doInstallPluginRuntime(
 		if reinstall {
 			stream, err = manager.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
 		} else {
-			stream, err = manager.InstallToServerlessFromPkg(pkgFile, zipDecoder, source, meta)
+			stream, err = manager.InstallToServerlessFromPkg(
+				pkgFile,
+				zipDecoder,
+				source,
+				meta,
+				plugin_manager.InstallOptions{BlueGreen: blueGreen},
+			)
 		}
 	} else if config.Platform == app.PLATFORM_LOCAL {
 		if reinstall {
 			log.Warn("reinstall is not supported on local platform, will do install")
 		}
-		stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, meta)
+		log.Info("[install] invoking InstallToLocal: uid=%s blue_green=%v", pluginUniqueIdentifier.String(), blueGreen)
+		stream, err = manager.InstallToLocal(
+			pluginUniqueIdentifier,
+			source,
+			meta,
+			plugin_manager.InstallOptions{BlueGreen: blueGreen},
+		)
 	} else {
 		updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 			task.Status = models.InstallTaskStatusFailed
@@ -194,6 +208,7 @@ func doInstallPluginRuntime(
 				plugin.Status = models.InstallTaskStatusFailed
 				plugin.Message = err.Error()
 			})
+			log.Error("[install] stream read error: uid=%s err=%s", pluginUniqueIdentifier.String(), err.Error())
 			return
 		}
 		onMessage(message)
@@ -203,16 +218,19 @@ func doInstallPluginRuntime(
 				plugin.Status = models.InstallTaskStatusFailed
 				plugin.Message = message.Data
 			})
+			log.Error("[install] stream event error: uid=%s msg=%s", pluginUniqueIdentifier.String(), message.Data)
 			return
 		}
 
 		if message.Event == plugin_manager.PluginInstallEventDone {
+			log.Info("[install] stream event done: uid=%s", pluginUniqueIdentifier.String())
 			if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenant_id, runtimeType, declaration, source, meta); err != nil {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed
 					plugin.Status = models.InstallTaskStatusFailed
 					plugin.Message = err.Error()
 				})
+				log.Error("[install] ensure global reference failed: uid=%s err=%s", pluginUniqueIdentifier.String(), err.Error())
 				return
 			}
 			if err := onDone(pluginUniqueIdentifier, declaration, meta); err != nil {
@@ -221,7 +239,20 @@ func doInstallPluginRuntime(
 					plugin.Status = models.InstallTaskStatusFailed
 					plugin.Message = "Failed to create plugin, perhaps it's already installed"
 				})
+				log.Error("[install] onDone failed: uid=%s err=%v", pluginUniqueIdentifier.String(), err)
 				return
+			}
+			log.Info("[install] onDone success: uid=%s", pluginUniqueIdentifier.String())
+
+			// invalidate installation cache for routing
+			pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenant_id)
+			_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
+
+			// perform traffic cutover AFTER mapping has been updated
+			if runtimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
+				identity := pluginUniqueIdentifier
+				log.Info("[install] finalize cutover after onDone: plugin_id=%s new_uid=%s", identity.PluginID(), identity.String())
+				manager.FinalizeRuntimeRegistration(identity, blueGreen)
 			}
 		}
 	}
@@ -236,6 +267,7 @@ func doInstallPluginRuntime(
 			task.Status = models.InstallTaskStatusSuccess
 		}
 	})
+	log.Info("[install] doInstallPluginRuntime success: tenant=%s uid=%s", tenant_id, pluginUniqueIdentifier.String())
 }
 
 func InstallPluginRuntimeToTenant(
@@ -244,6 +276,7 @@ func InstallPluginRuntimeToTenant(
 	plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier,
 	source string,
 	metas []map[string]any,
+	blueGreen bool,
 	onDone InstallPluginOnDoneHandler, // since installing plugin is a async task, we need to call it asynchronously
 ) (*InstallPluginResponse, error) {
 	response := &InstallPluginResponse{}
@@ -347,6 +380,7 @@ func InstallPluginRuntimeToTenant(
 				source,
 				pluginUniqueIdentifier,
 				metas[i],
+				blueGreen,
 				task,
 				declaration,
 				false,
@@ -367,6 +401,7 @@ func InstallPluginFromIdentifiers(
 	plugin_unique_identifiers []plugin_entities.PluginUniqueIdentifier,
 	source string,
 	metas []map[string]any,
+	blueGreen bool,
 ) *entities.Response {
 	response, err := InstallPluginRuntimeToTenant(
 		config,
@@ -374,6 +409,7 @@ func InstallPluginFromIdentifiers(
 		plugin_unique_identifiers,
 		source,
 		metas,
+		blueGreen,
 		func(
 			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 			declaration *plugin_entities.PluginDeclaration,
@@ -410,6 +446,7 @@ func ReinstallPluginFromIdentifier(
 	ctx *gin.Context,
 	config *app.Config,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	blueGreen bool,
 ) {
 	baseSSEService(func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
@@ -460,6 +497,7 @@ func ReinstallPluginFromIdentifier(
 				plugin.Source,
 				pluginUniqueIdentifier,
 				map[string]any{},
+				blueGreen,
 				task,
 				pluginDeclaration,
 				true,
@@ -527,6 +565,7 @@ func UpgradePlugin(
 	meta map[string]any,
 	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	blueGreen bool,
 ) *entities.Response {
 	if original_plugin_unique_identifier == new_plugin_unique_identifier {
 		return exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse()
@@ -558,6 +597,7 @@ func UpgradePlugin(
 		[]plugin_entities.PluginUniqueIdentifier{new_plugin_unique_identifier},
 		source,
 		[]map[string]any{meta},
+		blueGreen,
 		func(
 			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 			declaration *plugin_entities.PluginDeclaration,
@@ -599,16 +639,19 @@ func UpgradePlugin(
 			_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
 			if upgradeResponse.IsOriginalPluginDeleted {
-				// delete the plugin if no installation left
-				manager := plugin_manager.Manager()
-				if string(upgradeResponse.DeletedPlugin.InstallType) == string(
-					plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
-				) {
-					err = manager.UninstallFromLocal(
-						plugin_entities.PluginUniqueIdentifier(upgradeResponse.DeletedPlugin.PluginUniqueIdentifier),
-					)
-					if err != nil {
-						return err
+				// In blue-green release, old versions are not uninstalled immediately;
+				// packages are cleaned up automatically after traffic is drained.
+				if !blueGreen {
+					manager := plugin_manager.Manager()
+					if string(upgradeResponse.DeletedPlugin.InstallType) == string(
+						plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+					) {
+						err = manager.UninstallFromLocal(
+							plugin_entities.PluginUniqueIdentifier(upgradeResponse.DeletedPlugin.PluginUniqueIdentifier),
+						)
+						if err != nil {
+							return err
+						}
 					}
 				}
 			}

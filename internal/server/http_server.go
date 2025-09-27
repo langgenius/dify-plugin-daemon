@@ -160,6 +160,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/list", controllers.ListPlugins)
 	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)
 	group.POST("/installation/missing", controllers.FetchMissingPluginInstallations)
+	group.GET("/runtime/connections", controllers.ListPluginRuntimeConnections)
 	group.GET("/models", controllers.ListModels)
 	group.GET("/tools", controllers.ListTools)
 	group.GET("/tool", controllers.GetTool)

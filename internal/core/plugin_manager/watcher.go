@@ -49,6 +49,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 					return
 				}
 				p.m.Store(identity.String(), rpr)
+				p.registerRuntime(identity, registerRuntimeOptions{})
 				routine.Submit(map[string]string{
 					"module":    "plugin_manager",
 					"function":  "startRemoteWatcher",
@@ -60,6 +61,7 @@ func (p *PluginManager) startRemoteWatcher(config *app.Config) {
 							log.Error("plugin runtime error: %v", err)
 						}
 						p.m.Delete(identity.String())
+						p.cleanupRuntime(identity.String())
 					}()
 					p.fullDuplexLifecycle(rpr, nil, nil)
 				})
@@ -103,11 +105,19 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 				wg.Done()
 			}()
 
-			_, launchedChan, errChan, err := p.launchLocal(currentPlugin)
+			// In periodic scans, an existing runtime with the same plugin_id may be found.
+			// To avoid interruption from direct replacement, use blue-green option.
+			runtime, launchedChan, errChan, err := p.launchLocal(currentPlugin, InstallOptions{BlueGreen: true})
 			if err != nil {
 				log.Error("launch local plugin failed: %s", err.Error())
 				return
 			}
+
+			// finalize cutover after runtime started
+			go func(id plugin_entities.PluginUniqueIdentifier) {
+				<-runtime.WaitStarted()
+				p.finalizeRuntimeRegistration(id, true)
+			}(currentPlugin)
 
 			// Handle error channel
 			if errChan != nil {

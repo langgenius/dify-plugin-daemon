@@ -111,11 +111,17 @@ func Endpoint(
 
 	// fetch plugin
 	manager := plugin_manager.Manager()
-	runtime, err := manager.Get(identifier)
+	runtime, release, err := manager.AcquireRuntime(identifier)
 	if err != nil {
 		ctx.JSON(404, exception.ErrPluginNotFound().ToResponse())
 		return
 	}
+	releaseBound := false
+	defer func() {
+		if !releaseBound && release != nil {
+			release()
+		}
+	}()
 
 	// fetch endpoint declaration
 	endpointDeclaration := runtime.Configuration().Endpoint
@@ -163,7 +169,12 @@ func Endpoint(
 		IgnoreCache: false,
 	})
 
-	session.BindRuntime(runtime)
+	session.BindRuntime(runtime, func() {
+		if release != nil {
+			release()
+		}
+	})
+	releaseBound = true
 
 	statusCode, headers, response, err := plugin_daemon.InvokeEndpoint(
 		session, &requests.RequestInvokeEndpoint{
