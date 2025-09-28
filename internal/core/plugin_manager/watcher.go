@@ -116,7 +116,7 @@ func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {
 			// finalize cutover after runtime started
 			go func(id plugin_entities.PluginUniqueIdentifier) {
 				<-runtime.WaitStarted()
-				p.finalizeRuntimeRegistration(id, true)
+				p.finalizeRuntimeRegistration(id, BLUE_GREEN_MODE_AUTO)
 			}(currentPlugin)
 
 			// Handle error channel

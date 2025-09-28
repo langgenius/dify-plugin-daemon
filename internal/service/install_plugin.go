@@ -48,13 +48,14 @@ func doInstallPluginRuntime(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	meta map[string]any,
 	blueGreen bool,
+	blueGreenMode string,
 	task *models.InstallTask,
 	declaration *plugin_entities.PluginDeclaration,
 	reinstall bool,
 	onMessage InstallPluginOnMessageHandler,
 	onDone InstallPluginOnDoneHandler,
 ) {
-	log.Info("[install] begin doInstallPluginRuntime: tenant=%s uid=%s runtime=%s source=%s blue_green=%v reinstall=%v", tenant_id, pluginUniqueIdentifier.String(), string(runtimeType), source, blueGreen, reinstall)
+	log.Info("[install] begin doInstallPluginRuntime: tenant=%s uid=%s runtime=%s source=%s blue_green=%v mode=%s reinstall=%v", tenant_id, pluginUniqueIdentifier.String(), string(runtimeType), source, blueGreen, blueGreenMode, reinstall)
 	var err error
 	updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
 
@@ -167,7 +168,7 @@ func doInstallPluginRuntime(
 		if reinstall {
 			log.Warn("reinstall is not supported on local platform, will do install")
 		}
-		log.Info("[install] invoking InstallToLocal: uid=%s blue_green=%v", pluginUniqueIdentifier.String(), blueGreen)
+		log.Info("[install] invoking InstallToLocal: uid=%s blue_green=%v mode=%s", pluginUniqueIdentifier.String(), blueGreen, blueGreenMode)
 		stream, err = manager.InstallToLocal(
 			pluginUniqueIdentifier,
 			source,
@@ -252,7 +253,17 @@ func doInstallPluginRuntime(
 			if runtimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
 				identity := pluginUniqueIdentifier
 				log.Info("[install] finalize cutover after onDone: plugin_id=%s new_uid=%s", identity.PluginID(), identity.String())
-				manager.FinalizeRuntimeRegistration(identity, blueGreen)
+				if blueGreen {
+					var mode plugin_manager.BlueGreenMode
+					if blueGreenMode == string(plugin_manager.BLUE_GREEN_MODE_MANUAL) {
+						mode = plugin_manager.BLUE_GREEN_MODE_MANUAL
+					} else {
+						mode = plugin_manager.BLUE_GREEN_MODE_AUTO
+					}
+					manager.FinalizeRuntimeRegistration(identity, mode)
+				} else {
+					manager.FinalizeRuntimeRegistration(identity, plugin_manager.BlueGreenMode(""))
+				}
 			}
 		}
 	}
@@ -277,6 +288,7 @@ func InstallPluginRuntimeToTenant(
 	source string,
 	metas []map[string]any,
 	blueGreen bool,
+	blueGreenMode string,
 	onDone InstallPluginOnDoneHandler, // since installing plugin is a async task, we need to call it asynchronously
 ) (*InstallPluginResponse, error) {
 	response := &InstallPluginResponse{}
@@ -381,6 +393,7 @@ func InstallPluginRuntimeToTenant(
 				pluginUniqueIdentifier,
 				metas[i],
 				blueGreen,
+				blueGreenMode,
 				task,
 				declaration,
 				false,
@@ -402,6 +415,7 @@ func InstallPluginFromIdentifiers(
 	source string,
 	metas []map[string]any,
 	blueGreen bool,
+	blueGreenMode string,
 ) *entities.Response {
 	response, err := InstallPluginRuntimeToTenant(
 		config,
@@ -410,6 +424,7 @@ func InstallPluginFromIdentifiers(
 		source,
 		metas,
 		blueGreen,
+		blueGreenMode,
 		func(
 			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 			declaration *plugin_entities.PluginDeclaration,
@@ -498,6 +513,7 @@ func ReinstallPluginFromIdentifier(
 				pluginUniqueIdentifier,
 				map[string]any{},
 				blueGreen,
+				"auto",
 				task,
 				pluginDeclaration,
 				true,
@@ -566,6 +582,7 @@ func UpgradePlugin(
 	original_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	new_plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
 	blueGreen bool,
+	blueGreenMode string,
 ) *entities.Response {
 	if original_plugin_unique_identifier == new_plugin_unique_identifier {
 		return exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse()
@@ -598,6 +615,7 @@ func UpgradePlugin(
 		source,
 		[]map[string]any{meta},
 		blueGreen,
+		blueGreenMode,
 		func(
 			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 			declaration *plugin_entities.PluginDeclaration,

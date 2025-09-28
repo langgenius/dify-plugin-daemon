@@ -200,3 +200,11 @@ func (p *PluginManager) launchLocal(
 
 	return localPluginRuntime, launchedChan, errChan, nil
 }
+
+func (p *PluginManager) EnsureLocalRuntime(identity plugin_entities.PluginUniqueIdentifier) error {
+	if _, ok := p.m.Load(identity.String()); ok {
+		return nil
+	}
+	_, _, _, err := p.launchLocal(identity, InstallOptions{BlueGreen: true})
+	return err
+}

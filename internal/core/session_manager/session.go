@@ -20,6 +20,33 @@ var (
 	session_lock sync.RWMutex
 )
 
+var (
+	pluginConnCounts map[string]int       = map[string]int{}
+	pluginZeroSince  map[string]time.Time = map[string]time.Time{}
+	pluginConnLock   sync.RWMutex
+)
+
+func GetPluginConnections(identity string) int {
+	pluginConnLock.RLock()
+	defer pluginConnLock.RUnlock()
+	return pluginConnCounts[identity]
+}
+
+func GetPluginZeroSince(identity string) (time.Time, bool) {
+	pluginConnLock.RLock()
+	defer pluginConnLock.RUnlock()
+	t, ok := pluginZeroSince[identity]
+	return t, ok
+}
+
+func MarkPluginZeroSinceIfAbsent(identity string) {
+	pluginConnLock.Lock()
+	if _, ok := pluginZeroSince[identity]; !ok {
+		pluginZeroSince[identity] = time.Now()
+	}
+	pluginConnLock.Unlock()
+}
+
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
 	ID                  string                              `json:"id"`
@@ -87,6 +114,15 @@ func NewSession(payload NewSessionPayload) *Session {
 	sessions[s.ID] = s
 	session_lock.Unlock()
 
+	identity := payload.PluginUniqueIdentifier.String()
+	pluginConnLock.Lock()
+	prev := pluginConnCounts[identity]
+	pluginConnCounts[identity] = prev + 1
+	if prev == 0 {
+		delete(pluginZeroSince, identity)
+	}
+	pluginConnLock.Unlock()
+
 	if !payload.IgnoreCache {
 		if err := cache.Store(sessionKey(s.ID), s, time.Minute*30); err != nil {
 			log.Error("set session info to cache failed, %s", err)
@@ -125,8 +161,24 @@ type DeleteSessionPayload struct {
 
 func DeleteSession(payload DeleteSessionPayload) {
 	session_lock.Lock()
+	s := sessions[payload.ID]
 	delete(sessions, payload.ID)
 	session_lock.Unlock()
+
+	if s != nil {
+		identity := s.PluginUniqueIdentifier.String()
+		pluginConnLock.Lock()
+		cnt := pluginConnCounts[identity]
+		if cnt <= 1 {
+			pluginConnCounts[identity] = 0
+			if _, ok := pluginZeroSince[identity]; !ok {
+				pluginZeroSince[identity] = time.Now()
+			}
+		} else {
+			pluginConnCounts[identity] = cnt - 1
+		}
+		pluginConnLock.Unlock()
+	}
 
 	if !payload.IgnoreCache {
 		if _, err := cache.Del(sessionKey(payload.ID)); err != nil {
