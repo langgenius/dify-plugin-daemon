@@ -188,6 +188,10 @@ func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.Plu
 		return nil, err
 	}
 
+	if err := declaration.ManifestValidate(); err != nil {
+		return nil, errors.Join(err, fmt.Errorf("illegal plugin manifest"))
+	}
+
 	// get the assets
 	assets, err := packageDecoder.Assets()
 	if err != nil {
