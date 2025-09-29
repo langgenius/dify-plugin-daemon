@@ -85,6 +85,7 @@ func FullDuplex(
 	for !r.Stopped() {
 		// start plugin
 		if err := r.StartPlugin(); err != nil {
+			log.Error("start plugin failed: %s", err.Error())
 			if r.Stopped() {
 				// plugin has been stopped, exit
 				break
