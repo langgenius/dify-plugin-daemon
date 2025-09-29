@@ -63,7 +63,7 @@ output_schema:
         description: page content
 
 
-# For online document, you can use the following code:
+# For online drive, you can use the following code:
 parameters:
 output_schema:
     type: object
