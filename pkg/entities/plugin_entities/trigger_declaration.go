@@ -37,6 +37,7 @@ const (
 	TRIGGER_PARAMETER_TYPE_OBJECT         TriggerParameterType = OBJECT
 	TRIGGER_PARAMETER_TYPE_ARRAY          TriggerParameterType = ARRAY
 	TRIGGER_PARAMETER_TYPE_DYNAMIC_SELECT TriggerParameterType = DYNAMIC_SELECT
+	TRIGGER_PARAMETER_TYPE_CHECKBOX       TriggerParameterType = CHECKBOX
 )
 
 func isTriggerParameterType(fl validator.FieldLevel) bool {
@@ -52,7 +53,8 @@ func isTriggerParameterType(fl validator.FieldLevel) bool {
 		string(TRIGGER_PARAMETER_TYPE_APP_SELECTOR),
 		string(TRIGGER_PARAMETER_TYPE_OBJECT),
 		string(TRIGGER_PARAMETER_TYPE_ARRAY),
-		string(TRIGGER_PARAMETER_TYPE_DYNAMIC_SELECT):
+		string(TRIGGER_PARAMETER_TYPE_DYNAMIC_SELECT),
+		string(TRIGGER_PARAMETER_TYPE_CHECKBOX):
 		return true
 	}
 	return false
@@ -134,20 +136,20 @@ type TriggerDeclaration struct {
 	OutputSchema map[string]any     `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 }
 
-// SubscriptionSchema represents the subscription schema of the trigger provider
-type SubscriptionSchema struct {
-	ParametersSchema []TriggerParameter `json:"parameters_schema" yaml:"parameters_schema" validate:"omitempty,dive"`
-	PropertiesSchema []ProviderConfig   `json:"properties_schema" yaml:"properties_schema" validate:"omitempty,dive"`
+// SubscriptionConstructor represents the subscription constructor of the trigger provider
+type SubscriptionConstructor struct {
+	ParametersSchema  []TriggerParameter `json:"parameters_schema" yaml:"parameters_schema" validate:"omitempty,dive"`
+	CredentialsSchema []ProviderConfig   `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
+	OAuthSchema       *OAuthSchema       `json:"oauth_schema,omitempty" yaml:"oauth_schema,omitempty" validate:"omitempty"`
 }
 
 // TriggerProviderDeclaration represents the configuration of a trigger provider
 type TriggerProviderDeclaration struct {
-	Identity           TriggerProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
-	CredentialsSchema  []ProviderConfig        `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
-	OAuthSchema        *OAuthSchema            `json:"oauth_schema,omitempty" yaml:"oauth_schema,omitempty" validate:"omitempty"`
-	SubscriptionSchema SubscriptionSchema      `json:"subscription_schema" yaml:"subscription_schema" validate:"required"`
-	Triggers           []TriggerDeclaration    `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
-	TriggerFiles       []string                `json:"-" yaml:"-"`
+	Identity                TriggerProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
+	SubscriptionSchema      []ProviderConfig        `json:"subscription_schema" yaml:"subscription_schema" validate:"omitempty"`
+	SubscriptionConstructor SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty"`
+	Triggers                []TriggerDeclaration    `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
+	TriggerFiles            []string                `json:"-" yaml:"-"`
 }
 
 // Subscription represents the result of a successful trigger subscription operation
@@ -168,8 +170,14 @@ type Unsubscription struct {
 func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
 	type alias TriggerProviderDeclaration
 	p := alias(*t)
-	if p.CredentialsSchema == nil {
-		p.CredentialsSchema = []ProviderConfig{}
+	if p.SubscriptionSchema == nil {
+		p.SubscriptionSchema = []ProviderConfig{}
+	}
+	if p.SubscriptionConstructor.ParametersSchema == nil {
+		p.SubscriptionConstructor.ParametersSchema = []TriggerParameter{}
+	}
+	if p.SubscriptionConstructor.CredentialsSchema == nil {
+		p.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
 	}
 	if p.Triggers == nil {
 		p.Triggers = []TriggerDeclaration{}
@@ -180,11 +188,10 @@ func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
 // UnmarshalYAML implements custom YAML unmarshalling for TriggerProviderConfiguration
 func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
-		Identity           TriggerProviderIdentity `yaml:"identity"`
-		CredentialsSchema  yaml.Node               `yaml:"credentials_schema"`
-		OAuthSchema        *OAuthSchema            `yaml:"oauth_schema"`
-		SubscriptionSchema yaml.Node               `yaml:"subscription_schema"`
-		Triggers           yaml.Node               `yaml:"triggers"`
+		Identity                TriggerProviderIdentity `yaml:"identity"`
+		SubscriptionSchema      yaml.Node               `yaml:"subscription_schema"`
+		SubscriptionConstructor yaml.Node               `yaml:"subscription_constructor"`
+		Triggers                yaml.Node               `yaml:"triggers"`
 	}
 
 	var temp alias
@@ -197,22 +204,19 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	// apply identity
 	t.Identity = temp.Identity
 
-	// apply oauth_schema
-	t.OAuthSchema = temp.OAuthSchema
-
-	// handle credentials_schema conversion from dict to list format
-	if temp.CredentialsSchema.Kind != yaml.MappingNode {
+	// handle subscription_schema conversion from dict to list format
+	if temp.SubscriptionSchema.Kind != yaml.MappingNode {
 		// not a map, convert it into array
-		credentialsSchema := make([]ProviderConfig, 0)
-		if err := temp.CredentialsSchema.Decode(&credentialsSchema); err != nil {
+		subscriptionSchema := make([]ProviderConfig, 0)
+		if err := temp.SubscriptionSchema.Decode(&subscriptionSchema); err != nil {
 			return err
 		}
-		t.CredentialsSchema = credentialsSchema
-	} else if temp.CredentialsSchema.Kind == yaml.MappingNode {
-		credentialsSchema := make([]ProviderConfig, 0, len(temp.CredentialsSchema.Content)/2)
+		t.SubscriptionSchema = subscriptionSchema
+	} else if temp.SubscriptionSchema.Kind == yaml.MappingNode {
+		subscriptionSchema := make([]ProviderConfig, 0, len(temp.SubscriptionSchema.Content)/2)
 		currentKey := ""
 		currentValue := &ProviderConfig{}
-		for _, item := range temp.CredentialsSchema.Content {
+		for _, item := range temp.SubscriptionSchema.Content {
 			if item.Kind == yaml.ScalarNode {
 				currentKey = item.Value
 			} else if item.Kind == yaml.MappingNode {
@@ -221,20 +225,18 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 					return err
 				}
 				currentValue.Name = currentKey
-				credentialsSchema = append(credentialsSchema, *currentValue)
+				subscriptionSchema = append(subscriptionSchema, *currentValue)
 			}
 		}
-		t.CredentialsSchema = credentialsSchema
+		t.SubscriptionSchema = subscriptionSchema
 	}
 
-	// handle subscription_schema
-	subscriptionSchema := SubscriptionSchema{}
-	if temp.SubscriptionSchema.Kind == yaml.MappingNode {
-		if err := temp.SubscriptionSchema.Decode(&subscriptionSchema); err != nil {
+	// handle subscription_constructor
+	if temp.SubscriptionConstructor.Kind == yaml.MappingNode {
+		if err := temp.SubscriptionConstructor.Decode(&t.SubscriptionConstructor); err != nil {
 			return err
 		}
 	}
-	t.SubscriptionSchema = subscriptionSchema
 
 	// initialize TriggerFiles
 	if t.TriggerFiles == nil {
@@ -259,8 +261,16 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	// initialize empty arrays if nil
-	if t.CredentialsSchema == nil {
-		t.CredentialsSchema = []ProviderConfig{}
+	if t.SubscriptionSchema == nil {
+		t.SubscriptionSchema = []ProviderConfig{}
+	}
+
+	if t.SubscriptionConstructor.ParametersSchema == nil {
+		t.SubscriptionConstructor.ParametersSchema = []TriggerParameter{}
+	}
+
+	if t.SubscriptionConstructor.CredentialsSchema == nil {
+		t.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
 	}
 
 	if t.Triggers == nil {
