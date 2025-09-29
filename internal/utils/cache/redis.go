@@ -20,7 +20,7 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func getRedisOptions(addr, username, password string, useSsl bool, db int) *redis.Options {
+func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
 		Username: username,
@@ -28,23 +28,34 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int) *redi
 		DB:       db,
 	}
 	if useSsl {
-		opts.TLSConfig = &tls.Config{}
+		// Use provided TLS config (encodes CERT_NONE / REQUIRED policy). If nil, default to system roots.
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			opts.TLSConfig = &tls.Config{}
+		}
 	}
 	return opts
 }
 
-func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
-	opts := getRedisOptions(addr, username, password, useSsl, db)
+func InitRedisClient(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) error {
+	opts := getRedisOptions(addr, username, password, useSsl, db, tlsConf)
 	client = redis.NewClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func InitRedisSentinelClient(sentinels []string, masterName, username, password, sentinelUsername, sentinelPassword string, useSsl bool, db int, socketTimeout float64) error {
+func InitRedisSentinelClient(
+	sentinels []string,
+	masterName, username, password, sentinelUsername, sentinelPassword string,
+	useSsl bool,
+	db int,
+	socketTimeout float64,
+	tlsConf *tls.Config,
+) error {
 	opts := &redis.FailoverOptions{
 		MasterName:       masterName,
 		SentinelAddrs:    sentinels,
@@ -56,7 +67,12 @@ func InitRedisSentinelClient(sentinels []string, masterName, username, password,
 	}
 
 	if useSsl {
-		opts.TLSConfig = &tls.Config{}
+		// go-redis v9 uses TLSConfig for both Sentinel discovery and data connections
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			opts.TLSConfig = &tls.Config{}
+		}
 	}
 
 	if socketTimeout > 0 {
@@ -68,7 +84,6 @@ func InitRedisSentinelClient(sentinels []string, masterName, username, password,
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -77,7 +92,6 @@ func Close() error {
 	if client == nil {
 		return ErrDBNotInit
 	}
-
 	return client.Close()
 }
 
@@ -85,7 +99,6 @@ func getCmdable(context ...redis.Cmdable) redis.Cmdable {
 	if len(context) > 0 {
 		return context[0]
 	}
-
 	return client
 }
 
@@ -365,13 +378,12 @@ func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[str
 
 	result := make(map[string]V)
 
-	ScanMapAsync[V](key, match, func(m map[string]V) error {
+	_ = ScanMapAsync[V](key, match, func(m map[string]V) error {
 		for k, v := range m {
 			result[k] = v
 		}
-
 		return nil
-	})
+	}, context...)
 
 	return result, nil
 }
@@ -388,7 +400,6 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 		kvs, newCursor, err := getCmdable(context...).
 			HScan(ctx, serialKey(key), cursor, match, 32).
 			Result()
-
 		if err != nil {
 			return err
 		}
@@ -399,7 +410,6 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 			if err != nil {
 				continue
 			}
-
 			result[kvs[i]] = value
 		}
 
@@ -410,7 +420,6 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 		if newCursor == 0 {
 			break
 		}
-
 		cursor = newCursor
 	}
 
@@ -533,7 +542,6 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 				if err != nil {
 					continue
 				}
-
 				ch <- v
 			case *redis.Pong:
 			default:
