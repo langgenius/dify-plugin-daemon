@@ -17,9 +17,11 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 	decoder decoder.PluginDecoder,
 	source string,
 	meta map[string]any,
+	options InstallOptions,
 ) (
 	*stream.Stream[PluginInstallResponse], error,
 ) {
+	_ = options
 	checksum, err := decoder.Checksum()
 	if err != nil {
 		return nil, err

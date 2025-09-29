@@ -28,12 +28,12 @@ func CheckingKey(key string) gin.HandlerFunc {
 }
 
 func (app *App) FetchPluginInstallation() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		pluginId := ctx.Request.Header.Get(constants.X_PLUGIN_ID)
-		if pluginId == "" {
-			ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("plugin_id is required")).ToResponse())
-			return
-		}
+    return func(ctx *gin.Context) {
+        pluginId := ctx.Request.Header.Get(constants.X_PLUGIN_ID)
+        if pluginId == "" {
+            ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("plugin_id is required")).ToResponse())
+            return
+        }
 
 		tenantId := ctx.Param("tenant_id")
 		if tenantId == "" {
@@ -43,19 +43,19 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 
 		// fetch plugin installation with caching
 		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
-		installation, err := cache.AutoGetWithGetter(
-			cacheKey,
-			func() (*models.PluginInstallation, error) {
-				inst, err := db.GetOne[models.PluginInstallation](
-					db.Equal("tenant_id", tenantId),
-					db.Equal("plugin_id", pluginId),
-				)
-				if err != nil {
-					return nil, err
-				}
-				return &inst, nil
-			},
-		)
+        installation, err := cache.AutoGetWithGetter(
+            cacheKey,
+            func() (*models.PluginInstallation, error) {
+                inst, err := db.GetOne[models.PluginInstallation](
+                    db.Equal("tenant_id", tenantId),
+                    db.Equal("plugin_id", pluginId),
+                )
+                if err != nil {
+                    return nil, err
+                }
+                return &inst, nil
+            },
+        )
 
 		if err == db.ErrDatabaseNotFound {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
@@ -67,16 +67,17 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
-		if err != nil {
-			ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
-			return
-		}
+        identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+        if err != nil {
+            ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
+            return
+        }
+        log.Info("[route] FetchPluginInstallation: tenant=%s plugin_id=%s resolved_uid=%s", tenantId, pluginId, identity.String())
 
-		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
-		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
-		ctx.Next()
-	}
+        ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
+        ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
+        ctx.Next()
+    }
 }
 
 // RedirectPluginInvoke redirects the request to the correct cluster node

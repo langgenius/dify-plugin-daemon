@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -21,6 +22,9 @@ func GenericInvokePlugin[Req any, Rsp any](
 	runtime := session.Runtime()
 	if runtime == nil {
 		return nil, errors.New("plugin runtime not found")
+	}
+	if uid, err := runtime.Identity(); err == nil {
+		log.Info("[invoke] session=%s plugin_id=%s uid=%s action=%s", session.ID, uid.PluginID(), uid.String(), string(session.Action))
 	}
 
 	response := stream.NewStream[Rsp](response_buffer_size)
