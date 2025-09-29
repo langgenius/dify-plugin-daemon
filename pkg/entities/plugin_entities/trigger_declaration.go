@@ -148,7 +148,7 @@ type SubscriptionConstructor struct {
 type TriggerProviderDeclaration struct {
 	Identity                TriggerProviderIdentity  `json:"identity" yaml:"identity" validate:"required"`
 	SubscriptionSchema      []ProviderConfig         `json:"subscription_schema" yaml:"subscription_schema" validate:"required"`
-	SubscriptionConstructor *SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty,dive"`
+	SubscriptionConstructor *SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty"`
 	Triggers                []TriggerDeclaration     `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
 	TriggerFiles            []string                 `json:"-" yaml:"-"`
 }
