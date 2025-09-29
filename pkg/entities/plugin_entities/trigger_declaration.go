@@ -2,6 +2,7 @@ package plugin_entities
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 
 	"github.com/go-playground/validator/v10"
@@ -147,7 +148,7 @@ type SubscriptionConstructor struct {
 type TriggerProviderDeclaration struct {
 	Identity                TriggerProviderIdentity  `json:"identity" yaml:"identity" validate:"required"`
 	SubscriptionSchema      []ProviderConfig         `json:"subscription_schema" yaml:"subscription_schema" validate:"required"`
-	SubscriptionConstructor *SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty"`
+	SubscriptionConstructor *SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty,dive"`
 	Triggers                []TriggerDeclaration     `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
 	TriggerFiles            []string                 `json:"-" yaml:"-"`
 }
@@ -185,6 +186,44 @@ func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p)
 }
 
+// convertYAMLNodeToProviderConfigList converts a YAML node to []ProviderConfig
+// It supports both array format and dict/map format where keys become the Name field
+func convertYAMLNodeToProviderConfigList(node *yaml.Node) ([]ProviderConfig, error) {
+	if node.Kind != yaml.MappingNode {
+		// not a map, decode as array directly
+		configs := make([]ProviderConfig, 0)
+		if err := node.Decode(&configs); err != nil {
+			return nil, err
+		}
+		return configs, nil
+	}
+
+	// handle map/dict format: convert to array with keys as Name field
+	configs := make([]ProviderConfig, 0, len(node.Content)/2)
+	var currentKey string
+	for i, item := range node.Content {
+		if i%2 == 0 {
+			// even indices are keys
+			if item.Kind != yaml.ScalarNode {
+				return nil, fmt.Errorf("expected scalar key at position %d", i)
+			}
+			currentKey = item.Value
+		} else {
+			// odd indices are values
+			if item.Kind != yaml.MappingNode {
+				return nil, fmt.Errorf("expected mapping value for key %s", currentKey)
+			}
+			var config ProviderConfig
+			if err := item.Decode(&config); err != nil {
+				return nil, fmt.Errorf("failed to decode config for key %s: %w", currentKey, err)
+			}
+			config.Name = currentKey
+			configs = append(configs, config)
+		}
+	}
+	return configs, nil
+}
+
 // UnmarshalYAML implements custom YAML unmarshalling for TriggerProviderConfiguration
 func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	type alias struct {
@@ -205,36 +244,51 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	t.Identity = temp.Identity
 
 	// handle subscription_schema conversion from dict to list format
-	if temp.SubscriptionSchema.Kind != yaml.MappingNode {
-		// not a map, convert it into array
-		subscriptionSchema := make([]ProviderConfig, 0)
-		if err := temp.SubscriptionSchema.Decode(&subscriptionSchema); err != nil {
-			return err
-		}
-		t.SubscriptionSchema = subscriptionSchema
-	} else if temp.SubscriptionSchema.Kind == yaml.MappingNode {
-		subscriptionSchema := make([]ProviderConfig, 0, len(temp.SubscriptionSchema.Content)/2)
-		currentKey := ""
-		currentValue := &ProviderConfig{}
-		for _, item := range temp.SubscriptionSchema.Content {
-			if item.Kind == yaml.ScalarNode {
-				currentKey = item.Value
-			} else if item.Kind == yaml.MappingNode {
-				currentValue = &ProviderConfig{}
-				if err := item.Decode(currentValue); err != nil {
-					return err
-				}
-				currentValue.Name = currentKey
-				subscriptionSchema = append(subscriptionSchema, *currentValue)
-			}
-		}
-		t.SubscriptionSchema = subscriptionSchema
+	subscriptionSchema, err := convertYAMLNodeToProviderConfigList(&temp.SubscriptionSchema)
+	if err != nil {
+		return fmt.Errorf("failed to parse subscription_schema: %w", err)
 	}
+	t.SubscriptionSchema = subscriptionSchema
 
 	// handle subscription_constructor
 	if temp.SubscriptionConstructor.Kind == yaml.MappingNode {
-		if err := temp.SubscriptionConstructor.Decode(&t.SubscriptionConstructor); err != nil {
+		// parse subscription_constructor with custom handling for credentials_schema
+		type constructorAlias struct {
+			Parameters        yaml.Node `yaml:"parameters"`
+			CredentialsSchema yaml.Node `yaml:"credentials_schema"`
+			OAuthSchema       yaml.Node `yaml:"oauth_schema"`
+		}
+
+		var constructorTemp constructorAlias
+		if err := temp.SubscriptionConstructor.Decode(&constructorTemp); err != nil {
 			return err
+		}
+
+		t.SubscriptionConstructor = &SubscriptionConstructor{}
+
+		// decode parameters if present
+		if constructorTemp.Parameters.Kind != 0 {
+			if err := constructorTemp.Parameters.Decode(&t.SubscriptionConstructor.Parameters); err != nil {
+				return fmt.Errorf("failed to parse subscription_constructor.parameters: %w", err)
+			}
+		}
+
+		// handle credentials_schema conversion from dict to list format
+		if constructorTemp.CredentialsSchema.Kind != 0 {
+			credentialsSchema, err := convertYAMLNodeToProviderConfigList(&constructorTemp.CredentialsSchema)
+			if err != nil {
+				return fmt.Errorf("failed to parse subscription_constructor.credentials_schema: %w", err)
+			}
+			t.SubscriptionConstructor.CredentialsSchema = credentialsSchema
+		}
+
+		// decode oauth_schema if present
+		if constructorTemp.OAuthSchema.Kind != 0 {
+			var oauthSchema OAuthSchema
+			if err := constructorTemp.OAuthSchema.Decode(&oauthSchema); err != nil {
+				return fmt.Errorf("failed to parse subscription_constructor.oauth_schema: %w", err)
+			}
+			t.SubscriptionConstructor.OAuthSchema = &oauthSchema
 		}
 	}
 
@@ -265,12 +319,14 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		t.SubscriptionSchema = []ProviderConfig{}
 	}
 
-	if t.SubscriptionConstructor.Parameters == nil {
-		t.SubscriptionConstructor.Parameters = []TriggerParameter{}
-	}
+	if t.SubscriptionConstructor != nil {
+		if t.SubscriptionConstructor.Parameters == nil {
+			t.SubscriptionConstructor.Parameters = []TriggerParameter{}
+		}
 
-	if t.SubscriptionConstructor.CredentialsSchema == nil {
-		t.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
+		if t.SubscriptionConstructor.CredentialsSchema == nil {
+			t.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
+		}
 	}
 
 	if t.Triggers == nil {
