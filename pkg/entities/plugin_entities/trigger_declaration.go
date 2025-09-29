@@ -145,11 +145,11 @@ type SubscriptionConstructor struct {
 
 // TriggerProviderDeclaration represents the configuration of a trigger provider
 type TriggerProviderDeclaration struct {
-	Identity                TriggerProviderIdentity `json:"identity" yaml:"identity" validate:"required"`
-	SubscriptionSchema      []ProviderConfig        `json:"subscription_schema" yaml:"subscription_schema" validate:"omitempty"`
-	SubscriptionConstructor SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty"`
-	Triggers                []TriggerDeclaration    `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
-	TriggerFiles            []string                `json:"-" yaml:"-"`
+	Identity                TriggerProviderIdentity  `json:"identity" yaml:"identity" validate:"required"`
+	SubscriptionSchema      []ProviderConfig         `json:"subscription_schema" yaml:"subscription_schema" validate:"required"`
+	SubscriptionConstructor *SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty"`
+	Triggers                []TriggerDeclaration     `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
+	TriggerFiles            []string                 `json:"-" yaml:"-"`
 }
 
 // Subscription represents the result of a successful trigger subscription operation
