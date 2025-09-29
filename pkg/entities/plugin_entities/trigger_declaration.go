@@ -138,7 +138,7 @@ type TriggerDeclaration struct {
 
 // SubscriptionConstructor represents the subscription constructor of the trigger provider
 type SubscriptionConstructor struct {
-	ParametersSchema  []TriggerParameter `json:"parameters_schema" yaml:"parameters_schema" validate:"omitempty,dive"`
+	Parameters        []TriggerParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
 	CredentialsSchema []ProviderConfig   `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
 	OAuthSchema       *OAuthSchema       `json:"oauth_schema,omitempty" yaml:"oauth_schema,omitempty" validate:"omitempty"`
 }
@@ -173,8 +173,8 @@ func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
 	if p.SubscriptionSchema == nil {
 		p.SubscriptionSchema = []ProviderConfig{}
 	}
-	if p.SubscriptionConstructor.ParametersSchema == nil {
-		p.SubscriptionConstructor.ParametersSchema = []TriggerParameter{}
+	if p.SubscriptionConstructor.Parameters == nil {
+		p.SubscriptionConstructor.Parameters = []TriggerParameter{}
 	}
 	if p.SubscriptionConstructor.CredentialsSchema == nil {
 		p.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
@@ -265,8 +265,8 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		t.SubscriptionSchema = []ProviderConfig{}
 	}
 
-	if t.SubscriptionConstructor.ParametersSchema == nil {
-		t.SubscriptionConstructor.ParametersSchema = []TriggerParameter{}
+	if t.SubscriptionConstructor.Parameters == nil {
+		t.SubscriptionConstructor.Parameters = []TriggerParameter{}
 	}
 
 	if t.SubscriptionConstructor.CredentialsSchema == nil {
