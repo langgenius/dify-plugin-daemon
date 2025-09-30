@@ -23,4 +23,41 @@ type ServerlessPluginRuntime struct {
 	client *http.Client
 
 	PluginMaxExecutionTimeout int // in seconds
+
+	stdoutBufferSize    int
+	stdoutMaxBufferSize int
+}
+
+type ServerlessPluginRuntimeConfig struct {
+	LambdaURL                 string
+	LambdaName                string
+	PluginMaxExecutionTimeout int
+	StdoutBufferSize          int
+	StdoutMaxBufferSize       int
+}
+
+func NewServerlessPluginRuntime(
+	basicChecksum basic_runtime.BasicChecksum,
+	pluginRuntime plugin_entities.PluginRuntime,
+	config ServerlessPluginRuntimeConfig,
+) *ServerlessPluginRuntime {
+	// set default buffer sizes if not configured
+	stdoutBufferSize := config.StdoutBufferSize
+	if stdoutBufferSize <= 0 {
+		stdoutBufferSize = 1024
+	}
+	stdoutMaxBufferSize := config.StdoutMaxBufferSize
+	if stdoutMaxBufferSize <= 0 {
+		stdoutMaxBufferSize = 5 * 1024 * 1024
+	}
+
+	return &ServerlessPluginRuntime{
+		BasicChecksum:             basicChecksum,
+		PluginRuntime:             pluginRuntime,
+		LambdaURL:                 config.LambdaURL,
+		LambdaName:                config.LambdaName,
+		PluginMaxExecutionTimeout: config.PluginMaxExecutionTimeout,
+		stdoutBufferSize:          stdoutBufferSize,
+		stdoutMaxBufferSize:       stdoutMaxBufferSize,
+	}
 }
