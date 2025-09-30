@@ -314,19 +314,19 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal plugin file: %s", trigger))
 		}
 
-		// read triggers
-		for _, trigger_file := range pluginDec.TriggerFiles {
-			triggerFileContent, err := decoder.ReadFile(trigger_file)
+		// read events
+		for _, event_file := range pluginDec.EventFiles {
+			eventFileContent, err := decoder.ReadFile(event_file)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read trigger file: %s", trigger_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read event file: %s", event_file))
 			}
 
-			triggerFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.TriggerDeclaration](triggerFileContent)
+			eventFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.EventDeclaration](eventFileContent)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal trigger file: %s", trigger_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal event file: %s", event_file))
 			}
 
-			pluginDec.Triggers = append(pluginDec.Triggers, triggerFileDec)
+			pluginDec.Events = append(pluginDec.Events, eventFileDec)
 		}
 
 		dec.Trigger = &pluginDec

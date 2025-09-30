@@ -49,7 +49,7 @@ type TriggerValidateProviderCredentialsResponse struct {
 }
 
 type TriggerDispatchEventResponse struct {
-	Triggers        []string `json:"triggers"`
+	Events          []string `json:"events"`
 	RawHTTPResponse string   `json:"raw_http_response"`
 }
 

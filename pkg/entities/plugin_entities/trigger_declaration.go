@@ -17,70 +17,70 @@ type TriggerRuntime struct {
 	SessionID   *string        `json:"session_id" yaml:"session_id"`
 }
 
-// TriggerParameterOption represents the option of the trigger parameter
-type TriggerParameterOption struct {
+// EventParameterOption represents the option of the event parameter
+type EventParameterOption struct {
 	Label I18nObject `json:"label" yaml:"label" validate:"required"`
 	Value any        `json:"value" yaml:"value" validate:"required"`
 }
 
-// TriggerParameterType represents the type of the parameter
-type TriggerParameterType string
+// EventParameterType represents the type of the parameter
+type EventParameterType string
 
 const (
-	TRIGGER_PARAMETER_TYPE_STRING         TriggerParameterType = STRING
-	TRIGGER_PARAMETER_TYPE_NUMBER         TriggerParameterType = NUMBER
-	TRIGGER_PARAMETER_TYPE_BOOLEAN        TriggerParameterType = BOOLEAN
-	TRIGGER_PARAMETER_TYPE_SELECT         TriggerParameterType = SELECT
-	TRIGGER_PARAMETER_TYPE_FILE           TriggerParameterType = FILE
-	TRIGGER_PARAMETER_TYPE_FILES          TriggerParameterType = FILES
-	TRIGGER_PARAMETER_TYPE_MODEL_SELECTOR TriggerParameterType = MODEL_SELECTOR
-	TRIGGER_PARAMETER_TYPE_APP_SELECTOR   TriggerParameterType = APP_SELECTOR
-	TRIGGER_PARAMETER_TYPE_OBJECT         TriggerParameterType = OBJECT
-	TRIGGER_PARAMETER_TYPE_ARRAY          TriggerParameterType = ARRAY
-	TRIGGER_PARAMETER_TYPE_DYNAMIC_SELECT TriggerParameterType = DYNAMIC_SELECT
-	TRIGGER_PARAMETER_TYPE_CHECKBOX       TriggerParameterType = CHECKBOX
+	EVENT_PARAMETER_TYPE_STRING         EventParameterType = STRING
+	EVENT_PARAMETER_TYPE_NUMBER         EventParameterType = NUMBER
+	EVENT_PARAMETER_TYPE_BOOLEAN        EventParameterType = BOOLEAN
+	EVENT_PARAMETER_TYPE_SELECT         EventParameterType = SELECT
+	EVENT_PARAMETER_TYPE_FILE           EventParameterType = FILE
+	EVENT_PARAMETER_TYPE_FILES          EventParameterType = FILES
+	EVENT_PARAMETER_TYPE_MODEL_SELECTOR EventParameterType = MODEL_SELECTOR
+	EVENT_PARAMETER_TYPE_APP_SELECTOR   EventParameterType = APP_SELECTOR
+	EVENT_PARAMETER_TYPE_OBJECT         EventParameterType = OBJECT
+	EVENT_PARAMETER_TYPE_ARRAY          EventParameterType = ARRAY
+	EVENT_PARAMETER_TYPE_DYNAMIC_SELECT EventParameterType = DYNAMIC_SELECT
+	EVENT_PARAMETER_TYPE_CHECKBOX       EventParameterType = CHECKBOX
 )
 
-func isTriggerParameterType(fl validator.FieldLevel) bool {
+func isEventParameterType(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
 	switch value {
-	case string(TRIGGER_PARAMETER_TYPE_STRING),
-		string(TRIGGER_PARAMETER_TYPE_NUMBER),
-		string(TRIGGER_PARAMETER_TYPE_BOOLEAN),
-		string(TRIGGER_PARAMETER_TYPE_SELECT),
-		string(TRIGGER_PARAMETER_TYPE_FILE),
-		string(TRIGGER_PARAMETER_TYPE_FILES),
-		string(TRIGGER_PARAMETER_TYPE_MODEL_SELECTOR),
-		string(TRIGGER_PARAMETER_TYPE_APP_SELECTOR),
-		string(TRIGGER_PARAMETER_TYPE_OBJECT),
-		string(TRIGGER_PARAMETER_TYPE_ARRAY),
-		string(TRIGGER_PARAMETER_TYPE_DYNAMIC_SELECT),
-		string(TRIGGER_PARAMETER_TYPE_CHECKBOX):
+	case string(EVENT_PARAMETER_TYPE_STRING),
+		string(EVENT_PARAMETER_TYPE_NUMBER),
+		string(EVENT_PARAMETER_TYPE_BOOLEAN),
+		string(EVENT_PARAMETER_TYPE_SELECT),
+		string(EVENT_PARAMETER_TYPE_FILE),
+		string(EVENT_PARAMETER_TYPE_FILES),
+		string(EVENT_PARAMETER_TYPE_MODEL_SELECTOR),
+		string(EVENT_PARAMETER_TYPE_APP_SELECTOR),
+		string(EVENT_PARAMETER_TYPE_OBJECT),
+		string(EVENT_PARAMETER_TYPE_ARRAY),
+		string(EVENT_PARAMETER_TYPE_DYNAMIC_SELECT),
+		string(EVENT_PARAMETER_TYPE_CHECKBOX):
 		return true
 	}
 	return false
 }
 
 func init() {
-	validators.GlobalEntitiesValidator.RegisterValidation("trigger_parameter_type", isTriggerParameterType)
+	validators.GlobalEntitiesValidator.RegisterValidation("event_parameter_type", isEventParameterType)
 }
 
-// TriggerParameter represents the parameter of the trigger
-type TriggerParameter struct {
-	Name         string                   `json:"name" yaml:"name" validate:"required"`
-	Label        I18nObject               `json:"label" yaml:"label" validate:"required"`
-	Type         TriggerParameterType     `json:"type" yaml:"type" validate:"required,trigger_parameter_type"`
-	AutoGenerate *ParameterAutoGenerate   `json:"auto_generate,omitempty" yaml:"auto_generate,omitempty"`
-	Template     *ParameterTemplate       `json:"template,omitempty" yaml:"template,omitempty"`
-	Scope        *string                  `json:"scope,omitempty" yaml:"scope,omitempty"`
-	Required     bool                     `json:"required" yaml:"required"`
-	Multiple     bool                     `json:"multiple,omitempty" yaml:"multiple,omitempty"`
-	Default      any                      `json:"default,omitempty" yaml:"default,omitempty"`
-	Min          *float64                 `json:"min,omitempty" yaml:"min,omitempty"`
-	Max          *float64                 `json:"max,omitempty" yaml:"max,omitempty"`
-	Precision    *int                     `json:"precision,omitempty" yaml:"precision,omitempty"`
-	Options      []TriggerParameterOption `json:"options,omitempty" yaml:"options,omitempty" validate:"omitempty,dive"`
-	Description  *I18nObject              `json:"description,omitempty" yaml:"description,omitempty"`
+// EventParameter represents the parameter of the event
+type EventParameter struct {
+	Name         string                 `json:"name" yaml:"name" validate:"required"`
+	Label        I18nObject             `json:"label" yaml:"label" validate:"required"`
+	Type         EventParameterType     `json:"type" yaml:"type" validate:"required,event_parameter_type"`
+	AutoGenerate *ParameterAutoGenerate `json:"auto_generate,omitempty" yaml:"auto_generate,omitempty"`
+	Template     *ParameterTemplate     `json:"template,omitempty" yaml:"template,omitempty"`
+	Scope        *string                `json:"scope,omitempty" yaml:"scope,omitempty"`
+	Required     bool                   `json:"required" yaml:"required"`
+	Multiple     bool                   `json:"multiple,omitempty" yaml:"multiple,omitempty"`
+	Default      any                    `json:"default,omitempty" yaml:"default,omitempty"`
+	Min          *float64               `json:"min,omitempty" yaml:"min,omitempty"`
+	Max          *float64               `json:"max,omitempty" yaml:"max,omitempty"`
+	Precision    *int                   `json:"precision,omitempty" yaml:"precision,omitempty"`
+	Options      []EventParameterOption `json:"options,omitempty" yaml:"options,omitempty" validate:"omitempty,dive"`
+	Description  *I18nObject            `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 // TriggerProviderIdentity represents the identity of the trigger provider
@@ -105,43 +105,43 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("trigger_provider_identity_name", isTriggerProviderIdentityName)
 }
 
-// TriggerIdentity represents the identity of the trigger
-type TriggerIdentity struct {
+// EventIdentity represents the identity of the event
+type EventIdentity struct {
 	Author string     `json:"author" yaml:"author" validate:"required"`
-	Name   string     `json:"name" yaml:"name" validate:"required,trigger_identity_name"`
+	Name   string     `json:"name" yaml:"name" validate:"required,event_identity_name"`
 	Label  I18nObject `json:"label" yaml:"label" validate:"required"`
 }
 
-var triggerIdentityNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+var eventIdentityNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
-func isTriggerIdentityName(fl validator.FieldLevel) bool {
+func isEventIdentityName(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
-	return triggerIdentityNameRegex.MatchString(value)
+	return eventIdentityNameRegex.MatchString(value)
 }
 
 func init() {
-	validators.GlobalEntitiesValidator.RegisterValidation("trigger_identity_name", isTriggerIdentityName)
+	validators.GlobalEntitiesValidator.RegisterValidation("event_identity_name", isEventIdentityName)
 }
 
-// TriggerDescription represents the description of the trigger
-type TriggerDescription struct {
+// EventDescription represents the description of the event
+type EventDescription struct {
 	Human I18nObject `json:"human" yaml:"human" validate:"required"`
 	LLM   I18nObject `json:"llm" yaml:"llm" validate:"required"`
 }
 
-// TriggerDeclaration represents the configuration of a trigger
-type TriggerDeclaration struct {
-	Identity     TriggerIdentity    `json:"identity" yaml:"identity" validate:"required"`
-	Parameters   []TriggerParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	Description  TriggerDescription `json:"description" yaml:"description" validate:"required"`
-	OutputSchema map[string]any     `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
+// EventDeclaration represents the configuration of an event
+type EventDeclaration struct {
+	Identity     EventIdentity    `json:"identity" yaml:"identity" validate:"required"`
+	Parameters   []EventParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
+	Description  EventDescription `json:"description" yaml:"description" validate:"required"`
+	OutputSchema map[string]any   `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 }
 
 // SubscriptionConstructor represents the subscription constructor of the trigger provider
 type SubscriptionConstructor struct {
-	Parameters        []TriggerParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	CredentialsSchema []ProviderConfig   `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
-	OAuthSchema       *OAuthSchema       `json:"oauth_schema,omitempty" yaml:"oauth_schema,omitempty" validate:"omitempty"`
+	Parameters        []EventParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
+	CredentialsSchema []ProviderConfig `json:"credentials_schema" yaml:"credentials_schema" validate:"omitempty,dive"`
+	OAuthSchema       *OAuthSchema     `json:"oauth_schema,omitempty" yaml:"oauth_schema,omitempty" validate:"omitempty"`
 }
 
 // TriggerProviderDeclaration represents the configuration of a trigger provider
@@ -149,8 +149,8 @@ type TriggerProviderDeclaration struct {
 	Identity                TriggerProviderIdentity  `json:"identity" yaml:"identity" validate:"required"`
 	SubscriptionSchema      []ProviderConfig         `json:"subscription_schema" yaml:"subscription_schema" validate:"required"`
 	SubscriptionConstructor *SubscriptionConstructor `json:"subscription_constructor" yaml:"subscription_constructor" validate:"omitempty"`
-	Triggers                []TriggerDeclaration     `json:"triggers" yaml:"triggers" validate:"omitempty,dive"`
-	TriggerFiles            []string                 `json:"-" yaml:"-"`
+	Events                  []EventDeclaration       `json:"events" yaml:"events" validate:"omitempty,dive"`
+	EventFiles              []string                 `json:"-" yaml:"-"`
 }
 
 // Subscription represents the result of a successful trigger subscription operation
@@ -175,13 +175,13 @@ func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
 		p.SubscriptionSchema = []ProviderConfig{}
 	}
 	if p.SubscriptionConstructor.Parameters == nil {
-		p.SubscriptionConstructor.Parameters = []TriggerParameter{}
+		p.SubscriptionConstructor.Parameters = []EventParameter{}
 	}
 	if p.SubscriptionConstructor.CredentialsSchema == nil {
 		p.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
 	}
-	if p.Triggers == nil {
-		p.Triggers = []TriggerDeclaration{}
+	if p.Events == nil {
+		p.Events = []EventDeclaration{}
 	}
 	return json.Marshal(p)
 }
@@ -230,7 +230,7 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		Identity                TriggerProviderIdentity `yaml:"identity"`
 		SubscriptionSchema      yaml.Node               `yaml:"subscription_schema"`
 		SubscriptionConstructor yaml.Node               `yaml:"subscription_constructor"`
-		Triggers                yaml.Node               `yaml:"triggers"`
+		Events                  yaml.Node               `yaml:"events"`
 	}
 
 	var temp alias
@@ -292,24 +292,24 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		}
 	}
 
-	// initialize TriggerFiles
-	if t.TriggerFiles == nil {
-		t.TriggerFiles = []string{}
+	// initialize EventFiles
+	if t.EventFiles == nil {
+		t.EventFiles = []string{}
 	}
 
-	// unmarshal triggers - support both file paths and direct declarations
-	if temp.Triggers.Kind == yaml.SequenceNode {
-		for _, item := range temp.Triggers.Content {
+	// unmarshal events - support both file paths and direct declarations
+	if temp.Events.Kind == yaml.SequenceNode {
+		for _, item := range temp.Events.Content {
 			if item.Kind == yaml.ScalarNode {
-				// It's a string (file path), add to TriggerFiles
-				t.TriggerFiles = append(t.TriggerFiles, item.Value)
+				// It's a string (file path), add to EventFiles
+				t.EventFiles = append(t.EventFiles, item.Value)
 			} else if item.Kind == yaml.MappingNode {
-				// It's an object (direct trigger declaration), parse and add to Triggers
-				trigger := TriggerDeclaration{}
-				if err := item.Decode(&trigger); err != nil {
+				// It's an object (direct event declaration), parse and add to Events
+				event := EventDeclaration{}
+				if err := item.Decode(&event); err != nil {
 					return err
 				}
-				t.Triggers = append(t.Triggers, trigger)
+				t.Events = append(t.Events, event)
 			}
 		}
 	}
@@ -321,7 +321,7 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 
 	if t.SubscriptionConstructor != nil {
 		if t.SubscriptionConstructor.Parameters == nil {
-			t.SubscriptionConstructor.Parameters = []TriggerParameter{}
+			t.SubscriptionConstructor.Parameters = []EventParameter{}
 		}
 
 		if t.SubscriptionConstructor.CredentialsSchema == nil {
@@ -329,8 +329,8 @@ func (t *TriggerProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		}
 	}
 
-	if t.Triggers == nil {
-		t.Triggers = []TriggerDeclaration{}
+	if t.Events == nil {
+		t.Events = []EventDeclaration{}
 	}
 
 	if t.Identity.Tags == nil {
