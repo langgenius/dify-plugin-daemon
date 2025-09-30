@@ -1,7 +1,11 @@
 package app
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -108,6 +112,10 @@ type Config struct {
 	RedisUser   string `envconfig:"REDIS_USERNAME"`
 	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
 	RedisDB     int    `envconfig:"REDIS_DB"`
+
+	// redis TLS extras
+	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS" default:"CERT_REQUIRED"`
+	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
 
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
@@ -251,6 +259,42 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// RedisTLSConfig builds a *tls.Config for Redis based on envs.
+func (c *Config) RedisTLSConfig() (*tls.Config, error) {
+	if !c.RedisUseSsl {
+		return nil, nil
+	}
+
+	tlsConf := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	if strings.TrimSpace(c.RedisSSLCACerts) != "" {
+		pem, err := os.ReadFile(c.RedisSSLCACerts)
+		if err != nil {
+			return nil, fmt.Errorf("read REDIS_SSL_CA_CERTS: %w", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pem) {
+			return nil, fmt.Errorf("failed to append CA certs from %s", c.RedisSSLCACerts)
+		}
+		tlsConf.RootCAs = pool
+	}
+
+	switch strings.ToUpper(strings.TrimSpace(c.RedisSSLCertReqs)) {
+	case "CERT_NONE":
+		tlsConf.InsecureSkipVerify = true
+	case "CERT_OPTIONAL":
+		tlsConf.InsecureSkipVerify = false
+	case "CERT_REQUIRED", "":
+		tlsConf.InsecureSkipVerify = false
+	default:
+		tlsConf.InsecureSkipVerify = false
+	}
+
+	return tlsConf, nil
 }
 
 type PlatformType string

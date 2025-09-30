@@ -113,6 +113,12 @@ func (p *PluginManager) GetAsset(id string) ([]byte, error) {
 func (p *PluginManager) Launch(configuration *app.Config) {
 	log.Info("start plugin manager daemon...")
 
+	// Build TLS config for Redis (nil when RedisUseSsl=false)
+	tlsConf, err := configuration.RedisTLSConfig()
+	if err != nil {
+		log.Panic("invalid Redis TLS config: %s", err.Error())
+	}
+
 	// init redis client
 	if configuration.RedisUseSentinel {
 		// use Redis Sentinel
@@ -127,6 +133,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
 			configuration.RedisSentinelSocketTimeout,
+			tlsConf, // pass TLS to cache initializer
 		); err != nil {
 			log.Panic("init redis sentinel client failed: %s", err.Error())
 		}
@@ -137,6 +144,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 			configuration.RedisPass,
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
+			tlsConf, // pass TLS to cache initializer
 		); err != nil {
 			log.Panic("init redis client failed: %s", err.Error())
 		}
