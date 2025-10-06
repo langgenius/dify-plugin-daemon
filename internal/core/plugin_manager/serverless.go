@@ -54,8 +54,8 @@ func (p *PluginManager) getServerlessPluginRuntime(
 			LambdaURL:                 model.FunctionURL,
 			LambdaName:                model.FunctionName,
 			PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
-			StdoutBufferSize:          p.config.PluginStdioBufferSize,
-			StdoutMaxBufferSize:       p.config.PluginStdioMaxBufferSize,
+			RuntimeBufferSize:         p.config.GetRuntimeBufferSize(),
+			RuntimeMaxBufferSize:      p.config.GetRuntimeMaxBufferSize(),
 		},
 	)
 

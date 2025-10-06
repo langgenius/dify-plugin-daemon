@@ -87,7 +87,7 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 		scanner := bufio.NewScanner(response.Body)
 		defer response.Body.Close()
 
-		scanner.Buffer(make([]byte, r.stdoutBufferSize), r.stdoutMaxBufferSize)
+		scanner.Buffer(make([]byte, r.RuntimeBufferSize), r.RuntimeMaxBufferSize)
 
 		sessionAlive := true
 		for scanner.Scan() && sessionAlive {

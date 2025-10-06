@@ -24,16 +24,16 @@ type ServerlessPluginRuntime struct {
 
 	PluginMaxExecutionTimeout int // in seconds
 
-	stdoutBufferSize    int
-	stdoutMaxBufferSize int
+	RuntimeBufferSize    int
+	RuntimeMaxBufferSize int
 }
 
 type ServerlessPluginRuntimeConfig struct {
 	LambdaURL                 string
 	LambdaName                string
 	PluginMaxExecutionTimeout int
-	StdoutBufferSize          int
-	StdoutMaxBufferSize       int
+	RuntimeBufferSize         int
+	RuntimeMaxBufferSize      int
 }
 
 func NewServerlessPluginRuntime(
@@ -42,13 +42,13 @@ func NewServerlessPluginRuntime(
 	config ServerlessPluginRuntimeConfig,
 ) *ServerlessPluginRuntime {
 	// set default buffer sizes if not configured
-	stdoutBufferSize := config.StdoutBufferSize
-	if stdoutBufferSize <= 0 {
-		stdoutBufferSize = 1024
+	RuntimeBufferSize := config.RuntimeBufferSize
+	if RuntimeBufferSize <= 0 {
+		RuntimeBufferSize = 1024
 	}
-	stdoutMaxBufferSize := config.StdoutMaxBufferSize
-	if stdoutMaxBufferSize <= 0 {
-		stdoutMaxBufferSize = 5 * 1024 * 1024
+	RuntimeMaxBufferSize := config.RuntimeMaxBufferSize
+	if RuntimeMaxBufferSize <= 0 {
+		RuntimeMaxBufferSize = 5 * 1024 * 1024
 	}
 
 	return &ServerlessPluginRuntime{
@@ -57,7 +57,7 @@ func NewServerlessPluginRuntime(
 		LambdaURL:                 config.LambdaURL,
 		LambdaName:                config.LambdaName,
 		PluginMaxExecutionTimeout: config.PluginMaxExecutionTimeout,
-		stdoutBufferSize:          stdoutBufferSize,
-		stdoutMaxBufferSize:       stdoutMaxBufferSize,
+		RuntimeBufferSize:         RuntimeBufferSize,
+		RuntimeMaxBufferSize:      RuntimeMaxBufferSize,
 	}
 }

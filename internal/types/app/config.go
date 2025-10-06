@@ -173,6 +173,13 @@ type Config struct {
 	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
+	// Runtime buffer configuration (applies to both local and serverless runtimes)
+	// These are the new generic names that should be used going forward
+	PluginRuntimeBufferSize    int `envconfig:"PLUGIN_RUNTIME_BUFFER_SIZE" default:"0"`
+	PluginRuntimeMaxBufferSize int `envconfig:"PLUGIN_RUNTIME_MAX_BUFFER_SIZE" default:"0"`
+
+	// Legacy STDIO-specific buffer configuration (kept for backward compatibility)
+	// If the new PluginRuntime* configs are not set, these will be used as fallback
 	PluginStdioBufferSize    int `envconfig:"PLUGIN_STDIO_BUFFER_SIZE" default:"1024"`
 	PluginStdioMaxBufferSize int `envconfig:"PLUGIN_STDIO_MAX_BUFFER_SIZE" default:"5242880"`
 
@@ -251,6 +258,24 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// GetRuntimeBufferSize returns the runtime buffer size with backward compatibility.
+// Prefers the new PluginRuntimeBufferSize, falls back to PluginStdioBufferSize if not set.
+func (c *Config) GetRuntimeBufferSize() int {
+	if c.PluginRuntimeBufferSize > 0 {
+		return c.PluginRuntimeBufferSize
+	}
+	return c.PluginStdioBufferSize
+}
+
+// GetRuntimeMaxBufferSize returns the runtime max buffer size with backward compatibility.
+// Prefers the new PluginRuntimeMaxBufferSize, falls back to PluginStdioMaxBufferSize if not set.
+func (c *Config) GetRuntimeMaxBufferSize() int {
+	if c.PluginRuntimeMaxBufferSize > 0 {
+		return c.PluginRuntimeMaxBufferSize
+	}
+	return c.PluginStdioMaxBufferSize
 }
 
 type PlatformType string
