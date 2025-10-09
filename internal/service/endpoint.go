@@ -24,6 +24,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
@@ -219,26 +220,43 @@ func Endpoint(
 	}
 }
 
-func EnableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-
-	if err := install_service.EnabledEndpoint(endpoint_id, tenant_id); err != nil {
-		return exception.InternalServerError(errors.New("failed to enable endpoint")).ToResponse()
+func EnableEndpoint(endpointID string, tenantID string) *entities.Response {
+	endpoint, err := install_service.EnabledEndpoint(endpointID, tenantID)
+	if err != nil {
+		return handleEndpointStateError(err, "enable")
 	}
+
+	invalidateEndpointCache(endpoint.HookID)
 
 	return entities.NewSuccessResponse(true)
 }
 
-func DisableEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-	endpoint, err := install_service.DisabledEndpoint(endpoint_id, tenant_id)
+func DisableEndpoint(endpointID string, tenantID string) *entities.Response {
+	endpoint, err := install_service.DisabledEndpoint(endpointID, tenantID)
 	if err != nil {
-		return exception.InternalServerError(errors.New("failed to disable endpoint")).ToResponse()
+		return handleEndpointStateError(err, "disable")
 	}
 
-	// invalidate endpoint cache
-	endpointCacheKey := helper.EndpointCacheKey(endpoint.HookID)
-	_, _ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
+	invalidateEndpointCache(endpoint.HookID)
 
 	return entities.NewSuccessResponse(true)
+}
+
+func handleEndpointStateError(err error, action string) *entities.Response {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, db.ErrDatabaseNotFound) {
+		return exception.NotFoundError(errors.New("endpoint not found")).ToResponse()
+	}
+	return exception.InternalServerError(fmt.Errorf("failed to %s endpoint: %w", action, err)).ToResponse()
+}
+
+func invalidateEndpointCache(hookID string) {
+	endpointCacheKey := helper.EndpointCacheKey(hookID)
+	if _, err := cache.AutoDelete[models.Endpoint](endpointCacheKey); err != nil {
+		log.Warn("failed to invalidate endpoint cache for hookID %s: %v", hookID, err)
+	}
 }
 
 func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response {
