@@ -10,14 +10,14 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
 
-func TriggerInvoke(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.TriggerInvokeRequest]
+func TriggerInvokeEvent(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.TriggerInvokeEventRequest]
 
 	return func(c *gin.Context) {
 		BindPluginDispatchRequest(
 			c,
 			func(itr request) {
-				service.TriggerInvoke(&itr, c, config.PluginMaxExecutionTimeout)
+				service.TriggerInvokeEvent(&itr, c, config.PluginMaxExecutionTimeout)
 			},
 		)
 	}

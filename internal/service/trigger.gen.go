@@ -12,17 +12,17 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
 
-func TriggerInvoke(
-	r *plugin_entities.InvokePluginRequest[requests.TriggerInvokeRequest],
+func TriggerInvokeEvent(
+	r *plugin_entities.InvokePluginRequest[requests.TriggerInvokeEventRequest],
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
 	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[requests.TriggerInvokeResponse], error) {
-			return plugin_daemon.TriggerInvoke(session, &r.Data)
+		func(session *session_manager.Session) (*stream.Stream[requests.TriggerInvokeEventResponse], error) {
+			return plugin_daemon.TriggerInvokeEvent(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TRIGGER,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TRIGGER_EVENT,
 		r,
 		ctx,
 		max_timeout_seconds,

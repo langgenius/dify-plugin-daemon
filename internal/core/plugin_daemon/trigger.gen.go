@@ -8,13 +8,13 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 )
 
-func TriggerInvoke(
+func TriggerInvokeEvent(
 	session *session_manager.Session,
-	request *requests.TriggerInvokeRequest,
+	request *requests.TriggerInvokeEventRequest,
 ) (
-	*stream.Stream[requests.TriggerInvokeResponse], error,
+	*stream.Stream[requests.TriggerInvokeEventResponse], error,
 ) {
-	return GenericInvokePlugin[requests.TriggerInvokeRequest, requests.TriggerInvokeResponse](
+	return GenericInvokePlugin[requests.TriggerInvokeEventRequest, requests.TriggerInvokeEventResponse](
 		session,
 		request,
 		512,

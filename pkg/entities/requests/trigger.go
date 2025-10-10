@@ -1,9 +1,9 @@
 package requests
 
 // Request types - matching Python SDK protocol exactly
-type TriggerInvokeRequest struct {
+type TriggerInvokeEventRequest struct {
 	Provider       string         `json:"provider" validate:"required"`
-	Trigger        string         `json:"trigger" validate:"required"`
+	Event          string         `json:"event" validate:"required"`
 	RawHTTPRequest string         `json:"raw_http_request" validate:"required"`
 	Parameters     map[string]any `json:"parameters" validate:"omitempty"`
 	Credentials
@@ -40,8 +40,8 @@ type TriggerRefreshRequest struct {
 }
 
 // Response types - matching Python SDK protocol exactly
-type TriggerInvokeResponse struct {
-	Event map[string]any `json:"event"`
+type TriggerInvokeEventResponse struct {
+	Variables map[string]any `json:"variables"`
 }
 
 type TriggerValidateProviderCredentialsResponse struct {
