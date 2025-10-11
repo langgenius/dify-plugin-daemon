@@ -153,14 +153,6 @@ type TriggerProviderDeclaration struct {
 	EventFiles              []string                 `json:"-" yaml:"-"`
 }
 
-// Subscription represents the result of a successful trigger subscription operation
-type Subscription struct {
-	ExpiresAt  int64          `json:"expires_at" yaml:"expires_at" validate:"required"`
-	Endpoint   string         `json:"endpoint" yaml:"endpoint" validate:"required"`
-	Parameters map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Properties map[string]any `json:"properties" yaml:"properties" validate:"required"`
-}
-
 // Unsubscription represents the result of a trigger unsubscription operation
 type Unsubscription struct {
 	Success bool    `json:"success" yaml:"success" validate:"required"`

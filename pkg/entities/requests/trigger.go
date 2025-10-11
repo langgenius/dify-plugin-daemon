@@ -18,6 +18,7 @@ type TriggerDispatchEventRequest struct {
 	Provider       string         `json:"provider" validate:"required"`
 	Subscription   map[string]any `json:"subscription" validate:"required"` // Subscription object serialized as dict
 	RawHTTPRequest string         `json:"raw_http_request" validate:"required"`
+	Credentials
 }
 
 type TriggerSubscribeRequest struct {
