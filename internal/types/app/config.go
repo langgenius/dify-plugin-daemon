@@ -260,6 +260,22 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
+func (c *Config) GetLocalRuntimeBufferSize() int {
+	if c.PluginStdioBufferSize != 1024 {
+		return c.PluginStdioBufferSize
+	}
+	return c.PluginRuntimeBufferSize
+}
+
+// Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
+func (c *Config) GetLocalRuntimeMaxBufferSize() int {
+	if c.PluginStdioMaxBufferSize != 5242880 {
+		return c.PluginStdioMaxBufferSize
+	}
+	return c.PluginRuntimeMaxBufferSize
+}
+
 type PlatformType string
 
 const (
