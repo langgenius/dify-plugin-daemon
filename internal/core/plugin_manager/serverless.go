@@ -53,8 +53,8 @@ func (p *PluginManager) getServerlessPluginRuntime(
 		LambdaURL:                 model.FunctionURL,
 		LambdaName:                model.FunctionName,
 		PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
-		RuntimeBufferSize:         p.config.GetRuntimeBufferSize(),
-		RuntimeMaxBufferSize:      p.config.GetRuntimeMaxBufferSize(),
+		RuntimeBufferSize:         p.config.PluginRuntimeBufferSize,
+		RuntimeMaxBufferSize:      p.config.PluginRuntimeMaxBufferSize,
 	}
 
 	if err := pluginRuntime.InitEnvironment(); err != nil {

@@ -260,24 +260,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// GetRuntimeBufferSize returns the runtime buffer size with backward compatibility.
-// Prefers the new PluginRuntimeBufferSize, falls back to PluginStdioBufferSize if not set.
-func (c *Config) GetRuntimeBufferSize() int {
-	if c.PluginRuntimeBufferSize > 0 {
-		return c.PluginRuntimeBufferSize
-	}
-	return c.PluginStdioBufferSize
-}
-
-// GetRuntimeMaxBufferSize returns the runtime max buffer size with backward compatibility.
-// Prefers the new PluginRuntimeMaxBufferSize, falls back to PluginStdioMaxBufferSize if not set.
-func (c *Config) GetRuntimeMaxBufferSize() int {
-	if c.PluginRuntimeMaxBufferSize > 0 {
-		return c.PluginRuntimeMaxBufferSize
-	}
-	return c.PluginStdioMaxBufferSize
-}
-
 type PlatformType string
 
 const (
