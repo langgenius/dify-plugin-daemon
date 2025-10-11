@@ -175,8 +175,8 @@ type Config struct {
 
 	// Runtime buffer configuration (applies to both local and serverless runtimes)
 	// These are the new generic names that should be used going forward
-	PluginRuntimeBufferSize    int `envconfig:"PLUGIN_RUNTIME_BUFFER_SIZE" default:"0"`
-	PluginRuntimeMaxBufferSize int `envconfig:"PLUGIN_RUNTIME_MAX_BUFFER_SIZE" default:"0"`
+	PluginRuntimeBufferSize    int `envconfig:"PLUGIN_RUNTIME_BUFFER_SIZE" default:"1024"`
+	PluginRuntimeMaxBufferSize int `envconfig:"PLUGIN_RUNTIME_MAX_BUFFER_SIZE" default:"5242880"`
 
 	// Legacy STDIO-specific buffer configuration (kept for backward compatibility)
 	// If the new PluginRuntime* configs are not set, these will be used as fallback
