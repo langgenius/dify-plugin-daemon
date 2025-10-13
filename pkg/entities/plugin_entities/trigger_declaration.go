@@ -166,11 +166,13 @@ func (t *TriggerProviderDeclaration) MarshalJSON() ([]byte, error) {
 	if p.SubscriptionSchema == nil {
 		p.SubscriptionSchema = []ProviderConfig{}
 	}
-	if p.SubscriptionConstructor.Parameters == nil {
-		p.SubscriptionConstructor.Parameters = []EventParameter{}
-	}
-	if p.SubscriptionConstructor.CredentialsSchema == nil {
-		p.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
+	if p.SubscriptionConstructor != nil {
+		if p.SubscriptionConstructor.Parameters == nil {
+			p.SubscriptionConstructor.Parameters = []EventParameter{}
+		}
+		if p.SubscriptionConstructor.CredentialsSchema == nil {
+			p.SubscriptionConstructor.CredentialsSchema = []ProviderConfig{}
+		}
 	}
 	if p.Events == nil {
 		p.Events = []EventDeclaration{}
