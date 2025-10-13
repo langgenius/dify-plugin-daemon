@@ -123,17 +123,11 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("event_identity_name", isEventIdentityName)
 }
 
-// EventDescription represents the description of the event
-type EventDescription struct {
-	Human I18nObject `json:"human" yaml:"human" validate:"required"`
-	LLM   I18nObject `json:"llm" yaml:"llm" validate:"required"`
-}
-
 // EventDeclaration represents the configuration of an event
 type EventDeclaration struct {
 	Identity     EventIdentity    `json:"identity" yaml:"identity" validate:"required"`
 	Parameters   []EventParameter `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	Description  EventDescription `json:"description" yaml:"description" validate:"required"`
+	Description  I18nObject       `json:"description" yaml:"description" validate:"required"`
 	OutputSchema map[string]any   `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 }
 
