@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -155,6 +156,13 @@ func (s *DifyServer) OnShutdown(c gnet.Engine) {
 }
 
 func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
+	defer func() {
+		if r := recover(); r != nil {
+			traceback := string(debug.Stack())
+			log.Error("panic in OnTraffic: %v\n%s", r, traceback)
+		}
+	}()
+
 	codec := c.Context().(*codec)
 	messages, err := codec.Decode(c)
 	if err != nil {
