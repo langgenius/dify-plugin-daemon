@@ -6,6 +6,7 @@ type TriggerInvokeEventRequest struct {
 	Event          string         `json:"event" validate:"required"`
 	RawHTTPRequest string         `json:"raw_http_request" validate:"required"`
 	Parameters     map[string]any `json:"parameters" validate:"omitempty"`
+	Subscription   map[string]any `json:"subscription" validate:"required"` // Subscription object serialized as dict
 	Credentials
 }
 
