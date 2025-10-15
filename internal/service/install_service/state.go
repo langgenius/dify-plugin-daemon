@@ -166,17 +166,20 @@ func UninstallEndpoint(endpoint_id string, tenant_id string) (*models.Endpoint, 
 	return &endpoint, err
 }
 
-func EnabledEndpoint(endpoint_id string, tenant_id string) error {
-	return db.WithTransaction(func(tx *gorm.DB) error {
-		endpoint, err := db.GetOne[models.Endpoint](
+func EnabledEndpoint(endpointID string, tenantID string) (*models.Endpoint, error) {
+	var endpoint *models.Endpoint
+	err := db.WithTransaction(func(tx *gorm.DB) error {
+		e, err := db.GetOne[models.Endpoint](
 			db.WithTransactionContext(tx),
-			db.Equal("id", endpoint_id),
-			db.Equal("tenant_id", tenant_id),
+			db.Equal("id", endpointID),
+			db.Equal("tenant_id", tenantID),
 			db.WLock(),
 		)
 		if err != nil {
 			return err
 		}
+
+		endpoint = &e
 
 		if endpoint.Enabled {
 			return nil
@@ -198,16 +201,17 @@ func EnabledEndpoint(endpoint_id string, tenant_id string) error {
 			}),
 		)
 	})
+	return endpoint, err
 }
 
-func DisabledEndpoint(endpoint_id string, tenant_id string) (*models.Endpoint, error) {
+func DisabledEndpoint(endpointID string, tenantID string) (*models.Endpoint, error) {
 	var endpoint models.Endpoint
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		var err error
 		endpoint, err = db.GetOne[models.Endpoint](
 			db.WithTransactionContext(tx),
-			db.Equal("id", endpoint_id),
-			db.Equal("tenant_id", tenant_id),
+			db.Equal("id", endpointID),
+			db.Equal("tenant_id", tenantID),
 			db.WLock(),
 		)
 		if err != nil {

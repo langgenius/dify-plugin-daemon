@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -45,13 +44,7 @@ func (app *App) Endpoint(config *app.Config) func(c *gin.Context) {
 }
 
 func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTime time.Duration, path string) {
-	endpointCacheKey := strings.Join(
-		[]string{
-			"hook_id",
-			hookId,
-		},
-		":",
-	)
+	endpointCacheKey := helper.EndpointCacheKey(hookId)
 	endpoint, err := cache.AutoGetWithGetter[models.Endpoint](
 		endpointCacheKey,
 		func() (*models.Endpoint, error) {
@@ -60,7 +53,8 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 			)
 			return &v, err
 		})
-	if err == db.ErrDatabaseNotFound {
+
+	if errors.Is(err, db.ErrDatabaseNotFound) {
 		ctx.JSON(404, exception.BadRequestError(errors.New("endpoint not found")).ToResponse())
 		return
 	}
