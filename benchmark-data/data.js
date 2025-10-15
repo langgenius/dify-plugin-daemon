@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760527868203,
+  "lastUpdate": 1760527939710,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9072,6 +9072,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "977839221 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "123lzs123@gmail.com",
+            "name": "Tonlo",
+            "username": "TonloOO"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b06732f2105b470a9e931b9d804c258f025873f6",
+          "message": "fix(plugin): support customized stdio buffer size, align serverless runtime with local runtime (#470)\n\n* fix(plugin): support customized stdio buffer size, align serverless runtime with local runtime\n\n* fix(plugin): update config naming to pluginRuntimeBufferSize & pluginRuntimeMaxBufferSize, and keep the compatibility to stdoutBufferSize\n\n* fix: provide a default value for PLUGIN_RUNTIME_BUFFER_SIZE & PLUGIN_RUNTIME_MAX_BUFFER_SIZE\n\n* fix: remove redundant logic\n\n* fix: add compatibility to PLUGIN_STDIO_BUFFER_SIZE & PLUGIN_STDIO_MAX_BUFFER_SIZE",
+          "timestamp": "2025-10-15T19:28:21+08:00",
+          "tree_id": "0dfefe9c5866a253e302ee7ccdcfa5c1f21ce222",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b06732f2105b470a9e931b9d804c258f025873f6"
+        },
+        "date": 1760527939101,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 136615963,
+            "unit": "ns/op\t 1569124 B/op\t   27516 allocs/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 136615963,
+            "unit": "ns/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569124,
+            "unit": "B/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27516,
+            "unit": "allocs/op",
+            "extra": "258 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.05,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "997007406 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.05,
+            "unit": "ns/op",
+            "extra": "997007406 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "997007406 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "997007406 times\n4 procs"
           }
         ]
       }
