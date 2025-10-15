@@ -23,4 +23,7 @@ type ServerlessPluginRuntime struct {
 	client *http.Client
 
 	PluginMaxExecutionTimeout int // in seconds
+
+	RuntimeBufferSize    int
+	RuntimeMaxBufferSize int
 }
