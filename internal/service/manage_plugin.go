@@ -14,7 +14,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
+func ListPlugins(tenant_id string, page int, page_size int, response_type string) *entities.Response {
 	type installation struct {
 		ID                     string                             `json:"id"`
 		Name                   string                             `json:"name"`
@@ -96,12 +96,15 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 		})
 	}
 
-	finalData := responseData{
-		List: 	data,
-		Total: 	totalCount,
-	}
+	if response_type == "paged" {
+		finalData := responseData{
+			List:  data,
+			Total: totalCount,
+		}
 
-	return entities.NewSuccessResponse(finalData)
+		return entities.NewSuccessResponse(finalData)
+	}
+	return entities.NewSuccessResponse(data)
 }
 
 // Using plugin_ids to fetch plugin installations
