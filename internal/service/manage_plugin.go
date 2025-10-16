@@ -2,11 +2,15 @@ package service
 
 import (
 	"errors"
+	"sort"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -97,8 +101,8 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	finalData := responseData{
-		List: 	data,
-		Total: 	totalCount,
+		List:  data,
+		Total: totalCount,
 	}
 
 	return entities.NewSuccessResponse(finalData)
@@ -572,4 +576,171 @@ func GetDatasource(tenant_id string, plugin_id string, provider string) *entitie
 		DatasourceInstallation: datasource,
 		Declaration:            declaration.Datasource,
 	})
+}
+
+type RuntimeConnectionDetail struct {
+	PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
+	Connections            int64  `json:"connections"`
+}
+
+type PluginRuntimeConnectionSnapshot struct {
+	PluginID         string `json:"plugin_id"`
+	TotalConnections int64  `json:"total_connections"`
+	BlueGreen        bool   `json:"blue_green"`
+	Mode             string `json:"mode,omitempty"`
+	// the version currently serving traffic (the "new" version in blue-green).
+	ActiveVersion *RuntimeConnectionDetail `json:"active_version,omitempty"`
+	// list of old versions being phased out (empty if none).
+	DrainingVersions []RuntimeConnectionDetail `json:"draining_versions,omitempty"`
+}
+
+type PluginRuntimeConnectionsResponse struct {
+	List []PluginRuntimeConnectionSnapshot `json:"list"`
+}
+
+func ListPluginRuntimeConnections(pluginID string) *entities.Response {
+	manager := plugin_manager.Manager()
+	reports := manager.CollectRuntimeTraffic(pluginID)
+
+	type tmpGroup struct {
+		active   []RuntimeConnectionDetail
+		draining []RuntimeConnectionDetail
+		total    int64
+		manual   bool
+	}
+	tmp := map[string]*tmpGroup{}
+
+	for _, report := range reports {
+		detail := RuntimeConnectionDetail{
+			PluginUniqueIdentifier: report.Identity,
+			Connections:            report.Sessions,
+		}
+		g, ok := tmp[report.PluginID]
+		if !ok {
+			g = &tmpGroup{}
+			tmp[report.PluginID] = g
+		}
+		g.total += report.Sessions
+		if report.Draining {
+			g.draining = append(g.draining, detail)
+			if !report.AutoStop {
+				g.manual = true
+			}
+		} else {
+			g.active = append(g.active, detail)
+		}
+	}
+
+	list := make([]PluginRuntimeConnectionSnapshot, 0, len(tmp))
+	for pluginID, g := range tmp {
+		snapshot := PluginRuntimeConnectionSnapshot{
+			PluginID:         pluginID,
+			TotalConnections: g.total,
+			DrainingVersions: make([]RuntimeConnectionDetail, 0),
+		}
+		if len(g.draining) > 0 {
+			snapshot.BlueGreen = true
+			snapshot.Mode = map[bool]string{true: "manual", false: "auto"}[g.manual]
+			if len(g.active) > 0 {
+				maxIdx := 0
+				for i := 1; i < len(g.active); i++ {
+					if g.active[i].Connections > g.active[maxIdx].Connections {
+						maxIdx = i
+					}
+				}
+				d := g.active[maxIdx]
+				snapshot.ActiveVersion = &d
+			}
+			snapshot.DrainingVersions = append(snapshot.DrainingVersions, g.draining...)
+		} else {
+			if len(g.active) > 0 {
+				maxIdx := 0
+				for i := 1; i < len(g.active); i++ {
+					if g.active[i].Connections > g.active[maxIdx].Connections {
+						maxIdx = i
+					}
+				}
+				d := g.active[maxIdx]
+				snapshot.ActiveVersion = &d
+			}
+		}
+		list = append(list, snapshot)
+	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].PluginID < list[j].PluginID
+	})
+
+	return entities.NewSuccessResponse(PluginRuntimeConnectionsResponse{List: list})
+}
+
+func ApproveBlueGreen(pluginID string) *entities.Response {
+	manager := plugin_manager.Manager()
+	if err := manager.ApproveBlueGreen(pluginID); err != nil {
+		return exception.BadRequestError(err).ToResponse()
+	}
+	return entities.NewSuccessResponse(true)
+}
+
+func ForceOfflineRuntime(identity string) *entities.Response {
+	manager := plugin_manager.Manager()
+	manager.ForceOffline(identity)
+	return entities.NewSuccessResponse(true)
+}
+
+func RollbackBlueGreen(tenant_id string, plugin_unique_identifier string) *entities.Response {
+	uid, err := plugin_entities.NewPluginUniqueIdentifier(plugin_unique_identifier)
+	if err != nil {
+		return exception.UniqueIdentifierError(err).ToResponse()
+	}
+
+	// fetch all installations for this tenant and plugin_id
+	installations, err := db.GetAll[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_id", uid.PluginID()),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	if len(installations) == 0 {
+		return exception.NotFoundError(errors.New("no installations found to rollback")).ToResponse()
+	}
+
+	for i := range installations {
+		inst := installations[i]
+		original, err := plugin_entities.NewPluginUniqueIdentifier(inst.PluginUniqueIdentifier)
+		if err != nil {
+			return exception.UniqueIdentifierError(err).ToResponse()
+		}
+
+		installType := plugin_entities.PluginRuntimeType(inst.RuntimeType)
+		originalDeclaration, err := helper.CombinedGetPluginDeclaration(original, installType)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+		newDeclaration, err := helper.CombinedGetPluginDeclaration(uid, installType)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		if _, err := curd.UpgradePlugin(
+			tenant_id,
+			original,
+			uid,
+			originalDeclaration,
+			newDeclaration,
+			installType,
+			inst.Source,
+			inst.Meta,
+		); err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+	}
+
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(uid.PluginID(), tenant_id)
+	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
+	_ = plugin_manager.Manager().EnsureLocalRuntime(uid)
+	plugin_manager.Manager().RollbackRuntimeRegistration(uid)
+	return entities.NewSuccessResponse(true)
 }

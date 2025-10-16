@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/langgenius/dify-cloud-kit/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -26,6 +27,23 @@ import (
 
 type PluginManager struct {
 	m mapping.Map[string, plugin_entities.PluginLifetime]
+
+	// runtimeSessions tracks the active traffic for each plugin runtime.
+	runtimeSessions sync.Map // map[string]*runtimeTrafficState
+
+	// runtimePluginIDs keeps a mapping from runtime identity to plugin id for
+	// blue-green replacement bookkeeping.
+	runtimePluginIDs sync.Map // map[string]string
+
+	// drainingPending tracks runtimes requested to drain but without a current session state.
+	// Motivation: During blue-green switch, if old session state is temporarily unavailable due to race/exception,
+	// we avoid immediate Stop to prevent disrupting in-flight requests. Instead, mark as pending and bridge to
+	// the real state when acquired later.
+	drainingPending sync.Map // map[string]bool
+
+	// drainingCleanup stores identities whose packages should be cleaned after old runtimes stop.
+	// Used only in blue-green switch to avoid immediate uninstall that could interrupt in-flight requests.
+	drainingCleanup sync.Map // map[string]bool
 
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket

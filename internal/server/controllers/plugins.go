@@ -98,6 +98,8 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 			NewPluginUniqueIdentifier      plugin_entities.PluginUniqueIdentifier `json:"new_plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 			Source                         string                                 `json:"source" validate:"required"`
 			Meta                           map[string]any                         `json:"meta" validate:"omitempty"`
+			BlueGreen                      bool                                   `json:"blue_green"`
+			BlueGreenMode                  string                                 `json:"blue_green_mode" validate:"omitempty,oneof=auto manual"`
 		}) {
 			if request.TenantID == constants.GlobalTenantId && !app.PluginAllowOrphans {
 				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("orphan plugin is not allowed")).ToResponse())
@@ -110,6 +112,8 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 				request.Meta,
 				request.OriginalPluginUniqueIdentifier,
 				request.NewPluginUniqueIdentifier,
+				request.BlueGreen,
+				request.BlueGreenMode,
 			))
 		})
 	}
@@ -122,6 +126,8 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 			PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=64,dive,plugin_unique_identifier"`
 			Source                  string                                   `json:"source" validate:"required"`
 			Metas                   []map[string]any                         `json:"metas" validate:"omitempty"`
+			BlueGreen               bool                                     `json:"blue_green"`
+			BlueGreenMode           string                                   `json:"blue_green_mode" validate:"omitempty,oneof=auto manual"`
 		}) {
 			if request.Metas == nil {
 				request.Metas = []map[string]any{}
@@ -143,7 +149,8 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 			}
 
 			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
-				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
+				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas, request.BlueGreen,
+				request.BlueGreenMode,
 			))
 		})
 	}
@@ -153,8 +160,9 @@ func ReinstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
 			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+			BlueGreen              bool                                   `json:"blue_green"`
 		}) {
-			service.ReinstallPluginFromIdentifier(c, app, request.PluginUniqueIdentifier)
+			service.ReinstallPluginFromIdentifier(c, app, request.PluginUniqueIdentifier, request.BlueGreen)
 		})
 	}
 }
@@ -273,5 +281,41 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 		PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=256,dive,plugin_unique_identifier"`
 	}) {
 		c.JSON(http.StatusOK, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
+	})
+}
+
+func ListPluginRuntimeConnections(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `uri:"tenant_id" validate:"required"`
+		PluginID string `form:"plugin_id" validate:"omitempty"`
+	}) {
+		c.JSON(http.StatusOK, service.ListPluginRuntimeConnections(request.PluginID))
+	})
+}
+
+func ApproveBlueGreen(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string `uri:"tenant_id" validate:"required"`
+		PluginID string `json:"plugin_id" validate:"required"`
+	}) {
+		c.JSON(http.StatusOK, service.ApproveBlueGreen(request.PluginID))
+	})
+}
+
+func ForceOfflineRuntime(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier string `json:"plugin_unique_identifier" validate:"required"`
+	}) {
+		c.JSON(http.StatusOK, service.ForceOfflineRuntime(request.PluginUniqueIdentifier))
+	})
+}
+
+func RollbackBlueGreen(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier string `json:"plugin_unique_identifier" validate:"required"`
+	}) {
+		c.JSON(http.StatusOK, service.RollbackBlueGreen(request.TenantID, request.PluginUniqueIdentifier))
 	})
 }
