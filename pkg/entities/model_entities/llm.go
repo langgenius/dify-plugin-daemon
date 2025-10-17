@@ -105,7 +105,8 @@ type PromptMessageContent struct {
 	EncodeFormat string                   `json:"encode_format"`
 	Format       string                   `json:"format"`
 	MimeType     string                   `json:"mime_type"`
-	Detail       string                   `json:"detail"` // for multi-modal data
+	Detail       string                   `json:"detail"`   // for multi-modal data
+	Filename     string                   `json:"filename"` // for multi-modal data
 }
 
 type PromptMessageToolCall struct {
