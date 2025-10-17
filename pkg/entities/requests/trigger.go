@@ -51,6 +51,7 @@ type TriggerValidateProviderCredentialsResponse struct {
 }
 
 type TriggerDispatchEventResponse struct {
+	UserID          string   `json:"user_id" validate:"omitempty"`
 	Events          []string `json:"events"`
 	RawHTTPResponse string   `json:"raw_http_response"`
 }
