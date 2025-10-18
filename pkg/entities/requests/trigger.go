@@ -7,6 +7,7 @@ type TriggerInvokeEventRequest struct {
 	RawHTTPRequest string         `json:"raw_http_request" validate:"required"`
 	Parameters     map[string]any `json:"parameters" validate:"omitempty"`
 	Subscription   map[string]any `json:"subscription" validate:"required"` // Subscription object serialized as dict
+	Payload        map[string]any `json:"payload" validate:"omitempty"`     // Payload object from `dispatch_event` serialized as dict
 	Credentials
 }
 
@@ -51,9 +52,10 @@ type TriggerValidateProviderCredentialsResponse struct {
 }
 
 type TriggerDispatchEventResponse struct {
-	UserID          string   `json:"user_id" validate:"omitempty"`
-	Events          []string `json:"events"`
-	RawHTTPResponse string   `json:"raw_http_response"`
+	UserID          string         `json:"user_id" validate:"omitempty"`
+	Events          []string       `json:"events"`
+	Payload         map[string]any `json:"payload" validate:"omitempty"`
+	RawHTTPResponse string         `json:"raw_http_response"`
 }
 
 type TriggerSubscribeResponse struct {
