@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760680447341,
+  "lastUpdate": 1760946414814,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9216,6 +9216,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "964167957 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "132866042+AlexChim1231@users.noreply.github.com",
+            "name": "Alex Chim",
+            "username": "AlexChim1231"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1f910b867ccf93cbfc098eec958294e69ec64302",
+          "message": "Fixes #479 Add filename for multi modal (#480)\n\n* Update llm.go\n\n* Update pkg/entities/model_entities/llm.go\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>\n\n* formatting\n\n* add unit test\n\n---------\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>",
+          "timestamp": "2025-10-20T15:42:54+08:00",
+          "tree_id": "f8ad2c55440ec1373b70319088a18aa1cf90286a",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1f910b867ccf93cbfc098eec958294e69ec64302"
+        },
+        "date": 1760946413666,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 137616177,
+            "unit": "ns/op\t 1569516 B/op\t   27517 allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 137616177,
+            "unit": "ns/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569516,
+            "unit": "B/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "250 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.9,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "969851760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.9,
+            "unit": "ns/op",
+            "extra": "969851760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "969851760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "969851760 times\n4 procs"
           }
         ]
       }
