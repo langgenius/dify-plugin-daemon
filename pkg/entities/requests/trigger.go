@@ -52,10 +52,10 @@ type TriggerValidateProviderCredentialsResponse struct {
 }
 
 type TriggerDispatchEventResponse struct {
-	UserID          string         `json:"user_id" validate:"omitempty"`
-	Events          []string       `json:"events"`
-	Payload         map[string]any `json:"payload,omitempty" validate:"omitempty"`
-	RawHTTPResponse string         `json:"raw_http_response"`
+	UserID   string         `json:"user_id" validate:"omitempty"`
+	Events   []string       `json:"events"`
+	Payload  map[string]any `json:"payload,omitempty" validate:"omitempty"`
+	Response string         `json:"response"`
 }
 
 type TriggerSubscribeResponse struct {
