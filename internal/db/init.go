@@ -22,6 +22,7 @@ func autoMigrate() error {
 		models.TenantStorage{},
 		models.AgentStrategyInstallation{},
 		models.TriggerInstallation{},
+		models.PluginReadme{},
 	)
 
 	if err != nil {
