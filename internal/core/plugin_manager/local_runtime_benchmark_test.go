@@ -17,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/lifecycle"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/test_utils"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
@@ -61,7 +62,7 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
 		UvPath:                os.Getenv("UV_PATH"),
 		PythonEnvInitTimeout:  120,
-	})
+	}, app.Config{})
 
 	localPluginRuntime.PluginRuntime = plugin_entities.PluginRuntime{
 		Config: manifest,

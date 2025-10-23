@@ -33,14 +33,14 @@ func (r *LocalPluginRuntime) getCmd() (*exec.Cmd, error) {
 		cmd := exec.Command(r.pythonInterpreterPath, "-m", r.Config.Meta.Runner.Entrypoint)
 		cmd.Dir = r.State.WorkingPath
 		cmd.Env = cmd.Environ()
-		if r.HttpsProxy != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.HttpsProxy))
+		if r.appConfig.HttpsProxy != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.appConfig.HttpsProxy))
 		}
-		if r.HttpProxy != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.HttpProxy))
+		if r.appConfig.HttpProxy != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.appConfig.HttpProxy))
 		}
-		if r.NoProxy != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", r.NoProxy))
+		if r.appConfig.NoProxy != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", r.appConfig.NoProxy))
 		}
 		return cmd, nil
 	}
@@ -110,8 +110,8 @@ func (r *LocalPluginRuntime) StartPlugin() error {
 
 	// setup stdio
 	r.stdioHolder = newStdioHolder(r.Config.Identity(), stdin, stdout, stderr, &StdioHolderConfig{
-		StdoutBufferSize:    r.stdoutBufferSize,
-		StdoutMaxBufferSize: r.stdoutMaxBufferSize,
+		StdoutBufferSize:    r.appConfig.GetLocalRuntimeBufferSize(),
+		StdoutMaxBufferSize: r.appConfig.GetLocalRuntimeMaxBufferSize(),
 	})
 	defer r.stdioHolder.Stop()
 

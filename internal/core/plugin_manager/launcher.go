@@ -138,11 +138,11 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 		HttpsProxy:                p.config.HttpsProxy,
 		NoProxy:                   p.config.NoProxy,
 		PipMirrorUrl:              p.config.PipMirrorUrl,
-		PipPreferBinary:           *p.config.PipPreferBinary,
+		PipPreferBinary:           p.config.PipPreferBinary,
 		PipExtraArgs:              p.config.PipExtraArgs,
 		StdoutBufferSize:          p.config.GetLocalRuntimeBufferSize(),
 		StdoutMaxBufferSize:       p.config.GetLocalRuntimeMaxBufferSize(),
-	})
+	}, p.config)
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
 		MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),

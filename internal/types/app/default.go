@@ -34,9 +34,6 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
 	setDefaultInt(&config.PythonEnvInitTimeout, 120)
-	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
-	setDefaultBoolPtr(&config.PipPreferBinary, true)
-	setDefaultBoolPtr(&config.PipVerbose, true)
 	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
 	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
 	if config.DBType == "postgresql" {
@@ -44,7 +41,6 @@ func (config *Config) SetDefault() {
 	} else if config.DBType == "mysql" {
 		setDefaultString(&config.DBDefaultDatabase, "mysql")
 	}
-	setDefaultBoolPtr(&config.HealthApiLogEnabled, true)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {

@@ -53,7 +53,7 @@ func UploadPluginPkg(
 		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
 
-	if config.ForceVerifyingSignature != nil && *config.ForceVerifyingSignature || verifySignature {
+	if config.ForceVerifyingSignature || verifySignature {
 		if !declaration.Verified {
 			return exception.BadRequestError(errors.Join(err, errors.New(
 				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
@@ -156,7 +156,7 @@ func UploadPluginBundle(
 						return exception.InternalServerError(errors.Join(errors.New("failed to save package"), err)).ToResponse()
 					}
 
-					if config.ForceVerifyingSignature != nil && *config.ForceVerifyingSignature || verify_signature {
+					if config.ForceVerifyingSignature || verify_signature {
 						if !declaration.Verified {
 							return exception.BadRequestError(errors.Join(errors.New(
 								"plugin verification has been enabled, and the plugin you want to install has a bad signature",

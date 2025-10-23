@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -12,9 +13,6 @@ type LocalPluginRuntime struct {
 	plugin_entities.PluginRuntime
 
 	waitChan chan bool
-
-	// python interpreter path, currently only support python
-	pythonInterpreterPath string
 
 	// python env init timeout
 	pythonEnvInitTimeout int
@@ -27,26 +25,18 @@ type LocalPluginRuntime struct {
 	defaultPythonInterpreterPath string
 	uvPath                       string
 
-	pipMirrorUrl    string
-	pipPreferBinary bool
-	pipVerbose      bool
-	pipExtraArgs    string
-
-	// proxy settings
-	HttpProxy  string
-	HttpsProxy string
-	NoProxy    string
-
 	waitChanLock    sync.Mutex
 	waitStartedChan []chan bool
 	waitStoppedChan []chan bool
 
-	stdoutBufferSize    int
-	stdoutMaxBufferSize int
-
 	isNotFirstStart bool
 
-	stdioHolder *stdioHolder
+	appConfig *app.Config
+
+	instanceNums int // equivalent to K8s replicas
+
+	// always keep the nums of instances equal to instanceNums
+	instances []*PluginInstance
 }
 
 type LocalPluginRuntimeConfig struct {
@@ -54,31 +44,17 @@ type LocalPluginRuntimeConfig struct {
 	UvPath                    string
 	PythonEnvInitTimeout      int
 	PythonCompileAllExtraArgs string
-	HttpProxy                 string
-	HttpsProxy                string
-	NoProxy                   string
-	PipMirrorUrl              string
-	PipPreferBinary           bool
-	PipVerbose                bool
-	PipExtraArgs              string
-	StdoutBufferSize          int
-	StdoutMaxBufferSize       int
 }
 
-func NewLocalPluginRuntime(config LocalPluginRuntimeConfig) *LocalPluginRuntime {
+func NewLocalPluginRuntime(
+	config LocalPluginRuntimeConfig,
+	appConfig *app.Config,
+) *LocalPluginRuntime {
 	return &LocalPluginRuntime{
 		defaultPythonInterpreterPath: config.PythonInterpreterPath,
 		uvPath:                       config.UvPath,
 		pythonEnvInitTimeout:         config.PythonEnvInitTimeout,
 		pythonCompileAllExtraArgs:    config.PythonCompileAllExtraArgs,
-		HttpProxy:                    config.HttpProxy,
-		HttpsProxy:                   config.HttpsProxy,
-		NoProxy:                      config.NoProxy,
-		pipMirrorUrl:                 config.PipMirrorUrl,
-		pipPreferBinary:              config.PipPreferBinary,
-		pipVerbose:                   config.PipVerbose,
-		pipExtraArgs:                 config.PipExtraArgs,
-		stdoutBufferSize:             config.StdoutBufferSize,
-		stdoutMaxBufferSize:          config.StdoutMaxBufferSize,
+		appConfig:                    appConfig,
 	}
 }

@@ -139,7 +139,7 @@ type Config struct {
 	PersistenceStorageMaxSize int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
-	ForceVerifyingSignature *bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
+	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE" default:"true"`
 
 	// enable or disable third-party signature verification for plugins
 	ThirdPartySignatureVerificationEnabled bool `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_ENABLED"  default:"false"`
@@ -169,8 +169,8 @@ type Config struct {
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary           *bool  `envconfig:"PIP_PREFER_BINARY"`
-	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
+	PipPreferBinary           bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
+	PipVerbose                bool   `envconfig:"PIP_VERBOSE" default:"true"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
 	// Runtime buffer configuration (applies to both local and serverless runtimes)
@@ -200,7 +200,7 @@ type Config struct {
 	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
-	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`
+	HealthApiLogEnabled bool `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
