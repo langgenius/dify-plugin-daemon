@@ -39,14 +39,18 @@ type LocalPluginRuntime struct {
 
 	waitChanLock    sync.Mutex
 	waitStartedChan []chan bool
-	waitStoppedChan []chan bool
+    waitStoppedChan []chan bool
 
 	stdoutBufferSize    int
 	stdoutMaxBufferSize int
 
-	isNotFirstStart bool
+    isNotFirstStart bool
 
-	stdioHolder *stdioHolder
+    stdioHolder *stdioHolder
+
+    // started indicates whether the runtime has already emitted the started event.
+    // It solves late WaitStarted callers missing the notification.
+    started bool
 }
 
 type LocalPluginRuntimeConfig struct {

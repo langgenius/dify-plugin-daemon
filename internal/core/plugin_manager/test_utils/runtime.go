@@ -146,7 +146,7 @@ func RunOnceWithSession[T RunOnceRequest, R any](
 	request T,
 ) (*stream.Stream[R], error) {
 	// bind the runtime to the session, plugin_daemon.GenericInvokePlugin uses it
-	session.BindRuntime(runtime)
+	session.BindRuntime(runtime, nil)
 
 	return plugin_daemon.GenericInvokePlugin[T, R](session, &request, 1024)
 }
