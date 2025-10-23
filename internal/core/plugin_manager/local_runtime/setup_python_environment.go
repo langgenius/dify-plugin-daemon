@@ -157,9 +157,14 @@ func (p *LocalPluginRuntime) installDependencies(
 				break
 			}
 
-			if time.Since(lastActiveAt) > time.Duration(p.pythonEnvInitTimeout)*time.Second {
+			if time.Since(lastActiveAt) > time.Duration(
+				p.appConfig.PythonEnvInitTimeout,
+			)*time.Second {
 				cmd.Process.Kill()
-				errMsg.WriteString(fmt.Sprintf("init process exited due to no activity for %d seconds", p.pythonEnvInitTimeout))
+				errMsg.WriteString(fmt.Sprintf(
+					"init process exited due to no activity for %d seconds",
+					p.appConfig.PythonEnvInitTimeout,
+				))
 				break
 			}
 		}
@@ -281,8 +286,8 @@ func (p *LocalPluginRuntime) preCompile(
 	defer cancel()
 
 	compileArgs := []string{"-m", "compileall"}
-	if p.pythonCompileAllExtraArgs != "" {
-		compileArgs = append(compileArgs, strings.Split(p.pythonCompileAllExtraArgs, " ")...)
+	if p.appConfig.PythonCompileAllExtraArgs != "" {
+		compileArgs = append(compileArgs, strings.Split(p.appConfig.PythonCompileAllExtraArgs, " ")...)
 	}
 	compileArgs = append(compileArgs, ".")
 

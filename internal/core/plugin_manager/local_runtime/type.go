@@ -14,12 +14,6 @@ type LocalPluginRuntime struct {
 
 	waitChan chan bool
 
-	// python env init timeout
-	pythonEnvInitTimeout int
-
-	// python compileall extra args
-	pythonCompileAllExtraArgs string
-
 	// to create a new python virtual environment, we need a default python interpreter
 	// by using its venv module
 	defaultPythonInterpreterPath string
@@ -42,7 +36,6 @@ type LocalPluginRuntime struct {
 type LocalPluginRuntimeConfig struct {
 	PythonInterpreterPath     string
 	UvPath                    string
-	PythonEnvInitTimeout      int
 	PythonCompileAllExtraArgs string
 }
 
@@ -53,8 +46,6 @@ func NewLocalPluginRuntime(
 	return &LocalPluginRuntime{
 		defaultPythonInterpreterPath: config.PythonInterpreterPath,
 		uvPath:                       config.UvPath,
-		pythonEnvInitTimeout:         config.PythonEnvInitTimeout,
-		pythonCompileAllExtraArgs:    config.PythonCompileAllExtraArgs,
 		appConfig:                    appConfig,
 	}
 }
