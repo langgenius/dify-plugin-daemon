@@ -91,7 +91,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	app.pluginManagementGroup(group.Group("/management"), config)
 	app.endpointManagementGroup(group.Group("/endpoint"))
 	app.pluginAssetGroup(group.Group("/asset"))
-	app.pluginAssetExtractGroup(group.Group("/extract-asset")
+	app.pluginAssetExtractGroup(group.Group("/extract-asset"))
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
