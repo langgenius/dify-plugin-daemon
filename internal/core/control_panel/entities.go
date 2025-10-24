@@ -1,11 +1,15 @@
 package controlpanel
 
-type ControlPanelSignalEntity struct {
-	// The signal type
-	Signal ControlPanelSignal
-}
+// Streaming events for plugin installation
+type PluginInstallEvent string
 
-type InstanceSignalEntity struct {
-	// The signal type
-	Signal InstanceSignal
+const (
+	PluginInstallEventInfo  PluginInstallEvent = "info"
+	PluginInstallEventDone  PluginInstallEvent = "done"
+	PluginInstallEventError PluginInstallEvent = "error"
+)
+
+type PluginInstallResponse struct {
+	Event PluginInstallEvent `json:"event"`
+	Data  string             `json:"data"`
 }

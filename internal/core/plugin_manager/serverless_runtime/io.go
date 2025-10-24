@@ -17,7 +17,7 @@ import (
 )
 
 func (r *ServerlessPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
-	l := entities.NewBroadcast[plugin_entities.SessionMessage]()
+	l := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	// store the listener
 	r.listeners.Store(sessionId, l)
 	return l

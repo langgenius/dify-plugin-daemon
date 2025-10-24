@@ -51,7 +51,7 @@ func (r *RemotePluginServer) Next() bool {
 }
 
 // Wrap wraps the wrap method of stream response
-func (r *RemotePluginServer) Wrap(f func(plugin_entities.PluginFullDuplexLifetime)) {
+func (r *RemotePluginServer) Wrap(f func(*RemotePluginRuntime)) {
 	r.server.response.Async(f)
 }
 
@@ -109,7 +109,7 @@ func NewRemotePluginServer(config *app.Config, media_transport *media_transport.
 		config.PluginRemoteInstallingPort,
 	)
 
-	response := stream.NewStream[plugin_entities.PluginFullDuplexLifetime](
+	response := stream.NewStream[*RemotePluginRuntime](
 		config.PluginRemoteInstallingMaxConn,
 	)
 

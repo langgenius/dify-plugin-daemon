@@ -31,8 +31,6 @@ type (
 
 		// before the plugin starts, it will call this method to initialize the environment
 		InitEnvironment() error
-		// start the plugin, returns errors if the plugin fails to start and hangs until the plugin stops
-		StartPlugin() error
 		// wait for the plugin to stop
 		Wait() (<-chan bool, error)
 		// Cleanup the plugin runtime
@@ -68,9 +66,8 @@ type (
 
 	PluginRuntimeSessionIOInterface interface {
 		PluginBasicInfoInterface
-
 		// Listen listens for messages from the plugin
-		Listen(session_id string) *entities.Broadcast[SessionMessage]
+		Listen(session_id string) (*entities.Broadcast[SessionMessage], error)
 		// Write writes a message to the plugin
 		Write(session_id string, action access_types.PluginAccessAction, data []byte)
 		// Log adds a log to the plugin runtime state

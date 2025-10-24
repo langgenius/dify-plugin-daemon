@@ -35,9 +35,6 @@ type RemotePluginRuntime struct {
 	sessionMessageClosers     map[string][]func()
 	sessionMessageClosersLock *sync.RWMutex
 
-	// channel to notify all waiting routines
-	shutdownChan chan bool
-
 	// heartbeat
 	lastActiveAt time.Time
 
@@ -78,9 +75,30 @@ type RemotePluginRuntime struct {
 	waitStoppedChan      []chan bool
 	waitLaunchedChan     chan error
 	waitLaunchedChanOnce sync.Once
+
+	// notifiers
+	notifiers     []PluginRuntimeNotifier
+	notifiersLock sync.RWMutex
 }
 
-// TODO: unify below methods to a standard interface
+// AddNotifier adds a notifier to the runtime
+func (r *RemotePluginRuntime) AddNotifier(notifier PluginRuntimeNotifier) {
+	r.notifiersLock.Lock()
+	defer r.notifiersLock.Unlock()
+
+	r.notifiers = append(r.notifiers, notifier)
+}
+
+// WalkNotifiers walks through all the notifiers and calls the given function
+func (r *RemotePluginRuntime) WalkNotifiers(fn func(notifier PluginRuntimeNotifier)) {
+	r.notifiersLock.RLock()
+	notifiers := r.notifiers // copy the notifiers
+	r.notifiersLock.RUnlock()
+
+	for _, notifier := range notifiers {
+		fn(notifier)
+	}
+}
 
 // Listen creates a new listener for the given session_id
 // session id is an unique identifier for a request
@@ -143,9 +161,6 @@ func (r *RemotePluginRuntime) onDisconnected() {
 
 	// change the closed status
 	atomic.StoreInt32(&r.closed, 1)
-
-	// close shutdown channel to notify all waiting routines
-	close(r.shutdownChan)
 
 	// close response to stop current plugin
 	r.response.Close()

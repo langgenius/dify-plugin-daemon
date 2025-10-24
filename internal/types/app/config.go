@@ -70,13 +70,13 @@ type Config struct {
 	// plugin remote installing
 	PluginRemoteInstallingHost                string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort                uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
-	PluginRemoteInstallingEnabled             *bool  `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
+	PluginRemoteInstallingEnabled             bool   `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED" default:"true"`
 	PluginRemoteInstallingMaxConn             int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_CONN"`
 	PluginRemoteInstallingMaxSingleTenantConn int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_SINGLE_TENANT_CONN"`
 	PluginRemoteInstallServerEventLoopNums    int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
 	// plugin endpoint
-	PluginEndpointEnabled *bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
+	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED" default:"true"`
 
 	// storage
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
@@ -215,7 +215,7 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if c.PluginRemoteInstallingEnabled != nil && *c.PluginRemoteInstallingEnabled {
+	if c.PluginRemoteInstallingEnabled {
 		if c.PluginRemoteInstallingHost == "" {
 			return fmt.Errorf("plugin remote installing host is empty")
 		}

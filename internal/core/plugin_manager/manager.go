@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/langgenius/dify-cloud-kit/oss"
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -47,8 +47,7 @@ type PluginManager struct {
 
 	config *app.Config
 
-	// remote plugin server
-	remotePluginServer debugging_runtime.RemotePluginServerInterface
+	controlPanel *controlpanel.ControlPanel
 
 	// max launching lock to prevent too many plugins launching at the same time
 	maxLaunchingLock chan bool

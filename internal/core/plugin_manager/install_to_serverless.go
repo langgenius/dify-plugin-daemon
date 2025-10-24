@@ -3,6 +3,7 @@ package plugin_manager
 import (
 	"fmt"
 
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -18,7 +19,7 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 	source string,
 	meta map[string]any,
 ) (
-	*stream.Stream[PluginInstallResponse], error,
+	*stream.Stream[controlpanel.PluginInstallResponse], error,
 ) {
 	checksum, err := decoder.Checksum()
 	if err != nil {
@@ -40,7 +41,7 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 		return nil, err
 	}
 
-	newResponse := stream.NewStream[PluginInstallResponse](128)
+	newResponse := stream.NewStream[controlpanel.PluginInstallResponse](128)
 	routine.Submit(map[string]string{
 		"module":          "plugin_manager",
 		"function":        "InstallToServerlessFromPkg",
@@ -57,14 +58,14 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 
 		response.Async(func(r serverless.LaunchFunctionResponse) {
 			if r.Event == serverless.Info {
-				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventInfo,
+				newResponse.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventInfo,
 					Data:  "Installing...",
 				})
 			} else if r.Event == serverless.Done {
 				if functionUrl == "" || functionName == "" {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
+					newResponse.Write(controlpanel.PluginInstallResponse{
+						Event: controlpanel.PluginInstallEventError,
 						Data:  "Internal server error, failed to get lambda url or function name",
 					})
 					return
@@ -85,27 +86,27 @@ func (p *PluginManager) InstallToServerlessFromPkg(
 					}
 					err = db.Create(serverlessModel)
 					if err != nil {
-						newResponse.Write(PluginInstallResponse{
-							Event: PluginInstallEventError,
+						newResponse.Write(controlpanel.PluginInstallResponse{
+							Event: controlpanel.PluginInstallEventError,
 							Data:  "Failed to create serverless runtime",
 						})
 						return
 					}
 				} else if err != nil {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
+					newResponse.Write(controlpanel.PluginInstallResponse{
+						Event: controlpanel.PluginInstallEventError,
 						Data:  "Failed to check if the plugin is already installed",
 					})
 					return
 				}
 
-				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventDone,
+				newResponse.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventDone,
 					Data:  "Installed",
 				})
 			} else if r.Event == serverless.Error {
-				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventError,
+				newResponse.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventError,
 					Data:  "Internal server error",
 				})
 			} else if r.Event == serverless.FunctionUrl {
@@ -128,7 +129,7 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 	originalPackager []byte,
 	decoder decoder.PluginDecoder,
 ) (
-	*stream.Stream[PluginInstallResponse], error,
+	*stream.Stream[controlpanel.PluginInstallResponse], error,
 ) {
 	checksum, err := decoder.Checksum()
 	if err != nil {
@@ -166,7 +167,7 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 		return nil, err
 	}
 
-	newResponse := stream.NewStream[PluginInstallResponse](128)
+	newResponse := stream.NewStream[controlpanel.PluginInstallResponse](128)
 	routine.Submit(map[string]string{
 		"module":          "plugin_manager",
 		"function":        "ReinstallToServerlessFromPkg",
@@ -182,14 +183,14 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 
 		response.Async(func(r serverless.LaunchFunctionResponse) {
 			if r.Event == serverless.Info {
-				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventInfo,
+				newResponse.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventInfo,
 					Data:  "Installing...",
 				})
 			} else if r.Event == serverless.Done {
 				if functionUrl == "" || functionName == "" {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
+					newResponse.Write(controlpanel.PluginInstallResponse{
+						Event: controlpanel.PluginInstallEventError,
 						Data:  "Internal server error, failed to get lambda url or function name",
 					})
 					return
@@ -200,8 +201,8 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 				serverlessRuntime.FunctionName = functionName
 				err = db.Update(&serverlessRuntime)
 				if err != nil {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
+					newResponse.Write(controlpanel.PluginInstallResponse{
+						Event: controlpanel.PluginInstallEventError,
 						Data:  "Failed to update serverless runtime",
 					})
 					return
@@ -210,20 +211,20 @@ func (p *PluginManager) ReinstallToServerlessFromPkg(
 				// clear cache
 				err = p.clearServerlessRuntimeCache(uniqueIdentity)
 				if err != nil {
-					newResponse.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
+					newResponse.Write(controlpanel.PluginInstallResponse{
+						Event: controlpanel.PluginInstallEventError,
 						Data:  "Failed to clear serverless runtime cache",
 					})
 					return
 				}
 
-				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventDone,
+				newResponse.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventDone,
 					Data:  "Installed",
 				})
 			} else if r.Event == serverless.Error {
-				newResponse.Write(PluginInstallResponse{
-					Event: PluginInstallEventError,
+				newResponse.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventError,
 					Data:  "Internal server error",
 				})
 			} else if r.Event == serverless.FunctionUrl {

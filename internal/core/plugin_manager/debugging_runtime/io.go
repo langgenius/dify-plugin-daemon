@@ -13,8 +13,8 @@ import (
 	"github.com/panjf2000/gnet/v2"
 )
 
-func (r *RemotePluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
-	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
+func (r *RemotePluginRuntime) Listen(session_id string) (*entities.Broadcast[plugin_entities.SessionMessage], error) {
+	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
 		// execute in new goroutine to avoid deadlock
 		routine.Submit(map[string]string{
@@ -49,7 +49,7 @@ func (r *RemotePluginRuntime) Listen(session_id string) *entities.Broadcast[plug
 		listener.Send(chunk)
 	})
 
-	return listener
+	return listener, nil
 }
 
 func (r *RemotePluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {

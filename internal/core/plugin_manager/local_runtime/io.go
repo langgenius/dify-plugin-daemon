@@ -8,13 +8,25 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
-	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
+func (r *LocalPluginRuntime) Listen(sessionId string) (
+	*entities.Broadcast[plugin_entities.SessionMessage], error,
+) {
+	// pick the instance with lowest load
+	instance, err := r.pickLowestLoadInstance()
+	if err != nil {
+		return nil, err
+	}
+
+	// keep the mapping between sessionId and instance
+	r.sessionToInstanceMap.Store(sessionId, instance)
+
+	// setup listener to handle session message from plugin
+	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
-		r.stdioHolder.removeStdioHandlerListener(session_id)
+		instance.removeStdioHandlerListener(sessionId)
 	})
-	r.stdioHolder.setupStdioEventListener(session_id, func(b []byte) {
-		// unmarshal the session message
+
+	instance.setupStdioEventListener(sessionId, func(b []byte) {
 		data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](b)
 		if err != nil {
 			log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
@@ -23,9 +35,21 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 
 		listener.Send(data)
 	})
-	return listener
+
+	return listener, nil
 }
 
-func (r *LocalPluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
-	r.stdioHolder.write(append(data, '\n'))
+func (r *LocalPluginRuntime) Write(
+	sessionId string,
+	action access_types.PluginAccessAction,
+	data []byte,
+) error {
+	// get the instance from the mapping
+	instance, ok := r.sessionToInstanceMap.Load(sessionId)
+	if !ok {
+		return ErrSessionNotFound
+	}
+
+	// write to the instance
+	return instance.Write(data)
 }

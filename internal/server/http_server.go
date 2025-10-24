@@ -19,7 +19,7 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
-	if *config.HealthApiLogEnabled {
+	if config.HealthApiLogEnabled {
 		engine.Use(gin.Logger())
 	} else {
 		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
@@ -105,13 +105,13 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginRemoteInstallingEnabled != nil && *config.PluginRemoteInstallingEnabled {
+	if config.PluginRemoteInstallingEnabled {
 		group.POST("/key", CheckingKey(config.ServerKey), controllers.GetRemoteDebuggingKey)
 	}
 }
 
 func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginEndpointEnabled != nil && *config.PluginEndpointEnabled {
+	if config.PluginEndpointEnabled {
 		group.HEAD("/:hook_id/*path", app.Endpoint(config))
 		group.POST("/:hook_id/*path", app.Endpoint(config))
 		group.GET("/:hook_id/*path", app.Endpoint(config))

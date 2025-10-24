@@ -1,33 +1,19 @@
 package controlpanel
 
-type ControlPanelSignal string
-
-const (
-	// A new plugin instance is starting
-	CONTROL_SIGNAL_NEW_INSTANCE_STARTING ControlPanelSignal = "new_instance_starting"
-
-	// A new plugin instance is ready to receive requests
-	CONTROL_SIGNAL_NEW_INSTANCE_READY ControlPanelSignal = "new_instance_ready"
-
-	// Control panel failed to launch a new plugin instance
-	CONTROL_SIGNAL_NEW_INSTANCE_FAILED ControlPanelSignal = "new_instance_failed"
-
-	// A plugin instance is shutting down
-	CONTROL_SIGNAL_INSTANCE_SHUTDOWN ControlPanelSignal = "instance_shutdown"
+import (
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-type InstanceSignal string
+type ControlPanelNotifier interface {
+	// on instance launch failed
+	OnLocalRuntimeReady(runtime *local_runtime.LocalPluginRuntime)
+	// on local runtime failed to start
+	OnLocalRuntimeStartFailed(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier, err error)
 
-const (
-	// A plugin instance is starting
-	INSTANCE_SIGNAL_STARTING InstanceSignal = "instance_starting"
-
-	// A plugin instance is ready to receive requests
-	INSTANCE_SIGNAL_READY InstanceSignal = "instance_ready"
-
-	// A plugin instance failed to start
-	INSTANCE_SIGNAL_FAILED InstanceSignal = "instance_failed"
-
-	// A plugin instance is shutting down
-	INSTANCE_SIGNAL_SHUTDOWN InstanceSignal = "instance_shutdown"
-)
+	// on remote runtime connected
+	OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime)
+	// on remote runtime disconnected
+	OnDebuggingRuntimeDisconnected(runtime *debugging_runtime.RemotePluginRuntime)
+}

@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"errors"
+
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -16,7 +18,7 @@ func (p *PluginManager) InstallToLocal(
 	source string,
 	meta map[string]any,
 ) (
-	*stream.Stream[PluginInstallResponse], error,
+	*stream.Stream[controlpanel.PluginInstallResponse], error,
 ) {
 	packageFile, err := p.packageBucket.Get(plugin_unique_identifier.String())
 	if err != nil {
@@ -33,7 +35,7 @@ func (p *PluginManager) InstallToLocal(
 		return nil, err
 	}
 
-	response := stream.NewStream[PluginInstallResponse](128)
+	response := stream.NewStream[controlpanel.PluginInstallResponse](128)
 	routine.Submit(map[string]string{
 		"module":   "plugin_manager",
 		"function": "InstallToLocal",
@@ -49,14 +51,14 @@ func (p *PluginManager) InstallToLocal(
 			select {
 			case <-ticker.C:
 				// heartbeat
-				response.Write(PluginInstallResponse{
-					Event: PluginInstallEventInfo,
+				response.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventInfo,
 					Data:  "Installing",
 				})
 			case <-timer.C:
 				// timeout
-				response.Write(PluginInstallResponse{
-					Event: PluginInstallEventInfo,
+				response.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventInfo,
 					Data:  "Timeout",
 				})
 				runtime.Stop()
@@ -79,16 +81,16 @@ func (p *PluginManager) InstallToLocal(
 						errorMsg = err.Error()
 					}
 
-					response.Write(PluginInstallResponse{
-						Event: PluginInstallEventError,
+					response.Write(controlpanel.PluginInstallResponse{
+						Event: controlpanel.PluginInstallEventError,
 						Data:  errorMsg,
 					})
 					runtime.Stop()
 					return
 				}
 			case <-launchedChan:
-				response.Write(PluginInstallResponse{
-					Event: PluginInstallEventDone,
+				response.Write(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventDone,
 					Data:  "Installed",
 				})
 				return

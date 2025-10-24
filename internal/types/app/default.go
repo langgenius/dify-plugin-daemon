@@ -22,8 +22,6 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
 	setDefaultInt(&config.DifyPluginServerlessConnectorLaunchTimeout, 240)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
-	setDefaultBoolPtr(&config.PluginRemoteInstallingEnabled, true)
-	setDefaultBoolPtr(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
 	setDefaultString(&config.PluginStorageLocalRoot, "storage")
 	setDefaultString(&config.PluginInstalledPath, "plugin")
@@ -52,11 +50,5 @@ func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
 func setDefaultString(value *string, defaultValue string) {
 	if *value == "" {
 		*value = defaultValue
-	}
-}
-
-func setDefaultBoolPtr(value **bool, defaultValue bool) {
-	if *value == nil {
-		*value = &defaultValue
 	}
 }

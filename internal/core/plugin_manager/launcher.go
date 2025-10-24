@@ -130,19 +130,10 @@ func (p *PluginManager) launchLocal(pluginUniqueIdentifier plugin_entities.Plugi
 	}
 
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
-		PythonInterpreterPath:     p.config.PythonInterpreterPath,
-		UvPath:                    p.config.UvPath,
-		PythonEnvInitTimeout:      p.config.PythonEnvInitTimeout,
-		PythonCompileAllExtraArgs: p.config.PythonCompileAllExtraArgs,
-		HttpProxy:                 p.config.HttpProxy,
-		HttpsProxy:                p.config.HttpsProxy,
-		NoProxy:                   p.config.NoProxy,
-		PipMirrorUrl:              p.config.PipMirrorUrl,
-		PipPreferBinary:           p.config.PipPreferBinary,
-		PipExtraArgs:              p.config.PipExtraArgs,
-		StdoutBufferSize:          p.config.GetLocalRuntimeBufferSize(),
-		StdoutMaxBufferSize:       p.config.GetLocalRuntimeMaxBufferSize(),
+		PythonInterpreterPath: p.config.PythonInterpreterPath,
+		UvPath:                p.config.UvPath,
 	}, p.config)
+
 	localPluginRuntime.PluginRuntime = plugin.runtime
 	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
 		MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),

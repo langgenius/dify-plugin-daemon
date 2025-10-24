@@ -189,15 +189,17 @@ var (
 )
 
 const (
-	envValidFlagFile = ".venv/dify/plugin.json"
+	envPath          = ".venv"
+	envPythonPath    = envPath + "/bin/python"
+	envValidFlagFile = envPath + "/dify/plugin.json"
 )
 
 func (p *LocalPluginRuntime) checkVirtualEnvironment() (*VirtualEnvironment, error) {
-	if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv")); err != nil {
+	if _, err := os.Stat(path.Join(p.State.WorkingPath, envPath)); err != nil {
 		return nil, ErrVirtualEnvironmentNotFound
 	}
 
-	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, envPythonPath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find python: %s", err)
 	}
@@ -218,17 +220,17 @@ func (p *LocalPluginRuntime) checkVirtualEnvironment() (*VirtualEnvironment, err
 
 func (p *LocalPluginRuntime) deleteVirtualEnvironment() error {
 	// check if virtual environment exists
-	if _, err := os.Stat(path.Join(p.State.WorkingPath, ".venv")); err != nil {
+	if _, err := os.Stat(path.Join(p.State.WorkingPath, envPath)); err != nil {
 		return nil
 	}
 
-	return os.RemoveAll(path.Join(p.State.WorkingPath, ".venv"))
+	return os.RemoveAll(path.Join(p.State.WorkingPath, envPath))
 }
 
 func (p *LocalPluginRuntime) createVirtualEnvironment(
 	uvPath string,
 ) (*VirtualEnvironment, error) {
-	cmd := exec.Command(uvPath, "venv", ".venv", "--python", "3.12")
+	cmd := exec.Command(uvPath, "venv", envPath, "--python", "3.12")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b
@@ -237,7 +239,7 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 		return nil, fmt.Errorf("failed to create virtual environment: %s, output: %s", err, b.String())
 	}
 
-	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, ".venv/bin/python"))
+	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, envPythonPath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find python: %s", err)
 	}
@@ -268,11 +270,15 @@ func (p *LocalPluginRuntime) markVirtualEnvironmentAsValid() error {
 	pluginJsonPath := path.Join(p.State.WorkingPath, envValidFlagFile)
 
 	if err := os.MkdirAll(path.Dir(pluginJsonPath), 0755); err != nil {
-		return fmt.Errorf("failed to create .venv/dify directory: %s", err)
+		return fmt.Errorf("failed to create %s/dify directory: %s", envPath, err)
 	}
 
 	// write plugin.json
-	if err := os.WriteFile(pluginJsonPath, []byte(`{"timestamp":`+strconv.FormatInt(time.Now().Unix(), 10)+`}`), 0644); err != nil {
+	if err := os.WriteFile(
+		pluginJsonPath,
+		[]byte(`{"timestamp":`+strconv.FormatInt(time.Now().Unix(), 10)+`}`),
+		0644,
+	); err != nil {
 		return fmt.Errorf("failed to write plugin.json: %s", err)
 	}
 
@@ -385,4 +391,19 @@ func (p *LocalPluginRuntime) preCompile(
 	importCmd.Output()
 
 	return nil
+}
+
+func (p *LocalPluginRuntime) getVirtualEnvironmentPythonPath() (string, error) {
+	// get the absolute path of the python interpreter
+
+	pythonPath, err := filepath.Abs(path.Join(p.State.WorkingPath, envPythonPath))
+	if err != nil {
+		return "", fmt.Errorf("failed to join python path: %s", err)
+	}
+
+	if _, err := os.Stat(pythonPath); err != nil {
+		return "", ErrVirtualEnvironmentNotFound
+	}
+
+	return pythonPath, nil
 }

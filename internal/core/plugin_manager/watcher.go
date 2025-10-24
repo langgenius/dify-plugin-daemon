@@ -2,9 +2,7 @@ package plugin_manager
 
 import (
 	"sync"
-	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -13,59 +11,15 @@ import (
 )
 
 func (p *PluginManager) startLocalWatcher(config *app.Config) {
-	go func() {
-		log.Info("start to handle new plugins in path: %s", p.config.PluginInstalledPath)
-		log.Info("Launching plugins with max concurrency: %d", p.config.PluginLocalLaunchingConcurrent)
-		p.handleNewLocalPlugins(config)
-		for range time.NewTicker(time.Second * 30).C {
-			p.handleNewLocalPlugins(config)
-			p.removeUninstalledLocalPlugins()
-		}
-	}()
+	// REMOVE
 }
 
 func (p *PluginManager) initRemotePluginServer(config *app.Config) {
-	if p.remotePluginServer != nil {
-		return
-	}
-	p.remotePluginServer = debugging_runtime.NewRemotePluginServer(config, p.mediaBucket)
+	// REMOVE
 }
 
 func (p *PluginManager) startRemoteWatcher(config *app.Config) {
-	// launch TCP debugging server if enabled
-	if config.PluginRemoteInstallingEnabled != nil && *config.PluginRemoteInstallingEnabled {
-		p.initRemotePluginServer(config)
-		go func() {
-			err := p.remotePluginServer.Launch()
-			if err != nil {
-				log.Error("start remote plugin server failed: %s", err.Error())
-			}
-		}()
-		go func() {
-			p.remotePluginServer.Wrap(func(rpr plugin_entities.PluginFullDuplexLifetime) {
-				identity, err := rpr.Identity()
-				if err != nil {
-					log.Error("get remote plugin identity failed: %s", err.Error())
-					return
-				}
-				p.m.Store(identity.String(), rpr)
-				routine.Submit(map[string]string{
-					"module":    "plugin_manager",
-					"function":  "startRemoteWatcher",
-					"plugin_id": identity.String(),
-					"type":      "remote",
-				}, func() {
-					defer func() {
-						if err := recover(); err != nil {
-							log.Error("plugin runtime error: %v", err)
-						}
-						p.m.Delete(identity.String())
-					}()
-					p.fullDuplexLifecycle(rpr, nil, nil)
-				})
-			})
-		}()
-	}
+	// REMOVE
 }
 
 func (p *PluginManager) handleNewLocalPlugins(config *app.Config) {

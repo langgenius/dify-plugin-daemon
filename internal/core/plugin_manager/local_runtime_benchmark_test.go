@@ -61,8 +61,9 @@ func getRuntime(pluginZip []byte) (*local_runtime.LocalPluginRuntime, error) {
 	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
 		UvPath:                os.Getenv("UV_PATH"),
-		PythonEnvInitTimeout:  120,
-	}, app.Config{})
+	}, &app.Config{
+		PythonEnvInitTimeout: 120,
+	})
 
 	localPluginRuntime.PluginRuntime = plugin_entities.PluginRuntime{
 		Config: manifest,
