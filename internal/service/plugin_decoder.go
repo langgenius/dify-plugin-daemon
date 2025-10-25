@@ -41,7 +41,7 @@ func UploadPluginPkg(
 
 	// avoid author to be a uuid
 	if pluginUniqueIdentifier.RemoteLike() {
-		return exception.BadRequestError(errors.New("author cannot be a uuid")).ToResponse()
+		return exception.BadRequestError(errors.New("cannot set author to an UUID")).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()

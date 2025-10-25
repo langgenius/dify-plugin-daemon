@@ -2,7 +2,7 @@ package debugging_runtime
 
 type PluginRuntimeNotifier interface {
 	// on runtime connected
-	OnRuntimeConnected(*RemotePluginRuntime)
+	OnRuntimeConnected(*RemotePluginRuntime) error
 
 	// on runtime disconnected
 	OnRuntimeDisconnected(*RemotePluginRuntime)

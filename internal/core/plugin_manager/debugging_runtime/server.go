@@ -102,7 +102,9 @@ func (s *RemotePluginServer) collectShutdownSignal() {
 }
 
 // NewRemotePluginServer creates a new RemotePluginServer
-func NewRemotePluginServer(config *app.Config, media_transport *media_transport.MediaBucket) *RemotePluginServer {
+func NewRemotePluginServer(
+	config *app.Config, media_transport *media_transport.MediaBucket,
+) *RemotePluginServer {
 	addr := fmt.Sprintf(
 		"tcp://%s:%d",
 		config.PluginRemoteInstallingHost,
@@ -131,8 +133,20 @@ func NewRemotePluginServer(config *app.Config, media_transport *media_transport.
 	}
 
 	manager := &RemotePluginServer{
-		server: s,
+		server:        s,
+		notifiers:     []PluginRuntimeNotifier{},
+		notifierMutex: &sync.RWMutex{},
 	}
 
 	return manager
+}
+
+// AddNotifier adds a notifier to the runtime
+func (r *RemotePluginServer) AddNotifier(notifier PluginRuntimeNotifier) {
+	r.server.AddNotifier(notifier)
+}
+
+// WalkNotifiers walks through all the notifiers and calls the given function
+func (r *RemotePluginServer) WalkNotifiers(fn func(notifier PluginRuntimeNotifier)) {
+	r.server.WalkNotifiers(fn)
 }

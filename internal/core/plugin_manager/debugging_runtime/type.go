@@ -81,25 +81,6 @@ type RemotePluginRuntime struct {
 	notifiersLock sync.RWMutex
 }
 
-// AddNotifier adds a notifier to the runtime
-func (r *RemotePluginRuntime) AddNotifier(notifier PluginRuntimeNotifier) {
-	r.notifiersLock.Lock()
-	defer r.notifiersLock.Unlock()
-
-	r.notifiers = append(r.notifiers, notifier)
-}
-
-// WalkNotifiers walks through all the notifiers and calls the given function
-func (r *RemotePluginRuntime) WalkNotifiers(fn func(notifier PluginRuntimeNotifier)) {
-	r.notifiersLock.RLock()
-	notifiers := r.notifiers // copy the notifiers
-	r.notifiersLock.RUnlock()
-
-	for _, notifier := range notifiers {
-		fn(notifier)
-	}
-}
-
 // Listen creates a new listener for the given session_id
 // session id is an unique identifier for a request
 func (r *RemotePluginRuntime) addMessageCallbackHandler(session_id string, fn func([]byte)) {

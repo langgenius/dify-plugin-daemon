@@ -5,14 +5,18 @@ import (
 )
 
 type DebuggingRuntimeSignal struct {
-	onConnected    func(rpr *debugging_runtime.RemotePluginRuntime)
+	// Triggers if a new client connection established
+	onConnected func(rpr *debugging_runtime.RemotePluginRuntime) error
+
+	// Triggers if connection lost
 	onDisconnected func(rpr *debugging_runtime.RemotePluginRuntime)
 }
 
-func (c *DebuggingRuntimeSignal) OnRuntimeConnected(rpr *debugging_runtime.RemotePluginRuntime) {
+func (c *DebuggingRuntimeSignal) OnRuntimeConnected(rpr *debugging_runtime.RemotePluginRuntime) error {
 	if c.onConnected != nil {
-		c.onConnected(rpr)
+		return c.onConnected(rpr)
 	}
+	return nil
 }
 
 func (c *DebuggingRuntimeSignal) OnRuntimeDisconnected(rpr *debugging_runtime.RemotePluginRuntime) {

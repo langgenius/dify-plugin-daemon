@@ -13,14 +13,8 @@ var (
 )
 
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
-	// copy a new declaration
-	// check original author is alphanumeric
-	if !authorRegex.MatchString(r.Config.Author) {
-		return "", fmt.Errorf("author must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
-	}
-	if !pluginNameRegex.MatchString(r.Config.Name) {
-		return "", fmt.Errorf("plugin name must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
-	}
+	// FIXME: it's a little bit tricky that replace author with current tenant_id
+	// just as a flag to identify debugging plugin
 	config := r.Config
 	config.Author = r.tenantId
 	checksum, _ := r.Checksum()

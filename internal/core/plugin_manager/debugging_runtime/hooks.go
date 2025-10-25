@@ -2,7 +2,6 @@ package debugging_runtime
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
@@ -51,6 +49,9 @@ type DifyServer struct {
 
 	maxConn     int32
 	currentConn int32
+
+	notifiers     []PluginRuntimeNotifier
+	notifierMutex *sync.RWMutex
 }
 
 func (s *DifyServer) OnBoot(c gnet.Engine) (action gnet.Action) {
@@ -132,21 +133,6 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 		}
 	}
 
-	// send stopped event
-	plugin.waitChanLock.Lock()
-	for _, c := range plugin.waitStoppedChan {
-		select {
-		case c <- true:
-		default:
-		}
-	}
-	plugin.waitChanLock.Unlock()
-
-	// recycle launched chan, avoid memory leak
-	plugin.waitLaunchedChanOnce.Do(func() {
-		close(plugin.waitLaunchedChan)
-	})
-
 	return gnet.None
 }
 
@@ -204,155 +190,44 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			return
 		}
 
-		if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_HAND_SHAKE {
-			if runtime.handshake {
-				// handshake already completed
-				return
-			}
-
-			key, err := parser.UnmarshalJsonBytes[plugin_entities.RemotePluginRegisterHandshake](registerPayload.Data)
-			if err != nil {
-				// close connection if handshake failed
-				closeConn([]byte("handshake failed, invalid handshake message\n"))
+		switch registerPayload.Type {
+		case plugin_entities.REGISTER_EVENT_TYPE_HAND_SHAKE:
+			if connectionInfo, err := s.handleHandleShake(runtime, registerPayload); err != nil {
 				runtime.handshakeFailed = true
-				return
+				closeConn(append([]byte(err.Error()), '\n'))
+			} else {
+				runtime.tenantId = connectionInfo.TenantId
+				runtime.handshake = true
 			}
-
-			info, err := GetConnectionInfo(key.Key)
-			if err == cache.ErrNotFound {
-				// close connection if handshake failed
-				closeConn([]byte("handshake failed, invalid key\n"))
-				runtime.handshakeFailed = true
-				return
-			} else if err != nil {
-				// close connection if handshake failed
-				log.Error("failed to get connection info: %v", err)
-				closeConn([]byte("internal error\n"))
-				return
+		case plugin_entities.REGISTER_EVENT_TYPE_ASSET_CHUNK:
+			if err := s.handleAssetsTransfer(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
-
-			runtime.tenantId = info.TenantId
-
-			// handshake completed
-			runtime.handshake = true
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_ASSET_CHUNK {
-			if runtime.assetsTransferred {
-				return
-			}
-
-			assetChunk, err := parser.UnmarshalJsonBytes[plugin_entities.RemotePluginRegisterAssetChunk](registerPayload.Data)
-			if err != nil {
-				log.Error("assets register failed, error: %v", err)
-				closeConn([]byte("assets register failed, invalid assets chunk\n"))
-				return
-			}
-
-			buffer, ok := runtime.assets[assetChunk.Filename]
-			if !ok {
-				runtime.assets[assetChunk.Filename] = &bytes.Buffer{}
-				buffer = runtime.assets[assetChunk.Filename]
-			}
-
-			// allows at most 50MB assets
-			if runtime.assetsBytes+int64(len(assetChunk.Data)) > 50*1024*1024 {
-				closeConn([]byte("assets too large, at most 50MB\n"))
-				return
-			}
-
-			// decode as base64
-			data, err := base64.StdEncoding.DecodeString(assetChunk.Data)
-			if err != nil {
-				log.Error("assets decode failed, error: %v", err)
-				closeConn([]byte("assets decode failed, invalid assets data\n"))
-				return
-			}
-
-			buffer.Write(data)
-
-			// update assets bytes
-			runtime.assetsBytes += int64(len(data))
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_END {
-			if !runtime.modelsRegistrationTransferred &&
-				!runtime.endpointsRegistrationTransferred &&
-				!runtime.toolsRegistrationTransferred &&
-				!runtime.agentStrategyRegistrationTransferred &&
-				!runtime.datasourceRegistrationTransferred {
-				closeConn([]byte("no registration transferred, cannot initialize\n"))
-				return
-			}
-
-			files := make(map[string][]byte)
-			for filename, buffer := range runtime.assets {
-				files[filename] = buffer.Bytes()
-			}
-
-			// remap assets
-			if err := runtime.RemapAssets(&runtime.Config, files); err != nil {
-				log.Error("assets remap failed, error: %v", err)
-				closeConn([]byte(fmt.Sprintf("assets remap failed, invalid assets data, cannot remap: %v\n", err)))
-				return
-			}
-
+		case plugin_entities.REGISTER_EVENT_TYPE_END:
 			atomic.AddInt32(&s.currentConn, 1)
 			if atomic.LoadInt32(&s.currentConn) > int32(s.maxConn) {
 				closeConn([]byte("server is busy now, please try again later\n"))
 				return
 			}
-
-			// fill in default values
-			runtime.Config.FillInDefaultValues()
-
-			// mark assets transferred
-			runtime.assetsTransferred = true
-
-			runtime.checksum = runtime.calculateChecksum()
-			runtime.InitState()
-			runtime.SetActiveAt(time.Now())
-
-			// trigger registration event
-			if err := runtime.Register(); err != nil {
-				closeConn([]byte(fmt.Sprintf("register failed, cannot register: %v\n", err)))
+			if err := s.handleInitializationEndEvent(runtime); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 				return
 			}
 
-			// send started event
-			runtime.waitChanLock.Lock()
-			for _, c := range runtime.waitStartedChan {
-				select {
-				case c <- true:
-				default:
-				}
-			}
-			runtime.waitChanLock.Unlock()
-
-			// notify launched
-			runtime.waitLaunchedChanOnce.Do(func() {
-				close(runtime.waitLaunchedChan)
+			// trigger new connection event
+			s.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+				notifier.OnRuntimeConnected(runtime)
 			})
-
-			// mark initialized
-			runtime.initialized = true
 
 			// publish runtime to watcher
 			s.response.Write(runtime)
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_MANIFEST_DECLARATION {
-			if runtime.registrationTransferred {
-				return
+		case plugin_entities.REGISTER_EVENT_TYPE_MANIFEST_DECLARATION:
+			if err := s.handleDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
+		}
 
-			// process handle shake if not completed
-			declaration, err := parser.UnmarshalJsonBytes[plugin_entities.PluginDeclaration](registerPayload.Data)
-			if err != nil {
-				// close connection if handshake failed
-				closeConn([]byte(fmt.Sprintf("handshake failed, invalid plugin declaration: %v\n", err)))
-				return
-			}
-
-			runtime.Config = declaration
-
-			// registration transferred
-			runtime.registrationTransferred = true
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_TOOL_DECLARATION {
+		if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_TOOL_DECLARATION {
 			if runtime.toolsRegistrationTransferred {
 				return
 			}
@@ -446,5 +321,24 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 	} else {
 		// continue handle messages if handshake completed
 		runtime.response.WriteBlocking(message)
+	}
+}
+
+// AddNotifier adds a notifier to the runtime
+func (r *DifyServer) AddNotifier(notifier PluginRuntimeNotifier) {
+	r.notifierMutex.Lock()
+	defer r.notifierMutex.Unlock()
+
+	r.notifiers = append(r.notifiers, notifier)
+}
+
+// WalkNotifiers walks through all the notifiers and calls the given function
+func (r *DifyServer) WalkNotifiers(fn func(notifier PluginRuntimeNotifier)) {
+	r.notifierMutex.RLock()
+	notifiers := r.notifiers // copy the notifiers
+	r.notifierMutex.RUnlock()
+
+	for _, notifier := range notifiers {
+		fn(notifier)
 	}
 }

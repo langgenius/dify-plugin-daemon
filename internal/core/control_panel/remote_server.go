@@ -12,6 +12,34 @@ func (c *ControlPanel) setupDebuggingServer(config *app.Config) {
 		return
 	}
 	c.debuggingServer = debugging_runtime.NewRemotePluginServer(config, c.mediaBucket)
+
+	// setup notifiers
+	c.debuggingServer.AddNotifier(&DebuggingRuntimeSignal{
+		onConnected:    c.onDebuggingRuntimeConnected,
+		onDisconnected: c.OnDebuggingRuntimeDisconnected,
+	})
+}
+
+func (c *ControlPanel) onDebuggingRuntimeConnected(
+	rpr *debugging_runtime.RemotePluginRuntime,
+) error {
+	// handle plugin connection
+	pluginIdentifier, err := rpr.Identity()
+	if err != nil {
+		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
+	}
+	c.debuggingPluginRuntime.Store(pluginIdentifier, rpr)
+}
+
+func (c *ControlPanel) OnDebuggingRuntimeDisconnected(
+	rpr *debugging_runtime.RemotePluginRuntime,
+) {
+	// handle plugin disconnecting
+	pluginIdentifier, err := rpr.Identity()
+	if err != nil {
+		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
+	}
+	c.debuggingPluginRuntime.Delete(pluginIdentifier)
 }
 
 func (c *ControlPanel) startDebuggingServer() error {
@@ -24,21 +52,10 @@ func (c *ControlPanel) startDebuggingServer() error {
 func (c *ControlPanel) consumeDebuggingPlugin() {
 	// listen to new connections
 	c.debuggingServer.Wrap(func(rpr *debugging_runtime.RemotePluginRuntime) {
-		// FIXME: it may lead a race condition: while consuming the connection, it's already closed
 		identity, err := rpr.Identity()
 		if err != nil {
 			log.Error("get remote plugin identity failed: %s", err.Error())
 			return
 		}
-
-		rpr.AddNotifier(&DebuggingRuntimeSignal{
-			onDisconnected: func(rpr *debugging_runtime.RemotePluginRuntime) {
-				// delete the remote plugin runtime from the control panel
-				c.debuggingPluginRuntime.Delete(identity)
-			},
-		})
-
-		// store the remote plugin runtime
-		c.debuggingPluginRuntime.Store(identity, rpr)
 	})
 }

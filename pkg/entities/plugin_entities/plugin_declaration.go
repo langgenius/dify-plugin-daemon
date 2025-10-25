@@ -258,6 +258,14 @@ func (p *PluginDeclaration) Identity() string {
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {
+	if !AuthorRegex.MatchString(p.Author) {
+		return fmt.Errorf("author must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
+	}
+
+	if !PluginNameRegex.MatchString(p.Name) {
+		return fmt.Errorf("plugin name must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
+	}
+
 	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil && p.Datasource == nil {
 		return fmt.Errorf("at least one of endpoint, model, tool, agent_strategy, or datasource must be provided")
 	}
