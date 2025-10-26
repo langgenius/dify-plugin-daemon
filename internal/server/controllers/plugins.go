@@ -289,8 +289,8 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 func ExtractPluginAsset(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID               string                                 `uri:"tenant_id" validate:"required"`
-		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `query:"plugin_unique_identifier" validate:"required"`
-		FilePath               string                                 `query:"file_path" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,required,plugin_unique_identifier"`
+		FilePath               string                                 `form:"file_path" validate:"required"`
 	}) {
 		manager := plugin_manager.Manager()
 		asset, err := manager.ExtractPluginAsset(request.PluginUniqueIdentifier, request.FilePath)
