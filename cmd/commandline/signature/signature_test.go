@@ -285,7 +285,7 @@ func TestVerifyPluginWithoutVerificationField(t *testing.T) {
 		t.Fatalf("Failed to create dummy plugin file: %v", err)
 	}
 
-	pluginPackageWithoutVerificationField, err := signer.TraditionalSignPlugin(dummyPlugin)
+	pluginPackageWithoutVerificationField, err := signer.SignPlugin(dummyPlugin, nil)
 	if err != nil {
 		t.Fatalf("Failed to sign plugin: %v", err)
 	}
