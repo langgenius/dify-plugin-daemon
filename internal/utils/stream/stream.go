@@ -182,9 +182,12 @@ func (r *Stream[T]) Close() {
 		return
 	}
 
+	// fixed:issues #292 fatal error: concurrent map iteration and map write
+	r.l.Lock()
 	for _, f := range r.beforeClose {
 		f()
 	}
+	r.l.Unlock()
 
 	select {
 	case r.sig <- false:
