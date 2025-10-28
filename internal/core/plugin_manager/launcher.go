@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
@@ -16,6 +18,50 @@ import (
 type pluginRuntimeWithDecoder struct {
 	runtime plugin_entities.PluginRuntime
 	decoder decoder.PluginDecoder
+}
+
+// extract plugin from package to working directory
+func (p *PluginManager) getLocalPluginRuntime(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) (
+	*pluginRuntimeWithDecoder,
+	error,
+) {
+	pluginZip, err := p.installedBucket.Get(pluginUniqueIdentifier)
+	if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("get plugin package error"))
+	}
+
+	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
+	if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
+	}
+
+	// get manifest
+	manifest, err := decoder.Manifest()
+	if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("get plugin manifest error"))
+	}
+
+	checksum, err := decoder.Checksum()
+	if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))
+	}
+
+	identity := manifest.Identity()
+	identity = strings.ReplaceAll(identity, ":", "-")
+	pluginWorkingPath := path.Join(p.config.PluginWorkingPath, fmt.Sprintf("%s@%s", identity, checksum))
+	return &pluginRuntimeWithDecoder{
+		runtime: plugin_entities.PluginRuntime{
+			Config: manifest,
+			State: plugin_entities.PluginRuntimeState{
+				Status:      plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
+				Restarts:    0,
+				ActiveAt:    nil,
+				Verified:    manifest.Verified,
+				WorkingPath: pluginWorkingPath,
+			},
+		},
+		decoder: decoder,
+	}, nil
 }
 
 // launch a local plugin
