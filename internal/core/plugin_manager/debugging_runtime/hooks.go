@@ -2,24 +2,16 @@ package debugging_runtime
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/panjf2000/gnet/v2"
-)
-
-var (
-	// mode is only used for testing
-	// TODO: simplify this ugly code
-	_mode pluginRuntimeMode
 )
 
 type DifyServer struct {
@@ -39,13 +31,8 @@ type DifyServer struct {
 	// event loop count
 	numLoops int
 
-	// read new connections
-	response *stream.Stream[*RemotePluginRuntime]
-
 	plugins     map[int]*RemotePluginRuntime
 	pluginsLock *sync.RWMutex
-
-	shutdownChan chan bool
 
 	maxConn     int32
 	currentConn int32
@@ -76,11 +63,7 @@ func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 
 		assets:      make(map[string]*bytes.Buffer),
 		assetsBytes: 0,
-
-		shutdownChan:     make(chan bool),
-		waitLaunchedChan: make(chan error),
-
-		alive: true,
+		alive:       true,
 	}
 
 	// store plugin runtime
@@ -117,27 +100,23 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	}
 
 	// close plugin
-	plugin.onDisconnected()
+	plugin.cleanupResources()
 
-	// uninstall plugin
-	if plugin.assetsTransferred {
-		if _mode != _PLUGIN_RUNTIME_MODE_CI {
-			if plugin.installationId != "" {
-				if err := plugin.Unregister(); err != nil {
-					log.Error("unregister plugin failed, error: %v", err)
-				}
-			}
+	// trigger runtime disconnected event
+	s.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnRuntimeDisconnected(plugin)
+	})
 
-			// decrease current connection
-			atomic.AddInt32(&s.currentConn, -1)
-		}
-	}
+	// decrease current connection
+	atomic.AddInt32(&s.currentConn, -1)
 
 	return gnet.None
 }
 
 func (s *DifyServer) OnShutdown(c gnet.Engine) {
-	close(s.shutdownChan)
+	s.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnServerShutdown(SERVER_SHUTDOWN_REASON_EXIT)
+	})
 }
 
 func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
@@ -218,104 +197,29 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			s.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
 				notifier.OnRuntimeConnected(runtime)
 			})
-
-			// publish runtime to watcher
-			s.response.Write(runtime)
 		case plugin_entities.REGISTER_EVENT_TYPE_MANIFEST_DECLARATION:
 			if err := s.handleDeclarationRegister(runtime, registerPayload); err != nil {
 				closeConn(append([]byte(err.Error()), '\n'))
 			}
-		}
-
-		if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_TOOL_DECLARATION {
-			if runtime.toolsRegistrationTransferred {
-				return
+		case plugin_entities.REGISTER_EVENT_TYPE_TOOL_DECLARATION:
+			if err := s.handleToolDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
-
-			tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderDeclaration](registerPayload.Data)
-			if err != nil {
-				closeConn([]byte(fmt.Sprintf("tools register failed, invalid tools declaration: %v\n", err)))
-				return
+		case plugin_entities.REGISTER_EVENT_TYPE_MODEL_DECLARATION:
+			if err := s.handleModelDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
-
-			runtime.toolsRegistrationTransferred = true
-
-			if len(tools) > 0 {
-				declaration := runtime.Config
-				declaration.Tool = &tools[0]
-				runtime.Config = declaration
+		case plugin_entities.REGISTER_EVENT_TYPE_ENDPOINT_DECLARATION:
+			if err := s.handleEndpointDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_MODEL_DECLARATION {
-			if runtime.modelsRegistrationTransferred {
-				return
+		case plugin_entities.REGISTER_EVENT_TYPE_AGENT_STRATEGY_DECLARATION:
+			if err := s.handleAgentStrategyDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
-
-			models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderDeclaration](registerPayload.Data)
-			if err != nil {
-				closeConn([]byte(fmt.Sprintf("models register failed, invalid models declaration: %v\n", err)))
-				return
-			}
-
-			runtime.modelsRegistrationTransferred = true
-
-			if len(models) > 0 {
-				declaration := runtime.Config
-				declaration.Model = &models[0]
-				runtime.Config = declaration
-			}
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_ENDPOINT_DECLARATION {
-			if runtime.endpointsRegistrationTransferred {
-				return
-			}
-
-			endpoints, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.EndpointProviderDeclaration](registerPayload.Data)
-			if err != nil {
-				closeConn([]byte(fmt.Sprintf("endpoints register failed, invalid endpoints declaration: %v\n", err)))
-				return
-			}
-
-			runtime.endpointsRegistrationTransferred = true
-
-			if len(endpoints) > 0 {
-				declaration := runtime.Config
-				declaration.Endpoint = &endpoints[0]
-				runtime.Config = declaration
-			}
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_AGENT_STRATEGY_DECLARATION {
-			if runtime.agentStrategyRegistrationTransferred {
-				return
-			}
-
-			agents, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.AgentStrategyProviderDeclaration](registerPayload.Data)
-			if err != nil {
-				closeConn([]byte(fmt.Sprintf("agent strategies register failed, invalid agent strategies declaration: %v\n", err)))
-				return
-			}
-
-			runtime.agentStrategyRegistrationTransferred = true
-
-			if len(agents) > 0 {
-				declaration := runtime.Config
-				declaration.AgentStrategy = &agents[0]
-				runtime.Config = declaration
-			}
-		} else if registerPayload.Type == plugin_entities.REGISTER_EVENT_TYPE_DATASOURCE_DECLARATION {
-			if runtime.datasourceRegistrationTransferred {
-				return
-			}
-
-			datasources, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.DatasourceProviderDeclaration](registerPayload.Data)
-			if err != nil {
-				closeConn([]byte(fmt.Sprintf("datasources register failed, invalid datasources declaration: %v\n", err)))
-				return
-			}
-
-			runtime.datasourceRegistrationTransferred = true
-
-			if len(datasources) > 0 {
-				declaration := runtime.Config
-				declaration.Datasource = &datasources[0]
-				runtime.Config = declaration
+		case plugin_entities.REGISTER_EVENT_TYPE_DATASOURCE_DECLARATION:
+			if err := s.handleDatasourceDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
 			}
 		}
 	} else {

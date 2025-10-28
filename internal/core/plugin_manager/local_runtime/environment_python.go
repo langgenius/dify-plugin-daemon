@@ -15,7 +15,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	}
 
 	// check if virtual environment exists
-	venv, err := p.checkVirtualEnvironment()
+	venv, err := p.checkPythonVirtualEnvironment()
 	switch err {
 	case ErrVirtualEnvironmentInvalid:
 		// remove the venv and rebuild it

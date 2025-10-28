@@ -22,6 +22,19 @@ func (r *LocalPluginRuntime) InitEnvironment() error {
 	return nil
 }
 
+// return nil if environment is valid, otherwise return error
+func (r *LocalPluginRuntime) EnvironmentValidation() error {
+	if r.Config.Meta.Runner.Language == constants.Python {
+		_, err := r.checkPythonVirtualEnvironment()
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return fmt.Errorf("unsupported language: %s", r.Config.Meta.Runner.Language)
+}
+
 func (r *LocalPluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
 	checksum, err := r.Checksum()
 	if err != nil {

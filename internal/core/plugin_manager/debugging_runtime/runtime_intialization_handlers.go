@@ -9,6 +9,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -103,17 +104,18 @@ func (d *DifyServer) handleInitializationEndEvent(
 	runtime.InitState()
 	runtime.SetActiveAt(time.Now())
 
-	// trigger registration event
-	if err := runtime.Register(); err != nil {
-		return fmt.Errorf(fmt.Sprintf("register failed, cannot register: %v", err))
-	}
-
 	if err := runtime.Config.ManifestValidate(); err != nil {
 		return fmt.Errorf("register failed, invalid manifest detected: %v", err)
 	}
 
 	// mark initialized
 	runtime.initialized = true
+
+	// spawn a core to handle CPU-intensive tasks
+	routine.Submit(nil, func() { runtime.SpawnCore() })
+
+	// start heartbeat monitor
+	routine.Submit(nil, func() { runtime.HeartbeatMonitor() })
 
 	return nil
 }
@@ -137,6 +139,126 @@ func (d *DifyServer) handleDeclarationRegister(
 
 	// registration transferred
 	runtime.registrationTransferred = true
+
+	return nil
+}
+
+func (d *DifyServer) handleToolDeclarationRegister(
+	runtime *RemotePluginRuntime,
+	registerPayload plugin_entities.RemotePluginRegisterPayload,
+) error {
+	if runtime.toolsRegistrationTransferred {
+		return errors.New("tools declaration already registered")
+	}
+
+	tools, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ToolProviderDeclaration](registerPayload.Data)
+	if err != nil {
+		return fmt.Errorf("tools register failed, invalid tools declaration: %v", err)
+	}
+
+	runtime.toolsRegistrationTransferred = true
+
+	if len(tools) > 0 {
+		declaration := runtime.Config
+		declaration.Tool = &tools[0]
+		runtime.Config = declaration
+	}
+
+	return nil
+}
+
+func (d *DifyServer) handleModelDeclarationRegister(
+	runtime *RemotePluginRuntime,
+	registerPayload plugin_entities.RemotePluginRegisterPayload,
+) error {
+	if runtime.modelsRegistrationTransferred {
+		return errors.New("models declaration already registered")
+	}
+
+	models, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.ModelProviderDeclaration](registerPayload.Data)
+	if err != nil {
+		return fmt.Errorf("models register failed, invalid models declaration: %v", err)
+	}
+
+	runtime.modelsRegistrationTransferred = true
+
+	if len(models) > 0 {
+		declaration := runtime.Config
+		declaration.Model = &models[0]
+		runtime.Config = declaration
+	}
+
+	return nil
+}
+
+func (d *DifyServer) handleEndpointDeclarationRegister(
+	runtime *RemotePluginRuntime,
+	registerPayload plugin_entities.RemotePluginRegisterPayload,
+) error {
+	if runtime.endpointsRegistrationTransferred {
+		return errors.New("endpoints declaration already registered")
+	}
+
+	endpoints, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.EndpointProviderDeclaration](registerPayload.Data)
+	if err != nil {
+		return fmt.Errorf("endpoints register failed, invalid endpoints declaration: %v", err)
+	}
+
+	runtime.endpointsRegistrationTransferred = true
+
+	if len(endpoints) > 0 {
+		declaration := runtime.Config
+		declaration.Endpoint = &endpoints[0]
+		runtime.Config = declaration
+	}
+
+	return nil
+}
+
+func (d *DifyServer) handleAgentStrategyDeclarationRegister(
+	runtime *RemotePluginRuntime,
+	registerPayload plugin_entities.RemotePluginRegisterPayload,
+) error {
+	if runtime.agentStrategyRegistrationTransferred {
+		return errors.New("agent strategy declaration already registered")
+	}
+
+	agents, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.AgentStrategyProviderDeclaration](registerPayload.Data)
+	if err != nil {
+		return fmt.Errorf("agent strategies register failed, invalid agent strategies declaration: %v", err)
+	}
+
+	runtime.agentStrategyRegistrationTransferred = true
+
+	if len(agents) > 0 {
+		declaration := runtime.Config
+		declaration.AgentStrategy = &agents[0]
+		runtime.Config = declaration
+	}
+
+	return nil
+}
+
+func (d *DifyServer) handleDatasourceDeclarationRegister(
+	runtime *RemotePluginRuntime,
+	registerPayload plugin_entities.RemotePluginRegisterPayload,
+) error {
+	if runtime.datasourceRegistrationTransferred {
+		return errors.New("datasource declaration already registered")
+	}
+
+	datasources, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.DatasourceProviderDeclaration](registerPayload.Data)
+	if err != nil {
+		return fmt.Errorf("datasources register failed, invalid datasources declaration: %v", err)
+	}
+
+	runtime.datasourceRegistrationTransferred = true
+
+	if len(datasources) > 0 {
+		declaration := runtime.Config
+		declaration.Datasource = &datasources[0]
+		runtime.Config = declaration
+	}
 
 	return nil
 }

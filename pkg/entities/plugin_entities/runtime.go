@@ -31,8 +31,6 @@ type (
 
 		// before the plugin starts, it will call this method to initialize the environment
 		InitEnvironment() error
-		// wait for the plugin to stop
-		Wait() (<-chan bool, error)
 		// Cleanup the plugin runtime
 		Cleanup()
 		// set the plugin to active
@@ -49,10 +47,6 @@ type (
 		SetScheduledAt(t time.Time)
 		// add restarts to the plugin
 		AddRestarts()
-		// Started
-		WaitStarted() <-chan bool
-		// Stopped
-		WaitStopped() <-chan bool
 	}
 
 	PluginServerlessLifetime interface {

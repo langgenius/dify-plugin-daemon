@@ -52,18 +52,6 @@ type LocalPluginRuntimeConfig struct {
 	UvPath                string
 }
 
-func NewLocalPluginRuntime(
-	config LocalPluginRuntimeConfig,
-	appConfig *app.Config,
-) *LocalPluginRuntime {
-	return &LocalPluginRuntime{
-		scheduleStatus:               ScheduleStatusStopped,
-		defaultPythonInterpreterPath: config.PythonInterpreterPath,
-		uvPath:                       config.UvPath,
-		appConfig:                    appConfig,
-	}
-}
-
 // Type returns the runtime type of the plugin
 func (r *LocalPluginRuntime) Type() plugin_entities.PluginRuntimeType {
 	return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL

@@ -179,7 +179,7 @@ func (p *LocalPluginRuntime) installDependencies(
 	return nil
 }
 
-type VirtualEnvironment struct {
+type PythonVirtualEnvironment struct {
 	pythonInterpreterPath string
 }
 
@@ -194,7 +194,7 @@ const (
 	envValidFlagFile = envPath + "/dify/plugin.json"
 )
 
-func (p *LocalPluginRuntime) checkVirtualEnvironment() (*VirtualEnvironment, error) {
+func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvironment, error) {
 	if _, err := os.Stat(path.Join(p.State.WorkingPath, envPath)); err != nil {
 		return nil, ErrVirtualEnvironmentNotFound
 	}
@@ -213,7 +213,7 @@ func (p *LocalPluginRuntime) checkVirtualEnvironment() (*VirtualEnvironment, err
 		return nil, ErrVirtualEnvironmentInvalid
 	}
 
-	return &VirtualEnvironment{
+	return &PythonVirtualEnvironment{
 		pythonInterpreterPath: pythonPath,
 	}, nil
 }
@@ -229,7 +229,7 @@ func (p *LocalPluginRuntime) deleteVirtualEnvironment() error {
 
 func (p *LocalPluginRuntime) createVirtualEnvironment(
 	uvPath string,
-) (*VirtualEnvironment, error) {
+) (*PythonVirtualEnvironment, error) {
 	cmd := exec.Command(uvPath, "venv", envPath, "--python", "3.12")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
@@ -254,7 +254,7 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 		return nil, fmt.Errorf("failed to find requirements.txt: %s", err)
 	}
 
-	return &VirtualEnvironment{
+	return &PythonVirtualEnvironment{
 		pythonInterpreterPath: pythonPath,
 	}, nil
 }

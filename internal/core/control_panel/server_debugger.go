@@ -2,8 +2,10 @@ package controlpanel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func (c *ControlPanel) setupDebuggingServer(config *app.Config) {
@@ -11,12 +13,12 @@ func (c *ControlPanel) setupDebuggingServer(config *app.Config) {
 	if c.debuggingServer != nil {
 		return
 	}
-	c.debuggingServer = debugging_runtime.NewRemotePluginServer(config, c.mediaBucket)
+	c.debuggingServer = debugging_runtime.NewDebuggingPluginServer(config, c.mediaBucket)
 
 	// setup notifiers
 	c.debuggingServer.AddNotifier(&DebuggingRuntimeSignal{
 		onConnected:    c.onDebuggingRuntimeConnected,
-		onDisconnected: c.OnDebuggingRuntimeDisconnected,
+		onDisconnected: c.onDebuggingRuntimeDisconnected,
 	})
 }
 
@@ -28,10 +30,28 @@ func (c *ControlPanel) onDebuggingRuntimeConnected(
 	if err != nil {
 		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
 	}
+
+	// store plugin runtime
 	c.debuggingPluginRuntime.Store(pluginIdentifier, rpr)
+
+	_, installation, err := install_service.InstallPlugin(
+		rpr.TenantId(),
+		"",
+		rpr,
+		string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE),
+		map[string]any{},
+	)
+	if err != nil {
+		return err
+	}
+
+	// FIXME(Yeuoly): temporary solution for managing plugin installation model in DB
+	rpr.SetInstallationId(installation.ID)
+
+	return nil
 }
 
-func (c *ControlPanel) OnDebuggingRuntimeDisconnected(
+func (c *ControlPanel) onDebuggingRuntimeDisconnected(
 	rpr *debugging_runtime.RemotePluginRuntime,
 ) {
 	// handle plugin disconnecting
@@ -39,23 +59,21 @@ func (c *ControlPanel) OnDebuggingRuntimeDisconnected(
 	if err != nil {
 		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
 	}
+
+	// delete plugin runtime
 	c.debuggingPluginRuntime.Delete(pluginIdentifier)
+
+	if err := install_service.UninstallPlugin(
+		rpr.TenantId(),
+		rpr.InstallationId(),
+		pluginIdentifier,
+		plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
+	); err != nil {
+		log.Error("uninstall debugging plugin failed, error: %v", err)
+	}
 }
 
 func (c *ControlPanel) startDebuggingServer() error {
 	// launch debugging server
 	return c.debuggingServer.Launch()
-}
-
-// consumeDebuggingPlugin consumes TCP connections from clients
-// and schedule it to the control panel
-func (c *ControlPanel) consumeDebuggingPlugin() {
-	// listen to new connections
-	c.debuggingServer.Wrap(func(rpr *debugging_runtime.RemotePluginRuntime) {
-		identity, err := rpr.Identity()
-		if err != nil {
-			log.Error("get remote plugin identity failed: %s", err.Error())
-			return
-		}
-	})
 }

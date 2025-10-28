@@ -29,7 +29,7 @@ type ControlPanel struct {
 	controlPanelNotifierLock *sync.RWMutex
 
 	// local plugin runtimes
-	pluginRuntimes mapping.Map[
+	localPluginRuntimes mapping.Map[
 		plugin_entities.PluginUniqueIdentifier,
 		*local_runtime.LocalPluginRuntime,
 	]

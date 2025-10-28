@@ -10,6 +10,9 @@ type DebuggingRuntimeSignal struct {
 
 	// Triggers if connection lost
 	onDisconnected func(rpr *debugging_runtime.RemotePluginRuntime)
+
+	// Triggers if the server is shutting down
+	onServerShutdown func(reason debugging_runtime.ServerShutdownReason)
 }
 
 func (c *DebuggingRuntimeSignal) OnRuntimeConnected(rpr *debugging_runtime.RemotePluginRuntime) error {
@@ -22,5 +25,11 @@ func (c *DebuggingRuntimeSignal) OnRuntimeConnected(rpr *debugging_runtime.Remot
 func (c *DebuggingRuntimeSignal) OnRuntimeDisconnected(rpr *debugging_runtime.RemotePluginRuntime) {
 	if c.onDisconnected != nil {
 		c.onDisconnected(rpr)
+	}
+}
+
+func (c *DebuggingRuntimeSignal) OnServerShutdown(reason debugging_runtime.ServerShutdownReason) {
+	if c.onServerShutdown != nil {
+		c.onServerShutdown(reason)
 	}
 }

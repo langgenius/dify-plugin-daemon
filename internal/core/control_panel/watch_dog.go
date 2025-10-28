@@ -30,10 +30,5 @@ func (c *ControlPanel) StartDebuggingServerWatchDog() {
 				log.Error("start remote plugin server failed: %s", err.Error())
 			}
 		}()
-
-		// consume debugging plugin
-		go func() {
-			c.consumeDebuggingPlugin()
-		}()
 	}
 }

@@ -3,15 +3,9 @@ package debugging_runtime
 import (
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
-
-func (r *RemotePluginRuntime) InitEnvironment() error {
-	return nil
-}
 
 func (r *RemotePluginRuntime) Stopped() bool {
 	return !r.alive
@@ -29,38 +23,9 @@ func (r *RemotePluginRuntime) Type() plugin_entities.PluginRuntimeType {
 	return plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
 }
 
-func (r *RemotePluginRuntime) StartPlugin() error {
+// spawn a core to handle CPU-intensive tasks
+func (r *RemotePluginRuntime) SpawnCore() error {
 	var exitError error
-
-	identity, err := r.Identity()
-	if err != nil {
-		return err
-	}
-
-	// handle heartbeat
-	routine.Submit(map[string]string{
-		"module":    "debugging_runtime",
-		"function":  "StartPlugin",
-		"plugin_id": identity.String(),
-	}, func() {
-		r.lastActiveAt = time.Now()
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ticker.C:
-				if time.Since(r.lastActiveAt) > 60*time.Second {
-					// kill this connection if it's not active for a long time
-					r.conn.Close()
-					exitError = plugin_errors.ErrPluginNotActive
-					return
-				}
-			case <-r.shutdownChan:
-				return
-			}
-		}
-	})
 
 	r.response.Async(func(data []byte) {
 		plugin_entities.ParsePluginUniversalEvent(
@@ -91,8 +56,16 @@ func (r *RemotePluginRuntime) StartPlugin() error {
 	return exitError
 }
 
-func (r *RemotePluginRuntime) Wait() (<-chan bool, error) {
-	return r.shutdownChan, nil
+func (r *RemotePluginRuntime) HeartbeatMonitor() {
+	// close connection if it hangs for over 60 seconds
+	ticker := time.NewTicker(time.Second * 60)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		if time.Since(r.lastActiveAt) > time.Second*60 {
+			r.Stop()
+		}
+	}
 }
 
 func (r *RemotePluginRuntime) Checksum() (string, error) {

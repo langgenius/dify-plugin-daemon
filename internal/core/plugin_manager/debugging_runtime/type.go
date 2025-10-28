@@ -70,15 +70,9 @@ type RemotePluginRuntime struct {
 	installationId string
 
 	// wait for started event
-	waitChanLock         sync.Mutex
-	waitStartedChan      []chan bool
-	waitStoppedChan      []chan bool
-	waitLaunchedChan     chan error
-	waitLaunchedChanOnce sync.Once
-
-	// notifiers
-	notifiers     []PluginRuntimeNotifier
-	notifiersLock sync.RWMutex
+	waitChanLock    sync.Mutex
+	waitStartedChan []chan bool
+	waitStoppedChan []chan bool
 }
 
 // Listen creates a new listener for the given session_id
@@ -127,7 +121,7 @@ func (r *RemotePluginRuntime) removeSessionMessageCloser(session_id string) {
 	r.sessionMessageClosersLock.Unlock()
 }
 
-func (r *RemotePluginRuntime) onDisconnected() {
+func (r *RemotePluginRuntime) cleanupResources() {
 	// call all session message closers
 	r.sessionMessageClosersLock.RLock()
 	for _, closer := range r.sessionMessageClosers {
@@ -147,4 +141,19 @@ func (r *RemotePluginRuntime) onDisconnected() {
 	r.response.Close()
 
 	r.alive = false
+}
+
+func (r *RemotePluginRuntime) TenantId() string {
+	return r.tenantId
+}
+
+func (r *RemotePluginRuntime) InstallationId() string {
+	return r.installationId
+}
+
+func (r *RemotePluginRuntime) SetInstallationId(installationId string) {
+	// FIXME(Yeuoly): temporary solution for managing plugin installation model in DB
+	// once a connection is disconnected, removing it needs installation id
+	// however, it was set outside of the plugin runtime, it uses `notifiers`
+	r.installationId = installationId
 }

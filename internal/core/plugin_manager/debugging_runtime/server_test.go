@@ -47,10 +47,6 @@ var testConfigs = []*app.Config{
 	mysqlConfig,
 }
 
-func init() {
-	_mode = _PLUGIN_RUNTIME_MODE_CI
-}
-
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 	db.Init(testConfig)
 
@@ -70,7 +66,7 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 	}
 
 	// start plugin server
-	return NewRemotePluginServer(&app.Config{
+	return NewDebuggingPluginServer(&app.Config{
 		PluginRemoteInstallingHost:             "0.0.0.0",
 		PluginRemoteInstallingPort:             port,
 		PluginRemoteInstallingMaxConn:          1,
@@ -118,6 +114,19 @@ func TestLaunchAndClosePluginServer(t *testing.T) {
 	}
 }
 
+type TestPluginRuntimeNotifier struct {
+	onConnected func(rpr *RemotePluginRuntime) error
+}
+
+func (n *TestPluginRuntimeNotifier) OnRuntimeConnected(rpr *RemotePluginRuntime) error {
+	return n.onConnected(rpr)
+}
+
+func (n *TestPluginRuntimeNotifier) OnRuntimeDisconnected(rpr *RemotePluginRuntime) {
+}
+
+func (n *TestPluginRuntimeNotifier) OnServerShutdown(reason ServerShutdownReason) {}
+
 // TestAcceptConnection tests the acceptance of the connection
 func TestAcceptConnection(t *testing.T) {
 	if cache.InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0) != nil {
@@ -149,29 +158,23 @@ func TestAcceptConnection(t *testing.T) {
 	gotConnection := false
 	var connectionErr error
 
-	go func() {
-		for server.Next() {
-			runtime, err := server.Read()
-			if err != nil {
-				t.Errorf("failed to read plugin runtime: %s", err.Error())
-				return
-			}
-
-			remoteRuntime := runtime.(*RemotePluginRuntime)
-
-			config := remoteRuntime.Configuration()
+	server.AddNotifier(&TestPluginRuntimeNotifier{
+		onConnected: func(runtime *RemotePluginRuntime) error {
+			config := runtime.Configuration()
 			if config.Name != "ci_test" {
 				connectionErr = errors.New("plugin name not matched")
 			}
 
-			if remoteRuntime.tenantId != tenantId {
+			if runtime.tenantId != tenantId {
 				connectionErr = errors.New("tenant id not matched")
 			}
 
 			gotConnection = true
 			runtime.Stop()
-		}
-	}()
+
+			return nil
+		},
+	})
 
 	// wait for the server to start
 	time.Sleep(time.Second * 2)
@@ -308,17 +311,12 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 		server.Launch()
 	}()
 
-	go func() {
-		for server.Next() {
-			runtime, err := server.Read()
-			if err != nil {
-				t.Errorf("failed to read plugin runtime: %s", err.Error())
-				return
-			}
-
+	server.AddNotifier(&TestPluginRuntimeNotifier{
+		onConnected: func(runtime *RemotePluginRuntime) error {
 			runtime.Stop()
-		}
-	}()
+			return nil
+		},
+	})
 
 	// wait for the server to start
 	time.Sleep(time.Second * 2)
@@ -372,17 +370,12 @@ func TestIncorrectHandshake(t *testing.T) {
 		server.Launch()
 	}()
 
-	go func() {
-		for server.Next() {
-			runtime, err := server.Read()
-			if err != nil {
-				t.Errorf("failed to read plugin runtime: %s", err.Error())
-				return
-			}
-
+	server.AddNotifier(&TestPluginRuntimeNotifier{
+		onConnected: func(runtime *RemotePluginRuntime) error {
 			runtime.Stop()
-		}
-	}()
+			return nil
+		},
+	})
 
 	// wait for the server to start
 	time.Sleep(time.Second * 2)
