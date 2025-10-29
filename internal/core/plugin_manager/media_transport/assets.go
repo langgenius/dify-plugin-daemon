@@ -124,6 +124,22 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		}
 	}
 
+	if declaration.Trigger != nil {
+		if declaration.Trigger.Identity.Icon != "" {
+			declaration.Trigger.Identity.Icon, err = remap(declaration.Trigger.Identity.Icon)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("failed to remap trigger icon"))
+			}
+		}
+
+		if declaration.Trigger.Identity.IconDark != "" {
+			declaration.Trigger.Identity.IconDark, err = remap(declaration.Trigger.Identity.IconDark)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("failed to remap trigger icon dark"))
+			}
+		}
+	}
+
 	if declaration.Icon != "" {
 		declaration.Icon, err = remap(declaration.Icon)
 		if err != nil {

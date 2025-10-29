@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
@@ -77,6 +78,15 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 		// By default, we allow up to configuration.PluginLocalLaunchingConcurrent plugins to be launched concurrently; if not configured, the default is 2.
 		maxLaunchingLock: make(chan bool, configuration.PluginLocalLaunchingConcurrent),
 		config:           configuration,
+	}
+
+	// initialize plugin asset cache
+	if pluginAssetCache == nil {
+		c, err := lru.New[string, []byte](256)
+		if err != nil {
+			log.Panic("init plugin asset cache failed: %s", err.Error())
+		}
+		pluginAssetCache = c
 	}
 
 	return manager
@@ -258,4 +268,39 @@ func (p *PluginManager) GetDeclaration(
 	return helper.CombinedGetPluginDeclaration(
 		plugin_unique_identifier, runtime_type,
 	)
+}
+
+var (
+	pluginAssetCache *lru.Cache[string, []byte]
+)
+
+func pluginAssetCacheKey(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	path string,
+) string {
+	return fmt.Sprintf("%s/%s", pluginUniqueIdentifier.String(), path)
+}
+func (p *PluginManager) ExtractPluginAsset(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	path string,
+) ([]byte, error) {
+	key := pluginAssetCacheKey(pluginUniqueIdentifier, path)
+	cached, ok := pluginAssetCache.Get(key)
+	if ok {
+		return cached, nil
+	}
+	pkgBytes, err := manager.GetPackage(pluginUniqueIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	zipDecoder, err := decoder.NewZipPluginDecoder(pkgBytes)
+	if err != nil {
+		return nil, err
+	}
+	assets, err := zipDecoder.Assets()
+	if err != nil {
+		return nil, err
+	}
+	pluginAssetCache.Add(key, assets[path])
+	return assets[path], nil
 }

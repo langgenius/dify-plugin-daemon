@@ -188,6 +188,21 @@ func InstallPlugin(
 			}
 		}
 
+		// create trigger installation
+		if declaration.Trigger != nil {
+			triggerInstallation := &models.TriggerInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenantId,
+				Provider:               declaration.Trigger.Identity.Name,
+			}
+
+			err := db.Create(triggerInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -318,6 +333,19 @@ func UninstallPlugin(
 			}
 
 			err := db.DeleteByCondition(&datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete trigger installation
+		if declaration.Trigger != nil {
+			triggerInstallation := &models.TriggerInstallation{
+				PluginID: pluginToBeReturns.PluginID,
+				TenantID: tenantId,
+			}
+
+			err := db.DeleteByCondition(&triggerInstallation, tx)
 			if err != nil {
 				return err
 			}
@@ -561,6 +589,34 @@ func UpgradePlugin(
 			}
 
 			err := db.Create(datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update trigger installation
+		if originalDeclaration.Trigger != nil {
+			// delete the original trigger installation
+			err := db.DeleteByCondition(&models.TriggerInstallation{
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Trigger != nil {
+			// create the new trigger installation
+			triggerInstallation := &models.TriggerInstallation{
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
+				Provider:               newDeclaration.Trigger.Identity.Name,
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
+			}
+
+			err := db.Create(triggerInstallation, tx)
 			if err != nil {
 				return err
 			}

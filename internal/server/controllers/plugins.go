@@ -231,6 +231,16 @@ func FetchPluginManifest(c *gin.Context) {
 	})
 }
 
+func FetchPluginReadme(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantId               string                                 `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		Language               string                                 `form:"language" validate:"omitempty"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginReadme(request.TenantId, request.PluginUniqueIdentifier, request.Language))
+	})
+}
+
 func UninstallPlugin(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID             string `uri:"tenant_id" validate:"required"`
@@ -273,5 +283,21 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 		PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=256,dive,plugin_unique_identifier"`
 	}) {
 		c.JSON(http.StatusOK, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
+	})
+}
+
+func ExtractPluginAsset(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string                                 `uri:"tenant_id" validate:"required"`
+PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_unique_identifier\" validate:\"required,plugin_unique_identifier\""
+		FilePath               string                                 `form:"file_path" validate:"required"`
+	}) {
+		manager := plugin_manager.Manager()
+		asset, err := manager.ExtractPluginAsset(request.PluginUniqueIdentifier, request.FilePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, exception.InternalServerError(err).ToResponse())
+			return
+		}
+		c.Data(http.StatusOK, "application/octet-stream", asset)
 	})
 }

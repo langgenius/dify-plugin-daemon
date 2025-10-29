@@ -21,6 +21,8 @@ func autoMigrate() error {
 		models.InstallTask{},
 		models.TenantStorage{},
 		models.AgentStrategyInstallation{},
+		models.TriggerInstallation{},
+		models.PluginReadme{},
 	)
 
 	if err != nil {
@@ -45,6 +47,7 @@ func autoMigrate() error {
 		"tool_installations",
 		"ai_model_installations",
 		"agent_strategy_installations",
+		"trigger_installations",
 	}
 
 	for _, table := range tables {
