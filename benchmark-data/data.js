@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760946414814,
+  "lastUpdate": 1761717662215,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9288,6 +9288,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "969851760 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "xh001x@hotmail.com",
+            "name": "Maries",
+            "username": "Mairuis"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4589841b0c31ce199d5595d09730a835a539a1ee",
+          "message": "feat: introduce trigger (#482)\n\n* feat(plugins): add FetchPluginReadme endpoint and update launch configurations\n\n* feat: add PluginReadme database model\n\n* feat: implement readme extracting and storage\n\n* feat: implement readme endpoint\n\n* feat: add plugin asset extraction endpoint with caching support\n\n* Implement trigger functionality and clean up dynamic select code\n\n- Added new trigger-related access types and actions in access.go.\n- Introduced new HTTP routes for trigger operations in http_server.gen.go.\n- Updated plugin declaration to include triggers in plugin_entities.\n- Removed unused dynamic select service and controller files.\n- Enhanced message handling in debugging_runtime to support trigger registration.\n\nThis update enhances the plugin system by integrating trigger capabilities while cleaning up legacy code.\n\n* Refactor trigger-related types and enhance dynamic select functionality\n\n- Updated TriggerProviderIdentity and TriggerProviderConfiguration to improve structure and validation.\n- Renamed TriggerConfiguration to TriggerDeclaration for clarity.\n- Added CredentialType to RequestDynamicParameterSelect for better request handling.\n- Enhanced PluginDecoderHelper to read and unmarshal trigger files correctly.\n\nThese changes streamline the trigger system and improve the overall request handling in the plugin architecture.\n\n* Add trigger functionality and enhance database integration\n\n- Introduced TriggerInstallation model for managing trigger installations in the database.\n- Updated autoMigrate function to include trigger installations in the migration process.\n- Added new HTTP routes for listing and retrieving triggers in the HTTP server.\n- Implemented ListTriggers and GetTrigger controller functions for handling trigger requests.\n- Enhanced plugin management functions to create, update, and delete trigger installations during plugin lifecycle events.\n\nThese changes integrate trigger capabilities into the system, improving the overall plugin functionality and management.\n\n* feat: add remapping for trigger icons in MediaBucket\n\n- Enhanced the RemapAssets function to include remapping of trigger identity icons and dark icons.\n- Added error handling for remapping failures to ensure robust asset management.\n\nThese changes improve the handling of trigger assets within the plugin system, ensuring icons are correctly remapped as needed.\n\n* feat: add Multiple field to TriggerParameter for enhanced configuration\n\n- Introduced a new Multiple field in the TriggerParameter struct to allow for multiple values in trigger configurations.\n- This addition improves the flexibility of trigger parameters within the plugin system.\n\nThese changes enhance the capability of trigger parameters, enabling more complex configurations.\n\n* feat: add Multiple field to ProviderConfig for enhanced configuration\n\n- Introduced a new Multiple field in the ProviderConfig struct to allow for multiple values in provider configurations.\n- This addition improves the flexibility of provider options within the plugin system.\n\nThese changes enhance the capability of provider configurations, enabling more complex setups.\n\n* fix(plugin): update validation error messages in ManifestValidate method\n\n- Enhanced error messages in the ManifestValidate function to include 'trigger' in the validation checks for plugin declarations.\n- Updated logic to ensure that all relevant fields are considered when validating the presence of mutually exclusive parameters.\n\n* feat(trigger): add CHECKBOX parameter type to plugin entities  and refactor the trigger provider strcuture\n\n- Introduced a new CHECKBOX parameter type in constant.go for plugin entities.\n- Updated tool_declaration.go and trigger_declaration.go to include TOOL_PARAMETER_TYPE_CHECKBOX and TRIGGER_PARAMETER_TYPE_CHECKBOX respectively.\n- Enhanced validation logic to accommodate the new CHECKBOX type in parameter checks.\n\n* fix(trigger): update SubscriptionSchema validation in TriggerProviderDeclaration\n\n- Changed SubscriptionSchema validation from 'omitempty' to 'required' in TriggerProviderDeclaration to ensure it is always provided.\n- Updated SubscriptionConstructor field to be a pointer to allow for optional inclusion in the trigger provider configuration.\n\n* fix(trigger): rename ParametersSchema to Parameters in SubscriptionConstructor\n\n- Updated the SubscriptionConstructor struct to rename the ParametersSchema field to Parameters for consistency.\n- Adjusted related JSON and YAML marshaling logic to reflect the new field name, ensuring proper handling of trigger parameters.\n\n* refactor(trigger): enhance YAML unmarshalling for SubscriptionConstructor and SubscriptionSchema\n\n- Introduced a new helper function to convert YAML nodes to ProviderConfig lists, improving the handling of subscription_schema and credentials_schema.\n- Updated the UnmarshalYAML method to utilize the new function, simplifying the logic for parsing different YAML formats.\n- Ensured proper initialization of SubscriptionConstructor fields to prevent nil pointer dereferences.\n\n* fix(trigger): update SubscriptionConstructor validation in TriggerProviderDeclaration\n\n- Changed the validation for SubscriptionConstructor in TriggerProviderDeclaration from 'omitempty,dive' to 'omitempty' to simplify the validation logic.\n- Ensured that the SubscriptionConstructor field remains optional while maintaining its intended functionality.\n\n* refactor(trigger): rename Trigger to Event in plugin entities and related structures\n\n- Updated the naming conventions in trigger_declaration.go to replace 'Trigger' with 'Event' for better clarity and consistency.\n- Adjusted related types, validation functions, and unmarshalling logic to reflect the new 'Event' terminology.\n- Ensured that all references to triggers in the codebase are updated to events, including in the SubscriptionConstructor and response structures.\n\n* refactor(trigger): rename TriggerInvoke to TriggerInvokeEvent and update related structures\n\n- Renamed TriggerInvoke function and associated request/response types to TriggerInvokeEvent for improved clarity.\n- Updated routing and controller methods to reflect the new naming convention.\n- Ensured all references to the trigger invoke functionality are consistent with the new event terminology.\n\n* refactor(trigger): remove Subscription struct from trigger_declaration.go and update TriggerDispatchEventRequest\n\n- Removed the Subscription struct from trigger_declaration.go to streamline the codebase.\n- Added Credentials field to TriggerDispatchEventRequest for enhanced functionality and clarity.\n- Ensured that the changes maintain consistency with the existing naming conventions and structures.\n\n* fix(trigger): improve nil checks for SubscriptionConstructor in TriggerProviderDeclaration\n\n- Added nil checks for SubscriptionConstructor before accessing its fields to prevent potential nil pointer dereferences.\n- Ensured that Parameters and CredentialsSchema are initialized only if SubscriptionConstructor is not nil, enhancing code robustness.\n\n* fix(plugin): add recovery mechanism in OnTraffic to handle panics\n\n- Introduced a deferred function in OnTraffic to recover from panics, logging the error and stack trace for better debugging.\n- This enhancement improves the stability of the DifyServer by preventing crashes due to unexpected runtime errors.\n\n* feat(trigger): add Subscription field to TriggerInvokeEventRequest\n\n- Introduced a new Subscription field in the TriggerInvokeEventRequest struct to accommodate subscription data.\n- Ensured the field is marked as required, enhancing the request's functionality and validation requirements.\n\n* refactor(event): simplify EventDescription structure in EventDeclaration\n\n- Removed the EventDescription struct and replaced it with a direct I18nObject field in EventDeclaration.\n- This change streamlines the event configuration by reducing complexity while maintaining required validation for the description.\n\n* feat(trigger): add UserID field to TriggerDispatchEventResponse\n\n- Introduced a new UserID field in the TriggerDispatchEventResponse struct to include user identification in the response.\n- The field is marked as optional, enhancing the response's flexibility while maintaining existing functionality.\n\n* feat: add payload to TriggerDispatchEventResponse\n\n* fix\n\n* feat(trigger): update TriggerDispatchEventResponse structure\n\n* fix: avoid path collusion\n\n* fix: missing )\n\n* fix: query param\n\n* fix: form param\n\n* fix: remove redundant dynamic parameter access type\n\n* fix: remove dynamic parameter access type from validation\n\n* Update internal/server/controllers/plugins.go\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Stream <Stream_2@qq.com>\nCo-authored-by: Yeuoly <admin@srmxy.cn>\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>",
+          "timestamp": "2025-10-29T13:56:58+08:00",
+          "tree_id": "c31f507fe68fc44be7ca18e3d78820d02a0d98ff",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/4589841b0c31ce199d5595d09730a835a539a1ee"
+        },
+        "date": 1761717661780,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138971349,
+            "unit": "ns/op\t 1569491 B/op\t   27517 allocs/op",
+            "extra": "256 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138971349,
+            "unit": "ns/op",
+            "extra": "256 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569491,
+            "unit": "B/op",
+            "extra": "256 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27517,
+            "unit": "allocs/op",
+            "extra": "256 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.85,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "967477395 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.85,
+            "unit": "ns/op",
+            "extra": "967477395 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "967477395 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "967477395 times\n4 procs"
           }
         ]
       }
