@@ -9,7 +9,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -27,7 +26,6 @@ func (r *ServerlessPluginRuntime) Listen(sessionId string) *entities.Broadcast[p
 func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) error {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
-		log.Error("session %s not found", sessionId)
 		return fmt.Errorf("session %s not found", sessionId)
 	}
 
@@ -41,8 +39,7 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 			}),
 		})
 		l.Close()
-		r.Error(fmt.Sprintf("Error creating request: %v", err))
-		return err
+		return fmt.Errorf("error creating request: %v", err)
 	}
 
 	routine.Submit(map[string]string{
