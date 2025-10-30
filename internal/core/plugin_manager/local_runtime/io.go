@@ -9,6 +9,10 @@ import (
 )
 
 func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugin_entities.SessionMessage] {
+	if r.stdioHolder == nil {
+		log.Error("listen called on a plugin that has not been started yet")
+		return entities.NewBroadcast[plugin_entities.SessionMessage]()
+	}
 	listener := entities.NewBroadcast[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
 		r.stdioHolder.removeStdioHandlerListener(session_id)
@@ -27,5 +31,9 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 }
 
 func (r *LocalPluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
+	if r.stdioHolder == nil {
+		log.Error("write called on a plugin that has not been started yet")
+		return
+	}
 	r.stdioHolder.write(append(data, '\n'))
 }
