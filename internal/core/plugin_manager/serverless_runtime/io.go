@@ -24,11 +24,11 @@ func (r *ServerlessPluginRuntime) Listen(sessionId string) *entities.Broadcast[p
 }
 
 // For Serverless, write is equivalent to http request, it's not a normal stream like stdio and tcp
-func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
+func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) error {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
 		log.Error("session %s not found", sessionId)
-		return
+		return fmt.Errorf("session %s not found", sessionId)
 	}
 
 	url, err := url.JoinPath(r.LambdaURL, "invoke")
@@ -42,7 +42,7 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 		})
 		l.Close()
 		r.Error(fmt.Sprintf("Error creating request: %v", err))
-		return
+		return err
 	}
 
 	routine.Submit(map[string]string{
@@ -138,4 +138,5 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 			})
 		}
 	})
+	return nil
 }

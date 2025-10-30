@@ -26,6 +26,6 @@ func (r *LocalPluginRuntime) Listen(session_id string) *entities.Broadcast[plugi
 	return listener
 }
 
-func (r *LocalPluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
-	r.stdioHolder.write(append(data, '\n'))
+func (r *LocalPluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) error {
+	return r.stdioHolder.write(append(data, '\n'))
 }
