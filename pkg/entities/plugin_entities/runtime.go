@@ -72,7 +72,7 @@ type (
 		// Listen listens for messages from the plugin
 		Listen(session_id string) *entities.Broadcast[SessionMessage]
 		// Write writes a message to the plugin
-		Write(session_id string, action access_types.PluginAccessAction, data []byte)
+		Write(session_id string, action access_types.PluginAccessAction, data []byte) error
 		// Log adds a log to the plugin runtime state
 		Log(string)
 		// Warn adds a warning to the plugin runtime state
