@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -36,12 +37,13 @@ type InstallPluginOnDoneHandler func(
 ) error
 
 type InstallPluginOnMessageHandler func(
-	message plugin_manager.PluginInstallResponse,
+	message controlpanel.PluginInstallResponse,
 )
 
 func doInstallPluginRuntime(
 	runtimeType plugin_entities.PluginRuntimeType,
 	manager *plugin_manager.PluginManager,
+	controlPanel *controlpanel.ControlPanel,
 	config *app.Config,
 	tenant_id string,
 	source string,
@@ -112,7 +114,7 @@ func doInstallPluginRuntime(
 		plugin.Message = "Installing"
 	})
 
-	var stream *stream.Stream[plugin_manager.PluginInstallResponse]
+	var stream *stream.Stream[controlpanel.PluginInstallResponse]
 	if config.Platform == app.PLATFORM_SERVERLESS {
 		var zipDecoder *decoder.ZipPluginDecoder
 		var pkgFile []byte
@@ -123,8 +125,8 @@ func doInstallPluginRuntime(
 				task.Status = models.InstallTaskStatusFailed
 				plugin.Status = models.InstallTaskStatusFailed
 				plugin.Message = "Failed to read plugin package"
-				onMessage(plugin_manager.PluginInstallResponse{
-					Event: plugin_manager.PluginInstallEventError,
+				onMessage(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventError,
 					Data:  plugin.Message,
 				})
 			})
@@ -143,17 +145,17 @@ func doInstallPluginRuntime(
 				task.Status = models.InstallTaskStatusFailed
 				plugin.Status = models.InstallTaskStatusFailed
 				plugin.Message = err.Error()
-				onMessage(plugin_manager.PluginInstallResponse{
-					Event: plugin_manager.PluginInstallEventError,
+				onMessage(controlpanel.PluginInstallResponse{
+					Event: controlpanel.PluginInstallEventError,
 					Data:  plugin.Message,
 				})
 			})
 			return
 		}
 		if reinstall {
-			stream, err = manager.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
+			stream, err = controlPanel.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
 		} else {
-			stream, err = manager.InstallToServerlessFromPkg(pkgFile, zipDecoder, source, meta)
+			stream, err = controlPanel.InstallToServerlessFromPkg(pkgFile, zipDecoder)
 		}
 	} else if config.Platform == app.PLATFORM_LOCAL {
 		if reinstall {
@@ -471,6 +473,7 @@ func ReinstallPluginFromIdentifier(
 					return nil
 				})
 		}
+		// TODO: clear serverless runtime cache
 		routine.Submit(nil, f)
 		return retStream, nil
 	}, ctx, 1800)

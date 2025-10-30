@@ -1,15 +1,10 @@
 package controlpanel
 
-// Streaming events for plugin installation
-type PluginInstallEvent string
+import serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 
-const (
-	PluginInstallEventInfo  PluginInstallEvent = "info"
-	PluginInstallEventDone  PluginInstallEvent = "done"
-	PluginInstallEventError PluginInstallEvent = "error"
-)
-
-type PluginInstallResponse struct {
-	Event PluginInstallEvent `json:"event"`
-	Data  string             `json:"data"`
+// InstallLocalPluginResponse is the response type for local plugin installation
+type InstallLocalPluginResponse struct {
 }
+
+// InstallServerlessPluginResponse is the response type for serverless plugin installation
+type InstallServerlessPluginResponse = serverless.LaunchFunctionResponse

@@ -34,13 +34,12 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 	}
 
 	var wg sync.WaitGroup
-	maxConcurrency := config.PluginLocalLaunchingConcurrent
+	maxConcurrency := c.config.PluginLocalLaunchingConcurrent
 	sem := make(chan struct{}, maxConcurrency)
 
 	for _, plugin := range plugins {
 		// TODO: optimize following codes
-		_, exist := p.m.Load(plugin.String())
-		if exist {
+		if c.localPluginRuntimes.Exists(plugin) {
 			continue
 		}
 
