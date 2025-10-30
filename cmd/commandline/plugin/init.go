@@ -157,6 +157,7 @@ func InitPluginWithFlags(
 			"extension",
 			"agent-strategy",
 			"datasource",
+			"trigger",
 		}
 		valid := false
 		for _, cat := range validCategories {
@@ -446,6 +447,10 @@ func (m model) createPlugin() {
 
 	if categoryString == "datasource" {
 		manifest.Plugins.Datasources = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
+	}
+
+	if categoryString == "trigger" {
+		manifest.Plugins.Triggers = []string{fmt.Sprintf("provider/%s.yaml", manifest.Name)}
 	}
 
 	manifest.Meta = plugin_entities.PluginMeta{
