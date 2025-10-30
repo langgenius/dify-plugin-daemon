@@ -260,11 +260,12 @@ func FetchPluginFromIdentifier(c *gin.Context) {
 
 func ListPlugins(c *gin.Context) {
 	BindRequest(c, func(request struct {
-		TenantID string `uri:"tenant_id" validate:"required"`
-		Page     int    `form:"page" validate:"required,min=1"`
-		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
+		TenantID     string `uri:"tenant_id" validate:"required"`
+		Page         int    `form:"page" validate:"required,min=1"`
+		PageSize     int    `form:"page_size" validate:"required,min=1,max=256"`
+		ResponseType string `form:"response_type" validate:"omitempty,oneof=paged"`
 	}) {
-		c.JSON(http.StatusOK, service.ListPlugins(request.TenantID, request.Page, request.PageSize))
+		c.JSON(http.StatusOK, service.ListPlugins(request.TenantID, request.Page, request.PageSize, request.ResponseType))
 	})
 }
 
