@@ -40,6 +40,7 @@ type Session struct {
 	AppID          *string        `json:"app_id"`
 	EndpointID     *string        `json:"endpoint_id"`
 	Context        map[string]any `json:"context"`
+	Passthrough    *string        `json:"passthrough"`
 }
 
 func sessionKey(id string) string {
@@ -61,6 +62,7 @@ type NewSessionPayload struct {
 	AppID                  *string                                `json:"app_id"`
 	EndpointID             *string                                `json:"endpoint_id"`
 	Context                map[string]any                         `json:"context"`
+	Passthrough            *string                                `json:"passthrough"`
 }
 
 func NewSession(payload NewSessionPayload) *Session {
@@ -79,6 +81,7 @@ func NewSession(payload NewSessionPayload) *Session {
 		AppID:                  payload.AppID,
 		EndpointID:             payload.EndpointID,
 		Context:                payload.Context,
+		Passthrough:            payload.Passthrough,
 	}
 
 	session_lock.Lock()
@@ -175,6 +178,7 @@ func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 		"app_id":          s.AppID,
 		"endpoint_id":     s.EndpointID,
 		"context":         s.Context,
+		"passthrough":     s.Passthrough,
 		"event":           event,
 		"data":            data,
 	})
