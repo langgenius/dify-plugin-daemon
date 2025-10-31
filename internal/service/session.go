@@ -43,6 +43,7 @@ func createSession[T any](
 			AppID:                  r.AppID,
 			EndpointID:             r.EndpointID,
 			Context:                r.Context,
+			Passthrough:            r.Passthrough,
 		},
 	)
 
