@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -119,10 +121,10 @@ type Config struct {
 
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
-	DBUsername        string `envconfig:"DB_USERNAME" validate:"required"`
-	DBPassword        string `envconfig:"DB_PASSWORD" validate:"required"`
-	DBHost            string `envconfig:"DB_HOST" validate:"required"`
-	DBPort            uint16 `envconfig:"DB_PORT" validate:"required"`
+	DBUsername        string
+	DBPassword        string
+	DBHost            string
+	DBPort            uint16
 	DBDatabase        string `envconfig:"DB_DATABASE" validate:"required"`
 	DBDefaultDatabase string `envconfig:"DB_DEFAULT_DATABASE" validate:"required"`
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
@@ -282,3 +284,37 @@ const (
 	PLATFORM_LOCAL      PlatformType = "local"
 	PLATFORM_SERVERLESS PlatformType = "serverless"
 )
+
+// LoadDBConfig loads database configuration based on DB_TYPE
+// Only updates 4 fields: DBUsername, DBPassword, DBHost, DBPort
+func (c *Config) LoadDBConfig() error {
+	var prefix string
+	switch c.DBType {
+	case "mysql":
+		prefix = "MYSQL"
+	case "postgresql":
+		prefix = "POSTGRES"
+	default:
+		return nil
+	}
+
+	if user, ok := os.LookupEnv(prefix + "_USER"); ok {
+		c.DBUsername = user
+	}
+	if password, ok := os.LookupEnv(prefix + "_PASSWORD"); ok {
+		c.DBPassword = password
+	}
+	if host, ok := os.LookupEnv(prefix + "_HOST"); ok {
+		c.DBHost = host
+	}
+
+	if portStr, ok := os.LookupEnv(prefix + "_PORT"); ok {
+		port, err := strconv.ParseUint(portStr, 10, 16)
+		if err != nil {
+			return fmt.Errorf("invalid %s_PORT value: %q", prefix, portStr)
+		}
+		c.DBPort = uint16(port)
+	}
+
+	return nil
+}
