@@ -21,6 +21,9 @@ func main() {
 
 	config.SetDefault()
 
+	// Load database configuration based on DB_TYPE
+	config.LoadDBConfig()
+
 	if err := config.Validate(); err != nil {
 		log.Panic("Invalid configuration: %s", err.Error())
 	}

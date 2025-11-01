@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -119,10 +121,10 @@ type Config struct {
 
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
-	DBUsername        string `envconfig:"DB_USERNAME" validate:"required"`
-	DBPassword        string `envconfig:"DB_PASSWORD" validate:"required"`
-	DBHost            string `envconfig:"DB_HOST" validate:"required"`
-	DBPort            uint16 `envconfig:"DB_PORT" validate:"required"`
+	DBUsername        string `envconfig:"DB_USERNAME"`
+	DBPassword        string `envconfig:"DB_PASSWORD"`
+	DBHost            string `envconfig:"DB_HOST"`
+	DBPort            uint16 `envconfig:"DB_PORT"`
 	DBDatabase        string `envconfig:"DB_DATABASE" validate:"required"`
 	DBDefaultDatabase string `envconfig:"DB_DEFAULT_DATABASE" validate:"required"`
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
@@ -282,3 +284,39 @@ const (
 	PLATFORM_LOCAL      PlatformType = "local"
 	PLATFORM_SERVERLESS PlatformType = "serverless"
 )
+
+// LoadDBConfig loads database configuration based on DB_TYPE
+// Only updates 4 fields: DBUsername, DBPassword, DBHost, DBPort
+func (c *Config) LoadDBConfig() {
+	if c.DBType == "mysql" {
+		if mysqlUser := os.Getenv("MYSQL_USER"); mysqlUser != "" {
+			c.DBUsername = mysqlUser
+		}
+		if mysqlPassword := os.Getenv("MYSQL_PASSWORD"); mysqlPassword != "" {
+			c.DBPassword = mysqlPassword
+		}
+		if mysqlHost := os.Getenv("MYSQL_HOST"); mysqlHost != "" {
+			c.DBHost = mysqlHost
+		}
+		if mysqlPortStr := os.Getenv("MYSQL_PORT"); mysqlPortStr != "" {
+			if port, err := strconv.ParseUint(mysqlPortStr, 10, 16); err == nil {
+				c.DBPort = uint16(port)
+			}
+		}
+	} else if c.DBType == "postgresql" {
+		if pgUser := os.Getenv("POSTGRES_USER"); pgUser != "" {
+			c.DBUsername = pgUser
+		}
+		if pgPassword := os.Getenv("POSTGRES_PASSWORD"); pgPassword != "" {
+			c.DBPassword = pgPassword
+		}
+		if pgHost := os.Getenv("POSTGRES_HOST"); pgHost != "" {
+			c.DBHost = pgHost
+		}
+		if pgPortStr := os.Getenv("POSTGRES_PORT"); pgPortStr != "" {
+			if port, err := strconv.ParseUint(pgPortStr, 10, 16); err == nil {
+				c.DBPort = uint16(port)
+			}
+		}
+	}
+}
