@@ -7,7 +7,9 @@ import (
 )
 
 type ControlPanelNotifier interface {
-	// on instance launch failed
+	// on local runtime starting
+	OnLocalRuntimeStarting(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier)
+	// on local runtime ready
 	OnLocalRuntimeReady(runtime *local_runtime.LocalPluginRuntime)
 	// on local runtime failed to start
 	OnLocalRuntimeStartFailed(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier, err error)

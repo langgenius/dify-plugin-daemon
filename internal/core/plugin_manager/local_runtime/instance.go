@@ -249,39 +249,38 @@ func (s *PluginInstance) Monitor() error {
 	defer ticker.Stop()
 
 	// check status of plugin every 5 seconds
-	for {
-		select {
-		case <-ticker.C:
-			// check heartbeat
-			if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
-				s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-					// notify handlers
-					notifier.OnInstanceFailed(
-						s,
-						fmt.Errorf(
-							"plugin %s is not active for %f seconds, it may be dead",
-							s.pluginUniqueIdentifier,
-							time.Since(s.lastActiveAt).Seconds(),
-						),
-					)
-				})
-				return plugin_errors.ErrPluginNotActive
-			}
-			if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
+	for range ticker.C {
+		// check heartbeat
+		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
+			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 				// notify handlers
-				s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-					notifier.OnInstanceWarningLog(
-						s,
-						fmt.Sprintf(
-							"plugin %s is not active for %f seconds, it may be dead",
-							s.pluginUniqueIdentifier,
-							time.Since(s.lastActiveAt).Seconds(),
-						),
-					)
-				})
-			}
+				notifier.OnInstanceFailed(
+					s,
+					fmt.Errorf(
+						"plugin %s is not active for %f seconds, it may be dead",
+						s.pluginUniqueIdentifier,
+						time.Since(s.lastActiveAt).Seconds(),
+					),
+				)
+			})
+			return plugin_errors.ErrPluginNotActive
+		}
+		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
+			// notify handlers
+			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+				notifier.OnInstanceWarningLog(
+					s,
+					fmt.Sprintf(
+						"plugin %s is not active for %f seconds, it may be dead",
+						s.pluginUniqueIdentifier,
+						time.Since(s.lastActiveAt).Seconds(),
+					),
+				)
+			})
 		}
 	}
+
+	return nil
 }
 
 func (s *PluginInstance) Write(data []byte) error {

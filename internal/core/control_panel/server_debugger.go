@@ -2,10 +2,8 @@ package controlpanel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func (c *ControlPanel) setupDebuggingServer(config *app.Config) {
@@ -34,19 +32,10 @@ func (c *ControlPanel) onDebuggingRuntimeConnected(
 	// store plugin runtime
 	c.debuggingPluginRuntime.Store(pluginIdentifier, rpr)
 
-	_, installation, err := install_service.InstallPlugin(
-		rpr.TenantId(),
-		"",
-		rpr,
-		string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE),
-		map[string]any{},
-	)
-	if err != nil {
-		return err
-	}
-
-	// FIXME(Yeuoly): temporary solution for managing plugin installation model in DB
-	rpr.SetInstallationId(installation.ID)
+	// notify notifiers a new debugging runtime is connected
+	c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+		notifier.OnDebuggingRuntimeConnected(rpr)
+	})
 
 	return nil
 }
@@ -63,14 +52,10 @@ func (c *ControlPanel) onDebuggingRuntimeDisconnected(
 	// delete plugin runtime
 	c.debuggingPluginRuntime.Delete(pluginIdentifier)
 
-	if err := install_service.UninstallPlugin(
-		rpr.TenantId(),
-		rpr.InstallationId(),
-		pluginIdentifier,
-		plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
-	); err != nil {
-		log.Error("uninstall debugging plugin failed, error: %v", err)
-	}
+	// notify notifiers a new debugging runtime is disconnected
+	c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+		notifier.OnDebuggingRuntimeDisconnected(rpr)
+	})
 }
 
 func (c *ControlPanel) startDebuggingServer() error {

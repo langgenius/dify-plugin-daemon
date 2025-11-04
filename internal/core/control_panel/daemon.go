@@ -2,6 +2,7 @@ package controlpanel
 
 import (
 	"sync"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
@@ -34,11 +35,26 @@ type ControlPanel struct {
 		*local_runtime.LocalPluginRuntime,
 	]
 
+	// local plugin launching semaphore
+	localPluginLaunchingSemaphore chan bool
+
+	// how many times a local plugin failed to launch
+	// controls retries and waiting time after failures
+	localPluginFailsRecord mapping.Map[
+		plugin_entities.PluginUniqueIdentifier,
+		LocalPluginFailsRecord,
+	]
+
 	// debugging plugin runtime
 	debuggingPluginRuntime mapping.Map[
 		plugin_entities.PluginUniqueIdentifier,
 		*debugging_runtime.RemotePluginRuntime,
 	]
+}
+
+type LocalPluginFailsRecord struct {
+	RetryCount  int32
+	LastTriedAt time.Time
 }
 
 // create a new control panel as the engine of the local plugin daemon
@@ -51,6 +67,8 @@ func NewControlPanel(
 		config:          config,
 		mediaBucket:     mediaBucket,
 		installedBucket: installedBucket,
+
+		localPluginLaunchingSemaphore: make(chan bool, config.PluginLocalLaunchingConcurrent),
 
 		// notifiers initialization
 		controlPanelNotifiers:    []ControlPanelNotifier{},

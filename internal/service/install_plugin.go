@@ -413,7 +413,7 @@ func ReinstallPluginFromIdentifier(
 	config *app.Config,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) {
-	baseSSEService(func() (*stream.Stream[plugin_manager.PluginInstallResponse], error) {
+	baseSSEService(func() (*stream.Stream[controlpanel.PluginInstallResponse], error) {
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
 			pluginUniqueIdentifier,
 			plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS,

@@ -7,11 +7,9 @@ import (
 
 // RequestLaunchPlugin requests the control panel to launch a plugin
 // This function only trig the control panel to launch plugin
-func (c *ControlPanel) RequestLaunchPlugin(
+func (c *ControlPanel) RequestLaunchLocalPlugin(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	runtimeType plugin_entities.PluginRuntimeType,
 ) (*stream.Stream[any], error) {
-	// TODO: implement this
-	// 1. trig the daemon to launch plugin and subscribe the monitoring
+
 	return nil, nil
 }

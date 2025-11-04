@@ -43,6 +43,9 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		); err != nil {
 			log.Error("failed to patch the plugin sdk: %s", err)
 		}
+
+		// everything is good, return nil
+		return nil
 	default:
 		return fmt.Errorf("failed to check virtual environment: %w", err)
 	}

@@ -32,6 +32,11 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 	ticker := time.NewTicker(ScheduleLoopInterval)
 	defer ticker.Stop()
 
+	// notify callers that the runtime is not running anymore
+	defer r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnRuntimeClose()
+	})
+
 	for atomic.LoadInt32(&r.scheduleStatus) == ScheduleStatusRunning {
 		<-ticker.C
 

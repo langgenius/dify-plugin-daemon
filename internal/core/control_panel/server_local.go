@@ -13,6 +13,18 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
+var (
+	MAX_RETRY_COUNT = int32(15)
+
+	RETRY_WAIT_INTERVAL_MAP = map[int32]time.Duration{
+		0:               0 * time.Second,
+		3:               30 * time.Second,
+		8:               60 * time.Second,
+		MAX_RETRY_COUNT: 240 * time.Second,
+		// stop
+	}
+)
+
 func (c *ControlPanel) StartLocalMonitor() {
 	log.Info("start to handle new plugins in path: %s", c.config.PluginInstalledPath)
 	log.Info("launch plugins with max concurrency: %d", c.config.PluginLocalLaunchingConcurrent)
@@ -34,48 +46,62 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 	}
 
 	var wg sync.WaitGroup
-	maxConcurrency := c.config.PluginLocalLaunchingConcurrent
-	sem := make(chan struct{}, maxConcurrency)
 
-	for _, plugin := range plugins {
+	for _, uniquePluginIdentifier := range plugins {
 		// TODO: optimize following codes
-		if c.localPluginRuntimes.Exists(plugin) {
+		if c.localPluginRuntimes.Exists(uniquePluginIdentifier) {
+			continue
+		}
+
+		// get the retry count
+		retry, ok := c.localPluginFailsRecord.Load(uniquePluginIdentifier)
+		if !ok {
+			retry = LocalPluginFailsRecord{
+				RetryCount:  0,
+				LastTriedAt: time.Now(),
+			}
+		}
+
+		if retry.RetryCount >= MAX_RETRY_COUNT {
+			continue
+		}
+
+		waitTime := 0 * time.Second
+		// calculate the wait time
+		for c, v := range RETRY_WAIT_INTERVAL_MAP {
+			if retry.RetryCount <= c {
+				waitTime = v
+				break
+			}
+		}
+
+		// if the wait time is not 0, and the last failed at is not too long ago, skip it
+		if waitTime > 0 && time.Since(retry.LastTriedAt) < waitTime {
 			continue
 		}
 
 		wg.Add(1)
-		// Fix closure issue: create local variable copy
-		currentPlugin := plugin
 		routine.Submit(map[string]string{
 			"module":   "plugin_manager",
 			"function": "handleNewLocalPlugins",
 		}, func() {
-			// Acquire sem inside goroutine
-			sem <- struct{}{}
-			defer func() {
-				if err := recover(); err != nil {
-					log.Error("plugin launch runtime error: %v", err)
-				}
-				<-sem
-				wg.Done()
-			}()
-
-			_, launchedChan, errChan, err := p.launchLocal(currentPlugin)
+			defer wg.Done()
+			_, ch, err := c.LaunchLocalPlugin(uniquePluginIdentifier)
 			if err != nil {
 				log.Error("launch local plugin failed: %s", err.Error())
 				return
 			}
 
-			// Handle error channel
-			if errChan != nil {
-				for err := range errChan {
-					log.Error("plugin launch error: %s", err.Error())
-				}
-			}
-
-			// Wait for plugin to complete startup
-			if launchedChan != nil {
-				<-launchedChan
+			err = <-ch
+			if err != nil {
+				// record the failure
+				c.localPluginFailsRecord.Store(uniquePluginIdentifier, LocalPluginFailsRecord{
+					RetryCount:  retry.RetryCount + 1,
+					LastTriedAt: time.Now(),
+				})
+			} else {
+				// reset the failure record
+				c.localPluginFailsRecord.Delete(uniquePluginIdentifier)
 			}
 		})
 	}
@@ -92,7 +118,13 @@ func (c *ControlPanel) getLocalPluginRuntime(
 		return nil, errors.Join(err, fmt.Errorf("get plugin package error"))
 	}
 
-	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
+	// create a decoder to verify the plugin package
+	decoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
+		pluginZip, &decoder.ThirdPartySignatureVerificationConfig{
+			Enabled:        c.config.ThirdPartySignatureVerificationEnabled,
+			PublicKeyPaths: c.config.ThirdPartySignatureVerificationPublicKeys,
+		},
+	)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
 	}
