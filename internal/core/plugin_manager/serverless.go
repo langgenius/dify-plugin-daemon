@@ -1,7 +1,10 @@
 package plugin_manager
 
 import (
+	"context"
 	"fmt"
+	"net"
+	"net/http"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
@@ -55,10 +58,24 @@ func (p *PluginManager) getServerlessPluginRuntime(
 		PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
 		RuntimeBufferSize:         p.config.PluginRuntimeBufferSize,
 		RuntimeMaxBufferSize:      p.config.PluginRuntimeMaxBufferSize,
-	}
 
-	if err := pluginRuntime.InitEnvironment(); err != nil {
-		return nil, err
+		// init http client
+		Client: &http.Client{
+			Transport: &http.Transport{
+				TLSHandshakeTimeout: time.Duration(p.config.PluginMaxExecutionTimeout) * time.Second,
+				IdleConnTimeout:     120 * time.Second,
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					conn, err := (&net.Dialer{
+						Timeout:   time.Duration(p.config.PluginMaxExecutionTimeout) * time.Second,
+						KeepAlive: 120 * time.Second,
+					}).DialContext(ctx, network, addr)
+					if err != nil {
+						return nil, err
+					}
+					return conn, nil
+				},
+			},
+		},
 	}
 
 	return pluginRuntime, nil

@@ -88,5 +88,7 @@ func (r *LocalPluginRuntime) GracefulStop() error {
 	// stop schedule loop
 	r.stopSchedule()
 
+	// TODO: wait for all instances to be shutdown
+
 	return nil
 }

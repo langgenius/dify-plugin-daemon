@@ -13,19 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
-var (
-	MAX_RETRY_COUNT = int32(15)
-
-	RETRY_WAIT_INTERVAL_MAP = map[int32]time.Duration{
-		0:               0 * time.Second,
-		3:               30 * time.Second,
-		8:               60 * time.Second,
-		MAX_RETRY_COUNT: 240 * time.Second,
-		// stop
-	}
-)
-
-func (c *ControlPanel) StartLocalMonitor() {
+func (c *ControlPanel) startLocalMonitor() {
 	log.Info("start to handle new plugins in path: %s", c.config.PluginInstalledPath)
 	log.Info("launch plugins with max concurrency: %d", c.config.PluginLocalLaunchingConcurrent)
 
@@ -36,6 +24,38 @@ func (c *ControlPanel) StartLocalMonitor() {
 	}
 }
 
+// continue check if a plugin was uninstalled
+// AS plugin_daemon supports cluster mode
+// installed plugins were stored in `c.installedBucket`
+// it's a stateless across all plugin_daemon nodes
+// a plugin may be uninstalled by other nodes
+// to ensure all uninstalled plugin running in all nodes are stopped
+func (c *ControlPanel) removeUnusedLocalPlugins() {
+	for range time.NewTicker(time.Second * 30).C {
+		// remove already uninstalled plugins
+		c.localPluginRuntimes.Range(func(
+			key plugin_entities.PluginUniqueIdentifier,
+			value *local_runtime.LocalPluginRuntime,
+		) bool {
+			// remove plugin runtime
+			if exists, err := c.installedBucket.Exists(key); err != nil {
+				log.Error("check if plugin %s is installed failed: %s", key.String(), err.Error())
+			} else if !exists {
+				// Trigger a signal to stop a local plugin runtime
+				if _, err := c.ShutdownLocalPluginGracefully(key); err != nil {
+					log.Error("shutdown local plugin %s failed: %s", key.String(), err.Error())
+				}
+			}
+
+			return true
+		})
+	}
+}
+
+// continue check if a new plugin was installed.
+// the same as `removeUnusedLocalPlugins`, it's a cluster system,
+// the installation of a plugin may be triggered by other nodes
+// sync all the installed plugins in all nodes
 func (c *ControlPanel) handleNewLocalPlugins() {
 	// TODO: handle new local plugins
 	// walk through all plugins
@@ -66,15 +86,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			continue
 		}
 
-		waitTime := 0 * time.Second
-		// calculate the wait time
-		for c, v := range RETRY_WAIT_INTERVAL_MAP {
-			if retry.RetryCount <= c {
-				waitTime = v
-				break
-			}
-		}
-
+		waitTime := c.calculateWaitTime(retry.RetryCount)
 		// if the wait time is not 0, and the last failed at is not too long ago, skip it
 		if waitTime > 0 && time.Since(retry.LastTriedAt) < waitTime {
 			continue
@@ -110,12 +122,41 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 	wg.Wait()
 }
 
-func (c *ControlPanel) getLocalPluginRuntime(
+var (
+	MAX_RETRY_COUNT = int32(15)
+
+	RETRY_WAIT_INTERVAL_MAP = map[int32]time.Duration{
+		0:               0 * time.Second,
+		3:               30 * time.Second,
+		8:               60 * time.Second,
+		MAX_RETRY_COUNT: 240 * time.Second,
+		// stop
+	}
+)
+
+// calculate the wait time for a plugin to be launched
+// return 0 if the retry count is 0
+func (c *ControlPanel) calculateWaitTime(
+	retryCount int32,
+) time.Duration {
+	waitTime := 0 * time.Second
+	// calculate the wait time
+	for c, v := range RETRY_WAIT_INTERVAL_MAP {
+		// find the best match retry count
+		if retryCount >= c && v >= waitTime {
+			waitTime = v
+		}
+	}
+
+	return waitTime
+}
+
+func (c *ControlPanel) buildLocalPluginRuntime(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-) (*local_runtime.LocalPluginRuntime, error) {
+) (*local_runtime.LocalPluginRuntime, *decoder.ZipPluginDecoder, error) {
 	pluginZip, err := c.installedBucket.Get(pluginUniqueIdentifier)
 	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("get plugin package error"))
+		return nil, nil, errors.Join(err, fmt.Errorf("get plugin package error"))
 	}
 
 	// create a decoder to verify the plugin package
@@ -126,8 +167,13 @@ func (c *ControlPanel) getLocalPluginRuntime(
 		},
 	)
 	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
+		return nil, nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
 	}
 
-	return local_runtime.ConstructPluginRuntime(c.config, decoder)
+	runtime, err := local_runtime.ConstructPluginRuntime(c.config, decoder)
+	if err != nil {
+		return nil, nil, errors.Join(err, fmt.Errorf("construct plugin runtime error"))
+	}
+
+	return runtime, decoder, nil
 }

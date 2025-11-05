@@ -13,23 +13,22 @@ import (
 func (c *ControlPanel) InstallToLocalFromPkg(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[InstallLocalPluginResponse], error) {
-	runtime, err := c.getLocalPluginRuntime(pluginUniqueIdentifier)
+	runtime, decoder, err := c.buildLocalPluginRuntime(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
 	response := stream.NewStream[InstallLocalPluginResponse](128)
-
 	routine.Submit(map[string]string{
 		"module": "installer_local",
-		"func":   "InstallToLocalFromPkg",
+		"func":   "InstallToLocalFromPkg_Job",
 	}, func() {
 		defer response.Close()
 
 		// write the initial info
 		response.Write(InstallLocalPluginResponse{
 			Event:   Info,
-			Message: "Installing plugin to local runtime",
+			Message: "Installing plugin to local runtime...",
 		})
 
 		// init environment, create a channel to handle heartbeat to avoid network timeout
@@ -38,10 +37,10 @@ func (c *ControlPanel) InstallToLocalFromPkg(
 
 		routine.Submit(map[string]string{
 			"module": "installer_local",
-			"func":   "InstallToLocalFromPkg",
+			"func":   "InstallToLocalFromPkg_Job_InitEnvironment",
 		}, func() {
 			defer close(c)
-			if err := runtime.InitEnvironment(); err != nil {
+			if err := runtime.InitEnvironment(decoder); err != nil {
 				c <- err
 			}
 		})
@@ -52,13 +51,13 @@ func (c *ControlPanel) InstallToLocalFromPkg(
 			case <-ticker.C:
 				response.Write(InstallLocalPluginResponse{
 					Event:   Info,
-					Message: "Installing plugin to local runtime in progress...",
+					Message: "Initializing plugin environment in progress...",
 				})
 			case err := <-c:
 				if err == nil {
 					response.Write(InstallLocalPluginResponse{
 						Event:   Done,
-						Message: "Plugin installed successfully",
+						Message: "Plugin environment initialized successfully",
 					})
 				} else {
 					response.Write(InstallLocalPluginResponse{

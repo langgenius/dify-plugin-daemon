@@ -41,7 +41,6 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 			}),
 		})
 		l.Close()
-		r.Error(fmt.Sprintf("Error creating request: %v", err))
 		return
 	}
 
@@ -62,7 +61,7 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 		// create a new http request to serverless runtimes
 		url += "?action=" + string(action)
 		response, err := http_requests.Request(
-			r.client, url, "POST",
+			r.Client, url, "POST",
 			http_requests.HttpHeader(map[string]string{
 				"Content-Type":           "application/json",
 				"Accept":                 "text/event-stream",
@@ -79,7 +78,6 @@ func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.Pl
 					Message:   fmt.Sprintf("Error sending request to serverless: %v", err),
 				}),
 			})
-			r.Error(fmt.Sprintf("Error sending request to serverless: %v", err))
 			return
 		}
 

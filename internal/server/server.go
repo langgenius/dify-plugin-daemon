@@ -104,9 +104,6 @@ func (app *App) Run(config *app.Config) {
 	// create cluster
 	app.cluster = cluster.NewCluster(config, manager)
 
-	// register plugin lifetime event
-	manager.AddPluginRegisterHandler(app.cluster.RegisterPlugin)
-
 	// init manager
 	manager.Launch(config)
 

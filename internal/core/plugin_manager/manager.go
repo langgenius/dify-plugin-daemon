@@ -17,16 +17,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type PluginManager struct {
-	m mapping.Map[string, plugin_entities.PluginLifetime]
-
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
 
@@ -36,21 +32,12 @@ type PluginManager struct {
 	// installedBucket is used to manage installed plugins, all the installed plugins will be saved here
 	installedBucket *media_transport.InstalledBucket
 
-	// register plugin
-	pluginRegisters []func(lifetime plugin_entities.PluginLifetime) error
-
-	// localPluginLaunchingLock is a lock to launch local plugins
-	localPluginLaunchingLock *lock.GranularityLock
-
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
 
 	config *app.Config
 
 	controlPanel *controlpanel.ControlPanel
-
-	// max launching lock to prevent too many plugins launching at the same time
-	maxLaunchingLock chan bool
 }
 
 var (
@@ -58,24 +45,28 @@ var (
 )
 
 func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
+	mediaBucket := media_transport.NewAssetsBucket(
+		oss,
+		configuration.PluginMediaCachePath,
+		configuration.PluginMediaCacheSize,
+	)
+
+	installedBucket := media_transport.NewInstalledBucket(
+		oss,
+		configuration.PluginInstalledPath,
+	)
+
+	packageBucket := media_transport.NewPackageBucket(
+		oss,
+		configuration.PluginPackageCachePath,
+	)
+
 	manager = &PluginManager{
-		mediaBucket: media_transport.NewAssetsBucket(
-			oss,
-			configuration.PluginMediaCachePath,
-			configuration.PluginMediaCacheSize,
-		),
-		packageBucket: media_transport.NewPackageBucket(
-			oss,
-			configuration.PluginPackageCachePath,
-		),
-		installedBucket: media_transport.NewInstalledBucket(
-			oss,
-			configuration.PluginInstalledPath,
-		),
-		localPluginLaunchingLock: lock.NewGranularityLock(),
-		// By default, we allow up to configuration.PluginLocalLaunchingConcurrent plugins to be launched concurrently; if not configured, the default is 2.
-		maxLaunchingLock: make(chan bool, configuration.PluginLocalLaunchingConcurrent),
-		config:           configuration,
+		mediaBucket:     mediaBucket,
+		packageBucket:   packageBucket,
+		installedBucket: installedBucket,
+		controlPanel:    controlpanel.NewControlPanel(configuration, mediaBucket, installedBucket),
+		config:          configuration,
 	}
 
 	return manager
@@ -83,26 +74,6 @@ func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
 
 func Manager() *PluginManager {
 	return manager
-}
-
-func (p *PluginManager) Get(
-	identity plugin_entities.PluginUniqueIdentifier,
-) (plugin_entities.PluginLifetime, error) {
-	if identity.RemoteLike() || p.config.Platform == app.PLATFORM_LOCAL {
-		// check if it's a debugging plugin or a local plugin
-		if v, ok := p.m.Load(identity.String()); ok {
-			return v, nil
-		}
-		return nil, errors.New("plugin not found")
-	} else {
-		// otherwise, use serverless runtime instead
-		pluginSessionInterface, err := p.getServerlessPluginRuntime(identity)
-		if err != nil {
-			return nil, err
-		}
-
-		return pluginSessionInterface, nil
-	}
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {
@@ -154,27 +125,24 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 	p.backwardsInvocation = invocation
 
-	// start local watcher
-	if configuration.Platform == app.PLATFORM_LOCAL {
-		p.startLocalWatcher(configuration)
-	}
+	// start control panel
+	p.controlPanel.StartWatchDog()
 
 	// launch serverless connector
 	if configuration.Platform == app.PLATFORM_SERVERLESS {
 		serverless.Init(configuration)
 	}
-
-	// start remote watcher
-	p.startRemoteWatcher(configuration)
 }
 
 func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocation {
 	return p.backwardsInvocation
 }
 
-func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte, thirdPartySignatureVerificationConfig *decoder.ThirdPartySignatureVerificationConfig) (
-	*plugin_entities.PluginDeclaration, error,
-) {
+func (p *PluginManager) SavePackage(
+	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
+	pkg []byte,
+	thirdPartySignatureVerificationConfig *decoder.ThirdPartySignatureVerificationConfig,
+) (*plugin_entities.PluginDeclaration, error) {
 	// try to decode the package
 	packageDecoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(pkg, thirdPartySignatureVerificationConfig)
 	if err != nil {

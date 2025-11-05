@@ -23,19 +23,10 @@ func ConstructPluginRuntime(
 		return nil, errors.Join(err, fmt.Errorf("get plugin manifest error"))
 	}
 
-	checksum, err := pluginDecoder.Checksum()
+	pluginWorkingPath, err := buildPluginWorkingPath(appConfig, pluginDecoder)
 	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("calculate checksum error"))
+		return nil, errors.Join(err, fmt.Errorf("build plugin working path error"))
 	}
-
-	// generate plugin working path using author/name@checksum, but replace : with -
-	// some platform like windows may not allow : in the path
-	identity := manifest.Identity()
-	identity = strings.ReplaceAll(identity, ":", "-")
-	pluginWorkingPath := path.Join(
-		appConfig.PluginWorkingPath,
-		fmt.Sprintf("%s@%s", identity, checksum),
-	)
 
 	runtime := &LocalPluginRuntime{
 		PluginRuntime: plugin_entities.PluginRuntime{
@@ -54,4 +45,29 @@ func ConstructPluginRuntime(
 		appConfig:                    appConfig,
 	}
 	return runtime, nil
+}
+
+// generate plugin working path using author/name@checksum, but replace : with -
+// some platform like windows may not allow : in the path
+func buildPluginWorkingPath(
+	appConfig *app.Config,
+	pluginDecoder decoder.PluginDecoder,
+) (string, error) {
+	manifest, err := pluginDecoder.Manifest()
+	if err != nil {
+		return "", errors.Join(err, fmt.Errorf("get plugin manifest error"))
+	}
+
+	checksum, err := pluginDecoder.Checksum()
+	if err != nil {
+		return "", errors.Join(err, fmt.Errorf("calculate checksum error"))
+	}
+
+	identity := manifest.Identity()
+	identity = strings.ReplaceAll(identity, ":", "-")
+
+	return path.Join(
+		appConfig.PluginWorkingPath,
+		fmt.Sprintf("%s@%s", identity, checksum),
+	), nil
 }

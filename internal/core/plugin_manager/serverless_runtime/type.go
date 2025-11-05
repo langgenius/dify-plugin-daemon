@@ -20,7 +20,7 @@ type ServerlessPluginRuntime struct {
 	// listeners mapping session id to the listener
 	listeners mapping.Map[string, *entities.Broadcast[plugin_entities.SessionMessage]]
 
-	client *http.Client
+	Client *http.Client
 
 	PluginMaxExecutionTimeout int // in seconds
 

@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -29,13 +30,16 @@ type ControlPanel struct {
 	controlPanelNotifiers    []ControlPanelNotifier
 	controlPanelNotifierLock *sync.RWMutex
 
-	// local plugin runtimes
+	// local plugin runtimes map
+	// plugin unique identifier -> local plugin runtime
 	localPluginRuntimes mapping.Map[
 		plugin_entities.PluginUniqueIdentifier,
 		*local_runtime.LocalPluginRuntime,
 	]
 
 	// local plugin launching semaphore
+	// we allow multiple plugins to be installed concurrently
+	// to control the concurrency, this semaphore is introduced
 	localPluginLaunchingSemaphore chan bool
 
 	// how many times a local plugin failed to launch
@@ -44,6 +48,11 @@ type ControlPanel struct {
 		plugin_entities.PluginUniqueIdentifier,
 		LocalPluginFailsRecord,
 	]
+
+	// local plugin installation lock
+	// locks when a plugin is on its installation process, avoid the same plugin
+	// to be processed concurrently
+	localPluginInstallationLock *lock.GranularityLock
 
 	// debugging plugin runtime
 	debuggingPluginRuntime mapping.Map[
@@ -73,5 +82,8 @@ func NewControlPanel(
 		// notifiers initialization
 		controlPanelNotifiers:    []ControlPanelNotifier{},
 		controlPanelNotifierLock: &sync.RWMutex{},
+
+		// local plugin installation lock
+		localPluginInstallationLock: lock.NewGranularityLock(),
 	}
 }
