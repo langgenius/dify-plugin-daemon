@@ -67,7 +67,7 @@ class {{ .PluginName | SnakeToCamel }}SubscriptionConstructor(TriggerSubscriptio
         
         events: list[str] = parameters.get("events", [])
 
-        # Replace this placeholder with API calls to register a webhook or schedule polling jobs.
+        # Replace this placeholder with API calls to register a webhook
         return Subscription(
             expires_at=int(time.time()) + 7 * 24 * 60 * 60,
             endpoint=endpoint,
