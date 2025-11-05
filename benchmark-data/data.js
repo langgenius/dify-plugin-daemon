@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762323731567,
+  "lastUpdate": 1762328999241,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9432,6 +9432,78 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "970970695 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hjlarry@163.com",
+            "name": "非法操作",
+            "username": "hjlarry"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "70ba852ecc941b2949e1c9f01772a8e8a89b8f39",
+          "message": "feat: cli tool support create trigger plugins (#485)\n\n* feat: cli tool support create trigger plugins\n\n* fix(trigger): update placeholder comment in SubscriptionConstructor for webhook registration\n\n---------\n\nCo-authored-by: Harry <xh001x@hotmail.com>",
+          "timestamp": "2025-11-05T15:45:58+08:00",
+          "tree_id": "f19c367e22f375b0fa1fda40de178657830239ad",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/70ba852ecc941b2949e1c9f01772a8e8a89b8f39"
+        },
+        "date": 1762328998597,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation",
+            "value": 138357760,
+            "unit": "ns/op\t 1569109 B/op\t   27516 allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - ns/op",
+            "value": 138357760,
+            "unit": "ns/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - B/op",
+            "value": 1569109,
+            "unit": "B/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLocalOpenAILLMInvocation - allocs/op",
+            "value": 27516,
+            "unit": "allocs/op",
+            "extra": "248 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream",
+            "value": 36.58,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "969538563 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.58,
+            "unit": "ns/op",
+            "extra": "969538563 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "969538563 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "969538563 times\n4 procs"
           }
         ]
       }
