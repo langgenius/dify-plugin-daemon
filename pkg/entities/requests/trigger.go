@@ -45,6 +45,7 @@ type TriggerRefreshRequest struct {
 // Response types - matching Python SDK protocol exactly
 type TriggerInvokeEventResponse struct {
 	Variables map[string]any `json:"variables"`
+	Cancelled bool           `json:"cancelled" validate:"omitempty"`
 }
 
 type TriggerValidateProviderCredentialsResponse struct {
