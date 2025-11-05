@@ -103,6 +103,18 @@ var PYTHON_DATASOURCE_PROVIDER_MANIFEST_TEMPLATE []byte
 //go:embed templates/python/datasource_provider.py
 var PYTHON_DATASOURCE_PROVIDER_PY_TEMPLATE []byte
 
+//go:embed templates/python/trigger_provider.yaml
+var PYTHON_TRIGGER_PROVIDER_TEMPLATE []byte
+
+//go:embed templates/python/trigger_provider.py
+var PYTHON_TRIGGER_PROVIDER_PY_TEMPLATE []byte
+
+//go:embed templates/python/trigger.yaml
+var PYTHON_TRIGGER_TEMPLATE []byte
+
+//go:embed templates/python/trigger.py
+var PYTHON_TRIGGER_EVENT_PY_TEMPLATE []byte
+
 //go:embed templates/python/GUIDE.md
 var PYTHON_GUIDE []byte
 
@@ -245,6 +257,12 @@ func createPythonEnvironment(
 
 	if category == "datasource" {
 		if err := createPythonDatasource(root, manifest); err != nil {
+			return err
+		}
+	}
+
+	if category == "trigger" {
+		if err := createPythonTrigger(root, manifest); err != nil {
 			return err
 		}
 	}
