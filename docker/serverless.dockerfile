@@ -1,6 +1,8 @@
 FROM golang:1.23-alpine AS builder
 
 ARG VERSION=unknown
+ARG ARCH=amd64
+ARG OS=linux
 
 # Install ca-certificates and timezone data for final stage
 RUN apk add --no-cache ca-certificates tzdata
@@ -16,7 +18,7 @@ RUN go mod download
 COPY . .
 
 # Build with optimizations and security flags
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build \
     -ldflags "\
     -s -w \
     -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.VersionX=${VERSION}' \

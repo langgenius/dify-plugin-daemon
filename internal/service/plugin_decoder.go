@@ -202,7 +202,7 @@ func FetchPluginManifest(
 		pluginUniqueIdentifier, runtimeType,
 	)
 	if err == helper.ErrPluginNotFound {
-		return exception.BadRequestError(errors.New("plugin not found")).ToResponse()
+		return exception.NotFoundError(errors.New("plugin not found")).ToResponse()
 	}
 
 	if err != nil {

@@ -250,7 +250,7 @@ func (p *PluginManager) GetPackage(
 	file, err := p.packageBucket.Get(plugin_unique_identifier.String())
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, errors.New("plugin package not found, please upload it firstly")
+			return nil, ErrPluginPackageNotFound
 		}
 		return nil, err
 	}

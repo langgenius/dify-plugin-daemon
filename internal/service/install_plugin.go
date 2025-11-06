@@ -122,7 +122,7 @@ func doInstallPluginRuntime(
 			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 				task.Status = models.InstallTaskStatusFailed
 				plugin.Status = models.InstallTaskStatusFailed
-				plugin.Message = "Failed to read plugin package"
+				plugin.Message = fmt.Sprintf("Failed to read plugin package: %s", err.Error())
 				onMessage(plugin_manager.PluginInstallResponse{
 					Event: plugin_manager.PluginInstallEventError,
 					Data:  plugin.Message,
@@ -489,6 +489,9 @@ func DecodePluginFromIdentifier(
 	manager := plugin_manager.Manager()
 	pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
 	if err != nil {
+		if errors.Is(err, plugin_manager.ErrPluginPackageNotFound) {
+			return exception.NotFoundError(err).ToResponse()
+		}
 		return exception.BadRequestError(err).ToResponse()
 	}
 
