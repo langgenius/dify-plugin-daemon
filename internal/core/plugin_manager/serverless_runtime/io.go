@@ -16,15 +16,22 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (r *ServerlessPluginRuntime) Listen(sessionId string) *entities.Broadcast[plugin_entities.SessionMessage] {
+func (r *ServerlessPluginRuntime) Listen(sessionId string) (
+	*entities.Broadcast[plugin_entities.SessionMessage],
+	error,
+) {
 	l := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	// store the listener
 	r.listeners.Store(sessionId, l)
-	return l
+	return l, nil
 }
 
 // For Serverless, write is equivalent to http request, it's not a normal stream like stdio and tcp
-func (r *ServerlessPluginRuntime) Write(sessionId string, action access_types.PluginAccessAction, data []byte) {
+func (r *ServerlessPluginRuntime) Write(
+	sessionId string,
+	action access_types.PluginAccessAction,
+	data []byte,
+) {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
 		log.Error("session %s not found", sessionId)

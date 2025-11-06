@@ -15,12 +15,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/lifecycle"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -86,31 +83,7 @@ func GetRuntime(pluginZip []byte, cwd string) (*local_runtime.LocalPluginRuntime
 		Decoder:     decoder,
 	}
 
-	launchedChan := make(chan bool)
-	errChan := make(chan error)
-
 	// local plugin
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "LaunchLocal",
-	}, func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Error("plugin runtime panic: %v", r)
-			}
-		}()
-
-		// add max launching lock to prevent too many plugins launching at the same time
-		routine.Submit(map[string]string{
-			"module":   "plugin_manager",
-			"function": "LaunchLocal",
-		}, func() {
-			// wait for plugin launched
-			<-launchedChan
-		})
-
-		lifecycle.FullDuplex(localPluginRuntime, launchedChan, errChan)
-	})
 
 	// wait for plugin launched
 	select {

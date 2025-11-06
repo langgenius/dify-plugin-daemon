@@ -1,14 +1,11 @@
 package controlpanel
 
-import serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
-
-type LocalPluginLaunchEvent string
-
-const (
-	Error LocalPluginLaunchEvent = "error"
-	Info  LocalPluginLaunchEvent = "info"
-	Done  LocalPluginLaunchEvent = "done"
+import (
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 )
+
+type LocalPluginLaunchEvent = installation_entities.PluginInstallEvent
 
 // InstallLocalPluginResponse is the response type for local plugin installation
 type InstallLocalPluginResponse struct {

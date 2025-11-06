@@ -1,8 +1,6 @@
 package controlpanel
 
 import (
-	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -10,7 +8,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 func (c *ControlPanel) startLocalMonitor() {
@@ -149,31 +146,4 @@ func (c *ControlPanel) calculateWaitTime(
 	}
 
 	return waitTime
-}
-
-func (c *ControlPanel) buildLocalPluginRuntime(
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-) (*local_runtime.LocalPluginRuntime, *decoder.ZipPluginDecoder, error) {
-	pluginZip, err := c.installedBucket.Get(pluginUniqueIdentifier)
-	if err != nil {
-		return nil, nil, errors.Join(err, fmt.Errorf("get plugin package error"))
-	}
-
-	// create a decoder to verify the plugin package
-	decoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
-		pluginZip, &decoder.ThirdPartySignatureVerificationConfig{
-			Enabled:        c.config.ThirdPartySignatureVerificationEnabled,
-			PublicKeyPaths: c.config.ThirdPartySignatureVerificationPublicKeys,
-		},
-	)
-	if err != nil {
-		return nil, nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
-	}
-
-	runtime, err := local_runtime.ConstructPluginRuntime(c.config, decoder)
-	if err != nil {
-		return nil, nil, errors.Join(err, fmt.Errorf("construct plugin runtime error"))
-	}
-
-	return runtime, decoder, nil
 }

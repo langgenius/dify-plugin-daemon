@@ -20,6 +20,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"gorm.io/gorm"
@@ -37,15 +38,69 @@ type InstallPluginOnDoneHandler func(
 ) error
 
 type InstallPluginOnMessageHandler func(
-	message controlpanel.PluginInstallResponse,
+	message InstallPluginResponse,
 )
+
+func updateTaskStatus(
+	taskId string,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus),
+) error {
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		task, err := db.GetOne[models.InstallTask](
+			db.WithTransactionContext(tx),
+			db.Equal("id", taskId),
+			db.WLock(), // write lock, multiple tasks can't update the same task
+		)
+
+		if err == db.ErrDatabaseNotFound {
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		taskPointer := &task
+		var pluginStatus *models.InstallTaskPluginStatus
+		for i := range task.Plugins {
+			if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
+				pluginStatus = &task.Plugins[i]
+				break
+			}
+		}
+
+		if pluginStatus == nil {
+			return nil
+		}
+
+		modifier(taskPointer, pluginStatus)
+
+		successes := 0
+		for _, plugin := range taskPointer.Plugins {
+			if plugin.Status == models.InstallTaskStatusSuccess {
+				successes++
+			}
+		}
+
+		if successes == len(taskPointer.Plugins) {
+			// update status
+			taskPointer.Status = models.InstallTaskStatusSuccess
+			// delete the task after 120 seconds without transaction
+			time.AfterFunc(120*time.Second, func() {
+				db.Delete(taskPointer)
+			})
+		}
+		return db.Update(taskPointer, tx)
+	})
+}
 
 func doInstallPluginRuntime(
 	runtimeType plugin_entities.PluginRuntimeType,
 	manager *plugin_manager.PluginManager,
 	controlPanel *controlpanel.ControlPanel,
 	config *app.Config,
-	tenant_id string,
+	tenantId string,
 	source string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	meta map[string]any,
@@ -56,65 +111,16 @@ func doInstallPluginRuntime(
 	onDone InstallPluginOnDoneHandler,
 ) {
 	var err error
-	updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
+	updateTaskStatus(
+		task.ID,
+		pluginUniqueIdentifier,
+		func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+			plugin.Status = models.InstallTaskStatusRunning
+			plugin.Message = "Installing"
+		},
+	)
 
-		if err := db.WithTransaction(func(tx *gorm.DB) error {
-			task, err := db.GetOne[models.InstallTask](
-				db.WithTransactionContext(tx),
-				db.Equal("id", task.ID),
-				db.WLock(), // write lock, multiple tasks can't update the same task
-			)
-
-			if err == db.ErrDatabaseNotFound {
-				return nil
-			}
-
-			if err != nil {
-				return err
-			}
-
-			taskPointer := &task
-			var pluginStatus *models.InstallTaskPluginStatus
-			for i := range task.Plugins {
-				if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
-					pluginStatus = &task.Plugins[i]
-					break
-				}
-			}
-
-			if pluginStatus == nil {
-				return nil
-			}
-
-			modifier(taskPointer, pluginStatus)
-
-			successes := 0
-			for _, plugin := range taskPointer.Plugins {
-				if plugin.Status == models.InstallTaskStatusSuccess {
-					successes++
-				}
-			}
-
-			if successes == len(taskPointer.Plugins) {
-				// update status
-				taskPointer.Status = models.InstallTaskStatusSuccess
-				// delete the task after 120 seconds without transaction
-				time.AfterFunc(120*time.Second, func() {
-					db.Delete(taskPointer)
-				})
-			}
-			return db.Update(taskPointer, tx)
-		}); err != nil {
-			log.Error("failed to update install task status %s", err.Error())
-		}
-	}
-
-	updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-		plugin.Status = models.InstallTaskStatusRunning
-		plugin.Message = "Installing"
-	})
-
-	var stream *stream.Stream[controlpanel.PluginInstallResponse]
+	var stream *stream.Stream[installation_entities.PluginInstallResponse]
 	if config.Platform == app.PLATFORM_SERVERLESS {
 		var zipDecoder *decoder.ZipPluginDecoder
 		var pkgFile []byte
@@ -153,9 +159,9 @@ func doInstallPluginRuntime(
 			return
 		}
 		if reinstall {
-			stream, err = controlPanel.ReinstallToServerlessFromPkg(pkgFile, zipDecoder)
+			stream, err = manager.Reinstall(pluginUniqueIdentifier)
 		} else {
-			stream, err = controlPanel.InstallToServerlessFromPkg(pkgFile, zipDecoder)
+			stream, err = manager.Install(pluginUniqueIdentifier)
 		}
 	} else if config.Platform == app.PLATFORM_LOCAL {
 		if reinstall {
@@ -209,7 +215,7 @@ func doInstallPluginRuntime(
 		}
 
 		if message.Event == plugin_manager.PluginInstallEventDone {
-			if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenant_id, runtimeType, declaration, source, meta); err != nil {
+			if err := curd.EnsureGlobalReferenceIfRequired(pluginUniqueIdentifier, tenantId, runtimeType, declaration, source, meta); err != nil {
 				updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 					task.Status = models.InstallTaskStatusFailed
 					plugin.Status = models.InstallTaskStatusFailed
@@ -429,7 +435,7 @@ func ReinstallPluginFromIdentifier(
 			return nil, err
 		}
 
-		retStream := stream.NewStream[plugin_manager.PluginInstallResponse](128)
+		retStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 
 		task := &models.InstallTask{
 			Status:           models.InstallTaskStatusRunning,

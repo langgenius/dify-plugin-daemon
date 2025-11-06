@@ -3,17 +3,22 @@ package controlpanel
 import (
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 func (c *ControlPanel) InstallToServerlessFromPkg(
-	packageFile []byte,
-	decoder decoder.PluginDecoder,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (
 	*stream.Stream[InstallServerlessPluginResponse], error,
 ) {
+	decoder, packageFile, err := c.buildPluginDecoder(pluginUniqueIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	// check valid manifest
-	_, err := decoder.Manifest()
+	_, err = decoder.Manifest()
 	if err != nil {
 		return nil, err
 	}

@@ -1,13 +1,9 @@
 package plugin_manager
 
 import (
-	"context"
 	"fmt"
-	"net"
-	"net/http"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -47,36 +43,13 @@ func (p *PluginManager) getServerlessPluginRuntime(
 	runtimeEntity.InitState()
 
 	// convert to plugin runtime
-	pluginRuntime := &serverless_runtime.ServerlessPluginRuntime{
-		BasicChecksum: basic_runtime.BasicChecksum{
-			MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),
-			InnerChecksum:  model.Checksum,
-		},
-		PluginRuntime:             runtimeEntity,
-		LambdaURL:                 model.FunctionURL,
-		LambdaName:                model.FunctionName,
-		PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
-		RuntimeBufferSize:         p.config.PluginRuntimeBufferSize,
-		RuntimeMaxBufferSize:      p.config.PluginRuntimeMaxBufferSize,
-
-		// init http client
-		Client: &http.Client{
-			Transport: &http.Transport{
-				TLSHandshakeTimeout: time.Duration(p.config.PluginMaxExecutionTimeout) * time.Second,
-				IdleConnTimeout:     120 * time.Second,
-				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-					conn, err := (&net.Dialer{
-						Timeout:   time.Duration(p.config.PluginMaxExecutionTimeout) * time.Second,
-						KeepAlive: 120 * time.Second,
-					}).DialContext(ctx, network, addr)
-					if err != nil {
-						return nil, err
-					}
-					return conn, nil
-				},
-			},
-		},
-	}
+	pluginRuntime := serverless_runtime.ConstructServerlessPluginRuntime(
+		p.config,
+		declaration,
+		model,
+		p.mediaBucket,
+		identity,
+	)
 
 	return pluginRuntime, nil
 }

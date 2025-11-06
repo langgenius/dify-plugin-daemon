@@ -5,6 +5,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -27,7 +28,7 @@ func (c *ControlPanel) InstallToLocalFromPkg(
 
 		// write the initial info
 		response.Write(InstallLocalPluginResponse{
-			Event:   Info,
+			Event:   installation_entities.PluginInstallEventInfo,
 			Message: "Installing plugin to local runtime...",
 		})
 
@@ -50,18 +51,18 @@ func (c *ControlPanel) InstallToLocalFromPkg(
 			select {
 			case <-ticker.C:
 				response.Write(InstallLocalPluginResponse{
-					Event:   Info,
+					Event:   installation_entities.PluginInstallEventInfo,
 					Message: "Initializing plugin environment in progress...",
 				})
 			case err := <-c:
 				if err == nil {
 					response.Write(InstallLocalPluginResponse{
-						Event:   Done,
+						Event:   installation_entities.PluginInstallEventDone,
 						Message: "Plugin environment initialized successfully",
 					})
 				} else {
 					response.Write(InstallLocalPluginResponse{
-						Event:   Error,
+						Event:   installation_entities.PluginInstallEventError,
 						Message: err.Error(),
 					})
 				}

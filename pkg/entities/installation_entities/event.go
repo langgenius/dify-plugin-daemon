@@ -1,4 +1,4 @@
-package install_service
+package installation_entities
 
 // Streaming events for plugin installation
 type PluginInstallEvent string
