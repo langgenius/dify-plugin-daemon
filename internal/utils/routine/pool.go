@@ -60,7 +60,7 @@ func Submit(labels map[string]string, f func()) {
 	})
 }
 
-func WithMaxRoutine(maxRoutine int, tasks []func(), on_finish ...func()) {
+func WithMaxRoutine(maxRoutine int, tasks []func(), onFinish ...func()) {
 	if maxRoutine <= 0 {
 		maxRoutine = 1
 	}
@@ -91,8 +91,8 @@ func WithMaxRoutine(maxRoutine int, tasks []func(), on_finish ...func()) {
 
 		wg.Wait()
 
-		if len(on_finish) > 0 {
-			on_finish[0]()
+		if len(onFinish) > 0 {
+			onFinish[0]()
 		}
 	})
 }

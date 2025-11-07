@@ -2,6 +2,7 @@ package debugging_runtime
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
@@ -13,7 +14,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 )
 
-func (r *RemotePluginRuntime) Listen(session_id string) (*entities.Broadcast[plugin_entities.SessionMessage], error) {
+func (r *RemotePluginRuntime) Listen(sessionId string) (*entities.Broadcast[plugin_entities.SessionMessage], error) {
 	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
 		// execute in new goroutine to avoid deadlock
@@ -21,13 +22,13 @@ func (r *RemotePluginRuntime) Listen(session_id string) (*entities.Broadcast[plu
 			"module": "debugging_runtime",
 			"method": "removeMessageCallbackHandler",
 		}, func() {
-			r.removeMessageCallbackHandler(session_id)
-			r.removeSessionMessageCloser(session_id)
+			r.removeMessageCallbackHandler(sessionId)
+			r.removeSessionMessageCloser(sessionId)
 		})
 	})
 
 	// add session message closer to avoid unexpected connection closed
-	r.addSessionMessageCloser(session_id, func() {
+	r.addSessionMessageCloser(sessionId, func() {
 		listener.Send(plugin_entities.SessionMessage{
 			Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 			Data: json.RawMessage(parser.MarshalJson(plugin_entities.ErrorResponse{
@@ -38,7 +39,7 @@ func (r *RemotePluginRuntime) Listen(session_id string) (*entities.Broadcast[plu
 		})
 	})
 
-	r.addMessageCallbackHandler(session_id, func(data []byte) {
+	r.addMessageCallbackHandler(sessionId, func(data []byte) {
 		// unmarshal the session message
 		chunk, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 		if err != nil {
@@ -52,8 +53,15 @@ func (r *RemotePluginRuntime) Listen(session_id string) (*entities.Broadcast[plu
 	return listener, nil
 }
 
-func (r *RemotePluginRuntime) Write(session_id string, action access_types.PluginAccessAction, data []byte) {
-	r.conn.AsyncWrite(append(data, '\n'), func(c gnet.Conn, err error) error {
-		return nil
+func (r *RemotePluginRuntime) Write(
+	sessionId string,
+	action access_types.PluginAccessAction,
+	data []byte,
+) error {
+	if r.conn == nil {
+		return errors.New("connection not established")
+	}
+	return r.conn.AsyncWrite(append(data, '\n'), func(c gnet.Conn, err error) error {
+		return err
 	})
 }

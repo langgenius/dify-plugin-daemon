@@ -59,7 +59,7 @@ type (
 		// Listen listens for messages from the plugin
 		Listen(session_id string) (*entities.Broadcast[SessionMessage], error)
 		// Write writes a message to the plugin
-		Write(session_id string, action access_types.PluginAccessAction, data []byte)
+		Write(session_id string, action access_types.PluginAccessAction, data []byte) error
 	}
 
 	PluginClusterLifetime interface {

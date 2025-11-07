@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 type Config struct {
@@ -282,3 +283,10 @@ const (
 	PLATFORM_LOCAL      PlatformType = "local"
 	PLATFORM_SERVERLESS PlatformType = "serverless"
 )
+
+func (p PlatformType) ToPluginRuntimeType() plugin_entities.PluginRuntimeType {
+	if p == PLATFORM_LOCAL {
+		return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	}
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
+}

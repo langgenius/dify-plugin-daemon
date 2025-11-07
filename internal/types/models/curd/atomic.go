@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func EnsureGlobalReferenceIfRequired(
+func EnsureGlobalReference(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	tenantId string,
 	installType plugin_entities.PluginRuntimeType,
@@ -19,7 +19,7 @@ func EnsureGlobalReferenceIfRequired(
 	source string,
 	meta map[string]any,
 ) error {
-	if !allowOrphans || tenantId == constants.GlobalTenantId {
+	if tenantId == constants.GlobalTenantId {
 		return nil
 	}
 	_, _, err := InstallPlugin(
