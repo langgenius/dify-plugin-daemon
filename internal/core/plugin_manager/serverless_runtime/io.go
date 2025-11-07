@@ -3,13 +3,13 @@ package serverless_runtime
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -31,24 +31,15 @@ func (r *ServerlessPluginRuntime) Write(
 	sessionId string,
 	action access_types.PluginAccessAction,
 	data []byte,
-) {
+) error {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
-		log.Error("session %s not found", sessionId)
-		return
+		return errors.New("session not found")
 	}
 
 	url, err := url.JoinPath(r.LambdaURL, "invoke")
 	if err != nil {
-		l.Send(plugin_entities.SessionMessage{
-			Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
-			Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
-				ErrorType: "PluginDaemonInnerError",
-				Message:   fmt.Sprintf("Error creating request: %v", err),
-			}),
-		})
-		l.Close()
-		return
+		return errors.Join(err, errors.New("failed to join lambda url"))
 	}
 
 	routine.Submit(map[string]string{
@@ -143,4 +134,6 @@ func (r *ServerlessPluginRuntime) Write(
 			})
 		}
 	})
+
+	return nil
 }

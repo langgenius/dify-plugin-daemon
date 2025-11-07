@@ -184,6 +184,5 @@ func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, action access_types.Plugin
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.ID, action, s.Message(event, data))
-	return nil
+	return s.runtime.Write(s.ID, action, s.Message(event, data))
 }

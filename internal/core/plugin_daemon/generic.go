@@ -89,14 +89,17 @@ func GenericInvokePlugin[Req any, Rsp any](
 		listener.Close()
 	})
 
-	session.Write(
+	if err := session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
 		session.Action,
 		generic_invoke.GetInvokePluginMap(
 			session,
 			request,
 		),
-	)
+	); err != nil {
+		listener.Close()
+		return nil, errors.Join(err, errors.New("failed to write request"))
+	}
 
 	return response, nil
 }
