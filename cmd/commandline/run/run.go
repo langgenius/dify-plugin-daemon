@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/test_utils"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/lifecycle"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -174,25 +173,6 @@ func RunPlugin(payload RunPluginPayload) {
 	}
 }
 
-func setupSignalHandler(dir string) {
-	signalChanInterrupt := make(chan os.Signal, 1)
-	signalChanTerminate := make(chan os.Signal, 1)
-	signalChanKill := make(chan os.Signal, 1)
-	signal.Notify(signalChanInterrupt, os.Interrupt)
-	signal.Notify(signalChanTerminate, syscall.SIGTERM)
-	signal.Notify(signalChanKill, os.Interrupt)
-
-	go func() {
-		select {
-		case <-signalChanInterrupt:
-		case <-signalChanTerminate:
-		case <-signalChanKill:
-		}
-		os.RemoveAll(dir)
-		os.Exit(0)
-	}()
-}
-
 func runPlugin(payload RunPluginPayload) error {
 	// disable logs
 	log.SetLogVisibility(payload.EnableLogs)
@@ -208,8 +188,11 @@ func runPlugin(payload RunPluginPayload) error {
 	}
 	defer test_utils.ClearTestingPath(dir)
 
-	// remove the temp directory when the program shuts down
-	setupSignalHandler(dir)
+	lifecycle.RegisterFinalizers(func() error {
+		return os.RemoveAll(dir)
+	})
+
+	lifecycle.SetupSignalHandler()
 
 	// try decode the plugin zip file
 	pluginFile, err := os.ReadFile(payload.PluginPath)

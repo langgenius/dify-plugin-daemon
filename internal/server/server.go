@@ -7,7 +7,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/lifecycle"
+	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
@@ -115,6 +118,10 @@ func (app *App) Run(config *app.Config) {
 
 	// launch cluster
 	app.cluster.Launch()
+
+	// graceful shutdown
+	lifecycle.SetupSignalHandler()
+	lifecycle.RegisterFinalizers(service.TaskFinalizer, serverless.CleanupLocks)
 
 	// start http server
 	app.server(config)

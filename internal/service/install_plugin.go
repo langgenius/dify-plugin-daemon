@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	runningTasks = sync.Map{}
+)
+
 type InstallPluginResponse struct {
 	AllInstalled bool   `json:"all_installed"`
 	TaskID       string `json:"task_id"`
@@ -38,6 +43,48 @@ type InstallPluginOnDoneHandler func(
 type InstallPluginOnMessageHandler func(
 	message plugin_manager.PluginInstallResponse,
 )
+
+func startTask(task *models.InstallTask) {
+	log.Info("starting task %s", task.ID)
+	runningTasks.Store(task.ID, struct{}{})
+}
+
+func endTask(task *models.InstallTask) {
+	log.Info("ending task %s", task.ID)
+	runningTasks.Delete(task.ID)
+}
+
+func TaskFinalizer() error {
+	var errs []error
+	runningTasks.Range(func(key, value any) bool {
+		taskId := key.(string)
+		log.Info("updating task %s status to failed", taskId)
+		// update task status to failed
+		task, err := db.GetOne[models.InstallTask](
+			db.Equal("id", taskId),
+			db.InArray("status", []any{
+				string(models.InstallTaskStatusRunning),
+				string(models.InstallTaskStatusPending)},
+			),
+		)
+		if err != nil {
+			errs = append(errs, err)
+			return true
+		}
+		task.Status = models.InstallTaskStatusFailed
+		for i := range task.Plugins {
+			plugin := &task.Plugins[i]
+			plugin.Status = models.InstallTaskStatusFailed
+			plugin.Message = "Plugin daemon shut down"
+		}
+		err = db.Update(task)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		return true
+	})
+	return errors.Join(errs...)
+}
 
 func doInstallPluginRuntime(
 	runtimeType plugin_entities.PluginRuntimeType,
@@ -54,6 +101,8 @@ func doInstallPluginRuntime(
 	onDone InstallPluginOnDoneHandler,
 ) {
 	var err error
+	startTask(task)
+	defer endTask(task)
 	updateTaskStatus := func(modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus)) {
 
 		if err := db.WithTransaction(func(tx *gorm.DB) error {
