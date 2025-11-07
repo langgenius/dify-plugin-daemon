@@ -30,7 +30,7 @@ func (c *ControlPanel) buildLocalPluginRuntime(
 func (c *ControlPanel) buildPluginDecoder(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*decoder.ZipPluginDecoder, []byte, error) {
-	pluginZip, err := c.installedBucket.Get(pluginUniqueIdentifier)
+	pluginZip, err := c.packageBucket.Get(pluginUniqueIdentifier.String())
 	if err != nil {
 		return nil, nil, errors.Join(err, fmt.Errorf("get plugin package error"))
 	}

@@ -31,6 +31,7 @@ func (p *PluginManager) Install(
 	return p.installServerless(pluginUniqueIdentifier)
 }
 
+// TODO: comments
 func (p *PluginManager) Reinstall(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
@@ -39,7 +40,14 @@ func (p *PluginManager) Reinstall(
 	}
 
 	// TODO: implement reinstall for serverless platform
-	return nil, nil
+	response, err := p.controlPanel.ReinstallToServerlessFromPkg(pluginUniqueIdentifier)
+	if err != nil {
+		return nil, errors.Join(
+			errors.New("failed to reinstall plugin to serverless"),
+			err,
+		)
+	}
+
 }
 
 // whenever a plugin was installed successfully, a record will be inserted into `models.ServerlessRuntime`
@@ -54,80 +62,88 @@ func (p *PluginManager) installServerless(
 		)
 	}
 
-	functionUrl := ""
-	functionName := ""
-
 	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
-	response.Async(func(r serverless.LaunchFunctionResponse) {
-		if r.Event == serverless.Info {
-			responseStream.Write(installation_entities.PluginInstallResponse{
-				Event: installation_entities.PluginInstallEventInfo,
-				Data:  "Installing...",
-			})
-		} else if r.Event == serverless.Done {
-			if functionUrl == "" || functionName == "" {
-				responseStream.Write(installation_entities.PluginInstallResponse{
-					Event: installation_entities.PluginInstallEventError,
-					Data:  "Internal server error, failed to get lambda url or function name",
-				})
-				return
-			}
 
-			// check if the plugin is already installed
-			// NOTE: models.ServerlessRuntime is a tenant-isolated model
-			// it hands only engine-level persist data like which serverless runtime is installed
-			// that's why we placed it here, not in service layer.
-			//
-			// service layer takes care of tenant-level persist data like "which tenant installed which plugin"
-			_, err := db.GetOne[models.ServerlessRuntime](
-				db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-				db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
-			)
-			if err == db.ErrDatabaseNotFound {
-				// create a new serverless runtime
-				serverlessModel := &models.ServerlessRuntime{
-					Checksum:               pluginUniqueIdentifier.Checksum(),
-					Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
-					FunctionURL:            functionUrl,
-					FunctionName:           functionName,
-					PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
-				}
-				err = db.Create(serverlessModel)
-				if err != nil {
+	routine.Submit(map[string]string{
+		"module": "plugin_manager",
+		"action": "installServerless",
+	}, func() {
+		defer responseStream.Close()
+
+		functionUrl := ""
+		functionName := ""
+
+		response.Async(func(r serverless.LaunchFunctionResponse) {
+			if r.Event == serverless.Info {
+				responseStream.Write(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventInfo,
+					Data:  "Installing...",
+				})
+			} else if r.Event == serverless.Done {
+				if functionUrl == "" || functionName == "" {
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
-						Data:  "failed to create serverless runtime",
+						Data:  "Internal server error, failed to get lambda url or function name",
 					})
 					return
 				}
-			} else if err != nil {
+
+				// check if the plugin is already installed
+				// NOTE: models.ServerlessRuntime is a tenant-isolated model
+				// it hands only engine-level persist data like which serverless runtime is installed
+				// that's why we placed it here, not in service layer.
+				//
+				// service layer takes care of tenant-level persist data like "which tenant installed which plugin"
+				_, err := db.GetOne[models.ServerlessRuntime](
+					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
+				)
+				if err == db.ErrDatabaseNotFound {
+					// create a new serverless runtime
+					serverlessModel := &models.ServerlessRuntime{
+						Checksum:               pluginUniqueIdentifier.Checksum(),
+						Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
+						FunctionURL:            functionUrl,
+						FunctionName:           functionName,
+						PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+					}
+					err = db.Create(serverlessModel)
+					if err != nil {
+						responseStream.Write(installation_entities.PluginInstallResponse{
+							Event: installation_entities.PluginInstallEventError,
+							Data:  "failed to create serverless runtime",
+						})
+						return
+					}
+				} else if err != nil {
+					responseStream.Write(installation_entities.PluginInstallResponse{
+						Event: installation_entities.PluginInstallEventError,
+						Data:  "failed to check if the plugin is already installed",
+					})
+					return
+				}
+
+				responseStream.Write(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventDone,
+					Data:  "successfully installed",
+				})
+			} else if r.Event == serverless.Error {
+				// FIXME(Yeuoly): log the error to terminal, but avoid using inline log
+				// try to refactor the code to a more elegant way like abstracting all lifetime events
+				// and make logger in a centralized layer
+				log.Error("failed to install plugin to serverless: %s", r.Message)
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
-					Data:  "failed to check if the plugin is already installed",
+					Data:  "internal server error",
 				})
-				return
+			} else if r.Event == serverless.FunctionUrl {
+				functionUrl = r.Message
+			} else if r.Event == serverless.Function {
+				functionName = r.Message
+			} else {
+				responseStream.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
 			}
-
-			responseStream.Write(installation_entities.PluginInstallResponse{
-				Event: installation_entities.PluginInstallEventDone,
-				Data:  "successfully installed",
-			})
-		} else if r.Event == serverless.Error {
-			// FIXME(Yeuoly): log the error to terminal, but avoid using inline log
-			// try to refactor the code to a more elegant way like abstracting all lifetime events
-			// and make logger in a centralized layer
-			log.Error("failed to install plugin to serverless: %s", r.Message)
-			responseStream.Write(installation_entities.PluginInstallResponse{
-				Event: installation_entities.PluginInstallEventError,
-				Data:  "internal server error",
-			})
-		} else if r.Event == serverless.FunctionUrl {
-			functionUrl = r.Message
-		} else if r.Event == serverless.Function {
-			functionName = r.Message
-		} else {
-			responseStream.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
-		}
+		})
 	})
 
 	return responseStream, nil
