@@ -112,10 +112,16 @@ func (d *DifyServer) handleInitializationEndEvent(
 	runtime.initialized = true
 
 	// spawn a core to handle CPU-intensive tasks
-	routine.Submit(nil, func() { runtime.SpawnCore() })
+	routine.Submit(
+		map[string]string{"module": "debugging_runtime", "action": "spawnCore"},
+		func() { runtime.SpawnCore() },
+	)
 
 	// start heartbeat monitor
-	routine.Submit(nil, func() { runtime.HeartbeatMonitor() })
+	routine.Submit(
+		map[string]string{"module": "debugging_runtime", "action": "heartbeatMonitor"},
+		func() { runtime.HeartbeatMonitor() },
+	)
 
 	return nil
 }
