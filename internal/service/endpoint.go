@@ -112,7 +112,7 @@ func Endpoint(
 
 	// fetch plugin
 	manager := plugin_manager.Manager()
-	runtime, err := manager.Get(identifier)
+	runtime, err := manager.GetPluginRuntime(identifier)
 	if err != nil {
 		ctx.JSON(404, exception.ErrPluginNotFound().ToResponse())
 		return

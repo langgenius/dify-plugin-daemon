@@ -22,9 +22,9 @@ var (
 
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
-	ID                  string                              `json:"id"`
-	runtime             plugin_entities.PluginLifetime      `json:"-"`
-	backwardsInvocation dify_invocation.BackwardsInvocation `json:"-"`
+	ID                  string                                          `json:"id"`
+	runtime             plugin_entities.PluginRuntimeSessionIOInterface `json:"-"`
+	backwardsInvocation dify_invocation.BackwardsInvocation             `json:"-"`
 
 	TenantID               string                                 `json:"tenant_id"`
 	UserID                 string                                 `json:"user_id"`
@@ -144,11 +144,11 @@ func (s *Session) Close(payload CloseSessionPayload) {
 	})
 }
 
-func (s *Session) BindRuntime(runtime plugin_entities.PluginLifetime) {
+func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeSessionIOInterface) {
 	s.runtime = runtime
 }
 
-func (s *Session) Runtime() plugin_entities.PluginLifetime {
+func (s *Session) Runtime() plugin_entities.PluginRuntimeSessionIOInterface {
 	return s.runtime
 }
 

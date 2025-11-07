@@ -21,8 +21,7 @@ func createSession[T any](
 	}
 
 	// try fetch plugin identifier from plugin id
-
-	runtime, err := manager.Get(r.UniqueIdentifier)
+	runtime, err := manager.GetPluginRuntime(r.UniqueIdentifier)
 	if err != nil {
 		return nil, errors.New("failed to get plugin runtime")
 	}
