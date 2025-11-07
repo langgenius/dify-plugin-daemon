@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -65,7 +64,7 @@ func (p *PluginManager) Reinstall(
 		functionUrl := ""
 		functionName := ""
 
-		response.Async(func(ispr controlpanel.InstallServerlessPluginResponse) {
+		if err := response.Async(func(ispr serverless.LaunchFunctionResponse) {
 			switch ispr.Event {
 			case serverless.Done:
 				if functionUrl == "" || functionName == "" {
@@ -121,7 +120,9 @@ func (p *PluginManager) Reinstall(
 			default:
 				responseStream.WriteError(fmt.Errorf("unknown event: %s, with message: %s", ispr.Event, ispr.Message))
 			}
-		})
+		}); err != nil {
+			responseStream.WriteError(err)
+		}
 	})
 
 	return responseStream, nil
@@ -169,7 +170,7 @@ func (p *PluginManager) installServerless(
 		functionUrl := ""
 		functionName := ""
 
-		response.Async(func(r serverless.LaunchFunctionResponse) {
+		if err := response.Async(func(r serverless.LaunchFunctionResponse) {
 			if r.Event == serverless.Info {
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventInfo,
@@ -239,7 +240,9 @@ func (p *PluginManager) installServerless(
 			} else {
 				responseStream.WriteError(fmt.Errorf("unknown event: %s, with message: %s", r.Event, r.Message))
 			}
-		})
+		}); err != nil {
+			responseStream.WriteError(err)
+		}
 	})
 
 	return responseStream, nil

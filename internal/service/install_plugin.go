@@ -15,7 +15,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -38,7 +37,7 @@ type InstallPluginOnDoneHandler func(
 ) error
 
 type InstallPluginOnMessageHandler func(
-	message InstallPluginResponse,
+	message installation_entities.PluginInstallResponse,
 )
 
 func updateTaskStatus(
@@ -121,76 +120,25 @@ func doInstallPluginRuntime(
 	)
 
 	var stream *stream.Stream[installation_entities.PluginInstallResponse]
-	if config.Platform == app.PLATFORM_SERVERLESS {
-		var zipDecoder *decoder.ZipPluginDecoder
-		var pkgFile []byte
-
-		pkgFile, err = manager.GetPackage(pluginUniqueIdentifier)
-		if err != nil {
-			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-				task.Status = models.InstallTaskStatusFailed
-				plugin.Status = models.InstallTaskStatusFailed
-				plugin.Message = "Failed to read plugin package"
-				onMessage(controlpanel.PluginInstallResponse{
-					Event: controlpanel.PluginInstallEventError,
-					Data:  plugin.Message,
-				})
-			})
-			return
-		}
-
-		zipDecoder, err = decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
-			pkgFile,
-			&decoder.ThirdPartySignatureVerificationConfig{
-				Enabled:        config.ThirdPartySignatureVerificationEnabled,
-				PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
-			},
-		)
-		if err != nil {
-			updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-				task.Status = models.InstallTaskStatusFailed
-				plugin.Status = models.InstallTaskStatusFailed
-				plugin.Message = err.Error()
-				onMessage(controlpanel.PluginInstallResponse{
-					Event: controlpanel.PluginInstallEventError,
-					Data:  plugin.Message,
-				})
-			})
-			return
-		}
-		if reinstall {
-			stream, err = manager.Reinstall(pluginUniqueIdentifier)
-		} else {
-			stream, err = manager.Install(pluginUniqueIdentifier)
-		}
-	} else if config.Platform == app.PLATFORM_LOCAL {
-		if reinstall {
-			log.Warn("reinstall is not supported on local platform, will do install")
-		}
-		stream, err = manager.InstallToLocal(pluginUniqueIdentifier, source, meta)
+	if reinstall {
+		stream, err = manager.Reinstall(pluginUniqueIdentifier)
 	} else {
-		updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-			task.Status = models.InstallTaskStatusFailed
-			plugin.Status = models.InstallTaskStatusFailed
-			plugin.Message = "Unsupported platform"
-			onMessage(plugin_manager.PluginInstallResponse{
-				Event: plugin_manager.PluginInstallEventError,
-				Data:  plugin.Message,
-			})
-		})
-		return
+		stream, err = manager.Install(pluginUniqueIdentifier)
 	}
 
 	if err != nil {
-		updateTaskStatus(func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-			task.Status = models.InstallTaskStatusFailed
-			plugin.Status = models.InstallTaskStatusFailed
-			plugin.Message = err.Error()
-			onMessage(plugin_manager.PluginInstallResponse{
-				Event: plugin_manager.PluginInstallEventError,
-				Data:  plugin.Message,
-			})
-		})
+		updateTaskStatus(
+			task.ID, pluginUniqueIdentifier,
+			func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
+				task.Status = models.InstallTaskStatusFailed
+				plugin.Status = models.InstallTaskStatusFailed
+				plugin.Message = err.Error()
+				onMessage(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventError,
+					Data:  plugin.Message,
+				})
+			},
+		)
 		return
 	}
 
