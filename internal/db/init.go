@@ -76,7 +76,7 @@ func Init(config *app.Config) {
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
 		})
-	} else if config.DBType == "mysql" {
+	} else if config.DBType == "mysql" || config.DBType == "oceanbase" {	
 		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),

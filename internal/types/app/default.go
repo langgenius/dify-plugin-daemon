@@ -41,7 +41,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
 	if config.DBType == "postgresql" {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
-	} else if config.DBType == "mysql" {
+	} else if config.DBType == "mysql" || config.DBType == "oceanbase" {
 		setDefaultString(&config.DBDefaultDatabase, "mysql")
 	}
 	setDefaultBoolPtr(&config.HealthApiLogEnabled, true)

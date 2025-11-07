@@ -294,6 +294,8 @@ func (c *Config) LoadDBConfig() error {
 		prefix = "MYSQL"
 	case "postgresql":
 		prefix = "POSTGRES"
+	case "oceanbase":
+		prefix = "OCEANBASE"
 	default:
 		return nil
 	}
