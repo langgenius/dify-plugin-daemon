@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -20,8 +19,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
-	"gorm.io/gorm"
 )
 
 // // invalidate plugin installation cache
@@ -32,70 +29,6 @@ import (
 type InstallPluginResponse struct {
 	AllInstalled bool   `json:"all_installed"`
 	TaskID       string `json:"task_id"`
-}
-
-type InstallPluginOnDoneHandler func(
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	declaration *plugin_entities.PluginDeclaration,
-	meta map[string]any,
-) error
-
-type InstallPluginOnMessageHandler func(
-	message installation_entities.PluginInstallResponse,
-)
-
-func updateTaskStatus(
-	taskId string,
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus),
-) error {
-	return db.WithTransaction(func(tx *gorm.DB) error {
-		task, err := db.GetOne[models.InstallTask](
-			db.WithTransactionContext(tx),
-			db.Equal("id", taskId),
-			db.WLock(), // write lock, multiple tasks can't update the same task
-		)
-
-		if err == db.ErrDatabaseNotFound {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		taskPointer := &task
-		var pluginStatus *models.InstallTaskPluginStatus
-		for i := range task.Plugins {
-			if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
-				pluginStatus = &task.Plugins[i]
-				break
-			}
-		}
-
-		if pluginStatus == nil {
-			return nil
-		}
-
-		modifier(taskPointer, pluginStatus)
-
-		successes := 0
-		for _, plugin := range taskPointer.Plugins {
-			if plugin.Status == models.InstallTaskStatusSuccess {
-				successes++
-			}
-		}
-
-		if successes == len(taskPointer.Plugins) {
-			// update status
-			taskPointer.Status = models.InstallTaskStatusSuccess
-			// delete the task after 120 seconds without transaction
-			time.AfterFunc(120*time.Second, func() {
-				db.Delete(taskPointer)
-			})
-		}
-		return db.Update(taskPointer, tx)
-	})
 }
 
 // read the install task stream and handling its updates
@@ -451,50 +384,6 @@ func ReinstallPluginFromIdentifier(
 	}, ctx, 1800)
 }
 
-/*
- * Decode a plugin from a given identifier, no tenant_id is needed
- * When upload local plugin inside Dify, the second step need to ensure that the plugin is valid
- * So we need to provide a way to decode the plugin and verify the signature
- */
-func DecodePluginFromIdentifier(
-	config *app.Config,
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-) *entities.Response {
-	// get plugin package and decode again
-	manager := plugin_manager.Manager()
-	pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
-	if err != nil {
-		return exception.BadRequestError(err).ToResponse()
-	}
-
-	zipDecoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(
-		pkgFile,
-		&decoder.ThirdPartySignatureVerificationConfig{
-			Enabled:        config.ThirdPartySignatureVerificationEnabled,
-			PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
-		},
-	)
-	if err != nil {
-		return exception.BadRequestError(err).ToResponse()
-	}
-
-	verification, _ := zipDecoder.Verification()
-	if verification == nil && zipDecoder.Verified() {
-		verification = decoder.DefaultVerification()
-	}
-
-	declaration, err := zipDecoder.Manifest()
-	if err != nil {
-		return exception.BadRequestError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(map[string]any{
-		"unique_identifier": pluginUniqueIdentifier,
-		"manifest":          declaration,
-		"verification":      verification,
-	})
-}
-
 func UpgradePlugin(
 	config *app.Config,
 	tenantId string,
@@ -526,209 +415,7 @@ func UpgradePlugin(
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	// install the new plugin runtime
-	response, err := InstallPluginRuntimeToTenant(
-		config,
-		tenantId,
-		[]plugin_entities.PluginUniqueIdentifier{newPluginUniqueIdentifier},
-		source,
-		[]map[string]any{meta},
-		func(
-			pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-			declaration *plugin_entities.PluginDeclaration,
-			meta map[string]any,
-		) error {
-			originalDeclaration, err := helper.CombinedGetPluginDeclaration(
-				originalPluginUniqueIdentifier,
-				plugin_entities.PluginRuntimeType(installation.RuntimeType),
-			)
-			if err != nil {
-				return err
-			}
-
-			newDeclaration, err := helper.CombinedGetPluginDeclaration(
-				newPluginUniqueIdentifier,
-				plugin_entities.PluginRuntimeType(installation.RuntimeType),
-			)
-			if err != nil {
-				return err
-			}
-			// uninstall the original plugin
-			upgradeResponse, err := curd.UpgradePlugin(
-				tenantId,
-				originalPluginUniqueIdentifier,
-				newPluginUniqueIdentifier,
-				originalDeclaration,
-				newDeclaration,
-				plugin_entities.PluginRuntimeType(installation.RuntimeType),
-				source,
-				meta,
-			)
-
-			if err != nil {
-				return err
-			}
-
-			// invalidate plugin installation cache
-			pluginInstallationCacheKey := helper.PluginInstallationCacheKey(originalPluginUniqueIdentifier.PluginID(), tenantId)
-			_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
-
-			if upgradeResponse.IsOriginalPluginDeleted {
-				// delete the plugin if no installation left
-				manager := plugin_manager.Manager()
-				if string(upgradeResponse.DeletedPlugin.InstallType) == string(
-					plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
-				) {
-					err = manager.UninstallFromLocal(
-						plugin_entities.PluginUniqueIdentifier(upgradeResponse.DeletedPlugin.PluginUniqueIdentifier),
-					)
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(response)
-}
-
-func FetchPluginInstallationTasks(
-	tenant_id string,
-	page int,
-	page_size int,
-) *entities.Response {
-	tasks, err := db.GetAll[models.InstallTask](
-		db.Equal("tenant_id", tenant_id),
-		db.OrderBy("created_at", true),
-		db.Page(page, page_size),
-	)
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(tasks)
-}
-
-func FetchPluginInstallationTask(
-	tenant_id string,
-	task_id string,
-) *entities.Response {
-	task, err := db.GetOne[models.InstallTask](
-		db.Equal("id", task_id),
-		db.Equal("tenant_id", tenant_id),
-	)
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(task)
-}
-
-func DeletePluginInstallationTask(
-	tenant_id string,
-	task_id string,
-) *entities.Response {
-	err := db.DeleteByCondition(
-		models.InstallTask{
-			Model: models.Model{
-				ID: task_id,
-			},
-			TenantID: tenant_id,
-		},
-	)
-
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(true)
-}
-
-func DeleteAllPluginInstallationTasks(
-	tenant_id string,
-) *entities.Response {
-	err := db.DeleteByCondition(
-		models.InstallTask{
-			TenantID: tenant_id,
-		},
-	)
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(true)
-}
-
-func DeletePluginInstallationItemFromTask(
-	tenant_id string,
-	task_id string,
-	identifier plugin_entities.PluginUniqueIdentifier,
-) *entities.Response {
-	err := db.WithTransaction(func(tx *gorm.DB) error {
-		item, err := db.GetOne[models.InstallTask](
-			db.WithTransactionContext(tx),
-			db.Equal("id", task_id),
-			db.Equal("tenant_id", tenant_id),
-			db.WLock(),
-		)
-
-		if err != nil {
-			return err
-		}
-
-		plugins := []models.InstallTaskPluginStatus{}
-		for _, plugin := range item.Plugins {
-			if plugin.PluginUniqueIdentifier != identifier {
-				plugins = append(plugins, plugin)
-			}
-		}
-
-		successes := 0
-		for _, plugin := range plugins {
-			if plugin.Status == models.InstallTaskStatusSuccess {
-				successes++
-			}
-		}
-
-		if len(plugins) == successes {
-			// delete the task if all plugins are installed successfully
-			err = db.Delete(&item, tx)
-		} else {
-			item.Plugins = plugins
-			err = db.Update(&item, tx)
-		}
-
-		return err
-	})
-
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(true)
-}
-
-func FetchPluginFromIdentifier(
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-) *entities.Response {
-	_, err := db.GetOne[models.Plugin](
-		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-	)
-	if err == db.ErrDatabaseNotFound {
-		return entities.NewSuccessResponse(false)
-	}
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	return entities.NewSuccessResponse(true)
+	// TODO: upgrade process
 }
 
 func UninstallPlugin(
