@@ -32,7 +32,13 @@ func (p *PluginManager) Install(
 	return p.installServerless(pluginUniqueIdentifier)
 }
 
-// TODO: comments
+// serverless runtime uses a strategy that firstly compile the plugin into a docker image
+// then execute it on a docker container(k8s pod / aws lambda)
+// however, it's mutable due to dependencies updates when using a version range to
+// limit the dependencies, e.g. `dify_plugin>=1.0.0,<2.0.0`
+//
+// but serverless runtime persists the image, that's why we introduced `Reinstall`
+// it recompiles the plugin and launch a new plugin runtime, replace the old one
 func (p *PluginManager) Reinstall(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
@@ -40,7 +46,7 @@ func (p *PluginManager) Reinstall(
 		return nil, ErrReinstallNotSupported
 	}
 
-	response, err := p.controlPanel.ReinstallToServerlessFromPkg(pluginUniqueIdentifier)
+	response, err := p.controlPanel.ReinstallToServerless(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, errors.Join(
 			errors.New("failed to reinstall plugin to serverless"),
@@ -144,7 +150,7 @@ func (p *PluginManager) updateServerlessRuntimeModel(
 func (p *PluginManager) installServerless(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
-	response, err := p.controlPanel.InstallToServerlessFromPkg(pluginUniqueIdentifier)
+	response, err := p.controlPanel.InstallToServerless(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, errors.Join(
 			errors.New("failed to install plugin to serverless"),
@@ -275,7 +281,7 @@ func (p *PluginManager) installLocal(
 		p.controlPanel.DisableLocalPluginAutoLaunch(pluginUniqueIdentifier)
 
 		// move the plugin to installed bucket
-		err := p.controlPanel.InstallToLocalFromPkg(pluginUniqueIdentifier)
+		err := p.controlPanel.InstallToLocal(pluginUniqueIdentifier)
 		if err != nil {
 			return
 		}

@@ -10,7 +10,7 @@ import (
 // It's scope only for marking the plugin as `installed`,
 // you should call `LaunchLocalPlugin` to start it or it may launched by daemon
 // automatically
-func (c *ControlPanel) InstallToLocalFromPkg(
+func (c *ControlPanel) InstallToLocal(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) error {
 	// copy the package from `packageBucket` to `installedBucket`

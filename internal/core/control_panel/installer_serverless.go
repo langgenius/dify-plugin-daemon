@@ -6,7 +6,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-func (c *ControlPanel) InstallToServerlessFromPkg(
+func (c *ControlPanel) InstallToServerless(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (
 	*stream.Stream[InstallServerlessPluginResponse], error,
@@ -37,7 +37,7 @@ func (c *ControlPanel) InstallToServerlessFromPkg(
 	return response, nil
 }
 
-func (c *ControlPanel) ReinstallToServerlessFromPkg(
+func (c *ControlPanel) ReinstallToServerless(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (
 	*stream.Stream[InstallServerlessPluginResponse], error,
