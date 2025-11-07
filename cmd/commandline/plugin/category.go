@@ -21,15 +21,17 @@ const PLUGIN_GUIDE = `Before starting, here's some basic knowledge about Plugin 
 ` + BOLD + `- Tool` + RESET + `: ` + GREEN + `Tool Providers like Google Search, Stable Diffusion, etc. Used to perform specific tasks.` + RESET + `
 ` + BOLD + `- Model` + RESET + `: ` + GREEN + `Model Providers like OpenAI, Anthropic, etc. Use their models to enhance AI capabilities.` + RESET + `
 ` + BOLD + `- Endpoint` + RESET + `: ` + GREEN + `Similar to Service API in Dify and Ingress in Kubernetes. Extend HTTP services as endpoints with custom logic.` + RESET + `
+` + BOLD + `- Trigger` + RESET + `: ` + GREEN + `Event-driven providers that dispatch workflow executions via webhooks or polling.` + RESET + `
 ` + BOLD + `- Agent Strategy` + RESET + `: ` + GREEN + `Implement your own agent strategies like Function Calling, ReAct, ToT, CoT, etc.` + RESET + `
 
-Based on the ability you want to extend, Plugins are divided into five types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, ` + BOLD + `Extension` + RESET + `, ` + BOLD + `Agent Strategy` + RESET + `, and ` + BOLD + `Datasource` + RESET + `.
+Based on the ability you want to extend, Plugins are divided into six types: ` + BOLD + `Tool` + RESET + `, ` + BOLD + `Model` + RESET + `, ` + BOLD + `Extension` + RESET + `, ` + BOLD + `Agent Strategy` + RESET + `, ` + BOLD + `Datasource` + RESET + `, and ` + BOLD + `Trigger` + RESET + `.
 
 ` + BOLD + `- Tool` + RESET + `: ` + YELLOW + `A tool provider that can also implement endpoints. For example, building a Discord Bot requires both ` + BLUE + `Sending` + RESET + YELLOW + ` and ` + BLUE + `Receiving Messages` + RESET + YELLOW + `, so both ` + BOLD + `Tool` + RESET + YELLOW + ` and ` + BOLD + `Endpoint` + RESET + YELLOW + ` functionality.` + RESET + `
 ` + BOLD + `- Model` + RESET + `: ` + YELLOW + `Strictly for model providers, no other extensions allowed.` + RESET + `
 ` + BOLD + `- Extension` + RESET + `: ` + YELLOW + `For simple HTTP services that extend functionality.` + RESET + `
 ` + BOLD + `- Agent Strategy` + RESET + `: ` + YELLOW + `Implement custom agent logic with a focused approach.` + RESET + `
 ` + BOLD + `- Datasource` + RESET + `: ` + YELLOW + `Provide datasource for Dify RAG Pipeline.` + RESET + `
+` + BOLD + `- Trigger` + RESET + `: ` + YELLOW + `Build webhook or polling integrations that emit events to kick off workflows.` + RESET + `
 
 We've provided templates to help you get started. Choose one of the options below:
 `
@@ -49,6 +51,7 @@ var categories = []string{
 	"moderation",
 	"extension",
 	"datasource",
+	"trigger",
 }
 
 func newCategory() category {
