@@ -26,10 +26,18 @@ type PluginManager struct {
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
 
-	// packageBucket is used to manage plugin packages, all the packages uploaded by users will be saved here
+	// packageBucket can be considered as a collection of all uploaded plugin
+	// original packages, once a package was accepted by Dify,
+	// it should be stored here.
 	packageBucket *media_transport.PackageBucket
 
 	// installedBucket is used to manage installed plugins, all the installed plugins will be saved here
+	// `accepted` dose not means `installed`, a installed plugin
+	// will be scheduled by daemon, daemon copied and move the package
+	// from `packageBucket` to `installedBucket`
+	// the copy processing marks a plugin as `installed`
+	// as for `scheduling`, it's automatically done by control panel
+	// of course you may use `controlPanel.LaunchLocalPlugin` to start it manually
 	installedBucket *media_transport.InstalledBucket
 
 	// backwardsInvocation is a handle to invoke dify
@@ -37,6 +45,11 @@ type PluginManager struct {
 
 	config *app.Config
 
+	// plugin lifecycle controller
+	//
+	// whatever it's local mode or serverless mode, all the signals and calls
+	// which related to plugin lifecycle should be handled by it.
+	// so that we can decouple lifetime control and thirdparty service like package management
 	controlPanel *controlpanel.ControlPanel
 }
 
@@ -44,29 +57,34 @@ var (
 	manager *PluginManager
 )
 
-func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
+func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 	mediaBucket := media_transport.NewAssetsBucket(
 		oss,
-		configuration.PluginMediaCachePath,
-		configuration.PluginMediaCacheSize,
+		config.PluginMediaCachePath,
+		config.PluginMediaCacheSize,
 	)
 
 	installedBucket := media_transport.NewInstalledBucket(
 		oss,
-		configuration.PluginInstalledPath,
+		config.PluginInstalledPath,
 	)
 
 	packageBucket := media_transport.NewPackageBucket(
 		oss,
-		configuration.PluginPackageCachePath,
+		config.PluginPackageCachePath,
 	)
 
 	manager = &PluginManager{
 		mediaBucket:     mediaBucket,
 		packageBucket:   packageBucket,
 		installedBucket: installedBucket,
-		controlPanel:    controlpanel.NewControlPanel(configuration, mediaBucket, installedBucket),
-		config:          configuration,
+		controlPanel: controlpanel.NewControlPanel(
+			config,
+			mediaBucket,
+			packageBucket,
+			installedBucket,
+		),
+		config: config,
 	}
 
 	return manager

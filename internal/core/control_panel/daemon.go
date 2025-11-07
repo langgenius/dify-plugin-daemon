@@ -26,6 +26,9 @@ type ControlPanel struct {
 	// installed bucket
 	installedBucket *media_transport.InstalledBucket
 
+	// package bucket
+	packageBucket *media_transport.PackageBucket
+
 	// notifiers
 	controlPanelNotifiers    []ControlPanelNotifier
 	controlPanelNotifierLock *sync.RWMutex
@@ -49,6 +52,13 @@ type ControlPanel struct {
 		LocalPluginFailsRecord,
 	]
 
+	// this map marks plugins which should be ignored by `WatchDog`
+	// once a plugin is added, the launch process will be prevented
+	localPluginWatchIgnoreList mapping.Map[
+		plugin_entities.PluginUniqueIdentifier,
+		bool,
+	]
+
 	// local plugin installation lock
 	// locks when a plugin is on its installation process, avoid the same plugin
 	// to be processed concurrently
@@ -70,11 +80,13 @@ type LocalPluginFailsRecord struct {
 func NewControlPanel(
 	config *app.Config,
 	mediaBucket *media_transport.MediaBucket,
+	packageBucket *media_transport.PackageBucket,
 	installedBucket *media_transport.InstalledBucket,
 ) *ControlPanel {
 	return &ControlPanel{
 		config:          config,
 		mediaBucket:     mediaBucket,
+		packageBucket:   packageBucket,
 		installedBucket: installedBucket,
 
 		localPluginLaunchingSemaphore: make(chan bool, config.PluginLocalLaunchingConcurrent),

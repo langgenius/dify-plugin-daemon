@@ -3,6 +3,7 @@ package controlpanel
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 func (c *ControlPanel) StartWatchDog() {
@@ -42,4 +43,22 @@ func (c *ControlPanel) startDebuggingServerWatchDog() {
 			}
 		}()
 	}
+}
+
+// The plugin can never be launched by `WatchDog` automatically
+//
+// by default, all plugins are in auto launch mode
+func (c *ControlPanel) DisableLocalPluginAutoLaunch(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) {
+	c.localPluginWatchIgnoreList.Store(pluginUniqueIdentifier, true)
+}
+
+// Enable auto launch for a plugin
+//
+// by default, all plugins are in auto launch mode
+func (c *ControlPanel) EnableLocalPluginAutoLaunch(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) {
+	c.localPluginWatchIgnoreList.Delete(pluginUniqueIdentifier)
 }

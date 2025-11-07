@@ -59,14 +59,17 @@ func (c *LocalPluginInstanceLifetimeCallback) OnRuntimeClose() {
 // This method initializes environment (pypi, uv, dependencies, etc.) for a plugin
 // and then starts the schedule loop
 //
+// NOTE: this method also triggers notifiers added to ControlPanel
+// signal that a plugin starts successfully or failed
+//
 // Returns a channel that notifies if the process finished (both success and failed)
 func (c *ControlPanel) LaunchLocalPlugin(
-	uniquePluginIdentifier plugin_entities.PluginUniqueIdentifier,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*local_runtime.LocalPluginRuntime, <-chan error, error) {
-	c.localPluginInstallationLock.Lock(uniquePluginIdentifier.String())
+	c.localPluginInstallationLock.Lock(pluginUniqueIdentifier.String())
 
 	// check if the plugin is already installed
-	if _, exists := c.localPluginRuntimes.Load(uniquePluginIdentifier); exists {
+	if _, exists := c.localPluginRuntimes.Load(pluginUniqueIdentifier); exists {
 		return nil, nil, ErrorPluginAlreadyLaunched
 	}
 
@@ -75,7 +78,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 
 	releaseLockAndSemaphore := func() {
 		// this lock avoids the same plugin to be installed concurrently
-		c.localPluginInstallationLock.Unlock(uniquePluginIdentifier.String())
+		c.localPluginInstallationLock.Unlock(pluginUniqueIdentifier.String())
 
 		// release semaphore to allow next plugin to be installed
 		<-c.localPluginLaunchingSemaphore
@@ -83,16 +86,16 @@ func (c *ControlPanel) LaunchLocalPlugin(
 
 	// notify new runtime is starting
 	c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-		notifier.OnLocalRuntimeStarting(uniquePluginIdentifier)
+		notifier.OnLocalRuntimeStarting(pluginUniqueIdentifier)
 	})
 
 	// launch and wait for ready or error
-	runtime, decoder, err := c.buildLocalPluginRuntime(uniquePluginIdentifier)
+	runtime, decoder, err := c.buildLocalPluginRuntime(pluginUniqueIdentifier)
 	if err != nil {
 		err = errors.Join(err, fmt.Errorf("failed to get local plugin runtime"))
 		// notify new runtime launch failed
 		c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-			notifier.OnLocalRuntimeStartFailed(uniquePluginIdentifier, err)
+			notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
 		})
 		// release semaphore
 		releaseLockAndSemaphore()
@@ -106,7 +109,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		err = errors.Join(err, fmt.Errorf("failed to init environment"))
 		// notify new runtime launch failed
 		c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-			notifier.OnLocalRuntimeStartFailed(uniquePluginIdentifier, err)
+			notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
 		})
 		// release semaphore
 		releaseLockAndSemaphore()
@@ -123,7 +126,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			// ideally, `once` is not needed here as `onReady` should only be triggered once
 			once.Do(func() {
 				// store the runtime
-				c.localPluginRuntimes.Store(uniquePluginIdentifier, runtime)
+				c.localPluginRuntimes.Store(pluginUniqueIdentifier, runtime)
 				// notify new runtime ready
 				c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 					notifier.OnLocalRuntimeReady(runtime)
@@ -138,7 +141,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			once.Do(func() {
 				// notify new runtime launch failed
 				c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-					notifier.OnLocalRuntimeStartFailed(uniquePluginIdentifier, err)
+					notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
 				})
 				// release semaphore
 				releaseLockAndSemaphore()
@@ -148,7 +151,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		onRuntimeClose: func() {
 			// delete the runtime from the map
 			// Even if the runtime is not ready, deleting it still makes sense
-			c.localPluginRuntimes.Delete(uniquePluginIdentifier)
+			c.localPluginRuntimes.Delete(pluginUniqueIdentifier)
 		},
 	}
 	runtime.AddNotifier(lifetime)
@@ -160,7 +163,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		err = errors.Join(err, fmt.Errorf("failed to schedule local plugin runtime"))
 		// notify new runtime launch failed
 		c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-			notifier.OnLocalRuntimeStartFailed(uniquePluginIdentifier, err)
+			notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
 		})
 		// release semaphore
 		releaseLockAndSemaphore()

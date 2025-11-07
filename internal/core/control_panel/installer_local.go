@@ -1,75 +1,69 @@
 package controlpanel
 
 import (
-	"time"
+	"errors"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 // InstallToLocalFromPkg installs a plugin to the local plugin runtime
-// It's scope only for initializing environment, !!!starting schedule loop is not included
+// It's scope only for marking the plugin as `installed`,
+// you should call `LaunchLocalPlugin` to start it or it may launched by daemon
+// automatically
 func (c *ControlPanel) InstallToLocalFromPkg(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-) (*stream.Stream[InstallLocalPluginResponse], error) {
-	runtime, decoder, err := c.buildLocalPluginRuntime(pluginUniqueIdentifier)
+) error {
+	// copy the package from `packageBucket` to `installedBucket`
+	// this step marks the plugin as `installed`
+	packageFile, err := c.packageBucket.Get(pluginUniqueIdentifier.String())
 	if err != nil {
-		return nil, err
+		return errors.Join(
+			errors.New("failed to get package file when trying to install plugin to local"),
+			err,
+		)
 	}
 
-	response := stream.NewStream[InstallLocalPluginResponse](128)
-	routine.Submit(map[string]string{
-		"module": "installer_local",
-		"func":   "InstallToLocalFromPkg_Job",
-	}, func() {
-		defer response.Close()
+	err = c.installedBucket.Save(pluginUniqueIdentifier, packageFile)
+	if err != nil {
+		return errors.Join(
+			errors.New("failed to save package file to installed bucket when trying to install plugin to local"),
+			err,
+		)
+	}
 
-		// write the initial info
-		response.Write(InstallLocalPluginResponse{
-			Event:   installation_entities.PluginInstallEventInfo,
-			Message: "Installing plugin to local runtime...",
-		})
+	// try to decode the package
+	_, decoder, err := c.buildLocalPluginRuntime(pluginUniqueIdentifier)
+	if err != nil {
+		return err
+	}
 
-		// init environment, create a channel to handle heartbeat to avoid network timeout
-		c := make(chan error)
-		ticker := time.NewTicker(5 * time.Second)
+	_, err = decoder.Manifest()
+	if err != nil {
+		return errors.Join(
+			errors.New("failed to get manifest when trying to install plugin to local"),
+			err,
+		)
+	}
 
-		routine.Submit(map[string]string{
-			"module": "installer_local",
-			"func":   "InstallToLocalFromPkg_Job_InitEnvironment",
-		}, func() {
-			defer close(c)
-			if err := runtime.InitEnvironment(decoder); err != nil {
-				c <- err
-			}
-		})
+	return nil
+}
 
-		// wait for the plugin to be installed
-		for {
-			select {
-			case <-ticker.C:
-				response.Write(InstallLocalPluginResponse{
-					Event:   installation_entities.PluginInstallEventInfo,
-					Message: "Initializing plugin environment in progress...",
-				})
-			case err := <-c:
-				if err == nil {
-					response.Write(InstallLocalPluginResponse{
-						Event:   installation_entities.PluginInstallEventDone,
-						Message: "Plugin environment initialized successfully",
-					})
-				} else {
-					response.Write(InstallLocalPluginResponse{
-						Event:   installation_entities.PluginInstallEventError,
-						Message: err.Error(),
-					})
-				}
-				return
-			}
-		}
-	})
+// RemoveLocalPlugin removes a plugin from the local plugin runtime
+// It's scope only for marking the plugin as `not installed`
+// If you want to stop plugin runtime immediately, you should call `ShutdownLocalPluginForcefully`
+// or `ShutdownLocalPluginGracefully`
+// they have the right to shutdown a runtime.
+func (c *ControlPanel) RemoveLocalPlugin(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) error {
+	// remove the package from the `installedBucket`
+	err := c.installedBucket.Delete(pluginUniqueIdentifier)
+	if err != nil {
+		return errors.Join(
+			errors.New("failed to delete package file from installed bucket when trying to remove plugin from local"),
+			err,
+		)
+	}
 
-	return response, nil
+	return nil
 }

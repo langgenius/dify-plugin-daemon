@@ -3,12 +3,14 @@ package plugin_manager
 import (
 	"errors"
 	"fmt"
+	"time"
 
-	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
@@ -40,6 +42,7 @@ func (p *PluginManager) Reinstall(
 	return nil, nil
 }
 
+// whenever a plugin was installed successfully, a record will be inserted into `models.ServerlessRuntime`
 func (p *PluginManager) installServerless(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
@@ -69,7 +72,13 @@ func (p *PluginManager) installServerless(
 				})
 				return
 			}
+
 			// check if the plugin is already installed
+			// NOTE: models.ServerlessRuntime is a tenant-isolated model
+			// it hands only engine-level persist data like which serverless runtime is installed
+			// that's why we placed it here, not in service layer.
+			//
+			// service layer takes care of tenant-level persist data like "which tenant installed which plugin"
 			_, err := db.GetOne[models.ServerlessRuntime](
 				db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 				db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
@@ -87,26 +96,30 @@ func (p *PluginManager) installServerless(
 				if err != nil {
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
-						Data:  "Failed to create serverless runtime",
+						Data:  "failed to create serverless runtime",
 					})
 					return
 				}
 			} else if err != nil {
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
-					Data:  "Failed to check if the plugin is already installed",
+					Data:  "failed to check if the plugin is already installed",
 				})
 				return
 			}
 
 			responseStream.Write(installation_entities.PluginInstallResponse{
 				Event: installation_entities.PluginInstallEventDone,
-				Data:  "Installed",
+				Data:  "successfully installed",
 			})
 		} else if r.Event == serverless.Error {
+			// FIXME(Yeuoly): log the error to terminal, but avoid using inline log
+			// try to refactor the code to a more elegant way like abstracting all lifetime events
+			// and make logger in a centralized layer
+			log.Error("failed to install plugin to serverless: %s", r.Message)
 			responseStream.Write(installation_entities.PluginInstallResponse{
 				Event: installation_entities.PluginInstallEventError,
-				Data:  "Internal server error",
+				Data:  "internal server error",
 			})
 		} else if r.Event == serverless.FunctionUrl {
 			functionUrl = r.Message
@@ -125,39 +138,89 @@ func (p *PluginManager) installLocal(
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 
-	response, err := p.controlPanel.InstallToLocalFromPkg(pluginUniqueIdentifier)
-	if err != nil {
-		return nil, errors.Join(
-			errors.New("failed to install plugin to local"),
-			err,
-		)
-	}
-
 	routine.Submit(map[string]string{
 		"module": "plugin_manager",
 		"action": "installLocal",
 	}, func() {
+		// firstly, install the plugin, then launch it, delete it if process fails
+		var success bool = false
+		var runtime *local_runtime.LocalPluginRuntime
+		var ch <-chan error
+
 		defer responseStream.Close()
-		response.Async(func(response controlpanel.InstallLocalPluginResponse) {
-			if response.Event == installation_entities.PluginInstallEventInfo {
-				responseStream.Write(installation_entities.PluginInstallResponse{
-					Event: installation_entities.PluginInstallEventInfo,
-					Data:  "Installing...",
-				})
+		defer func() {
+			if !success {
+				p.controlPanel.RemoveLocalPlugin(pluginUniqueIdentifier)
+
+				// release the lock, avoid a potential race condition
+				// that plugins never be scheduled automatically
+				p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
+
+				// forcefully stop runtime, prevent continuous scheduling
+				if runtime != nil {
+					runtime.Stop()
+				}
 			}
-			if response.Event == installation_entities.PluginInstallEventDone {
-				responseStream.Write(installation_entities.PluginInstallResponse{
-					Event: installation_entities.PluginInstallEventDone,
-					Data:  "Installed",
-				})
-			}
-			if response.Event == installation_entities.PluginInstallEventError {
+		}()
+
+		// to avoid race condition:
+		// 	  WatchDog` starts the plugin before `installLocal` called `LaunchLocalPlugin`
+		//    firstly disable the auto launch
+		p.controlPanel.DisableLocalPluginAutoLaunch(pluginUniqueIdentifier)
+
+		// move the plugin to installed bucket
+		err := p.controlPanel.InstallToLocalFromPkg(pluginUniqueIdentifier)
+		if err != nil {
+			return
+		}
+
+		// call `LaunchLocalPlugin` to launch the plugin
+		// this method will trigger notifiers added to ControlPanel
+		// signal that a plugin starts successfully or failed
+		runtime, ch, err = p.controlPanel.LaunchLocalPlugin(pluginUniqueIdentifier)
+		if err != nil {
+			// release the lock
+			return
+		}
+
+		ticker := time.NewTicker(5 * time.Second)
+		timeout := time.Duration(p.config.PythonEnvInitTimeout) * time.Second
+		timer := time.NewTimer(timeout)
+
+		for {
+			select {
+			case <-timer.C:
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
-					Data:  "Failed to install plugin to local",
+					Data: fmt.Sprintf(
+						"timed out on waiting for plugin to be ready after %s, "+
+							"please contract the administrator to check the logs",
+						timeout.String(),
+					),
 				})
+				return
+			case <-ticker.C:
+				responseStream.Write(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventInfo,
+					Data:  "installing heartbeat, waiting for plugin to be ready...",
+				})
+			case err := <-ch:
+				if err != nil {
+					responseStream.Write(installation_entities.PluginInstallResponse{
+						Event: installation_entities.PluginInstallEventError,
+						Data:  fmt.Sprintf("failed to launch plugin: %s", err.Error()),
+					})
+					return
+				} else {
+					responseStream.Write(installation_entities.PluginInstallResponse{
+						Event: installation_entities.PluginInstallEventDone,
+						Data:  "successfully installed",
+					})
+					success = true
+					return
+				}
 			}
-		})
+		}
 	})
 
 	return responseStream, nil

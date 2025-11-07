@@ -65,7 +65,13 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 	var wg sync.WaitGroup
 
 	for _, uniquePluginIdentifier := range plugins {
-		// TODO: optimize following codes
+		// check if the plugin is in the ignore list
+		if _, ok := c.localPluginWatchIgnoreList.Load(uniquePluginIdentifier); ok {
+			// skip the plugin
+			continue
+		}
+
+		// skip if the plugin is already launched
 		if c.localPluginRuntimes.Exists(uniquePluginIdentifier) {
 			continue
 		}
