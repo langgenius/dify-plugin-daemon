@@ -142,7 +142,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 				}
 			}
 
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
+			c.JSON(http.StatusOK, service.InstallMultiplePluginsToTenant(
 				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
 		})

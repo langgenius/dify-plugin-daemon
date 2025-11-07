@@ -37,7 +37,7 @@ func InstallMultiplePluginsToTenant(
 	pluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier,
 	source string,
 	metas []map[string]any,
-) (*InstallPluginResponse, error) {
+) *InstallPluginResponse {
 
 	// TODO: implement this, create task firstly (including EE)
 	for i, pluginUniqueIdentifier := range pluginUniqueIdentifiers {
