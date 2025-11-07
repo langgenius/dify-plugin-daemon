@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -39,7 +40,6 @@ func (p *PluginManager) Reinstall(
 		return nil, ErrReinstallNotSupported
 	}
 
-	// TODO: implement reinstall for serverless platform
 	response, err := p.controlPanel.ReinstallToServerlessFromPkg(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, errors.Join(
@@ -48,6 +48,96 @@ func (p *PluginManager) Reinstall(
 		)
 	}
 
+	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
+
+	routine.Submit(map[string]string{
+		"module": "plugin_manager",
+		"action": "reinstallServerless",
+	}, func() {
+		defer responseStream.Close()
+
+		functionUrl := ""
+		functionName := ""
+
+		response.Async(func(ispr controlpanel.InstallServerlessPluginResponse) {
+			switch ispr.Event {
+			case serverless.Done:
+				if functionUrl == "" || functionName == "" {
+					responseStream.Write(installation_entities.PluginInstallResponse{
+						Event: installation_entities.PluginInstallEventError,
+						Data:  "Internal server error, failed to get serverless function url or function name",
+					})
+					return
+				}
+
+				// update serverless runtime model
+				if err := p.updateServerlessRuntimeModel(pluginUniqueIdentifier, functionUrl, functionName); err != nil {
+					responseStream.Write(installation_entities.PluginInstallResponse{
+						Event: installation_entities.PluginInstallEventError,
+						Data:  "failed to get serverless runtime model",
+					})
+					return
+				}
+
+				// cleanup system cache for serverless runtime model
+				// cleanup must be done after updating the model, otherwise race condition may occur
+				if err := p.clearServerlessRuntimeCache(pluginUniqueIdentifier); err != nil {
+					log.Error("failed to cleanup system cache for serverless runtime model: %v", err)
+					responseStream.Write(installation_entities.PluginInstallResponse{
+						Event: installation_entities.PluginInstallEventError,
+						Data:  "failed to cleanup system cache for serverless runtime model",
+					})
+					return
+				}
+
+				responseStream.Write(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventDone,
+					Data:  "successfully reinstalled",
+				})
+			case serverless.Error:
+				// FIXME(Yeuoly): log the error to terminal, but avoid using inline log
+				// try to refactor the code to a more elegant way like abstracting all lifetime events
+				// and make logger in a centralized layer
+				log.Error("failed to reinstall plugin to serverless: %s", ispr.Message)
+				responseStream.Write(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventError,
+					Data:  "failed to reinstall plugin to serverless",
+				})
+			case serverless.Info:
+				responseStream.Write(installation_entities.PluginInstallResponse{
+					Event: installation_entities.PluginInstallEventInfo,
+					Data:  "reinstalling...",
+				})
+			case serverless.Function:
+				functionName = ispr.Message
+			case serverless.FunctionUrl:
+				functionUrl = ispr.Message
+			default:
+				responseStream.WriteError(fmt.Errorf("unknown event: %s, with message: %s", ispr.Event, ispr.Message))
+			}
+		})
+	})
+
+	return responseStream, nil
+}
+
+func (p *PluginManager) updateServerlessRuntimeModel(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	functionUrl string,
+	functionName string,
+) error {
+	serverlessModel, err := db.GetOne[models.ServerlessRuntime](
+		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+		db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
+	)
+	if err != nil {
+		return err
+	}
+
+	serverlessModel.FunctionURL = functionUrl
+	serverlessModel.FunctionName = functionName
+
+	return db.Update(&serverlessModel)
 }
 
 // whenever a plugin was installed successfully, a record will be inserted into `models.ServerlessRuntime`
