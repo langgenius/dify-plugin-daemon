@@ -4,6 +4,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 )
 
 type App struct {
@@ -21,4 +22,7 @@ type App struct {
 
 	// plugin manager instance
 	pluginManager *plugin_manager.PluginManager
+
+	// configuration
+	config *app.Config
 }
