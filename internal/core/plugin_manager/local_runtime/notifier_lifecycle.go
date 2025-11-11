@@ -1,12 +1,10 @@
 package local_runtime
 
 import (
-	"sync"
 	"time"
 )
 
 type NotifierHeartbeat struct {
-	once          *sync.Once
 	afterShutdown []func()
 }
 

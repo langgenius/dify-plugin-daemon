@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ScheduleLoopInterval = 1 * time.Second
+	ScheduleLoopInterval = 5 * time.Second
 )
 
 // Start schedule loop, it's a routine method will never block

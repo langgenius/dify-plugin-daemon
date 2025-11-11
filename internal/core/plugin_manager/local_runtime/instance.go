@@ -253,7 +253,7 @@ func (s *PluginInstance) StartStderr() {
 // it will return an error if the plugin is not active
 // you can also call `Stop()` to stop the monitoring process
 func (s *PluginInstance) Monitor() error {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	// check status of plugin every 5 seconds
