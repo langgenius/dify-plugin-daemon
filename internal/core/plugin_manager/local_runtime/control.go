@@ -27,7 +27,6 @@ func (r *LocalPluginRuntime) Schedule() error {
 }
 
 func (r *LocalPluginRuntime) scheduleLoop() {
-	// TODO: continuously check `instanceNums` and `instances`
 	// once it's not match, scale it
 	ticker := time.NewTicker(ScheduleLoopInterval)
 	defer ticker.Stop()

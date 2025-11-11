@@ -54,7 +54,6 @@ func (c *ControlPanel) removeUnusedLocalPlugins() {
 // the installation of a plugin may be triggered by other nodes
 // sync all the installed plugins in all nodes
 func (c *ControlPanel) handleNewLocalPlugins() {
-	// TODO: handle new local plugins
 	// walk through all plugins
 	plugins, err := c.installedBucket.List()
 	if err != nil {

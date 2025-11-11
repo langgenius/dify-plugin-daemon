@@ -293,6 +293,23 @@ func (s *PluginInstance) Write(data []byte) error {
 // GracefulStop stops the instance gracefully
 // wait for at most maxWaitTime to shutdown, forcefully kill it if timeout reached
 func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
-	// TODO: wait for all listeners to be closed
+	timeout := time.NewTimer(maxWaitTime)
+	defer timeout.Stop()
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
+	for {
+		select {
+		case <-timeout.C:
+			// timeout reached, forcefully kill the instance
+			s.Stop()
+			return
+		case <-ticker.C:
+			if len(s.listener) == 0 {
+				// all listeners are closed, shutdown the instance
+				s.Stop()
+				return
+			}
+		}
+	}
 }
