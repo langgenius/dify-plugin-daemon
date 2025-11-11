@@ -121,6 +121,12 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// setup launch notifier
 	heartbeatOnce := sync.Once{}
 	instance.AddNotifier(&PluginInstanceNotifierTemplate{
+		OnInstanceReadyImpl: func(pi *PluginInstance) {
+			// notify plugin started
+			r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+				notifier.OnInstanceReady(instance)
+			})
+		},
 		OnInstanceHeartbeatImpl: func(pi *PluginInstance) {
 			heartbeatOnce.Do(func() {
 				// mark the instance as started
@@ -177,15 +183,6 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	r.instanceLocker.Lock()
 	r.instances = append(r.instances, instance)
 	r.instanceLocker.Unlock()
-
-	// notify plugin started
-	instance.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-		notifier.OnInstanceReady(instance)
-	})
-
-	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
-		notifier.OnInstanceReady(instance)
-	})
 
 	success = true
 	return nil

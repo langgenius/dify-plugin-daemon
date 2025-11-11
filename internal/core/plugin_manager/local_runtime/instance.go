@@ -170,6 +170,7 @@ func (s *PluginInstance) StartStdout() {
 
 // handles stdout data and notify corresponding listeners
 func (s *PluginInstance) handleStdout(data []byte) {
+	once := sync.Once{}
 	plugin_entities.ParsePluginUniversalEvent(
 		data,
 		"",
@@ -186,6 +187,12 @@ func (s *PluginInstance) handleStdout(data []byte) {
 			// heartbeat
 			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 				notifier.OnInstanceHeartbeat(s)
+			})
+			// only first heartbeat will trigger this
+			once.Do(func() {
+				s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+					notifier.OnInstanceReady(s)
+				})
 			})
 		},
 		func(err string) {
