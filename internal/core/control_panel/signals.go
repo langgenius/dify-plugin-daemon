@@ -13,6 +13,10 @@ type ControlPanelNotifier interface {
 	OnLocalRuntimeReady(runtime *local_runtime.LocalPluginRuntime)
 	// on local runtime failed to start
 	OnLocalRuntimeStartFailed(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier, err error)
+	// on local runtime stop
+	OnLocalRuntimeStop(pluginUniqueIdentifier *local_runtime.LocalPluginRuntime)
+	// on local runtime plugin totally stopped
+	OnLocalRuntimeStopped(pluginUniqueIdentifier *local_runtime.LocalPluginRuntime)
 
 	// on remote runtime connected
 	OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime)

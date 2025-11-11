@@ -17,5 +17,8 @@ type PluginRuntimeNotifier interface {
 	OnInstanceScaleDownFailed(error)
 
 	// on runtime stop schedule
+	OnRuntimeStopSchedule()
+
+	// on runtime close
 	OnRuntimeClose()
 }

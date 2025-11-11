@@ -96,13 +96,13 @@ func (app *App) Run(config *app.Config) {
 	oss := initOSS(config)
 
 	// create manager
-	manager := plugin_manager.InitGlobalManager(oss, config)
+	app.pluginManager = plugin_manager.InitGlobalManager(oss, config)
 
 	// create cluster
-	app.cluster = cluster.NewCluster(config, manager)
+	app.cluster = cluster.NewCluster(config)
 
 	// init manager
-	manager.Launch(config)
+	app.pluginManager.Launch(config)
 
 	// init persistence
 	persistence.InitPersistence(oss, config)

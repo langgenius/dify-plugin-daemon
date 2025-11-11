@@ -18,8 +18,7 @@ import (
 const (
 	MAX_ERR_MSG_LEN = 1024
 
-	MAX_HEARTBEAT_INTERVAL     = 120 * time.Second
-	MAX_GRACEFUL_STOP_INTERVAL = 120 * time.Second
+	MAX_HEARTBEAT_INTERVAL = 120 * time.Second
 )
 
 type PluginInstance struct {
@@ -161,9 +160,11 @@ func (s *PluginInstance) StartStdout() {
 		})
 	}
 
-	// kill subprocess
+	// once reader of stdout is closed, kill subprocess
 	if err := s.cmd.Process.Kill(); err != nil {
-		s.WriteError(fmt.Sprintf("failed to kill subprocess: %s", err.Error()))
+		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to kill subprocess: %s", err.Error()))
+		})
 	}
 }
 
@@ -289,8 +290,9 @@ func (s *PluginInstance) Write(data []byte) error {
 	return err
 }
 
-func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) error {
+// GracefulStop stops the instance gracefully
+// wait for at most maxWaitTime to shutdown, forcefully kill it if timeout reached
+func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
 	// TODO: wait for all listeners to be closed
 
-	return nil
 }

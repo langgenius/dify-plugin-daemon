@@ -21,6 +21,10 @@ type pluginState struct {
 	Identity string `json:"identity"`
 }
 
+func (l *pluginLifeTime) UpdateScheduledAt(t time.Time) {
+	l.lastScheduledAt = t
+}
+
 // RegisterPlugin registers a plugin to the cluster, and start to be scheduled
 func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error {
 	identity, err := lifetime.Identity()
@@ -40,32 +44,23 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 		lifetime: lifetime,
 	}
 
-	lifetime.OnStop(func() {
-		c.pluginLock.Lock()
-		c.plugins.Delete(identity.String())
-		// remove plugin state
-		c.doPluginStateUpdate(l)
-		c.pluginLock.Unlock()
-	})
+	c.plugins.Store(identity.String(), l)
 
-	c.pluginLock.Lock()
-	if !lifetime.Stopped() {
-		c.plugins.Store(identity.String(), l)
-
-		// do plugin state update immediately
-		err = c.doPluginStateUpdate(l)
-		if err != nil {
-			c.pluginLock.Unlock()
-			return err
-		}
+	// do plugin state update immediately
+	err = c.doPluginStateUpdate(l)
+	if err != nil {
+		return err
 	}
-	c.pluginLock.Unlock()
 
 	if c.showLog {
 		log.Info("start to schedule plugin %s", identity)
 	}
 
 	return nil
+}
+
+func (c *Cluster) UnregisterPlugin(lifetime plugin_entities.PluginLifetime) {
+	// TODO
 }
 
 const (
@@ -164,7 +159,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		if err != nil {
 			return err
 		}
-		lifetime.lifetime.UpdateScheduledAt(*scheduleState.ScheduledAt)
+		lifetime.UpdateScheduledAt(*scheduleState.ScheduledAt)
 		if c.showLog {
 			log.Info("updated plugin state %s", identity.String())
 		}
@@ -284,17 +279,4 @@ func (c *Cluster) autoGCPlugins() error {
 			return nil
 		},
 	)
-}
-
-func (c *Cluster) IsPluginOnCurrentNode(identity plugin_entities.PluginUniqueIdentifier) (bool, error) {
-	_, ok := c.plugins.Load(identity.String())
-	if !ok {
-		_, err := c.manager.Get(identity)
-		if err != nil {
-			return false, err
-		} else {
-			return true, nil
-		}
-	}
-	return ok, nil
 }

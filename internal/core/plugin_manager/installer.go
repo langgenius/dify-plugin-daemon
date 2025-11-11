@@ -273,7 +273,7 @@ func (p *PluginManager) installLocal(
 
 				// forcefully stop runtime, prevent continuous scheduling
 				if runtime != nil {
-					runtime.Stop()
+					runtime.Stop(false)
 				}
 			}
 		}()

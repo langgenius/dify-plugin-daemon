@@ -63,14 +63,8 @@ type (
 	}
 
 	PluginClusterLifetime interface {
-		// stop the plugin
-		Stop()
-		// returns true if the plugin is stopped
-		Stopped() bool
 		// returns the runtime state of the plugin
 		RuntimeState() PluginRuntimeState
-		// Update the runtime state of the plugin
-		UpdateScheduledAt(t time.Time)
 	}
 
 	PluginBasicInfoInterface interface {

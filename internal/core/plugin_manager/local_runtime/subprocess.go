@@ -176,5 +176,6 @@ func (r *LocalPluginRuntime) gracefullyStopLowestLoadInstance() error {
 	}
 
 	// gracefully shutdown the instance
-	return instance.GracefulStop(MAX_GRACEFUL_STOP_INTERVAL)
+	instance.GracefulStop(time.Duration(r.appConfig.PluginMaxExecutionTimeout) * time.Second)
+	return nil
 }

@@ -34,12 +34,10 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 
 	// notify callers that the runtime is not running anymore
 	defer r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
-		notifier.OnRuntimeClose()
+		notifier.OnRuntimeStopSchedule()
 	})
 
 	for atomic.LoadInt32(&r.scheduleStatus) == ScheduleStatusRunning {
-		<-ticker.C
-
 		// check if the instance nums is match
 		r.instanceLocker.RLock()
 		currentInstanceNums := len(r.instances)
@@ -63,6 +61,10 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 				})
 			}
 		}
+
+		// wait for the next tick
+		// this waiting must be done after all the schedule logic
+		<-ticker.C
 	}
 }
 
@@ -71,24 +73,78 @@ func (r *LocalPluginRuntime) stopSchedule() {
 	atomic.CompareAndSwapInt32(&r.scheduleStatus, ScheduleStatusRunning, ScheduleStatusStopped)
 }
 
-// Stop schedule loop, blocks until all instances were shutdown
-func (r *LocalPluginRuntime) Stop() error {
+// Stop schedule loop, wait until all instances were shutdown
+func (r *LocalPluginRuntime) Stop(async bool) {
 	// inherit from PluginRuntime
 	r.PluginRuntime.Stop()
 
+	// stop schedule loop
 	r.stopSchedule()
 
-	// TODO: send stop signal and wait for all instances to be shutdown
-	return nil
+	// forcefully shutdown all instances
+	r.forcefullyShutdownAllInstances()
+
+	// wait for all instances to be shutdown
+	if !async {
+		r.waitForAllInstancesToBeShutdown()
+	} else {
+		routine.Submit(map[string]string{
+			"module": "local_runtime", "method": "waitForAllInstancesToBeShutdown",
+		}, func() {
+			r.waitForAllInstancesToBeShutdown()
+		})
+	}
 }
 
 // GracefulStop stops the runtime gracefully
 // Wait until all instances were gracefully shutdown and all sessions were closed
-func (r *LocalPluginRuntime) GracefulStop() error {
+func (r *LocalPluginRuntime) GracefulStop(async bool) {
+	// inherit from PluginRuntime
+	r.PluginRuntime.Stop()
+
 	// stop schedule loop
 	r.stopSchedule()
 
-	// TODO: wait for all instances to be shutdown
+	// wait for all instances to be shutdown
+	if !async {
+		r.stopAndWaitForAllInstancesToBeShutdown()
+	} else {
+		routine.Submit(map[string]string{
+			"module": "local_runtime", "method": "stopAndWaitForAllInstancesToBeShutdown",
+		}, func() {
+			r.stopAndWaitForAllInstancesToBeShutdown()
+		})
+	}
+}
 
-	return nil
+// forcefully shutdown all instances, it's a async method which will not block
+func (r *LocalPluginRuntime) forcefullyShutdownAllInstances() {
+	instances := r.instances
+	for _, instance := range instances {
+		instance.Stop()
+	}
+}
+
+// stop and wait for all instances to be shutdown
+// please make sure to call this method after stop schedule loop
+// otherwise new instances are going to start
+func (r *LocalPluginRuntime) stopAndWaitForAllInstancesToBeShutdown() {
+	instances := r.instances
+	for _, instance := range instances {
+		instance.GracefulStop(time.Duration(r.appConfig.PluginMaxExecutionTimeout) * time.Second)
+	}
+}
+
+func (r *LocalPluginRuntime) waitForAllInstancesToBeShutdown() {
+	ticker := time.NewTicker(time.Second * 1)
+	defer ticker.Stop()
+
+	for len(r.instances) > 0 {
+		<-ticker.C
+	}
+
+	// notify callers that the runtime is shutdown
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnRuntimeClose()
+	})
 }

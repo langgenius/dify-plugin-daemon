@@ -16,6 +16,7 @@ type LocalPluginInstanceLifetimeCallback struct {
 	onFailed          func(instance *local_runtime.PluginInstance, err error)
 	onShutdown        func(instance *local_runtime.PluginInstance)
 	onScaleDownFailed func(err error)
+	onStopSchedule    func()
 	onRuntimeClose    func()
 }
 
@@ -46,6 +47,12 @@ func (c *LocalPluginInstanceLifetimeCallback) OnInstanceShutdown(instance *local
 func (c *LocalPluginInstanceLifetimeCallback) OnInstanceScaleDownFailed(err error) {
 	if c.onScaleDownFailed != nil {
 		c.onScaleDownFailed(err)
+	}
+}
+
+func (c *LocalPluginInstanceLifetimeCallback) OnRuntimeStopSchedule() {
+	if c.onStopSchedule != nil {
+		c.onStopSchedule()
 	}
 }
 
@@ -152,6 +159,17 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			// delete the runtime from the map
 			// Even if the runtime is not ready, deleting it still makes sense
 			c.localPluginRuntimes.Delete(pluginUniqueIdentifier)
+
+			// notify the plugin totally stopped
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeStopped(runtime)
+			})
+		},
+		onStopSchedule: func() {
+			// notify the plugin is stopping
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeStop(runtime)
+			})
 		},
 	}
 	runtime.AddNotifier(lifetime)
@@ -191,10 +209,7 @@ func (c *ControlPanel) ShutdownLocalPluginForcefully(
 		"module": "controlpanel",
 		"func":   "ShutdownLocalPluginForcefully",
 	}, func() {
-		err := runtime.Stop()
-		if err != nil {
-			ch <- err
-		}
+		runtime.Stop(false)
 
 		// trigger that the runtime is shutdown
 		close(ch)
@@ -223,10 +238,7 @@ func (c *ControlPanel) ShutdownLocalPluginGracefully(
 		"module": "controlpanel",
 		"func":   "ShutdownLocalPluginGracefully",
 	}, func() {
-		err := runtime.GracefulStop()
-		if err != nil {
-			ch <- err
-		}
+		runtime.GracefulStop(false)
 
 		// trigger that the runtime is shutdown
 		close(ch)
