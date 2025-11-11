@@ -1,8 +1,6 @@
 package service
 
 import (
-	"time"
-
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -125,60 +123,4 @@ func DeletePluginInstallationItemFromTask(
 	}
 
 	return entities.NewSuccessResponse(true)
-}
-
-// To update task status more elegant, avoid frequent code like lock and unlock
-// this method offers a way to update task status with a modifier function
-func updateTaskStatus(
-	taskId string,
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	modifier func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus),
-) error {
-	return db.WithTransaction(func(tx *gorm.DB) error {
-		task, err := db.GetOne[models.InstallTask](
-			db.WithTransactionContext(tx),
-			db.Equal("id", taskId),
-			db.WLock(), // write lock, multiple tasks can't update the same task
-		)
-
-		if err == db.ErrDatabaseNotFound {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		taskPointer := &task
-		var pluginStatus *models.InstallTaskPluginStatus
-		for i := range task.Plugins {
-			if task.Plugins[i].PluginUniqueIdentifier == pluginUniqueIdentifier {
-				pluginStatus = &task.Plugins[i]
-				break
-			}
-		}
-
-		if pluginStatus == nil {
-			return nil
-		}
-
-		modifier(taskPointer, pluginStatus)
-
-		successes := 0
-		for _, plugin := range taskPointer.Plugins {
-			if plugin.Status == models.InstallTaskStatusSuccess {
-				successes++
-			}
-		}
-
-		if successes == len(taskPointer.Plugins) {
-			// update status
-			taskPointer.Status = models.InstallTaskStatusSuccess
-			// delete the task after 120 seconds without transaction
-			time.AfterFunc(120*time.Second, func() {
-				db.Delete(taskPointer)
-			})
-		}
-		return db.Update(taskPointer, tx)
-	})
 }

@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/tasks"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
@@ -27,38 +27,8 @@ type InstallPluginResponse struct {
 	TaskID       string `json:"task_id"`
 }
 
-type pluginInstallJob struct {
-	identifier          plugin_entities.PluginUniqueIdentifier
-	declaration         *plugin_entities.PluginDeclaration
-	meta                map[string]any
-	needsRuntimeInstall bool
-}
-
-type installTaskRegistry struct {
-	order []string
-	tasks map[string]*models.InstallTask
-}
-
-func (r *installTaskRegistry) IDs() []string {
-	ids := make([]string, 0, len(r.order))
-	for _, tenantID := range r.order {
-		if task, ok := r.tasks[tenantID]; ok {
-			ids = append(ids, task.ID)
-		}
-	}
-	return ids
-}
-
-func (r *installTaskRegistry) PrimaryID() string {
-	if len(r.order) == 0 {
-		return ""
-	}
-	if task, ok := r.tasks[r.order[0]]; ok {
-		return task.ID
-	}
-	return ""
-}
-
+// Dify supports install multiple plugins to a tenant at once
+// At most
 func InstallMultiplePluginsToTenant(
 	config *app.Config,
 	tenantId string,
@@ -72,7 +42,9 @@ func InstallMultiplePluginsToTenant(
 		return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
 	}
 
-	jobs := make([]pluginInstallJob, 0, len(pluginUniqueIdentifiers))
+	// create len(pluginUniqueIdentifiers) jobs, each job is for one plugin
+	// and runs in a single goroutine after the task is created
+	jobs := make([]tasks.PluginInstallJob, 0, len(pluginUniqueIdentifiers))
 	declarations := make([]*plugin_entities.PluginDeclaration, 0, len(pluginUniqueIdentifiers))
 	allInstalled := true
 
@@ -97,22 +69,26 @@ func InstallMultiplePluginsToTenant(
 			return exception.InternalServerError(err).ToResponse()
 		}
 
-		job := pluginInstallJob{
-			identifier:          pluginUniqueIdentifier,
-			declaration:         declaration,
-			meta:                metas[i],
-			needsRuntimeInstall: needsRuntimeInstall,
+		job := tasks.PluginInstallJob{
+			Identifier:          pluginUniqueIdentifier,
+			Declaration:         declaration,
+			Meta:                metas[i],
+			NeedsRuntimeInstall: needsRuntimeInstall,
 		}
 
 		jobs = append(jobs, job)
 		declarations = append(declarations, declaration)
 	}
 
-	tenants := resolveInstallTenants(config, tenantId)
+	// Always, EE edition needs a global reference to display installation progress
+	// add it if needed
+	tenants := joinGlobalTenantIfNeeded(config, tenantId)
 
+	// all plugins are installed, no need to create tasks
+	// just add DB record and return
 	if allInstalled {
 		for i := range jobs {
-			if err := installForTenants(
+			if err := tasks.SaveInstallationForTenantsToDB(
 				tenants,
 				jobs[i],
 				runtimeType,
@@ -128,6 +104,7 @@ func InstallMultiplePluginsToTenant(
 		})
 	}
 
+	// create tasks for each plugin
 	statuses := buildTaskStatuses(pluginUniqueIdentifiers, declarations)
 	taskRegistry, err := createInstallTasks(tenants, statuses)
 	if err != nil {
@@ -137,11 +114,12 @@ func InstallMultiplePluginsToTenant(
 
 	for _, job := range jobs {
 		jobCopy := job
+		// start a new goroutine to install the plugin
 		routine.Submit(map[string]string{
 			"module": "service",
 			"func":   "InstallPlugin",
 		}, func() {
-			processInstallJob(
+			tasks.ProcessInstallJob(
 				manager,
 				tenants,
 				runtimeType,
@@ -154,182 +132,10 @@ func InstallMultiplePluginsToTenant(
 
 	return entities.NewSuccessResponse(&InstallPluginResponse{
 		AllInstalled: false,
-		TaskID:       taskRegistry.PrimaryID(),
+		// EE edition reference task should not be the first one
+		// here we use `PrimaryID` to present the user-facing task id
+		TaskID: taskRegistry.PrimaryID(),
 	})
-}
-
-func processInstallJob(
-	manager *plugin_manager.PluginManager,
-	tenants []string,
-	runtimeType plugin_entities.PluginRuntimeType,
-	source string,
-	taskIDs []string,
-	job pluginInstallJob,
-) {
-	if !job.needsRuntimeInstall {
-		if err := installForTenants(tenants, job, runtimeType, source); err != nil {
-			setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusFailed, err.Error())
-			return
-		}
-		setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusSuccess, "Installed")
-		return
-	}
-
-	installationStream, err := manager.Install(job.identifier)
-	if err != nil {
-		setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
-		return
-	}
-
-	err = installationStream.Async(func(resp installation_entities.PluginInstallResponse) {
-		switch resp.Event {
-		case installation_entities.PluginInstallEventInfo:
-			setTaskMessage(taskIDs, job.identifier, resp.Data)
-		case installation_entities.PluginInstallEventError:
-			setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusFailed, resp.Data)
-		case installation_entities.PluginInstallEventDone:
-			if err := installForTenants(tenants, job, runtimeType, source); err != nil {
-				setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusFailed, err.Error())
-				return
-			}
-			setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusSuccess, "Installed")
-		}
-	})
-	if err != nil {
-		setTaskStatus(taskIDs, job.identifier, models.InstallTaskStatusFailed, err.Error())
-	}
-}
-
-func installForTenants(
-	tenants []string,
-	job pluginInstallJob,
-	runtimeType plugin_entities.PluginRuntimeType,
-	source string,
-) error {
-	for _, tenantID := range tenants {
-		if err := installForTenant(tenantID, job, runtimeType, source); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func installForTenant(
-	tenantID string,
-	job pluginInstallJob,
-	runtimeType plugin_entities.PluginRuntimeType,
-	source string,
-) error {
-	_, _, err := curd.InstallPlugin(
-		tenantID,
-		job.identifier,
-		runtimeType,
-		job.declaration,
-		source,
-		job.meta,
-	)
-	if err != nil && err != curd.ErrPluginAlreadyInstalled {
-		return err
-	}
-	return nil
-}
-
-func buildTaskStatuses(
-	pluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier,
-	declarations []*plugin_entities.PluginDeclaration,
-) []models.InstallTaskPluginStatus {
-	statuses := make([]models.InstallTaskPluginStatus, len(pluginUniqueIdentifiers))
-	for i, identifier := range pluginUniqueIdentifiers {
-		statuses[i] = models.InstallTaskPluginStatus{
-			PluginUniqueIdentifier: identifier,
-			PluginID:               identifier.PluginID(),
-			Status:                 models.InstallTaskStatusPending,
-			Icon:                   declarations[i].Icon,
-			IconDark:               declarations[i].IconDark,
-			Labels:                 declarations[i].Label,
-			Message:                "",
-		}
-	}
-	return statuses
-}
-
-func createInstallTasks(
-	tenants []string,
-	statuses []models.InstallTaskPluginStatus,
-) (*installTaskRegistry, error) {
-	registry := &installTaskRegistry{
-		order: append([]string{}, tenants...),
-		tasks: make(map[string]*models.InstallTask, len(tenants)),
-	}
-
-	for _, tenantID := range tenants {
-		statusCopy := make([]models.InstallTaskPluginStatus, len(statuses))
-		copy(statusCopy, statuses)
-
-		task := &models.InstallTask{
-			Status:           models.InstallTaskStatusRunning,
-			TenantID:         tenantID,
-			TotalPlugins:     len(statusCopy),
-			CompletedPlugins: 0,
-			Plugins:          statusCopy,
-		}
-
-		if err := db.Create(task); err != nil {
-			return nil, err
-		}
-
-		registry.tasks[tenantID] = task
-	}
-
-	return registry, nil
-}
-
-func setTaskStatus(
-	taskIDs []string,
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	status models.InstallTaskStatus,
-	message string,
-) {
-	for _, taskID := range taskIDs {
-		if err := updateTaskStatus(taskID, pluginUniqueIdentifier, func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-			previousStatus := plugin.Status
-			plugin.Status = status
-			plugin.Message = message
-			if status == models.InstallTaskStatusSuccess && previousStatus != models.InstallTaskStatusSuccess {
-				task.CompletedPlugins++
-			}
-			if status == models.InstallTaskStatusFailed {
-				task.Status = models.InstallTaskStatusFailed
-				if previousStatus == models.InstallTaskStatusSuccess && task.CompletedPlugins > 0 {
-					task.CompletedPlugins--
-				}
-			}
-		}); err != nil {
-			log.Error("failed to update task status for %s: %v", pluginUniqueIdentifier.String(), err)
-		}
-	}
-}
-
-func setTaskMessage(
-	taskIDs []string,
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	message string,
-) {
-	for _, taskID := range taskIDs {
-		if err := updateTaskStatus(taskID, pluginUniqueIdentifier, func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
-			plugin.Message = message
-		}); err != nil {
-			log.Error("failed to update task message for %s: %v", pluginUniqueIdentifier.String(), err)
-		}
-	}
-}
-
-func resolveInstallTenants(config *app.Config, tenantId string) []string {
-	tenants := []string{tenantId}
-	if tenantId != constants.GlobalTenantId && config.PluginAllowOrphans {
-		tenants = append(tenants, constants.GlobalTenantId)
-	}
-	return tenants
 }
 
 /*
@@ -380,7 +186,7 @@ func ReinstallPluginFromIdentifier(
 
 			reinstallStream, err := manager.Reinstall(pluginUniqueIdentifier)
 			if err != nil {
-				setTaskStatus(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, err.Error())
+				tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, err.Error())
 				retStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
 					Data:  err.Error(),
@@ -392,9 +198,9 @@ func ReinstallPluginFromIdentifier(
 				retStream.Write(resp)
 				switch resp.Event {
 				case installation_entities.PluginInstallEventInfo:
-					setTaskMessage(taskRegistry.IDs(), pluginUniqueIdentifier, resp.Data)
+					tasks.SetTaskMessageForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, resp.Data)
 				case installation_entities.PluginInstallEventError:
-					setTaskStatus(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, resp.Data)
+					tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, resp.Data)
 				case installation_entities.PluginInstallEventDone:
 					_, _, installErr := curd.InstallPlugin(
 						constants.GlobalTenantId,
@@ -405,15 +211,15 @@ func ReinstallPluginFromIdentifier(
 						map[string]any{},
 					)
 					if installErr != nil && installErr != curd.ErrPluginAlreadyInstalled {
-						setTaskStatus(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, installErr.Error())
+						tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, installErr.Error())
 						return
 					}
-					setTaskStatus(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusSuccess, "Reinstalled")
+					tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusSuccess, "Reinstalled")
 				}
 			})
 
 			if err != nil {
-				setTaskStatus(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, err.Error())
+				tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, err.Error())
 				retStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
 					Data:  err.Error(),
