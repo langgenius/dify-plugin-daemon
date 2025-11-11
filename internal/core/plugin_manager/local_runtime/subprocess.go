@@ -99,7 +99,7 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	instance := newPluginInstance(r.Config.Identity(), e, stdin, stdout, stderr, r.appConfig)
 
 	// setup launch notifier
-	launchNotifier := newNotifierLifecycleSignal()
+	launchNotifier := newNotifierLifecycleSignal([]func(){cleanupIOHolders})
 	instance.AddNotifier(launchNotifier)
 
 	success := false
@@ -107,13 +107,6 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 		// if start NewInstance failed, close the pipes, avoid resource leak
 		if !success {
 			cleanupIOHolders()
-		} else {
-			// add cleanup callbacks to collect resources
-			instance.AddNotifier(&NotifierShutdown{
-				callbacks: []func(){
-					cleanupIOHolders,
-				},
-			})
 		}
 	}()
 

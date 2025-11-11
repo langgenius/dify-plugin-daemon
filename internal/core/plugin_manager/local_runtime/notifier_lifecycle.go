@@ -6,14 +6,18 @@ import (
 )
 
 type NotifierHeartbeat struct {
-	channel chan bool
-	once    *sync.Once
+	channel       chan bool
+	once          *sync.Once
+	afterShutdown []func()
 }
 
-func newNotifierLifecycleSignal() *NotifierHeartbeat {
+func newNotifierLifecycleSignal(
+	afterShutdown []func(),
+) *NotifierHeartbeat {
 	return &NotifierHeartbeat{
-		channel: make(chan bool),
-		once:    &sync.Once{},
+		channel:       make(chan bool),
+		once:          &sync.Once{},
+		afterShutdown: afterShutdown,
 	}
 }
 
@@ -31,6 +35,10 @@ func (n *NotifierHeartbeat) OnInstanceFailed(instance *PluginInstance, err error
 
 func (n *NotifierHeartbeat) OnInstanceShutdown(instance *PluginInstance) {
 	instance.shutdown = true
+
+	for _, callback := range n.afterShutdown {
+		callback()
+	}
 }
 
 func (n *NotifierHeartbeat) OnInstanceHeartbeat(instance *PluginInstance) {

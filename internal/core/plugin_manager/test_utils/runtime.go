@@ -7,14 +7,13 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"time"
+	"sync"
 
 	_ "embed"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -61,41 +60,47 @@ func GetRuntime(pluginZip []byte, cwd string) (*local_runtime.LocalPluginRuntime
 		}
 	}
 
-	localPluginRuntime := local_runtime.NewLocalPluginRuntime(local_runtime.LocalPluginRuntimeConfig{
+	// FIXME: cli test command should give a timeout for launching
+	runtime, err := local_runtime.ConstructPluginRuntime(&app.Config{
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
 		UvPath:                uvPath,
-	}, &app.Config{
-		PythonEnvInitTimeout: 120,
-	})
+		PythonEnvInitTimeout:  120,
+	}, decoder)
 
-	localPluginRuntime.PluginRuntime = plugin_entities.PluginRuntime{
-		Config: manifest,
-		State: plugin_entities.PluginRuntimeState{
-			Status:      plugin_entities.PLUGIN_RUNTIME_STATUS_PENDING,
-			Restarts:    0,
-			ActiveAt:    nil,
-			Verified:    manifest.Verified,
-			WorkingPath: pluginWorkingPath,
+	if err != nil {
+		return nil, errors.Join(err, fmt.Errorf("construct plugin runtime error"))
+	}
+
+	errChan := make(chan error)
+	launchedChan := make(chan bool)
+	once := sync.Once{}
+
+	notifier := local_runtime.PluginRuntimeNotifierTemplate{
+		OnInstanceFailedImpl: func(instance *local_runtime.PluginInstance, err error) {
+			once.Do(func() {
+				errChan <- err
+			})
+		},
+		OnInstanceReadyImpl: func(instance *local_runtime.PluginInstance) {
+			once.Do(func() {
+				launchedChan <- true
+			})
 		},
 	}
-	localPluginRuntime.BasicChecksum = basic_runtime.BasicChecksum{
-		WorkingPath: pluginWorkingPath,
-		Decoder:     decoder,
-	}
 
-	// local plugin
+	runtime.AddNotifier(&notifier)
+	if err := runtime.Schedule(); err != nil {
+		return nil, errors.Join(err, fmt.Errorf("schedule plugin runtime error"))
+	}
 
 	// wait for plugin launched
 	select {
 	case err := <-errChan:
-		return nil, err
+		return nil, errors.Join(err, fmt.Errorf("plugin runtime failed"))
 	case <-launchedChan:
 	}
 
-	// wait 1s for stdio to be ready
-	time.Sleep(1 * time.Second)
-
-	return localPluginRuntime, nil
+	return runtime, nil
 }
 
 func ClearTestingPath(cwd string) {
