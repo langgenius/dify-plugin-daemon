@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
@@ -39,10 +41,19 @@ func ConstructPluginRuntime(
 				WorkingPath: pluginWorkingPath,
 			},
 		},
+		BasicChecksum: basic_runtime.BasicChecksum{
+			Decoder: pluginDecoder,
+		},
 		scheduleStatus:               ScheduleStatusStopped,
 		defaultPythonInterpreterPath: appConfig.PythonInterpreterPath,
 		uvPath:                       appConfig.UvPath,
 		appConfig:                    appConfig,
+
+		instances:      []*PluginInstance{},
+		instanceLocker: &sync.RWMutex{},
+
+		notifiers:    []PluginRuntimeNotifier{},
+		notifierLock: &sync.Mutex{},
 	}
 	return runtime, nil
 }

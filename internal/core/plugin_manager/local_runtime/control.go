@@ -26,6 +26,16 @@ func (r *LocalPluginRuntime) Schedule() error {
 	return nil
 }
 
+// Increase replicas
+func (r *LocalPluginRuntime) ScaleUp() {
+	atomic.AddInt32(&r.instanceNums, 1)
+}
+
+// Decrease replicas
+func (r *LocalPluginRuntime) ScaleDown() {
+	atomic.AddInt32(&r.instanceNums, -1)
+}
+
 func (r *LocalPluginRuntime) scheduleLoop() {
 	// once it's not match, scale it
 	ticker := time.NewTicker(ScheduleLoopInterval)
@@ -43,15 +53,20 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 		r.instanceLocker.RUnlock()
 
 		// if the current instance nums is less than the expected instance nums, start a new instance
-		if currentInstanceNums < r.instanceNums {
+		if currentInstanceNums < int(r.instanceNums) {
 			// start a new instance
 			if err := r.startNewInstance(); err != nil {
 				// notify callers that a new instance failed to start
 				r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
 					notifier.OnInstanceLaunchFailed(nil, err)
 				})
+			} else {
+				// notify callers that a new instance started
+				r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+					notifier.OnInstanceStarting()
+				})
 			}
-		} else if currentInstanceNums > r.instanceNums {
+		} else if currentInstanceNums > int(r.instanceNums) {
 			// gracefully shutdown the instance
 			if err := r.gracefullyStopLowestLoadInstance(); err != nil {
 				// notify callers that failed to gracefully stop a instance

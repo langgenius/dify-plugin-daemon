@@ -11,7 +11,7 @@ import (
 )
 
 type LocalPluginInstanceLifetimeCallback struct {
-	onStarting        func(instance *local_runtime.PluginInstance)
+	onStarting        func()
 	onReady           func(instance *local_runtime.PluginInstance)
 	onFailed          func(instance *local_runtime.PluginInstance, err error)
 	onShutdown        func(instance *local_runtime.PluginInstance)
@@ -20,9 +20,9 @@ type LocalPluginInstanceLifetimeCallback struct {
 	onRuntimeClose    func()
 }
 
-func (c *LocalPluginInstanceLifetimeCallback) OnInstanceStarting(instance *local_runtime.PluginInstance) {
+func (c *LocalPluginInstanceLifetimeCallback) OnInstanceStarting() {
 	if c.onStarting != nil {
-		c.onStarting(instance)
+		c.onStarting()
 	}
 }
 
@@ -173,6 +173,9 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		},
 	}
 	runtime.AddNotifier(lifetime)
+
+	// scale up, ensure at least one instance is running
+	runtime.ScaleUp()
 
 	// start schedule
 	// NOTE: it's a async method, releasing semaphore here is not a good idea

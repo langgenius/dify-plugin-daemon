@@ -32,7 +32,7 @@ type InstanceSignalEntity struct {
 
 type PluginInstanceNotifier interface {
 	// on instance starting
-	OnInstanceStarting(*PluginInstance)
+	OnInstanceStarting()
 
 	// on instance ready
 	OnInstanceReady(*PluginInstance)

@@ -25,7 +25,7 @@ type LocalPluginRuntime struct {
 
 	appConfig *app.Config
 
-	instanceNums int // equivalent to K8s replicas
+	instanceNums int32 // equivalent to K8s replicas
 
 	sessionToInstanceMap mapping.Map[string, *PluginInstance]
 
@@ -33,7 +33,7 @@ type LocalPluginRuntime struct {
 	instances []*PluginInstance
 
 	// instanceLocker
-	instanceLocker sync.RWMutex
+	instanceLocker *sync.RWMutex
 
 	// round robin index
 	// NOTE: use atomic.AddInt64 and atomic.LoadInt64 to update and read it

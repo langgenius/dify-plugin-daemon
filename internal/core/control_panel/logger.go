@@ -22,12 +22,14 @@ func (l *StandardLogger) OnLocalRuntimeStartFailed(pluginUniqueIdentifier plugin
 	log.Error("local runtime start failed: %s, error: %s", pluginUniqueIdentifier, err)
 }
 
-func (l *StandardLogger) OnLocalRuntimeStop(pluginUniqueIdentifier *local_runtime.LocalPluginRuntime) {
-	log.Info("local runtime stop: %s", pluginUniqueIdentifier)
+func (l *StandardLogger) OnLocalRuntimeStop(runtime *local_runtime.LocalPluginRuntime) {
+	identity, _ := runtime.Identity()
+	log.Info("local runtime stop: %s", identity)
 }
 
-func (l *StandardLogger) OnLocalRuntimeStopped(pluginUniqueIdentifier *local_runtime.LocalPluginRuntime) {
-	log.Info("local runtime stopped: %s", pluginUniqueIdentifier)
+func (l *StandardLogger) OnLocalRuntimeStopped(runtime *local_runtime.LocalPluginRuntime) {
+	identity, _ := runtime.Identity()
+	log.Info("local runtime stopped: %s", identity)
 }
 
 func (l *StandardLogger) OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime) {

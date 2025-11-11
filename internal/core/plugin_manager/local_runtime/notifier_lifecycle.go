@@ -6,7 +6,6 @@ import (
 )
 
 type NotifierHeartbeat struct {
-	channel       chan bool
 	once          *sync.Once
 	afterShutdown []func()
 }
@@ -15,13 +14,11 @@ func newNotifierLifecycleSignal(
 	afterShutdown []func(),
 ) *NotifierHeartbeat {
 	return &NotifierHeartbeat{
-		channel:       make(chan bool),
-		once:          &sync.Once{},
 		afterShutdown: afterShutdown,
 	}
 }
 
-func (n *NotifierHeartbeat) OnInstanceStarting(instance *PluginInstance) {
+func (n *NotifierHeartbeat) OnInstanceStarting() {
 
 }
 
@@ -44,12 +41,6 @@ func (n *NotifierHeartbeat) OnInstanceShutdown(instance *PluginInstance) {
 func (n *NotifierHeartbeat) OnInstanceHeartbeat(instance *PluginInstance) {
 	// update the last active time on each time the plugin sends data
 	instance.lastActiveAt = time.Now()
-
-	n.once.Do(func() {
-		// mark the instance as started
-		instance.started = true
-		close(n.channel)
-	})
 }
 
 func (n *NotifierHeartbeat) OnInstanceLog(instance *PluginInstance, message string) {
@@ -62,11 +53,6 @@ func (n *NotifierHeartbeat) OnInstanceErrorLog(instance *PluginInstance, err err
 
 func (n *NotifierHeartbeat) OnInstanceWarningLog(instance *PluginInstance, message string) {
 
-}
-
-func (n *NotifierHeartbeat) WaitLaunchSignal() <-chan bool {
-	// wait for start signal
-	return n.channel
 }
 
 func (n *NotifierHeartbeat) OnInstanceStdout(instance *PluginInstance, data []byte) {

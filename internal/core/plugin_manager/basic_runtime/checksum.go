@@ -1,15 +1,12 @@
 package basic_runtime
 
 import (
-	"os"
-
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type BasicChecksum struct {
 	MediaTransport
 
-	WorkingPath string
 	// plugin decoder used to manage the plugin
 	Decoder decoder.PluginDecoder
 
@@ -35,8 +32,4 @@ func (r *BasicChecksum) Checksum() (string, error) {
 	}
 
 	return r.InnerChecksum, nil
-}
-
-func (r *BasicChecksum) Cleanup() {
-	os.RemoveAll(r.WorkingPath)
 }

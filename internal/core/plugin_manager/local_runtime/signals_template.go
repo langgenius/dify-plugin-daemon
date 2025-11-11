@@ -3,7 +3,7 @@ package local_runtime
 type PluginRuntimeNotifierTemplate struct {
 	PluginRuntimeNotifier
 
-	OnInstanceStartingImpl        func(*PluginInstance)
+	OnInstanceStartingImpl        func()
 	OnInstanceReadyImpl           func(*PluginInstance)
 	OnInstanceFailedImpl          func(*PluginInstance, error)
 	OnInstanceShutdownImpl        func(*PluginInstance)
@@ -12,9 +12,9 @@ type PluginRuntimeNotifierTemplate struct {
 	OnRuntimeCloseImpl            func()
 }
 
-func (t *PluginRuntimeNotifierTemplate) OnInstanceStarting(instance *PluginInstance) {
+func (t *PluginRuntimeNotifierTemplate) OnInstanceStarting() {
 	if t.OnInstanceStartingImpl != nil {
-		t.OnInstanceStartingImpl(instance)
+		t.OnInstanceStartingImpl()
 	}
 }
 
@@ -51,5 +51,80 @@ func (t *PluginRuntimeNotifierTemplate) OnRuntimeStopSchedule() {
 func (t *PluginRuntimeNotifierTemplate) OnRuntimeClose() {
 	if t.OnRuntimeCloseImpl != nil {
 		t.OnRuntimeCloseImpl()
+	}
+}
+
+type PluginInstanceNotifierTemplate struct {
+	PluginInstanceNotifier
+
+	OnInstanceStartingImpl   func()
+	OnInstanceReadyImpl      func(*PluginInstance)
+	OnInstanceFailedImpl     func(*PluginInstance, error)
+	OnInstanceShutdownImpl   func(*PluginInstance)
+	OnInstanceHeartbeatImpl  func(*PluginInstance)
+	OnInstanceLogImpl        func(*PluginInstance, string)
+	OnInstanceErrorLogImpl   func(*PluginInstance, error)
+	OnInstanceWarningLogImpl func(*PluginInstance, string)
+	OnInstanceStdoutImpl     func(*PluginInstance, []byte)
+	OnInstanceStderrImpl     func(*PluginInstance, []byte)
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceStarting() {
+	if t.OnInstanceStartingImpl != nil {
+		t.OnInstanceStartingImpl()
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceReady(instance *PluginInstance) {
+	if t.OnInstanceReadyImpl != nil {
+		t.OnInstanceReadyImpl(instance)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceFailed(instance *PluginInstance, err error) {
+	if t.OnInstanceFailedImpl != nil {
+		t.OnInstanceFailedImpl(instance, err)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceShutdown(instance *PluginInstance) {
+	if t.OnInstanceShutdownImpl != nil {
+		t.OnInstanceShutdownImpl(instance)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceHeartbeat(instance *PluginInstance) {
+	if t.OnInstanceHeartbeatImpl != nil {
+		t.OnInstanceHeartbeatImpl(instance)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceLog(instance *PluginInstance, message string) {
+	if t.OnInstanceLogImpl != nil {
+		t.OnInstanceLogImpl(instance, message)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceErrorLog(instance *PluginInstance, err error) {
+	if t.OnInstanceErrorLogImpl != nil {
+		t.OnInstanceErrorLogImpl(instance, err)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceWarningLog(instance *PluginInstance, message string) {
+	if t.OnInstanceWarningLogImpl != nil {
+		t.OnInstanceWarningLogImpl(instance, message)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceStdout(instance *PluginInstance, data []byte) {
+	if t.OnInstanceStdoutImpl != nil {
+		t.OnInstanceStdoutImpl(instance, data)
+	}
+}
+
+func (t *PluginInstanceNotifierTemplate) OnInstanceStderr(instance *PluginInstance, data []byte) {
+	if t.OnInstanceStderrImpl != nil {
+		t.OnInstanceStderrImpl(instance, data)
 	}
 }

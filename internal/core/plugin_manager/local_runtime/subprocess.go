@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
@@ -71,14 +72,24 @@ func (r *LocalPluginRuntime) getInstanceStdio(
 
 // startNewInstance starts a new plugin instance
 func (r *LocalPluginRuntime) startNewInstance() error {
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnInstanceStarting()
+	})
+
 	// get the command to start the plugin
 	e, err := r.getInstanceCmd()
 	if err != nil {
+		r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+			notifier.OnInstanceLaunchFailed(nil, err)
+		})
 		return err
 	}
 
 	stdin, stdout, stderr, err := r.getInstanceStdio(e)
 	if err != nil {
+		r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+			notifier.OnInstanceLaunchFailed(nil, err)
+		})
 		return err
 	}
 
@@ -92,28 +103,43 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// start plugin process,
 	if err := e.Start(); err != nil {
 		cleanupIOHolders()
+		r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+			notifier.OnInstanceLaunchFailed(nil, err)
+		})
 		return err
 	}
 
 	// setup stdio
 	instance := newPluginInstance(r.Config.Identity(), e, stdin, stdout, stderr, r.appConfig)
 
-	// setup launch notifier
+	// setup lifecycle notifier
 	launchNotifier := newNotifierLifecycleSignal([]func(){cleanupIOHolders})
 	instance.AddNotifier(launchNotifier)
+
+	launchChannel := make(chan bool)
+
+	// setup launch notifier
+	heartbeatOnce := sync.Once{}
+	instance.AddNotifier(&PluginInstanceNotifierTemplate{
+		OnInstanceHeartbeatImpl: func(pi *PluginInstance) {
+			heartbeatOnce.Do(func() {
+				// mark the instance as started
+				instance.started = true
+				close(launchChannel)
+			})
+		},
+	})
 
 	success := false
 	defer func() {
 		// if start NewInstance failed, close the pipes, avoid resource leak
 		if !success {
 			cleanupIOHolders()
+			r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+				notifier.OnInstanceLaunchFailed(instance, err)
+			})
 		}
 	}()
-
-	// notify plugin starting
-	instance.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-		notifier.OnInstanceStarting(instance)
-	})
 
 	// listen to plugin stdout
 	routine.Submit(
@@ -135,7 +161,7 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	case <-timeout.C:
 		instance.Stop()
 		return fmt.Errorf("failed to start plugin as no heartbeat received")
-	case <-launchNotifier.WaitLaunchSignal():
+	case <-launchChannel:
 		// nop
 	}
 
@@ -154,6 +180,10 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 
 	// notify plugin started
 	instance.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+		notifier.OnInstanceReady(instance)
+	})
+
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
 		notifier.OnInstanceReady(instance)
 	})
 
