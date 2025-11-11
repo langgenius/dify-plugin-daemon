@@ -81,6 +81,9 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 		config: config,
 	}
 
+	// mount logger to control panel
+	manager.controlPanel.AddNotifier(&controlpanel.StandardLogger{})
+
 	return manager
 }
 
