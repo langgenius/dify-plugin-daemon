@@ -46,8 +46,9 @@ func (r *LocalPluginRuntime) extractPluginToWorkingPath(decoder *decoder.ZipPlug
 			if err = decoder.ExtractTo(r.State.WorkingPath); err != nil {
 				return errors.Join(err, fmt.Errorf("extract plugin to working directory error"))
 			}
+		} else {
+			return errors.Join(err, fmt.Errorf("check working directory error"))
 		}
-		return errors.Join(err, fmt.Errorf("check working directory error"))
 	} else {
 		// check if the working path is empty
 		if entries, err := os.ReadDir(r.State.WorkingPath); err != nil {
