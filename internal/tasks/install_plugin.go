@@ -35,6 +35,9 @@ func ProcessInstallJob(
 		return
 	}
 
+	// set status to running
+	SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusRunning, "starting")
+
 	// start installation process
 	installationStream, err := manager.Install(job.Identifier)
 	if err != nil {
