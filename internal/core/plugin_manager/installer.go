@@ -286,6 +286,10 @@ func (p *PluginManager) installLocal(
 		// move the plugin to installed bucket
 		err := p.controlPanel.InstallToLocal(pluginUniqueIdentifier)
 		if err != nil {
+			responseStream.Write(installation_entities.PluginInstallResponse{
+				Event: installation_entities.PluginInstallEventError,
+				Data:  fmt.Sprintf("failed to move plugin to installed bucket: %s", err.Error()),
+			})
 			return
 		}
 
@@ -295,6 +299,10 @@ func (p *PluginManager) installLocal(
 		runtime, ch, err = p.controlPanel.LaunchLocalPlugin(pluginUniqueIdentifier)
 		if err != nil {
 			// release the lock
+			responseStream.Write(installation_entities.PluginInstallResponse{
+				Event: installation_entities.PluginInstallEventError,
+				Data:  fmt.Sprintf("failed to launch plugin: %s", err.Error()),
+			})
 			return
 		}
 
