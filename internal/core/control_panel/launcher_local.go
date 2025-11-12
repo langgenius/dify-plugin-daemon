@@ -10,58 +10,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-type LocalPluginInstanceLifetimeCallback struct {
-	onStarting        func()
-	onReady           func(instance *local_runtime.PluginInstance)
-	onFailed          func(instance *local_runtime.PluginInstance, err error)
-	onShutdown        func(instance *local_runtime.PluginInstance)
-	onScaleDownFailed func(err error)
-	onStopSchedule    func()
-	onRuntimeClose    func()
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnInstanceStarting() {
-	if c.onStarting != nil {
-		c.onStarting()
-	}
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnInstanceReady(instance *local_runtime.PluginInstance) {
-	if c.onReady != nil {
-		c.onReady(instance)
-	}
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnInstanceLaunchFailed(instance *local_runtime.PluginInstance, err error) {
-	if c.onFailed != nil {
-		c.onFailed(instance, err)
-	}
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnInstanceShutdown(instance *local_runtime.PluginInstance) {
-	if c.onShutdown != nil {
-		c.onShutdown(instance)
-	}
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnInstanceScaleDownFailed(err error) {
-	if c.onScaleDownFailed != nil {
-		c.onScaleDownFailed(err)
-	}
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnRuntimeStopSchedule() {
-	if c.onStopSchedule != nil {
-		c.onStopSchedule()
-	}
-}
-
-func (c *LocalPluginInstanceLifetimeCallback) OnRuntimeClose() {
-	if c.onRuntimeClose != nil {
-		c.onRuntimeClose()
-	}
-}
-
 // Launches a local plugin runtime
 // This method initializes environment (pypi, uv, dependencies, etc.) for a plugin
 // and then starts the schedule loop
@@ -127,9 +75,9 @@ func (c *ControlPanel) LaunchLocalPlugin(
 	ch := make(chan error, 1)
 
 	// mount a notifier to runtime
-	lifetime := &LocalPluginInstanceLifetimeCallback{
+	lifetime := &local_runtime.PluginRuntimeNotifierTemplate{
 		// only first instance ready will trigger this
-		onReady: func(instance *local_runtime.PluginInstance) {
+		OnInstanceReadyImpl: func(pi *local_runtime.PluginInstance) {
 			// ideally, `once` is not needed here as `onReady` should only be triggered once
 			once.Do(func() {
 				// store the runtime
@@ -144,7 +92,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			})
 		},
 		// only first instance failed will trigger this
-		onFailed: func(instance *local_runtime.PluginInstance, err error) {
+		OnInstanceFailedImpl: func(pi *local_runtime.PluginInstance, err error) {
 			once.Do(func() {
 				// notify new runtime launch failed
 				c.WalkNotifiers(func(notifier ControlPanelNotifier) {
@@ -155,7 +103,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 				ch <- err
 			})
 		},
-		onRuntimeClose: func() {
+		OnRuntimeCloseImpl: func() {
 			// delete the runtime from the map
 			// Even if the runtime is not ready, deleting it still makes sense
 			c.localPluginRuntimes.Delete(pluginUniqueIdentifier)
@@ -165,7 +113,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 				notifier.OnLocalRuntimeStopped(runtime)
 			})
 		},
-		onStopSchedule: func() {
+		OnRuntimeStopScheduleImpl: func() {
 			// notify the plugin is stopping
 			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 				notifier.OnLocalRuntimeStop(runtime)
