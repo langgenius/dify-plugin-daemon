@@ -46,7 +46,10 @@ func (p *LocalPluginRuntime) preparePipArgs() []string {
 		args = append(args, "-vvv")
 	}
 
-	args = append(args, p.appConfig.PipExtraArgs)
+	if p.appConfig.PipExtraArgs != "" {
+		extraArgs := strings.Split(p.appConfig.PipExtraArgs, " ")
+		args = append(args, extraArgs...)
+	}
 
 	args = append([]string{"pip"}, args...)
 
@@ -117,6 +120,7 @@ func (p *LocalPluginRuntime) installDependencies(
 			if err != nil {
 				break
 			}
+			// FIXME: move the log to separated layer
 			log.Info("installing %s - %s", p.Config.Identity(), string(buf[:n]))
 			lastActiveAt = time.Now()
 		}
