@@ -35,11 +35,21 @@ func (r *InstallTaskRegistry) PrimaryID() string {
 	return ""
 }
 
+func truncateMessage(message string) string {
+	if len(message) > 1024 {
+		message = message[:512] + "..." + message[len(message)-512:]
+	}
+	return message
+}
+
 func SetTaskMessageForOnePlugin(
 	taskIDs []string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	message string,
 ) {
+	// avoid message to be too long, only keep the first 512 and last 512 characters
+	message = truncateMessage(message)
+
 	for _, taskID := range taskIDs {
 		if err := UpdateTaskStatus(taskID, pluginUniqueIdentifier, func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 			plugin.Message = message
@@ -55,6 +65,9 @@ func SetTaskStatusForOnePlugin(
 	status models.InstallTaskStatus,
 	message string,
 ) {
+	// avoid message to be too long, only keep the first 512 and last 512 characters
+	message = truncateMessage(message)
+
 	for _, taskID := range taskIDs {
 		if err := UpdateTaskStatus(taskID, pluginUniqueIdentifier, func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 			previousStatus := plugin.Status
