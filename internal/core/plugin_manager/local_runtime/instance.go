@@ -305,18 +305,14 @@ func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	for {
+	for len(s.listener) > 0 {
 		select {
 		case <-timeout.C:
 			// timeout reached, forcefully kill the instance
 			s.Stop()
 			return
 		case <-ticker.C:
-			if len(s.listener) == 0 {
-				// all listeners are closed, shutdown the instance
-				s.Stop()
-				return
-			}
+			// do nothing
 		}
 	}
 }
