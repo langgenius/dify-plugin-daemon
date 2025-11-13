@@ -41,11 +41,12 @@ func (r *fakePlugin) Wait() (<-chan bool, error) {
 	return nil, nil
 }
 
-func (r *fakePlugin) Listen(string) *entities.Broadcast[plugin_entities.SessionMessage] {
-	return nil
+func (r *fakePlugin) Listen(string) (*entities.Broadcast[plugin_entities.SessionMessage], error) {
+	return nil, nil
 }
 
-func (r *fakePlugin) Write(string, access_types.PluginAccessAction, []byte) {
+func (r *fakePlugin) Write(string, access_types.PluginAccessAction, []byte) error {
+	return nil
 }
 
 func getRandomPluginRuntime() fakePlugin {
@@ -115,7 +116,7 @@ func TestPluginScheduleLifetime(t *testing.T) {
 	}
 
 	// trigger plugin stop
-	plugin.TriggerStop()
+	plugin.Stop()
 
 	// wait for the plugin to stop
 	time.Sleep(time.Second * 1)
