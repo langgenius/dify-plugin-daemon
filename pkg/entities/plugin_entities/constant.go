@@ -18,6 +18,7 @@ const (
 	DYNAMIC_SELECT = "dynamic-select"
 	ARRAY          = "array"
 	OBJECT         = "object"
+	CHECKBOX       = "checkbox"
 )
 
 type ParameterOption struct {

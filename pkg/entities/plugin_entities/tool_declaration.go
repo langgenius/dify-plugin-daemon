@@ -49,6 +49,7 @@ const (
 	TOOL_PARAMETER_TYPE_DYNAMIC_SELECT ToolParameterType = DYNAMIC_SELECT
 	TOOL_PARAMETER_ARRAY               ToolParameterType = ARRAY
 	TOOL_PARAMETER_OBJECT              ToolParameterType = OBJECT
+	TOOL_PARAMETER_TYPE_CHECKBOX       ToolParameterType = CHECKBOX
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -67,7 +68,8 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_ANY),
 		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT),
 		string(TOOL_PARAMETER_ARRAY),
-		string(TOOL_PARAMETER_OBJECT):
+		string(TOOL_PARAMETER_OBJECT),
+		string(TOOL_PARAMETER_TYPE_CHECKBOX):
 		return true
 	}
 	return false

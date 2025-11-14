@@ -80,7 +80,8 @@ func (d *DifyServer) handleInitializationEndEvent(
 		!runtime.endpointsRegistrationTransferred &&
 		!runtime.toolsRegistrationTransferred &&
 		!runtime.agentStrategyRegistrationTransferred &&
-		!runtime.datasourceRegistrationTransferred {
+		!runtime.datasourceRegistrationTransferred &&
+		!runtime.triggersRegistrationTransferred {
 		return errors.New("no registration transferred, cannot initialize")
 	}
 
@@ -263,6 +264,30 @@ func (d *DifyServer) handleDatasourceDeclarationRegister(
 	if len(datasources) > 0 {
 		declaration := runtime.Config
 		declaration.Datasource = &datasources[0]
+		runtime.Config = declaration
+	}
+
+	return nil
+}
+
+func (d *DifyServer) handleTriggerDeclarationRegister(
+	runtime *RemotePluginRuntime,
+	registerPayload plugin_entities.RemotePluginRegisterPayload,
+) error {
+	if runtime.triggersRegistrationTransferred {
+		return errors.New("triggers declaration already registered")
+	}
+
+	triggers, err := parser.UnmarshalJsonBytes2Slice[plugin_entities.TriggerProviderDeclaration](registerPayload.Data)
+	if err != nil {
+		return fmt.Errorf("triggers register failed, invalid triggers declaration: %v", err)
+	}
+
+	runtime.triggersRegistrationTransferred = true
+
+	if len(triggers) > 0 {
+		declaration := runtime.Config
+		declaration.Trigger = &triggers[0]
 		runtime.Config = declaration
 	}
 

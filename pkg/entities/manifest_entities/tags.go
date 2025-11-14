@@ -26,6 +26,7 @@ const (
 	PLUGIN_TAG_AGENT         PluginTag = "agent"
 	PLUGIN_TAG_RAG           PluginTag = "rag"
 	PLUGIN_TAG_OTHER         PluginTag = "other"
+	PLUGIN_TAG_TRIGGER       PluginTag = "trigger"
 )
 
 func isPluginTag(fl validator.FieldLevel) bool {
@@ -48,7 +49,8 @@ func isPluginTag(fl validator.FieldLevel) bool {
 		string(PLUGIN_TAG_UTILITIES),
 		string(PLUGIN_TAG_OTHER),
 		string(PLUGIN_TAG_AGENT),
-		string(PLUGIN_TAG_RAG):
+		string(PLUGIN_TAG_RAG),
+		string(PLUGIN_TAG_TRIGGER):
 		return true
 	}
 	return false

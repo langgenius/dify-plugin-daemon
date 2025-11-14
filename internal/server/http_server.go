@@ -91,6 +91,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	app.pluginManagementGroup(group.Group("/management"), config)
 	app.endpointManagementGroup(group.Group("/endpoint"))
 	app.pluginAssetGroup(group.Group("/asset"))
+	app.pluginAssetExtractGroup(group.Group("/extract-asset"))
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
@@ -156,6 +157,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/decode/from_identifier", controllers.DecodePluginFromIdentifier(config))
 	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
+	group.GET("/fetch/readme", controllers.FetchPluginReadme)
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", controllers.ListPlugins)
 	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)
@@ -163,6 +165,8 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/models", controllers.ListModels)
 	group.GET("/tools", controllers.ListTools)
 	group.GET("/tool", controllers.GetTool)
+	group.GET("/triggers", controllers.ListTriggers)
+	group.GET("/trigger", controllers.GetTrigger)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
@@ -176,6 +180,10 @@ func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
 	group.GET("/:id", controllers.GetAsset)
+}
+
+func (app *App) pluginAssetExtractGroup(group *gin.RouterGroup) {
+	group.GET("/", controllers.ExtractPluginAsset)
 }
 
 func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {

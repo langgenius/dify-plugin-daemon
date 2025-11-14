@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -14,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
 
 type PluginManager struct {
@@ -163,4 +165,39 @@ func (c *PluginManager) IsPluginOnCurrentNode(
 	}
 
 	return true, nil
+}
+
+var (
+	pluginAssetCache *lru.Cache[string, []byte]
+)
+
+func pluginAssetCacheKey(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	path string,
+) string {
+	return fmt.Sprintf("%s/%s", pluginUniqueIdentifier.String(), path)
+}
+func (p *PluginManager) ExtractPluginAsset(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	path string,
+) ([]byte, error) {
+	key := pluginAssetCacheKey(pluginUniqueIdentifier, path)
+	cached, ok := pluginAssetCache.Get(key)
+	if ok {
+		return cached, nil
+	}
+	pkgBytes, err := manager.GetPackage(pluginUniqueIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	zipDecoder, err := decoder.NewZipPluginDecoder(pkgBytes)
+	if err != nil {
+		return nil, err
+	}
+	assets, err := zipDecoder.Assets()
+	if err != nil {
+		return nil, err
+	}
+	pluginAssetCache.Add(key, assets[path])
+	return assets[path], nil
 }

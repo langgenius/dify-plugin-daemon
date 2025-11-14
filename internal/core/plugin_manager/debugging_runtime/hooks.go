@@ -2,12 +2,14 @@ package debugging_runtime
 
 import (
 	"bytes"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -120,6 +122,13 @@ func (s *DifyServer) OnShutdown(c gnet.Engine) {
 }
 
 func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
+	defer func() {
+		if r := recover(); r != nil {
+			traceback := string(debug.Stack())
+			log.Error("panic in OnTraffic: %v\n%s", r, traceback)
+		}
+	}()
+
 	codec := c.Context().(*codec)
 	messages, err := codec.Decode(c)
 	if err != nil {
@@ -219,6 +228,10 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			}
 		case plugin_entities.REGISTER_EVENT_TYPE_DATASOURCE_DECLARATION:
 			if err := s.handleDatasourceDeclarationRegister(runtime, registerPayload); err != nil {
+				closeConn(append([]byte(err.Error()), '\n'))
+			}
+		case plugin_entities.REGISTER_EVENT_TYPE_TRIGGER_DECLARATION:
+			if err := s.handleTriggerDeclarationRegister(runtime, registerPayload); err != nil {
 				closeConn(append([]byte(err.Error()), '\n'))
 			}
 		}
