@@ -14,6 +14,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func (r *ServerlessPluginRuntime) Listen(sessionId string) (
@@ -42,11 +43,11 @@ func (r *ServerlessPluginRuntime) Write(
 		return errors.Join(err, errors.New("failed to join lambda url"))
 	}
 
-	routine.Submit(map[string]string{
-		"module":     "serverless_runtime",
-		"function":   "Write",
-		"session_id": sessionId,
-		"lambda_url": r.LambdaURL,
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:    "serverless_runtime",
+		routinepkg.RoutineLabelKeyFunction:  "Write",
+		routinepkg.RoutineLabelKeySessionID: sessionId,
+		routinepkg.RoutineLabelKeyTarget:    r.LambdaURL,
 	}, func() {
 		// remove the session from listeners
 		defer r.listeners.Delete(sessionId)

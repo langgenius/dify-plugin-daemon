@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func (d *DifyServer) handleHandleShake(
@@ -114,13 +115,19 @@ func (d *DifyServer) handleInitializationEndEvent(
 
 	// spawn a core to handle CPU-intensive tasks
 	routine.Submit(
-		map[string]string{"module": "debugging_runtime", "action": "spawnCore"},
+		routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "debugging_runtime",
+			routinepkg.RoutineLabelKeyAction: "spawnCore",
+		},
 		func() { runtime.SpawnCore() },
 	)
 
 	// start heartbeat monitor
 	routine.Submit(
-		map[string]string{"module": "debugging_runtime", "action": "heartbeatMonitor"},
+		routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "debugging_runtime",
+			routinepkg.RoutineLabelKeyAction: "heartbeatMonitor",
+		},
 		func() { runtime.HeartbeatMonitor() },
 	)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
@@ -74,9 +75,9 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 	newResponse.OnClose(func() {
 		response.Close()
 	})
-	routine.Submit(map[string]string{
-		"module":   "dify_invocation",
-		"function": "StreamResponse",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "dify_invocation",
+		routinepkg.RoutineLabelKeyFunction: "StreamResponse",
 	}, func() {
 		defer newResponse.Close()
 		for response.Next() {

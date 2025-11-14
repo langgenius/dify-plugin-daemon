@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/agent_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func InvokeAgentStrategy(
@@ -37,8 +38,9 @@ func InvokeAgentStrategy(
 	newResponse := stream.NewStream[agent_entities.AgentStrategyResponseChunk](128)
 	files := make(map[string]*bytes.Buffer)
 
-	routine.Submit(map[string]string{
-		"agent_service": "invoke_agent_strategy",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "agent_service",
+		routinepkg.RoutineLabelKeyAction: "invoke_agent_strategy",
 	}, func() {
 		defer newResponse.Close()
 

@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 type ServerlessFunction struct {
@@ -157,9 +158,9 @@ func SetupFunction(
 
 	response := stream.NewStream[LaunchFunctionResponse](10)
 
-	routine.Submit(map[string]string{
-		"module": "serverless_connector",
-		"func":   "SetupFunction",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "serverless_connector",
+		routinepkg.RoutineLabelKeyFunction: "SetupFunction",
 	}, func() {
 		defer response.Close()
 		if err := serverless_connector_response.Async(func(chunk LaunchFunctionResponseChunk) {

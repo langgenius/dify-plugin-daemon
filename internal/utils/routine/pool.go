@@ -9,6 +9,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	routinelabels "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -39,9 +40,9 @@ func InitPool(size int, sentryOption ...sentry.ClientOptions) {
 	}
 }
 
-func Submit(labels map[string]string, f func()) {
+func Submit(labels routinelabels.Labels, f func()) {
 	if labels == nil {
-		labels = map[string]string{}
+		labels = routinelabels.Labels{}
 	}
 
 	p.Submit(func() {
@@ -50,7 +51,7 @@ func Submit(labels map[string]string, f func()) {
 		}
 		if len(labels) > 0 {
 			for k, v := range labels {
-				label = append(label, k, v)
+				label = append(label, string(k), v)
 			}
 		}
 		pprof.Do(context.Background(), pprof.Labels(label...), func(ctx context.Context) {
@@ -69,9 +70,9 @@ func WithMaxRoutine(maxRoutine int, tasks []func(), onFinish ...func()) {
 		maxRoutine = len(tasks)
 	}
 
-	Submit(map[string]string{
-		"module":   "routine",
-		"function": "WithMaxRoutine",
+	Submit(routinelabels.Labels{
+		routinelabels.RoutineLabelKeyModule:   "routine",
+		routinelabels.RoutineLabelKeyFunction: "WithMaxRoutine",
 	}, func() {
 		wg := sync.WaitGroup{}
 		taskIndex := int32(0)
