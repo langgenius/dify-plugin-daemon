@@ -48,6 +48,19 @@ func InvokeTextEmbedding(
 	)
 }
 
+func InvokeMultimodalEmbedding(
+	session *session_manager.Session,
+	request *requests.RequestInvokeMultimodalEmbedding,
+) (
+	*stream.Stream[model_entities.MultimodalEmbeddingResult], error,
+) {
+	return GenericInvokePlugin[requests.RequestInvokeMultimodalEmbedding, model_entities.MultimodalEmbeddingResult](
+		session,
+		request,
+		1,
+	)
+}
+
 func GetTextEmbeddingNumTokens(
 	session *session_manager.Session,
 	request *requests.RequestGetTextEmbeddingNumTokens,
@@ -68,6 +81,19 @@ func InvokeRerank(
 	*stream.Stream[model_entities.RerankResult], error,
 ) {
 	return GenericInvokePlugin[requests.RequestInvokeRerank, model_entities.RerankResult](
+		session,
+		request,
+		1,
+	)
+}
+
+func InvokeMultimodalRerank(
+	session *session_manager.Session,
+	request *requests.RequestInvokeMultimodalRerank,
+) (
+	*stream.Stream[model_entities.MultimodalRerankResult], error,
+) {
+	return GenericInvokePlugin[requests.RequestInvokeMultimodalRerank, model_entities.MultimodalRerankResult](
 		session,
 		request,
 		1,

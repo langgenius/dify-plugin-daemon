@@ -60,6 +60,34 @@ type RequestInvokeRerank struct {
 	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type,eq=rerank"`
 }
 
+type InvokeMultimodalRerankSchema struct {
+	Query          model_entities.MultimodalContent   `json:"query" validate:"required"`
+	Docs           []model_entities.MultimodalContent `json:"docs" validate:"required,dive"`
+	ScoreThreshold float64                            `json:"score_threshold"`
+	TopN           int                                `json:"top_n"`
+}
+
+type RequestInvokeMultimodalRerank struct {
+	BaseRequestInvokeModel
+	Credentials
+	InvokeMultimodalRerankSchema
+
+	ModelType string `json:"model_type" validate:"required"`
+}
+
+type InvokeMultimodalEmbeddingSchema struct {
+	Documents []model_entities.MultimodalContent `json:"documents" validate:"required,dive"`
+	InputType string                             `json:"input_type" validate:"required,oneof=document query"`
+}
+
+type RequestInvokeMultimodalEmbedding struct {
+	BaseRequestInvokeModel
+	Credentials
+	InvokeMultimodalEmbeddingSchema
+
+	ModelType string `json:"model_type" validate:"required"`
+}
+
 type InvokeTTSSchema struct {
 	ContentText string `json:"content_text"  validate:"required"`
 	Voice       string `json:"voice" validate:"required"`

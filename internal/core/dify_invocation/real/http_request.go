@@ -125,8 +125,16 @@ func (i *RealBackwardsInvocation) InvokeTextEmbedding(payload *dify_invocation.I
 	return Request[model_entities.TextEmbeddingResult](i, "POST", "invoke/text-embedding", http_requests.HttpPayloadJson(payload))
 }
 
+func (i *RealBackwardsInvocation) InvokeMultimodalEmbedding(payload *dify_invocation.InvokeMultimodalEmbeddingRequest) (*model_entities.MultimodalEmbeddingResult, error) {
+	return Request[model_entities.MultimodalEmbeddingResult](i, "POST", "invoke/multimodal-embedding", http_requests.HttpPayloadJson(payload))
+}
+
 func (i *RealBackwardsInvocation) InvokeRerank(payload *dify_invocation.InvokeRerankRequest) (*model_entities.RerankResult, error) {
 	return Request[model_entities.RerankResult](i, "POST", "invoke/rerank", http_requests.HttpPayloadJson(payload))
+}
+
+func (i *RealBackwardsInvocation) InvokeMultimodalRerank(payload *dify_invocation.InvokeMultimodalRerankRequest) (*model_entities.MultimodalRerankResult, error) {
+	return Request[model_entities.MultimodalRerankResult](i, "POST", "invoke/multimodal-rerank", http_requests.HttpPayloadJson(payload))
 }
 
 func (i *RealBackwardsInvocation) InvokeTTS(payload *dify_invocation.InvokeTTSRequest) (*stream.Stream[model_entities.TTSResult], error) {

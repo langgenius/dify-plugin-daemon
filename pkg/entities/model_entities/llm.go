@@ -12,12 +12,14 @@ import (
 type ModelType string
 
 const (
-	MODEL_TYPE_LLM            ModelType = "llm"
-	MODEL_TYPE_TEXT_EMBEDDING ModelType = "text-embedding"
-	MODEL_TYPE_RERANKING      ModelType = "rerank"
-	MODEL_TYPE_SPEECH2TEXT    ModelType = "speech2text"
-	MODEL_TYPE_TTS            ModelType = "tts"
-	MODEL_TYPE_MODERATION     ModelType = "moderation"
+	MODEL_TYPE_LLM                  ModelType = "llm"
+	MODEL_TYPE_TEXT_EMBEDDING       ModelType = "text-embedding"
+	MODEL_TYPE_RERANKING            ModelType = "rerank"
+	MODEL_TYPE_SPEECH2TEXT          ModelType = "speech2text"
+	MODEL_TYPE_TTS                  ModelType = "tts"
+	MODEL_TYPE_MODERATION           ModelType = "moderation"
+	MODEL_TYPE_MULTIMODAL_EMBEDDING ModelType = "multimodal-embedding"
+	MODEL_TYPE_MULTIMODAL_RERANK    ModelType = "multimodal-rerank"
 )
 
 type LLMModel string
