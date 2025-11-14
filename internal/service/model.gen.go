@@ -74,7 +74,7 @@ func InvokeMultimodalEmbedding(
 			return plugin_daemon.InvokeMultimodalEmbedding(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_EMBEDDING,
 		r,
 		ctx,
 		max_timeout_seconds,
@@ -125,7 +125,7 @@ func InvokeMultimodalRerank(
 			return plugin_daemon.InvokeMultimodalRerank(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_RERANK,
 		r,
 		ctx,
 		max_timeout_seconds,
