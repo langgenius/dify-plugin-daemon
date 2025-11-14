@@ -71,8 +71,8 @@ func WithMaxRoutine(maxRoutine int, tasks []func(), onFinish ...func()) {
 	}
 
 	Submit(routinelabels.Labels{
-		routinelabels.RoutineLabelKeyModule:   "routine",
-		routinelabels.RoutineLabelKeyFunction: "WithMaxRoutine",
+		routinelabels.RoutineLabelKeyModule: "routine",
+		routinelabels.RoutineLabelKeyMethod: "WithMaxRoutine",
 	}, func() {
 		wg := sync.WaitGroup{}
 		taskIndex := int32(0)

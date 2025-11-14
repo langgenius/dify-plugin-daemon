@@ -117,8 +117,8 @@ func InstallMultiplePluginsToTenant(
 		jobCopy := job
 		// start a new goroutine to install the plugin
 		routine.Submit(routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule:   "service",
-			routinepkg.RoutineLabelKeyFunction: "InstallPlugin",
+			routinepkg.RoutineLabelKeyModule: "service",
+			routinepkg.RoutineLabelKeyMethod: "InstallPlugin",
 		}, func() {
 			tasks.ProcessInstallJob(
 				manager,
@@ -180,8 +180,8 @@ func ReinstallPluginFromIdentifier(
 
 		retStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 		routine.Submit(routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule:   "service",
-			routinepkg.RoutineLabelKeyFunction: "ReinstallPlugin",
+			routinepkg.RoutineLabelKeyModule: "service",
+			routinepkg.RoutineLabelKeyMethod: "ReinstallPlugin",
 		}, func() {
 			defer retStream.Close()
 

@@ -151,9 +151,9 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// listen to plugin stdout
 	routine.Submit(
 		routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-			routinepkg.RoutineLabelKeyType:     "local",
-			routinepkg.RoutineLabelKeyFunction: "StartStdout",
+			routinepkg.RoutineLabelKeyModule:      "plugin_manager",
+			routinepkg.RoutineLabelRuntimeKeyType: "local",
+			routinepkg.RoutineLabelKeyMethod:      "StartStdout",
 		},
 		instance.StartStdout,
 	)
@@ -161,9 +161,9 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// listen to plugin stderr
 	routine.Submit(
 		routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-			routinepkg.RoutineLabelKeyType:     "local",
-			routinepkg.RoutineLabelKeyFunction: "StartStderr",
+			routinepkg.RoutineLabelKeyModule:      "plugin_manager",
+			routinepkg.RoutineLabelRuntimeKeyType: "local",
+			routinepkg.RoutineLabelKeyMethod:      "StartStderr",
 		},
 		instance.StartStderr,
 	)
@@ -183,9 +183,9 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// monitor plugin
 	routine.Submit(
 		routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-			routinepkg.RoutineLabelKeyType:     "local",
-			routinepkg.RoutineLabelKeyFunction: "Monitor",
+			routinepkg.RoutineLabelKeyModule:      "plugin_manager",
+			routinepkg.RoutineLabelRuntimeKeyType: "local",
+			routinepkg.RoutineLabelKeyMethod:      "Monitor",
 		},
 		func() {
 			instance.Monitor()

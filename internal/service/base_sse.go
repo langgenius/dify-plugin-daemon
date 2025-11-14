@@ -51,8 +51,8 @@ func baseSSEService[R any](
 	}
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "service",
-		routinepkg.RoutineLabelKeyFunction: "baseSSEService",
+		routinepkg.RoutineLabelKeyModule: "service",
+		routinepkg.RoutineLabelKeyMethod: "baseSSEService",
 	}, func() {
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()

@@ -159,8 +159,8 @@ func SetupFunction(
 	response := stream.NewStream[LaunchFunctionResponse](10)
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "serverless_connector",
-		routinepkg.RoutineLabelKeyFunction: "SetupFunction",
+		routinepkg.RoutineLabelKeyModule: "serverless_connector",
+		routinepkg.RoutineLabelKeyMethod: "SetupFunction",
 	}, func() {
 		defer response.Close()
 		if err := serverless_connector_response.Async(func(chunk LaunchFunctionResponseChunk) {

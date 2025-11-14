@@ -76,8 +76,8 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		response.Close()
 	})
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "dify_invocation",
-		routinepkg.RoutineLabelKeyFunction: "StreamResponse",
+		routinepkg.RoutineLabelKeyModule: "dify_invocation",
+		routinepkg.RoutineLabelKeyMethod: "StreamResponse",
 	}, func() {
 		defer newResponse.Close()
 		for response.Next() {

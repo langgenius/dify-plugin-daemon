@@ -110,8 +110,8 @@ func (p *LocalPluginRuntime) installDependencies(
 	lastActiveAt := time.Now()
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		defer wg.Done()
 		// read stdout
@@ -128,8 +128,8 @@ func (p *LocalPluginRuntime) installDependencies(
 	})
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		defer wg.Done()
 		// read stderr
@@ -152,8 +152,8 @@ func (p *LocalPluginRuntime) installDependencies(
 	})
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
@@ -334,8 +334,8 @@ func (p *LocalPluginRuntime) preCompile(
 	compileWg.Add(2)
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		defer compileWg.Done()
 		// read compileStdout
@@ -363,8 +363,8 @@ func (p *LocalPluginRuntime) preCompile(
 	})
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		defer compileWg.Done()
 		// read stderr

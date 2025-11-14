@@ -117,7 +117,7 @@ func (d *DifyServer) handleInitializationEndEvent(
 	routine.Submit(
 		routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "debugging_runtime",
-			routinepkg.RoutineLabelKeyAction: "spawnCore",
+			routinepkg.RoutineLabelKeyMethod: "spawnCore",
 		},
 		func() { runtime.SpawnCore() },
 	)
@@ -126,7 +126,7 @@ func (d *DifyServer) handleInitializationEndEvent(
 	routine.Submit(
 		routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "debugging_runtime",
-			routinepkg.RoutineLabelKeyAction: "heartbeatMonitor",
+			routinepkg.RoutineLabelKeyMethod: "heartbeatMonitor",
 		},
 		func() { runtime.HeartbeatMonitor() },
 	)

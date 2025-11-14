@@ -58,7 +58,7 @@ func (p *PluginManager) Reinstall(
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule: "plugin_manager",
-		routinepkg.RoutineLabelKeyAction: "reinstallServerless",
+		routinepkg.RoutineLabelKeyMethod: "reinstallServerless",
 	}, func() {
 		defer responseStream.Close()
 
@@ -164,7 +164,7 @@ func (p *PluginManager) installServerless(
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule: "plugin_manager",
-		routinepkg.RoutineLabelKeyAction: "installServerless",
+		routinepkg.RoutineLabelKeyMethod: "installServerless",
 	}, func() {
 		defer responseStream.Close()
 
@@ -256,7 +256,7 @@ func (p *PluginManager) installLocal(
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule: "plugin_manager",
-		routinepkg.RoutineLabelKeyAction: "installLocal",
+		routinepkg.RoutineLabelKeyMethod: "installLocal",
 	}, func() {
 		// firstly, install the plugin, then launch it, delete it if process fails
 		var success bool = false

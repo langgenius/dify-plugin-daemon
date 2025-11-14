@@ -125,8 +125,8 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	}
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "http_requests",
-		routinepkg.RoutineLabelKeyFunction: "RequestAndParseStream",
+		routinepkg.RoutineLabelKeyModule: "http_requests",
+		routinepkg.RoutineLabelKeyMethod: "RequestAndParseStream",
 	}, func() {
 		defer resp.Body.Close()
 

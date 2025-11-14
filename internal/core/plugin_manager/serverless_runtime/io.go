@@ -45,9 +45,9 @@ func (r *ServerlessPluginRuntime) Write(
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule:    "serverless_runtime",
-		routinepkg.RoutineLabelKeyFunction:  "Write",
+		routinepkg.RoutineLabelKeyMethod:    "Write",
 		routinepkg.RoutineLabelKeySessionID: sessionId,
-		routinepkg.RoutineLabelKeyTarget:    r.LambdaURL,
+		routinepkg.RoutineLabelKeyLambdaURL: r.LambdaURL,
 	}, func() {
 		// remove the session from listeners
 		defer r.listeners.Delete(sessionId)

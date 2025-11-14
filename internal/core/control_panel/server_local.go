@@ -97,8 +97,8 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 
 		wg.Add(1)
 		routine.Submit(routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
-			routinepkg.RoutineLabelKeyFunction: "handleNewLocalPlugins",
+			routinepkg.RoutineLabelKeyModule: "plugin_manager",
+			routinepkg.RoutineLabelKeyMethod: "handleNewLocalPlugins",
 		}, func() {
 			defer wg.Done()
 			_, ch, err := c.LaunchLocalPlugin(uniquePluginIdentifier)

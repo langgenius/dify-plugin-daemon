@@ -81,8 +81,8 @@ func (c *Cluster) clusterLifetime() {
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "cluster",
-		routinepkg.RoutineLabelKeyFunction: "voteAddressesWhenInit",
+		routinepkg.RoutineLabelKeyModule: "cluster",
+		routinepkg.RoutineLabelKeyMethod: "voteAddressesWhenInit",
 	}, func() {
 		if err := c.updateNodeStatus(); err != nil {
 			log.Error("failed to update the status of the node: %s", err.Error())

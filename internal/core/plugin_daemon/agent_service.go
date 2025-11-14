@@ -40,7 +40,7 @@ func InvokeAgentStrategy(
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule: "agent_service",
-		routinepkg.RoutineLabelKeyAction: "invoke_agent_strategy",
+		routinepkg.RoutineLabelKeyMethod: "invoke_agent_strategy",
 	}, func() {
 		defer newResponse.Close()
 

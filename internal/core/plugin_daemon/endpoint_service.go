@@ -62,9 +62,9 @@ func InvokeEndpoint(
 
 			response.Write(dehexed)
 			routine.Submit(routinepkg.Labels{
-				routinepkg.RoutineLabelKeyModule:   "plugin_daemon",
-				routinepkg.RoutineLabelKeyFunction: "InvokeEndpoint",
-				routinepkg.RoutineLabelKeyType:     "body_write",
+				routinepkg.RoutineLabelKeyModule:      "plugin_daemon",
+				routinepkg.RoutineLabelKeyMethod:      "InvokeEndpoint",
+				routinepkg.RoutineLabelRuntimeKeyType: "body_write",
 			}, func() {
 				defer response.Close()
 				for resp.Next() {

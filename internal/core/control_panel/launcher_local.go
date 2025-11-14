@@ -158,8 +158,8 @@ func (c *ControlPanel) ShutdownLocalPluginForcefully(
 	ch := make(chan error, 1)
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "controlpanel",
-		routinepkg.RoutineLabelKeyFunction: "ShutdownLocalPluginForcefully",
+		routinepkg.RoutineLabelKeyModule: "controlpanel",
+		routinepkg.RoutineLabelKeyMethod: "ShutdownLocalPluginForcefully",
 	}, func() {
 		runtime.Stop(false)
 
@@ -187,8 +187,8 @@ func (c *ControlPanel) ShutdownLocalPluginGracefully(
 
 	// wait for runtime to be shutdown in a goroutine
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "controlpanel",
-		routinepkg.RoutineLabelKeyFunction: "ShutdownLocalPluginGracefully",
+		routinepkg.RoutineLabelKeyModule: "controlpanel",
+		routinepkg.RoutineLabelKeyMethod: "ShutdownLocalPluginGracefully",
 	}, func() {
 		runtime.GracefulStop(false)
 

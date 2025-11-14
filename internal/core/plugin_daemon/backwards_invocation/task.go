@@ -58,8 +58,8 @@ func InvokeDify(
 
 	// dispatch invocation task
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "plugin_daemon",
-		routinepkg.RoutineLabelKeyFunction: "InvokeDify",
+		routinepkg.RoutineLabelKeyModule: "plugin_daemon",
+		routinepkg.RoutineLabelKeyMethod: "InvokeDify",
 	}, func() {
 		dispatchDifyInvocationTask(requestHandle)
 		defer requestHandle.EndResponse()

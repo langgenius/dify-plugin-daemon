@@ -197,8 +197,8 @@ func Endpoint(
 	defer close()
 
 	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule:   "service",
-		routinepkg.RoutineLabelKeyFunction: "Endpoint",
+		routinepkg.RoutineLabelKeyModule: "service",
+		routinepkg.RoutineLabelKeyMethod: "Endpoint",
 	}, func() {
 		defer close()
 		for response.Next() {
