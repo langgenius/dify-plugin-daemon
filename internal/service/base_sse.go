@@ -14,6 +14,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 // baseSSEService is a helper function to handle SSE service
@@ -49,9 +50,9 @@ func baseSSEService[R any](
 		return
 	}
 
-	routine.Submit(map[string]string{
-		"module":   "service",
-		"function": "baseSSEService",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "service",
+		routinepkg.RoutineLabelKeyFunction: "baseSSEService",
 	}, func() {
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()

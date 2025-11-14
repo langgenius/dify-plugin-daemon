@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 const (
@@ -19,8 +20,9 @@ func (r *LocalPluginRuntime) Schedule() error {
 	}
 
 	// start schedule loop
-	routine.Submit(map[string]string{
-		"module": "local_runtime", "method": "scheduleLoop",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "local_runtime",
+		routinepkg.RoutineLabelKeyMethod: "scheduleLoop",
 	}, r.scheduleLoop)
 
 	return nil
@@ -102,8 +104,9 @@ func (r *LocalPluginRuntime) Stop(async bool) {
 	if !async {
 		r.waitForAllInstancesToBeShutdown()
 	} else {
-		routine.Submit(map[string]string{
-			"module": "local_runtime", "method": "waitForAllInstancesToBeShutdown",
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "local_runtime",
+			routinepkg.RoutineLabelKeyMethod: "waitForAllInstancesToBeShutdown",
 		}, func() {
 			r.waitForAllInstancesToBeShutdown()
 		})
@@ -123,8 +126,9 @@ func (r *LocalPluginRuntime) GracefulStop(async bool) {
 	if !async {
 		r.stopAndWaitForAllInstancesToBeShutdown()
 	} else {
-		routine.Submit(map[string]string{
-			"module": "local_runtime", "method": "stopAndWaitForAllInstancesToBeShutdown",
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "local_runtime",
+			routinepkg.RoutineLabelKeyMethod: "stopAndWaitForAllInstancesToBeShutdown",
 		}, func() {
 			r.stopAndWaitForAllInstancesToBeShutdown()
 		})

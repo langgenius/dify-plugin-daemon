@@ -20,6 +20,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 type InstallPluginResponse struct {
@@ -115,9 +116,9 @@ func InstallMultiplePluginsToTenant(
 	for _, job := range jobs {
 		jobCopy := job
 		// start a new goroutine to install the plugin
-		routine.Submit(map[string]string{
-			"module": "service",
-			"func":   "InstallPlugin",
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule:   "service",
+			routinepkg.RoutineLabelKeyFunction: "InstallPlugin",
 		}, func() {
 			tasks.ProcessInstallJob(
 				manager,
@@ -178,9 +179,9 @@ func ReinstallPluginFromIdentifier(
 		}
 
 		retStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
-		routine.Submit(map[string]string{
-			"module": "service",
-			"func":   "ReinstallPlugin",
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule:   "service",
+			routinepkg.RoutineLabelKeyFunction: "ReinstallPlugin",
 		}, func() {
 			defer retStream.Close()
 

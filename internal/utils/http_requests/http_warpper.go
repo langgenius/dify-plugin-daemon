@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func parseJsonBody(resp *http.Response, ret interface{}) error {
@@ -123,9 +124,9 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		return nil
 	}
 
-	routine.Submit(map[string]string{
-		"module":   "http_requests",
-		"function": "RequestAndParseStream",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "http_requests",
+		routinepkg.RoutineLabelKeyFunction: "RequestAndParseStream",
 	}, func() {
 		defer resp.Body.Close()
 

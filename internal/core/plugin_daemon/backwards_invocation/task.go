@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 // returns error only if payload is not correct
@@ -56,9 +57,9 @@ func InvokeDify(
 	}
 
 	// dispatch invocation task
-	routine.Submit(map[string]string{
-		"module":   "plugin_daemon",
-		"function": "InvokeDify",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "plugin_daemon",
+		routinepkg.RoutineLabelKeyFunction: "InvokeDify",
 	}, func() {
 		dispatchDifyInvocationTask(requestHandle)
 		defer requestHandle.EndResponse()

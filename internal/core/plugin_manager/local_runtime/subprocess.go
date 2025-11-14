@@ -11,6 +11,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 // getCmd prepares the exec.Cmd for the plugin based on its language
@@ -149,13 +150,21 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 
 	// listen to plugin stdout
 	routine.Submit(
-		map[string]string{"module": "plugin_manager", "type": "local", "function": "StartStdout"},
+		routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+			routinepkg.RoutineLabelKeyType:     "local",
+			routinepkg.RoutineLabelKeyFunction: "StartStdout",
+		},
 		instance.StartStdout,
 	)
 
 	// listen to plugin stderr
 	routine.Submit(
-		map[string]string{"module": "plugin_manager", "type": "local", "function": "StartStderr"},
+		routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+			routinepkg.RoutineLabelKeyType:     "local",
+			routinepkg.RoutineLabelKeyFunction: "StartStderr",
+		},
 		instance.StartStderr,
 	)
 
@@ -173,7 +182,11 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 
 	// monitor plugin
 	routine.Submit(
-		map[string]string{"module": "plugin_manager", "type": "local", "function": "Monitor"},
+		routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+			routinepkg.RoutineLabelKeyType:     "local",
+			routinepkg.RoutineLabelKeyFunction: "Monitor",
+		},
 		func() {
 			instance.Monitor()
 		},

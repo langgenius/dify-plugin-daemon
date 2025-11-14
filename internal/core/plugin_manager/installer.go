@@ -15,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 var (
@@ -55,9 +56,9 @@ func (p *PluginManager) Reinstall(
 
 	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 
-	routine.Submit(map[string]string{
-		"module": "plugin_manager",
-		"action": "reinstallServerless",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyAction: "reinstallServerless",
 	}, func() {
 		defer responseStream.Close()
 
@@ -161,9 +162,9 @@ func (p *PluginManager) installServerless(
 
 	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 
-	routine.Submit(map[string]string{
-		"module": "plugin_manager",
-		"action": "installServerless",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyAction: "installServerless",
 	}, func() {
 		defer responseStream.Close()
 
@@ -253,9 +254,9 @@ func (p *PluginManager) installLocal(
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 
-	routine.Submit(map[string]string{
-		"module": "plugin_manager",
-		"action": "installLocal",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "plugin_manager",
+		routinepkg.RoutineLabelKeyAction: "installLocal",
 	}, func() {
 		// firstly, install the plugin, then launch it, delete it if process fails
 		var success bool = false

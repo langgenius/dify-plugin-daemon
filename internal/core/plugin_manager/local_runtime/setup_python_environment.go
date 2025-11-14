@@ -16,6 +16,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func (p *LocalPluginRuntime) prepareUV() (string, error) {
@@ -108,9 +109,9 @@ func (p *LocalPluginRuntime) installDependencies(
 
 	lastActiveAt := time.Now()
 
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "InitPythonEnvironment",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
 	}, func() {
 		defer wg.Done()
 		// read stdout
@@ -126,9 +127,9 @@ func (p *LocalPluginRuntime) installDependencies(
 		}
 	})
 
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "InitPythonEnvironment",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
 	}, func() {
 		defer wg.Done()
 		// read stderr
@@ -150,9 +151,9 @@ func (p *LocalPluginRuntime) installDependencies(
 		}
 	})
 
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "InitPythonEnvironment",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
 	}, func() {
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
@@ -332,9 +333,9 @@ func (p *LocalPluginRuntime) preCompile(
 	var compileWg sync.WaitGroup
 	compileWg.Add(2)
 
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "InitPythonEnvironment",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
 	}, func() {
 		defer compileWg.Done()
 		// read compileStdout
@@ -361,9 +362,9 @@ func (p *LocalPluginRuntime) preCompile(
 		}
 	})
 
-	routine.Submit(map[string]string{
-		"module":   "plugin_manager",
-		"function": "InitPythonEnvironment",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+		routinepkg.RoutineLabelKeyFunction: "InitPythonEnvironment",
 	}, func() {
 		defer compileWg.Done()
 		// read stderr

@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 // Launches a local plugin runtime
@@ -156,9 +157,9 @@ func (c *ControlPanel) ShutdownLocalPluginForcefully(
 
 	ch := make(chan error, 1)
 
-	routine.Submit(map[string]string{
-		"module": "controlpanel",
-		"func":   "ShutdownLocalPluginForcefully",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "controlpanel",
+		routinepkg.RoutineLabelKeyFunction: "ShutdownLocalPluginForcefully",
 	}, func() {
 		runtime.Stop(false)
 
@@ -185,9 +186,9 @@ func (c *ControlPanel) ShutdownLocalPluginGracefully(
 	ch := make(chan error, 1)
 
 	// wait for runtime to be shutdown in a goroutine
-	routine.Submit(map[string]string{
-		"module": "controlpanel",
-		"func":   "ShutdownLocalPluginGracefully",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "controlpanel",
+		routinepkg.RoutineLabelKeyFunction: "ShutdownLocalPluginGracefully",
 	}, func() {
 		runtime.GracefulStop(false)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func InvokeEndpoint(
@@ -60,10 +61,10 @@ func InvokeEndpoint(
 			}
 
 			response.Write(dehexed)
-			routine.Submit(map[string]string{
-				"module":   "plugin_daemon",
-				"function": "InvokeEndpoint",
-				"type":     "body_write",
+			routine.Submit(routinepkg.Labels{
+				routinepkg.RoutineLabelKeyModule:   "plugin_daemon",
+				routinepkg.RoutineLabelKeyFunction: "InvokeEndpoint",
+				routinepkg.RoutineLabelKeyType:     "body_write",
 			}, func() {
 				defer response.Close()
 				for resp.Next() {

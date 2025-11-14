@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func (c *ControlPanel) startLocalMonitor() {
@@ -95,9 +96,9 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 		}
 
 		wg.Add(1)
-		routine.Submit(map[string]string{
-			"module":   "plugin_manager",
-			"function": "handleNewLocalPlugins",
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule:   "plugin_manager",
+			routinepkg.RoutineLabelKeyFunction: "handleNewLocalPlugins",
 		}, func() {
 			defer wg.Done()
 			_, ch, err := c.LaunchLocalPlugin(uniquePluginIdentifier)

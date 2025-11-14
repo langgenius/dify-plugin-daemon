@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/panjf2000/gnet/v2"
 )
 
@@ -18,9 +19,9 @@ func (r *RemotePluginRuntime) Listen(sessionId string) (*entities.Broadcast[plug
 	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
 		// execute in new goroutine to avoid deadlock
-		routine.Submit(map[string]string{
-			"module": "debugging_runtime",
-			"method": "removeMessageCallbackHandler",
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "debugging_runtime",
+			routinepkg.RoutineLabelKeyMethod: "removeMessageCallbackHandler",
 		}, func() {
 			r.removeMessageCallbackHandler(sessionId)
 			r.removeSessionMessageCloser(sessionId)

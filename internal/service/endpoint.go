@@ -30,6 +30,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 )
 
 func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, error) {
@@ -195,9 +196,9 @@ func Endpoint(
 	}
 	defer close()
 
-	routine.Submit(map[string]string{
-		"module":   "service",
-		"function": "Endpoint",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule:   "service",
+		routinepkg.RoutineLabelKeyFunction: "Endpoint",
 	}, func() {
 		defer close()
 		for response.Next() {
