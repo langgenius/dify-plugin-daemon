@@ -210,6 +210,16 @@ func (m *MockedDifyInvocation) InvokeTextEmbedding(payload *dify_invocation.Invo
 	return &result, nil
 }
 
+func (m *MockedDifyInvocation) InvokeMultimodalEmbedding(payload *dify_invocation.InvokeMultimodalEmbeddingRequest) (*model_entities.MultimodalEmbeddingResult, error) {
+	result := model_entities.MultimodalEmbeddingResult{
+		Model: payload.Model,
+	}
+	for i := 0; i < len(payload.Documents); i++ {
+		result.Embeddings = append(result.Embeddings, []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0})
+	}
+	return &result, nil
+}
+
 func (m *MockedDifyInvocation) InvokeRerank(payload *dify_invocation.InvokeRerankRequest) (*model_entities.RerankResult, error) {
 	result := model_entities.RerankResult{
 		Model: payload.Model,
@@ -219,6 +229,21 @@ func (m *MockedDifyInvocation) InvokeRerank(payload *dify_invocation.InvokeReran
 			Index: &[]int{i}[0],
 			Score: &[]float64{0.1}[0],
 			Text:  &doc,
+		})
+	}
+	return &result, nil
+}
+
+func (m *MockedDifyInvocation) InvokeMultimodalRerank(payload *dify_invocation.InvokeMultimodalRerankRequest) (*model_entities.MultimodalRerankResult, error) {
+	result := model_entities.MultimodalRerankResult{
+		Model: payload.Model,
+		Docs:  []model_entities.MultimodalRerankDocument{},
+	}
+	for i, doc := range payload.Docs {
+		result.Docs = append(result.Docs, model_entities.MultimodalRerankDocument{
+			Index: &[]int{i}[0],
+			Score: &[]float64{0.1}[0],
+			Text:  &doc.Content,
 		})
 	}
 	return &result, nil
