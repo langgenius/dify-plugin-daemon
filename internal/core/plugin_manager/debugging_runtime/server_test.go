@@ -17,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -45,6 +46,11 @@ var testConfig = defaultConfig
 var testConfigs = []*app.Config{
 	defaultConfig,
 	mysqlConfig,
+}
+
+func init() {
+	// init routine pool for testing
+	routine.InitPool(1024)
 }
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
