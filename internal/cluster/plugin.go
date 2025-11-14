@@ -29,7 +29,7 @@ func (l *pluginLifeTime) UpdateScheduledAt(t time.Time) {
 func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error {
 	identity, err := lifetime.Identity()
 	if err != nil {
-		return err
+		return errors.Join(err, errors.New("failed to get plugin identity"))
 	}
 
 	if c.showLog {
@@ -49,7 +49,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	// do plugin state update immediately
 	err = c.doPluginStateUpdate(l)
 	if err != nil {
-		return err
+		return errors.Join(err, errors.New("failed to get plugin identity"))
 	}
 
 	if c.showLog {
@@ -59,8 +59,25 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	return nil
 }
 
-func (c *Cluster) UnregisterPlugin(lifetime plugin_entities.PluginLifetime) {
-	// TODO
+func (c *Cluster) UnregisterPlugin(lifetime plugin_entities.PluginLifetime) error {
+	identity, err := lifetime.Identity()
+	if err != nil {
+		return errors.Join(err, errors.New("failed to get plugin identity"))
+	}
+
+	if c.showLog {
+		log.Info("unregistering plugin %s", identity.String())
+	}
+
+	// remove plugin from cluster
+	err = c.removePluginState(c.id, plugin_entities.HashedIdentity(identity.String()))
+	if err != nil {
+		return errors.Join(err, errors.New("failed to remove plugin state"))
+	}
+
+	c.plugins.Delete(identity.String())
+
+	return nil
 }
 
 const (

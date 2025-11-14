@@ -118,6 +118,12 @@ func TestPluginScheduleLifetime(t *testing.T) {
 	// trigger plugin stop
 	plugin.Stop()
 
+	// notify plugin has been stopped
+	if err := cluster[0].UnregisterPlugin(&plugin); err != nil {
+		t.Errorf("unregister plugin failed: %v", err)
+		return
+	}
+
 	// wait for the plugin to stop
 	time.Sleep(time.Second * 1)
 

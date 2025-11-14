@@ -4,6 +4,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -16,21 +17,27 @@ func (t *ClusterTunnel) OnDebuggingRuntimeConnected(
 	runtime *debugging_runtime.RemotePluginRuntime,
 ) {
 	// register the plugin to the cluster
-	t.cluster.RegisterPlugin(runtime)
+	if err := t.cluster.RegisterPlugin(runtime); err != nil {
+		log.Error("failed to register plugin: %s", err.Error())
+	}
 }
 
 func (t *ClusterTunnel) OnDebuggingRuntimeDisconnected(
 	runtime *debugging_runtime.RemotePluginRuntime,
 ) {
 	// unregister the plugin from the cluster
-	t.cluster.UnregisterPlugin(runtime)
+	if err := t.cluster.UnregisterPlugin(runtime); err != nil {
+		log.Error("failed to unregister plugin: %s", err.Error())
+	}
 }
 
 func (t *ClusterTunnel) OnLocalRuntimeReady(
 	runtime *local_runtime.LocalPluginRuntime,
 ) {
 	// register the plugin to the cluster
-	t.cluster.RegisterPlugin(runtime)
+	if err := t.cluster.RegisterPlugin(runtime); err != nil {
+		log.Error("failed to register plugin: %s", err.Error())
+	}
 }
 
 func (t *ClusterTunnel) OnLocalRuntimeStartFailed(
@@ -50,7 +57,9 @@ func (t *ClusterTunnel) OnLocalRuntimeStop(
 	runtime *local_runtime.LocalPluginRuntime,
 ) {
 	// unregister the plugin from the cluster
-	t.cluster.UnregisterPlugin(runtime)
+	if err := t.cluster.UnregisterPlugin(runtime); err != nil {
+		log.Error("failed to unregister plugin: %s", err.Error())
+	}
 }
 
 func (t *ClusterTunnel) OnLocalRuntimeStopped(
