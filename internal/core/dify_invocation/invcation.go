@@ -14,8 +14,12 @@ type BackwardsInvocation interface {
 		*stream.Stream[model_entities.LLMResultChunkWithStructuredOutput], error)
 	// InvokeTextEmbedding
 	InvokeTextEmbedding(payload *InvokeTextEmbeddingRequest) (*model_entities.TextEmbeddingResult, error)
+	// InvokeMultimodalEmbedding
+	InvokeMultimodalEmbedding(payload *InvokeMultimodalEmbeddingRequest) (*model_entities.MultimodalEmbeddingResult, error)
 	// InvokeRerank
 	InvokeRerank(payload *InvokeRerankRequest) (*model_entities.RerankResult, error)
+	// InvokeMultimodalRerank
+	InvokeMultimodalRerank(payload *InvokeMultimodalRerankRequest) (*model_entities.MultimodalRerankResult, error)
 	// InvokeTTS
 	InvokeTTS(payload *InvokeTTSRequest) (*stream.Stream[model_entities.TTSResult], error)
 	// InvokeSpeech2Text

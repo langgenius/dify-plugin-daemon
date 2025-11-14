@@ -20,7 +20,9 @@ const (
 	INVOKE_TYPE_LLM                      InvokeType = "llm"
 	INVOKE_TYPE_LLM_STRUCTURED_OUTPUT    InvokeType = "llm_structured_output"
 	INVOKE_TYPE_TEXT_EMBEDDING           InvokeType = "text_embedding"
+	INVOKE_TYPE_MULTIMODAL_EMBEDDING     InvokeType = "multimodal_embedding"
 	INVOKE_TYPE_RERANK                   InvokeType = "rerank"
+	INVOKE_TYPE_MULTIMODAL_RERANK        InvokeType = "multimodal_rerank"
 	INVOKE_TYPE_TTS                      InvokeType = "tts"
 	INVOKE_TYPE_SPEECH2TEXT              InvokeType = "speech2text"
 	INVOKE_TYPE_MODERATION               InvokeType = "moderation"
@@ -67,10 +69,22 @@ type InvokeTextEmbeddingRequest struct {
 	requests.InvokeTextEmbeddingSchema
 }
 
+type InvokeMultimodalEmbeddingRequest struct {
+	BaseInvokeDifyRequest
+	requests.BaseRequestInvokeModel
+	requests.InvokeMultimodalEmbeddingSchema
+}
+
 type InvokeRerankRequest struct {
 	BaseInvokeDifyRequest
 	requests.BaseRequestInvokeModel
 	requests.InvokeRerankSchema
+}
+
+type InvokeMultimodalRerankRequest struct {
+	BaseInvokeDifyRequest
+	requests.BaseRequestInvokeModel
+	requests.InvokeMultimodalRerankSchema
 }
 
 type InvokeTTSRequest struct {

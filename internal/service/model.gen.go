@@ -64,6 +64,23 @@ func InvokeTextEmbedding(
 	)
 }
 
+func InvokeMultimodalEmbedding(
+	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeMultimodalEmbedding],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.MultimodalEmbeddingResult], error) {
+			return plugin_daemon.InvokeMultimodalEmbedding(session, &r.Data)
+		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		r,
+		ctx,
+		max_timeout_seconds,
+	)
+}
+
 func GetTextEmbeddingNumTokens(
 	r *plugin_entities.InvokePluginRequest[requests.RequestGetTextEmbeddingNumTokens],
 	ctx *gin.Context,
@@ -89,6 +106,23 @@ func InvokeRerank(
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.RerankResult], error) {
 			return plugin_daemon.InvokeRerank(session, &r.Data)
+		},
+		access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
+		r,
+		ctx,
+		max_timeout_seconds,
+	)
+}
+
+func InvokeMultimodalRerank(
+	r *plugin_entities.InvokePluginRequest[requests.RequestInvokeMultimodalRerank],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[model_entities.MultimodalRerankResult], error) {
+			return plugin_daemon.InvokeMultimodalRerank(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,

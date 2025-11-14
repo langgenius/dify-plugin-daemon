@@ -19,13 +19,15 @@ import (
 type ModelType string
 
 const (
-	MODEL_TYPE_LLM            ModelType = "llm"
-	MODEL_TYPE_TEXT_EMBEDDING ModelType = "text-embedding"
-	MODEL_TYPE_RERANKING      ModelType = "rerank"
-	MODEL_TYPE_SPEECH2TEXT    ModelType = "speech2text"
-	MODEL_TYPE_MODERATION     ModelType = "moderation"
-	MODEL_TYPE_TTS            ModelType = "tts"
-	MODEL_TYPE_TEXT2IMG       ModelType = "text2img"
+	MODEL_TYPE_LLM                  ModelType = "llm"
+	MODEL_TYPE_TEXT_EMBEDDING       ModelType = "text-embedding"
+	MODEL_TYPE_RERANKING            ModelType = "rerank"
+	MODEL_TYPE_SPEECH2TEXT          ModelType = "speech2text"
+	MODEL_TYPE_MODERATION           ModelType = "moderation"
+	MODEL_TYPE_TTS                  ModelType = "tts"
+	MODEL_TYPE_TEXT2IMG             ModelType = "text2img"
+	MODEL_TYPE_MULTIMODAL_EMBEDDING ModelType = "multimodal-embedding"
+	MODEL_TYPE_MULTIMODAL_RERANK    ModelType = "multimodal-rerank"
 )
 
 func isModelType(fl validator.FieldLevel) bool {
@@ -37,7 +39,9 @@ func isModelType(fl validator.FieldLevel) bool {
 		string(MODEL_TYPE_SPEECH2TEXT),
 		string(MODEL_TYPE_MODERATION),
 		string(MODEL_TYPE_TTS),
-		string(MODEL_TYPE_TEXT2IMG):
+		string(MODEL_TYPE_TEXT2IMG),
+		string(MODEL_TYPE_MULTIMODAL_EMBEDDING),
+		string(MODEL_TYPE_MULTIMODAL_RERANK):
 		return true
 	}
 	return false
