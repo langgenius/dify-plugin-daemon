@@ -24,6 +24,7 @@ func (r *LocalPluginRuntime) Listen(sessionId string) (
 	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
 	listener.OnClose(func() {
 		instance.removeStdioHandlerListener(sessionId)
+		r.sessionToInstanceMap.Delete(sessionId)
 	})
 
 	instance.setupStdioEventListener(sessionId, func(b []byte) {
