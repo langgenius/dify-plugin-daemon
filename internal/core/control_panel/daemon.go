@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"

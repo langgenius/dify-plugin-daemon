@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 )

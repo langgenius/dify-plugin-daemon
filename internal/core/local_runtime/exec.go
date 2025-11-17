@@ -15,4 +15,7 @@ var (
 
 	// Runtime already stopped
 	ErrRuntimeAlreadyStopped = errors.New("runtime already stopped")
+
+	// Runtime is not active
+	ErrRuntimeNotActive = errors.New("runtime is not active")
 )

@@ -1,7 +1,7 @@
 package controlpanel
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
 )
 
 type DebuggingRuntimeSignal struct {

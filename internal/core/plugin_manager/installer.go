@@ -6,8 +6,8 @@ import (
 	"time"
 
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
-	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"

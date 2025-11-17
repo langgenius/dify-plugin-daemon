@@ -1,7 +1,7 @@
 package controlpanel
 
 import (
-	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )

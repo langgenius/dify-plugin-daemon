@@ -1,4 +1,4 @@
-package test_utils
+package testutils
 
 import (
 	"errors"
@@ -12,9 +12,9 @@ import (
 	_ "embed"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
+	plugin_daemon "github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"

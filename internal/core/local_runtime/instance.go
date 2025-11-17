@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/plugin_errors"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -271,7 +270,7 @@ func (s *PluginInstance) Monitor() error {
 					),
 				)
 			})
-			return plugin_errors.ErrPluginNotActive
+			return ErrRuntimeNotActive
 		}
 		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
 			// notify handlers

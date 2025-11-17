@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/serverless_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"

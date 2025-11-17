@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"

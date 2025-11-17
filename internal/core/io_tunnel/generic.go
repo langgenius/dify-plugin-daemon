@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/generic_invoke"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
