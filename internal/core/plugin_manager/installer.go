@@ -302,6 +302,7 @@ func (p *PluginManager) installLocal(
 
 		// if the plugin is already launched, just return success
 		if err == controlpanel.ErrorPluginAlreadyLaunched {
+			success = true // set success to true as the result for defer function
 			responseStream.Write(installation_entities.PluginInstallResponse{
 				Event: installation_entities.PluginInstallEventDone,
 				Data:  "successfully installed",
