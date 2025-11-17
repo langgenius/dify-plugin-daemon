@@ -60,16 +60,25 @@ func GetRuntime(pluginZip []byte, cwd string, instanceNums int) (*local_runtime.
 		}
 	}
 
+	config := &app.Config{
+		PythonInterpreterPath:      os.Getenv("PYTHON_INTERPRETER_PATH"),
+		UvPath:                     uvPath,
+		PythonEnvInitTimeout:       120,
+		PluginWorkingPath:          cwd,
+		PluginRuntimeBufferSize:    1024,
+		PluginRuntimeMaxBufferSize: 5242880,
+	}
+
 	// FIXME: cli test command should give a timeout for launching
-	runtime, err := local_runtime.ConstructPluginRuntime(&app.Config{
-		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
-		UvPath:                uvPath,
-		PythonEnvInitTimeout:  120,
-		PluginWorkingPath:     cwd,
-	}, decoder)
+	runtime, err := local_runtime.ConstructPluginRuntime(config, decoder)
 
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("construct plugin runtime error"))
+	}
+
+	// initialize environment
+	if err := runtime.InitPythonEnvironment(); err != nil {
+		return nil, errors.Join(err, fmt.Errorf("initialize python environment error"))
 	}
 
 	errChan := make(chan error, 1)

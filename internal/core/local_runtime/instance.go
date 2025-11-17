@@ -124,8 +124,8 @@ func (s *PluginInstance) StartStdout() {
 
 	scanner := bufio.NewScanner(s.outReader)
 	scanner.Buffer(
-		make([]byte, s.appConfig.PluginStdioBufferSize),
-		s.appConfig.PluginStdioMaxBufferSize,
+		make([]byte, s.appConfig.GetLocalRuntimeBufferSize()),
+		s.appConfig.GetLocalRuntimeMaxBufferSize(),
 	)
 
 	for scanner.Scan() {
