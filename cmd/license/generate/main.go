@@ -30,6 +30,6 @@ func main() {
 		Bytes: newPublicKey,
 	})
 
-	os.WriteFile("internal/core/license/private_key/PRIVATE_KEY.pem", privateKeyPem, 0644)
-	os.WriteFile("internal/core/license/public_key/PUBLIC_KEY.pem", publicKeyPem, 0644)
+	os.WriteFile("pkg/license/private_key/PRIVATE_KEY.pem", privateKeyPem, 0644)
+	os.WriteFile("pkg/license/public_key/PUBLIC_KEY.pem", publicKeyPem, 0644)
 }
