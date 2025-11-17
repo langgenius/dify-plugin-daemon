@@ -1,4 +1,4 @@
-package tester
+package mock
 
 import (
 	"time"

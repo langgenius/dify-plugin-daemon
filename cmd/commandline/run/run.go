@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/mock"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/testutils"
@@ -73,7 +73,7 @@ func handleClient(
 	pluginUniqueIdentifier, _ := runtime.Identity()
 
 	// mocked invocation
-	mockedInvocation := tester.NewMockedDifyInvocation()
+	mockedInvocation := mock.NewMockedDifyInvocation()
 
 	logResponse(GenericResponse{
 		Type:     GENERIC_RESPONSE_TYPE_PLUGIN_READY,

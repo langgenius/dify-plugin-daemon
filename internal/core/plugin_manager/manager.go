@@ -8,7 +8,7 @@ import (
 	"github.com/langgenius/dify-cloud-kit/oss"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/calldify"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -129,8 +129,8 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		}
 	}
 
-	invocation, err := real.NewDifyInvocationDaemon(
-		real.NewDifyInvocationDaemonPayload{
+	invocation, err := calldify.NewDifyInvocationDaemon(
+		calldify.NewDifyInvocationDaemonPayload{
 			BaseUrl:      configuration.DifyInnerApiURL,
 			CallingKey:   configuration.DifyInnerApiKey,
 			WriteTimeout: configuration.DifyInvocationWriteTimeout,

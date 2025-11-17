@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/mock"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -20,7 +20,7 @@ func getTestSession() *session_manager.Session {
 			InvokeFrom:             access_types.PLUGIN_ACCESS_TYPE_ENDPOINT,
 			Action:                 access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,
 			Declaration:            nil,
-			BackwardsInvocation:    tester.NewMockedDifyInvocation(),
+			BackwardsInvocation:    mock.NewMockedDifyInvocation(),
 			IgnoreCache:            true,
 		},
 	)

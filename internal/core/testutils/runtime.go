@@ -11,7 +11,7 @@ import (
 
 	_ "embed"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/mock"
 	plugin_daemon "github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
@@ -163,7 +163,7 @@ func RunOnce[T RunOnceRequest, R any](
 			InvokeFrom:             accessType,
 			Action:                 action,
 			Declaration:            nil,
-			BackwardsInvocation:    tester.NewMockedDifyInvocation(),
+			BackwardsInvocation:    mock.NewMockedDifyInvocation(),
 			IgnoreCache:            true,
 		},
 	)
