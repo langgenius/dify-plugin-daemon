@@ -156,12 +156,31 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 }
 
 // check if the plugin is already running on this node
-func (c *PluginManager) IsPluginOnCurrentNode(
+func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (bool, error) {
-	_, err := c.controlPanel.GetPluginRuntime(identity)
-	if err != nil {
-		return false, err
+	// debugging runtime were stored in control panel
+	if identity.RemoteLike() {
+		_, err := c.controlPanel.GetPluginRuntime(identity)
+		if err != nil {
+			return true, err
+		}
+		return false, nil
+	}
+
+	if c.config.Platform == app.PLATFORM_SERVERLESS {
+		// under serverless mode, it's no need to do redirecting
+		return false, nil
+	} else if c.config.Platform == app.PLATFORM_LOCAL {
+		// under local mode, check if the plugin is already running on this node
+		_, err := c.controlPanel.GetPluginRuntime(identity)
+		if err != nil {
+			// not found on this node, need to redirecting
+			return true, err
+		}
+
+		// found on current node
+		return false, nil
 	}
 
 	return true, nil

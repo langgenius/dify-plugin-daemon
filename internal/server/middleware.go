@@ -102,7 +102,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		}
 
 		// check if plugin in current node
-		if ok, originalError := app.pluginManager.IsPluginOnCurrentNode(identity); !ok {
+		if needRedirecting, originalError := app.pluginManager.NeedRedirecting(identity); needRedirecting {
 			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, originalError)
 			ctx.Abort()
 		} else {

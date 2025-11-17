@@ -93,7 +93,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 	}
 
 	// check if plugin exists in current node
-	if ok, originalError := app.pluginManager.IsPluginOnCurrentNode(pluginUniqueIdentifier); !ok {
+	if needRedirecting, originalError := app.pluginManager.NeedRedirecting(pluginUniqueIdentifier); needRedirecting {
 		app.redirectPluginInvokeByPluginIdentifier(ctx, pluginUniqueIdentifier, originalError)
 	} else {
 		service.Endpoint(ctx, endpoint, pluginInstallation, maxExecutionTime, path)
