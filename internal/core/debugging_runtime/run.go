@@ -62,6 +62,10 @@ func (r *RemotePluginRuntime) HeartbeatMonitor() {
 	defer ticker.Stop()
 
 	for range ticker.C {
+		if r.Stopped() {
+			return
+		}
+
 		if time.Since(r.lastActiveAt) > time.Second*60 {
 			r.Stop()
 		}

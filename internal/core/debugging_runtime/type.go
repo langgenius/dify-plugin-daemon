@@ -12,10 +12,6 @@ import (
 	"github.com/panjf2000/gnet/v2"
 )
 
-type pluginRuntimeMode string
-
-const _PLUGIN_RUNTIME_MODE_CI pluginRuntimeMode = "ci"
-
 type RemotePluginRuntime struct {
 	basic_runtime.MediaTransport
 	plugin_entities.PluginRuntime
