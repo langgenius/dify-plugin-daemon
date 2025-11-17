@@ -32,7 +32,7 @@ func (c *ControlPanel) InstallToLocal(
 	}
 
 	// try to decode the package
-	_, decoder, err := c.buildLocalPluginRuntime(pluginUniqueIdentifier)
+	decoder, _, err := c.buildPluginDecoder(pluginUniqueIdentifier)
 	if err != nil {
 		return err
 	}
