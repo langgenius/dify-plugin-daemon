@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/tasks"
@@ -363,7 +364,9 @@ func UninstallPlugin(
 		}
 
 		shutdownCh, err := manager.ShutdownLocalPluginGracefully(pluginUniqueIdentifier)
-		if err != nil {
+		if err == controlpanel.ErrLocalPluginRuntimeNotFound {
+			return entities.NewSuccessResponse(true)
+		} else if err != nil {
 			return exception.InternalServerError(err).ToResponse()
 		}
 

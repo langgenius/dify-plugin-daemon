@@ -52,5 +52,5 @@ func (r *LocalPluginRuntime) Write(
 	}
 
 	// write to the instance
-	return instance.Write(data)
+	return instance.Write(append(data, '\n'))
 }

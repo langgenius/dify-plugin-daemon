@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -298,7 +299,15 @@ func (p *PluginManager) installLocal(
 		// this method will trigger notifiers added to ControlPanel
 		// signal that a plugin starts successfully or failed
 		runtime, ch, err = p.controlPanel.LaunchLocalPlugin(pluginUniqueIdentifier)
-		if err != nil {
+
+		// if the plugin is already launched, just return success
+		if err == controlpanel.ErrorPluginAlreadyLaunched {
+			responseStream.Write(installation_entities.PluginInstallResponse{
+				Event: installation_entities.PluginInstallEventDone,
+				Data:  "successfully installed",
+			})
+			return
+		} else if err != nil {
 			// release the lock
 			responseStream.Write(installation_entities.PluginInstallResponse{
 				Event: installation_entities.PluginInstallEventError,
