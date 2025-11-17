@@ -25,7 +25,7 @@ import (
 
 // GetRuntime returns a runtime for a plugin
 // Please ensure cwd is a valid directory without any file in it
-func GetRuntime(pluginZip []byte, cwd string) (*local_runtime.LocalPluginRuntime, error) {
+func GetRuntime(pluginZip []byte, cwd string, instanceNums int) (*local_runtime.LocalPluginRuntime, error) {
 	decoder, err := decoder.NewZipPluginDecoder(pluginZip)
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("create plugin decoder error"))
@@ -87,6 +87,11 @@ func GetRuntime(pluginZip []byte, cwd string) (*local_runtime.LocalPluginRuntime
 				launchedChan <- true
 			})
 		},
+	}
+
+	// scale up to the expected instance nums
+	for i := 0; i < instanceNums; i++ {
+		runtime.ScaleUp()
 	}
 
 	runtime.AddNotifier(&notifier)

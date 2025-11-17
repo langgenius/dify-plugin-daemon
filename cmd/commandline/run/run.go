@@ -233,7 +233,7 @@ func runPlugin(payload RunPluginPayload) error {
 	}, payload.ResponseFormat)
 
 	// launch the plugin locally and returns a local runtime
-	runtime, err := testutils.GetRuntime(pluginFile, dir)
+	runtime, err := testutils.GetRuntime(pluginFile, dir, 1)
 	if err != nil {
 		return err
 	}

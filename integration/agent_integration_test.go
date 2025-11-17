@@ -28,7 +28,7 @@ func TestDifyOfficialAgentIntegration(t *testing.T) {
 
 	defer testutils.ClearTestingPath(_testingPath)
 
-	runtime, err := testutils.GetRuntime(difyOfficialAgent, _testingPath)
+	runtime, err := testutils.GetRuntime(difyOfficialAgent, _testingPath, 1)
 	assert.NoError(t, err)
 
 	invokePayload, err := parser.UnmarshalJsonBytes2Map(invokeAgentStrategyJson)
