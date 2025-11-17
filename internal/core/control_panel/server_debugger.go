@@ -27,6 +27,7 @@ func (c *ControlPanel) onDebuggingRuntimeConnected(
 	pluginIdentifier, err := rpr.Identity()
 	if err != nil {
 		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
+		return err
 	}
 
 	// store plugin runtime
