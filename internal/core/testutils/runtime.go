@@ -71,7 +71,6 @@ func GetRuntime(pluginZip []byte, cwd string, instanceNums int) (*local_runtime.
 
 	// FIXME: cli test command should give a timeout for launching
 	runtime, err := local_runtime.ConstructPluginRuntime(config, decoder)
-
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("construct plugin runtime error"))
 	}

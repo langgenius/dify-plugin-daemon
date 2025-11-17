@@ -129,6 +129,11 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 			})
 		},
 		OnInstanceHeartbeatImpl: func(pi *PluginInstance) {
+			// setup instance
+			r.instanceLocker.Lock()
+			r.instances = append(r.instances, instance)
+			r.instanceLocker.Unlock()
+
 			heartbeatOnce.Do(func() {
 				// mark the instance as started
 				instance.started = true
@@ -191,11 +196,6 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 			instance.Monitor()
 		},
 	)
-
-	// setup instance
-	r.instanceLocker.Lock()
-	r.instances = append(r.instances, instance)
-	r.instanceLocker.Unlock()
 
 	success = true
 	return nil
