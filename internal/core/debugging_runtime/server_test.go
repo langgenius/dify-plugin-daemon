@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/service/debugging_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
@@ -120,14 +121,14 @@ func TestAcceptConnection(t *testing.T) {
 	tenantId := uuid.New().String()
 
 	defer cache.Close()
-	key, err := GetConnectionKey(ConnectionInfo{
+	key, err := debugging_service.GetConnectionKey(debugging_service.ConnectionInfo{
 		TenantId: tenantId,
 	})
 	if err != nil {
 		t.Errorf("failed to get connection key: %s", err.Error())
 		return
 	}
-	defer ClearConnectionKey(tenantId)
+	defer debugging_service.ClearConnectionKey(tenantId)
 
 	server, port := preparePluginServer(t)
 	if server == nil {

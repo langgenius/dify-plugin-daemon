@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/service/debugging_service"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
@@ -17,7 +18,7 @@ import (
 func (d *DifyServer) handleHandleShake(
 	runtime *RemotePluginRuntime,
 	registerPayload plugin_entities.RemotePluginRegisterPayload,
-) (*ConnectionInfo, error) {
+) (*debugging_service.ConnectionInfo, error) {
 	if runtime.handshake {
 		return nil, errors.New("handshake already completed")
 	}
@@ -28,7 +29,7 @@ func (d *DifyServer) handleHandleShake(
 		return nil, errors.New("handshake failed, invalid handshake message")
 	}
 
-	info, err := GetConnectionInfo(key.Key)
+	info, err := debugging_service.GetConnectionInfo(key.Key)
 	if err == cache.ErrNotFound {
 		// close connection if handshake failed
 		return nil, errors.New("handshake failed, invalid key")

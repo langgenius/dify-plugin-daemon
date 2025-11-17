@@ -1,4 +1,4 @@
-package debugging_runtime
+package debugging_service
 
 import (
 	"strings"

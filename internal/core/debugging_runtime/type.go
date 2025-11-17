@@ -2,6 +2,7 @@ package debugging_runtime
 
 import (
 	"bytes"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -153,4 +154,13 @@ func (r *RemotePluginRuntime) SetInstallationId(installationId string) {
 	// once a connection is disconnected, removing it needs installation id
 	// however, it was set outside of the plugin runtime, it uses `notifiers`
 	r.installationId = installationId
+}
+
+func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
+	// FIXME: it's a little bit tricky that replace author with current tenant_id
+	// just as a flag to identify debugging plugin
+	config := r.Config
+	config.Author = r.tenantId
+	checksum, _ := r.Checksum()
+	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", config.Identity(), checksum))
 }
