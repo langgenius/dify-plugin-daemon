@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/tasks"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
@@ -109,6 +110,10 @@ func (app *App) Run(config *app.Config) {
 
 	// launch cluster
 	app.cluster.Launch()
+
+	// setup signal handler, for a graceful shutdown to cleanup resources like async tasks
+	tasks.SetupSignalHandler()
+	tasks.RegisterFinalizers(tasks.RecycleTasks)
 
 	// start http server
 	app.server(config)

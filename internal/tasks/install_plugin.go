@@ -25,6 +25,9 @@ func ProcessInstallJob(
 	taskIDs []string,
 	job PluginInstallJob,
 ) {
+	startTasks(taskIDs)
+	defer endTasks(taskIDs)
+
 	// if the plugin does not need runtime install, just save the installation to the database
 	if !job.NeedsRuntimeInstall {
 		if err := SaveInstallationForTenantsToDB(tenants, job, runtimeType, source); err != nil {
