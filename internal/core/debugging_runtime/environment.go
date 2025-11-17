@@ -2,14 +2,8 @@ package debugging_runtime
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
-)
-
-var (
-	authorRegex     = regexp.MustCompile(`^[a-z0-9_-]{1,64}$`)
-	pluginNameRegex = regexp.MustCompile(`^[a-z0-9_-]{1,64}$`)
 )
 
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
@@ -19,10 +13,6 @@ func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier
 	config.Author = r.tenantId
 	checksum, _ := r.Checksum()
 	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", config.Identity(), checksum))
-}
-
-func (r *RemotePluginRuntime) Cleanup() {
-	// no cleanup needed
 }
 
 func (r *RemotePluginRuntime) WaitStarted() <-chan bool {

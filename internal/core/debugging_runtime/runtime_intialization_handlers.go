@@ -149,6 +149,11 @@ func (d *DifyServer) handleDeclarationRegister(
 		return fmt.Errorf("handshake failed, invalid plugin declaration: %v", err)
 	}
 
+	// check if declaration is valid
+	if err := declaration.ManifestValidate(); err != nil {
+		return fmt.Errorf("invalid manifest detected: %v", err)
+	}
+
 	runtime.Config = declaration
 
 	// registration transferred
