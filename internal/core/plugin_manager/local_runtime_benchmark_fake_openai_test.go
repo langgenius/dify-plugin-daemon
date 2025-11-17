@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
 )
 
 // FakeOpenAIResponse represents the structure of an OpenAI chat completion response

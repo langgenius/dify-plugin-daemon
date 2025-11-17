@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	jsonschema "github.com/langgenius/dify-plugin-daemon/internal/utils/json_schema"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
+	jsonschema "github.com/langgenius/dify-plugin-daemon/pkg/utils/json_schema"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 type MockedDifyInvocation struct{}

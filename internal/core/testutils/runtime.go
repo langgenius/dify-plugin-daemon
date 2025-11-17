@@ -17,10 +17,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 // GetRuntime returns a runtime for a plugin

@@ -11,7 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 	sentrygin "github.com/getsentry/sentry-go/gin"
 )

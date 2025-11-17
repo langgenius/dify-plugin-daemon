@@ -8,9 +8,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func GenericInvokePlugin[Req any, Rsp any](

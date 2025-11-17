@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer/withkey"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func Sign(difypkgPath string, privateKeyPath string, verification *decoder.Verification) error {

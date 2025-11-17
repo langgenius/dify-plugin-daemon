@@ -2,9 +2,9 @@ package plugin_daemon
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/oauth_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func OAuthGetAuthorizationURL(

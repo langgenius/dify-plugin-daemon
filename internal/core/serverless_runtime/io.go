@@ -9,12 +9,12 @@ import (
 	"net/url"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func (r *ServerlessPluginRuntime) Listen(sessionId string) (

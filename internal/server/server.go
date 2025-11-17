@@ -9,8 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func initOSS(config *app.Config) oss.OSS {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func GenerateKeyPair(keyPairName string) error {

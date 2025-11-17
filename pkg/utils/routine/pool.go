@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	routinelabels "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/panjf2000/ants/v2"
 )
 

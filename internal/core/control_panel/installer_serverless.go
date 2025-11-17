@@ -2,8 +2,8 @@ package controlpanel
 
 import (
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func (c *ControlPanel) InstallToServerless(

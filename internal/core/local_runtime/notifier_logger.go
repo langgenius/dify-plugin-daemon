@@ -1,6 +1,6 @@
 package local_runtime
 
-import "github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+import "github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 type NotifierLogger struct {
 }

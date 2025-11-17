@@ -6,9 +6,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 type pluginLifeTime struct {

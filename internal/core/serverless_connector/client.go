@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 var (

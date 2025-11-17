@@ -14,13 +14,13 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func init() {

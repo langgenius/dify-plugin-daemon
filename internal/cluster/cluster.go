@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/mapping"
 )
 
 type Cluster struct {

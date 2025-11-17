@@ -5,12 +5,12 @@ import (
 	"reflect"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 

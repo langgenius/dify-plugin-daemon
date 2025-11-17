@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func InvokeEndpoint(

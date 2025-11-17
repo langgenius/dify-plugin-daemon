@@ -7,10 +7,10 @@ import (
 	plugin_daemon "github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/oauth_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func OAuthGetAuthorizationURL(

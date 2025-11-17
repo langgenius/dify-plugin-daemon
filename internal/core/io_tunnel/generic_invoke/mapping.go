@@ -3,7 +3,7 @@ package generic_invoke
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 func getBasicPluginAccessMap(

@@ -3,10 +3,10 @@ package cluster
 import (
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 const (

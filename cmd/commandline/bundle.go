@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/bundle"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/spf13/cobra"
 )
 

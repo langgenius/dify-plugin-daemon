@@ -21,16 +21,16 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, error) {

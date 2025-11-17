@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	version "github.com/hashicorp/go-version"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 //go:embed patches/0.0.1b70.ai_model.py.patch

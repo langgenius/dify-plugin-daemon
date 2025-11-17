@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func (p *LocalPluginRuntime) prepareUV() (string, error) {

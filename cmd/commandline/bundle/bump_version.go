@@ -1,8 +1,8 @@
 package bundle
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func BumpVersion(bundlePath string, targetVersion string) {

@@ -4,8 +4,8 @@ import (
 	"flag"
 	"os"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func main() {

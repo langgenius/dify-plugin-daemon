@@ -8,9 +8,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/lock"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/mapping"
 )
 
 type ControlPanel struct {

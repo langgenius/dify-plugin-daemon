@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/redis/go-redis/v9"
 )
 

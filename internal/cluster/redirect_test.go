@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
 )
 
 type SimulationCheckServer struct {

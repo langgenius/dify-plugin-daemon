@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 // getCmd prepares the exec.Cmd for the plugin based on its language

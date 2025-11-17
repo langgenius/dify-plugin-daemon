@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func parseJsonBody(resp *http.Response, ret interface{}) error {

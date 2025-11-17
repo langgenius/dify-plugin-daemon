@@ -6,10 +6,10 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	testutils "github.com/langgenius/dify-plugin-daemon/internal/core/testutils"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/agent_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/stretchr/testify/assert"
 )
 
