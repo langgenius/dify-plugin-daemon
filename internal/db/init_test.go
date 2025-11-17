@@ -8,7 +8,7 @@ import (
 
 func TestInitDB(t *testing.T) {
 	var pgConfig = &app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",
@@ -18,7 +18,7 @@ func TestInitDB(t *testing.T) {
 	}
 
 	var mysqlConfig = &app.Config{
-		DBType:     "mysql",
+		DBType:     app.DB_TYPE_MYSQL,
 		DBUsername: "root",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",

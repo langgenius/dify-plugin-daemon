@@ -30,7 +30,7 @@ func init() {
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 	config := &app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",

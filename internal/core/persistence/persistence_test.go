@@ -21,7 +21,7 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBType:            "postgresql",
+		DBType:            app.DB_TYPE_POSTGRESQL,
 		DBUsername:        "postgres",
 		DBPassword:        "difyai123456",
 		DBHost:            "localhost",
@@ -74,7 +74,7 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 	assert.Nil(t, err)
 	defer cache.Close()
 	db.Init(&app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",
@@ -108,7 +108,7 @@ func TestPersistenceDelete(t *testing.T) {
 	assert.Nil(t, err)
 	defer cache.Close()
 	db.Init(&app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",
@@ -158,7 +158,7 @@ func TestPersistencePathTraversal(t *testing.T) {
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBType:            "postgresql",
+		DBType:            app.DB_TYPE_POSTGRESQL,
 		DBUsername:        "postgres",
 		DBPassword:        "difyai123456",
 		DBHost:            "localhost",
