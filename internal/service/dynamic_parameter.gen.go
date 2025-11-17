@@ -20,7 +20,7 @@ func FetchDynamicParameterOptions(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[dynamic_select_entities.DynamicSelectResult], error) {
-			return plugin_daemon.FetchDynamicParameterOptions(session, &r.Data)
+			return io_tunnel.FetchDynamicParameterOptions(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER,
 		access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS,

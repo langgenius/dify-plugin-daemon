@@ -1,4 +1,4 @@
-package plugin_daemon
+package io_tunnel
 
 import (
 	"encoding/hex"

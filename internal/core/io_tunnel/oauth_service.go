@@ -1,4 +1,4 @@
-package plugin_daemon
+package io_tunnel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"

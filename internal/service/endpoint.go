@@ -13,7 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	plugin_daemon "github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
@@ -167,7 +167,7 @@ func Endpoint(
 
 	session.BindRuntime(runtime)
 
-	statusCode, headers, response, err := plugin_daemon.InvokeEndpoint(
+	statusCode, headers, response, err := io_tunnel.InvokeEndpoint(
 		session, &requests.RequestInvokeEndpoint{
 			RawHttpRequest: hex.EncodeToString(buffer.Bytes()),
 			Settings:       settings,

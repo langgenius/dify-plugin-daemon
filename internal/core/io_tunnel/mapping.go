@@ -1,4 +1,4 @@
-package generic_invoke
+package io_tunnel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"

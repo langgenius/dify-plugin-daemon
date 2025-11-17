@@ -20,7 +20,7 @@ func GetAuthorizationURL(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthGetAuthorizationURLResult], error) {
-			return plugin_daemon.GetAuthorizationURL(session, &r.Data)
+			return io_tunnel.GetAuthorizationURL(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
 		access_types.PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL,
@@ -37,7 +37,7 @@ func GetCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthGetCredentialsResult], error) {
-			return plugin_daemon.GetCredentials(session, &r.Data)
+			return io_tunnel.GetCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
 		access_types.PLUGIN_ACCESS_ACTION_GET_CREDENTIALS,
@@ -54,7 +54,7 @@ func RefreshCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthRefreshCredentialsResult], error) {
-			return plugin_daemon.RefreshCredentials(session, &r.Data)
+			return io_tunnel.RefreshCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
 		access_types.PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS,

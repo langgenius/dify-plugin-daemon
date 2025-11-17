@@ -19,7 +19,7 @@ func TriggerInvokeEvent(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[requests.TriggerInvokeEventResponse], error) {
-			return plugin_daemon.TriggerInvokeEvent(session, &r.Data)
+			return io_tunnel.TriggerInvokeEvent(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TRIGGER_EVENT,
@@ -36,7 +36,7 @@ func TriggerValidateProviderCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[requests.TriggerValidateProviderCredentialsResponse], error) {
-			return plugin_daemon.TriggerValidateProviderCredentials(session, &r.Data)
+			return io_tunnel.TriggerValidateProviderCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TRIGGER_CREDENTIALS,
@@ -53,7 +53,7 @@ func TriggerDispatchEvent(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[requests.TriggerDispatchEventResponse], error) {
-			return plugin_daemon.TriggerDispatchEvent(session, &r.Data)
+			return io_tunnel.TriggerDispatchEvent(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
 		access_types.PLUGIN_ACCESS_ACTION_DISPATCH_TRIGGER_EVENT,
@@ -70,7 +70,7 @@ func TriggerSubscribe(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[requests.TriggerSubscribeResponse], error) {
-			return plugin_daemon.TriggerSubscribe(session, &r.Data)
+			return io_tunnel.TriggerSubscribe(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
 		access_types.PLUGIN_ACCESS_ACTION_SUBSCRIBE_TRIGGER,
@@ -87,7 +87,7 @@ func TriggerUnsubscribe(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[requests.TriggerUnsubscribeResponse], error) {
-			return plugin_daemon.TriggerUnsubscribe(session, &r.Data)
+			return io_tunnel.TriggerUnsubscribe(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
 		access_types.PLUGIN_ACCESS_ACTION_UNSUBSCRIBE_TRIGGER,
@@ -104,7 +104,7 @@ func TriggerRefresh(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[requests.TriggerRefreshResponse], error) {
-			return plugin_daemon.TriggerRefresh(session, &r.Data)
+			return io_tunnel.TriggerRefresh(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TRIGGER,
 		access_types.PLUGIN_ACCESS_ACTION_REFRESH_TRIGGER,

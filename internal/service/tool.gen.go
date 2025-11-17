@@ -20,7 +20,7 @@ func InvokeTool(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[tool_entities.ToolResponseChunk], error) {
-			return plugin_daemon.InvokeTool(session, &r.Data)
+			return io_tunnel.InvokeTool(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TOOL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TOOL,
@@ -37,7 +37,7 @@ func ValidateToolCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[tool_entities.ValidateCredentialsResult], error) {
-			return plugin_daemon.ValidateToolCredentials(session, &r.Data)
+			return io_tunnel.ValidateToolCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TOOL,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
@@ -54,7 +54,7 @@ func GetToolRuntimeParameters(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[tool_entities.GetToolRuntimeParametersResponse], error) {
-			return plugin_daemon.GetToolRuntimeParameters(session, &r.Data)
+			return io_tunnel.GetToolRuntimeParameters(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_TOOL,
 		access_types.PLUGIN_ACCESS_ACTION_GET_TOOL_RUNTIME_PARAMETERS,

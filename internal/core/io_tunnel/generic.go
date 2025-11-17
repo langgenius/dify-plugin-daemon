@@ -1,4 +1,4 @@
-package plugin_daemon
+package io_tunnel
 
 import (
 	"errors"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/generic_invoke"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
@@ -92,7 +91,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 	if err := session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
 		session.Action,
-		generic_invoke.GetInvokePluginMap(
+		GetInvokePluginMap(
 			session,
 			request,
 		),
