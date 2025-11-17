@@ -61,7 +61,7 @@ func autoMigrate() error {
 
 func Init(config *app.Config) {
 	var err error
-	if config.DBType == "postgresql" {
+	if config.DBType == app.DB_TYPE_POSTGRESQL {
 		DifyPluginDB, err = pg.InitPluginDB(&pg.PGConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),
@@ -76,7 +76,7 @@ func Init(config *app.Config) {
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
 		})
-	} else if config.DBType == "mysql" {
+	} else if config.DBType == app.DB_TYPE_MYSQL {
 		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),

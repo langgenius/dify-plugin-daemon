@@ -7,6 +7,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
+const (
+	DB_TYPE_POSTGRESQL = "postgresql"
+	DB_TYPE_MYSQL      = "mysql"
+)
+
 type Config struct {
 	// server
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`

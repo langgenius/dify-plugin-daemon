@@ -29,7 +29,7 @@ func init() {
 }
 
 func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
-	db.Init(&app.Config{
+	config := &app.Config{
 		DBType:     "postgresql",
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
@@ -37,7 +37,9 @@ func preparePluginServer(t *testing.T) (*RemotePluginServer, uint16) {
 		DBPort:     5432,
 		DBDatabase: "dify_plugin_daemon",
 		DBSslMode:  "disable",
-	})
+	}
+	config.SetDefault()
+	db.Init(config)
 
 	port, err := network.GetRandomPort()
 	if err != nil {
