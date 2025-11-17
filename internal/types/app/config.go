@@ -79,7 +79,6 @@ type Config struct {
 	// plugin endpoint
 	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED" default:"true"`
 
-	// storage
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`

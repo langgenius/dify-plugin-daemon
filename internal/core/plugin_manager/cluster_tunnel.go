@@ -2,8 +2,8 @@ package plugin_manager
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )

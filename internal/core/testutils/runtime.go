@@ -65,14 +65,15 @@ func GetRuntime(pluginZip []byte, cwd string) (*local_runtime.LocalPluginRuntime
 		PythonInterpreterPath: os.Getenv("PYTHON_INTERPRETER_PATH"),
 		UvPath:                uvPath,
 		PythonEnvInitTimeout:  120,
+		PluginWorkingPath:     cwd,
 	}, decoder)
 
 	if err != nil {
 		return nil, errors.Join(err, fmt.Errorf("construct plugin runtime error"))
 	}
 
-	errChan := make(chan error)
-	launchedChan := make(chan bool)
+	errChan := make(chan error, 1)
+	launchedChan := make(chan bool, 1)
 	once := sync.Once{}
 
 	notifier := local_runtime.PluginRuntimeNotifierTemplate{
