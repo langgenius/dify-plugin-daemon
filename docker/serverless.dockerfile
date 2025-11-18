@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # Build with optimizations and security flags
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 go build \
     -ldflags "\
     -s -w \
     -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.VersionX=${VERSION}' \
