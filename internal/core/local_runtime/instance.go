@@ -308,7 +308,15 @@ func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	for len(s.listener) > 0 {
+	for {
+		s.l.Lock()
+		listeners := len(s.listener)
+		s.l.Unlock()
+
+		if listeners == 0 {
+			break
+		}
+
 		select {
 		case <-timeout.C:
 			// timeout reached, forcefully kill the instance
@@ -318,4 +326,7 @@ func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
 			// do nothing
 		}
 	}
+
+	// all listeners are closed, stop the instance
+	s.Stop()
 }

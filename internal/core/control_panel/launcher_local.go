@@ -193,7 +193,7 @@ func (c *ControlPanel) ShutdownLocalPluginGracefully(
 	}, func() {
 		runtime.GracefulStop(false)
 
-		// trigger that the runtime is shutdown
+		// trigger that the runtime has shutdown
 		close(ch)
 	})
 

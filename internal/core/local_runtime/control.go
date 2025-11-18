@@ -146,9 +146,19 @@ func (r *LocalPluginRuntime) GracefulStop(async bool) {
 
 // forcefully shutdown all instances, it's a async method which will not block
 func (r *LocalPluginRuntime) forcefullyShutdownAllInstances() {
-	instances := r.instances
-	for _, instance := range instances {
+	for {
+		r.instanceLocker.RLock()
+		instances := r.instances
+		r.instanceLocker.RUnlock()
+		if len(instances) == 0 {
+			break
+		}
+		instance := instances[0]
 		instance.Stop()
+		r.instanceLocker.RUnlock()
+
+		// sleep for 1 second to avoid busy waiting
+		time.Sleep(time.Second * 1)
 	}
 }
 
@@ -156,9 +166,18 @@ func (r *LocalPluginRuntime) forcefullyShutdownAllInstances() {
 // please make sure to call this method after stop schedule loop
 // otherwise new instances are going to start
 func (r *LocalPluginRuntime) stopAndWaitForAllInstancesToBeShutdown() {
-	instances := r.instances
-	for _, instance := range instances {
+	for {
+		r.instanceLocker.RLock()
+		instances := r.instances
+		r.instanceLocker.RUnlock()
+		if len(instances) == 0 {
+			break
+		}
+		instance := instances[0]
 		instance.GracefulStop(time.Duration(r.appConfig.PluginMaxExecutionTimeout) * time.Second)
+
+		// sleep for 1 second to avoid busy waiting
+		time.Sleep(time.Second * 1)
 	}
 }
 
