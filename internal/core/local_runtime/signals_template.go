@@ -5,6 +5,8 @@ type PluginRuntimeNotifierTemplate struct {
 	OnInstanceReadyImpl           func(*PluginInstance)
 	OnInstanceLaunchFailedImpl    func(*PluginInstance, error)
 	OnInstanceShutdownImpl        func(*PluginInstance)
+	OnInstanceScaleUpImpl         func(int32)
+	OnInstanceScaleDownImpl       func(int32)
 	OnInstanceScaleDownFailedImpl func(error)
 	OnRuntimeStopScheduleImpl     func()
 	OnRuntimeCloseImpl            func()
@@ -31,6 +33,18 @@ func (t *PluginRuntimeNotifierTemplate) OnInstanceLaunchFailed(instance *PluginI
 func (t *PluginRuntimeNotifierTemplate) OnInstanceShutdown(instance *PluginInstance) {
 	if t.OnInstanceShutdownImpl != nil {
 		t.OnInstanceShutdownImpl(instance)
+	}
+}
+
+func (t *PluginRuntimeNotifierTemplate) OnInstanceScaleUp(instanceNums int32) {
+	if t.OnInstanceScaleUpImpl != nil {
+		t.OnInstanceScaleUpImpl(instanceNums)
+	}
+}
+
+func (t *PluginRuntimeNotifierTemplate) OnInstanceScaleDown(instanceNums int32) {
+	if t.OnInstanceScaleDownImpl != nil {
+		t.OnInstanceScaleDownImpl(instanceNums)
 	}
 }
 

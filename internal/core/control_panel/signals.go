@@ -17,6 +17,10 @@ type ControlPanelNotifier interface {
 	OnLocalRuntimeStop(pluginUniqueIdentifier *local_runtime.LocalPluginRuntime)
 	// on local runtime plugin totally stopped
 	OnLocalRuntimeStopped(pluginUniqueIdentifier *local_runtime.LocalPluginRuntime)
+	// on local runtime scale up
+	OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPluginRuntime, instanceNums int32)
+	// on local runtime scale down
+	OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, instanceNums int32)
 
 	// on remote runtime connected
 	OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime)

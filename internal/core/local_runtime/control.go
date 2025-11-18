@@ -31,11 +31,17 @@ func (r *LocalPluginRuntime) Schedule() error {
 // Increase replicas
 func (r *LocalPluginRuntime) ScaleUp() {
 	atomic.AddInt32(&r.instanceNums, 1)
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnInstanceScaleUp(r.instanceNums)
+	})
 }
 
 // Decrease replicas
 func (r *LocalPluginRuntime) ScaleDown() {
 	atomic.AddInt32(&r.instanceNums, -1)
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnInstanceScaleDown(r.instanceNums)
+	})
 }
 
 func (r *LocalPluginRuntime) scheduleLoop() {

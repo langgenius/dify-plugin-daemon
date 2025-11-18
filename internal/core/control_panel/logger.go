@@ -41,3 +41,13 @@ func (l *StandardLogger) OnDebuggingRuntimeDisconnected(runtime *debugging_runti
 	identity, _ := runtime.Identity()
 	log.Info("debugging runtime disconnected: %s", identity)
 }
+
+func (l *StandardLogger) OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
+	identity, _ := runtime.Identity()
+	log.Info("local runtime scale up: %s, instance nums: %d", identity, instanceNums)
+}
+
+func (l *StandardLogger) OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
+	identity, _ := runtime.Identity()
+	log.Info("local runtime scale down: %s, instance nums: %d", identity, instanceNums)
+}

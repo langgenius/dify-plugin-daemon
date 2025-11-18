@@ -13,6 +13,12 @@ type PluginRuntimeNotifier interface {
 	// on instance shutdown
 	OnInstanceShutdown(*PluginInstance)
 
+	// on instance scale up
+	OnInstanceScaleUp(int32)
+
+	// on instance scale down
+	OnInstanceScaleDown(int32)
+
 	// on instance scale down failed
 	OnInstanceScaleDownFailed(error)
 

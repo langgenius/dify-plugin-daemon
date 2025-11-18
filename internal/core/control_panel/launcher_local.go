@@ -92,6 +92,16 @@ func (c *ControlPanel) LaunchLocalPlugin(
 				ch <- nil
 			})
 		},
+		OnInstanceScaleUpImpl: func(i int32) {
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeScaleUp(runtime, i)
+			})
+		},
+		OnInstanceScaleDownImpl: func(i int32) {
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeScaleDown(runtime, i)
+			})
+		},
 		// only first instance failed will trigger this
 		OnInstanceLaunchFailedImpl: func(pi *local_runtime.PluginInstance, err error) {
 			once.Do(func() {
