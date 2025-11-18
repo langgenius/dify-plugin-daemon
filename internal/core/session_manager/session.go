@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
@@ -184,6 +185,5 @@ func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, action access_types.Plugin
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.ID, action, s.Message(event, data))
-	return nil
+	return s.runtime.Write(s.ID, action, s.Message(event, data))
 }
