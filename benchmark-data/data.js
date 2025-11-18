@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763446677165,
+  "lastUpdate": 1763458169979,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9648,6 +9648,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "969859608 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "888ad788bccc16ff244fef11ce593bfa6fe9d360",
+          "message": "refactor: plugin lifecycle control panel (#499)\n\n* refactor: introduce local plugin control panel and cleanup environment setup process\n\n* fix: args\n\n* refactor: new local runtime\n\n* temp: stash work for refactor on RemotePluginServer\n\n* refactor: unify local runtime lifetime and sperate init environment process\n\n* chore: add missing files\n\n* stash\n\n* refactor: local plugin lifetime control\n\n* refactor: complete installation process of control panel\n\n* refactor: adapt service layer to new controlpanel\n\n* refactor: pluginManager.Install\n\n* fix: add routine wrap to InstallServerless, avoid blocking main thread\n\n* feat: reinstall serverless runtime\n\n* chore: add comments to Reinstall and update confusing naming\n\n* refactor: unify install plugin service\n\n* refactor: add labels to debugging runtime\n\n* refactor: add getters to plugin manager\n\n* refactor: split install service to decode/install_task/install service\n\n* ???\n\n* refactor: adapt controllers\n\n* refactor: session write\n\n* refactor: session runtime\n\n* Refine install task orchestration (#501)\n\n* refactor: installing task\n\n* refactor cluster management, decouple lifetime management and cluster\n\n* fix cli test command\n\n* fix: cleanup TODO comments and implement GracefulStop for instance\n\n* feat: add logger to control panel\n\n* fix: multiple nil references\n\n* refactor: better lifetime control\n\n* refactor: better cycle interval\n\n* fix(LocalPluginRuntime): prevent returning err when it's not  error\n\n* fix: avoid adding empty PipExtraArgs\n\n* fix: missing errors in Environment init\n\n* fix: add truncateMessage to avoid db explosion\n\n* cleanup: better lifecycle management\n\n* fix: init status at the beginning of installation\n\n* optimize: GracefulStop for pluginInstance\n\n* refactor: tests\n\n* refactor: centralize routine labels (#504)\n\n* cleanup: RoutineKey\n\n* fix: init routine pool\n\n* fix: correctly handle cluster register error\n\n* fix: memory leak\n\n* fix: add \\n to instance write\n\n* fix(installer.go): set success to true after succeed for defer func\n\n* refactor\n\n* fix: missing cwd in testutils\n\n* fix: scaleup default runtime nums to 1 when testing\n\n* fix: localruntime appconfig in testing module\n\n* Update internal/core/local_runtime/load_balancing.go\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>\n\n* fix: more efficiency implement in installer_local.go\n\n* fix: returns after failing in onDebuggingRuntimeDisconnected\n\n* fix: returns after failing in onDebuggingRuntimeDisconnected\n\n* fix: splits tests\n\n* refactor: naming\n\n* refactor: manifest.VersionX\n\n* fix: adapt SetDefault to tests\n\n* fix: enforce use constants in DBType\n\n* fix: generate\n\n* fix: linter\n\n* cleanup tests\n\n* refactor: change  package to\n\n* cleanup: useless codes\n\n* Update internal/cluster/plugin.go\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>\n\n* cleanup\n\n* refactor: decouple connection_key management from debugging_time\n\n* refactor: confused naming\n\n* feat: recycle resources to adapt to https://github.com/langgenius/dify-plugin-daemon/pull/500\n\n* refactor: confusing redirecting\n\n* fix: support get serverless runtime\n\n* fix: race condition in Launching\n\n* fix: avoid ManifestValidate in first step of debugging handshake\n\n* fix: adding ReleaseAllLocks to finalizers\n\n* wtf: what a beautiful code\n\n* refactor: rename Stream.Async to Stream.Process\n\n* fix: kill process if daed instance was detected\n\n* fix: correctly handle failures\n\n* fix: consistence of difference interfaces\n\n* fix: add stacktrace to panic\n\n* fix: only trigger once  event\n\n* fix: ensure plugin runtime was shutdown\n\n* feat: cleanup install tasks\n\n* fix: add scale logs\n\n---------\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>",
+          "timestamp": "2025-11-18T17:28:02+08:00",
+          "tree_id": "82a34f96a08bf1263a3776a134c24074665253b5",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/888ad788bccc16ff244fef11ce593bfa6fe9d360"
+        },
+        "date": 1763458168996,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.53,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "982962924 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.53,
+            "unit": "ns/op",
+            "extra": "982962924 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "982962924 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "982962924 times\n4 procs"
           }
         ]
       }
