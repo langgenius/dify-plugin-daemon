@@ -270,6 +270,8 @@ func (s *PluginInstance) Monitor() error {
 					),
 				)
 			})
+			// dead instance detected, kill it
+			s.Stop()
 			return ErrRuntimeNotActive
 		}
 		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
