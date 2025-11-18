@@ -41,12 +41,6 @@ func (r *LocalPluginRuntime) ScaleDown() {
 func (r *LocalPluginRuntime) scheduleLoop() {
 	// once it's not match, scale it
 	ticker := time.NewTicker(ScheduleLoopInterval)
-	defer ticker.Stop()
-
-	// notify callers that the runtime is not running anymore
-	defer r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
-		notifier.OnRuntimeStopSchedule()
-	})
 
 	for atomic.LoadInt32(&r.scheduleStatus) == ScheduleStatusRunning {
 		// check if the instance nums is match
@@ -82,6 +76,21 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 		// this waiting must be done after all the schedule logic
 		<-ticker.C
 	}
+
+	ticker.Stop()
+
+	// notify callers that the runtime is not running anymore
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnRuntimeStopSchedule()
+	})
+
+	// wait for all instances to be shutdown
+	r.waitForAllInstancesToBeShutdown()
+
+	// notify callers that the runtime has been shutdown
+	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+		notifier.OnRuntimeClose()
+	})
 }
 
 func (r *LocalPluginRuntime) stopSchedule() {
@@ -160,9 +169,4 @@ func (r *LocalPluginRuntime) waitForAllInstancesToBeShutdown() {
 	for len(r.instances) > 0 {
 		<-ticker.C
 	}
-
-	// notify callers that the runtime is shutdown
-	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
-		notifier.OnRuntimeClose()
-	})
 }

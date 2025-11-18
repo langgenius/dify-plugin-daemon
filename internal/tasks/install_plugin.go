@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 type PluginInstallJob struct {
@@ -15,6 +16,14 @@ type PluginInstallJob struct {
 	Declaration         *plugin_entities.PluginDeclaration
 	Meta                map[string]any
 	NeedsRuntimeInstall bool
+}
+
+type PluginUpgradeJob struct {
+	NewIdentifier       plugin_entities.PluginUniqueIdentifier
+	NewDeclaration      *plugin_entities.PluginDeclaration
+	OriginalIdentifier  plugin_entities.PluginUniqueIdentifier
+	OriginalDeclaration *plugin_entities.PluginDeclaration
+	Meta                map[string]any
 }
 
 func ProcessInstallJob(
@@ -66,6 +75,64 @@ func ProcessInstallJob(
 	if err != nil {
 		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, err.Error())
 	}
+}
+
+func ProcessUpgradeJob(
+	manager *plugin_manager.PluginManager,
+	tenants []string,
+	runtimeType plugin_entities.PluginRuntimeType,
+	source string,
+	taskIDs []string,
+	job PluginUpgradeJob,
+) {
+	startTasks(taskIDs)
+	defer endTasks(taskIDs)
+
+	// set status to running
+	SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusRunning, "starting")
+
+	// start installation process
+	installationStream, err := manager.Install(job.NewIdentifier)
+	if err != nil {
+		SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
+		return
+	}
+
+	err = installationStream.Async(func(resp installation_entities.PluginInstallResponse) {
+		switch resp.Event {
+		case installation_entities.PluginInstallEventInfo:
+			SetTaskMessageForOnePlugin(taskIDs, job.NewIdentifier, resp.Data)
+		case installation_entities.PluginInstallEventError:
+			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, resp.Data)
+		case installation_entities.PluginInstallEventDone:
+			for _, tenantID := range tenants {
+				response, err := curd.UpgradePlugin(
+					tenantID,
+					job.OriginalIdentifier,
+					job.NewIdentifier,
+					job.OriginalDeclaration,
+					job.NewDeclaration,
+					runtimeType,
+					source,
+					job.Meta,
+				)
+				if err != nil {
+					SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, err.Error())
+					return
+				}
+
+				if err := RemovePluginIfNeeded(manager, job.OriginalIdentifier, response); err != nil {
+					log.Error("failed to remove uninstalled plugin: %v", err)
+				}
+			}
+
+			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusSuccess, "Upgraded")
+		}
+	})
+	if err != nil {
+		SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, err.Error())
+	}
+
 }
 
 func SaveInstallationForTenantsToDB(

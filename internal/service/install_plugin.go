@@ -20,6 +20,7 @@ import (
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
@@ -233,6 +234,9 @@ func ReinstallPluginFromIdentifier(
 	}, ctx, 1800)
 }
 
+/*
+ * Upgrade a plugin between 2 identifiers
+ */
 func UpgradePlugin(
 	config *app.Config,
 	tenantId string,
@@ -241,12 +245,9 @@ func UpgradePlugin(
 	originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	newPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) *entities.Response {
-	if originalPluginUniqueIdentifier == newPluginUniqueIdentifier {
-		return exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse()
-	}
-
-	if originalPluginUniqueIdentifier.PluginID() != newPluginUniqueIdentifier.PluginID() {
-		return exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse()
+	manager := plugin_manager.Manager()
+	if manager == nil {
+		return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
 	}
 
 	installation, err := db.GetOne[models.PluginInstallation](
@@ -254,62 +255,100 @@ func UpgradePlugin(
 		db.Equal("plugin_unique_identifier", originalPluginUniqueIdentifier.String()),
 		db.Equal("source", source),
 	)
-
 	if err == db.ErrDatabaseNotFound {
 		return exception.NotFoundError(errors.New("plugin installation not found for this tenant")).ToResponse()
-	}
-
-	if err != nil {
+	} else if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
 
 	runtimeType := plugin_entities.PluginRuntimeType(installation.RuntimeType)
-
 	originalDeclaration, err := helper.CombinedGetPluginDeclaration(originalPluginUniqueIdentifier, runtimeType)
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
-
 	newDeclaration, err := helper.CombinedGetPluginDeclaration(newPluginUniqueIdentifier, runtimeType)
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	response, err := curd.UpgradePlugin(
-		tenantId,
-		originalPluginUniqueIdentifier,
-		newPluginUniqueIdentifier,
-		originalDeclaration,
-		newDeclaration,
-		runtimeType,
-		source,
-		meta,
+	// check if the new plugin is already installed
+	_, err = db.GetOne[models.Plugin](
+		db.Equal("plugin_unique_identifier", newPluginUniqueIdentifier.String()),
 	)
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
-
-	if response.IsOriginalPluginDeleted && response.DeletedPlugin != nil && response.DeletedPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
-		manager := plugin_manager.Manager()
-		if manager == nil {
-			return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
-		}
-
-		if err := manager.RemoveLocalPlugin(originalPluginUniqueIdentifier); err != nil {
-			return exception.InternalServerError(err).ToResponse()
-		}
-
-		shutdownCh, err := manager.ShutdownLocalPluginGracefully(originalPluginUniqueIdentifier)
+	if err == nil {
+		response, err := curd.UpgradePlugin(
+			tenantId,
+			originalPluginUniqueIdentifier,
+			newPluginUniqueIdentifier,
+			originalDeclaration,
+			newDeclaration,
+			runtimeType,
+			source,
+			meta,
+		)
 		if err != nil {
 			return exception.InternalServerError(err).ToResponse()
 		}
 
-		if err := waitGracefulShutdown(shutdownCh); err != nil {
-			return exception.InternalServerError(err).ToResponse()
-		}
+		// call RemovePluginIfNeeded in a new goroutine
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "service",
+			routinepkg.RoutineLabelKeyMethod: "UpgradePlugin.RemovePluginIfNeeded",
+		}, func() {
+			if err := tasks.RemovePluginIfNeeded(manager, originalPluginUniqueIdentifier, response); err != nil {
+				log.Error("failed to remove uninstalled plugin: %v", err)
+			}
+		})
+
+		return entities.NewSuccessResponse(&InstallPluginResponse{
+			AllInstalled: true,
+			TaskID:       "",
+		})
+	} else if err != db.ErrDatabaseNotFound {
+		return exception.InternalServerError(err).ToResponse()
 	}
 
-	return entities.NewSuccessResponse(true)
+	// construct tenant jobs
+	tenants := joinGlobalTenantIfNeeded(config, tenantId)
+
+	job := tasks.PluginUpgradeJob{
+		NewIdentifier:       newPluginUniqueIdentifier,
+		NewDeclaration:      newDeclaration,
+		OriginalIdentifier:  originalPluginUniqueIdentifier,
+		OriginalDeclaration: originalDeclaration,
+		Meta:                meta,
+	}
+
+	statuses := buildTaskStatuses(
+		[]plugin_entities.PluginUniqueIdentifier{newPluginUniqueIdentifier},
+		[]*plugin_entities.PluginDeclaration{newDeclaration},
+	)
+
+	taskRegistry, err := createInstallTasks(tenants, statuses)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	taskIDs := taskRegistry.IDs()
+
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "service",
+		routinepkg.RoutineLabelKeyMethod: "UpgradePlugin",
+	}, func() {
+		tasks.ProcessUpgradeJob(
+			manager,
+			tenants,
+			runtimeType,
+			source,
+			taskIDs,
+			job,
+		)
+	})
+
+	return entities.NewSuccessResponse(&InstallPluginResponse{
+		AllInstalled: false,
+		TaskID:       taskRegistry.PrimaryID(),
+	})
 }
 
 func UninstallPlugin(

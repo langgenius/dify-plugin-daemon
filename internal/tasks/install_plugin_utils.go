@@ -1,10 +1,13 @@
 package tasks
 
 import (
+	"errors"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"gorm.io/gorm"
@@ -142,4 +145,24 @@ func UpdateTaskStatus(
 		}
 		return db.Update(taskPointer, tx)
 	})
+}
+
+func RemovePluginIfNeeded(
+	manager *plugin_manager.PluginManager,
+	originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	response *curd.UpgradePluginResponse,
+) error {
+	if response.IsOriginalPluginDeleted && response.DeletedPlugin != nil && response.DeletedPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
+		// uninstall plugin from local install bucket
+		if err := manager.RemoveLocalPlugin(originalPluginUniqueIdentifier); err != nil {
+			return errors.Join(err, errors.New("failed to remove plugin from local install bucket"))
+		}
+
+		// shutdown it gracefully
+		_, err := manager.ShutdownLocalPluginGracefully(originalPluginUniqueIdentifier)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to shutdown plugin gracefully"))
+		}
+	}
+	return nil
 }
