@@ -2,6 +2,7 @@ package routine
 
 import (
 	"context"
+	"runtime"
 	"runtime/pprof"
 	"sync"
 	"sync/atomic"
@@ -56,6 +57,15 @@ func Submit(labels routinelabels.Labels, f func()) {
 		}
 		pprof.Do(context.Background(), pprof.Labels(label...), func(ctx context.Context) {
 			defer sentry.Recover()
+			defer func() {
+				if err := recover(); err != nil {
+					log.Error("panic in routine: %v", err)
+					// get stack trace
+					buf := make([]byte, 1024*1024)
+					n := runtime.Stack(buf, false)
+					log.Error("stack trace %v: %s", err, string(buf[:n]))
+				}
+			}()
 			f()
 		})
 	})
