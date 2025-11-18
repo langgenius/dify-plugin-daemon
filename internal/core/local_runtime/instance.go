@@ -264,9 +264,10 @@ func (s *PluginInstance) Monitor() error {
 				notifier.OnInstanceFailed(
 					s,
 					fmt.Errorf(
-						"plugin %s is not active for %f seconds, it may be dead",
+						"plugin %s is not active for %f seconds, it may be dead, captured error logs: %v",
 						s.pluginUniqueIdentifier,
 						time.Since(s.lastActiveAt).Seconds(),
+						s.Error(),
 					),
 				)
 			})

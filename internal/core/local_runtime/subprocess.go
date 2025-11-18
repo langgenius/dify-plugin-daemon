@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"sync"
+	"slices"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
@@ -120,25 +120,40 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	launchChannel := make(chan bool)
 
 	// setup launch notifier
-	heartbeatOnce := sync.Once{}
 	instance.AddNotifier(&PluginInstanceNotifierTemplate{
+		// the first heartbeat will trigger this
 		OnInstanceReadyImpl: func(pi *PluginInstance) {
 			// notify plugin started
 			r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
 				notifier.OnInstanceReady(instance)
 			})
-		},
-		OnInstanceHeartbeatImpl: func(pi *PluginInstance) {
+			// mark the instance as started
+			instance.started = true
 			// setup instance
 			r.instanceLocker.Lock()
 			r.instances = append(r.instances, instance)
 			r.instanceLocker.Unlock()
 
-			heartbeatOnce.Do(func() {
-				// mark the instance as started
-				instance.started = true
-				close(launchChannel)
+			close(launchChannel)
+		},
+		OnInstanceShutdownImpl: func(pi *PluginInstance) {
+			// remove the instance from the list
+			r.instanceLocker.Lock()
+			r.instances = slices.DeleteFunc(r.instances, func(instance *PluginInstance) bool {
+				return instance.instanceId == pi.instanceId
 			})
+			r.instanceLocker.Unlock()
+
+			if !instance.started {
+				// if the instance is not started, it means the plugin is not ready
+				// so we need to notify the caller that the plugin is not ready
+				r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+					notifier.OnInstanceLaunchFailed(
+						instance,
+						fmt.Errorf("plugin failed to start: %v", instance.Error()),
+					)
+				})
+			}
 		},
 	})
 
