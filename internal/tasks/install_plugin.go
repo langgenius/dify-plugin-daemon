@@ -58,7 +58,7 @@ func ProcessInstallJob(
 	}
 
 	// wait for the job to be done
-	err = installationStream.Async(func(resp installation_entities.PluginInstallResponse) {
+	err = installationStream.Process(func(resp installation_entities.PluginInstallResponse) {
 		switch resp.Event {
 		case installation_entities.PluginInstallEventInfo:
 			SetTaskMessageForOnePlugin(taskIDs, job.Identifier, resp.Data)
@@ -98,7 +98,7 @@ func ProcessUpgradeJob(
 		return
 	}
 
-	err = installationStream.Async(func(resp installation_entities.PluginInstallResponse) {
+	err = installationStream.Process(func(resp installation_entities.PluginInstallResponse) {
 		switch resp.Event {
 		case installation_entities.PluginInstallEventInfo:
 			SetTaskMessageForOnePlugin(taskIDs, job.NewIdentifier, resp.Data)

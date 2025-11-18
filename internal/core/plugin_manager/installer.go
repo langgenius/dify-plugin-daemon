@@ -66,7 +66,7 @@ func (p *PluginManager) Reinstall(
 		functionUrl := ""
 		functionName := ""
 
-		if err := response.Async(func(ispr serverless.LaunchFunctionResponse) {
+		if err := response.Process(func(ispr serverless.LaunchFunctionResponse) {
 			switch ispr.Event {
 			case serverless.Done:
 				if functionUrl == "" || functionName == "" {
@@ -172,7 +172,7 @@ func (p *PluginManager) installServerless(
 		functionUrl := ""
 		functionName := ""
 
-		if err := response.Async(func(r serverless.LaunchFunctionResponse) {
+		if err := response.Process(func(r serverless.LaunchFunctionResponse) {
 			if r.Event == serverless.Info {
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventInfo,
@@ -270,7 +270,7 @@ func (p *PluginManager) installLocal(
 				p.controlPanel.RemoveLocalPlugin(pluginUniqueIdentifier)
 
 				// release the lock, avoid a potential race condition
-				// that plugins never be scheduled automatically
+				// which causes plugins never to be scheduled automatically
 				p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
 
 				// forcefully stop runtime, prevent continuous scheduling
@@ -296,8 +296,7 @@ func (p *PluginManager) installLocal(
 		}
 
 		// call `LaunchLocalPlugin` to launch the plugin
-		// this method will trigger notifiers added to ControlPanel
-		// signal that a plugin starts successfully or failed
+		// `ch` is used to wait for the plugin to be ready or failed
 		runtime, ch, err = p.controlPanel.LaunchLocalPlugin(pluginUniqueIdentifier)
 
 		// if the plugin is already launched, just return success
@@ -334,6 +333,7 @@ func (p *PluginManager) installLocal(
 				})
 				return
 			case <-ticker.C:
+				// keep sending heartbeat until the plugin is ready or timed out
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventInfo,
 					Data:  "installing heartbeat, waiting for plugin to be ready...",

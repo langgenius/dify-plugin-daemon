@@ -197,7 +197,7 @@ func ReinstallPluginFromIdentifier(
 				return
 			}
 
-			err = reinstallStream.Async(func(resp installation_entities.PluginInstallResponse) {
+			err = reinstallStream.Process(func(resp installation_entities.PluginInstallResponse) {
 				retStream.Write(resp)
 				switch resp.Event {
 				case installation_entities.PluginInstallEventInfo:

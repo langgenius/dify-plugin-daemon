@@ -111,8 +111,8 @@ func (r *Stream[T]) Read() (T, error) {
 	}
 }
 
-// Async wraps the stream with a new stream, and allows customized operations
-func (r *Stream[T]) Async(fn func(T)) error {
+// Process wraps the stream with a new stream, and allows customized operations
+func (r *Stream[T]) Process(fn func(T)) error {
 	for r.Next() {
 		data, err := r.Read()
 		if err != nil {

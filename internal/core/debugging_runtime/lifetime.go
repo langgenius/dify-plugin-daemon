@@ -27,7 +27,7 @@ func (r *RemotePluginRuntime) Type() plugin_entities.PluginRuntimeType {
 func (r *RemotePluginRuntime) SpawnCore() error {
 	var exitError error
 
-	r.response.Async(func(data []byte) {
+	r.response.Process(func(data []byte) {
 		plugin_entities.ParsePluginUniversalEvent(
 			data,
 			"",

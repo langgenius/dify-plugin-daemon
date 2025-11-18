@@ -163,7 +163,7 @@ func SetupFunction(
 		routinepkg.RoutineLabelKeyMethod: "SetupFunction",
 	}, func() {
 		defer response.Close()
-		if err := serverless_connector_response.Async(func(chunk LaunchFunctionResponseChunk) {
+		if err := serverless_connector_response.Process(func(chunk LaunchFunctionResponseChunk) {
 			if chunk.State == LAUNCH_STATE_FAILED {
 				response.Write(LaunchFunctionResponse{
 					Event:   Error,
