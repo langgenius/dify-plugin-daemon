@@ -34,6 +34,7 @@ func initOSS(config *app.Config) oss.OSS {
 		},
 		TencentCOS: &oss.TencentCOS{
 			Region:    config.TencentCOSRegion,
+			Endpoint:  config.TencentCOSEndpoint,
 			SecretID:  config.TencentCOSSecretId,
 			SecretKey: config.TencentCOSSecretKey,
 			Bucket:    config.PluginStorageOSSBucket,
