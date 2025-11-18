@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
@@ -436,6 +437,10 @@ var (
 	ErrLockTimeout = errors.New("lock timeout")
 )
 
+var (
+	distributedLocks = sync.Map{}
+)
+
 // Lock key, expire time takes responsibility for expiration time
 // try_lock_timeout takes responsibility for the timeout of trying to lock
 func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, context ...redis.Cmdable) error {
@@ -452,6 +457,7 @@ func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, contex
 		if success, err := getCmdable(context...).SetNX(ctx, serialKey(key), "1", expire).Result(); err != nil {
 			return err
 		} else if success {
+			distributedLocks.Store(key, true)
 			return nil
 		}
 
@@ -469,7 +475,29 @@ func Unlock(key string, context ...redis.Cmdable) error {
 		return ErrDBNotInit
 	}
 
-	return getCmdable(context...).Del(ctx, serialKey(key)).Err()
+	if err := getCmdable(context...).Del(ctx, serialKey(key)).Err(); err != nil {
+		return err
+	}
+
+	distributedLocks.Delete(key)
+	return nil
+}
+
+// ReleaseAllLocks release all locks
+func ReleaseAllLocks() error {
+	if client == nil {
+		// redis client not initialized, skip, no need to release any locks
+		return nil
+	}
+
+	distributedLocks.Range(func(key, value any) bool {
+		if err := Unlock(key.(string)); err != nil {
+			return false
+		}
+		return true
+	})
+
+	return nil
 }
 
 func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, error) {
