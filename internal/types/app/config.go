@@ -37,6 +37,7 @@ type Config struct {
 	TencentCOSSecretKey string `envconfig:"TENCENT_COS_SECRET_KEY"`
 	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
 	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
+	TencentCOSEndpoint  string `envconfig:"TENCENT_COS_ENDPOINT"`
 
 	// azure blob
 	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`

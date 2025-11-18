@@ -10,7 +10,7 @@ require (
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.7.0
-	github.com/langgenius/dify-cloud-kit v0.1.0
+	github.com/langgenius/dify-cloud-kit v0.1.1
 	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/redis/go-redis/v9 v9.5.5
 	github.com/spf13/cobra v1.8.1
