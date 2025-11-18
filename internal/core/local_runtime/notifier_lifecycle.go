@@ -24,7 +24,7 @@ func (n *NotifierHeartbeat) OnInstanceReady(instance *PluginInstance) {
 
 }
 
-func (n *NotifierHeartbeat) OnInstanceFailed(instance *PluginInstance, err error) {
+func (n *NotifierHeartbeat) OnInstanceLaunchFailed(instance *PluginInstance, err error) {
 
 }
 

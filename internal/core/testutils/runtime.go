@@ -85,7 +85,7 @@ func GetRuntime(pluginZip []byte, cwd string, instanceNums int) (*local_runtime.
 	once := sync.Once{}
 
 	notifier := local_runtime.PluginRuntimeNotifierTemplate{
-		OnInstanceFailedImpl: func(instance *local_runtime.PluginInstance, err error) {
+		OnInstanceLaunchFailedImpl: func(instance *local_runtime.PluginInstance, err error) {
 			once.Do(func() {
 				errChan <- err
 			})

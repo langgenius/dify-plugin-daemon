@@ -103,7 +103,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			defer wg.Done()
 			_, ch, err := c.LaunchLocalPlugin(uniquePluginIdentifier)
 			if err != nil {
-				log.Error("launch local plugin failed: %s", err.Error())
+				log.Error("launch local plugin failed: %s, retried in %d seconds", err.Error(), waitTime)
 				return
 			}
 

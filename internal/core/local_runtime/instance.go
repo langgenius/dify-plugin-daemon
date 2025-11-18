@@ -261,7 +261,7 @@ func (s *PluginInstance) Monitor() error {
 		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
 			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 				// notify handlers
-				notifier.OnInstanceFailed(
+				notifier.OnInstanceLaunchFailed(
 					s,
 					fmt.Errorf(
 						"plugin %s is not active for %f seconds, it may be dead, captured error logs: %v",

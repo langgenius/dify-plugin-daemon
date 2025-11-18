@@ -93,7 +93,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			})
 		},
 		// only first instance failed will trigger this
-		OnInstanceFailedImpl: func(pi *local_runtime.PluginInstance, err error) {
+		OnInstanceLaunchFailedImpl: func(pi *local_runtime.PluginInstance, err error) {
 			once.Do(func() {
 				// notify new runtime launch failed
 				c.WalkNotifiers(func(notifier ControlPanelNotifier) {

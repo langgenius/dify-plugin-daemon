@@ -66,11 +66,11 @@ func UploadPluginPkg(
 		verification = decoder.DefaultVerification()
 	}
 
-	if config.EnforceLanggeniusSignatures {
-		if isUnauthorizedLanggenius(declaration, verification) {
-			return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
-		}
-	}
+	// if config.EnforceLanggeniusSignatures {
+	// 	if isUnauthorizedLanggenius(declaration, verification) {
+	// 		return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
+	// 	}
+	// }
 
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": pluginUniqueIdentifier,

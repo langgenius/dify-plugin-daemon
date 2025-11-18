@@ -1,11 +1,9 @@
 package local_runtime
 
 type PluginRuntimeNotifierTemplate struct {
-	PluginRuntimeNotifier
-
 	OnInstanceStartingImpl        func()
 	OnInstanceReadyImpl           func(*PluginInstance)
-	OnInstanceFailedImpl          func(*PluginInstance, error)
+	OnInstanceLaunchFailedImpl    func(*PluginInstance, error)
 	OnInstanceShutdownImpl        func(*PluginInstance)
 	OnInstanceScaleDownFailedImpl func(error)
 	OnRuntimeStopScheduleImpl     func()
@@ -24,9 +22,9 @@ func (t *PluginRuntimeNotifierTemplate) OnInstanceReady(instance *PluginInstance
 	}
 }
 
-func (t *PluginRuntimeNotifierTemplate) OnInstanceFailed(instance *PluginInstance, err error) {
-	if t.OnInstanceFailedImpl != nil {
-		t.OnInstanceFailedImpl(instance, err)
+func (t *PluginRuntimeNotifierTemplate) OnInstanceLaunchFailed(instance *PluginInstance, err error) {
+	if t.OnInstanceLaunchFailedImpl != nil {
+		t.OnInstanceLaunchFailedImpl(instance, err)
 	}
 }
 
@@ -55,18 +53,16 @@ func (t *PluginRuntimeNotifierTemplate) OnRuntimeClose() {
 }
 
 type PluginInstanceNotifierTemplate struct {
-	PluginInstanceNotifier
-
-	OnInstanceStartingImpl   func()
-	OnInstanceReadyImpl      func(*PluginInstance)
-	OnInstanceFailedImpl     func(*PluginInstance, error)
-	OnInstanceShutdownImpl   func(*PluginInstance)
-	OnInstanceHeartbeatImpl  func(*PluginInstance)
-	OnInstanceLogImpl        func(*PluginInstance, string)
-	OnInstanceErrorLogImpl   func(*PluginInstance, error)
-	OnInstanceWarningLogImpl func(*PluginInstance, string)
-	OnInstanceStdoutImpl     func(*PluginInstance, []byte)
-	OnInstanceStderrImpl     func(*PluginInstance, []byte)
+	OnInstanceStartingImpl     func()
+	OnInstanceReadyImpl        func(*PluginInstance)
+	OnInstanceLaunchFailedImpl func(*PluginInstance, error)
+	OnInstanceShutdownImpl     func(*PluginInstance)
+	OnInstanceHeartbeatImpl    func(*PluginInstance)
+	OnInstanceLogImpl          func(*PluginInstance, string)
+	OnInstanceErrorLogImpl     func(*PluginInstance, error)
+	OnInstanceWarningLogImpl   func(*PluginInstance, string)
+	OnInstanceStdoutImpl       func(*PluginInstance, []byte)
+	OnInstanceStderrImpl       func(*PluginInstance, []byte)
 }
 
 func (t *PluginInstanceNotifierTemplate) OnInstanceStarting() {
@@ -81,9 +77,9 @@ func (t *PluginInstanceNotifierTemplate) OnInstanceReady(instance *PluginInstanc
 	}
 }
 
-func (t *PluginInstanceNotifierTemplate) OnInstanceFailed(instance *PluginInstance, err error) {
-	if t.OnInstanceFailedImpl != nil {
-		t.OnInstanceFailedImpl(instance, err)
+func (t *PluginInstanceNotifierTemplate) OnInstanceLaunchFailed(instance *PluginInstance, err error) {
+	if t.OnInstanceLaunchFailedImpl != nil {
+		t.OnInstanceLaunchFailedImpl(instance, err)
 	}
 }
 

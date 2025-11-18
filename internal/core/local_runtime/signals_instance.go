@@ -38,7 +38,7 @@ type PluginInstanceNotifier interface {
 	OnInstanceReady(*PluginInstance)
 
 	// on instance failed
-	OnInstanceFailed(*PluginInstance, error)
+	OnInstanceLaunchFailed(*PluginInstance, error)
 
 	// on instance shutdown
 	OnInstanceShutdown(*PluginInstance)
