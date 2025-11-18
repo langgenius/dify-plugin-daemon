@@ -4,10 +4,10 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -20,7 +20,7 @@ func InvokeLLM(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.LLMResultChunk], error) {
-			return plugin_daemon.InvokeLLM(session, &r.Data)
+			return io_tunnel.InvokeLLM(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM,
@@ -37,7 +37,7 @@ func GetLLMNumTokens(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.LLMGetNumTokensResponse], error) {
-			return plugin_daemon.GetLLMNumTokens(session, &r.Data)
+			return io_tunnel.GetLLMNumTokens(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS,
@@ -54,7 +54,7 @@ func InvokeTextEmbedding(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.TextEmbeddingResult], error) {
-			return plugin_daemon.InvokeTextEmbedding(session, &r.Data)
+			return io_tunnel.InvokeTextEmbedding(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
@@ -71,7 +71,7 @@ func GetTextEmbeddingNumTokens(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error) {
-			return plugin_daemon.GetTextEmbeddingNumTokens(session, &r.Data)
+			return io_tunnel.GetTextEmbeddingNumTokens(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS,
@@ -88,7 +88,7 @@ func InvokeRerank(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.RerankResult], error) {
-			return plugin_daemon.InvokeRerank(session, &r.Data)
+			return io_tunnel.InvokeRerank(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
@@ -105,7 +105,7 @@ func InvokeTTS(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.TTSResult], error) {
-			return plugin_daemon.InvokeTTS(session, &r.Data)
+			return io_tunnel.InvokeTTS(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TTS,
@@ -122,7 +122,7 @@ func GetTTSModelVoices(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.GetTTSVoicesResponse], error) {
-			return plugin_daemon.GetTTSModelVoices(session, &r.Data)
+			return io_tunnel.GetTTSModelVoices(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_GET_TTS_MODEL_VOICES,
@@ -139,7 +139,7 @@ func InvokeSpeech2Text(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.Speech2TextResult], error) {
-			return plugin_daemon.InvokeSpeech2Text(session, &r.Data)
+			return io_tunnel.InvokeSpeech2Text(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_SPEECH2TEXT,
@@ -156,7 +156,7 @@ func InvokeModeration(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.ModerationResult], error) {
-			return plugin_daemon.InvokeModeration(session, &r.Data)
+			return io_tunnel.InvokeModeration(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MODERATION,
@@ -173,7 +173,7 @@ func ValidateProviderCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
-			return plugin_daemon.ValidateProviderCredentials(session, &r.Data)
+			return io_tunnel.ValidateProviderCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_PROVIDER_CREDENTIALS,
@@ -190,7 +190,7 @@ func ValidateModelCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.ValidateCredentialsResult], error) {
-			return plugin_daemon.ValidateModelCredentials(session, &r.Data)
+			return io_tunnel.ValidateModelCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
@@ -207,7 +207,7 @@ func GetAIModelSchema(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.GetModelSchemasResponse], error) {
-			return plugin_daemon.GetAIModelSchema(session, &r.Data)
+			return io_tunnel.GetAIModelSchema(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,

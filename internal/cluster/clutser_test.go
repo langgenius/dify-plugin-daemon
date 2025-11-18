@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func createSimulationCluster(nums int) ([]*Cluster, error) {
@@ -20,7 +20,7 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 	for i := 0; i < nums; i++ {
 		result = append(result, NewCluster(&app.Config{
 			ServerPort: 12121,
-		}, nil))
+		}))
 	}
 
 	log.SetLogVisibility(false)

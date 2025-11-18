@@ -1,119 +1,96 @@
 package plugin_manager
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/real"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/debugging_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/calldify"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
-	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_connector"
-	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/lock"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 type PluginManager struct {
-	m mapping.Map[string, plugin_entities.PluginLifetime]
-
 	// mediaBucket is used to manage media files like plugin icons, images, etc.
 	mediaBucket *media_transport.MediaBucket
 
-	// packageBucket is used to manage plugin packages, all the packages uploaded by users will be saved here
+	// packageBucket can be considered as a collection of all uploaded plugin
+	// original packages, once a package was accepted by Dify,
+	// it should be stored here.
 	packageBucket *media_transport.PackageBucket
 
 	// installedBucket is used to manage installed plugins, all the installed plugins will be saved here
+	// `accepted` dose not means `installed`, a installed plugin
+	// will be scheduled by daemon, daemon copied and move the package
+	// from `packageBucket` to `installedBucket`
+	// the copy processing marks a plugin as `installed`
+	// as for `scheduling`, it's automatically done by control panel
+	// of course you may use `controlPanel.LaunchLocalPlugin` to start it manually
 	installedBucket *media_transport.InstalledBucket
-
-	// register plugin
-	pluginRegisters []func(lifetime plugin_entities.PluginLifetime) error
-
-	// localPluginLaunchingLock is a lock to launch local plugins
-	localPluginLaunchingLock *lock.GranularityLock
 
 	// backwardsInvocation is a handle to invoke dify
 	backwardsInvocation dify_invocation.BackwardsInvocation
 
 	config *app.Config
 
-	// remote plugin server
-	remotePluginServer debugging_runtime.RemotePluginServerInterface
-
-	// max launching lock to prevent too many plugins launching at the same time
-	maxLaunchingLock chan bool
+	// plugin lifecycle controller
+	//
+	// whatever it's local mode or serverless mode, all the signals and calls
+	// which related to plugin lifecycle should be handled by it.
+	// so that we can decouple lifetime control and thirdparty service like package management
+	controlPanel *controlpanel.ControlPanel
 }
 
 var (
 	manager *PluginManager
 )
 
-func InitGlobalManager(oss oss.OSS, configuration *app.Config) *PluginManager {
+func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
+	mediaBucket := media_transport.NewAssetsBucket(
+		oss,
+		config.PluginMediaCachePath,
+		config.PluginMediaCacheSize,
+	)
+
+	installedBucket := media_transport.NewInstalledBucket(
+		oss,
+		config.PluginInstalledPath,
+	)
+
+	packageBucket := media_transport.NewPackageBucket(
+		oss,
+		config.PluginPackageCachePath,
+	)
+
 	manager = &PluginManager{
-		mediaBucket: media_transport.NewAssetsBucket(
-			oss,
-			configuration.PluginMediaCachePath,
-			configuration.PluginMediaCacheSize,
+		mediaBucket:     mediaBucket,
+		packageBucket:   packageBucket,
+		installedBucket: installedBucket,
+		controlPanel: controlpanel.NewControlPanel(
+			config,
+			mediaBucket,
+			packageBucket,
+			installedBucket,
 		),
-		packageBucket: media_transport.NewPackageBucket(
-			oss,
-			configuration.PluginPackageCachePath,
-		),
-		installedBucket: media_transport.NewInstalledBucket(
-			oss,
-			configuration.PluginInstalledPath,
-		),
-		localPluginLaunchingLock: lock.NewGranularityLock(),
-		// By default, we allow up to configuration.PluginLocalLaunchingConcurrent plugins to be launched concurrently; if not configured, the default is 2.
-		maxLaunchingLock: make(chan bool, configuration.PluginLocalLaunchingConcurrent),
-		config:           configuration,
+		config: config,
 	}
 
-	// initialize plugin asset cache
-	if pluginAssetCache == nil {
-		c, err := lru.New[string, []byte](256)
-		if err != nil {
-			log.Panic("init plugin asset cache failed: %s", err.Error())
-		}
-		pluginAssetCache = c
-	}
+	// mount logger to control panel
+	manager.controlPanel.AddNotifier(&controlpanel.StandardLogger{})
 
 	return manager
 }
 
 func Manager() *PluginManager {
 	return manager
-}
-
-func (p *PluginManager) Get(
-	identity plugin_entities.PluginUniqueIdentifier,
-) (plugin_entities.PluginLifetime, error) {
-	if identity.RemoteLike() || p.config.Platform == app.PLATFORM_LOCAL {
-		// check if it's a debugging plugin or a local plugin
-		if v, ok := p.m.Load(identity.String()); ok {
-			return v, nil
-		}
-		return nil, errors.New("plugin not found")
-	} else {
-		// otherwise, use serverless runtime instead
-		pluginSessionInterface, err := p.getServerlessPluginRuntime(identity)
-		if err != nil {
-			return nil, err
-		}
-
-		return pluginSessionInterface, nil
-	}
 }
 
 func (p *PluginManager) GetAsset(id string) ([]byte, error) {
@@ -152,8 +129,8 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		}
 	}
 
-	invocation, err := real.NewDifyInvocationDaemon(
-		real.NewDifyInvocationDaemonPayload{
+	invocation, err := calldify.NewDifyInvocationDaemon(
+		calldify.NewDifyInvocationDaemonPayload{
 			BaseUrl:      configuration.DifyInnerApiURL,
 			CallingKey:   configuration.DifyInnerApiKey,
 			WriteTimeout: configuration.DifyInvocationWriteTimeout,
@@ -165,109 +142,48 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 	p.backwardsInvocation = invocation
 
-	// start local watcher
-	if configuration.Platform == app.PLATFORM_LOCAL {
-		p.startLocalWatcher(configuration)
-	}
+	// start control panel
+	p.controlPanel.StartWatchDog()
 
 	// launch serverless connector
 	if configuration.Platform == app.PLATFORM_SERVERLESS {
 		serverless.Init(configuration)
 	}
-
-	// start remote watcher
-	p.startRemoteWatcher(configuration)
 }
 
 func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocation {
 	return p.backwardsInvocation
 }
 
-func (p *PluginManager) SavePackage(plugin_unique_identifier plugin_entities.PluginUniqueIdentifier, pkg []byte, thirdPartySignatureVerificationConfig *decoder.ThirdPartySignatureVerificationConfig) (
-	*plugin_entities.PluginDeclaration, error,
-) {
-	// try to decode the package
-	packageDecoder, err := decoder.NewZipPluginDecoderWithThirdPartySignatureVerificationConfig(pkg, thirdPartySignatureVerificationConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	// get the declaration
-	declaration, err := packageDecoder.Manifest()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := declaration.ManifestValidate(); err != nil {
-		return nil, errors.Join(err, fmt.Errorf("illegal plugin manifest"))
-	}
-
-	// get the assets
-	assets, err := packageDecoder.Assets()
-	if err != nil {
-		return nil, err
-	}
-
-	// remap the assets
-	_, err = p.mediaBucket.RemapAssets(&declaration, assets)
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("failed to remap assets"))
-	}
-
-	uniqueIdentifier, err := packageDecoder.UniqueIdentity()
-	if err != nil {
-		return nil, err
-	}
-
-	// save to storage
-	err = p.packageBucket.Save(plugin_unique_identifier.String(), pkg)
-	if err != nil {
-		return nil, err
-	}
-
-	// create plugin if not exists
-	if _, err := db.GetOne[models.PluginDeclaration](
-		db.Equal("plugin_unique_identifier", uniqueIdentifier.String()),
-	); err == db.ErrDatabaseNotFound {
-		err = db.Create(&models.PluginDeclaration{
-			PluginUniqueIdentifier: uniqueIdentifier.String(),
-			PluginID:               uniqueIdentifier.PluginID(),
-			Declaration:            declaration,
-		})
+// check if the plugin is already running on this node
+func (c *PluginManager) NeedRedirecting(
+	identity plugin_entities.PluginUniqueIdentifier,
+) (bool, error) {
+	// debugging runtime were stored in control panel
+	if identity.RemoteLike() {
+		_, err := c.controlPanel.GetPluginRuntime(identity)
 		if err != nil {
-			return nil, err
+			return true, err
 		}
-	} else if err != nil {
-		return nil, err
+		return false, nil
 	}
 
-	return &declaration, nil
-}
-
-func (p *PluginManager) GetPackage(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-) ([]byte, error) {
-	file, err := p.packageBucket.Get(plugin_unique_identifier.String())
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, errors.New("plugin package not found, please upload it firstly")
+	if c.config.Platform == app.PLATFORM_SERVERLESS {
+		// under serverless mode, it's no need to do redirecting
+		return false, nil
+	} else if c.config.Platform == app.PLATFORM_LOCAL {
+		// under local mode, check if the plugin is already running on this node
+		_, err := c.controlPanel.GetPluginRuntime(identity)
+		if err != nil {
+			// not found on this node, need to redirecting
+			return true, err
 		}
-		return nil, err
+
+		// found on current node
+		return false, nil
 	}
 
-	return file, nil
-}
-
-func (p *PluginManager) GetDeclaration(
-	plugin_unique_identifier plugin_entities.PluginUniqueIdentifier,
-	tenant_id string,
-	runtime_type plugin_entities.PluginRuntimeType,
-) (
-	*plugin_entities.PluginDeclaration, error,
-) {
-	return helper.CombinedGetPluginDeclaration(
-		plugin_unique_identifier, runtime_type,
-	)
+	return true, nil
 }
 
 var (

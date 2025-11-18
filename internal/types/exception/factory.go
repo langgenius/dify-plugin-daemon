@@ -3,7 +3,7 @@ package exception
 import (
 	"runtime/debug"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 const (

@@ -4,6 +4,12 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+)
+
+const (
+	DB_TYPE_POSTGRESQL = "postgresql"
+	DB_TYPE_MYSQL      = "mysql"
 )
 
 type Config struct {
@@ -71,15 +77,14 @@ type Config struct {
 	// plugin remote installing
 	PluginRemoteInstallingHost                string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort                uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
-	PluginRemoteInstallingEnabled             *bool  `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
+	PluginRemoteInstallingEnabled             bool   `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED" default:"true"`
 	PluginRemoteInstallingMaxConn             int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_CONN"`
 	PluginRemoteInstallingMaxSingleTenantConn int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_SINGLE_TENANT_CONN"`
 	PluginRemoteInstallServerEventLoopNums    int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
 	// plugin endpoint
-	PluginEndpointEnabled *bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
+	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED" default:"true"`
 
-	// storage
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
@@ -140,7 +145,7 @@ type Config struct {
 	PersistenceStorageMaxSize int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
-	ForceVerifyingSignature *bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
+	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE" default:"true"`
 
 	// enable or disable third-party signature verification for plugins
 	ThirdPartySignatureVerificationEnabled bool `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_ENABLED"  default:"false"`
@@ -170,8 +175,8 @@ type Config struct {
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary           *bool  `envconfig:"PIP_PREFER_BINARY"`
-	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
+	PipPreferBinary           bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
+	PipVerbose                bool   `envconfig:"PIP_VERBOSE" default:"true"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
 	// Runtime buffer configuration (applies to both local and serverless runtimes)
@@ -201,7 +206,7 @@ type Config struct {
 	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
-	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`
+	HealthApiLogEnabled bool `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
@@ -216,7 +221,7 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if c.PluginRemoteInstallingEnabled != nil && *c.PluginRemoteInstallingEnabled {
+	if c.PluginRemoteInstallingEnabled {
 		if c.PluginRemoteInstallingHost == "" {
 			return fmt.Errorf("plugin remote installing host is empty")
 		}
@@ -263,7 +268,7 @@ func (c *Config) Validate() error {
 
 // Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
 func (c *Config) GetLocalRuntimeBufferSize() int {
-	if c.PluginStdioBufferSize != 1024 {
+	if c.PluginStdioBufferSize != 1024 && c.PluginStdioBufferSize != 0 {
 		return c.PluginStdioBufferSize
 	}
 	return c.PluginRuntimeBufferSize
@@ -271,7 +276,7 @@ func (c *Config) GetLocalRuntimeBufferSize() int {
 
 // Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
 func (c *Config) GetLocalRuntimeMaxBufferSize() int {
-	if c.PluginStdioMaxBufferSize != 5242880 {
+	if c.PluginStdioMaxBufferSize != 5242880 && c.PluginStdioMaxBufferSize != 0 {
 		return c.PluginStdioMaxBufferSize
 	}
 	return c.PluginRuntimeMaxBufferSize
@@ -283,3 +288,10 @@ const (
 	PLATFORM_LOCAL      PlatformType = "local"
 	PLATFORM_SERVERLESS PlatformType = "serverless"
 )
+
+func (p PlatformType) ToPluginRuntimeType() plugin_entities.PluginRuntimeType {
+	if p == PLATFORM_LOCAL {
+		return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	}
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
+}

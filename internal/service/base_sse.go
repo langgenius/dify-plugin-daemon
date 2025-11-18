@@ -6,14 +6,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 // baseSSEService is a helper function to handle SSE service
@@ -49,9 +50,9 @@ func baseSSEService[R any](
 		return
 	}
 
-	routine.Submit(map[string]string{
-		"module":   "service",
-		"function": "baseSSEService",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "service",
+		routinepkg.RoutineLabelKeyMethod: "baseSSEService",
 	}, func() {
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()

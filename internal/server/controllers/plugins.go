@@ -103,6 +103,16 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("orphan plugin is not allowed")).ToResponse())
 				return
 			}
+			if request.OriginalPluginUniqueIdentifier == request.NewPluginUniqueIdentifier {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse())
+				return
+			}
+
+			if request.OriginalPluginUniqueIdentifier.PluginID() != request.NewPluginUniqueIdentifier.PluginID() {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse())
+				return
+			}
+
 			c.JSON(http.StatusOK, service.UpgradePlugin(
 				app,
 				request.TenantID,
@@ -142,7 +152,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 				}
 			}
 
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
+			c.JSON(http.StatusOK, service.InstallMultiplePluginsToTenant(
 				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
 		})
@@ -289,7 +299,7 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 func ExtractPluginAsset(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID               string                                 `uri:"tenant_id" validate:"required"`
-PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_unique_identifier\" validate:\"required,plugin_unique_identifier\""
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_unique_identifier\" validate:\"required,plugin_unique_identifier\""
 		FilePath               string                                 `form:"file_path" validate:"required"`
 	}) {
 		manager := plugin_manager.Manager()

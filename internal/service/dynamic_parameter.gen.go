@@ -4,10 +4,10 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/dynamic_select_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -20,7 +20,7 @@ func FetchDynamicParameterOptions(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[dynamic_select_entities.DynamicSelectResult], error) {
-			return plugin_daemon.FetchDynamicParameterOptions(session, &r.Data)
+			return io_tunnel.FetchDynamicParameterOptions(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DYNAMIC_PARAMETER,
 		access_types.PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS,

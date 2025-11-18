@@ -12,7 +12,7 @@ import (
 
 func TestTransactionOnPg(t *testing.T) {
 	testTransaction(t, &app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "0.0.0.0",
@@ -24,7 +24,7 @@ func TestTransactionOnPg(t *testing.T) {
 
 func TestTransactionOnMySQL(t *testing.T) {
 	testTransaction(t, &app.Config{
-		DBType:     "mysql",
+		DBType:     app.DB_TYPE_MYSQL,
 		DBUsername: "root",
 		DBPassword: "difyai123456",
 		DBHost:     "0.0.0.0",

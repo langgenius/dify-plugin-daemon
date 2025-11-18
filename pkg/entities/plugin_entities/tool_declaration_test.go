@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 func TestFullFunctionToolProvider_Validate(t *testing.T) {

@@ -8,10 +8,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/tasks"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func initOSS(config *app.Config) oss.OSS {
@@ -94,28 +95,28 @@ func (app *App) Run(config *app.Config) {
 	// init db
 	db.Init(config)
 
-	curd.Init(config)
-
 	// init oss
 	oss := initOSS(config)
 
 	// create manager
-	manager := plugin_manager.InitGlobalManager(oss, config)
+	app.pluginManager = plugin_manager.InitGlobalManager(oss, config)
 
 	// create cluster
-	app.cluster = cluster.NewCluster(config, manager)
-
-	// register plugin lifetime event
-	manager.AddPluginRegisterHandler(app.cluster.RegisterPlugin)
+	app.cluster = cluster.NewCluster(config)
 
 	// init manager
-	manager.Launch(config)
+	app.pluginManager.Launch(config)
 
 	// init persistence
 	persistence.InitPersistence(oss, config)
 
 	// launch cluster
 	app.cluster.Launch()
+
+	// setup signal handler, for a graceful shutdown to cleanup resources like async tasks
+	tasks.SetupSignalHandler()
+	tasks.RegisterFinalizers(tasks.RecycleTasks)
+	tasks.RegisterFinalizers(cache.ReleaseAllLocks)
 
 	// start http server
 	app.server(config)

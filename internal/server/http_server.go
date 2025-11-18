@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 	sentrygin "github.com/getsentry/sentry-go/gin"
 )
@@ -19,7 +19,7 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
-	if *config.HealthApiLogEnabled {
+	if config.HealthApiLogEnabled {
 		engine.Use(gin.Logger())
 	} else {
 		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
@@ -106,13 +106,13 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginRemoteInstallingEnabled != nil && *config.PluginRemoteInstallingEnabled {
+	if config.PluginRemoteInstallingEnabled {
 		group.POST("/key", CheckingKey(config.ServerKey), controllers.GetRemoteDebuggingKey)
 	}
 }
 
 func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginEndpointEnabled != nil && *config.PluginEndpointEnabled {
+	if config.PluginEndpointEnabled {
 		group.HEAD("/:hook_id/*path", app.Endpoint(config))
 		group.POST("/:hook_id/*path", app.Endpoint(config))
 		group.GET("/:hook_id/*path", app.Endpoint(config))

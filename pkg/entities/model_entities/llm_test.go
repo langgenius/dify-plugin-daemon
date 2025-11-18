@@ -3,7 +3,7 @@ package model_entities
 import (
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/stretchr/testify/assert"
 )
 

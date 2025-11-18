@@ -19,8 +19,8 @@ COPY . .
 RUN CGO_ENABLED=0 go build \
     -ldflags "\
     -s -w \
-    -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.VersionX=${VERSION}' \
-    -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" \
+    -X 'github.com/langgenius/dify-plugin-daemon/pkg/manifest.VersionX=${VERSION}' \
+    -X 'github.com/langgenius/dify-plugin-daemon/pkg/manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" \
     -o /app/main cmd/server/main.go
 
 # Use Alpine for better permission handling with mounted volumes

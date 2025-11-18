@@ -3,9 +3,10 @@ package cluster
 import (
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 const (
@@ -79,9 +80,9 @@ func (c *Cluster) clusterLifetime() {
 	defer pluginSchedulerTicker.Stop()
 
 	// vote for all ips and find the best one, prepare for later traffic scheduling
-	routine.Submit(map[string]string{
-		"module":   "cluster",
-		"function": "voteAddressesWhenInit",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "cluster",
+		routinepkg.RoutineLabelKeyMethod: "voteAddressesWhenInit",
 	}, func() {
 		if err := c.updateNodeStatus(); err != nil {
 			log.Error("failed to update the status of the node: %s", err.Error())

@@ -1,7 +1,7 @@
 package definitions
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/datasource_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/dynamic_select_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"

@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

@@ -4,10 +4,10 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/datasource_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
@@ -20,7 +20,7 @@ func DatasourceValidateCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceValidateCredentialsResponse], error) {
-			return plugin_daemon.DatasourceValidateCredentials(session, &r.Data)
+			return io_tunnel.DatasourceValidateCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS,
@@ -37,7 +37,7 @@ func DatasourceGetWebsiteCrawl(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.WebsiteCrawlChunk], error) {
-			return plugin_daemon.DatasourceGetWebsiteCrawl(session, &r.Data)
+			return io_tunnel.DatasourceGetWebsiteCrawl(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL,
@@ -54,7 +54,7 @@ func DatasourceGetOnlineDocumentPages(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DatasourceGetPagesResponse], error) {
-			return plugin_daemon.DatasourceGetOnlineDocumentPages(session, &r.Data)
+			return io_tunnel.DatasourceGetOnlineDocumentPages(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES,
@@ -71,7 +71,7 @@ func DatasourceGetOnlineDocumentPageContent(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceResponseChunk], error) {
-			return plugin_daemon.DatasourceGetOnlineDocumentPageContent(session, &r.Data)
+			return io_tunnel.DatasourceGetOnlineDocumentPageContent(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGE_CONTENT,
@@ -88,7 +88,7 @@ func DatasourceOnlineDriveBrowseFiles(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.GetOnlineDriveBrowseFilesResponse], error) {
-			return plugin_daemon.DatasourceOnlineDriveBrowseFiles(session, &r.Data)
+			return io_tunnel.DatasourceOnlineDriveBrowseFiles(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_BROWSE_FILES,
@@ -105,7 +105,7 @@ func DatasourceOnlineDriveDownloadFile(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[datasource_entities.DataSourceResponseChunk], error) {
-			return plugin_daemon.DatasourceOnlineDriveDownloadFile(session, &r.Data)
+			return io_tunnel.DatasourceOnlineDriveDownloadFile(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_DATASOURCE,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DRIVE_DOWNLOAD_FILE,
