@@ -147,6 +147,14 @@ func UpdateTaskStatus(
 	})
 }
 
+func DeleteTask(taskId string) error {
+	return db.DeleteByCondition(models.InstallTask{
+		Model: models.Model{
+			ID: taskId,
+		},
+	})
+}
+
 func RemovePluginIfNeeded(
 	manager *plugin_manager.PluginManager,
 	originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,

@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -43,7 +44,7 @@ func ProcessInstallJob(
 			SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, err.Error())
 			return
 		}
-		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusSuccess, "Installed")
+		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusSuccess, "installed")
 		return
 	}
 
@@ -69,7 +70,15 @@ func ProcessInstallJob(
 				SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, err.Error())
 				return
 			}
-			SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusSuccess, "Installed")
+			SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusSuccess, "installed")
+			// delete the task in 60 seconds
+			time.AfterFunc(time.Second*60, func() {
+				for _, taskID := range taskIDs {
+					if err := DeleteTask(taskID); err != nil {
+						log.Error("failed to delete task %s: %v", taskID, err)
+					}
+				}
+			})
 		}
 	})
 	if err != nil {
@@ -126,7 +135,7 @@ func ProcessUpgradeJob(
 				}
 			}
 
-			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusSuccess, "Upgraded")
+			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusSuccess, "upgraded")
 		}
 	})
 	if err != nil {
