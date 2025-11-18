@@ -122,6 +122,8 @@ func (s *PluginInstance) StartStdout() {
 		})
 	}()
 
+	once := &sync.Once{}
+
 	scanner := bufio.NewScanner(s.outReader)
 	scanner.Buffer(
 		make([]byte, s.appConfig.GetLocalRuntimeBufferSize()),
@@ -138,7 +140,7 @@ func (s *PluginInstance) StartStdout() {
 		}
 
 		// handle stdout
-		s.handleStdout(data)
+		s.handleStdout(data, once)
 
 		// notify stdout notifiers
 		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
@@ -168,8 +170,7 @@ func (s *PluginInstance) StartStdout() {
 }
 
 // handles stdout data and notify corresponding listeners
-func (s *PluginInstance) handleStdout(data []byte) {
-	once := sync.Once{}
+func (s *PluginInstance) handleStdout(data []byte, once *sync.Once) {
 	plugin_entities.ParsePluginUniversalEvent(
 		data,
 		"",
