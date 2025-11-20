@@ -304,8 +304,8 @@ func TestRedirectTrafficWithPathStyle(t *testing.T) {
 	}
 }
 
-// Tests for the new localhost redirection functionality
-func TestConstructLocalRedirectUrl(t *testing.T) {
+// Tests for localhost redirection using the generic constructor
+func TestConstructRedirectUrlLocalhost(t *testing.T) {
 	tests := []struct {
 		name     string
 		port     uint16
@@ -334,13 +334,14 @@ func TestConstructLocalRedirectUrl(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := constructLocalRedirectUrl(tt.port, tt.request)
+			addr := address{Ip: "localhost", Port: tt.port}
+			result := constructRedirectUrl(addr, tt.request)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestRedirectRequestToLocal(t *testing.T) {
+func TestRedirectRequestToLocalhostUsingGeneric(t *testing.T) {
 	// Create a test server to simulate the local endpoint
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -350,7 +351,7 @@ func TestRedirectRequestToLocal(t *testing.T) {
 
 	// Test with a request that will fail (no server on localhost:5002)
 	req := httptest.NewRequest("GET", "/test", nil)
-	statusCode, header, body, err := redirectRequestToLocal(5002, req)
+	statusCode, header, body, err := redirectRequestToIp(address{Ip: "localhost", Port: 5002}, req)
 
 	// Should fail since there's no actual server on localhost:5002
 	assert.Error(t, err)
@@ -359,7 +360,7 @@ func TestRedirectRequestToLocal(t *testing.T) {
 	assert.Nil(t, body)
 }
 
-func TestRedirectRequestToLocalWithActualServer(t *testing.T) {
+func TestRedirectRequestToLocalhostWithActualServerUsingGeneric(t *testing.T) {
 	// Create a test server on localhost
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/test", r.URL.Path)
@@ -379,7 +380,7 @@ func TestRedirectRequestToLocalWithActualServer(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test", nil)
 
 	// This should work since we have an actual server
-	statusCode, header, body, err := redirectRequestToLocal(portNum, req)
+	statusCode, header, body, err := redirectRequestToIp(address{Ip: "localhost", Port: portNum}, req)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
@@ -393,6 +394,15 @@ func TestRedirectRequestToLocalWithActualServer(t *testing.T) {
 
 	// Close body
 	body.Close()
+}
+
+func BenchmarkConstructRedirectUrlLocalhost(b *testing.B) {
+	req := httptest.NewRequest("GET", "/plugin/test?param=value", nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		constructRedirectUrl(address{Ip: "localhost", Port: 5002}, req)
+	}
 }
 
 func TestClusterRedirectRequestToCurrentNode(t *testing.T) {
@@ -472,14 +482,5 @@ func BenchmarkConstructRedirectUrl(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		constructRedirectUrl(ip, req)
-	}
-}
-
-func BenchmarkConstructLocalRedirectUrl(b *testing.B) {
-	req := httptest.NewRequest("GET", "/plugin/test?param=value", nil)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		constructLocalRedirectUrl(5002, req)
 	}
 }
