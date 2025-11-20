@@ -4,8 +4,8 @@ package io_tunnel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func TriggerInvokeEvent(

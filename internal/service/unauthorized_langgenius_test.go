@@ -138,7 +138,7 @@ func TestIsUnauthorizedLanggenius(t *testing.T) {
 					Author: tt.author,
 				},
 			}
-			
+
 			got := isUnauthorizedLanggenius(declaration, tt.verification)
 			if got != tt.want {
 				t.Errorf("isUnauthorizedLanggenius() = %v, want %v", got, tt.want)
@@ -163,10 +163,10 @@ func TestIsUnauthorizedLanggenius_EdgeCases(t *testing.T) {
 			want: false, // spaces don't affect the comparison after lowercase
 		},
 		{
-			name:   "langgenius with spaces but no verification",
-			author: " langgenius ",
+			name:         "langgenius with spaces but no verification",
+			author:       " langgenius ",
 			verification: nil,
-			want: false, // with spaces, not exact match after lowercase
+			want:         false, // with spaces, not exact match after lowercase
 		},
 		{
 			name:   "LaNgGeNiUs mixed case",
@@ -193,7 +193,7 @@ func TestIsUnauthorizedLanggenius_EdgeCases(t *testing.T) {
 					Author: tt.author,
 				},
 			}
-			
+
 			got := isUnauthorizedLanggenius(declaration, tt.verification)
 			if got != tt.want {
 				t.Errorf("isUnauthorizedLanggenius() = %v, want %v for author=%q", got, tt.want, tt.author)
