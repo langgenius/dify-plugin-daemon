@@ -252,9 +252,6 @@ func (c *Config) Validate() error {
 		if c.PluginWorkingPath == "" {
 			return fmt.Errorf("plugin working path is empty")
 		}
-		if c.PluginAllowOrphans {
-			return fmt.Errorf("orphan plugins are not allowed in local mode")
-		}
 	} else {
 		return fmt.Errorf("invalid platform")
 	}
