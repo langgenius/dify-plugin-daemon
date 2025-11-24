@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763461322631,
+  "lastUpdate": 1763977013028,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9744,6 +9744,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "946707218 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c1ff2515aee59a8ec8908fd7d4c5710c59fa52d8",
+          "message": "fix: remove restriction of orphan plugins in local mode (#509)",
+          "timestamp": "2025-11-24T17:34:32+08:00",
+          "tree_id": "aa71bb226eda648fa50f01890cd01737f02cc77d",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/c1ff2515aee59a8ec8908fd7d4c5710c59fa52d8"
+        },
+        "date": 1763977012659,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.5,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "988442043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.5,
+            "unit": "ns/op",
+            "extra": "988442043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "988442043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "988442043 times\n4 procs"
           }
         ]
       }
