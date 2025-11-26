@@ -6,7 +6,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
-// InstallToLocalFromPkg installs a plugin to the local plugin runtime
+// InstallToLocal installs a plugin to the local plugin runtime
 // It's scope only for marking the plugin as `installed`,
 // you should call `LaunchLocalPlugin` to start it or it may launched by daemon
 // automatically
