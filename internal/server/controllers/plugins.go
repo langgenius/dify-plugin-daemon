@@ -311,3 +311,20 @@ func ExtractPluginAsset(c *gin.Context) {
 		c.Data(http.StatusOK, "application/octet-stream", asset)
 	})
 }
+
+func SwitchServerlessEndpoint(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		FunctionName           string                                 `json:"function_name" validate:"required"`
+		FunctionURL            string                                 `json:"function_url" validate:"required"`
+	}) {
+		c.JSON(
+			http.StatusOK,
+			service.SwitchServerlessEndpoint(
+				request.PluginUniqueIdentifier,
+				request.FunctionName,
+				request.FunctionURL,
+			),
+		)
+	})
+}
