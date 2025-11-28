@@ -97,10 +97,6 @@ type Config struct {
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
 
-	// add a global reference to plugins to prevent them from being garbage collected
-	// not allowed for local mode
-	PluginAllowOrphans bool `envconfig:"PLUGIN_ALLOW_ORPHANS" default:"false"`
-
 	// platform like local or aws lambda
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
 

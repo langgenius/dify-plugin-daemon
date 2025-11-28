@@ -26,6 +26,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 
 	// check if the plugin is already installed
 	if _, exists := c.localPluginRuntimes.Load(pluginUniqueIdentifier); exists {
+		c.localPluginInstallationLock.Unlock(pluginUniqueIdentifier.String())
 		return nil, nil, ErrorPluginAlreadyLaunched
 	}
 

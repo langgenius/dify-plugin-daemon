@@ -33,6 +33,21 @@ func (p *PluginManager) Install(
 	return p.installServerless(pluginUniqueIdentifier)
 }
 
+func (p *PluginManager) SwitchServerlessEndpoint(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	functionName string,
+	functionURL string,
+) error {
+	if p.config.Platform == app.PLATFORM_LOCAL {
+		return errors.New("switch serverless runtime is not supported on local platform")
+	}
+	err := p.updateServerlessRuntimeModel(pluginUniqueIdentifier, functionURL, functionName)
+	if err != nil {
+		return err
+	}
+	return p.clearServerlessRuntimeCache(pluginUniqueIdentifier)
+}
+
 // serverless runtime uses a strategy that firstly compile the plugin into a docker image
 // then execute it on a docker container(k8s pod / aws lambda)
 // however, it's mutable due to dependencies updates when using a version range to

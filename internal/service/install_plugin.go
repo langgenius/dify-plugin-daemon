@@ -14,7 +14,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
@@ -83,9 +82,7 @@ func InstallMultiplePluginsToTenant(
 		declarations = append(declarations, declaration)
 	}
 
-	// Always, EE edition needs a global reference to display installation progress
-	// add it if needed
-	tenants := joinGlobalTenantIfNeeded(config, tenantId)
+	tenants := []string{tenantId}
 
 	// all plugins are installed, no need to create tasks
 	// just add DB record and return
@@ -150,30 +147,6 @@ func ReinstallPluginFromIdentifier(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) {
 	baseSSEService(func() (*stream.Stream[installation_entities.PluginInstallResponse], error) {
-		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
-			pluginUniqueIdentifier,
-			plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS,
-		)
-		if err != nil {
-			return nil, errors.Join(err, errors.New("failed to get plugin declaration"))
-		}
-
-		plugin, err := db.GetOne[models.Plugin](
-			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-		)
-		if err != nil {
-			return nil, errors.Join(err, errors.New("failed to get plugin"))
-		}
-
-		statuses := buildTaskStatuses(
-			[]plugin_entities.PluginUniqueIdentifier{pluginUniqueIdentifier},
-			[]*plugin_entities.PluginDeclaration{pluginDeclaration},
-		)
-
-		taskRegistry, err := createInstallTasks([]string{constants.GlobalTenantId}, statuses)
-		if err != nil {
-			return nil, err
-		}
 
 		manager := plugin_manager.Manager()
 		if manager == nil {
@@ -189,7 +162,6 @@ func ReinstallPluginFromIdentifier(
 
 			reinstallStream, err := manager.Reinstall(pluginUniqueIdentifier)
 			if err != nil {
-				tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, err.Error())
 				retStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
 					Data:  err.Error(),
@@ -199,30 +171,9 @@ func ReinstallPluginFromIdentifier(
 
 			err = reinstallStream.Process(func(resp installation_entities.PluginInstallResponse) {
 				retStream.Write(resp)
-				switch resp.Event {
-				case installation_entities.PluginInstallEventInfo:
-					tasks.SetTaskMessageForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, resp.Data)
-				case installation_entities.PluginInstallEventError:
-					tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, resp.Data)
-				case installation_entities.PluginInstallEventDone:
-					_, _, installErr := curd.InstallPlugin(
-						constants.GlobalTenantId,
-						pluginUniqueIdentifier,
-						plugin.InstallType,
-						pluginDeclaration,
-						plugin.Source,
-						map[string]any{},
-					)
-					if installErr != nil && installErr != curd.ErrPluginAlreadyInstalled {
-						tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, installErr.Error())
-						return
-					}
-					tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusSuccess, "Reinstalled")
-				}
 			})
 
 			if err != nil {
-				tasks.SetTaskStatusForOnePlugin(taskRegistry.IDs(), pluginUniqueIdentifier, models.InstallTaskStatusFailed, err.Error())
 				retStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
 					Data:  err.Error(),
@@ -309,7 +260,7 @@ func UpgradePlugin(
 	}
 
 	// construct tenant jobs
-	tenants := joinGlobalTenantIfNeeded(config, tenantId)
+	tenants := []string{tenantId}
 
 	job := tasks.PluginUpgradeJob{
 		NewIdentifier:       newPluginUniqueIdentifier,
