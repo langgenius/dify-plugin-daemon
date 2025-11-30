@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/calldify"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
+	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
@@ -83,8 +84,9 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 		config: config,
 	}
 
-	// mount logger to control panel
+	// mount control panel notifiers
 	manager.controlPanel.AddNotifier(&controlpanel.StandardLogger{})
+	manager.controlPanel.AddNotifier(&install_service.InstallListener{})
 
 	return manager
 }
