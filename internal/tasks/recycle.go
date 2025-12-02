@@ -76,7 +76,10 @@ func markTasksAsTimeout(tasks []*models.InstallTask) {
 			plugin.Message = "Task timed out but not properly terminated"
 		}
 	}
-	db.Update(tasks)
+	err := db.Update(tasks)
+	if err != nil {
+		log.Error("failed to update tasks: %v", err)
+	}
 }
 
 // Just in case some tasks may stuck for some reason that we don't know.
