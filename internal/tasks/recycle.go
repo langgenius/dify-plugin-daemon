@@ -110,10 +110,11 @@ func MonitorTimeoutTasks(cluster *cluster.Cluster, config *app.Config) {
 				log.Error("failed to get all tasks: %v", err)
 				continue
 			}
-			for _, task := range tasks {
+			for i := range tasks {
+				task := &tasks[i]
 				if time.Since(task.CreatedAt) > timeout {
 					log.Info("task %s timed out", task.ID)
-					tasksToProcess = append(tasksToProcess, &task)
+					tasksToProcess = append(tasksToProcess, task)
 				}
 			}
 			markTasksAsTimeout(tasksToProcess)
