@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764663319112,
+  "lastUpdate": 1764678133015,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9888,6 +9888,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "990280719 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "BorisPolonsky@users.noreply.github.com",
+            "name": "Boris Polonsky",
+            "username": "BorisPolonsky"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d3d1a652e65f3eff006368b513207aefb1594b4d",
+          "message": "Rename InstallToLocalFromPkg to InstallToLocal (#511)",
+          "timestamp": "2025-12-02T20:19:44+08:00",
+          "tree_id": "56970103f62abbb90f1fbc0a17a1b5a182867597",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/d3d1a652e65f3eff006368b513207aefb1594b4d"
+        },
+        "date": 1764678132580,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.01,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "981622772 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.01,
+            "unit": "ns/op",
+            "extra": "981622772 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "981622772 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "981622772 times\n4 procs"
           }
         ]
       }
