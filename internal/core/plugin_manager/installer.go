@@ -33,6 +33,9 @@ func (p *PluginManager) Install(
 	return p.installServerless(pluginUniqueIdentifier)
 }
 
+// SwitchServerlessEndpoint is required by enterprise dashboard.
+// one typical use case is rolling back to a previous version if the plugin is re-built,
+// while the dependencies of newer version break the functionality.
 func (p *PluginManager) SwitchServerlessEndpoint(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	functionName string,
