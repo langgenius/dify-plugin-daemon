@@ -9,6 +9,30 @@ import (
 
 type InstallListener struct{}
 
+func (l *InstallListener) OnLocalRuntimeStarting(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) {
+}
+
+func (l *InstallListener) OnLocalRuntimeReady(runtime *local_runtime.LocalPluginRuntime) {
+}
+
+func (l *InstallListener) OnLocalRuntimeStartFailed(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	err error,
+) {
+}
+
+func (l *InstallListener) OnLocalRuntimeStop(runtime *local_runtime.LocalPluginRuntime) {
+}
+
+func (l *InstallListener) OnLocalRuntimeStopped(runtime *local_runtime.LocalPluginRuntime) {
+}
+
+func (l *InstallListener) OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
+}
+
+func (l *InstallListener) OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
+}
+
 func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime) {
 	_, installation, err := InstallPlugin(
 		runtime.TenantId(),
@@ -40,12 +64,4 @@ func (l *InstallListener) OnDebuggingRuntimeDisconnected(runtime *debugging_runt
 	); err != nil {
 		log.Error("uninstall debugging plugin failed, error: %v", err)
 	}
-}
-
-func (l *InstallListener) OnLocalRuntimeReady(runtime *local_runtime.LocalPluginRuntime) {
-
-}
-
-func (l *InstallListener) OnLocalRuntimeStartFailed(runtime *local_runtime.LocalPluginRuntime) {
-
 }
