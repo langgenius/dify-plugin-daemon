@@ -106,6 +106,7 @@ func TestRedirectTraffic(t *testing.T) {
 						c.Header(k, vv)
 					}
 				}
+				defer reader.Close()
 				io.Copy(c.Writer, reader)
 			} else {
 				c.String(http.StatusOK, "ok")
