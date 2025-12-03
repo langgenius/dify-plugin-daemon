@@ -158,21 +158,15 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		}
 	}
 
-	for {
-		buf := make([]byte, 1024)
-		n, err := body.Read(buf)
-		if err != nil && err != io.EOF {
-			break
-		} else if err != nil {
-			ctx.Writer.Write(buf[:n])
-			ctx.Writer.Flush()
-			break
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			log.Error("body close failed: %s", err.Error())
 		}
+	}(body)
 
-		if n > 0 {
-			ctx.Writer.Write(buf[:n])
-			ctx.Writer.Flush()
-		}
+	if _, err := io.Copy(ctx.Writer, body); err != nil {
+		log.Error("failed to write response body: %s", err.Error())
 	}
 }
 
