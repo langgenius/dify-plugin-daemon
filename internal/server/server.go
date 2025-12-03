@@ -117,6 +117,7 @@ func (app *App) Run(config *app.Config) {
 	tasks.SetupSignalHandler()
 	tasks.RegisterFinalizers(tasks.RecycleTasks)
 	tasks.RegisterFinalizers(cache.ReleaseAllLocks)
+	tasks.MonitorTimeoutTasks(app.cluster, config)
 
 	// start http server
 	app.server(config)
