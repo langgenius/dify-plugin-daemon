@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764756987144,
+  "lastUpdate": 1764757271227,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9984,6 +9984,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "984699484 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68db8475c9a84014f23459708c5ab8d6238a4769",
+          "message": "fix: fix ReadCloser is not closed (#518)",
+          "timestamp": "2025-12-03T18:18:30+08:00",
+          "tree_id": "e24b32dac50e2a9a0bb609f7c23ad8c55decb76e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/68db8475c9a84014f23459708c5ab8d6238a4769"
+        },
+        "date": 1764757270139,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.36,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "993393021 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.36,
+            "unit": "ns/op",
+            "extra": "993393021 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "993393021 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "993393021 times\n4 procs"
           }
         ]
       }
