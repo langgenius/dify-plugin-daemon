@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764678133015,
+  "lastUpdate": 1764756987144,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -9936,6 +9936,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "981622772 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f9546889309ee2c90dc01c5722712918bd4da466",
+          "message": "enterprise related adjustment (#510)\n\n* remove enterprise logics\n\n* release lock if runtime already installed\n\n* support setting serverless endpoint by api\n\n* remove global tenant id totally\n\n* scan timeout tasks\n\n* adding comments\n\n* use index in loop\n\n* add log",
+          "timestamp": "2025-12-03T18:13:54+08:00",
+          "tree_id": "f4108d5817e4513e6252f25a0d13aac4056d7d3f",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f9546889309ee2c90dc01c5722712918bd4da466"
+        },
+        "date": 1764756986140,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.42,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "984699484 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.42,
+            "unit": "ns/op",
+            "extra": "984699484 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "984699484 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "984699484 times\n4 procs"
           }
         ]
       }
