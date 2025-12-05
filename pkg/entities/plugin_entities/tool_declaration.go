@@ -132,9 +132,10 @@ type ToolParameter struct {
 	Required         bool                   `json:"required" yaml:"required"`
 	AutoGenerate     *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
 	Template         *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
-	Default          any                    `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Default          any                    `json:"default" yaml:"default" validate:"omitempty"`
 	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
 	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
+	Multiple         bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
 	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
 	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
