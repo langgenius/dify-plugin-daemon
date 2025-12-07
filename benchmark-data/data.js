@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764757271227,
+  "lastUpdate": 1765101906869,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10032,6 +10032,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "993393021 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "77637afbc5ec0a15c9616850c891a038ba11eca6",
+          "message": "fix: handle connection close on the connector side (#522)",
+          "timestamp": "2025-12-07T18:02:44+08:00",
+          "tree_id": "06e9f01a7f9bc0f3ca8802bf4ff929bff9e63cda",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/77637afbc5ec0a15c9616850c891a038ba11eca6"
+        },
+        "date": 1765101906168,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.63,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "964405075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.63,
+            "unit": "ns/op",
+            "extra": "964405075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "964405075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "964405075 times\n4 procs"
           }
         ]
       }
