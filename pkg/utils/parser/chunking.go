@@ -24,7 +24,7 @@ func LineBasedChunking(reader io.Reader, maxChunkSize int, processor func([]byte
 			return err
 		}
 	}
-	return nil
+	return scanner.Err()
 }
 
 // We uses following format:
