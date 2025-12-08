@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765168525547,
+  "lastUpdate": 1765183260931,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10128,6 +10128,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "906485782 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "longbing.ljw@oceanbase.com",
+            "name": "longbingljw",
+            "username": "longbingljw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ad7d3a1ab7be32c59b7b57d8bf7118b07ed98c56",
+          "message": "update config after mysql adaptation (#514)\n\n* update config after mysql adaptation\n\n* fix\n\n* fix",
+          "timestamp": "2025-12-08T16:38:26+08:00",
+          "tree_id": "cd403b12452400031580438be55ec608743febcd",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/ad7d3a1ab7be32c59b7b57d8bf7118b07ed98c56"
+        },
+        "date": 1765183259933,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.65,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "987841123 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.65,
+            "unit": "ns/op",
+            "extra": "987841123 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "987841123 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "987841123 times\n4 procs"
           }
         ]
       }
