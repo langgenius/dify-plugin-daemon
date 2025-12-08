@@ -25,6 +25,9 @@ func createSession[T any](
 	if err != nil {
 		return nil, errors.New("failed to get plugin runtime")
 	}
+	if runtime == nil {
+		return nil, errors.New("plugin runtime is nil for identifier: " + string(r.UniqueIdentifier))
+	}
 
 	session := session_manager.NewSession(
 		session_manager.NewSessionPayload{

@@ -145,10 +145,20 @@ func (s *Session) Close(payload CloseSessionPayload) {
 }
 
 func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeSessionIOInterface) {
+	if s == nil {
+		return
+	}
+	if runtime == nil {
+		log.Warn("attempting to bind nil runtime to session %s", s.ID)
+		return
+	}
 	s.runtime = runtime
 }
 
 func (s *Session) Runtime() plugin_entities.PluginRuntimeSessionIOInterface {
+	if s == nil {
+		return nil
+	}
 	return s.runtime
 }
 

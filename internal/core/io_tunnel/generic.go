@@ -17,15 +17,19 @@ func GenericInvokePlugin[Req any, Rsp any](
 	request *Req,
 	response_buffer_size int,
 ) (*stream.Stream[Rsp], error) {
+	if session == nil {
+		return nil, errors.New("session is nil")
+	}
+
 	runtime := session.Runtime()
 	if runtime == nil {
-		return nil, errors.New("plugin runtime not found")
+		return nil, errors.New("plugin runtime not bound to session, session may not be properly initialized")
 	}
 
 	response := stream.NewStream[Rsp](response_buffer_size)
 	listener, err := runtime.Listen(session.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create listener for session %s: %w", session.ID, err)
 	}
 
 	listener.Listen(func(chunk plugin_entities.SessionMessage) {

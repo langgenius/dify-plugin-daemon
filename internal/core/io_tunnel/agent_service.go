@@ -18,9 +18,8 @@ func InvokeAgentStrategy(
 	session *session_manager.Session,
 	r *requests.RequestInvokeAgentStrategy,
 ) (*stream.Stream[agent_entities.AgentStrategyResponseChunk], error) {
-	runtime := session.Runtime()
-	if runtime == nil {
-		return nil, errors.New("plugin not found")
+	if session == nil {
+		return nil, errors.New("session is nil")
 	}
 
 	response, err := GenericInvokePlugin[
