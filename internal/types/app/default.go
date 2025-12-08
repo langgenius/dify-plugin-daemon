@@ -6,6 +6,10 @@ import (
 )
 
 func (config *Config) SetDefault() {
+	switch config.DBType {
+	case DB_TYPE_OCEANBASE, DB_TYPE_SEEKDB:
+		config.DBType = DB_TYPE_MYSQL
+	}
 	setDefaultInt(&config.ServerPort, 5002)
 	setDefaultInt(&config.RoutinePoolSize, 10000)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
