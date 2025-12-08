@@ -10,8 +10,8 @@ import (
 const (
 	DB_TYPE_POSTGRESQL = "postgresql"
 	DB_TYPE_MYSQL      = "mysql"
-	DB_TYPE_OCEANBASE = "oceanbase"
-	DB_TYPE_SEEKDB    = "seekdb"
+	DB_TYPE_OCEANBASE  = "oceanbase"
+	DB_TYPE_SEEKDB     = "seekdb"
 )
 
 type Config struct {

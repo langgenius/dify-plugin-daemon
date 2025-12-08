@@ -3,6 +3,7 @@ module github.com/langgenius/dify-plugin-daemon
 go 1.23.3
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/charmbracelet/bubbles v0.19.0
 	github.com/charmbracelet/bubbletea v1.1.0
 	github.com/fxamacker/cbor/v2 v2.7.0
