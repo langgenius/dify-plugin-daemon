@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765183260931,
+  "lastUpdate": 1765263516045,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10176,6 +10176,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "987841123 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d282de6a1740335370956a267e6a20e8ae09227",
+          "message": "feat: support multimodal rerank and embedding (#503)\n\n* fix: align multimodal permission mapping\n\n* fix: implement mock interface for multimodal embeddings\n\n* fix: support multimodal embedding\n\n* fix: incorrect reference",
+          "timestamp": "2025-12-09T14:56:11+08:00",
+          "tree_id": "669c78f09c9a4961fae217c23cf2131d1c88447e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/0d282de6a1740335370956a267e6a20e8ae09227"
+        },
+        "date": 1765263515491,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.2,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "970659117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.2,
+            "unit": "ns/op",
+            "extra": "970659117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "970659117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "970659117 times\n4 procs"
           }
         ]
       }
