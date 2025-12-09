@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/mapping"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/mapping"
 )
 
 type Cluster struct {
@@ -24,8 +23,6 @@ type Cluster struct {
 	// plugins stores all the plugin life time of the current node
 	plugins    mapping.Map[string, *pluginLifeTime]
 	pluginLock sync.RWMutex
-
-	manager *plugin_manager.PluginManager
 
 	// nodes stores all the nodes of the cluster
 	nodes mapping.Map[string, node]
@@ -62,7 +59,7 @@ type Cluster struct {
 	pluginDeactivatedTimeout      time.Duration
 }
 
-func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager) *Cluster {
+func NewCluster(config *app.Config) *Cluster {
 	return &Cluster{
 		id:                            uuid.New().String(),
 		port:                          uint16(config.ServerPort),
@@ -77,8 +74,6 @@ func NewCluster(config *app.Config, plugin_manager *plugin_manager.PluginManager
 		pluginSchedulerInterval:       PLUGIN_SCHEDULER_INTERVAL,
 		pluginSchedulerTickerInterval: PLUGIN_SCHEDULER_TICKER_INTERVAL,
 		pluginDeactivatedTimeout:      PLUGIN_DEACTIVATED_TIMEOUT,
-
-		manager: plugin_manager,
 
 		notifyBecomeMasterChan:            make(chan bool),
 		notifyMasterGcChan:                make(chan bool),

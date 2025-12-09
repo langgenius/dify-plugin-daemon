@@ -2,13 +2,13 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	plugin_daemon "github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/agent_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func InvokeAgentStrategy(

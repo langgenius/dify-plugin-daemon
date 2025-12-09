@@ -3,9 +3,9 @@ package plugin
 import (
 	"os"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/packager"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func PackagePlugin(inputPath string, outputPath string, maxSizeBytes int64) {

@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 ARG VERSION=unknown
 
@@ -16,11 +16,11 @@ RUN go mod download
 COPY . .
 
 # Build with optimizations and security flags
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 go build \
     -ldflags "\
     -s -w \
-    -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.VersionX=${VERSION}' \
-    -X 'github.com/langgenius/dify-plugin-daemon/internal/manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" \
+    -X 'github.com/langgenius/dify-plugin-daemon/pkg/manifest.VersionX=${VERSION}' \
+    -X 'github.com/langgenius/dify-plugin-daemon/pkg/manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" \
     -o /app/main cmd/server/main.go
 
 # Use Alpine for better permission handling with mounted volumes

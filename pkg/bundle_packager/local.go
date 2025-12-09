@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 type LocalBundlePackager struct {

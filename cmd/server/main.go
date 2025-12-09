@@ -5,7 +5,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/langgenius/dify-plugin-daemon/internal/server"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func main() {

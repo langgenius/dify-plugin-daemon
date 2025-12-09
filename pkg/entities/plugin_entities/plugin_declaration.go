@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
@@ -266,6 +266,14 @@ func (p *PluginDeclaration) Identity() string {
 }
 
 func (p *PluginDeclaration) ManifestValidate() error {
+	if !AuthorRegex.MatchString(p.Author) {
+		return fmt.Errorf("author must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
+	}
+
+	if !PluginNameRegex.MatchString(p.Name) {
+		return fmt.Errorf("plugin name must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
+	}
+
 	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil && p.Datasource == nil && p.Trigger == nil {
 		return fmt.Errorf("at least one of endpoint, model, tool, agent_strategy, trigger, or datasource must be provided")
 	}

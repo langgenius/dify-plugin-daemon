@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
 )
 
 type SimulationCheckServer struct {
@@ -106,6 +106,7 @@ func TestRedirectTraffic(t *testing.T) {
 						c.Header(k, vv)
 					}
 				}
+				defer reader.Close()
 				io.Copy(c.Writer, reader)
 			} else {
 				c.String(http.StatusOK, "ok")

@@ -9,8 +9,8 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"gopkg.in/yaml.v3"
 )
@@ -132,9 +132,10 @@ type ToolParameter struct {
 	Required         bool                   `json:"required" yaml:"required"`
 	AutoGenerate     *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
 	Template         *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
-	Default          any                    `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Default          any                    `json:"default" yaml:"default" validate:"omitempty"`
 	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
 	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
+	Multiple         bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
 	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
 	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
@@ -179,7 +180,7 @@ type ToolProviderIdentity struct {
 	Name        string                        `json:"name" validate:"required,tool_provider_identity_name"`
 	Description I18nObject                    `json:"description"`
 	Icon        string                        `json:"icon" validate:"required"`
-	IconDark    string                        `json:"icon_dark" validate:"omitempty"`
+	IconDark    string                        `json:"icon_dark" yaml:"icon_dark" validate:"omitempty"`
 	Label       I18nObject                    `json:"label" validate:"required"`
 	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
 }

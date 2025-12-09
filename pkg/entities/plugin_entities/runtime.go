@@ -5,19 +5,17 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
-	"fmt"
 	"hash/fnv"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 )
 
 type (
 	PluginRuntime struct {
-		State     PluginRuntimeState `json:"state"`
-		Config    PluginDeclaration  `json:"config"`
-		onStopped []func()           `json:"-"`
+		State  PluginRuntimeState `json:"state"`
+		Config PluginDeclaration  `json:"config"`
 	}
 
 	PluginLifetime interface {
@@ -31,10 +29,6 @@ type (
 
 		// before the plugin starts, it will call this method to initialize the environment
 		InitEnvironment() error
-		// start the plugin, returns errors if the plugin fails to start and hangs until the plugin stops
-		StartPlugin() error
-		// wait for the plugin to stop
-		Wait() (<-chan bool, error)
 		// Cleanup the plugin runtime
 		Cleanup()
 		// set the plugin to active
@@ -49,12 +43,6 @@ type (
 		SetActiveAt(t time.Time)
 		// set the scheduled time of the plugin
 		SetScheduledAt(t time.Time)
-		// add restarts to the plugin
-		AddRestarts()
-		// Started
-		WaitStarted() <-chan bool
-		// Stopped
-		WaitStopped() <-chan bool
 	}
 
 	PluginServerlessLifetime interface {
@@ -68,32 +56,15 @@ type (
 
 	PluginRuntimeSessionIOInterface interface {
 		PluginBasicInfoInterface
-
 		// Listen listens for messages from the plugin
-		Listen(session_id string) *entities.Broadcast[SessionMessage]
+		Listen(session_id string) (*entities.Broadcast[SessionMessage], error)
 		// Write writes a message to the plugin
-		Write(session_id string, action access_types.PluginAccessAction, data []byte)
-		// Log adds a log to the plugin runtime state
-		Log(string)
-		// Warn adds a warning to the plugin runtime state
-		Warn(string)
-		// Error adds an error to the plugin runtime state
-		Error(string)
+		Write(session_id string, action access_types.PluginAccessAction, data []byte) error
 	}
 
 	PluginClusterLifetime interface {
-		// stop the plugin
-		Stop()
-		// add a function to be called when the plugin stops
-		OnStop(func())
-		// trigger the stop event
-		TriggerStop()
-		// returns true if the plugin is stopped
-		Stopped() bool
 		// returns the runtime state of the plugin
 		RuntimeState() PluginRuntimeState
-		// Update the runtime state of the plugin
-		UpdateScheduledAt(t time.Time)
 	}
 
 	PluginBasicInfoInterface interface {
@@ -174,32 +145,6 @@ func (r *PluginRuntime) SetActiveAt(t time.Time) {
 
 func (r *PluginRuntime) SetScheduledAt(t time.Time) {
 	r.State.ScheduledAt = &t
-}
-
-func (r *PluginRuntime) AddRestarts() {
-	r.State.Restarts++
-}
-
-func (r *PluginRuntime) OnStop(f func()) {
-	r.onStopped = append(r.onStopped, f)
-}
-
-func (r *PluginRuntime) TriggerStop() {
-	for _, f := range r.onStopped {
-		f()
-	}
-}
-
-func (s *PluginRuntime) Log(log string) {
-	s.State.Logs = append(s.State.Logs, fmt.Sprintf("[Info] %s: %s", time.Now().Format(time.RFC3339), log))
-}
-
-func (s *PluginRuntime) Warn(log string) {
-	s.State.Logs = append(s.State.Logs, fmt.Sprintf("[Warn] %s: %s", time.Now().Format(time.RFC3339), log))
-}
-
-func (s *PluginRuntime) Error(log string) {
-	s.State.Logs = append(s.State.Logs, fmt.Sprintf("[Error] %s: %s", time.Now().Format(time.RFC3339), log))
 }
 
 type PluginRuntimeType string

@@ -4,14 +4,15 @@ import (
 	"errors"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 )
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
@@ -97,8 +98,8 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	finalData := responseData{
-		List: 	data,
-		Total: 	totalCount,
+		List:  data,
+		Total: totalCount,
 	}
 
 	return entities.NewSuccessResponse(finalData)
@@ -572,4 +573,16 @@ func GetDatasource(tenant_id string, plugin_id string, provider string) *entitie
 		DatasourceInstallation: datasource,
 		Declaration:            declaration.Datasource,
 	})
+}
+
+func SwitchServerlessEndpoint(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	functionName string,
+	functionURL string) *entities.Response {
+	manager := plugin_manager.Manager()
+	err := manager.SwitchServerlessEndpoint(pluginUniqueIdentifier, functionName, functionURL)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+	return entities.NewSuccessResponse(true)
 }

@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/serverless_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/serverless_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 )
 
 const (
@@ -44,22 +43,13 @@ func (p *PluginManager) getServerlessPluginRuntime(
 	runtimeEntity.InitState()
 
 	// convert to plugin runtime
-	pluginRuntime := &serverless_runtime.ServerlessPluginRuntime{
-		BasicChecksum: basic_runtime.BasicChecksum{
-			MediaTransport: basic_runtime.NewMediaTransport(p.mediaBucket),
-			InnerChecksum:  model.Checksum,
-		},
-		PluginRuntime:             runtimeEntity,
-		LambdaURL:                 model.FunctionURL,
-		LambdaName:                model.FunctionName,
-		PluginMaxExecutionTimeout: p.config.PluginMaxExecutionTimeout,
-		RuntimeBufferSize:         p.config.PluginRuntimeBufferSize,
-		RuntimeMaxBufferSize:      p.config.PluginRuntimeMaxBufferSize,
-	}
-
-	if err := pluginRuntime.InitEnvironment(); err != nil {
-		return nil, err
-	}
+	pluginRuntime := serverless_runtime.ConstructServerlessPluginRuntime(
+		p.config,
+		declaration,
+		model,
+		p.mediaBucket,
+		identity,
+	)
 
 	return pluginRuntime, nil
 }

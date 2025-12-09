@@ -10,7 +10,7 @@ type Broadcast[T any] struct {
 
 type BytesIOListener = Broadcast[[]byte]
 
-func NewBroadcast[T any]() *Broadcast[T] {
+func NewCallbackHandler[T any]() *Broadcast[T] {
 	return &Broadcast[T]{
 		l: &sync.RWMutex{},
 	}

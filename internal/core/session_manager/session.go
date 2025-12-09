@@ -8,11 +8,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 var (
@@ -22,9 +22,9 @@ var (
 
 // session need to implement the backwards_invocation.BackwardsInvocationWriter interface
 type Session struct {
-	ID                  string                              `json:"id"`
-	runtime             plugin_entities.PluginLifetime      `json:"-"`
-	backwardsInvocation dify_invocation.BackwardsInvocation `json:"-"`
+	ID                  string                                          `json:"id"`
+	runtime             plugin_entities.PluginRuntimeSessionIOInterface `json:"-"`
+	backwardsInvocation dify_invocation.BackwardsInvocation             `json:"-"`
 
 	TenantID               string                                 `json:"tenant_id"`
 	UserID                 string                                 `json:"user_id"`
@@ -144,11 +144,11 @@ func (s *Session) Close(payload CloseSessionPayload) {
 	})
 }
 
-func (s *Session) BindRuntime(runtime plugin_entities.PluginLifetime) {
+func (s *Session) BindRuntime(runtime plugin_entities.PluginRuntimeSessionIOInterface) {
 	s.runtime = runtime
 }
 
-func (s *Session) Runtime() plugin_entities.PluginLifetime {
+func (s *Session) Runtime() plugin_entities.PluginRuntimeSessionIOInterface {
 	return s.runtime
 }
 
@@ -184,6 +184,5 @@ func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, action access_types.Plugin
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	s.runtime.Write(s.ID, action, s.Message(event, data))
-	return nil
+	return s.runtime.Write(s.ID, action, s.Message(event, data))
 }

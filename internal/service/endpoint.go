@@ -13,23 +13,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, error) {
@@ -112,7 +113,7 @@ func Endpoint(
 
 	// fetch plugin
 	manager := plugin_manager.Manager()
-	runtime, err := manager.Get(identifier)
+	runtime, err := manager.GetPluginRuntime(identifier)
 	if err != nil {
 		ctx.JSON(404, exception.ErrPluginNotFound().ToResponse())
 		return
@@ -166,7 +167,7 @@ func Endpoint(
 
 	session.BindRuntime(runtime)
 
-	statusCode, headers, response, err := plugin_daemon.InvokeEndpoint(
+	statusCode, headers, response, err := io_tunnel.InvokeEndpoint(
 		session, &requests.RequestInvokeEndpoint{
 			RawHttpRequest: hex.EncodeToString(buffer.Bytes()),
 			Settings:       settings,
@@ -195,9 +196,9 @@ func Endpoint(
 	}
 	defer close()
 
-	routine.Submit(map[string]string{
-		"module":   "service",
-		"function": "Endpoint",
+	routine.Submit(routinepkg.Labels{
+		routinepkg.RoutineLabelKeyModule: "service",
+		routinepkg.RoutineLabelKeyMethod: "Endpoint",
 	}, func() {
 		defer close()
 		for response.Next() {

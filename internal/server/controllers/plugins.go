@@ -10,7 +10,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -99,10 +98,16 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 			Source                         string                                 `json:"source" validate:"required"`
 			Meta                           map[string]any                         `json:"meta" validate:"omitempty"`
 		}) {
-			if request.TenantID == constants.GlobalTenantId && !app.PluginAllowOrphans {
-				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("orphan plugin is not allowed")).ToResponse())
+			if request.OriginalPluginUniqueIdentifier == request.NewPluginUniqueIdentifier {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse())
 				return
 			}
+
+			if request.OriginalPluginUniqueIdentifier.PluginID() != request.NewPluginUniqueIdentifier.PluginID() {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse())
+				return
+			}
+
 			c.JSON(http.StatusOK, service.UpgradePlugin(
 				app,
 				request.TenantID,
@@ -126,10 +131,6 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 			if request.Metas == nil {
 				request.Metas = []map[string]any{}
 			}
-			if request.TenantID == constants.GlobalTenantId && !app.PluginAllowOrphans {
-				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("orphan plugin is not allowed")).ToResponse())
-				return
-			}
 
 			if len(request.Metas) != len(request.PluginUniqueIdentifiers) {
 				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("the number of metas must be equal to the number of plugin unique identifiers")).ToResponse())
@@ -142,7 +143,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 				}
 			}
 
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
+			c.JSON(http.StatusOK, service.InstallMultiplePluginsToTenant(
 				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
 		})
@@ -289,7 +290,7 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 func ExtractPluginAsset(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID               string                                 `uri:"tenant_id" validate:"required"`
-PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_unique_identifier\" validate:\"required,plugin_unique_identifier\""
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_unique_identifier\" validate:\"required,plugin_unique_identifier\""
 		FilePath               string                                 `form:"file_path" validate:"required"`
 	}) {
 		manager := plugin_manager.Manager()
@@ -299,5 +300,22 @@ PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_uni
 			return
 		}
 		c.Data(http.StatusOK, "application/octet-stream", asset)
+	})
+}
+
+func SwitchServerlessEndpoint(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		FunctionName           string                                 `json:"function_name" validate:"required"`
+		FunctionURL            string                                 `json:"function_url" validate:"required"`
+	}) {
+		c.JSON(
+			http.StatusOK,
+			service.SwitchServerlessEndpoint(
+				request.PluginUniqueIdentifier,
+				request.FunctionName,
+				request.FunctionURL,
+			),
+		)
 	})
 }

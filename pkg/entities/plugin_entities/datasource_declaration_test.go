@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
@@ -54,7 +54,6 @@ func TestDatasourceDeclarationBasic(t *testing.T) {
 		t.Errorf("Expected 1 parameter, got %d", len(datasourceDecl.Parameters))
 	}
 }
-
 
 // TestDatasourceProviderDeclaration tests the full provider declaration
 func TestDatasourceProviderDeclaration(t *testing.T) {
@@ -115,7 +114,6 @@ datasources:
 	}
 
 }
-
 
 // TestDatasourceParameterValidation tests parameter validation
 func TestDatasourceParameterValidation(t *testing.T) {

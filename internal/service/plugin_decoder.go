@@ -9,12 +9,12 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/bundle_packager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 )
 
 func UploadPluginPkg(
@@ -41,7 +41,7 @@ func UploadPluginPkg(
 
 	// avoid author to be a uuid
 	if pluginUniqueIdentifier.RemoteLike() {
-		return exception.BadRequestError(errors.New("author cannot be a uuid")).ToResponse()
+		return exception.BadRequestError(errors.New("cannot set author to an UUID")).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
@@ -53,7 +53,7 @@ func UploadPluginPkg(
 		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
 
-	if config.ForceVerifyingSignature != nil && *config.ForceVerifyingSignature || verifySignature {
+	if config.ForceVerifyingSignature || verifySignature {
 		if !declaration.Verified {
 			return exception.BadRequestError(errors.Join(err, errors.New(
 				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
@@ -66,11 +66,11 @@ func UploadPluginPkg(
 		verification = decoder.DefaultVerification()
 	}
 
-	if config.EnforceLanggeniusSignatures {
-		if isUnauthorizedLanggenius(declaration, verification) {
-			return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
-		}
-	}
+	// if config.EnforceLanggeniusSignatures {
+	// 	if isUnauthorizedLanggenius(declaration, verification) {
+	// 		return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
+	// 	}
+	// }
 
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": pluginUniqueIdentifier,
@@ -156,7 +156,7 @@ func UploadPluginBundle(
 						return exception.InternalServerError(errors.Join(errors.New("failed to save package"), err)).ToResponse()
 					}
 
-					if config.ForceVerifyingSignature != nil && *config.ForceVerifyingSignature || verify_signature {
+					if config.ForceVerifyingSignature || verify_signature {
 						if !declaration.Verified {
 							return exception.BadRequestError(errors.Join(errors.New(
 								"plugin verification has been enabled, and the plugin you want to install has a bad signature",

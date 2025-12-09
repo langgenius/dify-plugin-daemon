@@ -5,36 +5,10 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"gorm.io/gorm"
 )
-
-func EnsureGlobalReferenceIfRequired(
-	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
-	tenantId string,
-	installType plugin_entities.PluginRuntimeType,
-	declaration *plugin_entities.PluginDeclaration,
-	source string,
-	meta map[string]any,
-) error {
-	if !allowOrphans || tenantId == constants.GlobalTenantId {
-		return nil
-	}
-	_, _, err := InstallPlugin(
-		constants.GlobalTenantId,
-		pluginUniqueIdentifier,
-		installType,
-		declaration,
-		source,
-		meta,
-	)
-	if err != nil && err != ErrPluginAlreadyInstalled {
-		return err
-	}
-	return nil
-}
 
 // Create plugin for a tenant, create plugin if it has never been created before
 // and install it to the tenant, return the plugin and the installation

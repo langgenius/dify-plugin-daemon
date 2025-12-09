@@ -7,8 +7,8 @@ import (
 
 	"github.com/langgenius/dify-cloud-kit/oss"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 type InstalledBucket struct {

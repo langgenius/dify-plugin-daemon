@@ -6,6 +6,10 @@ import (
 )
 
 func (config *Config) SetDefault() {
+	switch config.DBType {
+	case DB_TYPE_OCEANBASE, DB_TYPE_SEEKDB:
+		config.DBType = DB_TYPE_MYSQL
+	}
 	setDefaultInt(&config.ServerPort, 5002)
 	setDefaultInt(&config.RoutinePoolSize, 10000)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
@@ -22,8 +26,6 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
 	setDefaultInt(&config.DifyPluginServerlessConnectorLaunchTimeout, 240)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
-	setDefaultBoolPtr(&config.PluginRemoteInstallingEnabled, true)
-	setDefaultBoolPtr(&config.PluginEndpointEnabled, true)
 	setDefaultString(&config.DBSslMode, "disable")
 	setDefaultString(&config.PluginStorageLocalRoot, "storage")
 	setDefaultString(&config.PluginInstalledPath, "plugin")
@@ -34,17 +36,13 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
 	setDefaultInt(&config.PythonEnvInitTimeout, 120)
-	setDefaultBoolPtr(&config.ForceVerifyingSignature, true)
-	setDefaultBoolPtr(&config.PipPreferBinary, true)
-	setDefaultBoolPtr(&config.PipVerbose, true)
 	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
 	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
-	if config.DBType == "postgresql" {
+	if config.DBType == DB_TYPE_POSTGRESQL {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
-	} else if config.DBType == "mysql" {
+	} else if config.DBType == DB_TYPE_MYSQL {
 		setDefaultString(&config.DBDefaultDatabase, "mysql")
 	}
-	setDefaultBoolPtr(&config.HealthApiLogEnabled, true)
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
@@ -56,11 +54,5 @@ func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
 func setDefaultString(value *string, defaultValue string) {
 	if *value == "" {
 		*value = defaultValue
-	}
-}
-
-func setDefaultBoolPtr(value **bool, defaultValue bool) {
-	if *value == nil {
-		*value = &defaultValue
 	}
 }

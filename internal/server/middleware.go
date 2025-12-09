@@ -9,10 +9,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func CheckingKey(key string) gin.HandlerFunc {
@@ -102,7 +102,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		}
 
 		// check if plugin in current node
-		if ok, originalError := app.cluster.IsPluginOnCurrentNode(identity); !ok {
+		if needRedirecting, originalError := app.pluginManager.NeedRedirecting(identity); needRedirecting {
 			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, originalError)
 			ctx.Abort()
 		} else {
@@ -158,21 +158,15 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		}
 	}
 
-	for {
-		buf := make([]byte, 1024)
-		n, err := body.Read(buf)
-		if err != nil && err != io.EOF {
-			break
-		} else if err != nil {
-			ctx.Writer.Write(buf[:n])
-			ctx.Writer.Flush()
-			break
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			log.Error("body close failed: %s", err.Error())
 		}
+	}(body)
 
-		if n > 0 {
-			ctx.Writer.Write(buf[:n])
-			ctx.Writer.Flush()
-		}
+	if _, err := io.Copy(ctx.Writer, body); err != nil {
+		log.Error("failed to write response body: %s", err.Error())
 	}
 }
 

@@ -17,9 +17,6 @@ func main() {
 	// encrypt as pem
 	newPrivateKey := x509.MarshalPKCS1PrivateKey(keyPair)
 	newPublicKey := x509.MarshalPKCS1PublicKey(&keyPair.PublicKey)
-	if err != nil {
-		panic(err)
-	}
 
 	privateKeyPem := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
@@ -30,6 +27,6 @@ func main() {
 		Bytes: newPublicKey,
 	})
 
-	os.WriteFile("internal/core/license/private_key/PRIVATE_KEY.pem", privateKeyPem, 0644)
-	os.WriteFile("internal/core/license/public_key/PUBLIC_KEY.pem", publicKeyPem, 0644)
+	os.WriteFile("pkg/license/private_key/PRIVATE_KEY.pem", privateKeyPem, 0644)
+	os.WriteFile("pkg/license/public_key/PUBLIC_KEY.pem", publicKeyPem, 0644)
 }

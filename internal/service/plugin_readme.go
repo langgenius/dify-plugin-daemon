@@ -1,9 +1,14 @@
 package service
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 )
@@ -109,4 +114,48 @@ func savePluginReadmeMapToDb(
 	}
 
 	return tx.Commit().Error
+}
+
+func FetchPluginReadme(
+	tenantId string,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	language string,
+) *entities.Response {
+	if pluginUniqueIdentifier.String() == "" {
+		return exception.BadRequestError(errors.New("plugin_unique_identifier is required")).ToResponse()
+	}
+	if tenantId == "" {
+		return exception.BadRequestError(errors.New("tenant_id is required")).ToResponse()
+	}
+
+	readmeMap, err := GetPluginReadmeMap(tenantId, pluginUniqueIdentifier)
+	if err != nil {
+		return exception.InternalServerError(fmt.Errorf("failed to get readme from database: %w", err)).ToResponse()
+	}
+
+	if readmeMap == nil || len(readmeMap) == 0 {
+		return exception.NotFoundError(errors.New("no readme content available for this plugin")).ToResponse()
+	}
+
+	var selectedContent string
+	var selectedLanguage string
+
+	if content, exists := readmeMap[language]; exists {
+		selectedContent = content
+		selectedLanguage = language
+	} else if content, exists := readmeMap["en_US"]; exists {
+		selectedContent = content
+		selectedLanguage = "en_US"
+	} else {
+		for lang, content := range readmeMap {
+			selectedContent = content
+			selectedLanguage = lang
+			break
+		}
+	}
+
+	return entities.NewSuccessResponse(map[string]interface{}{
+		"content":  selectedContent,
+		"language": selectedLanguage,
+	})
 }

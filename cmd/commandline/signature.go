@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/signature"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/spf13/cobra"
 )
 
