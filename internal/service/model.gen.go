@@ -71,7 +71,7 @@ func InvokeMultimodalEmbedding(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.MultimodalEmbeddingResult], error) {
-			return plugin_daemon.InvokeMultimodalEmbedding(session, &r.Data)
+			return io_tunnel.InvokeMultimodalEmbedding(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_EMBEDDING,
@@ -122,7 +122,7 @@ func InvokeMultimodalRerank(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[model_entities.MultimodalRerankResult], error) {
-			return plugin_daemon.InvokeMultimodalRerank(session, &r.Data)
+			return io_tunnel.InvokeMultimodalRerank(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_RERANK,
