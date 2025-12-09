@@ -122,7 +122,8 @@ func ClearTestingPath(cwd string) {
 }
 
 type RunOnceRequest interface {
-	requests.RequestInvokeLLM | requests.RequestInvokeTextEmbedding | requests.RequestInvokeRerank |
+	requests.RequestInvokeLLM | requests.RequestInvokeTextEmbedding | requests.RequestInvokeMultimodalEmbedding |
+		requests.RequestInvokeRerank | requests.RequestInvokeMultimodalRerank |
 		requests.RequestInvokeTTS | requests.RequestInvokeSpeech2Text | requests.RequestInvokeModeration |
 		requests.RequestValidateProviderCredentials | requests.RequestValidateModelCredentials |
 		requests.RequestGetTTSModelVoices | requests.RequestGetTextEmbeddingNumTokens |
