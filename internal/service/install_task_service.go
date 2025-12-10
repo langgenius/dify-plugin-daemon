@@ -89,6 +89,10 @@ func DeletePluginInstallationItemFromTask(
 			db.WLock(),
 		)
 
+		if err == db.ErrDatabaseNotFound {
+			return nil
+		}
+
 		if err != nil {
 			return err
 		}
