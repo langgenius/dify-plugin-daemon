@@ -10,18 +10,19 @@ import (
 )
 
 type PGConfig struct {
-	Host            string
-	Port            int
-	DBName          string
-	DefaultDBName   string
-	User            string
-	Pass            string
-	SSLMode         string
-	MaxIdleConns    int
-	MaxOpenConns    int
-	ConnMaxLifetime int
-	Charset         string
-	Extras          string
+	Host               string
+	Port               int
+	DBName             string
+	DefaultDBName      string
+	User               string
+	Pass               string
+	SSLMode            string
+	MaxIdleConns       int
+	MaxOpenConns       int
+	ConnMaxLifetime    int
+	Charset            string
+	Extras             string
+	PreparedStatements bool
 }
 
 func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
@@ -58,7 +59,9 @@ func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 
 		// connect to the new db
 		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", config.Host, config.Port, config.User, config.Pass, config.DBName, config.SSLMode)
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			PrepareStmt: config.PreparedStatements,
+		})
 		if err != nil {
 			return nil, err
 		}

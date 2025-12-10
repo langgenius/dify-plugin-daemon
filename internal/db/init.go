@@ -61,7 +61,7 @@ func autoMigrate() error {
 
 func Init(config *app.Config) {
 	var err error
-	if config.DBType == app.DB_TYPE_POSTGRESQL {
+	if config.DBType == app.DB_TYPE_POSTGRESQL || config.DBType == app.DB_TYPE_PG_BOUNCER {
 		DifyPluginDB, err = pg.InitPluginDB(&pg.PGConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),
@@ -75,6 +75,9 @@ func Init(config *app.Config) {
 			ConnMaxLifetime: config.DBConnMaxLifetime,
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
+			// enable prepared statements only for native PostgreSQL, disable for PgBouncer
+			// as it's not supported on transaction pooling mode
+			PreparedStatements: config.DBType == app.DB_TYPE_POSTGRESQL,
 		})
 	} else if config.DBType == app.DB_TYPE_MYSQL {
 		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
