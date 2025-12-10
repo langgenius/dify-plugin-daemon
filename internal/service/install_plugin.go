@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
@@ -105,49 +104,21 @@ func InstallMultiplePluginsToTenant(
 		})
 	}
 
-	// acquire locks to prevent concurrent installation of the same plugin
-	lockKeys := make(map[string]string, len(pluginUniqueIdentifiers))
-	releaseLocks := func() {
-		for _, key := range lockKeys {
-			if err := cache.Unlock(key); err != nil {
-				log.Error("failed to unlock key %s: %v", key, err)
-			}
-		}
-	}
-	for _, pluginUniqueIdentifier := range pluginUniqueIdentifiers {
-		lockKey := fmt.Sprintf("plugin:install:%s:%s", tenantId, pluginUniqueIdentifier.PluginID())
-		if err := cache.Lock(lockKey, time.Minute*10, time.Millisecond*100); err != nil {
-			releaseLocks()
-			if err == cache.ErrLockTimeout {
-				return exception.BadRequestError(errors.New("plugin installation is already in progress")).ToResponse()
-			}
-			return exception.InternalServerError(err).ToResponse()
-		}
-		lockKeys[pluginUniqueIdentifier.PluginID()] = lockKey
-	}
-
 	// create tasks for each plugin
 	statuses := buildTaskStatuses(pluginUniqueIdentifiers, declarations)
 	taskRegistry, err := createInstallTasks(tenants, statuses)
 	if err != nil {
-		releaseLocks()
 		return exception.InternalServerError(err).ToResponse()
 	}
 	taskIDs := taskRegistry.IDs()
 
 	for _, job := range jobs {
 		jobCopy := job
-		lockKey := lockKeys[jobCopy.Identifier.PluginID()]
 		// start a new goroutine to install the plugin
 		routine.Submit(routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "service",
 			routinepkg.RoutineLabelKeyMethod: "InstallPlugin",
 		}, func() {
-			defer func() {
-				if err := cache.Unlock(lockKey); err != nil {
-					log.Error("failed to unlock key %s: %v", lockKey, err)
-				}
-			}()
 			tasks.ProcessInstallJob(
 				manager,
 				tenants,
@@ -288,15 +259,6 @@ func UpgradePlugin(
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	// acquire lock to prevent concurrent upgrade of the same plugin
-	lockKey := fmt.Sprintf("plugin:install:%s:%s", tenantId, newPluginUniqueIdentifier.PluginID())
-	if err := cache.Lock(lockKey, time.Minute*10, time.Millisecond*100); err != nil {
-		if err == cache.ErrLockTimeout {
-			return exception.BadRequestError(errors.New("plugin installation is already in progress")).ToResponse()
-		}
-		return exception.InternalServerError(err).ToResponse()
-	}
-
 	// construct tenant jobs
 	tenants := []string{tenantId}
 
@@ -315,9 +277,6 @@ func UpgradePlugin(
 
 	taskRegistry, err := createInstallTasks(tenants, statuses)
 	if err != nil {
-		if unlockErr := cache.Unlock(lockKey); unlockErr != nil {
-			log.Error("failed to unlock key %s: %v", lockKey, unlockErr)
-		}
 		return exception.InternalServerError(err).ToResponse()
 	}
 
@@ -327,11 +286,6 @@ func UpgradePlugin(
 		routinepkg.RoutineLabelKeyModule: "service",
 		routinepkg.RoutineLabelKeyMethod: "UpgradePlugin",
 	}, func() {
-		defer func() {
-			if err := cache.Unlock(lockKey); err != nil {
-				log.Error("failed to unlock key %s: %v", lockKey, err)
-			}
-		}()
 		tasks.ProcessUpgradeJob(
 			manager,
 			tenants,
