@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765263516045,
+  "lastUpdate": 1765359019981,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10224,6 +10224,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "970659117 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "xh001x@hotmail.com",
+            "name": "Maries",
+            "username": "Mairuis"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e5743aef671e8736b33b31a18658e246803204c",
+          "message": "feat: implement locking mechanism for concurrent plugin installation and upgrade (#526)\n\n* add locking to prevent simultaneous installations of the same plugin\n* ensure proper unlocking of keys in case of errors during installation and upgrade\n* handle database not found error in DeletePluginInstallationItemFromTask",
+          "timestamp": "2025-12-10T17:27:43+08:00",
+          "tree_id": "1851307b9b63f90ce439dd6958cbb7f5cb261932",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/8e5743aef671e8736b33b31a18658e246803204c"
+        },
+        "date": 1765359018954,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.46,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "984624910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.46,
+            "unit": "ns/op",
+            "extra": "984624910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "984624910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "984624910 times\n4 procs"
           }
         ]
       }
