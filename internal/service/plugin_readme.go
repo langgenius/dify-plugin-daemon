@@ -93,7 +93,9 @@ func savePluginReadmeMapToDb(
 				Language:               language,
 				Content:                content,
 			}
-			return db.Create(&readme, tx)
+			if err := db.Create(&readme, tx); err != nil {
+				return err
+			}
 		}
 
 		return nil
