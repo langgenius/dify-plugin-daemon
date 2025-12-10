@@ -43,7 +43,7 @@ func GetPluginReadmeMap(
 func getPluginReadmeMapFromDb(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (map[string]string, error) {
-	readmes, err := db.GetAll[models.PluginReadme](
+	readmes, err := db.GetAll[models.PluginReadmeRecord](
 		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 	)
 	if err != nil {
@@ -88,7 +88,7 @@ func savePluginReadmeMapToDb(
 	return db.WithTransaction(func(tx *gorm.DB) error {
 		// Create new readme entries
 		for language, content := range readmeMap {
-			readme := models.PluginReadme{
+			readme := models.PluginReadmeRecord{
 				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
 				Language:               language,
 				Content:                content,
