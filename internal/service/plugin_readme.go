@@ -11,13 +11,13 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"gorm.io/gorm"
 )
 
 func GetPluginReadmeMap(
-	tenantId string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (map[string]string, error) {
-	readmeMap, err := getPluginReadmeMapFromDb(tenantId, pluginUniqueIdentifier)
+	readmeMap, err := getPluginReadmeMapFromDb(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func GetPluginReadmeMap(
 		if err != nil {
 			return nil, err
 		}
-		err := savePluginReadmeMapToDb(tenantId, pluginUniqueIdentifier, readmeMap)
+		err := savePluginReadmeMapToDb(pluginUniqueIdentifier, readmeMap)
 		if err != nil {
 			return nil, err
 		}
@@ -41,19 +41,13 @@ func GetPluginReadmeMap(
 }
 
 func getPluginReadmeMapFromDb(
-	tenantId string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (map[string]string, error) {
-	var readmes []models.PluginReadme
-	err := db.DifyPluginDB.Where(
-		"tenant_id = ? AND plugin_unique_identifier = ?",
-		tenantId, pluginUniqueIdentifier.String(),
-	).Find(&readmes).Error
+	readmes, err := db.GetAll[models.PluginReadme](
+		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+	)
 	if err != nil {
 		return nil, err
-	}
-	if readmes == nil {
-		return nil, nil
 	}
 	readmeMap := make(map[string]string)
 	for _, readme := range readmes {
@@ -88,52 +82,34 @@ func extractInstalledPluginReadmeMap(
 }
 
 func savePluginReadmeMapToDb(
-	tenantId string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	readmeMap map[string]string,
 ) error {
-	tx := db.DifyPluginDB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	return db.WithTransaction(func(tx *gorm.DB) error {
+		// Create new readme entries
+		for language, content := range readmeMap {
+			readme := models.PluginReadme{
+				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+				Language:               language,
+				Content:                content,
+			}
+			return db.Create(&readme, tx)
 		}
-	}()
 
-	// Create new readme entries
-	for language, content := range readmeMap {
-		readme := models.PluginReadme{
-			TenantID:               tenantId,
-			PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
-			Language:               language,
-			Content:                content,
-		}
-		if err := tx.Create(&readme).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-
-	return tx.Commit().Error
+		return nil
+	})
 }
 
 func FetchPluginReadme(
-	tenantId string,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	language string,
 ) *entities.Response {
-	if pluginUniqueIdentifier.String() == "" {
-		return exception.BadRequestError(errors.New("plugin_unique_identifier is required")).ToResponse()
-	}
-	if tenantId == "" {
-		return exception.BadRequestError(errors.New("tenant_id is required")).ToResponse()
-	}
-
-	readmeMap, err := GetPluginReadmeMap(tenantId, pluginUniqueIdentifier)
+	readmeMap, err := GetPluginReadmeMap(pluginUniqueIdentifier)
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to get readme from database: %w", err)).ToResponse()
 	}
 
-	if readmeMap == nil || len(readmeMap) == 0 {
+	if len(readmeMap) == 0 {
 		return exception.NotFoundError(errors.New("no readme content available for this plugin")).ToResponse()
 	}
 
