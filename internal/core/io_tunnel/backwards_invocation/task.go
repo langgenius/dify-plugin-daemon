@@ -88,7 +88,19 @@ var (
 			},
 			"error": "permission denied, you need to enable text-embedding access in plugin manifest",
 		},
+		dify_invocation.INVOKE_TYPE_MULTIMODAL_EMBEDDING: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeTextEmbedding()
+			},
+			"error": "permission denied, you need to enable text-embedding access in plugin manifest",
+		},
 		dify_invocation.INVOKE_TYPE_RERANK: {
+			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
+				return declaration.Resource.Permission.AllowInvokeRerank()
+			},
+			"error": "permission denied, you need to enable rerank access in plugin manifest",
+		},
+		dify_invocation.INVOKE_TYPE_MULTIMODAL_RERANK: {
 			"func": func(declaration *plugin_entities.PluginDeclaration) bool {
 				return declaration.Resource.Permission.AllowInvokeRerank()
 			},
@@ -164,7 +176,9 @@ var (
 )
 
 func checkPermission(runtime *plugin_entities.PluginDeclaration, requestHandle *BackwardsInvocation) error {
-	permission, ok := permissionMapping[requestHandle.Type()]
+	invokeType := requestHandle.Type()
+
+	permission, ok := permissionMapping[invokeType]
 	if !ok {
 		return fmt.Errorf("unsupported invoke type: %s", requestHandle.Type())
 	}
@@ -223,8 +237,14 @@ var (
 		dify_invocation.INVOKE_TYPE_TEXT_EMBEDDING: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationTextEmbeddingTask)
 		},
+		dify_invocation.INVOKE_TYPE_MULTIMODAL_EMBEDDING: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationMultimodalEmbeddingTask)
+		},
 		dify_invocation.INVOKE_TYPE_RERANK: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationRerankTask)
+		},
+		dify_invocation.INVOKE_TYPE_MULTIMODAL_RERANK: func(handle *BackwardsInvocation) {
+			genericDispatchTask(handle, executeDifyInvocationMultimodalRerankTask)
 		},
 		dify_invocation.INVOKE_TYPE_TTS: func(handle *BackwardsInvocation) {
 			genericDispatchTask(handle, executeDifyInvocationTTSTask)
@@ -379,6 +399,19 @@ func executeDifyInvocationTextEmbeddingTask(
 	handle.WriteResponse("struct", response)
 }
 
+func executeDifyInvocationMultimodalEmbeddingTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeMultimodalEmbeddingRequest,
+) {
+	response, err := handle.backwardsInvocation.InvokeMultimodalEmbedding(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke multimodal embedding model failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
+}
+
 func executeDifyInvocationRerankTask(
 	handle *BackwardsInvocation,
 	request *dify_invocation.InvokeRerankRequest,
@@ -386,6 +419,19 @@ func executeDifyInvocationRerankTask(
 	response, err := handle.backwardsInvocation.InvokeRerank(request)
 	if err != nil {
 		handle.WriteError(fmt.Errorf("invoke rerank model failed: %s", err.Error()))
+		return
+	}
+
+	handle.WriteResponse("struct", response)
+}
+
+func executeDifyInvocationMultimodalRerankTask(
+	handle *BackwardsInvocation,
+	request *dify_invocation.InvokeMultimodalRerankRequest,
+) {
+	response, err := handle.backwardsInvocation.InvokeMultimodalRerank(request)
+	if err != nil {
+		handle.WriteError(fmt.Errorf("invoke multimodal rerank model failed: %s", err.Error()))
 		return
 	}
 
