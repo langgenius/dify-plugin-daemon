@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765512558221,
+  "lastUpdate": 1765524984561,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10354,6 +10354,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 31.01,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0eb2cbe2847577a75d8d411071724355202afdaf",
+          "message": "Fix/remove tenant id reference in readme service (#530)\n\n* fix: remove tenant ID reference from plugin readme service\n\n* fix: rename PluginReadme to PluginReadmeRecord to remove tenant ID reference\n\n* fix: handle error when saving plugin readme map to database\n\n* fix: remove TenantId from FetchPluginReadme request binding\n\n* fix: standardize error message casing for plugin unique identifier validation",
+          "timestamp": "2025-12-12T15:35:06+08:00",
+          "tree_id": "b7b4257ad570a51c7782b9ff16814d504c364079",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/0eb2cbe2847577a75d8d411071724355202afdaf"
+        },
+        "date": 1765524983997,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.75,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.75,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
