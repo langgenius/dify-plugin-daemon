@@ -69,20 +69,6 @@ func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// check if uuid-ossp extension exists
-	rows, err := pgsqlDB.Query("SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp'")
-	if err != nil {
-		return nil, err
-	}
-
-	if !rows.Next() {
-		// create the uuid-ossp extension
-		_, err = pgsqlDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// configure connection pool
 	pgsqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	pgsqlDB.SetMaxOpenConns(config.MaxOpenConns)
