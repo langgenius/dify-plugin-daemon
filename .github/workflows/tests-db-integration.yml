@@ -1,4 +1,4 @@
-name: Run Tests
+name: Database Integration Tests
 
 on:
   pull_request:
@@ -9,12 +9,11 @@ on:
       - main
 
 concurrency:
-  group: test-${{ github.head_ref || github.run_id }}
+  group: test-db-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
-  
 
 jobs:
-  test:
+  db-integration:
     runs-on: ubuntu-latest
 
     services:
@@ -29,22 +28,39 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: difyai123456
-          POSTGRES_DB: difyai
+          POSTGRES_DB: dify_plugin_daemon
         ports:
           - 5432:5432
 
       mysql:
-        image: mysql:8.0
+        image: mysql:8
         env:
-          MYSQL_DATABASE: difyai
           MYSQL_ROOT_PASSWORD: difyai123456
+          MYSQL_DATABASE: dify_plugin_daemon
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping --silent"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root --password=difyai123456"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=30
+          --health-retries=5
+
+      pgbouncer:
+        image: edoburu/pgbouncer
+        env:
+          DB_HOST: postgres
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: difyai123456
+          DB_NAME: dify_plugin_daemon
+          POOL_MODE: transaction
+        ports:
+          - 6432:6432
+        options: >-
+          --health-cmd "pg_isready -h localhost -p 6432 -U postgres -d dify_plugin_daemon"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +70,6 @@ jobs:
         with:
           go-version: '1.23'
 
-      # setup uv and get uv path to env
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -66,5 +81,5 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      - name: Run tests
-        run: go test -v -timeout 1m ./...
+      - name: Run database integration tests
+        run: go test -v ./integration/db/...
