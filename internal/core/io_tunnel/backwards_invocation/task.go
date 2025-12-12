@@ -189,7 +189,7 @@ func checkPermission(runtime *plugin_entities.PluginDeclaration, requestHandle *
 	}
 
 	if !permissionFunc(runtime) {
-		return fmt.Errorf(permission["error"].(string))
+		return errors.New(permission["error"].(string))
 	}
 
 	return nil
