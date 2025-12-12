@@ -20,7 +20,7 @@ type Model struct {
 // as it's not compatible to some of the DB versions.
 func (m *Model) BeforeCreate(tx *gorm.DB) error {
 	uuid, err := uuid.NewV7()
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	m.ID = uuid.String()
