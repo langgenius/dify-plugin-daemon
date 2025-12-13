@@ -8,14 +8,22 @@ import (
 )
 
 type Model struct {
-	ID        string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"id"`
+	ID        string    `gorm:"column:id;primaryKey;type:uuid;" json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {
-	if tx.Dialector.Name() == "mysql" && m.ID == "" {
-		m.ID = uuid.New().String()
+// BeforeCreate sets the ID field to a new UUID v7 value before creating a new record.
+// ISSUE: https://github.com/langgenius/dify-plugin-daemon/issues/469
+//
+// to support both pgsql17 and mysql, `generate_uuid_v4` was removed from the database side.
+// as it's not compatible to some of the DB versions.
+func (m *Model) BeforeCreate(tx *gorm.DB) error {
+	uuid, err := uuid.NewV7()
+	if err != nil {
+		return err
 	}
-	return
+	m.ID = uuid.String()
+
+	return nil
 }
