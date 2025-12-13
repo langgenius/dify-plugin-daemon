@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765524984561,
+  "lastUpdate": 1765614397118,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10416,6 +10416,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "11e00ea0268a233a299e55ad4f827c5d8f87278e",
+          "message": "refactor: remove uuid-ossp dependency and update ID generation logic (#536)\n\n* refactor: remove uuid-ossp dependency and update ID generation logic\n\n* fix: condition error",
+          "timestamp": "2025-12-13T16:25:15+08:00",
+          "tree_id": "bd3781df4ed56b2cc6609bb14c43b57d8828d70f",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/11e00ea0268a233a299e55ad4f827c5d8f87278e"
+        },
+        "date": 1765614396106,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.4,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "981869842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.4,
+            "unit": "ns/op",
+            "extra": "981869842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "981869842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "981869842 times\n4 procs"
           }
         ]
       }
