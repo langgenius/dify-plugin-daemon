@@ -2,6 +2,8 @@ package local_runtime
 
 import (
 	"time"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 type NotifierHeartbeat struct {
@@ -41,7 +43,7 @@ func (n *NotifierHeartbeat) OnInstanceHeartbeat(instance *PluginInstance) {
 	instance.lastActiveAt = time.Now()
 }
 
-func (n *NotifierHeartbeat) OnInstanceLog(instance *PluginInstance, message string) {
+func (n *NotifierHeartbeat) OnInstanceLog(instance *PluginInstance, event plugin_entities.PluginLogEvent) {
 
 }
 

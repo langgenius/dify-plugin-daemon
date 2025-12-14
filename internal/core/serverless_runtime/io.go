@@ -121,7 +121,7 @@ func (r *ServerlessPluginRuntime) Write(
 						}),
 					})
 				},
-				func(message string) {},
+				func(plugin_entities.PluginLogEvent) {},
 			)
 		}
 

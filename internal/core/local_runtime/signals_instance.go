@@ -1,5 +1,7 @@
 package local_runtime
 
+import "github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+
 type InstanceSignal string
 
 const (
@@ -47,7 +49,7 @@ type PluginInstanceNotifier interface {
 	OnInstanceHeartbeat(*PluginInstance)
 
 	// on instance log
-	OnInstanceLog(*PluginInstance, string)
+	OnInstanceLog(*PluginInstance, plugin_entities.PluginLogEvent)
 
 	// on instance error
 	OnInstanceErrorLog(*PluginInstance, error)

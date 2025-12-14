@@ -113,6 +113,9 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// setup stdio
 	instance := newPluginInstance(r.Config.Identity(), e, stdin, stdout, stderr, r.appConfig)
 
+	// forward plugin log events to the standard logger
+	instance.AddNotifier(&NotifierLogger{})
+
 	// setup lifecycle notifier
 	launchNotifier := newNotifierLifecycleSignal([]func(){cleanupIOHolders})
 	instance.AddNotifier(launchNotifier)

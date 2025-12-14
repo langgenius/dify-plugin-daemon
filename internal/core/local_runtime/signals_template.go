@@ -1,5 +1,7 @@
 package local_runtime
 
+import "github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+
 type PluginRuntimeNotifierTemplate struct {
 	OnInstanceStartingImpl        func()
 	OnInstanceReadyImpl           func(*PluginInstance)
@@ -72,7 +74,7 @@ type PluginInstanceNotifierTemplate struct {
 	OnInstanceLaunchFailedImpl func(*PluginInstance, error)
 	OnInstanceShutdownImpl     func(*PluginInstance)
 	OnInstanceHeartbeatImpl    func(*PluginInstance)
-	OnInstanceLogImpl          func(*PluginInstance, string)
+	OnInstanceLogImpl          func(*PluginInstance, plugin_entities.PluginLogEvent)
 	OnInstanceErrorLogImpl     func(*PluginInstance, error)
 	OnInstanceWarningLogImpl   func(*PluginInstance, string)
 	OnInstanceStdoutImpl       func(*PluginInstance, []byte)
@@ -109,9 +111,12 @@ func (t *PluginInstanceNotifierTemplate) OnInstanceHeartbeat(instance *PluginIns
 	}
 }
 
-func (t *PluginInstanceNotifierTemplate) OnInstanceLog(instance *PluginInstance, message string) {
+func (t *PluginInstanceNotifierTemplate) OnInstanceLog(
+	instance *PluginInstance,
+	event plugin_entities.PluginLogEvent,
+) {
 	if t.OnInstanceLogImpl != nil {
-		t.OnInstanceLogImpl(instance, message)
+		t.OnInstanceLogImpl(instance, event)
 	}
 }
 

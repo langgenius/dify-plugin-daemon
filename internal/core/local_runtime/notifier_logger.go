@@ -1,13 +1,17 @@
 package local_runtime
 
-import "github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+import (
+	"strings"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+)
 
 type NotifierLogger struct {
 }
 
-func (n *NotifierLogger) OnInstanceStarting(instance *PluginInstance) {
-	// notify terminal
-	log.Info("starting plugin %s: instance %s", instance.pluginUniqueIdentifier, instance.instanceId[:8])
+func (n *NotifierLogger) OnInstanceStarting() {
+	// Nop
 }
 
 func (n *NotifierLogger) OnInstanceReady(instance *PluginInstance) {
@@ -15,7 +19,7 @@ func (n *NotifierLogger) OnInstanceReady(instance *PluginInstance) {
 	log.Info("plugin %s: instance %s ready", instance.pluginUniqueIdentifier, instance.instanceId[:8])
 }
 
-func (n *NotifierLogger) OnInstanceFailed(instance *PluginInstance, err error) {
+func (n *NotifierLogger) OnInstanceLaunchFailed(instance *PluginInstance, err error) {
 	log.Error("plugin %s: instance %s failed: %s", instance.pluginUniqueIdentifier, instance.instanceId[:8], err.Error())
 }
 
@@ -28,14 +32,20 @@ func (n *NotifierLogger) OnInstanceHeartbeat(instance *PluginInstance) {
 	// Nop
 }
 
-func (n *NotifierLogger) OnInstanceLog(instance *PluginInstance, message string) {
+func (n *NotifierLogger) OnInstanceLog(instance *PluginInstance, event plugin_entities.PluginLogEvent) {
 	// notify terminal
-	log.Info(
-		"plugin %s: instance %s log: %s",
-		instance.pluginUniqueIdentifier,
-		instance.instanceId[:8],
-		message,
-	)
+	instanceID := instance.instanceId[:8]
+
+	switch strings.ToLower(event.Level) {
+	case "debug":
+		log.Debug("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
+	case "warn", "warning":
+		log.Warn("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
+	case "error", "fatal", "critical":
+		log.Error("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
+	default:
+		log.Info("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
+	}
 }
 
 func (n *NotifierLogger) OnInstanceErrorLog(instance *PluginInstance, err error) {

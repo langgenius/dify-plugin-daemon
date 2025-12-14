@@ -201,10 +201,10 @@ func (s *PluginInstance) handleStdout(data []byte, once *sync.Once) {
 				notifier.OnInstanceErrorLog(s, errors.New(err))
 			})
 		},
-		func(message string) {
+		func(logEvent plugin_entities.PluginLogEvent) {
 			// plain text log
 			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-				notifier.OnInstanceLog(s, message)
+				notifier.OnInstanceLog(s, logEvent)
 			})
 		},
 	)
