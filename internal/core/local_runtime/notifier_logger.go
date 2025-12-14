@@ -36,16 +36,20 @@ func (n *NotifierLogger) OnInstanceLog(instance *PluginInstance, event plugin_en
 	// notify terminal
 	instanceID := instance.instanceId[:8]
 
-	switch strings.ToLower(event.Level) {
-	case "debug":
-		log.Debug("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
-	case "warn", "warning":
-		log.Warn("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
-	case "error", "fatal", "critical":
-		log.Error("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
-	default:
-		log.Info("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
-	}
+loggers := map[string]func(string, ...interface{}){
+	"debug":    log.Debug,
+	"warn":     log.Warn,
+	"warning":  log.Warn,
+	"error":    log.Error,
+	"fatal":    log.Error,
+	"critical": log.Error,
+}
+
+loggerFunc, ok := loggers[strings.ToLower(event.Level)]
+if !ok {
+	loggerFunc = log.Info
+}
+loggerFunc("plugin %s: instance %s log: %s", instance.pluginUniqueIdentifier, instanceID, event.Message)
 }
 
 func (n *NotifierLogger) OnInstanceErrorLog(instance *PluginInstance, err error) {
