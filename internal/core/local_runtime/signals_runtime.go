@@ -1,5 +1,7 @@
 package local_runtime
 
+import "github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+
 type PluginRuntimeNotifier interface {
 	// on instance starting
 	OnInstanceStarting()
@@ -12,6 +14,9 @@ type PluginRuntimeNotifier interface {
 
 	// on instance shutdown
 	OnInstanceShutdown(*PluginInstance)
+
+	// on instance log
+	OnInstanceLog(*PluginInstance, plugin_entities.PluginLogEvent)
 
 	// on instance scale up
 	OnInstanceScaleUp(int32)

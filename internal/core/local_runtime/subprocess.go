@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
@@ -113,9 +114,6 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	// setup stdio
 	instance := newPluginInstance(r.Config.Identity(), e, stdin, stdout, stderr, r.appConfig)
 
-	// forward plugin log events to the standard logger
-	instance.AddNotifier(&NotifierLogger{})
-
 	// setup lifecycle notifier
 	launchNotifier := newNotifierLifecycleSignal([]func(){cleanupIOHolders})
 	instance.AddNotifier(launchNotifier)
@@ -157,6 +155,11 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 					)
 				})
 			}
+		},
+		OnInstanceLogImpl: func(pi *PluginInstance, ple plugin_entities.PluginLogEvent) {
+			r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+				notifier.OnInstanceLog(instance, ple)
+			})
 		},
 	})
 

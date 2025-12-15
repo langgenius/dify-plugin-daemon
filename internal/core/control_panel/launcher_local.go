@@ -132,6 +132,11 @@ func (c *ControlPanel) LaunchLocalPlugin(
 				notifier.OnLocalRuntimeStop(runtime)
 			})
 		},
+		OnInstanceLogImpl: func(pi *local_runtime.PluginInstance, ple plugin_entities.PluginLogEvent) {
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeInstanceLog(runtime, pi, ple)
+			})
+		},
 	}
 	runtime.AddNotifier(lifetime)
 

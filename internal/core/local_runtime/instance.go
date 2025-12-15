@@ -330,3 +330,7 @@ func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
 	// all listeners are closed, stop the instance
 	s.Stop()
 }
+
+func (s *PluginInstance) ID() string {
+	return s.instanceId
+}
