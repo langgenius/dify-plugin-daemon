@@ -63,7 +63,7 @@ func initOSS(config *app.Config) oss.OSS {
 			SecretKey: config.HuaweiOBSSecretKey,
 			Server:    config.HuaweiOBSServer,
 			Bucket:    config.PluginStorageOSSBucket,
-			PathStyle: config.HuaweiOBPathStyle,
+			PathStyle: config.HuaweiOBSPathStyle,
 		},
 		VolcengineTOS: &oss.VolcengineTOS{
 			Region:    config.VolcengineTOSRegion,
