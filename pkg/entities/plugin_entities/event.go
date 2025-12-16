@@ -22,7 +22,7 @@ func ParsePluginUniversalEvent(
 	sessionHandler func(sessionId string, data []byte),
 	heartbeatHandler func(),
 	errorHandler func(err string),
-	infoHandler func(message string),
+	logHandler func(logEvent PluginLogEvent),
 ) {
 	// handle event
 	event, err := parser.UnmarshalJsonBytes[PluginUniversalEvent](data)
@@ -48,7 +48,9 @@ func ParsePluginUniversalEvent(
 				return
 			}
 
-			infoHandler(logEvent.Message)
+			if logHandler != nil {
+				logHandler(logEvent)
+			}
 		}
 	case PLUGIN_EVENT_SESSION:
 		sessionHandler(sessionId, event.Data)

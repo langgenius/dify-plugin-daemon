@@ -21,6 +21,12 @@ type ControlPanelNotifier interface {
 	OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPluginRuntime, instanceNums int32)
 	// on local runtime scale down
 	OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, instanceNums int32)
+	// on local runtime instance log
+	OnLocalRuntimeInstanceLog(
+		runtime *local_runtime.LocalPluginRuntime,
+		instance *local_runtime.PluginInstance,
+		event plugin_entities.PluginLogEvent,
+	)
 
 	// on remote runtime connected
 	OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime)
