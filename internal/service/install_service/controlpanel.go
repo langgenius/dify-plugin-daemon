@@ -33,6 +33,13 @@ func (l *InstallListener) OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPlug
 func (l *InstallListener) OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
 }
 
+func (l *InstallListener) OnLocalRuntimeInstanceLog(
+	runtime *local_runtime.LocalPluginRuntime,
+	instance *local_runtime.PluginInstance,
+	event plugin_entities.PluginLogEvent,
+) {
+}
+
 func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime) {
 	_, installation, err := InstallPlugin(
 		runtime.TenantId(),

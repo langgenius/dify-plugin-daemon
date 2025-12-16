@@ -116,7 +116,7 @@ func (h *ServerlessTransactionHandler) Handle(
 		func(err string) {
 			log.Warn("invoke dify failed, received errors: %s", err)
 		},
-		func(message string) {}, //log
+		func(plugin_entities.PluginLogEvent) {}, //log
 	)
 
 	select {

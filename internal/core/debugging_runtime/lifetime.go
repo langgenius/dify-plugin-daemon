@@ -47,9 +47,7 @@ func (r *RemotePluginRuntime) SpawnCore() error {
 			func(err string) {
 				log.Error("plugin %s: %s", r.Configuration().Identity(), err)
 			},
-			func(message string) {
-				log.Info("plugin %s: %s", r.Configuration().Identity(), message)
-			},
+			func(plugin_entities.PluginLogEvent) {}, // remote debugging logs stay on client side
 		)
 	})
 
