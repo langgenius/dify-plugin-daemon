@@ -57,7 +57,7 @@ func TestRedisTransaction(t *testing.T) {
 		}
 
 		return errors.New("test transaction error")
-	})
+	}, strings.Join([]string{TEST_PREFIX, "key"}, ":"))
 
 	if err == nil {
 		t.Errorf("transaction should return error")
@@ -93,7 +93,7 @@ func TestRedisTransaction(t *testing.T) {
 		}
 
 		return nil
-	})
+	}, strings.Join([]string{TEST_PREFIX, "key"}, ":"))
 
 	if err != nil {
 		t.Errorf("transaction should not return error")

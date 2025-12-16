@@ -527,9 +527,20 @@ func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, err
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
 }
 
-func Transaction(fn func(redis.Pipeliner) error) error {
+func Transaction(fn func(redis.Pipeliner) error, keys ...string) error {
 	if client == nil {
 		return ErrDBNotInit
+	}
+
+	// 如果没有提供 keys，则返回错误
+	if len(keys) == 0 {
+		return errors.New("redis: Watch requires at least one key")
+	}
+
+	// 将 keys 进行序列化处理
+	watchKeys := make([]string, len(keys))
+	for i, key := range keys {
+		watchKeys[i] = serialKey(key)
 	}
 
 	return client.Watch(ctx, func(tx *redis.Tx) error {
@@ -540,7 +551,7 @@ func Transaction(fn func(redis.Pipeliner) error) error {
 			return nil
 		}
 		return err
-	})
+	}, watchKeys...)
 }
 
 func Publish(channel string, message any, context ...redis.Cmdable) error {
