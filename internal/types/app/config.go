@@ -67,7 +67,7 @@ type Config struct {
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
 	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
 	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
-	HuaweiOBPathStyle  bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
+	HuaweiOBSPathStyle  bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
