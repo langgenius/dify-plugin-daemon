@@ -532,12 +532,16 @@ func Transaction(fn func(redis.Pipeliner) error, keys ...string) error {
 		return ErrDBNotInit
 	}
 
-	// 如果没有提供 keys，则返回错误
+	// Fix: If no keys provided, use plain Pipeline instead of Watch transaction
 	if len(keys) == 0 {
-		return errors.New("redis: Watch requires at least one key")
+		_, err := client.TxPipelined(ctx, fn)
+		if err == redis.Nil {
+			return nil
+		}
+		return err
 	}
 
-	// 将 keys 进行序列化处理
+	// Serialize watch keys
 	watchKeys := make([]string, len(keys))
 	for i, key := range keys {
 		watchKeys[i] = serialKey(key)
