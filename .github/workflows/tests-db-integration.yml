@@ -16,54 +16,19 @@ jobs:
   db-integration:
     runs-on: ubuntu-latest
 
-    services:
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-        options: -e REDIS_PASSWORD=difyai123456
-
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: difyai123456
-          POSTGRES_DB: dify_plugin_daemon
-        ports:
-          - 5432:5432
-
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: difyai123456
-          MYSQL_DATABASE: dify_plugin_daemon
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root --password=difyai123456"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      pgbouncer:
-        image: edoburu/pgbouncer
-        env:
-          DB_HOST: postgres
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: difyai123456
-          DB_NAME: dify_plugin_daemon
-          POOL_MODE: transaction
-        ports:
-          - 6432:6432
-        options: >-
-          --health-cmd "pg_isready -h localhost -p 6432 -U postgres -d dify_plugin_daemon"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start integration services
+        uses: hoverkraft-tech/compose-action@v2.0.2
+        with:
+          compose-file: |
+            integration/docker/docker-compose.ci.yml
+          services: |
+            redis
+            postgres
+            mysql
+            pgbouncer
 
       - name: Setup Go
         uses: actions/setup-go@v5
