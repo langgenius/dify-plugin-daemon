@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765960757603,
+  "lastUpdate": 1765980669634,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10546,6 +10546,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.44,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4b75eed6b7c14d1d755c3e9cac59c4d847bec2c1",
+          "message": "refactor: separate CI tests, and support pg bouncer (#529)\n\n* feat: add support for PgBouncer in database initialization\n\n* refactor: consolidate gorm configuration for database connection\n\n* Add MySQL and multi-driver DB integration tests (#535)\n\n* feat: streamline integration tests by using a centralized docker-compose file\n\n* fix: add timeout\n\n* refactor: replace inline service definitions with docker-compose action for integration tests\n\n* fix: update pgbouncer image and environment variable names for consistency",
+          "timestamp": "2025-12-17T22:08:47+08:00",
+          "tree_id": "a83a987a0bd30204c67985e69ef98255d1ed2dcc",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/4b75eed6b7c14d1d755c3e9cac59c4d847bec2c1"
+        },
+        "date": 1765980669036,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.24,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.24,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
