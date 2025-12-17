@@ -58,6 +58,7 @@ type Config struct {
 	AliyunOSSAccessKeySecret string `envconfig:"ALIYUN_OSS_ACCESS_KEY_SECRET"`
 	AliyunOSSAuthVersion     string `envconfig:"ALIYUN_OSS_AUTH_VERSION" default:"v4"`
 	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
+	AliyunOSSCloudBoxId      string `envconfig:"ALIYUN_OSS_CLOUDBOX_ID" default:""`
 
 	// google gcs
 	GoogleCloudStorageCredentialsB64 string `envconfig:"GCS_CREDENTIALS"`
@@ -66,6 +67,7 @@ type Config struct {
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
 	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
 	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
+	HuaweiOBSPathStyle  bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`

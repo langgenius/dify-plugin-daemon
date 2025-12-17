@@ -56,12 +56,14 @@ func initOSS(config *app.Config) oss.OSS {
 			AuthVersion: config.AliyunOSSAuthVersion,
 			Path:        config.AliyunOSSPath,
 			Bucket:      config.PluginStorageOSSBucket,
+			CloudBoxId:  config.AliyunOSSCloudBoxId,
 		},
 		HuaweiOBS: &oss.HuaweiOBS{
 			AccessKey: config.HuaweiOBSAccessKey,
 			SecretKey: config.HuaweiOBSSecretKey,
 			Server:    config.HuaweiOBSServer,
 			Bucket:    config.PluginStorageOSSBucket,
+			PathStyle: config.HuaweiOBSPathStyle,
 		},
 		VolcengineTOS: &oss.VolcengineTOS{
 			Region:    config.VolcengineTOSRegion,
