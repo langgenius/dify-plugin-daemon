@@ -271,7 +271,7 @@ func (p *PluginDeclaration) ManifestValidate() error {
 	}
 
 	if !PluginNameRegex.MatchString(p.Name) {
-		return fmt.Errorf("plugin name must be alphanumeric and less than 64 characters: ^[a-z0-9_-]{1,64}$")
+		return fmt.Errorf("plugin name must be alphanumeric and less than 128 characters: ^[a-z0-9_-]{1,128}$")
 	}
 
 	if p.Endpoint == nil && p.Model == nil && p.Tool == nil && p.AgentStrategy == nil && p.Datasource == nil && p.Trigger == nil {
