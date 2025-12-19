@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766129531188,
+  "lastUpdate": 1766129742157,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10642,6 +10642,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.59,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sjhpzx@gmail.com",
+            "name": "Xin Zhang",
+            "username": "zhangx1n"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4f48fdbc3cbeba733249097f543fe92525288ddb",
+          "message": "Align plugin manifest validation error messages with regex length limits (#547)",
+          "timestamp": "2025-12-19T15:33:21+08:00",
+          "tree_id": "66111b18392850f2987f799c00f7becc11c1a0e7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/4f48fdbc3cbeba733249097f543fe92525288ddb"
+        },
+        "date": 1766129741615,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.57,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.57,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
