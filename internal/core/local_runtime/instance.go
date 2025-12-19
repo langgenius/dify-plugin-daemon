@@ -30,8 +30,8 @@ type PluginInstance struct {
 	l                      *sync.Mutex
 	listener               map[string]func([]byte)
 
-	started  bool // mark the instance as started
-	shutdown bool // mark the instance as shutdown
+	started  bool // mark the instance as started, it will be set to true when the first heartbeat is received
+	shutdown bool // mark the instance as shutdown, it will be set to true when stdout reader is closed
 
 	// app config
 	appConfig *app.Config
@@ -114,6 +114,17 @@ func (s *PluginInstance) Stop() {
 
 // StartStdout starts to read the stdout of the plugin
 // and parse the stdout data to trigger corresponding listeners
+//
+// # Whenever the stdout reader is closed, subprocess will be killed and reaped
+//
+// At a high-level view of the architecture design
+// Stdout actually take responsibility of the existing of the plugin instance
+//
+//	CLOSE STDOUT = KILL and REAP subprocess
+//	CLOSE INSTANCE =  CLOSE STDOUT
+//
+// In the above scope, the subprocess was killed by daemon,
+// Once the subprocess exists itself, STDOUT always close, which results in `CLOSE STDOUT`
 func (s *PluginInstance) StartStdout() {
 	defer func() {
 		// notify shutdown signal
@@ -163,8 +174,17 @@ func (s *PluginInstance) StartStdout() {
 
 	// once reader of stdout is closed, kill subprocess
 	if err := s.cmd.Process.Kill(); err != nil {
+		// no need to return here, just log the error, it's perhaps the process was exited already
+		// and the kill command fails
 		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to kill subprocess: %s", err.Error()))
+		})
+	}
+
+	// collect subprocess, avoid zombie processes
+	if _, err := s.cmd.Process.Wait(); err != nil {
+		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to reap subprocess: %s", err.Error()))
 		})
 	}
 }
@@ -258,6 +278,11 @@ func (s *PluginInstance) Monitor() error {
 
 	// check status of plugin every 5 seconds
 	for range ticker.C {
+		if s.shutdown {
+			// process was closed already, exit monitoring
+			return nil
+		}
+
 		// check heartbeat
 		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
 			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
@@ -276,6 +301,7 @@ func (s *PluginInstance) Monitor() error {
 			s.Stop()
 			return ErrRuntimeNotActive
 		}
+
 		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL/2 {
 			// notify handlers
 			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
