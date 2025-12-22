@@ -56,7 +56,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(workers)
-	
+
 	for i := 0; i < workers; i++ {
 		go func(i int) {
 			defer wg.Done()
@@ -78,7 +78,7 @@ func TestLoadOrStore(t *testing.T) {
 	m := Map[string, interface{}]{}
 
 	// First store
-	val, loaded := m.LoadOrStore("data", []byte{1,2,3})
+	val, loaded := m.LoadOrStore("data", []byte{1, 2, 3})
 	if loaded || val.([]byte)[0] != 1 {
 		t.Error("Initial LoadOrStore failed")
 	}
@@ -89,8 +89,6 @@ func TestLoadOrStore(t *testing.T) {
 		t.Error("Existing key LoadOrStore failed")
 	}
 }
-
-
 
 // TestEdgeCases covers special scenarios
 func TestEdgeCases(t *testing.T) {
