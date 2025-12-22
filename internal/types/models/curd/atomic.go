@@ -2,6 +2,8 @@ package curd
 
 import (
 	"errors"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -602,6 +604,8 @@ func UpgradePlugin(
 	if err != nil {
 		return nil, err
 	}
-
+    pluginId := strings.Split(newPluginUniqueIdentifier.String(), ":")[0]  // get the pluginId
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId) // make cache key
+	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey) // delete the old data
 	return &response, nil
 }
