@@ -71,9 +71,9 @@ func newPluginInstance(
 		errReader:              errReader,
 		l:                      &sync.Mutex{},
 		appConfig:              appConfig,
-
-		notifiers:    []PluginInstanceNotifier{},
-		notifierLock: &sync.Mutex{},
+		listener:               make(map[string]func([]byte)),
+		notifiers:              []PluginInstanceNotifier{},
+		notifierLock:           &sync.Mutex{},
 	}
 
 	return instance
@@ -82,9 +82,6 @@ func newPluginInstance(
 func (s *PluginInstance) setupStdioEventListener(session_id string, listener func([]byte)) {
 	s.l.Lock()
 	defer s.l.Unlock()
-	if s.listener == nil {
-		s.listener = map[string]func([]byte){}
-	}
 
 	s.listener[session_id] = listener
 }
