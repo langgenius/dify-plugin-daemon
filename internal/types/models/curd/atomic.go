@@ -604,8 +604,10 @@ func UpgradePlugin(
 	if err != nil {
 		return nil, err
 	}
-    pluginId := strings.Split(newPluginUniqueIdentifier.String(), ":")[0]  // get the pluginId
+    pluginId := newPluginUniqueIdentifier.PluginID()  // get the pluginId
 	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId) // make cache key
-	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey) // delete the old data
+	if _, err = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); err != nil {
+		return nil, err
+	}
 	return &response, nil
 }
