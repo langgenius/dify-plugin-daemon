@@ -2,11 +2,14 @@ package http_requests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.Request, error) {
@@ -17,6 +20,14 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 
 	for _, option := range options {
 		switch option.Type {
+		case HttpOptionTypeContext:
+			if ctx, ok := option.Value.(context.Context); ok {
+				ctx = log.EnsureTrace(ctx)
+				traceparent := log.GetTraceparentHeader(ctx)
+				if traceparent != "" {
+					req.Header.Set("traceparent", traceparent)
+				}
+			}
 		case "header":
 			for k, v := range option.Value.(map[string]string) {
 				req.Header.Set(k, v)

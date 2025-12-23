@@ -19,14 +19,15 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
+	engine.Use(log.TraceMiddleware())
 	if config.HealthApiLogEnabled {
-		engine.Use(gin.Logger())
+		engine.Use(log.LoggerMiddleware())
 	} else {
-		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		engine.Use(log.LoggerMiddlewareWithConfig(log.LoggerConfig{
 			SkipPaths: []string{"/health/check"},
 		}))
 	}
-	engine.Use(gin.Recovery())
+	engine.Use(log.RecoveryMiddleware())
 	engine.Use(controllers.CollectActiveRequests())
 	engine.GET("/health/check", controllers.HealthCheck(config))
 

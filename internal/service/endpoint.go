@@ -159,6 +159,7 @@ func Endpoint(
 			BackwardsInvocation:    manager.BackwardsInvocation(),
 			IgnoreCache:            false,
 			EndpointID:             &endpoint.ID,
+			RequestContext:         ctx.Request.Context(),
 		},
 	)
 	defer session.Close(session_manager.CloseSessionPayload{

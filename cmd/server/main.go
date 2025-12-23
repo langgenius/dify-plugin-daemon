@@ -21,6 +21,9 @@ func main() {
 
 	config.SetDefault()
 
+	log.Init(config.LogFormat == "json")
+	defer log.RecoverAndExit()
+
 	if err := config.Validate(); err != nil {
 		log.Panic("Invalid configuration: %s", err.Error())
 	}

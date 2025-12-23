@@ -1,6 +1,7 @@
 package session_manager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -25,6 +26,7 @@ type Session struct {
 	ID                  string                                          `json:"id"`
 	runtime             plugin_entities.PluginRuntimeSessionIOInterface `json:"-"`
 	backwardsInvocation dify_invocation.BackwardsInvocation             `json:"-"`
+	requestContext      context.Context                                 `json:"-"`
 
 	TenantID               string                                 `json:"tenant_id"`
 	UserID                 string                                 `json:"user_id"`
@@ -61,6 +63,7 @@ type NewSessionPayload struct {
 	AppID                  *string                                `json:"app_id"`
 	EndpointID             *string                                `json:"endpoint_id"`
 	Context                map[string]any                         `json:"context"`
+	RequestContext         context.Context                        `json:"-"`
 }
 
 func NewSession(payload NewSessionPayload) *Session {
@@ -74,6 +77,7 @@ func NewSession(payload NewSessionPayload) *Session {
 		Action:                 payload.Action,
 		Declaration:            payload.Declaration,
 		backwardsInvocation:    payload.BackwardsInvocation,
+		requestContext:         payload.RequestContext,
 		ConversationID:         payload.ConversationID,
 		MessageID:              payload.MessageID,
 		AppID:                  payload.AppID,
@@ -157,7 +161,17 @@ func (s *Session) BindBackwardsInvocation(backwardsInvocation dify_invocation.Ba
 }
 
 func (s *Session) BackwardsInvocation() dify_invocation.BackwardsInvocation {
+	if s.backwardsInvocation != nil && s.requestContext != nil {
+		s.backwardsInvocation.SetContext(s.requestContext)
+	}
 	return s.backwardsInvocation
+}
+
+func (s *Session) RequestContext() context.Context {
+	if s.requestContext == nil {
+		return context.Background()
+	}
+	return s.requestContext
 }
 
 type PLUGIN_IN_STREAM_EVENT string

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
@@ -14,6 +15,7 @@ func createSession[T any](
 	access_type access_types.PluginAccessType,
 	access_action access_types.PluginAccessAction,
 	cluster_id string,
+	requestContext context.Context,
 ) (*session_manager.Session, error) {
 	manager := plugin_manager.Manager()
 	if manager == nil {
@@ -42,6 +44,7 @@ func createSession[T any](
 			AppID:                  r.AppID,
 			EndpointID:             r.EndpointID,
 			Context:                r.Context,
+			RequestContext:         requestContext,
 		},
 	)
 

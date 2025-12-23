@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -24,13 +25,14 @@ var (
 )
 
 func (p *PluginManager) Install(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	if p.config.Platform == app.PLATFORM_LOCAL {
 		return p.installLocal(pluginUniqueIdentifier)
 	}
 
-	return p.installServerless(pluginUniqueIdentifier)
+	return p.installServerless(ctx, pluginUniqueIdentifier)
 }
 
 // SwitchServerlessEndpoint is required by enterprise dashboard.
@@ -59,13 +61,14 @@ func (p *PluginManager) SwitchServerlessEndpoint(
 // but serverless runtime persists the image, that's why we introduced `Reinstall`
 // it recompiles the plugin and launch a new plugin runtime, replace the old one
 func (p *PluginManager) Reinstall(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	if p.config.Platform == app.PLATFORM_LOCAL {
 		return nil, ErrReinstallNotSupported
 	}
 
-	response, err := p.controlPanel.ReinstallToServerless(pluginUniqueIdentifier)
+	response, err := p.controlPanel.ReinstallToServerless(ctx, pluginUniqueIdentifier)
 	if err != nil {
 		return nil, errors.Join(
 			errors.New("failed to reinstall plugin to serverless"),
@@ -169,9 +172,10 @@ func (p *PluginManager) updateServerlessRuntimeModel(
 
 // whenever a plugin was installed successfully, a record will be inserted into `models.ServerlessRuntime`
 func (p *PluginManager) installServerless(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
-	response, err := p.controlPanel.InstallToServerless(pluginUniqueIdentifier)
+	response, err := p.controlPanel.InstallToServerless(ctx, pluginUniqueIdentifier)
 	if err != nil {
 		return nil, errors.Join(
 			errors.New("failed to install plugin to serverless"),
