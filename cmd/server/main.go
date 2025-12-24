@@ -21,7 +21,7 @@ func main() {
 
 	config.SetDefault()
 
-	log.Init(config.LogFormat == "json")
+	log.Init(config.LogOutputFormat == "json")
 	defer log.RecoverAndExit()
 
 	if err := config.Validate(); err != nil {

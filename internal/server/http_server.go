@@ -29,6 +29,9 @@ func (app *App) server(config *app.Config) func() {
 	}
 	engine.Use(log.RecoveryMiddleware())
 	engine.Use(controllers.CollectActiveRequests())
+	engine.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
+	})
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
