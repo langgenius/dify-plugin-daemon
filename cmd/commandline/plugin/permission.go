@@ -315,14 +315,14 @@ func (p permissionModel) View() string {
 func EditPermission(pluginPath string) {
 	plugin, err := decoder.NewFSPluginDecoder(pluginPath)
 	if err != nil {
-		log.Error("decode plugin failed, error: %v", err)
+		log.Error("decode plugin failed", "error", err)
 		os.Exit(1)
 		return
 	}
 
 	manifest, err := plugin.Manifest()
 	if err != nil {
-		log.Error("get manifest failed, error: %v", err)
+		log.Error("get manifest failed", "error", err)
 		os.Exit(1)
 		return
 	}
@@ -348,12 +348,12 @@ func EditPermission(pluginPath string) {
 				manifestPath,
 				string(marshalYamlBytes(manifest.PluginDeclarationWithoutAdvancedFields)),
 			); err != nil {
-				log.Error("write manifest failed, error: %v", err)
+				log.Error("write manifest failed", "error", err)
 				os.Exit(1)
 				return
 			}
 		} else {
-			log.Error("Error running program: %s", err)
+			log.Error("error running program", "error", err)
 			return
 		}
 	}

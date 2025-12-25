@@ -31,7 +31,7 @@ func main() {
 	// read plugin
 	plugin, err := os.ReadFile(in_path)
 	if err != nil {
-		log.Panic("failed to read plugin file %v", err)
+		log.Panic("failed to read plugin file", "error", err)
 	}
 
 	// sign plugin
@@ -39,14 +39,14 @@ func main() {
 		AuthorizedCategory: decoder.AuthorizedCategory(authorized_category),
 	})
 	if err != nil {
-		log.Panic("failed to sign plugin %v", err)
+		log.Panic("failed to sign plugin", "error", err)
 	}
 
 	// write signature
 	err = os.WriteFile(out_path, pluginFile, 0644)
 	if err != nil {
-		log.Panic("failed to write plugin file %v", err)
+		log.Panic("failed to write plugin file", "error", err)
 	}
 
-	log.Info("plugin signed successfully, output path: %s", out_path)
+	log.Info("plugin signed successfully", "output_path", out_path)
 }

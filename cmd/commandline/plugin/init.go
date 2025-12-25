@@ -80,7 +80,7 @@ func InitPlugin() {
 				m.createPlugin()
 			}
 		} else {
-			log.Error("Error running program: %s", err)
+			log.Error("error running program", "error", err)
 			return
 		}
 	}
@@ -112,15 +112,15 @@ func InitPluginWithFlags(
 	if quick {
 		// Validate name and author
 		if !plugin_entities.PluginNameRegex.MatchString(name) {
-			log.Error("Plugin name must be 1-128 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
+			log.Error("plugin name must be 1-128 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
 			return
 		}
 		if !plugin_entities.AuthorRegex.MatchString(author) {
-			log.Error("Author name must be 1-64 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
+			log.Error("author name must be 1-64 characters long, and can only contain lowercase letters, numbers, dashes and underscores")
 			return
 		}
 		if description == "" {
-			log.Error("Description cannot be empty")
+			log.Error("description cannot be empty")
 			return
 		}
 	}
@@ -139,7 +139,7 @@ func InitPluginWithFlags(
 			}
 		}
 		if !valid {
-			log.Error("Invalid language. Supported languages are: %v", validLanguages)
+			log.Error("invalid language", "supported_languages", validLanguages)
 			return
 		}
 	}
@@ -167,7 +167,7 @@ func InitPluginWithFlags(
 			}
 		}
 		if !valid {
-			log.Error("Invalid category. Supported categories are: %v", validCategories)
+			log.Error("invalid category", "supported_categories", validCategories)
 			return
 		}
 	}
@@ -268,7 +268,7 @@ func InitPluginWithFlags(
 				m.createPlugin()
 			}
 		} else {
-			log.Error("Error running program: %s", err)
+			log.Error("error running program", "error", err)
 			return
 		}
 	}
@@ -472,7 +472,7 @@ func (m model) createPlugin() {
 		manifest.Meta.Runner.Language = constants.Python
 		manifest.Meta.Runner.Version = "3.12"
 	default:
-		log.Error("unsupported language: %s", m.subMenus[SUB_MENU_KEY_LANGUAGE].(language).Language())
+		log.Error("unsupported language", "language", m.subMenus[SUB_MENU_KEY_LANGUAGE].(language).Language())
 		return
 	}
 
@@ -489,49 +489,49 @@ func (m model) createPlugin() {
 	// create the plugin directory
 	cwd, err := os.Getwd()
 	if err != nil {
-		log.Error("failed to get current working directory: %s", err)
+		log.Error("failed to get current working directory", "error", err)
 		return
 	}
 
 	pluginDir := filepath.Join(cwd, manifest.Name)
 
 	if err := writeFile(filepath.Join(pluginDir, "manifest.yaml"), string(manifestFile)); err != nil {
-		log.Error("failed to write manifest file: %s", err)
+		log.Error("failed to write manifest file", "error", err)
 		return
 	}
 
 	// get icon and icon-dark
 	iconLight := icon["light"][string(manifest.Category())]
 	if iconLight == nil {
-		log.Error("icon not found for category: %s", manifest.Category())
+		log.Error("icon not found for category", "category", manifest.Category())
 		return
 	}
 	iconDark := icon["dark"][string(manifest.Category())]
 	if iconDark == nil {
-		log.Error("icon-dark not found for category: %s", manifest.Category())
+		log.Error("icon-dark not found for category", "category", manifest.Category())
 		return
 	}
 
 	// create icon.svg
 	if err := writeFile(filepath.Join(pluginDir, "_assets", "icon.svg"), string(iconLight)); err != nil {
-		log.Error("failed to write icon file: %s", err)
+		log.Error("failed to write icon file", "error", err)
 		return
 	}
 
 	// create icon-dark.svg
 	if err := writeFile(filepath.Join(pluginDir, "_assets", "icon-dark.svg"), string(iconDark)); err != nil {
-		log.Error("failed to write icon-dark file: %s", err)
+		log.Error("failed to write icon-dark file", "error", err)
 		return
 	}
 
 	// create README.md
 	readme, err := renderTemplate(README, manifest, []string{})
 	if err != nil {
-		log.Error("failed to render README template: %s", err)
+		log.Error("failed to render README template", "error", err)
 		return
 	}
 	if err := writeFile(filepath.Join(pluginDir, "README.md"), readme); err != nil {
-		log.Error("failed to write README file: %s", err)
+		log.Error("failed to write README file", "error", err)
 		return
 	}
 
@@ -557,14 +557,14 @@ func (m model) createPlugin() {
 				// Render the template for this language
 				langReadme, err := renderTemplate(template, manifest, []string{})
 				if err != nil {
-					log.Error("failed to render %s README template: %s", lang, err)
+					log.Error("failed to render README template", "language", lang, "error", err)
 					return
 				}
 
 				// Write the language-specific README file
 				readmeFilename := fmt.Sprintf("README_%s.md", lang)
 				if err := writeFile(filepath.Join(pluginDir, "readme", readmeFilename), langReadme); err != nil {
-					log.Error("failed to write %s README file: %s", lang, err)
+					log.Error("failed to write README file", "language", lang, "error", err)
 					return
 				}
 			}
@@ -573,18 +573,18 @@ func (m model) createPlugin() {
 
 	// create .env.example
 	if err := writeFile(filepath.Join(pluginDir, ".env.example"), string(ENV_EXAMPLE)); err != nil {
-		log.Error("failed to write .env.example file: %s", err)
+		log.Error("failed to write .env.example file", "error", err)
 		return
 	}
 
 	// create PRIVACY.md
 	if err := writeFile(filepath.Join(pluginDir, "PRIVACY.md"), string(PRIVACY)); err != nil {
-		log.Error("failed to write PRIVACY file: %s", err)
+		log.Error("failed to write PRIVACY file", "error", err)
 		return
 	}
 	// create github CI workflow
 	if err := writeFile(filepath.Join(pluginDir, ".github", "workflows", "plugin-publish.yml"), string(PLUGIN_PUBLISH_WORKFLOW)); err != nil {
-		log.Error("failed to write plugin-publish workflow file: %s", err)
+		log.Error("failed to write plugin-publish workflow file", "error", err)
 		return
 	}
 
@@ -595,11 +595,11 @@ func (m model) createPlugin() {
 		m.subMenus[SUB_MENU_KEY_CATEGORY].(category).Category(),
 	)
 	if err != nil {
-		log.Error("failed to create python environment: %s", err)
+		log.Error("failed to create python environment", "error", err)
 		return
 	}
 
 	success = true
 
-	log.Info("plugin %s created successfully, you can refer to `%s/GUIDE.md` for more information about how to develop it", manifest.Name, manifest.Name)
+	log.Info("plugin created successfully", "name", manifest.Name, "guide", fmt.Sprintf("%s/GUIDE.md", manifest.Name))
 }

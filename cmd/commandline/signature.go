@@ -41,7 +41,7 @@ var (
 				if !strings.EqualFold(authorizedCategory, string(decoder.AUTHORIZED_CATEGORY_LANGGENIUS)) &&
 					!strings.EqualFold(authorizedCategory, string(decoder.AUTHORIZED_CATEGORY_PARTNER)) &&
 					!strings.EqualFold(authorizedCategory, string(decoder.AUTHORIZED_CATEGORY_COMMUNITY)) {
-					log.Error("invalid authorized category: %s", authorizedCategory)
+					log.Error("invalid authorized category", "category", authorizedCategory)
 					os.Exit(1)
 				}
 			}
