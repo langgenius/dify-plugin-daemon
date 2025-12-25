@@ -85,6 +85,10 @@ func NewSession(payload NewSessionPayload) *Session {
 		Context:                payload.Context,
 	}
 
+	if s.backwardsInvocation != nil && s.requestContext != nil {
+		s.backwardsInvocation.SetContext(s.requestContext)
+	}
+
 	session_lock.Lock()
 	sessions[s.ID] = s
 	session_lock.Unlock()
@@ -158,12 +162,12 @@ func (s *Session) Runtime() plugin_entities.PluginRuntimeSessionIOInterface {
 
 func (s *Session) BindBackwardsInvocation(backwardsInvocation dify_invocation.BackwardsInvocation) {
 	s.backwardsInvocation = backwardsInvocation
-}
-
-func (s *Session) BackwardsInvocation() dify_invocation.BackwardsInvocation {
 	if s.backwardsInvocation != nil && s.requestContext != nil {
 		s.backwardsInvocation.SetContext(s.requestContext)
 	}
+}
+
+func (s *Session) BackwardsInvocation() dify_invocation.BackwardsInvocation {
 	return s.backwardsInvocation
 }
 
