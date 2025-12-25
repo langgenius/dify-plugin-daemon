@@ -1,9 +1,7 @@
 package log
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"runtime"
@@ -120,23 +118,4 @@ func captureFullStack() string {
 		}
 		buf = make([]byte, len(buf)*2)
 	}
-}
-
-type responseBodyWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w *responseBodyWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
-}
-
-func (w *responseBodyWriter) WriteString(s string) (int, error) {
-	w.body.WriteString(s)
-	return w.ResponseWriter.WriteString(s)
-}
-
-func (w *responseBodyWriter) ReadFrom(r io.Reader) (n int64, err error) {
-	return io.Copy(w, r)
 }
