@@ -60,7 +60,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 	}
 
 	if err != nil {
-		log.Error("get endpoint error %v", err)
+		log.Error("get endpoint error", "error", err)
 		ctx.JSON(500, exception.InternalServerError(errors.New("internal server error")).ToResponse())
 		return
 	}

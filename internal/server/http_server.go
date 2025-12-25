@@ -76,13 +76,13 @@ func (app *App) server(config *app.Config) func() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Panic("listen: %s\n", err)
+			log.Panic("listen failed", "error", err)
 		}
 	}()
 
 	return func() {
 		if err := srv.Shutdown(context.Background()); err != nil {
-			log.Panic("Server Shutdown: %s\n", err)
+			log.Panic("server shutdown failed", "error", err)
 		}
 	}
 }

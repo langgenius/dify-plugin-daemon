@@ -43,7 +43,7 @@ func SetupSignalHandler() {
 		for _, finalizer := range finalizers {
 			err := finalizer()
 			if err != nil {
-				log.Error("finalizer failed: %s", err.Error())
+				log.Error("finalizer failed", "error", err)
 				hasError = true
 			}
 		}

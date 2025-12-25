@@ -12,30 +12,30 @@ import (
 type StandardLogger struct{}
 
 func (l *StandardLogger) OnLocalRuntimeStarting(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) {
-	log.Info("local runtime starting: %s", pluginUniqueIdentifier)
+	log.Info("local runtime starting", "plugin", pluginUniqueIdentifier)
 }
 
 func (l *StandardLogger) OnLocalRuntimeReady(runtime *local_runtime.LocalPluginRuntime) {
 	identity, _ := runtime.Identity()
-	log.Info("local runtime ready: %s", identity)
+	log.Info("local runtime ready", "plugin", identity)
 }
 
 func (l *StandardLogger) OnLocalRuntimeStartFailed(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier, err error) {
-	log.Error("local runtime start failed: %s, error: %s", pluginUniqueIdentifier, err)
+	log.Error("local runtime start failed", "plugin", pluginUniqueIdentifier, "error", err)
 }
 
 func (l *StandardLogger) OnLocalRuntimeStop(runtime *local_runtime.LocalPluginRuntime) {
 	identity, _ := runtime.Identity()
-	log.Info("local runtime stop: %s", identity)
+	log.Info("local runtime stop", "plugin", identity)
 }
 
 func (l *StandardLogger) OnLocalRuntimeStopped(runtime *local_runtime.LocalPluginRuntime) {
 	identity, _ := runtime.Identity()
-	log.Info("local runtime stopped: %s", identity)
+	log.Info("local runtime stopped", "plugin", identity)
 }
 
 var (
-	loggers = map[string]func(string, ...interface{}){
+	loggers = map[string]func(string, ...any){
 		"debug":    log.Debug,
 		"warn":     log.Warn,
 		"warning":  log.Warn,
@@ -58,25 +58,25 @@ func (l *StandardLogger) OnLocalRuntimeInstanceLog(
 	}
 	identity, _ := runtime.Identity()
 
-	loggerFunc("plugin %s: instance %s log: %s", identity, instanceID, event.Message)
+	loggerFunc("plugin instance log", "plugin", identity, "instance", instanceID, "message", event.Message)
 }
 
 func (l *StandardLogger) OnDebuggingRuntimeConnected(runtime *debugging_runtime.RemotePluginRuntime) {
 	identity, _ := runtime.Identity()
-	log.Info("debugging runtime connected: %s", identity)
+	log.Info("debugging runtime connected", "plugin", identity)
 }
 
 func (l *StandardLogger) OnDebuggingRuntimeDisconnected(runtime *debugging_runtime.RemotePluginRuntime) {
 	identity, _ := runtime.Identity()
-	log.Info("debugging runtime disconnected: %s", identity)
+	log.Info("debugging runtime disconnected", "plugin", identity)
 }
 
 func (l *StandardLogger) OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
 	identity, _ := runtime.Identity()
-	log.Info("local runtime scale up: %s, instance nums: %d", identity, instanceNums)
+	log.Info("local runtime scale up", "plugin", identity, "instance_nums", instanceNums)
 }
 
 func (l *StandardLogger) OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, instanceNums int32) {
 	identity, _ := runtime.Identity()
-	log.Info("local runtime scale down: %s, instance nums: %d", identity, instanceNums)
+	log.Info("local runtime scale down", "plugin", identity, "instance_nums", instanceNums)
 }

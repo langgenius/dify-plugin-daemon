@@ -110,7 +110,7 @@ func (p *PluginManager) Reinstall(
 				// cleanup system cache for serverless runtime model
 				// cleanup must be done after updating the model, otherwise race condition may occur
 				if err := p.clearServerlessRuntimeCache(pluginUniqueIdentifier); err != nil {
-					log.Error("failed to cleanup system cache for serverless runtime model: %v", err)
+					log.Error("failed to cleanup system cache for serverless runtime model", "error", err)
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
 						Data:  "failed to cleanup system cache for serverless runtime model",
@@ -126,7 +126,7 @@ func (p *PluginManager) Reinstall(
 				// FIXME(Yeuoly): log the error to terminal, but avoid using inline log
 				// try to refactor the code to a more elegant way like abstracting all lifetime events
 				// and make logger in a centralized layer
-				log.Error("failed to reinstall plugin to serverless: %s", ispr.Message)
+				log.Error("failed to reinstall plugin to serverless", "message", ispr.Message)
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
 					Data:  "failed to reinstall plugin to serverless",
@@ -252,7 +252,7 @@ func (p *PluginManager) installServerless(
 				// FIXME(Yeuoly): log the error to terminal, but avoid using inline log
 				// try to refactor the code to a more elegant way like abstracting all lifetime events
 				// and make logger in a centralized layer
-				log.Error("failed to install plugin to serverless: %s", r.Message)
+				log.Error("failed to install plugin to serverless", "message", r.Message)
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
 					Data:  "internal server error",

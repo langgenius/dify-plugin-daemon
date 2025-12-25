@@ -134,7 +134,7 @@ func DeleteSession(payload DeleteSessionPayload) {
 
 	if !payload.IgnoreCache {
 		if _, err := cache.Del(sessionKey(payload.ID)); err != nil {
-			log.Error("delete session info from cache failed, %s", err)
+			log.Error("delete session info from cache failed", "error", err)
 		}
 	}
 }

@@ -77,7 +77,7 @@ func ProcessInstallJob(
 			time.AfterFunc(time.Second*60, func() {
 				for _, taskID := range taskIDs {
 					if err := DeleteTask(taskID); err != nil {
-						log.Error("failed to delete task %s: %v", taskID, err)
+						log.Error("failed to delete task", "task_id", taskID, "error", err)
 					}
 				}
 			})
@@ -134,7 +134,7 @@ func ProcessUpgradeJob(
 				}
 
 				if err := RemovePluginIfNeeded(manager, job.OriginalIdentifier, response); err != nil {
-					log.Error("failed to remove uninstalled plugin: %v", err)
+					log.Error("failed to remove uninstalled plugin", "error", err)
 				}
 			}
 

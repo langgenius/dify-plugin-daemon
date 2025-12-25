@@ -252,7 +252,7 @@ func UpgradePlugin(
 			routinepkg.RoutineLabelKeyMethod: "UpgradePlugin.RemovePluginIfNeeded",
 		}, func() {
 			if err := tasks.RemovePluginIfNeeded(manager, originalPluginUniqueIdentifier, response); err != nil {
-				log.Error("failed to remove uninstalled plugin: %v", err)
+				log.Error("failed to remove uninstalled plugin", "error", err)
 			}
 		})
 

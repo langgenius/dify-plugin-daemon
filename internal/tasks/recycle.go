@@ -19,14 +19,14 @@ var (
 
 func startTasks(taskIDs []string) {
 	for _, taskID := range taskIDs {
-		log.Info("start new install task %s", taskID)
+		log.Info("start new install task", "task_id", taskID)
 		installingTasks.Store(taskID, true)
 	}
 }
 
 func endTasks(taskIDs []string) {
 	for _, taskID := range taskIDs {
-		log.Info("install task %s finished", taskID)
+		log.Info("install task finished", "task_id", taskID)
 		installingTasks.Delete(taskID)
 	}
 }
@@ -36,7 +36,7 @@ func endTasks(taskIDs []string) {
 func RecycleTasks() error {
 	var errs []error
 	installingTasks.Range(func(taskId string, _ bool) bool {
-		log.Info("updating task %s status to failed", taskId)
+		log.Info("updating task status to failed", "task_id", taskId)
 		// update task status to failed
 		task, err := db.GetOne[models.InstallTask](
 			db.Equal("id", taskId),
@@ -78,7 +78,7 @@ func markTasksAsTimeout(tasks []*models.InstallTask) {
 	}
 	err := db.Update(tasks)
 	if err != nil {
-		log.Error("failed to update tasks: %v", err)
+		log.Error("failed to update tasks", "error", err)
 	}
 }
 
@@ -110,13 +110,13 @@ func MonitorTimeoutTasks(cluster *cluster.Cluster, config *app.Config) {
 				}),
 			)
 			if err != nil {
-				log.Error("failed to get all tasks: %v", err)
+				log.Error("failed to get all tasks", "error", err)
 				continue
 			}
 			for i := range tasks {
 				task := &tasks[i]
 				if time.Since(task.CreatedAt) > timeout {
-					log.Info("task %s timed out", task.ID)
+					log.Info("task timed out", "task_id", task.ID)
 					tasksToProcess = append(tasksToProcess, task)
 				}
 			}

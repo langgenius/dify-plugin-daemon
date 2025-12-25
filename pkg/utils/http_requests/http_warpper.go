@@ -115,7 +115,7 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			if raiseErrorWhenStreamDataNotMatch {
 				return err
 			} else {
-				log.Warn("stream data not match for %s, got %s", url, string(data))
+				log.Warn("stream data not match", "url", url, "data", string(data))
 				return nil
 			}
 		}
