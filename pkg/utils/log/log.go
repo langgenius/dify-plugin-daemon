@@ -13,8 +13,6 @@ import (
 
 const ServiceName = "dify-plugin-daemon"
 
-var initialized bool
-
 func Init(json bool) {
 	handler := NewHandler(Options{
 		Level:   slog.LevelInfo,
@@ -24,7 +22,6 @@ func Init(json bool) {
 	})
 	slog.SetDefault(slog.New(handler))
 	setupGinDebug()
-	initialized = true
 }
 
 func setupGinDebug() {
@@ -52,44 +49,24 @@ func logWithCaller(ctx context.Context, level slog.Level, msg string, args ...an
 	_ = logger.Handler().Handle(ctx, r)
 }
 
-func Debug(format string, v ...any) {
-	msg := format
-	if len(v) > 0 {
-		msg = fmt.Sprintf(format, v...)
-	}
-	logWithCaller(context.Background(), slog.LevelDebug, msg)
+func Debug(msg string, args ...any) {
+	logWithCaller(context.Background(), slog.LevelDebug, msg, args...)
 }
 
-func Info(format string, v ...any) {
-	msg := format
-	if len(v) > 0 {
-		msg = fmt.Sprintf(format, v...)
-	}
-	logWithCaller(context.Background(), slog.LevelInfo, msg)
+func Info(msg string, args ...any) {
+	logWithCaller(context.Background(), slog.LevelInfo, msg, args...)
 }
 
-func Warn(format string, v ...any) {
-	msg := format
-	if len(v) > 0 {
-		msg = fmt.Sprintf(format, v...)
-	}
-	logWithCaller(context.Background(), slog.LevelWarn, msg)
+func Warn(msg string, args ...any) {
+	logWithCaller(context.Background(), slog.LevelWarn, msg, args...)
 }
 
-func Error(format string, v ...any) {
-	msg := format
-	if len(v) > 0 {
-		msg = fmt.Sprintf(format, v...)
-	}
-	logWithCaller(context.Background(), slog.LevelError, msg)
+func Error(msg string, args ...any) {
+	logWithCaller(context.Background(), slog.LevelError, msg, args...)
 }
 
-func Panic(format string, v ...any) {
-	msg := format
-	if len(v) > 0 {
-		msg = fmt.Sprintf(format, v...)
-	}
-	logWithCaller(context.Background(), slog.LevelError, msg)
+func Panic(msg string, args ...any) {
+	logWithCaller(context.Background(), slog.LevelError, msg, args...)
 	panic(msg)
 }
 

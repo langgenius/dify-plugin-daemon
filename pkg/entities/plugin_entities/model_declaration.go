@@ -431,7 +431,7 @@ func (m ModelDeclaration) MarshalJSON() ([]byte, error) {
 	if temp.ModelProperties != nil {
 		result, ok := mapping.ConvertAnyMap(temp.ModelProperties).(map[string]any)
 		if !ok {
-			log.Error("ModelProperties is not a map[string]any: %v", temp.ModelProperties)
+			log.Error("ModelProperties is not a map[string]any", "model_properties", temp.ModelProperties)
 		} else {
 			temp.ModelProperties = result
 		}
