@@ -19,6 +19,7 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
+	engine.Use(log.RecoveryMiddleware())
 	engine.Use(log.TraceMiddleware())
 	if config.HealthApiLogEnabled {
 		engine.Use(log.LoggerMiddleware())
@@ -27,7 +28,6 @@ func (app *App) server(config *app.Config) func() {
 			SkipPaths: []string{"/health/check"},
 		}))
 	}
-	engine.Use(log.RecoveryMiddleware())
 	engine.Use(controllers.CollectActiveRequests())
 	engine.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
