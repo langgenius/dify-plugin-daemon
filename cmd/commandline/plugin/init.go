@@ -80,7 +80,7 @@ func InitPlugin() {
 				m.createPlugin()
 			}
 		} else {
-			log.Error("Error running program:", err)
+			log.Error("Error running program: %s", err)
 			return
 		}
 	}
@@ -268,7 +268,7 @@ func InitPluginWithFlags(
 				m.createPlugin()
 			}
 		} else {
-			log.Error("Error running program:", err)
+			log.Error("Error running program: %s", err)
 			return
 		}
 	}

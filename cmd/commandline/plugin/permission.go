@@ -353,7 +353,7 @@ func EditPermission(pluginPath string) {
 				return
 			}
 		} else {
-			log.Error("Error running program:", err)
+			log.Error("Error running program: %s", err)
 			return
 		}
 	}

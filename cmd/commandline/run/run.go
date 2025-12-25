@@ -47,9 +47,9 @@ func systemLog(response GenericResponse, responseFormat string) {
 	} else if responseFormat == "text" {
 		switch response.Type {
 		case GENERIC_RESPONSE_TYPE_INFO:
-			logger.Output(3, log.LOG_LEVEL_DEBUG_COLOR+"[INFO]"+response.Response["info"].(string)+log.LOG_LEVEL_COLOR_END)
+			logger.Output(3, "[INFO]"+response.Response["info"].(string))
 		case GENERIC_RESPONSE_TYPE_ERROR:
-			logger.Output(3, log.LOG_LEVEL_ERROR_COLOR+"[ERROR]"+response.Response["error"].(string)+log.LOG_LEVEL_COLOR_END)
+			logger.Output(3, "[ERROR]"+response.Response["error"].(string))
 		}
 	}
 }
