@@ -91,10 +91,6 @@ func PanicContext(ctx context.Context, msg string, args ...any) {
 	panic(msg)
 }
 
-func SetLogVisibility(show bool) {
-	// Deprecated: kept for compatibility, no-op with slog
-}
-
 func RecoverAndExit() {
 	if err := recover(); err != nil {
 		stack := captureFullPanicStack()

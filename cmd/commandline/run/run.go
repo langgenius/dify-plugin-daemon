@@ -15,7 +15,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/testutils"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
@@ -194,9 +193,6 @@ func setupSignalHandler(dir string) {
 }
 
 func runPlugin(payload RunPluginPayload) error {
-	// disable logs
-	log.SetLogVisibility(payload.EnableLogs)
-
 	// init routine pool
 	routine.InitPool(10000)
 
