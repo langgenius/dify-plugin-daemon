@@ -48,10 +48,7 @@ func (w *serverlessTransactionWriteCloser) Close() error {
 	return nil
 }
 
-func (h *ServerlessTransactionHandler) Handle(
-	ctx *gin.Context,
-	session_id string,
-) {
+func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string) {
 	writer := &serverlessTransactionWriteCloser{
 		writer: ctx.Writer.Write,
 		flush:  ctx.Writer.Flush,
@@ -84,13 +81,18 @@ func (h *ServerlessTransactionHandler) Handle(
 			}
 
 			session, err := session_manager.GetSession(sessionId)
-
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
 				ctx.Writer.Write([]byte(err.Error()))
 				writer.Close()
 				return
 			}
+
+			// replace trace context, propagate it to gin
+			ctxRequestContext := ctx.Request.Context()
+			ctxRequestContext = log.WithTrace(ctxRequestContext, session.TraceContext)
+			ctxRequestContext = log.WithIdentity(ctxRequestContext, session.IdentityContext)
+			ctx.Request = ctx.Request.WithContext(ctxRequestContext)
 
 			// bind the backwards invocation
 			plugin_manager := plugin_manager.Manager()
