@@ -12,18 +12,18 @@ type RealBackwardsInvocation struct {
 	client              *http.Client
 	writeTimeout        int64
 	readTimeout         int64
-	ctx                 context.Context
+	traceCtx            context.Context
 }
 
 func (i *RealBackwardsInvocation) SetContext(ctx context.Context) {
-	i.ctx = ctx
+	i.traceCtx = ctx
 }
 
 func (i *RealBackwardsInvocation) Context() context.Context {
-	if i.ctx == nil {
+	if i.traceCtx == nil {
 		return context.Background()
 	}
-	return i.ctx
+	return i.traceCtx
 }
 
 type BaseBackwardsInvocationResponse[T any] struct {
