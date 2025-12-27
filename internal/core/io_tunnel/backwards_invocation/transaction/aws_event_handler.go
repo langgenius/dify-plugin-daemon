@@ -73,7 +73,7 @@ func (h *ServerlessTransactionHandler) Handle(
 	plugin_entities.ParsePluginUniversalEvent(
 		bytes,
 		"",
-		func(session_id string, data []byte) {
+		func(sessionId string, data []byte) {
 			// parse the data
 			sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 			if err != nil {
@@ -83,9 +83,7 @@ func (h *ServerlessTransactionHandler) Handle(
 				return
 			}
 
-			session, err := session_manager.GetSession(session_manager.GetSessionPayload{
-				ID: session_id,
-			})
+			session, err := session_manager.GetSession(sessionId)
 
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)

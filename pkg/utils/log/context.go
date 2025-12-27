@@ -6,14 +6,14 @@ type traceContextKey struct{}
 type identityContextKey struct{}
 
 type TraceContext struct {
-	TraceID string
-	SpanID  string
+	TraceID string `json:"trace_id"`
+	SpanID  string `json:"span_id"`
 }
 
 type Identity struct {
-	TenantID string
-	UserID   string
-	UserType string
+	TenantID string `json:"tenant_id"`
+	UserID   string `json:"user_id"`
+	UserType string `json:"user_type"`
 }
 
 func WithTrace(ctx context.Context, tc TraceContext) context.Context {
