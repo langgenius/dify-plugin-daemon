@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
 const configFileName = ".dify_cli.json"
@@ -54,8 +53,6 @@ func LoadEnvFile(path string) (types.EnvConfig, error) {
 			config.TenantID = value
 		case "USER_ID":
 			config.UserID = value
-		case "PROVIDER":
-			config.Provider = value
 		}
 	}
 
@@ -109,7 +106,7 @@ func Load() (*types.DifyConfig, error) {
 	return &config, nil
 }
 
-func FindTool(config *types.DifyConfig, toolName string) *plugin_entities.ToolDeclaration {
+func FindTool(config *types.DifyConfig, toolName string) *types.DifyToolDeclaration {
 	for i := range config.Tools {
 		tool := &config.Tools[i]
 		if tool.Identity.Name == toolName {

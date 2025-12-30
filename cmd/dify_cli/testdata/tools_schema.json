@@ -2,74 +2,683 @@
   "tools": [
     {
       "identity": {
-        "author": "dify",
-        "name": "google_search",
+        "author": "Anonymous",
+        "name": "add_issue_comment",
         "label": {
-          "en_US": "Google Search"
-        }
-      },
-      "description": {
-        "human": {
-          "en_US": "Search the web using Google"
+          "en_US": "add_issue_comment",
+          "zh_Hans": "add_issue_comment",
+          "pt_BR": "add_issue_comment",
+          "ja_JP": "add_issue_comment"
         },
-        "llm": "Search the web using Google search engine"
+        "provider": "github_mcp",
+        "icon": "32cbeac4-074f-42f7-83d2-ed8dbbc0252f"
       },
       "parameters": [
         {
-          "name": "query",
+          "name": "body",
           "label": {
-            "en_US": "Search Query"
+            "en_US": "body",
+            "zh_Hans": "body",
+            "pt_BR": "body",
+            "ja_JP": "body"
           },
-          "human_description": {
-            "en_US": "The search query"
-          },
+          "required": true,
+          "options": [],
           "type": "string",
+          "human_description": {
+            "en_US": "Comment content",
+            "zh_Hans": "Comment content",
+            "pt_BR": "Comment content",
+            "ja_JP": "Comment content"
+          },
           "form": "llm",
-          "required": true
+          "llm_description": "Comment content"
         },
         {
-          "name": "num_results",
+          "name": "issue_number",
           "label": {
-            "en_US": "Number of Results"
+            "en_US": "issue_number",
+            "zh_Hans": "issue_number",
+            "pt_BR": "issue_number",
+            "ja_JP": "issue_number"
           },
-          "human_description": {
-            "en_US": "Number of results to return"
-          },
+          "required": true,
+          "options": [],
           "type": "number",
-          "form": "form",
-          "required": false,
-          "default": 10
+          "human_description": {
+            "en_US": "Issue number to comment on",
+            "zh_Hans": "Issue number to comment on",
+            "pt_BR": "Issue number to comment on",
+            "ja_JP": "Issue number to comment on"
+          },
+          "form": "llm",
+          "llm_description": "Issue number to comment on"
+        },
+        {
+          "name": "owner",
+          "label": {
+            "en_US": "owner",
+            "zh_Hans": "owner",
+            "pt_BR": "owner",
+            "ja_JP": "owner"
+          },
+          "required": true,
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "Repository owner",
+            "zh_Hans": "Repository owner",
+            "pt_BR": "Repository owner",
+            "ja_JP": "Repository owner"
+          },
+          "form": "llm",
+          "llm_description": "Repository owner"
+        },
+        {
+          "name": "repo",
+          "label": {
+            "en_US": "repo",
+            "zh_Hans": "repo",
+            "pt_BR": "repo",
+            "ja_JP": "repo"
+          },
+          "required": true,
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "Repository name",
+            "zh_Hans": "Repository name",
+            "pt_BR": "Repository name",
+            "ja_JP": "Repository name"
+          },
+          "form": "llm",
+          "llm_description": "Repository name"
         }
-      ]
+      ],
+      "description": {
+        "human": {
+          "en_US": "Add a comment to a specific issue in a GitHub repository. Use this tool to add comments to pull requests as well (in this case pass pull request number as issue_number), but only if user is not asking specifically to add review comments.",
+          "zh_Hans": "Add a comment to a specific issue in a GitHub repository. Use this tool to add comments to pull requests as well (in this case pass pull request number as issue_number), but only if user is not asking specifically to add review comments.",
+          "pt_BR": "Add a comment to a specific issue in a GitHub repository. Use this tool to add comments to pull requests as well (in this case pass pull request number as issue_number), but only if user is not asking specifically to add review comments.",
+          "ja_JP": "Add a comment to a specific issue in a GitHub repository. Use this tool to add comments to pull requests as well (in this case pass pull request number as issue_number), but only if user is not asking specifically to add review comments."
+        },
+        "llm": "Add a comment to a specific issue in a GitHub repository. Use this tool to add comments to pull requests as well (in this case pass pull request number as issue_number), but only if user is not asking specifically to add review comments."
+      },
+      "output_schema": {},
+      "has_runtime_parameters": true,
+      "runtime_parameters": {},
+      "provider_type": "mcp"
     },
     {
       "identity": {
-        "author": "dify",
-        "name": "get_weather",
+        "author": "Dify",
+        "name": "current_time",
         "label": {
-          "en_US": "Get Weather"
-        }
-      },
-      "description": {
-        "human": {
-          "en_US": "Get current weather for a location"
+          "en_US": "Current Time",
+          "zh_Hans": "获取当前时间",
+          "pt_BR": "Current Time",
+          "ja_JP": "Current Time"
         },
-        "llm": "Get current weather information for a specified location"
+        "provider": "time"
       },
       "parameters": [
         {
-          "name": "location",
+          "name": "format",
           "label": {
-            "en_US": "Location"
+            "en_US": "Format",
+            "zh_Hans": "格式",
+            "pt_BR": "Format",
+            "ja_JP": "Format"
           },
-          "human_description": {
-            "en_US": "The location to get weather for"
-          },
+          "required": false,
+          "default": "%Y-%m-%d %H:%M:%S",
+          "options": [],
           "type": "string",
-          "form": "llm",
-          "required": true
+          "human_description": {
+            "en_US": "Time format in strftime standard.",
+            "zh_Hans": "strftime 标准的时间格式。",
+            "pt_BR": "Time format in strftime standard.",
+            "ja_JP": "Time format in strftime standard."
+          },
+          "form": "form"
+        },
+        {
+          "name": "timezone",
+          "label": {
+            "en_US": "Timezone",
+            "zh_Hans": "时区",
+            "pt_BR": "Timezone",
+            "ja_JP": "Timezone"
+          },
+          "required": false,
+          "default": "UTC",
+          "options": [
+            {
+              "value": "UTC",
+              "label": {
+                "en_US": "UTC",
+                "zh_Hans": "UTC",
+                "pt_BR": "UTC",
+                "ja_JP": "UTC"
+              }
+            },
+            {
+              "value": "America/New_York",
+              "label": {
+                "en_US": "America/New_York",
+                "zh_Hans": "美洲/纽约",
+                "pt_BR": "America/New_York",
+                "ja_JP": "America/New_York"
+              }
+            },
+            {
+              "value": "America/Los_Angeles",
+              "label": {
+                "en_US": "America/Los_Angeles",
+                "zh_Hans": "美洲/洛杉矶",
+                "pt_BR": "America/Los_Angeles",
+                "ja_JP": "America/Los_Angeles"
+              }
+            },
+            {
+              "value": "America/Chicago",
+              "label": {
+                "en_US": "America/Chicago",
+                "zh_Hans": "美洲/芝加哥",
+                "pt_BR": "America/Chicago",
+                "ja_JP": "America/Chicago"
+              }
+            },
+            {
+              "value": "America/Sao_Paulo",
+              "label": {
+                "en_US": "America/Sao_Paulo",
+                "zh_Hans": "美洲/圣保罗",
+                "pt_BR": "América/São Paulo",
+                "ja_JP": "America/Sao_Paulo"
+              }
+            },
+            {
+              "value": "Asia/Shanghai",
+              "label": {
+                "en_US": "Asia/Shanghai",
+                "zh_Hans": "亚洲/上海",
+                "pt_BR": "Asia/Shanghai",
+                "ja_JP": "Asia/Shanghai"
+              }
+            },
+            {
+              "value": "Asia/Ho_Chi_Minh",
+              "label": {
+                "en_US": "Asia/Ho_Chi_Minh",
+                "zh_Hans": "亚洲/胡志明市",
+                "pt_BR": "Ásia/Ho Chi Minh",
+                "ja_JP": "Asia/Ho_Chi_Minh"
+              }
+            },
+            {
+              "value": "Asia/Tokyo",
+              "label": {
+                "en_US": "Asia/Tokyo",
+                "zh_Hans": "亚洲/东京",
+                "pt_BR": "Asia/Tokyo",
+                "ja_JP": "Asia/Tokyo"
+              }
+            },
+            {
+              "value": "Asia/Dubai",
+              "label": {
+                "en_US": "Asia/Dubai",
+                "zh_Hans": "亚洲/迪拜",
+                "pt_BR": "Asia/Dubai",
+                "ja_JP": "Asia/Dubai"
+              }
+            },
+            {
+              "value": "Asia/Kolkata",
+              "label": {
+                "en_US": "Asia/Kolkata",
+                "zh_Hans": "亚洲/加尔各答",
+                "pt_BR": "Asia/Kolkata",
+                "ja_JP": "Asia/Kolkata"
+              }
+            },
+            {
+              "value": "Asia/Seoul",
+              "label": {
+                "en_US": "Asia/Seoul",
+                "zh_Hans": "亚洲/首尔",
+                "pt_BR": "Asia/Seoul",
+                "ja_JP": "Asia/Seoul"
+              }
+            },
+            {
+              "value": "Asia/Singapore",
+              "label": {
+                "en_US": "Asia/Singapore",
+                "zh_Hans": "亚洲/新加坡",
+                "pt_BR": "Asia/Singapore",
+                "ja_JP": "Asia/Singapore"
+              }
+            },
+            {
+              "value": "Europe/London",
+              "label": {
+                "en_US": "Europe/London",
+                "zh_Hans": "欧洲/伦敦",
+                "pt_BR": "Europe/London",
+                "ja_JP": "Europe/London"
+              }
+            },
+            {
+              "value": "Europe/Berlin",
+              "label": {
+                "en_US": "Europe/Berlin",
+                "zh_Hans": "欧洲/柏林",
+                "pt_BR": "Europe/Berlin",
+                "ja_JP": "Europe/Berlin"
+              }
+            },
+            {
+              "value": "Europe/Moscow",
+              "label": {
+                "en_US": "Europe/Moscow",
+                "zh_Hans": "欧洲/莫斯科",
+                "pt_BR": "Europe/Moscow",
+                "ja_JP": "Europe/Moscow"
+              }
+            },
+            {
+              "value": "Australia/Sydney",
+              "label": {
+                "en_US": "Australia/Sydney",
+                "zh_Hans": "澳大利亚/悉尼",
+                "pt_BR": "Australia/Sydney",
+                "ja_JP": "Australia/Sydney"
+              }
+            },
+            {
+              "value": "Pacific/Auckland",
+              "label": {
+                "en_US": "Pacific/Auckland",
+                "zh_Hans": "太平洋/奥克兰",
+                "pt_BR": "Pacific/Auckland",
+                "ja_JP": "Pacific/Auckland"
+              }
+            },
+            {
+              "value": "Africa/Cairo",
+              "label": {
+                "en_US": "Africa/Cairo",
+                "zh_Hans": "非洲/开罗",
+                "pt_BR": "Africa/Cairo",
+                "ja_JP": "Africa/Cairo"
+              }
+            }
+          ],
+          "type": "select",
+          "human_description": {
+            "en_US": "Timezone",
+            "zh_Hans": "时区",
+            "pt_BR": "Timezone",
+            "ja_JP": "Timezone"
+          },
+          "form": "form"
         }
-      ]
+      ],
+      "description": {
+        "human": {
+          "en_US": "A tool for getting the current time.",
+          "zh_Hans": "一个用于获取当前时间的工具。",
+          "pt_BR": "A tool for getting the current time.",
+          "ja_JP": "A tool for getting the current time."
+        },
+        "llm": "A tool for getting the current time."
+      },
+      "output_schema": {},
+      "has_runtime_parameters": false,
+      "runtime_parameters": {
+        "format": "%Y-%m-%d %H:%M:%S",
+        "timezone": "UTC"
+      },
+      "provider_type": "builtin"
+    },
+    {
+      "identity": {
+        "author": "",
+        "name": "DuckDuckGoSearch",
+        "label": {
+          "en_US": "DuckDuckGoSearch",
+          "zh_Hans": "DuckDuckGoSearch",
+          "pt_BR": "DuckDuckGoSearch",
+          "ja_JP": "DuckDuckGoSearch"
+        },
+        "provider": "509ede01-282c-4a5b-966e-c383cf7abc6d",
+        "icon": "{\"content\": \"\\ud83e\\udd86\", \"background\": \"#FEF7C3\"}"
+      },
+      "parameters": [
+        {
+          "name": "q",
+          "label": {
+            "en_US": "q",
+            "zh_Hans": "q",
+            "pt_BR": "q",
+            "ja_JP": "q"
+          },
+          "placeholder": {
+            "en_US": "Search query",
+            "zh_Hans": "Search query",
+            "pt_BR": "Search query",
+            "ja_JP": "Search query"
+          },
+          "required": true,
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "Search query",
+            "zh_Hans": "Search query",
+            "pt_BR": "Search query",
+            "ja_JP": "Search query"
+          },
+          "form": "llm",
+          "llm_description": "Search query"
+        },
+        {
+          "name": "format",
+          "label": {
+            "en_US": "format",
+            "zh_Hans": "format",
+            "pt_BR": "format",
+            "ja_JP": "format"
+          },
+          "placeholder": {
+            "en_US": "Response format (must be json)",
+            "zh_Hans": "Response format (must be json)",
+            "pt_BR": "Response format (must be json)",
+            "ja_JP": "Response format (must be json)"
+          },
+          "required": true,
+          "default": "json",
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "Response format (must be json)",
+            "zh_Hans": "Response format (must be json)",
+            "pt_BR": "Response format (must be json)",
+            "ja_JP": "Response format (must be json)"
+          },
+          "form": "llm",
+          "llm_description": "Response format (must be json)"
+        },
+        {
+          "name": "no_html",
+          "label": {
+            "en_US": "no_html",
+            "zh_Hans": "no_html",
+            "pt_BR": "no_html",
+            "ja_JP": "no_html"
+          },
+          "placeholder": {
+            "en_US": "Strip HTML from text fields",
+            "zh_Hans": "Strip HTML from text fields",
+            "pt_BR": "Strip HTML from text fields",
+            "ja_JP": "Strip HTML from text fields"
+          },
+          "required": false,
+          "default": 1,
+          "options": [],
+          "type": "number",
+          "human_description": {
+            "en_US": "Strip HTML from text fields",
+            "zh_Hans": "Strip HTML from text fields",
+            "pt_BR": "Strip HTML from text fields",
+            "ja_JP": "Strip HTML from text fields"
+          },
+          "form": "llm",
+          "llm_description": "Strip HTML from text fields"
+        },
+        {
+          "name": "no_redirect",
+          "label": {
+            "en_US": "no_redirect",
+            "zh_Hans": "no_redirect",
+            "pt_BR": "no_redirect",
+            "ja_JP": "no_redirect"
+          },
+          "placeholder": {
+            "en_US": "Disable redirects",
+            "zh_Hans": "Disable redirects",
+            "pt_BR": "Disable redirects",
+            "ja_JP": "Disable redirects"
+          },
+          "required": false,
+          "default": 1,
+          "options": [],
+          "type": "number",
+          "human_description": {
+            "en_US": "Disable redirects",
+            "zh_Hans": "Disable redirects",
+            "pt_BR": "Disable redirects",
+            "ja_JP": "Disable redirects"
+          },
+          "form": "llm",
+          "llm_description": "Disable redirects"
+        },
+        {
+          "name": "skip_disambig",
+          "label": {
+            "en_US": "skip_disambig",
+            "zh_Hans": "skip_disambig",
+            "pt_BR": "skip_disambig",
+            "ja_JP": "skip_disambig"
+          },
+          "placeholder": {
+            "en_US": "Skip disambiguation results",
+            "zh_Hans": "Skip disambiguation results",
+            "pt_BR": "Skip disambiguation results",
+            "ja_JP": "Skip disambiguation results"
+          },
+          "required": false,
+          "default": 1,
+          "options": [],
+          "type": "number",
+          "human_description": {
+            "en_US": "Skip disambiguation results",
+            "zh_Hans": "Skip disambiguation results",
+            "pt_BR": "Skip disambiguation results",
+            "ja_JP": "Skip disambiguation results"
+          },
+          "form": "llm",
+          "llm_description": "Skip disambiguation results"
+        },
+        {
+          "name": "kl",
+          "label": {
+            "en_US": "kl",
+            "zh_Hans": "kl",
+            "pt_BR": "kl",
+            "ja_JP": "kl"
+          },
+          "placeholder": {
+            "en_US": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+            "zh_Hans": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+            "pt_BR": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+            "ja_JP": "Region / language code (e.g. us-en, jp-jp, zh-cn)"
+          },
+          "required": false,
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+            "zh_Hans": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+            "pt_BR": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+            "ja_JP": "Region / language code (e.g. us-en, jp-jp, zh-cn)"
+          },
+          "form": "llm",
+          "llm_description": "Region / language code (e.g. us-en, jp-jp, zh-cn)"
+        }
+      ],
+      "description": {
+        "human": {
+          "en_US": "Performs a DuckDuckGo search using the Instant Answer API and returns structured JSON results.",
+          "zh_Hans": "Performs a DuckDuckGo search using the Instant Answer API and returns structured JSON results.",
+          "pt_BR": "Performs a DuckDuckGo search using the Instant Answer API and returns structured JSON results.",
+          "ja_JP": "Performs a DuckDuckGo search using the Instant Answer API and returns structured JSON results."
+        },
+        "llm": "Performs a DuckDuckGo search using the Instant Answer API and returns structured JSON results."
+      },
+      "output_schema": {},
+      "has_runtime_parameters": false,
+      "runtime_parameters": {},
+      "provider_type": "api"
+    },
+    {
+      "identity": {
+        "author": "mairuiseer@gmail.com",
+        "name": "article_writer",
+        "label": {
+          "en_US": "Text Polishing",
+          "zh_Hans": "Text Polishing",
+          "pt_BR": "Text Polishing",
+          "ja_JP": "Text Polishing"
+        },
+        "provider": "fdace209-04db-48df-94e0-9d38c30fc629",
+        "icon": "{\"content\": \"fire\", \"background\": \"#FFEAD5\"}"
+      },
+      "parameters": [
+        {
+          "name": "title",
+          "label": {
+            "en_US": "TITLE",
+            "zh_Hans": "TITLE",
+            "pt_BR": "TITLE",
+            "ja_JP": "TITLE"
+          },
+          "placeholder": {
+            "en_US": "",
+            "zh_Hans": "",
+            "pt_BR": "",
+            "ja_JP": ""
+          },
+          "required": true,
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "",
+            "zh_Hans": "",
+            "pt_BR": "",
+            "ja_JP": ""
+          },
+          "form": "llm",
+          "llm_description": ""
+        }
+      ],
+      "description": {
+        "human": {
+          "en_US": "",
+          "zh_Hans": "",
+          "pt_BR": "",
+          "ja_JP": ""
+        },
+        "llm": ""
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "has_runtime_parameters": false,
+      "runtime_parameters": {},
+      "provider_type": "workflow"
+    },
+    {
+      "identity": {
+        "author": "CharlieWei",
+        "name": "github_repositories",
+        "label": {
+          "en_US": "Search Repositories",
+          "zh_Hans": "仓库搜索",
+          "pt_BR": "Pesquisar Repositórios",
+          "ja_JP": "Search Repositories"
+        },
+        "provider": "langgenius/github/github"
+      },
+      "parameters": [
+        {
+          "name": "username",
+          "label": {
+            "en_US": "Username",
+            "zh_Hans": "用户名",
+            "pt_BR": "Nome de usuário",
+            "ja_JP": "Username"
+          },
+          "required": true,
+          "options": [],
+          "type": "dynamic-select",
+          "human_description": {
+            "en_US": "The GitHub username to get repositories for. The name is not case sensitive.",
+            "zh_Hans": "要获取仓库的GitHub用户名。名称不区分大小写。",
+            "pt_BR": "O nome de usuário do GitHub para obter repositórios. O nome não diferencia maiúsculas de minúsculas.",
+            "ja_JP": "The GitHub username to get repositories for. The name is not case sensitive."
+          },
+          "form": "llm",
+          "llm_description": "The GitHub username to get repositories for. The name is not case sensitive."
+        },
+        {
+          "name": "query",
+          "label": {
+            "en_US": "query",
+            "zh_Hans": "关键字",
+            "pt_BR": "consulta",
+            "ja_JP": "query"
+          },
+          "required": true,
+          "options": [],
+          "type": "string",
+          "human_description": {
+            "en_US": "You want to find the project development language, keywords, For example. Find 10 Python developed PDF document parsing projects.",
+            "zh_Hans": "你想要找的项目开发语言、关键字，如：找10个Python开发的PDF文档解析项目。",
+            "pt_BR": "Você deseja encontrar a linguagem de desenvolvimento do projeto, palavras-chave, Por exemplo. Encontre 10 projetos de análise de documentos PDF desenvolvidos em Python.",
+            "ja_JP": "You want to find the project development language, keywords, For example. Find 10 Python developed PDF document parsing projects."
+          },
+          "form": "llm",
+          "llm_description": "The query of you want to search, format query condition like \"keywords+language:js\", language can be other dev languages."
+        },
+        {
+          "name": "top_n",
+          "label": {
+            "en_US": "Top N",
+            "zh_Hans": "Top N",
+            "pt_BR": "Topo N",
+            "ja_JP": "Top N"
+          },
+          "required": true,
+          "default": 5,
+          "options": [],
+          "type": "number",
+          "human_description": {
+            "en_US": "Number of records returned by sorting based on stars. 5 is returned by default.",
+            "zh_Hans": "基于stars排序返回的记录数, 默认返回5条。",
+            "pt_BR": "Número de registros retornados por classificação com base em estrelas. 5 é retornado por padrão.",
+            "ja_JP": "Number of records returned by sorting based on stars. 5 is returned by default."
+          },
+          "form": "llm",
+          "llm_description": "Extract the first N records from the returned result."
+        }
+      ],
+      "description": {
+        "human": {
+          "en_US": "Search the GitHub repository to retrieve the open source projects you need",
+          "zh_Hans": "搜索GitHub仓库，检索你需要的开源项目。",
+          "pt_BR": "Pesquise o repositório do GitHub para recuperar os projetos de código aberto necessários.",
+          "ja_JP": "Search the GitHub repository to retrieve the open source projects you need"
+        },
+        "llm": "Search the GitHub repository to retrieve the open source projects you need"
+      },
+      "output_schema": {},
+      "has_runtime_parameters": false,
+      "runtime_parameters": {},
+      "credential_id": "758fd462-2cae-4f05-8db8-baf5fc81adba",
+      "provider_type": "builtin"
     }
   ]
 }

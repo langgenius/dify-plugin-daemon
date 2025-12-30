@@ -47,14 +47,14 @@ func InvokeTool(name string, args []string) {
 
 	params := parseToolArgs(tool, args)
 
-	err = callDifyAPI(cfg, tool.Identity.Name, params)
+	err = callDifyAPI(cfg, tool, params)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: API call failed: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func parseToolArgs(tool *plugin_entities.ToolDeclaration, args []string) map[string]any {
+func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]any {
 	params := make(map[string]any)
 
 	for i := 0; i < len(args); i++ {
@@ -95,7 +95,7 @@ func parseToolArgs(tool *plugin_entities.ToolDeclaration, args []string) map[str
 	return params
 }
 
-func callDifyAPI(cfg *types.DifyConfig, toolName string, params map[string]any) error {
+func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params map[string]any) error {
 	reqBody := dify_invocation.InvokeToolRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: cfg.Env.TenantID,
@@ -104,10 +104,12 @@ func callDifyAPI(cfg *types.DifyConfig, toolName string, params map[string]any) 
 		},
 		ToolType: requests.TOOL_TYPE_BUILTIN,
 		InvokeToolSchema: requests.InvokeToolSchema{
-			Provider:       cfg.Env.Provider,
-			Tool:           toolName,
+			Provider:       tool.Identity.Provider,
+			Tool:           tool.Identity.Name,
 			ToolParameters: params,
 		},
+		CredentialId:   tool.CredentialId,
+		CredentialType: tool.CredentialType,
 	}
 
 	url := strings.TrimSuffix(cfg.Env.InnerAPIURL, "/") + "/inner/api/invoke/tool"
@@ -139,6 +141,5 @@ func callDifyAPI(cfg *types.DifyConfig, toolName string, params map[string]any) 
 			}
 		}
 	}
-
 	return nil
 }
