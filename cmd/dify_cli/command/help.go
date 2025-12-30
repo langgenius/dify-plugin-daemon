@@ -37,7 +37,7 @@ func runHelp(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	printToolHelp(tool)
+	PrintToolHelp(tool)
 }
 
 func printAllTools(cfg *types.DifyConfig) {
@@ -68,7 +68,7 @@ func findTool(cfg *types.DifyConfig, name string) *types.DifyToolDeclaration {
 	return nil
 }
 
-func printToolHelp(tool *types.DifyToolDeclaration) {
+func PrintToolHelp(tool *types.DifyToolDeclaration) {
 	fmt.Printf("Tool: %s\n", tool.Identity.Name)
 	fmt.Println()
 

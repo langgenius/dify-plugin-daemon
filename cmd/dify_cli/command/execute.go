@@ -49,6 +49,11 @@ func InvokeTool(name string, args []string) {
 		os.Exit(1)
 	}
 
+	if len(args) == 0 {
+		PrintToolHelp(tool)
+		return
+	}
+
 	params := parseToolArgs(tool, args)
 
 	err = callDifyAPI(cfg, tool, params)
