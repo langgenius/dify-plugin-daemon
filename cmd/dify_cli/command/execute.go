@@ -1,10 +1,12 @@
 package command
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
@@ -13,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/spf13/cobra"
 )
 
@@ -113,33 +116,79 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 	}
 
 	url := strings.TrimSuffix(cfg.Env.InnerAPIURL, "/") + "/inner/api/invoke/tool"
-	client := &http.Client{}
 
-	response, err := http_requests.PostAndParseStream[tool_entities.ToolResponseChunk](
+	client := &http.Client{
+		Timeout: 5 * time.Minute,
+	}
+
+	resp, err := http_requests.Request(
 		client,
 		url,
+		"POST",
 		http_requests.HttpHeader(map[string]string{
 			"X-Inner-Api-Key": cfg.Env.InnerAPIKey,
 		}),
 		http_requests.HttpPayloadJson(reqBody),
-		http_requests.HttpUsingLengthPrefixed(true),
+		http_requests.HttpWriteTimeout(5000),
+		http_requests.HttpReadTimeout(240000),
 	)
 	if err != nil {
 		return err
 	}
-	defer response.Close()
+	defer resp.Body.Close()
 
-	for response.Next() {
-		chunk, err := response.Read()
+	type apiResponse struct {
+		Data  *tool_entities.ToolResponseChunk `json:"data,omitempty"`
+		Error string                           `json:"error"`
+	}
+
+	err = parser.LengthPrefixedChunking(resp.Body, 0x0f, 1024*1024*30, func(data []byte) error {
+		chunk, err := parser.UnmarshalJsonBytes[apiResponse](data)
 		if err != nil {
 			return err
 		}
 
-		if chunk.Type == tool_entities.ToolResponseChunkTypeText {
-			if msg, ok := chunk.Message["text"]; ok {
-				fmt.Print(msg)
+		if chunk.Error != "" {
+			return fmt.Errorf("API error: %s", chunk.Error)
+		}
+
+		if chunk.Data == nil {
+			return errors.New("data is nil")
+		}
+
+		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeText {
+			if msg, ok := chunk.Data.Message["text"]; ok {
+				fmt.Println(msg)
 			}
 		}
-	}
-	return nil
+		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeJson {
+			if msg, ok := chunk.Data.Message["json"]; ok {
+				fmt.Println(msg)
+			}
+		}
+		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeFile {
+			if msg, ok := chunk.Data.Message["file"]; ok {
+				fmt.Println(msg)
+			}
+		}
+		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeBlob {
+			if msg, ok := chunk.Data.Message["blob"]; ok {
+				fmt.Println(msg)
+			}
+		}
+		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeBlobChunk {
+			if msg, ok := chunk.Data.Message["blob_chunk"]; ok {
+				fmt.Println(msg)
+			}
+		}
+		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeLink {
+			if msg, ok := chunk.Data.Message["link"]; ok {
+				fmt.Println(msg)
+			}
+		}
+		return nil
+	})
+
+	fmt.Println()
+	return err
 }
