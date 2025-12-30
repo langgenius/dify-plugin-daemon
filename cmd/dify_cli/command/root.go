@@ -19,9 +19,12 @@ After initialization, you can use symlinked commands directly:
 }
 
 func init() {
+	RootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
+	RootCmd.CompletionOptions.DisableDefaultCmd = true
 	RootCmd.AddCommand(InitCmd)
 	RootCmd.AddCommand(ExecuteCmd)
 	RootCmd.AddCommand(ListCmd)
+	RootCmd.AddCommand(HelpCmd)
 }
 
 func Execute() {
