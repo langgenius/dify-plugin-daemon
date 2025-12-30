@@ -16,25 +16,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var toolName string
-
 var ExecuteCmd = &cobra.Command{
-	Use:   "execute",
-	Short: "Execute a tool directly",
-	Long: `Execute a tool directly by name. Useful for debugging.
-
-The remaining arguments after --tool are passed to the tool as parameters.`,
-	Example: `  dify execute --tool google_search --query "hello world"`,
-	Run:     runExecute,
-}
-
-func init() {
-	ExecuteCmd.Flags().StringVar(&toolName, "tool", "", "Name of the tool to execute (required)")
-	ExecuteCmd.MarkFlagRequired("tool")
+	Use:                "execute <tool_name> [--param value ...]",
+	Short:              "Execute a tool directly",
+	Long:               `Execute a tool directly by name. Useful for debugging.`,
+	Example:            `  dify execute google_search --query "hello world"`,
+	Args:               cobra.MinimumNArgs(1),
+	DisableFlagParsing: true,
+	Run:                runExecute,
 }
 
 func runExecute(cmd *cobra.Command, args []string) {
-	InvokeTool(toolName, args)
+	toolName := args[0]
+	toolArgs := args[1:]
+	InvokeTool(toolName, toolArgs)
 }
 
 func InvokeTool(name string, args []string) {
