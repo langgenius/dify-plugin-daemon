@@ -21,17 +21,35 @@ After initialization, you can use symlinked commands directly:
 func main() {
 	progName := filepath.Base(os.Args[0])
 
-	// symlink invocation: google_search --query "hello"
-	if progName != "dify" && progName != "dify_cli" {
+	// Check if invoked via symlink to self (BusyBox style)
+	if progName != "dify" && progName != "dify_cli" && isSymlinkToSelf() {
 		command.InvokeTool(progName, os.Args[1:])
 		return
 	}
 
-	// normal invocation: dify init / dify execute
+	// normal invocation: dify init / dify execute / dify list
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func isSymlinkToSelf() bool {
+	invokedPath, err := filepath.EvalSymlinks(os.Args[0])
+	if err != nil {
+		return false
+	}
+
+	selfPath, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	selfReal, err := filepath.EvalSymlinks(selfPath)
+	if err != nil {
+		return false
+	}
+
+	return invokedPath == selfReal
 }
 
 func init() {
