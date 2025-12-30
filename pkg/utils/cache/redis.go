@@ -549,7 +549,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		for alive {
 			iface, err := pubsub.Receive(context.Background())
 			if err != nil {
-				log.Error("failed to receive message from redis: %s, will retry in 1 second", err.Error())
+				log.Error("failed to receive message from redis, will retry in 1 second", "error", err)
 				time.Sleep(1 * time.Second)
 				continue
 			}

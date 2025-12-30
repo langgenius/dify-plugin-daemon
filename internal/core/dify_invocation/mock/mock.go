@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"context"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
@@ -12,10 +13,23 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
-type MockedDifyInvocation struct{}
+type MockedDifyInvocation struct {
+	ctx context.Context
+}
 
 func NewMockedDifyInvocation() dify_invocation.BackwardsInvocation {
 	return &MockedDifyInvocation{}
+}
+
+func (m *MockedDifyInvocation) SetContext(ctx context.Context) {
+	m.ctx = ctx
+}
+
+func (m *MockedDifyInvocation) Context() context.Context {
+	if m.ctx == nil {
+		return context.Background()
+	}
+	return m.ctx
 }
 
 func (m *MockedDifyInvocation) InvokeLLM(payload *dify_invocation.InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error) {

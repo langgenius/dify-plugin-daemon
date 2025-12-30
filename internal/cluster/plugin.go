@@ -33,7 +33,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	}
 
 	if c.showLog {
-		log.Info("registering plugin %s", identity.String())
+		log.Info("registering plugin", "identity", identity.String())
 	}
 
 	if c.plugins.Exists(identity.String()) {
@@ -53,7 +53,7 @@ return errors.Join(err, errors.New("failed to update plugin state"))
 	}
 
 	if c.showLog {
-		log.Info("start to schedule plugin %s", identity)
+		log.Info("start to schedule plugin", "identity", identity)
 	}
 
 	return nil
@@ -66,7 +66,7 @@ func (c *Cluster) UnregisterPlugin(lifetime plugin_entities.PluginLifetime) erro
 	}
 
 	if c.showLog {
-		log.Info("unregistering plugin %s", identity.String())
+		log.Info("unregistering plugin", "identity", identity.String())
 	}
 
 	// remove plugin from cluster
@@ -102,7 +102,7 @@ func (c *Cluster) getScanPluginsByIdKey(plugin_id string) string {
 // but once a plugin is not removed, it will be gc by the master node
 func (c *Cluster) schedulePlugins() error {
 	if c.showLog {
-		log.Info("scheduling %d plugins", c.plugins.Len())
+		log.Info("scheduling plugins", "count", c.plugins.Len())
 	}
 
 	c.notifyPluginSchedule()
@@ -113,23 +113,23 @@ func (c *Cluster) schedulePlugins() error {
 			return true
 		}
 		if c.showLog {
-			log.Info("scheduling plugin %s", key)
+			log.Info("scheduling plugin", "key", key)
 		}
 		// do plugin state update
 		err := c.doPluginStateUpdate(value)
 		if err != nil {
-			log.Error("failed to update plugin state: %s", err.Error())
+			log.Error("failed to update plugin state", "error", err)
 		}
 
 		if c.showLog {
-			log.Info("scheduled plugin %s", key)
+			log.Info("scheduled plugin", "key", key)
 		}
 
 		return true
 	})
 
 	if c.showLog {
-		log.Info("scheduled %d plugins", c.plugins.Len())
+		log.Info("scheduled plugins", "count", c.plugins.Len())
 	}
 
 	return nil
@@ -144,7 +144,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 	}
 
 	if c.showLog {
-		log.Info("updating plugin state %s", identity.String())
+		log.Info("updating plugin state", "identity", identity.String())
 	}
 
 	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
@@ -159,7 +159,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 	// check if the plugin has been removed
 	if !c.plugins.Exists(identity.String()) {
 		if c.showLog {
-			log.Info("removing plugin state %s due no longer exists", identity.String())
+			log.Info("removing plugin state due no longer exists", "identity", identity.String())
 		}
 		// remove state
 		err = c.removePluginState(c.id, hashedIdentity)
@@ -168,7 +168,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		}
 	} else {
 		if c.showLog {
-			log.Info("updating plugin state %s", identity.String())
+			log.Info("updating plugin state", "identity", identity.String())
 		}
 		// update plugin state
 		scheduleState.ScheduledAt = &[]time.Time{time.Now()}[0]
@@ -178,7 +178,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		}
 		lifetime.UpdateScheduledAt(*scheduleState.ScheduledAt)
 		if c.showLog {
-			log.Info("updated plugin state %s", identity.String())
+			log.Info("updated plugin state", "identity", identity.String())
 		}
 	}
 
@@ -189,7 +189,7 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 
 func (c *Cluster) removePluginState(nodeId string, hashed_identity string) error {
 	if c.showLog {
-		log.Info("removing plugin state %s", hashed_identity)
+		log.Info("removing plugin state", "hashed_identity", hashed_identity)
 	}
 	err := cache.DelMapField(PLUGIN_STATE_MAP_KEY, c.getPluginStateKey(nodeId, hashed_identity))
 	if err != nil {
@@ -197,7 +197,7 @@ func (c *Cluster) removePluginState(nodeId string, hashed_identity string) error
 	}
 
 	if c.showLog {
-		log.Info("plugin %s has been removed from node %s", hashed_identity, c.id)
+		log.Info("plugin has been removed from node", "hashed_identity", hashed_identity, "node_id", c.id)
 	}
 
 	return nil

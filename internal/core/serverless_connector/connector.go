@@ -1,6 +1,7 @@
 package serverless
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
@@ -23,6 +25,11 @@ type ServerlessFunction struct {
 
 // Ping the serverless connector, return error if failed
 func Ping() error {
+	return PingWithContext(log.EnsureTrace(context.Background()))
+}
+
+// PingWithContext pings the serverless connector with trace context
+func PingWithContext(ctx context.Context) error {
 	url, err := url.JoinPath(baseurl.String(), "/ping")
 	if err != nil {
 		return err
@@ -30,6 +37,7 @@ func Ping() error {
 	response, err := http_requests.PostAndParse[string](
 		client,
 		url,
+		http_requests.HttpContext(ctx),
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
@@ -50,7 +58,7 @@ var (
 )
 
 // Fetch the function from serverless connector, return error if failed
-func FetchFunction(manifest plugin_entities.PluginDeclaration, checksum string) (*ServerlessFunction, error) {
+func FetchFunction(ctx context.Context, manifest plugin_entities.PluginDeclaration, checksum string) (*ServerlessFunction, error) {
 	filename := getFunctionFilename(manifest, checksum)
 
 	url, err := url.JoinPath(baseurl.String(), "/v1/runner/instances")
@@ -61,6 +69,7 @@ func FetchFunction(manifest plugin_entities.PluginDeclaration, checksum string) 
 	response, err := http_requests.GetAndParse[RunnerInstances](
 		client,
 		url,
+		http_requests.HttpContext(ctx),
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
@@ -107,10 +116,11 @@ type LaunchFunctionResponse struct {
 // and build it a docker image, then run it on serverless platform like AWS Lambda
 // it returns a event stream, the caller should consider it as a async operation
 func SetupFunction(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	manifest plugin_entities.PluginDeclaration,
 	checksum string,
-	context io.Reader,
+	content io.Reader,
 	timeout int, // in seconds
 ) (*stream.Stream[LaunchFunctionResponse], error) {
 	url, err := url.JoinPath(baseurl.String(), "/v1/launch")
@@ -129,6 +139,7 @@ func SetupFunction(
 	serverless_connector_response, err := http_requests.PostAndParseStream[LaunchFunctionResponseChunk](
 		client,
 		url,
+		http_requests.HttpContext(ctx),
 		http_requests.HttpHeader(map[string]string{
 			"Authorization": SERVERLESS_CONNECTOR_API_KEY,
 		}),
@@ -147,7 +158,7 @@ func SetupFunction(
 			map[string]http_requests.HttpPayloadMultipartFile{
 				"context": {
 					Filename: getFunctionFilename(manifest, checksum),
-					Reader:   context,
+					Reader:   content,
 				},
 			},
 		),

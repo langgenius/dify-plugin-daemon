@@ -95,16 +95,16 @@ func Init(config *app.Config) {
 			Extras:          config.DBExtras,
 		})
 	} else {
-		log.Panic("unsupported database type: %v", config.DBType)
+		log.Panic("unsupported database type", "type", config.DBType)
 	}
 
 	if err != nil {
-		log.Panic("failed to init dify plugin db: %v", err)
+		log.Panic("failed to init dify plugin db", "error", err)
 	}
 
 	err = autoMigrate()
 	if err != nil {
-		log.Panic("failed to auto migrate: %v", err)
+		log.Panic("failed to auto migrate", "error", err)
 	}
 
 	log.Info("dify plugin db initialized")
@@ -113,13 +113,13 @@ func Init(config *app.Config) {
 func Close() {
 	db, err := DifyPluginDB.DB()
 	if err != nil {
-		log.Error("failed to close dify plugin db: %v", err)
+		log.Error("failed to close dify plugin db", "error", err)
 		return
 	}
 
 	err = db.Close()
 	if err != nil {
-		log.Error("failed to close dify plugin db: %v", err)
+		log.Error("failed to close dify plugin db", "error", err)
 		return
 	}
 

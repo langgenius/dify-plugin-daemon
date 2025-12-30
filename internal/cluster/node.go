@@ -210,7 +210,7 @@ func (c *Cluster) gcNode(nodeId string) error {
 	if err != nil {
 		return err
 	} else {
-		log.Info("node %s has been removed from the cluster due to being disconnected", nodeId)
+		log.Info("node has been removed from the cluster due to being disconnected", "node_id", nodeId)
 	}
 
 	return nil

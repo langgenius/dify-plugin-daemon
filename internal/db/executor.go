@@ -316,7 +316,7 @@ func WithTransaction(fn func(tx *gorm.DB) error, ctx ...*gorm.DB) error {
 	err := fn(tx)
 	if err != nil {
 		if err := tx.Rollback().Error; err != nil {
-			log.Error("failed to rollback tx: %v", err)
+			log.Error("failed to rollback tx", "error", err)
 		}
 		return err
 	}

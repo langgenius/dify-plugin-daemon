@@ -41,7 +41,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 			p.getRequirementsPath(),
 			venv.pythonInterpreterPath,
 		); err != nil {
-			log.Error("failed to patch the plugin sdk: %s", err)
+			log.Error("failed to patch the plugin sdk", "error", err)
 		}
 
 		// everything is good, return nil
@@ -68,12 +68,12 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		p.getRequirementsPath(),
 		venv.pythonInterpreterPath,
 	); err != nil {
-		log.Error("failed to patch the plugin sdk: %s", err)
+		log.Error("failed to patch the plugin sdk", "error", err)
 	}
 
 	// mark the virtual environment as valid if everything goes well
 	if err := p.markVirtualEnvironmentAsValid(); err != nil {
-		log.Error("failed to mark the virtual environment as valid: %s", err)
+		log.Error("failed to mark the virtual environment as valid", "error", err)
 	}
 
 	return nil

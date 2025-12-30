@@ -125,7 +125,7 @@ func (s *DifyServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	defer func() {
 		if r := recover(); r != nil {
 			traceback := string(debug.Stack())
-			log.Error("panic in OnTraffic: %v\n%s", r, traceback)
+			log.Error("panic in OnTraffic", "panic", r, "traceback", traceback)
 		}
 	}()
 

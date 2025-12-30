@@ -12,8 +12,8 @@ import (
 )
 
 func (c *ControlPanel) startLocalMonitor() {
-	log.Info("start to handle new plugins in path: %s", c.config.PluginInstalledPath)
-	log.Info("launch plugins with max concurrency: %d", c.config.PluginLocalLaunchingConcurrent)
+	log.Info("start to handle new plugins", "path", c.config.PluginInstalledPath)
+	log.Info("launch plugins with max concurrency", "concurrency", c.config.PluginLocalLaunchingConcurrent)
 
 	c.handleNewLocalPlugins()
 	// sync every 30 seconds
@@ -37,11 +37,11 @@ func (c *ControlPanel) removeUnusedLocalPlugins() {
 		) bool {
 			// remove plugin runtime
 			if exists, err := c.installedBucket.Exists(key); err != nil {
-				log.Error("check if plugin %s is installed failed: %s", key.String(), err.Error())
+				log.Error("check if plugin is installed failed", "plugin", key.String(), "error", err)
 			} else if !exists {
 				// Trigger a signal to stop a local plugin runtime
 				if _, err := c.ShutdownLocalPluginGracefully(key); err != nil {
-					log.Error("shutdown local plugin %s failed: %s", key.String(), err.Error())
+					log.Error("shutdown local plugin failed", "plugin", key.String(), "error", err)
 				}
 			}
 
@@ -58,7 +58,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 	// walk through all plugins
 	plugins, err := c.installedBucket.List()
 	if err != nil {
-		log.Error("list installed plugins failed: %s", err.Error())
+		log.Error("list installed plugins failed", "error", err)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			defer wg.Done()
 			_, ch, err := c.LaunchLocalPlugin(uniquePluginIdentifier)
 			if err != nil {
-				log.Error("launch local plugin failed: %s, retried in %d seconds", err.Error(), waitTime)
+				log.Error("launch local plugin failed", "error", err, "retry_in_seconds", waitTime)
 				return
 			}
 

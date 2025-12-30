@@ -13,13 +13,13 @@ func Verify(difypkgPath string, publicKeyPath string) error {
 	// read the plugin
 	plugin, err := os.ReadFile(difypkgPath)
 	if err != nil {
-		log.Error("Failed to read plugin file: %v", err)
+		log.Error("failed to read plugin file", "error", err)
 		return err
 	}
 
 	decoderInstance, err := decoder.NewZipPluginDecoder(plugin)
 	if err != nil {
-		log.Error("Failed to create plugin decoder, plugin path: %s, error: %v", difypkgPath, err)
+		log.Error("failed to create plugin decoder", "plugin_path", difypkgPath, "error", err)
 		return err
 	}
 
@@ -27,31 +27,31 @@ func Verify(difypkgPath string, publicKeyPath string) error {
 		// verify the plugin with the official (bundled) public key
 		err = decoder.VerifyPlugin(decoderInstance)
 		if err != nil {
-			log.Error("Failed to verify plugin with official public key: %v", err)
+			log.Error("failed to verify plugin with official public key", "error", err)
 			return err
 		}
 	} else {
 		// read the public key
 		publicKeyBytes, err := os.ReadFile(publicKeyPath)
 		if err != nil {
-			log.Error("Failed to read public key file: %v", err)
+			log.Error("failed to read public key file", "error", err)
 			return err
 		}
 
 		publicKey, err := encryption.LoadPublicKey(publicKeyBytes)
 		if err != nil {
-			log.Error("Failed to load public key: %v", err)
+			log.Error("failed to load public key", "error", err)
 			return err
 		}
 
 		// verify the plugin
 		err = decoder.VerifyPluginWithPublicKeys(decoderInstance, []*rsa.PublicKey{publicKey})
 		if err != nil {
-			log.Error("Failed to verify plugin with provided public key: %v", err)
+			log.Error("failed to verify plugin with provided public key", "error", err)
 			return err
 		}
 	}
 
-	log.Info("Plugin verified successfully")
+	log.Info("plugin verified successfully")
 	return nil
 }

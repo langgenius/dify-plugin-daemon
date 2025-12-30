@@ -34,13 +34,13 @@ func (p *LocalPluginRuntime) patchPluginSdk(
 
 	pluginSdkVersion, err := p.getPluginSdkVersion(string(requirements))
 	if err != nil {
-		log.Error("failed to get the version of the plugin sdk: %s", err)
+		log.Error("failed to get the version of the plugin sdk", "error", err)
 		return nil
 	}
 
 	pluginSdkVersionObj, err := version.NewVersion(pluginSdkVersion)
 	if err != nil {
-		log.Error("failed to create the version: %s", err)
+		log.Error("failed to create the version", "error", err)
 		return nil
 	}
 

@@ -39,6 +39,7 @@ func (r *RemotePluginServer) Launch() error {
 	err := gnet.Run(
 		r.server, r.server.addr, gnet.WithMulticore(r.server.multicore),
 		gnet.WithNumEventLoop(r.server.numLoops),
+		gnet.WithLogger(GnetLogger{}),
 	)
 
 	if err != nil {

@@ -26,7 +26,7 @@ func (c *ControlPanel) onDebuggingRuntimeConnected(
 	// handle plugin connection
 	pluginIdentifier, err := rpr.Identity()
 	if err != nil {
-		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
+		log.Error("failed to get plugin identity, check if your declaration is invalid", "error", err)
 		return err
 	}
 
@@ -47,7 +47,7 @@ func (c *ControlPanel) onDebuggingRuntimeDisconnected(
 	// handle plugin disconnecting
 	pluginIdentifier, err := rpr.Identity()
 	if err != nil {
-		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
+		log.Error("failed to get plugin identity, check if your declaration is invalid", "error", err)
 		return
 	}
 

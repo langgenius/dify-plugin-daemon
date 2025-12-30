@@ -207,7 +207,8 @@ type Config struct {
 	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
-	HealthApiLogEnabled bool `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
+	HealthApiLogEnabled bool   `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
+	LogOutputFormat     string `envconfig:"LOG_OUTPUT_FORMAT" default:"text"`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
