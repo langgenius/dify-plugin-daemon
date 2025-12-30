@@ -1,6 +1,7 @@
 release/
 logs/
-.vscode/
+.vscode/*
+!.vscode/*.example
 .idea/
 .env
 cmd/**/__debug_bin*
