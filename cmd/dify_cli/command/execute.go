@@ -102,7 +102,7 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 			UserId:   cfg.Env.UserID,
 			Type:     dify_invocation.INVOKE_TYPE_TOOL,
 		},
-		ToolType: requests.TOOL_TYPE_BUILTIN,
+		ToolType: tool.ProviderType,
 		InvokeToolSchema: requests.InvokeToolSchema{
 			Provider:       tool.Identity.Provider,
 			Tool:           tool.Identity.Name,

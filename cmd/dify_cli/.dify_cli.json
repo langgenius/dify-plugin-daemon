@@ -1,4 +1,10 @@
 {
+  "env": {
+    "inner_api_url": "http://localhost:5001",
+    "inner_api_key": "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1",
+    "tenant_id": "eef47942-5b50-4523-8381-e368adacc926",
+    "user_id": "f689825a-5e24-4324-8540-7296d907ad9b"
+  },
   "tools": [
     {
       "identity": {
@@ -22,7 +28,15 @@
             "pt_BR": "body",
             "ja_JP": "body"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -32,7 +46,8 @@
             "ja_JP": "Comment content"
           },
           "form": "llm",
-          "llm_description": "Comment content"
+          "llm_description": "Comment content",
+          "input_schema": null
         },
         {
           "name": "issue_number",
@@ -42,7 +57,15 @@
             "pt_BR": "issue_number",
             "ja_JP": "issue_number"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "number",
           "human_description": {
@@ -52,7 +75,8 @@
             "ja_JP": "Issue number to comment on"
           },
           "form": "llm",
-          "llm_description": "Issue number to comment on"
+          "llm_description": "Issue number to comment on",
+          "input_schema": null
         },
         {
           "name": "owner",
@@ -62,7 +86,15 @@
             "pt_BR": "owner",
             "ja_JP": "owner"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -72,7 +104,8 @@
             "ja_JP": "Repository owner"
           },
           "form": "llm",
-          "llm_description": "Repository owner"
+          "llm_description": "Repository owner",
+          "input_schema": null
         },
         {
           "name": "repo",
@@ -82,7 +115,15 @@
             "pt_BR": "repo",
             "ja_JP": "repo"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -92,7 +133,8 @@
             "ja_JP": "Repository name"
           },
           "form": "llm",
-          "llm_description": "Repository name"
+          "llm_description": "Repository name",
+          "input_schema": null
         }
       ],
       "description": {
@@ -107,6 +149,7 @@
       "output_schema": {},
       "has_runtime_parameters": true,
       "runtime_parameters": {},
+      "credential_id": null,
       "provider_type": "mcp"
     },
     {
@@ -119,7 +162,8 @@
           "pt_BR": "Current Time",
           "ja_JP": "Current Time"
         },
-        "provider": "time"
+        "provider": "time",
+        "icon": null
       },
       "parameters": [
         {
@@ -130,8 +174,15 @@
             "pt_BR": "Format",
             "ja_JP": "Format"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": false,
           "default": "%Y-%m-%d %H:%M:%S",
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -140,7 +191,9 @@
             "pt_BR": "Time format in strftime standard.",
             "ja_JP": "Time format in strftime standard."
           },
-          "form": "form"
+          "form": "form",
+          "llm_description": null,
+          "input_schema": null
         },
         {
           "name": "timezone",
@@ -150,8 +203,15 @@
             "pt_BR": "Timezone",
             "ja_JP": "Timezone"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": false,
           "default": "UTC",
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [
             {
               "value": "UTC",
@@ -160,7 +220,8 @@
                 "zh_Hans": "UTC",
                 "pt_BR": "UTC",
                 "ja_JP": "UTC"
-              }
+              },
+              "icon": null
             },
             {
               "value": "America/New_York",
@@ -169,7 +230,8 @@
                 "zh_Hans": "美洲/纽约",
                 "pt_BR": "America/New_York",
                 "ja_JP": "America/New_York"
-              }
+              },
+              "icon": null
             },
             {
               "value": "America/Los_Angeles",
@@ -178,7 +240,8 @@
                 "zh_Hans": "美洲/洛杉矶",
                 "pt_BR": "America/Los_Angeles",
                 "ja_JP": "America/Los_Angeles"
-              }
+              },
+              "icon": null
             },
             {
               "value": "America/Chicago",
@@ -187,7 +250,8 @@
                 "zh_Hans": "美洲/芝加哥",
                 "pt_BR": "America/Chicago",
                 "ja_JP": "America/Chicago"
-              }
+              },
+              "icon": null
             },
             {
               "value": "America/Sao_Paulo",
@@ -196,7 +260,8 @@
                 "zh_Hans": "美洲/圣保罗",
                 "pt_BR": "América/São Paulo",
                 "ja_JP": "America/Sao_Paulo"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Shanghai",
@@ -205,7 +270,8 @@
                 "zh_Hans": "亚洲/上海",
                 "pt_BR": "Asia/Shanghai",
                 "ja_JP": "Asia/Shanghai"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Ho_Chi_Minh",
@@ -214,7 +280,8 @@
                 "zh_Hans": "亚洲/胡志明市",
                 "pt_BR": "Ásia/Ho Chi Minh",
                 "ja_JP": "Asia/Ho_Chi_Minh"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Tokyo",
@@ -223,7 +290,8 @@
                 "zh_Hans": "亚洲/东京",
                 "pt_BR": "Asia/Tokyo",
                 "ja_JP": "Asia/Tokyo"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Dubai",
@@ -232,7 +300,8 @@
                 "zh_Hans": "亚洲/迪拜",
                 "pt_BR": "Asia/Dubai",
                 "ja_JP": "Asia/Dubai"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Kolkata",
@@ -241,7 +310,8 @@
                 "zh_Hans": "亚洲/加尔各答",
                 "pt_BR": "Asia/Kolkata",
                 "ja_JP": "Asia/Kolkata"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Seoul",
@@ -250,7 +320,8 @@
                 "zh_Hans": "亚洲/首尔",
                 "pt_BR": "Asia/Seoul",
                 "ja_JP": "Asia/Seoul"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Asia/Singapore",
@@ -259,7 +330,8 @@
                 "zh_Hans": "亚洲/新加坡",
                 "pt_BR": "Asia/Singapore",
                 "ja_JP": "Asia/Singapore"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Europe/London",
@@ -268,7 +340,8 @@
                 "zh_Hans": "欧洲/伦敦",
                 "pt_BR": "Europe/London",
                 "ja_JP": "Europe/London"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Europe/Berlin",
@@ -277,7 +350,8 @@
                 "zh_Hans": "欧洲/柏林",
                 "pt_BR": "Europe/Berlin",
                 "ja_JP": "Europe/Berlin"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Europe/Moscow",
@@ -286,7 +360,8 @@
                 "zh_Hans": "欧洲/莫斯科",
                 "pt_BR": "Europe/Moscow",
                 "ja_JP": "Europe/Moscow"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Australia/Sydney",
@@ -295,7 +370,8 @@
                 "zh_Hans": "澳大利亚/悉尼",
                 "pt_BR": "Australia/Sydney",
                 "ja_JP": "Australia/Sydney"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Pacific/Auckland",
@@ -304,7 +380,8 @@
                 "zh_Hans": "太平洋/奥克兰",
                 "pt_BR": "Pacific/Auckland",
                 "ja_JP": "Pacific/Auckland"
-              }
+              },
+              "icon": null
             },
             {
               "value": "Africa/Cairo",
@@ -313,7 +390,8 @@
                 "zh_Hans": "非洲/开罗",
                 "pt_BR": "Africa/Cairo",
                 "ja_JP": "Africa/Cairo"
-              }
+              },
+              "icon": null
             }
           ],
           "type": "select",
@@ -323,7 +401,9 @@
             "pt_BR": "Timezone",
             "ja_JP": "Timezone"
           },
-          "form": "form"
+          "form": "form",
+          "llm_description": null,
+          "input_schema": null
         }
       ],
       "description": {
@@ -341,6 +421,7 @@
         "format": "%Y-%m-%d %H:%M:%S",
         "timezone": "UTC"
       },
+      "credential_id": null,
       "provider_type": "builtin"
     },
     {
@@ -371,7 +452,14 @@
             "pt_BR": "Search query",
             "ja_JP": "Search query"
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -381,7 +469,8 @@
             "ja_JP": "Search query"
           },
           "form": "llm",
-          "llm_description": "Search query"
+          "llm_description": "Search query",
+          "input_schema": null
         },
         {
           "name": "format",
@@ -397,8 +486,14 @@
             "pt_BR": "Response format (must be json)",
             "ja_JP": "Response format (must be json)"
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
           "default": "json",
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -408,7 +503,8 @@
             "ja_JP": "Response format (must be json)"
           },
           "form": "llm",
-          "llm_description": "Response format (must be json)"
+          "llm_description": "Response format (must be json)",
+          "input_schema": null
         },
         {
           "name": "no_html",
@@ -424,8 +520,14 @@
             "pt_BR": "Strip HTML from text fields",
             "ja_JP": "Strip HTML from text fields"
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": false,
           "default": 1,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "number",
           "human_description": {
@@ -435,7 +537,8 @@
             "ja_JP": "Strip HTML from text fields"
           },
           "form": "llm",
-          "llm_description": "Strip HTML from text fields"
+          "llm_description": "Strip HTML from text fields",
+          "input_schema": null
         },
         {
           "name": "no_redirect",
@@ -451,8 +554,14 @@
             "pt_BR": "Disable redirects",
             "ja_JP": "Disable redirects"
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": false,
           "default": 1,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "number",
           "human_description": {
@@ -462,7 +571,8 @@
             "ja_JP": "Disable redirects"
           },
           "form": "llm",
-          "llm_description": "Disable redirects"
+          "llm_description": "Disable redirects",
+          "input_schema": null
         },
         {
           "name": "skip_disambig",
@@ -478,8 +588,14 @@
             "pt_BR": "Skip disambiguation results",
             "ja_JP": "Skip disambiguation results"
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": false,
           "default": 1,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "number",
           "human_description": {
@@ -489,7 +605,8 @@
             "ja_JP": "Skip disambiguation results"
           },
           "form": "llm",
-          "llm_description": "Skip disambiguation results"
+          "llm_description": "Skip disambiguation results",
+          "input_schema": null
         },
         {
           "name": "kl",
@@ -505,7 +622,14 @@
             "pt_BR": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
             "ja_JP": "Region / language code (e.g. us-en, jp-jp, zh-cn)"
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": false,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -515,7 +639,8 @@
             "ja_JP": "Region / language code (e.g. us-en, jp-jp, zh-cn)"
           },
           "form": "llm",
-          "llm_description": "Region / language code (e.g. us-en, jp-jp, zh-cn)"
+          "llm_description": "Region / language code (e.g. us-en, jp-jp, zh-cn)",
+          "input_schema": null
         }
       ],
       "description": {
@@ -530,6 +655,7 @@
       "output_schema": {},
       "has_runtime_parameters": false,
       "runtime_parameters": {},
+      "credential_id": null,
       "provider_type": "api"
     },
     {
@@ -560,7 +686,14 @@
             "pt_BR": "",
             "ja_JP": ""
           },
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -570,7 +703,8 @@
             "ja_JP": ""
           },
           "form": "llm",
-          "llm_description": ""
+          "llm_description": "",
+          "input_schema": null
         }
       ],
       "description": {
@@ -588,6 +722,7 @@
       },
       "has_runtime_parameters": false,
       "runtime_parameters": {},
+      "credential_id": null,
       "provider_type": "workflow"
     },
     {
@@ -600,7 +735,8 @@
           "pt_BR": "Pesquisar Repositórios",
           "ja_JP": "Search Repositories"
         },
-        "provider": "langgenius/github/github"
+        "provider": "langgenius/github/github",
+        "icon": null
       },
       "parameters": [
         {
@@ -611,7 +747,15 @@
             "pt_BR": "Nome de usuário",
             "ja_JP": "Username"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "dynamic-select",
           "human_description": {
@@ -621,7 +765,8 @@
             "ja_JP": "The GitHub username to get repositories for. The name is not case sensitive."
           },
           "form": "llm",
-          "llm_description": "The GitHub username to get repositories for. The name is not case sensitive."
+          "llm_description": "The GitHub username to get repositories for. The name is not case sensitive.",
+          "input_schema": null
         },
         {
           "name": "query",
@@ -631,7 +776,15 @@
             "pt_BR": "consulta",
             "ja_JP": "query"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
+          "default": null,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "string",
           "human_description": {
@@ -641,7 +794,8 @@
             "ja_JP": "You want to find the project development language, keywords, For example. Find 10 Python developed PDF document parsing projects."
           },
           "form": "llm",
-          "llm_description": "The query of you want to search, format query condition like \"keywords+language:js\", language can be other dev languages."
+          "llm_description": "The query of you want to search, format query condition like \"keywords+language:js\", language can be other dev languages.",
+          "input_schema": null
         },
         {
           "name": "top_n",
@@ -651,8 +805,15 @@
             "pt_BR": "Topo N",
             "ja_JP": "Top N"
           },
+          "placeholder": null,
+          "scope": null,
+          "auto_generate": null,
+          "template": null,
           "required": true,
           "default": 5,
+          "min": null,
+          "max": null,
+          "precision": null,
           "options": [],
           "type": "number",
           "human_description": {
@@ -662,7 +823,8 @@
             "ja_JP": "Number of records returned by sorting based on stars. 5 is returned by default."
           },
           "form": "llm",
-          "llm_description": "Extract the first N records from the returned result."
+          "llm_description": "Extract the first N records from the returned result.",
+          "input_schema": null
         }
       ],
       "description": {
