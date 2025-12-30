@@ -54,24 +54,26 @@ func LoadEnvFile(path string) (types.EnvConfig, error) {
 			config.TenantID = value
 		case "USER_ID":
 			config.UserID = value
+		case "PROVIDER":
+			config.Provider = value
 		}
 	}
 
 	return config, scanner.Err()
 }
 
-func LoadSchemaFile(path string) ([]plugin_entities.ToolProviderDeclaration, error) {
+func LoadSchemaFile(path string) (*types.ToolSchemas, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var providers []plugin_entities.ToolProviderDeclaration
-	if err := json.Unmarshal(data, &providers); err != nil {
+	var schemas types.ToolSchemas
+	if err := json.Unmarshal(data, &schemas); err != nil {
 		return nil, err
 	}
 
-	return providers, nil
+	return &schemas, nil
 }
 
 func Save(config *types.DifyConfig) error {
@@ -107,17 +109,14 @@ func Load() (*types.DifyConfig, error) {
 	return &config, nil
 }
 
-func FindTool(config *types.DifyConfig, toolName string) (*plugin_entities.ToolProviderDeclaration, *plugin_entities.ToolDeclaration) {
-	for i := range config.Providers {
-		provider := &config.Providers[i]
-		for j := range provider.Tools {
-			tool := &provider.Tools[j]
-			if tool.Identity.Name == toolName {
-				return provider, tool
-			}
+func FindTool(config *types.DifyConfig, toolName string) *plugin_entities.ToolDeclaration {
+	for i := range config.Tools {
+		tool := &config.Tools[i]
+		if tool.Identity.Name == toolName {
+			return tool
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func GetSelfPath() (string, error) {

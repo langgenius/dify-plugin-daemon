@@ -1,105 +1,75 @@
-[
-  {
-    "identity": {
-      "author": "dify",
-      "name": "google",
-      "description": {
-        "en_US": "Google search provider"
+{
+  "tools": [
+    {
+      "identity": {
+        "author": "dify",
+        "name": "google_search",
+        "label": {
+          "en_US": "Google Search"
+        }
       },
-      "icon": "icon.svg",
-      "label": {
-        "en_US": "Google"
-      }
-    },
-    "credentials_schema": [],
-    "tools": [
-      {
-        "identity": {
-          "author": "dify",
-          "name": "google_search",
-          "label": {
-            "en_US": "Google Search"
-          }
-        },
-        "description": {
-          "human": {
-            "en_US": "Search the web using Google"
-          },
-          "llm": "Search the web using Google search engine"
-        },
-        "parameters": [
-          {
-            "name": "query",
-            "label": {
-              "en_US": "Search Query"
-            },
-            "human_description": {
-              "en_US": "The search query"
-            },
-            "type": "string",
-            "form": "llm",
-            "required": true
-          },
-          {
-            "name": "num_results",
-            "label": {
-              "en_US": "Number of Results"
-            },
-            "human_description": {
-              "en_US": "Number of results to return"
-            },
-            "type": "number",
-            "form": "form",
-            "required": false,
-            "default": 10
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "identity": {
-      "author": "dify",
-      "name": "weather",
       "description": {
-        "en_US": "Weather provider"
+        "human": {
+          "en_US": "Search the web using Google"
+        },
+        "llm": "Search the web using Google search engine"
       },
-      "icon": "icon.svg",
-      "label": {
-        "en_US": "Weather"
-      }
-    },
-    "credentials_schema": [],
-    "tools": [
-      {
-        "identity": {
-          "author": "dify",
-          "name": "get_weather",
+      "parameters": [
+        {
+          "name": "query",
           "label": {
-            "en_US": "Get Weather"
-          }
-        },
-        "description": {
-          "human": {
-            "en_US": "Get current weather for a location"
+            "en_US": "Search Query"
           },
-          "llm": "Get current weather information for a specified location"
+          "human_description": {
+            "en_US": "The search query"
+          },
+          "type": "string",
+          "form": "llm",
+          "required": true
         },
-        "parameters": [
-          {
-            "name": "location",
-            "label": {
-              "en_US": "Location"
-            },
-            "human_description": {
-              "en_US": "The location to get weather for"
-            },
-            "type": "string",
-            "form": "llm",
-            "required": true
-          }
-        ]
-      }
-    ]
-  }
-]
+        {
+          "name": "num_results",
+          "label": {
+            "en_US": "Number of Results"
+          },
+          "human_description": {
+            "en_US": "Number of results to return"
+          },
+          "type": "number",
+          "form": "form",
+          "required": false,
+          "default": 10
+        }
+      ]
+    },
+    {
+      "identity": {
+        "author": "dify",
+        "name": "get_weather",
+        "label": {
+          "en_US": "Get Weather"
+        }
+      },
+      "description": {
+        "human": {
+          "en_US": "Get current weather for a location"
+        },
+        "llm": "Get current weather information for a specified location"
+      },
+      "parameters": [
+        {
+          "name": "location",
+          "label": {
+            "en_US": "Location"
+          },
+          "human_description": {
+            "en_US": "The location to get weather for"
+          },
+          "type": "string",
+          "form": "llm",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

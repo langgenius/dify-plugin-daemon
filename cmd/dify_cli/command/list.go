@@ -22,10 +22,8 @@ func runList(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	for _, provider := range cfg.Providers {
-		fmt.Printf("[%s]\n", provider.Identity.Name)
-		for _, tool := range provider.Tools {
-			fmt.Printf("  %s - %s\n", tool.Identity.Name, tool.Description.Human.EnUS)
-		}
+	fmt.Printf("Available tools (provider: %s):\n", cfg.Env.Provider)
+	for _, tool := range cfg.Tools {
+		fmt.Printf("  %s - %s\n", tool.Identity.Name, tool.Description.Human.EnUS)
 	}
 }

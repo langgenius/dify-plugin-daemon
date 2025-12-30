@@ -45,15 +45,15 @@ func runInit(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	providers, err := config.LoadSchemaFile(schemaFile)
+	schemas, err := config.LoadSchemaFile(schemaFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to load schema file: %v\n", err)
 		os.Exit(1)
 	}
 
 	cfg := &types.DifyConfig{
-		Env:       env,
-		Providers: providers,
+		Env:   env,
+		Tools: schemas.Tools,
 	}
 
 	if err := config.Save(cfg); err != nil {
@@ -74,19 +74,17 @@ func runInit(cmd *cobra.Command, args []string) {
 	}
 
 	created := 0
-	for _, provider := range providers {
-		for _, tool := range provider.Tools {
-			linkPath := filepath.Join(binDir, tool.Identity.Name)
+	for _, tool := range schemas.Tools {
+		linkPath := filepath.Join(binDir, tool.Identity.Name)
 
-			os.Remove(linkPath)
+		os.Remove(linkPath)
 
-			if err := os.Symlink(selfPath, linkPath); err != nil {
-				fmt.Printf("  [SKIP] %s: %v\n", tool.Identity.Name, err)
-				continue
-			}
-			fmt.Printf("  [OK] %s\n", tool.Identity.Name)
-			created++
+		if err := os.Symlink(selfPath, linkPath); err != nil {
+			fmt.Printf("  [SKIP] %s: %v\n", tool.Identity.Name, err)
+			continue
 		}
+		fmt.Printf("  [OK] %s\n", tool.Identity.Name)
+		created++
 	}
 
 	fmt.Println()

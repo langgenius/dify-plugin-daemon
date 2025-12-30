@@ -39,7 +39,7 @@ func InvokeTool(name string, args []string) {
 		os.Exit(1)
 	}
 
-	provider, tool := config.FindTool(cfg, name)
+	tool := config.FindTool(cfg, name)
 	if tool == nil {
 		fmt.Fprintf(os.Stderr, "Error: tool not found: %s\n", name)
 		os.Exit(1)
@@ -47,7 +47,7 @@ func InvokeTool(name string, args []string) {
 
 	params := parseToolArgs(tool, args)
 
-	err = callDifyAPI(cfg, provider.Identity.Name, tool.Identity.Name, params)
+	err = callDifyAPI(cfg, tool.Identity.Name, params)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: API call failed: %v\n", err)
 		os.Exit(1)
@@ -95,7 +95,7 @@ func parseToolArgs(tool *plugin_entities.ToolDeclaration, args []string) map[str
 	return params
 }
 
-func callDifyAPI(cfg *types.DifyConfig, providerName, toolName string, params map[string]any) error {
+func callDifyAPI(cfg *types.DifyConfig, toolName string, params map[string]any) error {
 	reqBody := dify_invocation.InvokeToolRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: cfg.Env.TenantID,
@@ -104,7 +104,7 @@ func callDifyAPI(cfg *types.DifyConfig, providerName, toolName string, params ma
 		},
 		ToolType: requests.TOOL_TYPE_BUILTIN,
 		InvokeToolSchema: requests.InvokeToolSchema{
-			Provider:       providerName,
+			Provider:       cfg.Env.Provider,
 			Tool:           toolName,
 			ToolParameters: params,
 		},

@@ -7,9 +7,14 @@ type EnvConfig struct {
 	InnerAPIKey string `json:"inner_api_key"`
 	TenantID    string `json:"tenant_id"`
 	UserID      string `json:"user_id"`
+	Provider    string `json:"provider"`
+}
+
+type ToolSchemas struct {
+	Tools []plugin_entities.ToolDeclaration `json:"tools"`
 }
 
 type DifyConfig struct {
-	Env       EnvConfig                               `json:"env"`
-	Providers []plugin_entities.ToolProviderDeclaration `json:"providers"`
+	Env   EnvConfig                         `json:"env"`
+	Tools []plugin_entities.ToolDeclaration `json:"tools"`
 }
