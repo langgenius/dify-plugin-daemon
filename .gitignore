@@ -16,4 +16,4 @@ bin/
 .venv/
 integration_test_cwd/dify
 dify
-.vscode/
+.vscode/launch.json
