@@ -3,10 +3,10 @@ package command
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 	"github.com/spf13/cobra"
 )
 
@@ -16,13 +16,9 @@ var (
 )
 
 var InitCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Initialize with config files",
-	Long: `Initialize dify_cli with environment and tool schema files.
-
-This command reads the env file and schema file, saves the configuration,
-and creates symlinks for each tool in ~/.dify/bin/.`,
-	Example: `  dify init --env /path/to/dify.env --schemas /path/to/tools_schema.json`,
+	Use:     "init",
+	Short:   "Initialize with config files",
+	Example: `  dify init --env dify.env --schemas tools_schema.json`,
 	Run:     runInit,
 }
 
@@ -39,9 +35,8 @@ func runInit(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "Error: failed to load env file: %v\n", err)
 		os.Exit(1)
 	}
-
-	if env.InnerAPIURL == "" || env.InnerAPIKey == "" {
-		fmt.Fprintf(os.Stderr, "Error: env file must contain INNER_API_URL and INNER_API_KEY\n")
+	if err := validators.GlobalEntitiesValidator.Struct(env); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: invalid env config: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -51,12 +46,7 @@ func runInit(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	cfg := &types.DifyConfig{
-		Env:   env,
-		Tools: schemas.Tools,
-	}
-
-	if err := config.Save(cfg); err != nil {
+	if err := config.Save(&types.DifyConfig{Env: env, Tools: schemas.Tools}); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to save config: %v\n", err)
 		os.Exit(1)
 	}
@@ -67,29 +57,17 @@ func runInit(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	binDir := config.GetBinDir()
-	if err := os.MkdirAll(binDir, 0755); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to create bin directory: %v\n", err)
-		os.Exit(1)
-	}
-
 	created := 0
 	for _, tool := range schemas.Tools {
-		linkPath := filepath.Join(binDir, tool.Identity.Name)
-
-		os.Remove(linkPath)
-
-		if err := os.Symlink(selfPath, linkPath); err != nil {
-			fmt.Printf("  [SKIP] %s: %v\n", tool.Identity.Name, err)
+		name := tool.Identity.Name
+		os.Remove(name)
+		if err := os.Symlink(selfPath, name); err != nil {
+			fmt.Printf("  [SKIP] %s: %v\n", name, err)
 			continue
 		}
-		fmt.Printf("  [OK] %s\n", tool.Identity.Name)
+		fmt.Printf("  [OK] %s\n", name)
 		created++
 	}
 
-	fmt.Println()
-	fmt.Printf("Initialized %d tools in %s\n", created, binDir)
-	fmt.Println()
-	fmt.Println("Add to your PATH:")
-	fmt.Printf("  export PATH=\"%s:$PATH\"\n", binDir)
+	fmt.Printf("\nInitialized %d tools in current directory\n", created)
 }
