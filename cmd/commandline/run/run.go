@@ -15,7 +15,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/testutils"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
@@ -47,9 +46,9 @@ func systemLog(response GenericResponse, responseFormat string) {
 	} else if responseFormat == "text" {
 		switch response.Type {
 		case GENERIC_RESPONSE_TYPE_INFO:
-			logger.Output(3, log.LOG_LEVEL_DEBUG_COLOR+"[INFO]"+response.Response["info"].(string)+log.LOG_LEVEL_COLOR_END)
+			logger.Output(3, "[INFO]"+response.Response["info"].(string))
 		case GENERIC_RESPONSE_TYPE_ERROR:
-			logger.Output(3, log.LOG_LEVEL_ERROR_COLOR+"[ERROR]"+response.Response["error"].(string)+log.LOG_LEVEL_COLOR_END)
+			logger.Output(3, "[ERROR]"+response.Response["error"].(string))
 		}
 	}
 }
@@ -194,9 +193,6 @@ func setupSignalHandler(dir string) {
 }
 
 func runPlugin(payload RunPluginPayload) error {
-	// disable logs
-	log.SetLogVisibility(payload.EnableLogs)
-
 	// init routine pool
 	routine.InitPool(10000)
 

@@ -17,7 +17,7 @@ func InitPersistence(oss oss.OSS, config *app.Config) {
 		maxStorageSize: config.PersistenceStorageMaxSize,
 	}
 
-	log.Info("Persistence initialized")
+	log.Info("persistence initialized")
 }
 
 func GetPersistence() *Persistence {

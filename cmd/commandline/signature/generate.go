@@ -15,7 +15,7 @@ func GenerateKeyPair(keyPairName string) error {
 	// generate a key pair
 	keyPair, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		log.Error("Failed to generate key pair: %v", err)
+		log.Error("failed to generate key pair", "error", err)
 		return err
 	}
 
@@ -36,18 +36,16 @@ func GenerateKeyPair(keyPairName string) error {
 	publicKeyPath := fmt.Sprintf("%s.public.pem", keyPairName)
 
 	if err := os.WriteFile(privateKeyPath, privateKeyPem, 0644); err != nil {
-		log.Error("Failed to write private key: %v", err)
+		log.Error("failed to write private key", "error", err)
 		return err
 	}
 
 	if err := os.WriteFile(publicKeyPath, publicKeyPem, 0644); err != nil {
-		log.Error("Failed to write public key: %v", err)
+		log.Error("failed to write public key", "error", err)
 		return err
 	}
 
-	log.Info("Key pair generated successfully")
-	log.Info("Private key: %s", privateKeyPath)
-	log.Info("Public key: %s", publicKeyPath)
+	log.Info("key pair generated successfully", "private_key", privateKeyPath, "public_key", publicKeyPath)
 
 	return nil
 }

@@ -44,7 +44,7 @@ func ParsePluginUniversalEvent(
 				event.Data,
 			)
 			if err != nil {
-				log.Error("unmarshal json failed: %s", err.Error())
+				log.Error("unmarshal json failed", "error", err)
 				return
 			}
 

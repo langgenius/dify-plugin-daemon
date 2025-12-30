@@ -16,13 +16,16 @@ func main() {
 
 	err := envconfig.Process("", &config)
 	if err != nil {
-		log.Panic("Error processing environment variables: %s", err.Error())
+		log.Panic("error processing environment variables", "error", err)
 	}
 
 	config.SetDefault()
 
+	log.Init(config.LogOutputFormat == "json")
+	defer log.RecoverAndExit()
+
 	if err := config.Validate(); err != nil {
-		log.Panic("Invalid configuration: %s", err.Error())
+		log.Panic("invalid configuration", "error", err)
 	}
 
 	(&server.App{}).Run(&config)

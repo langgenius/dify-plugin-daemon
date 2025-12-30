@@ -38,7 +38,7 @@ func ListReadme(pluginPath string) {
 
 	stat, err := os.Stat(pluginPath)
 	if err != nil {
-		log.Error("failed to get plugin file stat: %s", err)
+		log.Error("failed to get plugin file stat", "error", err)
 		return
 	}
 
@@ -47,24 +47,24 @@ func ListReadme(pluginPath string) {
 	} else {
 		fileContent, err := os.ReadFile(pluginPath)
 		if err != nil {
-			log.Error("failed to read plugin file: %s", err)
+			log.Error("failed to read plugin file", "error", err)
 			return
 		}
 		pluginDecoder, err = decoder.NewZipPluginDecoder(fileContent)
 		if err != nil {
-			log.Error("failed to create zip plugin decoder: %s", err)
+			log.Error("failed to create zip plugin decoder", "error", err)
 			return
 		}
 	}
 	if err != nil {
-		log.Error("your plugin is not a valid plugin: %s", err)
+		log.Error("your plugin is not a valid plugin", "error", err)
 		return
 	}
 
 	// Get available i18n README files
 	availableReadmes, err := pluginDecoder.AvailableI18nReadme()
 	if err != nil {
-		log.Error("failed to get available README files: %s", err)
+		log.Error("failed to get available README files", "error", err)
 		return
 	}
 

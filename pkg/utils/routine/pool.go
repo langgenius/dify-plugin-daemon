@@ -31,12 +31,12 @@ func InitPool(size int, sentryOption ...sentry.ClientOptions) {
 	if p != nil {
 		return
 	}
-	log.Info("init routine pool, size: %d", size)
+	log.Info("init routine pool", "size", size)
 	p, _ = ants.NewPool(size, ants.WithNonblocking(false))
 
 	if len(sentryOption) > 0 {
 		if err := sentry.Init(sentryOption[0]); err != nil {
-			log.Error("init sentry failed, error: %v", err)
+			log.Error("init sentry failed", "error", err)
 		}
 	}
 }
@@ -59,11 +59,10 @@ func Submit(labels routinelabels.Labels, f func()) {
 			defer sentry.Recover()
 			defer func() {
 				if err := recover(); err != nil {
-					log.Error("panic in routine: %v", err)
 					// get stack trace
 					buf := make([]byte, 1024*1024)
 					n := runtime.Stack(buf, false)
-					log.Error("stack trace %v: %s", err, string(buf[:n]))
+					log.Error("panic in routine", "panic", err, "stack_trace", string(buf[:n]))
 				}
 			}()
 			f()

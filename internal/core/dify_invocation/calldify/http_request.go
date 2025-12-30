@@ -17,6 +17,7 @@ import (
 // Send a request to dify inner api and validate the response
 func Request[T any](i *RealBackwardsInvocation, method string, path string, options ...http_requests.HttpOptions) (*T, error) {
 	options = append(options,
+		http_requests.HttpContext(i.Context()),
 		http_requests.HttpHeader(map[string]string{
 			"X-Inner-Api-Key": i.difyInnerApiKey,
 		}),
@@ -53,7 +54,9 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 	*stream.Stream[T], error,
 ) {
 	options = append(
-		options, http_requests.HttpHeader(map[string]string{
+		options,
+		http_requests.HttpContext(i.Context()),
+		http_requests.HttpHeader(map[string]string{
 			"X-Inner-Api-Key": i.difyInnerApiKey,
 		}),
 		http_requests.HttpWriteTimeout(i.writeTimeout),

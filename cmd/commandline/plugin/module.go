@@ -130,7 +130,7 @@ func ModuleList(pluginPath string) {
 
 	stat, err := os.Stat(pluginPath)
 	if err != nil {
-		log.Error("failed to get plugin file stat: %s", err)
+		log.Error("failed to get plugin file stat", "error", err)
 		return
 	}
 
@@ -139,23 +139,23 @@ func ModuleList(pluginPath string) {
 	} else {
 		fileContent, err := os.ReadFile(pluginPath)
 		if err != nil {
-			log.Error("failed to read plugin file: %s", err)
+			log.Error("failed to read plugin file", "error", err)
 			return
 		}
 		pluginDecoder, err = decoder.NewZipPluginDecoder(fileContent)
 		if err != nil {
-			log.Error("failed to create zip plugin decoder: %s", err)
+			log.Error("failed to create zip plugin decoder", "error", err)
 			return
 		}
 	}
 	if err != nil {
-		log.Error("your plugin is not a valid plugin: %s", err)
+		log.Error("your plugin is not a valid plugin", "error", err)
 		return
 	}
 
 	manifest, err := pluginDecoder.Manifest()
 	if err != nil {
-		log.Error("failed to get manifest: %s", err)
+		log.Error("failed to get manifest", "error", err)
 		return
 	}
 
@@ -163,13 +163,13 @@ func ModuleList(pluginPath string) {
 		for _, tool := range manifest.Tool.Tools {
 			tmpl, err := template.New("tool").Parse(TOOL_MODULE_TEMPLATE)
 			if err != nil {
-				log.Error("failed to parse template: %s", err)
+				log.Error("failed to parse template", "error", err)
 				return
 			}
 
 			err = tmpl.Execute(os.Stdout, tool)
 			if err != nil {
-				log.Error("failed to execute template: %s", err)
+				log.Error("failed to execute template", "error", err)
 				return
 			}
 		}
@@ -179,13 +179,13 @@ func ModuleList(pluginPath string) {
 		for _, strategy := range manifest.AgentStrategy.Strategies {
 			tmpl, err := template.New("agent").Parse(AGENT_MODULE_TEMPLATE)
 			if err != nil {
-				log.Error("failed to parse template: %s", err)
+				log.Error("failed to parse template", "error", err)
 				return
 			}
 
 			err = tmpl.Execute(os.Stdout, strategy)
 			if err != nil {
-				log.Error("failed to execute template: %s", err)
+				log.Error("failed to execute template", "error", err)
 				return
 			}
 		}
@@ -195,13 +195,13 @@ func ModuleList(pluginPath string) {
 		for _, model := range manifest.Model.Models {
 			tmpl, err := template.New("model").Parse(MODEL_MODULE_TEMPLATE)
 			if err != nil {
-				log.Error("failed to parse template: %s", err)
+				log.Error("failed to parse template", "error", err)
 				return
 			}
 
 			err = tmpl.Execute(os.Stdout, model)
 			if err != nil {
-				log.Error("failed to execute template: %s", err)
+				log.Error("failed to execute template", "error", err)
 				return
 			}
 		}
@@ -211,13 +211,13 @@ func ModuleList(pluginPath string) {
 		for _, endpoint := range manifest.Endpoint.Endpoints {
 			tmpl, err := template.New("endpoint").Parse(ENDPOINT_MODULE_TEMPLATE)
 			if err != nil {
-				log.Error("failed to parse template: %s", err)
+				log.Error("failed to parse template", "error", err)
 				return
 			}
 
 			err = tmpl.Execute(os.Stdout, endpoint)
 			if err != nil {
-				log.Error("failed to execute template: %s", err)
+				log.Error("failed to execute template", "error", err)
 				return
 			}
 		}
@@ -227,25 +227,23 @@ func ModuleList(pluginPath string) {
 func ModuleAppendTools(pluginPath string) {
 	decoder, err := decoder.NewFSPluginDecoder(pluginPath)
 	if err != nil {
-		log.Error("your plugin is not a valid plugin: %s", err)
+		log.Error("your plugin is not a valid plugin", "error", err)
 		return
 	}
 
 	manifest, err := decoder.Manifest()
 	if err != nil {
-		log.Error("failed to get manifest: %s", err)
+		log.Error("failed to get manifest", "error", err)
 		return
 	}
 
 	if manifest.Tool != nil {
-		log.Error("you have already declared tools in this plugin, " +
-			"you can add new tool by modifying the `provider.yaml` file to add new tools, " +
-			"this command is used to create new module that never been declared in this plugin.")
+		log.Error("you have already declared tools in this plugin, you can add new tool by modifying the provider.yaml file")
 		return
 	}
 
 	if manifest.Model != nil {
-		log.Error("model plugin dose not support declare tools.")
+		log.Error("model plugin does not support declare tools")
 		return
 	}
 
@@ -257,12 +255,12 @@ func ModuleAppendTools(pluginPath string) {
 
 	if manifest.Meta.Runner.Language == constants.Python {
 		if err := createPythonTool(pluginPath, &manifest); err != nil {
-			log.Error("failed to create python tool: %s", err)
+			log.Error("failed to create python tool", "error", err)
 			return
 		}
 
 		if err := createPythonToolProvider(pluginPath, &manifest); err != nil {
-			log.Error("failed to create python tool provider: %s", err)
+			log.Error("failed to create python tool provider", "error", err)
 			return
 		}
 	}
@@ -270,7 +268,7 @@ func ModuleAppendTools(pluginPath string) {
 	// save manifest
 	manifest_file := marshalYamlBytes(manifest.PluginDeclarationWithoutAdvancedFields)
 	if err := writeFile(filepath.Join(pluginPath, "manifest.yaml"), string(manifest_file)); err != nil {
-		log.Error("failed to save manifest: %s", err)
+		log.Error("failed to save manifest", "error", err)
 		return
 	}
 
@@ -280,25 +278,23 @@ func ModuleAppendTools(pluginPath string) {
 func ModuleAppendEndpoints(pluginPath string) {
 	decoder, err := decoder.NewFSPluginDecoder(pluginPath)
 	if err != nil {
-		log.Error("your plugin is not a valid plugin: %s", err)
+		log.Error("your plugin is not a valid plugin", "error", err)
 		return
 	}
 
 	manifest, err := decoder.Manifest()
 	if err != nil {
-		log.Error("failed to get manifest: %s", err)
+		log.Error("failed to get manifest", "error", err)
 		return
 	}
 
 	if manifest.Endpoint != nil {
-		log.Error("you have already declared endpoints in this plugin, " +
-			"you can add new endpoint by modifying the `provider.yaml` file to add new endpoints, " +
-			"this command is used to create new module that never been declared in this plugin.")
+		log.Error("you have already declared endpoints in this plugin, you can add new endpoint by modifying the provider.yaml file")
 		return
 	}
 
 	if manifest.Model != nil {
-		log.Error("model plugin dose not support declare endpoints.")
+		log.Error("model plugin does not support declare endpoints")
 		return
 	}
 
@@ -310,12 +306,12 @@ func ModuleAppendEndpoints(pluginPath string) {
 
 	if manifest.Meta.Runner.Language == constants.Python {
 		if err := createPythonEndpoint(pluginPath, &manifest); err != nil {
-			log.Error("failed to create python endpoint: %s", err)
+			log.Error("failed to create python endpoint", "error", err)
 			return
 		}
 
 		if err := createPythonEndpointGroup(pluginPath, &manifest); err != nil {
-			log.Error("failed to create python group: %s", err)
+			log.Error("failed to create python group", "error", err)
 			return
 		}
 	}
@@ -323,7 +319,7 @@ func ModuleAppendEndpoints(pluginPath string) {
 	// save manifest
 	manifest_file := marshalYamlBytes(manifest.PluginDeclarationWithoutAdvancedFields)
 	if err := writeFile(filepath.Join(pluginPath, "manifest.yaml"), string(manifest_file)); err != nil {
-		log.Error("failed to save manifest: %s", err)
+		log.Error("failed to save manifest", "error", err)
 		return
 	}
 

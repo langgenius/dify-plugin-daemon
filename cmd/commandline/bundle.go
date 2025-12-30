@@ -48,7 +48,7 @@ var (
 			repoPattern := c.Flag("repo_pattern").Value.String()
 			githubPattern, err := bundle_entities.NewGithubRepoPattern(repoPattern)
 			if err != nil {
-				log.Error("Invalid github repo pattern: %v", err)
+				log.Error("invalid github repo pattern", "error", err)
 				return
 			}
 			bundle.AddGithubDependency(bundlePath, githubPattern)
@@ -65,7 +65,7 @@ var (
 			marketplacePatternString := c.Flag("marketplace_pattern").Value.String()
 			marketplacePattern, err := bundle_entities.NewMarketplacePattern(marketplacePatternString)
 			if err != nil {
-				log.Error("Invalid marketplace pattern: %v", err)
+				log.Error("invalid marketplace pattern", "error", err)
 				return
 			}
 			bundle.AddMarketplaceDependency(bundlePath, marketplacePattern)
@@ -105,7 +105,7 @@ var (
 			index := c.Flag("index").Value.String()
 			indexInt, err := strconv.Atoi(index)
 			if err != nil {
-				log.Error("Invalid index: %v", err)
+				log.Error("invalid index", "error", err)
 				return
 			}
 			bundle.RemoveDependency(bundlePath, indexInt)

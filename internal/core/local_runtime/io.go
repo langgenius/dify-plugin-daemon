@@ -30,7 +30,7 @@ func (r *LocalPluginRuntime) Listen(sessionId string) (
 	instance.setupStdioEventListener(sessionId, func(b []byte) {
 		data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](b)
 		if err != nil {
-			log.Error("unmarshal json failed: %s, failed to parse session message", err.Error())
+			log.Error("unmarshal json failed, failed to parse session message", "error", err)
 			return
 		}
 

@@ -48,7 +48,7 @@ const (
 func (c *Cluster) clusterLifetime() {
 	defer func() {
 		if err := c.removeSelfNode(); err != nil {
-			log.Error("failed to remove the self node from the cluster: %s", err.Error())
+			log.Error("failed to remove the self node from the cluster", "error", err)
 		}
 		c.notifyClusterStopped()
 
@@ -85,17 +85,17 @@ func (c *Cluster) clusterLifetime() {
 		routinepkg.RoutineLabelKeyMethod: "voteAddressesWhenInit",
 	}, func() {
 		if err := c.updateNodeStatus(); err != nil {
-			log.Error("failed to update the status of the node: %s", err.Error())
+			log.Error("failed to update the status of the node", "error", err)
 		}
 
 		if err := cache.Publish(CLUSTER_NEW_NODE_CHANNEL, newNodeEvent{
 			NodeID: c.id,
 		}); err != nil {
-			log.Error("failed to publish the new node event: %s", err.Error())
+			log.Error("failed to publish the new node event", "error", err)
 		}
 
 		if err := c.voteAddresses(); err != nil {
-			log.Error("failed to vote the ips of the nodes: %s", err.Error())
+			log.Error("failed to vote the ips of the nodes", "error", err)
 		}
 	})
 
@@ -108,7 +108,7 @@ func (c *Cluster) clusterLifetime() {
 			if !c.iAmMaster {
 				// try lock the slot
 				if success, err := c.lockMaster(); err != nil {
-					log.Error("failed to lock the slot to be the master of the cluster: %s", err.Error())
+					log.Error("failed to lock the slot to be the master of the cluster", "error", err)
 				} else if success {
 					c.iAmMaster = true
 					log.Info("current node has become the master of the cluster")
@@ -122,38 +122,38 @@ func (c *Cluster) clusterLifetime() {
 			} else {
 				// update the master
 				if err := c.updateMaster(); err != nil {
-					log.Error("failed to update the master: %s", err.Error())
+					log.Error("failed to update the master", "error", err)
 				}
 			}
 		case <-tickerUpdateNodeStatus.C:
 			if err := c.updateNodeStatus(); err != nil {
-				log.Error("failed to update the status of the node: %s", err.Error())
+				log.Error("failed to update the status of the node", "error", err)
 			}
 		case <-masterGcTicker.C:
 			if c.iAmMaster {
 				c.notifyMasterGC()
 				if err := c.autoGCNodes(); err != nil {
-					log.Error("failed to gc the nodes have already deactivated: %s", err.Error())
+					log.Error("failed to gc the nodes have already deactivated", "error", err)
 				}
 				if err := c.autoGCPlugins(); err != nil {
-					log.Error("failed to gc the plugins have already stopped: %s", err.Error())
+					log.Error("failed to gc the plugins have already stopped", "error", err)
 				}
 				c.notifyMasterGCCompleted()
 			}
 		case <-nodeVoteTicker.C:
 			if err := c.voteAddresses(); err != nil {
-				log.Error("failed to vote the ips of the nodes: %s", err.Error())
+				log.Error("failed to vote the ips of the nodes", "error", err)
 			}
 		case _, ok := <-newNodeChan:
 			if ok {
 				// vote for the new node
 				if err := c.voteAddresses(); err != nil {
-					log.Error("failed to vote the ips of the nodes: %s", err.Error())
+					log.Error("failed to vote the ips of the nodes", "error", err)
 				}
 			}
 		case <-pluginSchedulerTicker.C:
 			if err := c.schedulePlugins(); err != nil {
-				log.Error("failed to schedule the plugins: %s", err.Error())
+				log.Error("failed to schedule the plugins", "error", err)
 			}
 		case <-c.stopChan:
 			return

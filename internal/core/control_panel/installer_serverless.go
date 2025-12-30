@@ -1,12 +1,15 @@
 package controlpanel
 
 import (
+	"context"
+
 	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func (c *ControlPanel) InstallToServerless(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (
 	*stream.Stream[serverless.LaunchFunctionResponse], error,
@@ -24,6 +27,7 @@ func (c *ControlPanel) InstallToServerless(
 
 	// serverless.LaunchPlugin will check if the plugin has already been launched, if so, it returns directly
 	response, err := serverless.LaunchPlugin(
+		ctx,
 		pluginUniqueIdentifier,
 		packageFile,
 		decoder,
@@ -38,6 +42,7 @@ func (c *ControlPanel) InstallToServerless(
 }
 
 func (c *ControlPanel) ReinstallToServerless(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (
 	*stream.Stream[serverless.LaunchFunctionResponse], error,
@@ -54,6 +59,7 @@ func (c *ControlPanel) ReinstallToServerless(
 	}
 
 	response, err := serverless.LaunchPlugin(
+		ctx,
 		pluginUniqueIdentifier,
 		packageFile,
 		decoder,

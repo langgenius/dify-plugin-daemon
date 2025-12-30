@@ -103,6 +103,7 @@ func baseSSEWithSession[T any, R any](
 		access_type,
 		access_action,
 		ctx.GetString("cluster_id"),
+		ctx.Request.Context(),
 	)
 	if err != nil {
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())

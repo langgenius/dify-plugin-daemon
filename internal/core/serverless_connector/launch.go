@@ -2,6 +2,7 @@ package serverless
 
 import (
 	"bytes"
+	"context"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -17,6 +18,7 @@ var (
 // LaunchPlugin uploads the plugin to specific serverless connector
 // return the function url and name
 func LaunchPlugin(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	originPackage []byte,
 	decoder decoder.PluginDecoder,
@@ -48,7 +50,7 @@ func LaunchPlugin(
 	}
 
 	if !ignoreIdempotent {
-		function, err := FetchFunction(manifest, checksum)
+		function, err := FetchFunction(ctx, manifest, checksum)
 		if err != nil {
 			if err != ErrFunctionNotFound {
 				return nil, unlock(err)
@@ -73,7 +75,7 @@ func LaunchPlugin(
 		}
 	}
 
-	response, err := SetupFunction(pluginUniqueIdentifier, manifest, checksum, bytes.NewReader(originPackage), timeout)
+	response, err := SetupFunction(ctx, pluginUniqueIdentifier, manifest, checksum, bytes.NewReader(originPackage), timeout)
 	if err != nil {
 		return nil, unlock(err)
 	}

@@ -48,10 +48,7 @@ func (w *serverlessTransactionWriteCloser) Close() error {
 	return nil
 }
 
-func (h *ServerlessTransactionHandler) Handle(
-	ctx *gin.Context,
-	session_id string,
-) {
+func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string) {
 	writer := &serverlessTransactionWriteCloser{
 		writer: ctx.Writer.Write,
 		flush:  ctx.Writer.Flush,
@@ -73,7 +70,7 @@ func (h *ServerlessTransactionHandler) Handle(
 	plugin_entities.ParsePluginUniversalEvent(
 		bytes,
 		"",
-		func(session_id string, data []byte) {
+		func(sessionId string, data []byte) {
 			// parse the data
 			sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 			if err != nil {
@@ -83,16 +80,19 @@ func (h *ServerlessTransactionHandler) Handle(
 				return
 			}
 
-			session, err := session_manager.GetSession(session_manager.GetSessionPayload{
-				ID: session_id,
-			})
-
+			session, err := session_manager.GetSession(sessionId)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
 				ctx.Writer.Write([]byte(err.Error()))
 				writer.Close()
 				return
 			}
+
+			// replace trace context, propagate it to gin
+			ctxRequestContext := ctx.Request.Context()
+			ctxRequestContext = log.WithTrace(ctxRequestContext, session.TraceContext)
+			ctxRequestContext = log.WithIdentity(ctxRequestContext, session.IdentityContext)
+			ctx.Request = ctx.Request.WithContext(ctxRequestContext)
 
 			// bind the backwards invocation
 			plugin_manager := plugin_manager.Manager()
@@ -114,7 +114,7 @@ func (h *ServerlessTransactionHandler) Handle(
 		},
 		func() {},
 		func(err string) {
-			log.Warn("invoke dify failed, received errors: %s", err)
+			log.Warn("invoke dify failed, received errors", "error", err)
 		},
 		func(plugin_entities.PluginLogEvent) {}, //log
 	)

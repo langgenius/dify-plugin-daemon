@@ -18,7 +18,7 @@ func (t *ClusterTunnel) OnDebuggingRuntimeConnected(
 ) {
 	// register the plugin to the cluster
 	if err := t.cluster.RegisterPlugin(runtime); err != nil {
-		log.Error("failed to register plugin: %s", err.Error())
+		log.Error("failed to register plugin", "error", err)
 	}
 }
 
@@ -27,7 +27,7 @@ func (t *ClusterTunnel) OnDebuggingRuntimeDisconnected(
 ) {
 	// unregister the plugin from the cluster
 	if err := t.cluster.UnregisterPlugin(runtime); err != nil {
-		log.Error("failed to unregister plugin: %s", err.Error())
+		log.Error("failed to unregister plugin", "error", err)
 	}
 }
 
@@ -36,7 +36,7 @@ func (t *ClusterTunnel) OnLocalRuntimeReady(
 ) {
 	// register the plugin to the cluster
 	if err := t.cluster.RegisterPlugin(runtime); err != nil {
-		log.Error("failed to register plugin: %s", err.Error())
+		log.Error("failed to register plugin", "error", err)
 	}
 }
 
@@ -58,7 +58,7 @@ func (t *ClusterTunnel) OnLocalRuntimeStop(
 ) {
 	// unregister the plugin from the cluster
 	if err := t.cluster.UnregisterPlugin(runtime); err != nil {
-		log.Error("failed to unregister plugin: %s", err.Error())
+		log.Error("failed to unregister plugin", "error", err)
 	}
 }
 

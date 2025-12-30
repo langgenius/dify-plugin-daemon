@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -32,6 +33,7 @@ type InstallPluginResponse struct {
 // Dify supports install multiple plugins to a tenant at once
 // At most
 func InstallMultiplePluginsToTenant(
+	ctx context.Context,
 	config *app.Config,
 	tenantId string,
 	pluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier,
@@ -120,6 +122,7 @@ func InstallMultiplePluginsToTenant(
 			routinepkg.RoutineLabelKeyMethod: "InstallPlugin",
 		}, func() {
 			tasks.ProcessInstallJob(
+				ctx,
 				manager,
 				tenants,
 				runtimeType,
@@ -153,6 +156,7 @@ func ReinstallPluginFromIdentifier(
 			return nil, errors.New("plugin manager is not initialized")
 		}
 
+		reqCtx := ctx.Request.Context()
 		retStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 		routine.Submit(routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "service",
@@ -160,7 +164,7 @@ func ReinstallPluginFromIdentifier(
 		}, func() {
 			defer retStream.Close()
 
-			reinstallStream, err := manager.Reinstall(pluginUniqueIdentifier)
+			reinstallStream, err := manager.Reinstall(reqCtx, pluginUniqueIdentifier)
 			if err != nil {
 				retStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
@@ -189,6 +193,7 @@ func ReinstallPluginFromIdentifier(
  * Upgrade a plugin between 2 identifiers
  */
 func UpgradePlugin(
+	ctx context.Context,
 	config *app.Config,
 	tenantId string,
 	source string,
@@ -247,7 +252,7 @@ func UpgradePlugin(
 			routinepkg.RoutineLabelKeyMethod: "UpgradePlugin.RemovePluginIfNeeded",
 		}, func() {
 			if err := tasks.RemovePluginIfNeeded(manager, originalPluginUniqueIdentifier, response); err != nil {
-				log.Error("failed to remove uninstalled plugin: %v", err)
+				log.Error("failed to remove uninstalled plugin", "error", err)
 			}
 		})
 
@@ -287,6 +292,7 @@ func UpgradePlugin(
 		routinepkg.RoutineLabelKeyMethod: "UpgradePlugin",
 	}, func() {
 		tasks.ProcessUpgradeJob(
+			ctx,
 			manager,
 			tenants,
 			runtimeType,
