@@ -1,6 +1,7 @@
 package command
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -156,39 +157,17 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 			return errors.New("data is nil")
 		}
 
-		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeText {
-			if msg, ok := chunk.Data.Message["text"]; ok {
-				fmt.Println(msg)
-			}
+		outputJSON, err := json.Marshal(chunk.Data)
+		if err != nil {
+			return err
 		}
-		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeJson {
-			if msg, ok := chunk.Data.Message["json"]; ok {
-				fmt.Println(msg)
-			}
-		}
-		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeFile {
-			if msg, ok := chunk.Data.Message["file"]; ok {
-				fmt.Println(msg)
-			}
-		}
-		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeBlob {
-			if msg, ok := chunk.Data.Message["blob"]; ok {
-				fmt.Println(msg)
-			}
-		}
-		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeBlobChunk {
-			if msg, ok := chunk.Data.Message["blob_chunk"]; ok {
-				fmt.Println(msg)
-			}
-		}
-		if chunk.Data.Type == tool_entities.ToolResponseChunkTypeLink {
-			if msg, ok := chunk.Data.Message["link"]; ok {
-				fmt.Println(msg)
-			}
-		}
+
+		fmt.Println("[on_tool_execution]")
+		fmt.Printf("Tool: %s\n", tool.Identity.Name)
+		fmt.Printf("Outputs: %s\n", string(outputJSON))
+
 		return nil
 	})
 
-	fmt.Println()
 	return err
 }
