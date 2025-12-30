@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766400212781,
+  "lastUpdate": 1767063791608,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -10834,6 +10834,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 31.14,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca3d00229e71ac02518d52709680f6b83a6ef7b5",
+          "message": "Feat/Implement structured logging and Trace ID propagation (#552)\n\n* use slog instead of log package and format to new log schema\n\n* update the environment name to LOG_OUTPUT_FORMAT\n\n* add the env to .env.example\n\n* fix log reference error\n\n* change the order of milldlewares\n\n* delete unused code\n\n* fix the concurrently session potential race condition\n\n* fix the log format in tests\n\n* update the duplicate code\n\n* refactor: convert log functions to slog structured format\n\n- Change log.Error/Info/Warn/Debug/Panic to accept msg + key-value pairs\n- Remove printf-style formatting from log functions\n- Update log calls in internal/cluster, internal/db, internal/core/session_manager\n- Remove unused 'initialized' variable from log package\n- Remaining files will be updated in follow-up commits\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\n\n* refactor: update all log call sites to use slog structured format\n\nConvert all log.Error, log.Info, log.Warn, log.Debug, and log.Panic\ncalls from printf-style formatting to slog key-value pairs.\n\nBefore: log.Error(\"failed to do something: %s\", err.Error())\nAfter:  log.Error(\"failed to do something\", \"error\", err)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\n\n* refactor: update cmd/ log calls to use slog structured format\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\n\n* feat: implement GnetLogger for structured logging in gnet\n\n* refactor: remove deprecated log visibility functions and related calls\n\n* feat: enhance session management with trace and identity context propagation\n\n* feat: implement serverless transaction handler and writer for plugin runtime\n\n* refactor: rename context field to traceCtx in RealBackwardsInvocation\n\n---------\n\nCo-authored-by: Claude Opus 4.5 <noreply@anthropic.com>\nCo-authored-by: Yeuoly <admin@srmxy.cn>",
+          "timestamp": "2025-12-30T11:00:48+08:00",
+          "tree_id": "909458d7f2d3e351563a2cfe3b9c9458ca7907f4",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/ca3d00229e71ac02518d52709680f6b83a6ef7b5"
+        },
+        "date": 1767063791218,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.89,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.89,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
