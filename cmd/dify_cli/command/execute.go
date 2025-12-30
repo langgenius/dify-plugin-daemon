@@ -49,7 +49,7 @@ func InvokeTool(name string, args []string) {
 		os.Exit(1)
 	}
 
-	if len(args) == 0 {
+	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
 		PrintToolHelp(tool)
 		return
 	}
