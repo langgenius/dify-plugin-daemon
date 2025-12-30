@@ -12,6 +12,8 @@ import (
 func TestLoadEnvFile(t *testing.T) {
 	content := `INNER_API_URL=http://localhost:5001
 INNER_API_KEY=test-key-123
+TENANT_ID=tenant-123
+USER_ID=user-456
 # comment line
 IGNORED_VAR=should_be_ignored
 `
@@ -30,6 +32,12 @@ IGNORED_VAR=should_be_ignored
 	}
 	if cfg.InnerAPIKey != "test-key-123" {
 		t.Errorf("InnerAPIKey = %q, want %q", cfg.InnerAPIKey, "test-key-123")
+	}
+	if cfg.TenantID != "tenant-123" {
+		t.Errorf("TenantID = %q, want %q", cfg.TenantID, "tenant-123")
+	}
+	if cfg.UserID != "user-456" {
+		t.Errorf("UserID = %q, want %q", cfg.UserID, "user-456")
 	}
 }
 
@@ -180,6 +188,8 @@ func TestSaveAndLoad(t *testing.T) {
 		Env: types.EnvConfig{
 			InnerAPIURL: "http://test:5001",
 			InnerAPIKey: "test-key",
+			TenantID:    "tenant-abc",
+			UserID:      "user-xyz",
 		},
 		Providers: []plugin_entities.ToolProviderDeclaration{
 			{
@@ -202,5 +212,11 @@ func TestSaveAndLoad(t *testing.T) {
 	}
 	if loaded.Env.InnerAPIKey != cfg.Env.InnerAPIKey {
 		t.Errorf("InnerAPIKey = %q, want %q", loaded.Env.InnerAPIKey, cfg.Env.InnerAPIKey)
+	}
+	if loaded.Env.TenantID != cfg.Env.TenantID {
+		t.Errorf("TenantID = %q, want %q", loaded.Env.TenantID, cfg.Env.TenantID)
+	}
+	if loaded.Env.UserID != cfg.Env.UserID {
+		t.Errorf("UserID = %q, want %q", loaded.Env.UserID, cfg.Env.UserID)
 	}
 }

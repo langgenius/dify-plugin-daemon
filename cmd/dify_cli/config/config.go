@@ -50,6 +50,10 @@ func LoadEnvFile(path string) (types.EnvConfig, error) {
 			config.InnerAPIURL = value
 		case "INNER_API_KEY":
 			config.InnerAPIKey = value
+		case "TENANT_ID":
+			config.TenantID = value
+		case "USER_ID":
+			config.UserID = value
 		}
 	}
 
