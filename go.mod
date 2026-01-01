@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/langgenius/dify-cloud-kit v0.1.1
 	github.com/panjf2000/ants/v2 v2.10.0
-	github.com/redis/go-redis/v9 v9.5.5
+	github.com/redis/go-redis/v9 v9.6.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
