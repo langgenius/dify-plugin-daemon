@@ -6,9 +6,9 @@ import (
 )
 
 type EnvConfig struct {
+	FilesURL    string `json:"files_url" validate:"required"`
 	InnerAPIURL string `json:"inner_api_url" validate:"required"`
 	InnerAPIKey string `json:"inner_api_key" validate:"required"`
-	FilesURL    string `json:"files_url"`
 	TenantID    string `json:"tenant_id"`
 	UserID      string `json:"user_id"`
 }
