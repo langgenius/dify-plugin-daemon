@@ -28,8 +28,12 @@ func Load() (*types.DifyConfig, error) {
 
 func FindTool(config *types.DifyConfig, toolName string) *types.DifyToolDeclaration {
 	for i := range config.Tools {
-		if config.Tools[i].Identity.Name == toolName {
-			return &config.Tools[i]
+		tool := &config.Tools[i]
+		if tool.Identity.Name == toolName {
+			return tool
+		}
+		if tool.Identity.Provider+"/"+tool.Identity.Name == toolName {
+			return tool
 		}
 	}
 	return nil

@@ -1,7 +1,6 @@
 package command
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,11 +9,11 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
+	toolhandler "github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/tool"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/spf13/cobra"
@@ -43,7 +42,7 @@ func InvokeTool(name string, args []string) {
 		os.Exit(1)
 	}
 
-	tool := config.FindTool(cfg, name)
+	var tool = config.FindTool(cfg, name)
 	if tool == nil {
 		fmt.Fprintf(os.Stderr, "Error: tool not found: %s\n", name)
 		os.Exit(1)
@@ -105,6 +104,10 @@ func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]an
 }
 
 func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params map[string]any) error {
+	if cfg.Env.FilesURL != "" {
+		toolhandler.SetFilesURL(cfg.Env.FilesURL)
+	}
+
 	reqBody := dify_invocation.InvokeToolRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
 			TenantId: cfg.Env.TenantID,
@@ -143,15 +146,10 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 	}
 	defer resp.Body.Close()
 
-	type apiResponse struct {
-		Data  *tool_entities.ToolResponseChunk `json:"data,omitempty"`
-		Error string                           `json:"error"`
-	}
-
 	err = parser.LengthPrefixedChunking(resp.Body, 0x0f, 1024*1024*30, func(data []byte) error {
-		chunk, err := parser.UnmarshalJsonBytes[apiResponse](data)
+		chunk, err := parser.UnmarshalJsonBytes[types.DifyInnerAPIResponse[types.DifyToolResponseChunk]](data)
 		if err != nil {
-			return err
+			return fmt.Errorf("unmarshal json failed: %v", err)
 		}
 
 		if chunk.Error != "" {
@@ -162,16 +160,7 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 			return errors.New("data is nil")
 		}
 
-		outputJSON, err := json.Marshal(chunk.Data)
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("[on_tool_execution]")
-		fmt.Printf("Tool: %s\n", tool.Identity.Name)
-		fmt.Printf("Outputs: %s\n", string(outputJSON))
-
-		return nil
+		return toolhandler.Dispatch(chunk.Data)
 	})
 
 	return err

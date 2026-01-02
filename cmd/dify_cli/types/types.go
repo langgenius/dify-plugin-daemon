@@ -8,6 +8,7 @@ import (
 type EnvConfig struct {
 	InnerAPIURL string `json:"inner_api_url" validate:"required"`
 	InnerAPIKey string `json:"inner_api_key" validate:"required"`
+	FilesURL    string `json:"files_url"`
 	TenantID    string `json:"tenant_id"`
 	UserID      string `json:"user_id"`
 }
@@ -32,4 +33,32 @@ type DifyToolDeclaration struct {
 type DifyConfig struct {
 	Env   EnvConfig             `json:"env"`
 	Tools []DifyToolDeclaration `json:"tools"`
+}
+
+type DifyInnerAPIResponse[T any] struct {
+	Data  *T     `json:"data,omitempty"`
+	Error string `json:"error"`
+}
+
+type DifyToolResponseChunkType string
+
+const (
+	ToolResponseChunkTypeBinaryLink         DifyToolResponseChunkType = "binary_link"
+	ToolResponseChunkTypeText               DifyToolResponseChunkType = "text"
+	ToolResponseChunkTypeFile               DifyToolResponseChunkType = "file"
+	ToolResponseChunkTypeBlob               DifyToolResponseChunkType = "blob"
+	ToolResponseChunkTypeBlobChunk          DifyToolResponseChunkType = "blob_chunk"
+	ToolResponseChunkTypeJson               DifyToolResponseChunkType = "json"
+	ToolResponseChunkTypeLink               DifyToolResponseChunkType = "link"
+	ToolResponseChunkTypeImage              DifyToolResponseChunkType = "image"
+	ToolResponseChunkTypeImageLink          DifyToolResponseChunkType = "image_link"
+	ToolResponseChunkTypeVariable           DifyToolResponseChunkType = "variable"
+	ToolResponseChunkTypeLog                DifyToolResponseChunkType = "log"
+	ToolResponseChunkTypeRetrieverResources DifyToolResponseChunkType = "retriever_resources"
+)
+
+type DifyToolResponseChunk struct {
+	Type    DifyToolResponseChunkType `json:"type" validate:"required"`
+	Message map[string]any            `json:"message" validate:"omitempty"`
+	Meta    map[string]any            `json:"meta" validate:"omitempty"`
 }
