@@ -3,7 +3,8 @@ FROM golang:1.25-alpine AS builder
 ARG VERSION=unknown
 
 # Install ca-certificates and timezone data for final stage
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata && \
+    apk add --upgrade --force-refresh busybox 
 
 # Set working directory
 WORKDIR /app
@@ -27,7 +28,8 @@ RUN CGO_ENABLED=0 go build \
 FROM alpine:3.20
 
 # Install ca-certificates for SSL/TLS
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata && \
+    apk add --upgrade --force-refresh busybox
 
 # Create non-root user with specific UID/GID for consistency
 RUN addgroup -g 1000 appgroup && \
