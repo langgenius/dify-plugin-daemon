@@ -76,7 +76,7 @@ func ListReadme(pluginPath string) {
 	fmt.Fprintln(w, "-------------\t--------\t---------")
 
 	// Print each available README
-	for code, _ := range availableReadmes {
+	for code := range availableReadmes {
 		languageName := GetLanguageName(code)
 		fmt.Fprintf(w, "%s\t%s\t✅\n", code, languageName)
 	}

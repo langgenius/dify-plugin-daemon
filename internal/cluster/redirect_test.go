@@ -5,15 +5,35 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
+	"github.com/stretchr/testify/assert"
 )
+
+// Helper function to create test requests
+func createTestRequest(url string) *http.Request {
+	req, _ := http.NewRequest("GET", url, nil)
+	return req
+}
+
+// MockCluster extends Cluster for testing
+type MockCluster struct {
+	*Cluster
+	id   string
+	port uint16
+}
+
+func (m *MockCluster) ID() string {
+	return m.id
+}
 
 type SimulationCheckServer struct {
 	http.Server
@@ -282,5 +302,186 @@ func TestRedirectTrafficWithPathStyle(t *testing.T) {
 
 	if string(content) != payload {
 		t.Fatal("content is not correct")
+	}
+}
+
+// Tests for localhost redirection using the generic constructor
+func TestConstructRedirectUrlLocalhost(t *testing.T) {
+	tests := []struct {
+		name     string
+		port     uint16
+		request  *http.Request
+		expected string
+	}{
+		{
+			name:     "basic localhost URL",
+			port:     5002,
+			request:  createTestRequest("/plugin/test"),
+			expected: "http://localhost:5002/plugin/test",
+		},
+		{
+			name:     "localhost URL with query parameters",
+			port:     8080,
+			request:  createTestRequest("/api/v1/endpoint?param1=value1&param2=value2"),
+			expected: "http://localhost:8080/api/v1/endpoint?param1=value1&param2=value2",
+		},
+		{
+			name:     "localhost URL with complex path",
+			port:     3000,
+			request:  createTestRequest("/plugin/a5df51ca-fba9-4170-8369-4ae0eff4f543/dispatch/model/schema"),
+			expected: "http://localhost:3000/plugin/a5df51ca-fba9-4170-8369-4ae0eff4f543/dispatch/model/schema",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			addr := address{Ip: "localhost", Port: tt.port}
+			result := constructRedirectUrl(addr, tt.request)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestRedirectRequestToLocalhostUsingGeneric(t *testing.T) {
+	// Create a test server to simulate the local endpoint
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("local response"))
+	}))
+	defer testServer.Close()
+
+	// Test with a request that will fail (no server on localhost:5002)
+	req := httptest.NewRequest("GET", "/test", nil)
+	statusCode, header, body, err := redirectRequestToIp(address{Ip: "localhost", Port: 5002}, req)
+
+	// Should fail since there's no actual server on localhost:5002
+	assert.Error(t, err)
+	assert.Equal(t, 0, statusCode)
+	assert.Nil(t, header)
+	assert.Nil(t, body)
+}
+
+func TestRedirectRequestToLocalhostWithActualServerUsingGeneric(t *testing.T) {
+	// Create a test server on localhost
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/test", r.URL.Path)
+		assert.Equal(t, "GET", r.Method)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("success"))
+	}))
+	defer testServer.Close()
+
+	// Extract the port from the test server URL
+	parts := strings.Split(testServer.URL, ":")
+	port := parts[len(parts)-1]
+	portNum := uint16(0)
+	fmt.Sscanf(port, "%d", &portNum)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/test", nil)
+
+	// This should work since we have an actual server
+	statusCode, header, body, err := redirectRequestToIp(address{Ip: "localhost", Port: portNum}, req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.NotNil(t, header)
+	assert.NotNil(t, body)
+
+	// Read response body
+	content, err := io.ReadAll(body)
+	assert.NoError(t, err)
+	assert.Equal(t, "success", string(content))
+
+	// Close body
+	body.Close()
+}
+
+func BenchmarkConstructRedirectUrlLocalhost(b *testing.B) {
+	req := httptest.NewRequest("GET", "/plugin/test?param=value", nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		constructRedirectUrl(address{Ip: "localhost", Port: 5002}, req)
+	}
+}
+
+func TestClusterRedirectRequestToCurrentNode(t *testing.T) {
+	// Create a mock cluster
+	config := &app.Config{
+		ServerPort: 5002,
+	}
+
+	cluster := &MockCluster{
+		Cluster: NewCluster(config),
+		id:      "test-node-id",
+		port:    5002,
+	}
+
+	// Test redirect to current node (should use localhost)
+	req := httptest.NewRequest("GET", "/plugin/test", nil)
+	statusCode, header, body, err := cluster.RedirectRequest("test-node-id", req)
+
+	// Should fail since no actual server on localhost:5002, but should attempt localhost
+	assert.Error(t, err)
+	assert.Equal(t, 0, statusCode)
+	assert.Nil(t, header)
+	assert.Nil(t, body)
+}
+
+func TestClusterRedirectRequestToUnknownNode(t *testing.T) {
+	// Create a mock cluster
+	config := &app.Config{
+		ServerPort: 5002,
+	}
+
+	cluster := &MockCluster{
+		Cluster: NewCluster(config),
+		id:      "test-node-id",
+		port:    5002,
+	}
+
+	// Test redirect to unknown node
+	req := httptest.NewRequest("GET", "/plugin/test", nil)
+	statusCode, header, body, err := cluster.RedirectRequest("unknown-node-id", req)
+
+	// Should fail with "node not found" error
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "node not found")
+	assert.Equal(t, 0, statusCode)
+	assert.Nil(t, header)
+	assert.Nil(t, body)
+}
+
+func TestRedirectRequestWithTimeout(t *testing.T) {
+	// Test that redirect requests have proper timeout
+	ip := address{
+		Ip:   "192.168.255.254", // Non-routable IP
+		Port: 5002,
+	}
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	start := time.Now()
+
+	statusCode, header, body, err := redirectRequestToIp(ip, req)
+
+	elapsed := time.Since(start)
+
+	// Should fail quickly due to timeout
+	assert.Error(t, err)
+	assert.Equal(t, 0, statusCode)
+	assert.Nil(t, header)
+	assert.Nil(t, body)
+	assert.Less(t, elapsed, 15*time.Second) // Should timeout within 10 seconds + some buffer
+}
+
+// Benchmark tests
+func BenchmarkConstructRedirectUrl(b *testing.B) {
+	ip := address{Ip: "192.168.1.100", Port: 5002}
+	req := httptest.NewRequest("GET", "/plugin/test?param=value", nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		constructRedirectUrl(ip, req)
 	}
 }

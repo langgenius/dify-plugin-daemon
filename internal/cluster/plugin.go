@@ -49,7 +49,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	// do plugin state update immediately
 	err = c.doPluginStateUpdate(l)
 	if err != nil {
-return errors.Join(err, errors.New("failed to update plugin state"))
+		return errors.Join(err, errors.New("failed to update plugin state"))
 	}
 
 	if c.showLog {
