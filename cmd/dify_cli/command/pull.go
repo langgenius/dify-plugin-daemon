@@ -23,11 +23,6 @@ var PullCmd = &cobra.Command{
 	Run:   runPull,
 }
 
-type pullRequest struct {
-	TenantID string `json:"tenant_id"`
-	UserID   string `json:"user_id"`
-}
-
 type toolParameter struct {
 	Name             string                            `json:"name"`
 	Type             plugin_entities.ToolParameterType `json:"type"`
@@ -98,29 +93,21 @@ func loadEnvConfig() types.EnvConfig {
 	}
 
 	innerAPIURL := os.Getenv("DIFY_INNER_API_URL")
-	innerAPIKey := os.Getenv("DIFY_INNER_API_KEY")
-	tenantID := os.Getenv("DIFY_TENANT_ID")
-	userID := os.Getenv("DIFY_USER_ID")
+	innerAPISessionID := os.Getenv("DIFY_INNER_API_SESSION_ID")
 
-	if innerAPIURL == "" || innerAPIKey == "" {
-		fmt.Fprintln(os.Stderr, "Error: DIFY_INNER_API_URL and DIFY_INNER_API_KEY environment variables are required")
+	if innerAPIURL == "" || innerAPISessionID == "" {
+		fmt.Fprintln(os.Stderr, "Error: DIFY_INNER_API_URL and DIFY_INNER_API_SESSION_ID environment variables are required")
 		fmt.Fprintln(os.Stderr, "Or create a .dify_cli.json config file first")
 		os.Exit(1)
 	}
 
 	return types.EnvConfig{
-		InnerAPIURL: innerAPIURL,
-		InnerAPIKey: innerAPIKey,
-		TenantID:    tenantID,
-		UserID:      userID,
+		InnerAPIURL:       innerAPIURL,
+		InnerAPISessionID: innerAPISessionID,
 	}
 }
 
 func fetchProviders(envCfg types.EnvConfig) ([]providerEntity, error) {
-	reqBody := pullRequest{
-		TenantID: envCfg.TenantID,
-		UserID:   envCfg.UserID,
-	}
 
 	url := strings.TrimSuffix(envCfg.InnerAPIURL, "/") + "/inner/api/fetch/tools/list"
 
@@ -133,10 +120,9 @@ func fetchProviders(envCfg types.EnvConfig) ([]providerEntity, error) {
 		url,
 		"POST",
 		http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Key": envCfg.InnerAPIKey,
-			"Content-Type":    "application/json",
+			"X-Inner-Api-Session-Id": envCfg.InnerAPISessionID,
+			"Content-Type":           "application/json",
 		}),
-		http_requests.HttpPayloadJson(reqBody),
 		http_requests.HttpWriteTimeout(5000),
 		http_requests.HttpReadTimeout(120000),
 	)

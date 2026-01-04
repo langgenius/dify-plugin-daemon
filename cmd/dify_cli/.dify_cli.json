@@ -2,9 +2,7 @@
   "env": {
     "files_url": "http://localhost:5001",
     "inner_api_url": "http://localhost:5001",
-    "inner_api_key": "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1",
-    "tenant_id": "eef47942-5b50-4523-8381-e368adacc926",
-    "user_id": "f689825a-5e24-4324-8540-7296d907ad9b"
+    "inner_api_session_id": "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
   },
   "tools": []
 }

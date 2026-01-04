@@ -110,9 +110,7 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 
 	reqBody := dify_invocation.InvokeToolRequest{
 		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
-			TenantId: cfg.Env.TenantID,
-			UserId:   cfg.Env.UserID,
-			Type:     dify_invocation.INVOKE_TYPE_TOOL,
+			Type: dify_invocation.INVOKE_TYPE_TOOL,
 		},
 		ToolType: tool.ProviderType,
 		InvokeToolSchema: requests.InvokeToolSchema{
@@ -135,7 +133,7 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 		url,
 		"POST",
 		http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Key": cfg.Env.InnerAPIKey,
+			"X-Inner-Api-Session-Id": cfg.Env.InnerAPISessionID,
 		}),
 		http_requests.HttpPayloadJson(reqBody),
 		http_requests.HttpWriteTimeout(5000),

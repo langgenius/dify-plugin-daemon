@@ -6,11 +6,9 @@ import (
 )
 
 type EnvConfig struct {
-	FilesURL    string `json:"files_url" validate:"required"`
-	InnerAPIURL string `json:"inner_api_url" validate:"required"`
-	InnerAPIKey string `json:"inner_api_key" validate:"required"`
-	TenantID    string `json:"tenant_id"`
-	UserID      string `json:"user_id"`
+	FilesURL          string `json:"files_url" validate:"required"`
+	InnerAPIURL       string `json:"inner_api_url" validate:"required"`
+	InnerAPISessionID string `json:"inner_api_session_id" validate:"required"`
 }
 
 type DifyToolIdentity struct {
