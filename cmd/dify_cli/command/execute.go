@@ -11,9 +11,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	toolhandler "github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/tool"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/spf13/cobra"
@@ -82,11 +79,11 @@ func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]an
 		for _, p := range tool.Parameters {
 			if p.Name == name {
 				switch p.Type {
-				case plugin_entities.TOOL_PARAMETER_TYPE_NUMBER:
+				case types.ToolParameterTypeNumber:
 					var num float64
 					fmt.Sscanf(value, "%f", &num)
 					params[name] = num
-				case plugin_entities.TOOL_PARAMETER_TYPE_BOOLEAN:
+				case types.ToolParameterTypeBoolean:
 					params[name] = value == "true" || value == "1"
 				default:
 					params[name] = value
@@ -108,16 +105,12 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 		toolhandler.SetFilesURL(cfg.Env.FilesURL)
 	}
 
-	reqBody := dify_invocation.InvokeToolRequest{
-		BaseInvokeDifyRequest: dify_invocation.BaseInvokeDifyRequest{
-			Type: dify_invocation.INVOKE_TYPE_TOOL,
-		},
-		ToolType: tool.ProviderType,
-		InvokeToolSchema: requests.InvokeToolSchema{
-			Provider:       tool.Identity.Provider,
-			Tool:           tool.Identity.Name,
-			ToolParameters: params,
-		},
+	reqBody := types.InvokeToolRequest{
+		Type:           types.INVOKE_TYPE_TOOL,
+		ToolType:       tool.ProviderType,
+		Provider:       tool.Identity.Provider,
+		Tool:           tool.Identity.Name,
+		ToolParameters: params,
 		CredentialId:   tool.CredentialId,
 		CredentialType: tool.CredentialType,
 	}

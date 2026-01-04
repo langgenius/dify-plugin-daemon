@@ -10,8 +10,6 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/spf13/cobra"
 )
@@ -24,21 +22,22 @@ var PullCmd = &cobra.Command{
 }
 
 type toolParameter struct {
-	Name             string                            `json:"name"`
-	Type             plugin_entities.ToolParameterType `json:"type"`
-	Label            plugin_entities.I18nObject        `json:"label"`
-	Required         bool                              `json:"required"`
-	Default          any                               `json:"default"`
-	Options          []plugin_entities.ParameterOption `json:"options"`
-	HumanDescription plugin_entities.I18nObject        `json:"human_description"`
+	Name             string                  `json:"name"`
+	Type             types.ToolParameterType `json:"type"`
+	Label            types.I18nObject        `json:"label"`
+	Required         bool                    `json:"required"`
+	Default          any                     `json:"default"`
+	Options          []types.ParameterOption `json:"options"`
+	HumanDescription types.I18nObject        `json:"human_description"`
+	LLMDescription   string                  `json:"llm_description"`
 }
 
 type toolEntity struct {
-	Author      string                     `json:"author"`
-	Name        string                     `json:"name"`
-	Label       plugin_entities.I18nObject `json:"label"`
-	Description plugin_entities.I18nObject `json:"description"`
-	Parameters  []toolParameter            `json:"parameters"`
+	Author      string           `json:"author"`
+	Name        string           `json:"name"`
+	Label       types.I18nObject `json:"label"`
+	Description types.I18nObject `json:"description"`
+	Parameters  []toolParameter  `json:"parameters"`
 }
 
 type providerEntity struct {
@@ -108,7 +107,6 @@ func loadEnvConfig() types.EnvConfig {
 }
 
 func fetchProviders(envCfg types.EnvConfig) ([]providerEntity, error) {
-
 	url := strings.TrimSuffix(envCfg.InnerAPIURL, "/") + "/inner/api/fetch/tools/list"
 
 	client := &http.Client{
@@ -158,9 +156,9 @@ func convertProvidersToTools(providers []providerEntity) []types.DifyToolDeclara
 		providerType := mapProviderType(provider.Type)
 
 		for _, tool := range provider.Tools {
-			params := make([]plugin_entities.ToolParameter, 0, len(tool.Parameters))
+			params := make([]types.ToolParameter, 0, len(tool.Parameters))
 			for _, p := range tool.Parameters {
-				params = append(params, plugin_entities.ToolParameter{
+				params = append(params, types.ToolParameter{
 					Name:             p.Name,
 					Type:             p.Type,
 					Label:            p.Label,
@@ -168,6 +166,7 @@ func convertProvidersToTools(providers []providerEntity) []types.DifyToolDeclara
 					Default:          p.Default,
 					Options:          p.Options,
 					HumanDescription: p.HumanDescription,
+					LLMDescription:   p.LLMDescription,
 				})
 			}
 
@@ -179,7 +178,7 @@ func convertProvidersToTools(providers []providerEntity) []types.DifyToolDeclara
 					Label:    tool.Label,
 					Provider: provider.Name,
 				},
-				Description: plugin_entities.ToolDescription{
+				Description: types.ToolDescription{
 					Human: tool.Description,
 					LLM:   getDescriptionText(tool.Description),
 				},
@@ -195,22 +194,22 @@ func convertProvidersToTools(providers []providerEntity) []types.DifyToolDeclara
 	return tools
 }
 
-func mapProviderType(providerType string) requests.ToolType {
+func mapProviderType(providerType string) types.ToolType {
 	switch providerType {
 	case "builtin":
-		return requests.TOOL_TYPE_BUILTIN
+		return types.ToolTypeBuiltin
 	case "api":
-		return requests.TOOL_TYPE_API
+		return types.ToolTypeAPI
 	case "workflow":
-		return requests.TOOL_TYPE_WORKFLOW
+		return types.ToolTypeWorkflow
 	case "mcp":
-		return requests.TOOL_TYPE_MCP
+		return types.ToolTypeMCP
 	default:
-		return requests.TOOL_TYPE_BUILTIN
+		return types.ToolTypeBuiltin
 	}
 }
 
-func getDescriptionText(desc plugin_entities.I18nObject) string {
+func getDescriptionText(desc types.I18nObject) string {
 	if desc.EnUS != "" {
 		return desc.EnUS
 	}
