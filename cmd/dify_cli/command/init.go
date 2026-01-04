@@ -51,4 +51,5 @@ func runInit(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Fprintf(os.Stdout, "\nCreated %d symlinks, skipped %d\n", created, skipped)
+	fmt.Fprintf(os.Stdout, "\nRun this to add tools to PATH:\n  eval \"$(dify env)\"\n")
 }
