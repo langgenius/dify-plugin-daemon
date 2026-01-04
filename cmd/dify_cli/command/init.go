@@ -23,7 +23,7 @@ func runInit(cmd *cobra.Command, args []string) {
 	}
 
 	if len(cfg.Tools) == 0 {
-		fmt.Println("No tools defined in config")
+		fmt.Fprintf(os.Stderr, "No tools defined in config\n")
 		return
 	}
 
@@ -38,7 +38,7 @@ func runInit(cmd *cobra.Command, args []string) {
 	for _, tool := range cfg.Tools {
 		name := tool.Identity.Name
 		if _, err := os.Lstat(name); err == nil {
-			fmt.Printf("  [SKIP] %s (already exists)\n", name)
+			fmt.Fprintf(os.Stdout, "  [SKIP] %s (already exists)\n", name)
 			skipped++
 			continue
 		}
@@ -46,9 +46,9 @@ func runInit(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "  [FAIL] %s: %v\n", name, err)
 			continue
 		}
-		fmt.Printf("  [OK] %s\n", name)
+		fmt.Fprintf(os.Stdout, "  [OK] %s\n", name)
 		created++
 	}
 
-	fmt.Printf("\nCreated %d symlinks, skipped %d\n", created, skipped)
+	fmt.Fprintf(os.Stdout, "\nCreated %d symlinks, skipped %d\n", created, skipped)
 }
