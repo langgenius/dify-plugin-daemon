@@ -1,0 +1,23 @@
+version: 0.0.1
+type: plugin
+author: "test"
+name: "pyproject-test-plugin"
+description:
+  en_US: "Test plugin with pyproject.toml"
+label:
+  en_US: "Test Plugin pyproject"
+created_at: "2024-01-01T00:00:00.000000Z"
+icon: icon.png
+resource:
+  memory: 1048576
+plugins:
+  tools:
+    - "tools/test_tool.yaml"
+meta:
+  version: 0.0.1
+  arch:
+    - "amd64"
+  runner:
+    language: "python"
+    version: "3.10"
+    entrypoint: "main"

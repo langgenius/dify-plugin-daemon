@@ -23,16 +23,16 @@ var python011llmPatches []byte
 var python011requestReaderPatches []byte
 
 func (p *LocalPluginRuntime) patchPluginSdk(
-	requirementsPath string,
+	dependencyFilePath string,
 	pythonInterpreterPath string,
 ) error {
-	// get the version of the plugin sdk
-	requirements, err := os.ReadFile(requirementsPath)
+	// get the version of the plugin sdk from dependency file
+	dependencyContent, err := os.ReadFile(dependencyFilePath)
 	if err != nil {
-		return fmt.Errorf("failed to read requirements.txt: %s", err)
+		return fmt.Errorf("failed to read dependency file %s: %s", dependencyFilePath, err)
 	}
 
-	pluginSdkVersion, err := p.getPluginSdkVersion(string(requirements))
+	pluginSdkVersion, err := p.getPluginSdkVersion(string(dependencyContent))
 	if err != nil {
 		log.Error("failed to get the version of the plugin sdk", "error", err)
 		return nil
@@ -99,6 +99,8 @@ func (p *LocalPluginRuntime) patchPluginSdk(
 	return nil
 }
 
+// getPluginSdkVersion extracts the dify-plugin SDK version from dependency file content.
+// Works with both requirements.txt and pyproject.toml formats.
 func (p *LocalPluginRuntime) getPluginSdkVersion(requirements string) (string, error) {
 	// using regex to find the version of the plugin sdk
 	// First try to match exact version or compatible version

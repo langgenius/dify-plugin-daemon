@@ -1,0 +1,9 @@
+identity:
+  author: test
+  name: test_tool
+description:
+  human:
+    en_US: Test tool
+    zh_Hans: 测试工具
+  llm: This is a test tool
+parameters: []
