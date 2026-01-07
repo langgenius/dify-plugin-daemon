@@ -101,11 +101,11 @@ func (p *LocalPluginRuntime) patchPluginSdk(
 
 // getPluginSdkVersion extracts the dify-plugin SDK version from dependency file content.
 // Works with both requirements.txt and pyproject.toml formats.
-func (p *LocalPluginRuntime) getPluginSdkVersion(requirements string) (string, error) {
+func (p *LocalPluginRuntime) getPluginSdkVersion(dependencyFileContent string) (string, error) {
 	// using regex to find the version of the plugin sdk
 	// First try to match exact version or compatible version
 	re := regexp.MustCompile(`(?:dify[_-]plugin)(?:~=|==)([0-9.a-z]+)`)
-	matches := re.FindStringSubmatch(requirements)
+	matches := re.FindStringSubmatch(dependencyFileContent)
 	if len(matches) >= 2 {
 		return matches[1], nil
 	}
@@ -115,7 +115,7 @@ func (p *LocalPluginRuntime) getPluginSdkVersion(requirements string) (string, e
 	// Try to match version ranges with multiple constraints
 	// For example: dify-plugin>=0.1.0,<0.2.0
 	reAllConstraints := regexp.MustCompile(`(?:dify[_-]plugin)([><]=?|==)([0-9.a-z]+)(?:,([><]=?|==)([0-9.a-z]+))?`)
-	allMatches := reAllConstraints.FindAllStringSubmatch(requirements, -1)
+	allMatches := reAllConstraints.FindAllStringSubmatch(dependencyFileContent, -1)
 
 	if len(allMatches) > 0 {
 		// Always return the highest version among all constraints
