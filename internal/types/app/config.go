@@ -320,11 +320,12 @@ func (c *Config) RedisTLSConfig() (*tls.Config, error) {
 		// Accept the connection whether or not a certificate is provided
 		// This is truly "optional" - we verify if a cert is provided, but don't require it
 		tlsConf.InsecureSkipVerify = true
+		rootCAs := tlsConf.RootCAs // Capture only RootCAs to avoid reference cycle
 		tlsConf.VerifyConnection = func(cs tls.ConnectionState) error {
 			// If the server provides certificates, verify them
 			if len(cs.PeerCertificates) > 0 {
 				opts := x509.VerifyOptions{
-					Roots:         tlsConf.RootCAs,
+					Roots:         rootCAs,
 					Intermediates: x509.NewCertPool(),
 				}
 				for _, cert := range cs.PeerCertificates[1:] {

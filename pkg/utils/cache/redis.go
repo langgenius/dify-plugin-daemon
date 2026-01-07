@@ -29,12 +29,8 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsCo
 		DB:       db,
 	}
 	if useSsl {
-		// Use provided TLS config (encodes CERT_NONE / REQUIRED policy). If nil, default to system roots.
-		if tlsConf != nil {
-			opts.TLSConfig = tlsConf
-		} else {
-			opts.TLSConfig = &tls.Config{}
-		}
+		// The provided tlsConf is guaranteed to be non-nil when useSsl is true.
+		opts.TLSConfig = tlsConf
 	}
 	return opts
 }
@@ -69,12 +65,8 @@ func InitRedisSentinelClient(
 	}
 
 	if useSsl {
-		// go-redis v9 uses TLSConfig for both Sentinel discovery and data connections
-		if tlsConf != nil {
-			opts.TLSConfig = tlsConf
-		} else {
-			opts.TLSConfig = &tls.Config{}
-		}
+		// The provided tlsConf is guaranteed to be non-nil when useSsl is true.
+		opts.TLSConfig = tlsConf
 	}
 
 	if socketTimeout > 0 {
