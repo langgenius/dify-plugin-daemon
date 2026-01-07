@@ -316,41 +316,11 @@ func (c *Config) RedisTLSConfig() (*tls.Config, error) {
 	case "CERT_NONE":
 		// Skip all certificate verification (insecure)
 		tlsConf.InsecureSkipVerify = true
-	case "CERT_OPTIONAL":
-		// Certificate is optional: if provided, it must be valid; if not provided, accept the connection
-		// Keep InsecureSkipVerify = false to perform proper TLS handshake
-		// Use VerifyPeerCertificate to handle the optionality
-		rootCAs := tlsConf.RootCAs // Capture only RootCAs to avoid reference cycle
-		tlsConf.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			// If no certificates are provided, accept the connection (optional)
-			if len(rawCerts) == 0 {
-				return nil
-			}
-
-			// If certificates are provided, they must be valid
-			// Parse the certificates
-			certs := make([]*x509.Certificate, len(rawCerts))
-			for i, asn1Data := range rawCerts {
-				cert, err := x509.ParseCertificate(asn1Data)
-				if err != nil {
-					return fmt.Errorf("failed to parse certificate: %w", err)
-				}
-				certs[i] = cert
-			}
-
-			// Verify the certificate chain
-			opts := x509.VerifyOptions{
-				Roots:         rootCAs,
-				Intermediates: x509.NewCertPool(),
-			}
-			for _, cert := range certs[1:] {
-				opts.Intermediates.AddCert(cert)
-			}
-			_, err := certs[0].Verify(opts)
-			return err
-		}
-	case "CERT_REQUIRED", "":
+	case "CERT_OPTIONAL", "CERT_REQUIRED", "":
 		// Require valid certificate verification (default and most secure)
+		// CERT_OPTIONAL is treated as CERT_REQUIRED for client-side TLS,
+		// as servers almost always present certificates and the client's
+		// choice is whether to validate them or not
 		tlsConf.InsecureSkipVerify = false
 	default:
 		// Invalid value - return an error instead of silently defaulting
