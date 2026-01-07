@@ -317,24 +317,37 @@ func (c *Config) RedisTLSConfig() (*tls.Config, error) {
 		// Skip all certificate verification (insecure)
 		tlsConf.InsecureSkipVerify = true
 	case "CERT_OPTIONAL":
-		// Accept the connection whether or not a certificate is provided
-		// This is truly "optional" - we verify if a cert is provided, but don't require it
-		tlsConf.InsecureSkipVerify = true
+		// Certificate is optional: if provided, it must be valid; if not provided, accept the connection
+		// Keep InsecureSkipVerify = false to perform proper TLS handshake
+		// Use VerifyPeerCertificate to handle the optionality
 		rootCAs := tlsConf.RootCAs // Capture only RootCAs to avoid reference cycle
-		tlsConf.VerifyConnection = func(cs tls.ConnectionState) error {
-			// If the server provides certificates, verify them
-			if len(cs.PeerCertificates) > 0 {
-				opts := x509.VerifyOptions{
-					Roots:         rootCAs,
-					Intermediates: x509.NewCertPool(),
-				}
-				for _, cert := range cs.PeerCertificates[1:] {
-					opts.Intermediates.AddCert(cert)
-				}
-				_, err := cs.PeerCertificates[0].Verify(opts)
-				return err
+		tlsConf.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			// If no certificates are provided, accept the connection (optional)
+			if len(rawCerts) == 0 {
+				return nil
 			}
-			return nil
+
+			// If certificates are provided, they must be valid
+			// Parse the certificates
+			certs := make([]*x509.Certificate, len(rawCerts))
+			for i, asn1Data := range rawCerts {
+				cert, err := x509.ParseCertificate(asn1Data)
+				if err != nil {
+					return fmt.Errorf("failed to parse certificate: %w", err)
+				}
+				certs[i] = cert
+			}
+
+			// Verify the certificate chain
+			opts := x509.VerifyOptions{
+				Roots:         rootCAs,
+				Intermediates: x509.NewCertPool(),
+			}
+			for _, cert := range certs[1:] {
+				opts.Intermediates.AddCert(cert)
+			}
+			_, err := certs[0].Verify(opts)
+			return err
 		}
 	case "CERT_REQUIRED", "":
 		// Require valid certificate verification (default and most secure)
