@@ -99,12 +99,15 @@ func (p *LocalPluginRuntime) installDependencies(
 	defer cancel()
 
 	var args []string
-	if dependencyFileType == pyprojectTomlFile {
+	switch dependencyFileType {
+	case pyprojectTomlFile:
 		args = p.prepareSyncArgs()
 		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv sync", "file", pyprojectTomlFile)
-	} else {
+	case requirementsTxtFile:
 		args = p.preparePipArgs()
 		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv pip install", "file", requirementsTxtFile)
+	default:
+		return fmt.Errorf("unsupported dependency file type: %s", dependencyFileType)
 	}
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
