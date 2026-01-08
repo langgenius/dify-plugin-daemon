@@ -57,13 +57,58 @@ func (p *LocalPluginRuntime) preparePipArgs() []string {
 	return args
 }
 
+func (p *LocalPluginRuntime) prepareSyncArgs() []string {
+	args := []string{"sync", "--no-dev"}
+
+	if p.appConfig.PipMirrorUrl != "" {
+		args = append(args, "-i", p.appConfig.PipMirrorUrl)
+	}
+
+	if p.appConfig.PipVerbose {
+		args = append(args, "-v")
+	}
+
+	if p.appConfig.PipExtraArgs != "" {
+		extraArgs := strings.Split(p.appConfig.PipExtraArgs, " ")
+		args = append(args, extraArgs...)
+	}
+
+	return args
+}
+
+func (p *LocalPluginRuntime) detectDependencyFileType() (PythonDependencyFileType, error) {
+	pyprojectPath := path.Join(p.State.WorkingPath, string(pyprojectTomlFile))
+	requirementsPath := path.Join(p.State.WorkingPath, string(requirementsTxtFile))
+
+	if _, err := os.Stat(pyprojectPath); err == nil {
+		return pyprojectTomlFile, nil
+	}
+
+	if _, err := os.Stat(requirementsPath); err == nil {
+		return requirementsTxtFile, nil
+	}
+
+	return "", fmt.Errorf("neither %s nor %s found in plugin directory", pyprojectTomlFile, requirementsTxtFile)
+}
+
 func (p *LocalPluginRuntime) installDependencies(
 	uvPath string,
+	dependencyFileType PythonDependencyFileType,
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	args := p.preparePipArgs()
+	var args []string
+	switch dependencyFileType {
+	case pyprojectTomlFile:
+		args = p.prepareSyncArgs()
+		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv sync", "file", pyprojectTomlFile)
+	case requirementsTxtFile:
+		args = p.preparePipArgs()
+		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv pip install", "file", requirementsTxtFile)
+	default:
+		return fmt.Errorf("unsupported dependency file type: %s", dependencyFileType)
+	}
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
 	cmd := exec.CommandContext(ctx, uvPath, args...)
@@ -193,6 +238,13 @@ var (
 	ErrVirtualEnvironmentInvalid  = errors.New("virtual environment is invalid")
 )
 
+type PythonDependencyFileType string
+
+const (
+	pyprojectTomlFile   PythonDependencyFileType = "pyproject.toml"
+	requirementsTxtFile PythonDependencyFileType = "requirements.txt"
+)
+
 const (
 	envPath          = ".venv"
 	envPythonPath    = envPath + "/bin/python"
@@ -253,11 +305,13 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 		return nil, fmt.Errorf("failed to find python: %s", err)
 	}
 
-	// try find requirements.txt
-	requirementsPath := path.Join(p.State.WorkingPath, "requirements.txt")
-	if _, err := os.Stat(requirementsPath); err != nil {
-		return nil, fmt.Errorf("failed to find requirements.txt: %s", err)
+	// try find pyproject.toml or requirements.txt
+	dependencyFileType, err := p.detectDependencyFileType()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find dependency file: %s", err)
 	}
+
+	log.Info("detected dependency file", "plugin", p.Config.Identity(), "file", dependencyFileType)
 
 	return &PythonVirtualEnvironment{
 		pythonInterpreterPath: pythonPath,
@@ -265,7 +319,15 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 }
 
 func (p *LocalPluginRuntime) getRequirementsPath() string {
-	return path.Join(p.State.WorkingPath, "requirements.txt")
+	return path.Join(p.State.WorkingPath, string(requirementsTxtFile))
+}
+
+func (p *LocalPluginRuntime) getDependencyFilePath() (string, error) {
+	dependencyFileType, err := p.detectDependencyFileType()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(p.State.WorkingPath, string(dependencyFileType)), nil
 }
 
 func (p *LocalPluginRuntime) markVirtualEnvironmentAsValid() error {

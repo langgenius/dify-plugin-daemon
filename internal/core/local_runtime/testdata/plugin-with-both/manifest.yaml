@@ -1,0 +1,26 @@
+version: 0.0.1
+type: plugin
+author: test
+name: both-files-test-plugin
+label:
+  en_US: Test Plugin both
+description:
+  en_US: Test plugin with both pyproject.toml and requirements.txt
+created_at: "2024-01-01T00:00:00.000000Z"
+icon: icon.svg
+resource:
+  memory: 1048576
+  permission:
+    tool:
+      enabled: true
+plugins:
+  tools:
+    - provider/test_provider.yaml
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
