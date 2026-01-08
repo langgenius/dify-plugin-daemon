@@ -1,5 +1,6 @@
-from dify_plugin import Tool
+from dify_plugin import Plugin, DifyPluginEnv
 
-class TestTool(Tool):
-    def _invoke(self, tool_parameters: dict) -> str:
-        return "test result"
+plugin = Plugin(DifyPluginEnv())
+
+if __name__ == "__main__":
+    plugin.run()
