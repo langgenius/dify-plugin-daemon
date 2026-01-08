@@ -26,7 +26,7 @@ func TestDetectDependencyFileType(t *testing.T) {
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.NoError(t, err)
-		require.Equal(t, "pyproject.toml", fileType)
+		require.Equal(t, pyprojectTomlFile, fileType)
 	})
 
 	t.Run("requirements.txt exists only", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestDetectDependencyFileType(t *testing.T) {
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.NoError(t, err)
-		require.Equal(t, "requirements.txt", fileType)
+		require.Equal(t, requirementsTxtFile, fileType)
 	})
 
 	t.Run("both files exist - pyproject.toml takes priority", func(t *testing.T) {
@@ -64,7 +64,7 @@ func TestDetectDependencyFileType(t *testing.T) {
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.NoError(t, err)
-		require.Equal(t, "pyproject.toml", fileType)
+		require.Equal(t, pyprojectTomlFile, fileType)
 	})
 
 	t.Run("neither file exists", func(t *testing.T) {

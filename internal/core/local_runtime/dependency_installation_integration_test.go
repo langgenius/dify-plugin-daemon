@@ -28,28 +28,28 @@ func TestInitPythonEnvironmentWithPyprojectToml(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		pluginDir             string
-		expectedDependency    string
+		expectedDependency    PythonDependencyFileType
 		shouldPreferPyproject bool
 		shouldFail            bool
 	}{
 		{
 			name:                  "plugin with pyproject.toml only",
 			pluginDir:             "plugin-with-pyproject",
-			expectedDependency:    "pyproject.toml",
+			expectedDependency:    pyprojectTomlFile,
 			shouldPreferPyproject: true,
 			shouldFail:            false,
 		},
 		{
 			name:                  "plugin with requirements.txt only",
 			pluginDir:             "plugin-with-requirements",
-			expectedDependency:    "requirements.txt",
+			expectedDependency:    requirementsTxtFile,
 			shouldPreferPyproject: false,
 			shouldFail:            false,
 		},
 		{
 			name:                  "plugin with both files - pyproject.toml takes priority",
 			pluginDir:             "plugin-with-both",
-			expectedDependency:    "pyproject.toml",
+			expectedDependency:    pyprojectTomlFile,
 			shouldPreferPyproject: true,
 			shouldFail:            false,
 		},

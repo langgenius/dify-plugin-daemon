@@ -76,9 +76,9 @@ func (p *LocalPluginRuntime) prepareSyncArgs() []string {
 	return args
 }
 
-func (p *LocalPluginRuntime) detectDependencyFileType() (string, error) {
-	pyprojectPath := path.Join(p.State.WorkingPath, pyprojectTomlFile)
-	requirementsPath := path.Join(p.State.WorkingPath, requirementsTxtFile)
+func (p *LocalPluginRuntime) detectDependencyFileType() (PythonDependencyFileType, error) {
+	pyprojectPath := path.Join(p.State.WorkingPath, string(pyprojectTomlFile))
+	requirementsPath := path.Join(p.State.WorkingPath, string(requirementsTxtFile))
 
 	if _, err := os.Stat(pyprojectPath); err == nil {
 		return pyprojectTomlFile, nil
@@ -93,7 +93,7 @@ func (p *LocalPluginRuntime) detectDependencyFileType() (string, error) {
 
 func (p *LocalPluginRuntime) installDependencies(
 	uvPath string,
-	dependencyFileType string,
+	dependencyFileType PythonDependencyFileType,
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
@@ -238,12 +238,17 @@ var (
 	ErrVirtualEnvironmentInvalid  = errors.New("virtual environment is invalid")
 )
 
+type PythonDependencyFileType string
+
 const (
-	envPath             = ".venv"
-	envPythonPath       = envPath + "/bin/python"
-	envValidFlagFile    = envPath + "/dify/plugin.json"
-	pyprojectTomlFile   = "pyproject.toml"
-	requirementsTxtFile = "requirements.txt"
+	pyprojectTomlFile   PythonDependencyFileType = "pyproject.toml"
+	requirementsTxtFile PythonDependencyFileType = "requirements.txt"
+)
+
+const (
+	envPath          = ".venv"
+	envPythonPath    = envPath + "/bin/python"
+	envValidFlagFile = envPath + "/dify/plugin.json"
 )
 
 func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvironment, error) {
@@ -314,7 +319,7 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 }
 
 func (p *LocalPluginRuntime) getRequirementsPath() string {
-	return path.Join(p.State.WorkingPath, requirementsTxtFile)
+	return path.Join(p.State.WorkingPath, string(requirementsTxtFile))
 }
 
 func (p *LocalPluginRuntime) getDependencyFilePath() (string, error) {
@@ -322,7 +327,7 @@ func (p *LocalPluginRuntime) getDependencyFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return path.Join(p.State.WorkingPath, dependencyFileType), nil
+	return path.Join(p.State.WorkingPath, string(dependencyFileType)), nil
 }
 
 func (p *LocalPluginRuntime) markVirtualEnvironmentAsValid() error {
