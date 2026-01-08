@@ -3,26 +3,60 @@ package local_runtime
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/stretchr/testify/require"
 )
 
+func copyTestData(t *testing.T, src, dst string) {
+	t.Helper()
+	err := filepath.Walk(src, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(src, p)
+		if err != nil {
+			return err
+		}
+		targetPath := filepath.Join(dst, relPath)
+		if info.IsDir() {
+			return os.MkdirAll(targetPath, info.Mode())
+		}
+		data, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(targetPath, data, info.Mode())
+	})
+	require.NoError(t, err)
+}
+
+func createTestRuntime(t *testing.T, pluginDir string) *LocalPluginRuntime {
+	t.Helper()
+	tempDir := t.TempDir()
+	pluginSourceDir := path.Join("testdata", pluginDir)
+
+	pluginDecoder, err := decoder.NewFSPluginDecoder(pluginSourceDir)
+	require.NoError(t, err)
+
+	appConfig := &app.Config{
+		PluginWorkingPath: tempDir,
+	}
+
+	runtime, err := ConstructPluginRuntime(appConfig, pluginDecoder)
+	require.NoError(t, err)
+
+	copyTestData(t, pluginSourceDir, runtime.State.WorkingPath)
+
+	return runtime
+}
+
 func TestDetectDependencyFileType(t *testing.T) {
 	t.Run("pyproject.toml exists only", func(t *testing.T) {
-		tempDir := t.TempDir()
-		pyprojectPath := path.Join(tempDir, "pyproject.toml")
-		require.NoError(t, os.WriteFile(pyprojectPath, []byte("[project]\n"), 0644))
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-with-pyproject")
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.NoError(t, err)
@@ -30,17 +64,7 @@ func TestDetectDependencyFileType(t *testing.T) {
 	})
 
 	t.Run("requirements.txt exists only", func(t *testing.T) {
-		tempDir := t.TempDir()
-		requirementsPath := path.Join(tempDir, "requirements.txt")
-		require.NoError(t, os.WriteFile(requirementsPath, []byte("dify-plugin==0.1.0\n"), 0644))
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-with-requirements")
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.NoError(t, err)
@@ -48,19 +72,7 @@ func TestDetectDependencyFileType(t *testing.T) {
 	})
 
 	t.Run("both files exist - pyproject.toml takes priority", func(t *testing.T) {
-		tempDir := t.TempDir()
-		pyprojectPath := path.Join(tempDir, "pyproject.toml")
-		requirementsPath := path.Join(tempDir, "requirements.txt")
-		require.NoError(t, os.WriteFile(pyprojectPath, []byte("[project]\n"), 0644))
-		require.NoError(t, os.WriteFile(requirementsPath, []byte("dify-plugin==0.1.0\n"), 0644))
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-with-both")
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.NoError(t, err)
@@ -68,15 +80,7 @@ func TestDetectDependencyFileType(t *testing.T) {
 	})
 
 	t.Run("neither file exists", func(t *testing.T) {
-		tempDir := t.TempDir()
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-without-dependencies")
 
 		fileType, err := runtime.detectDependencyFileType()
 		require.Error(t, err)
@@ -87,51 +91,23 @@ func TestDetectDependencyFileType(t *testing.T) {
 
 func TestGetDependencyFilePath(t *testing.T) {
 	t.Run("returns pyproject.toml path when it exists", func(t *testing.T) {
-		tempDir := t.TempDir()
-		pyprojectPath := path.Join(tempDir, "pyproject.toml")
-		require.NoError(t, os.WriteFile(pyprojectPath, []byte("[project]\n"), 0644))
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-with-pyproject")
 
 		filePath, err := runtime.getDependencyFilePath()
 		require.NoError(t, err)
-		require.Equal(t, pyprojectPath, filePath)
+		require.Equal(t, path.Join(runtime.State.WorkingPath, "pyproject.toml"), filePath)
 	})
 
 	t.Run("returns requirements.txt path when it exists", func(t *testing.T) {
-		tempDir := t.TempDir()
-		requirementsPath := path.Join(tempDir, "requirements.txt")
-		require.NoError(t, os.WriteFile(requirementsPath, []byte("dify-plugin==0.1.0\n"), 0644))
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-with-requirements")
 
 		filePath, err := runtime.getDependencyFilePath()
 		require.NoError(t, err)
-		require.Equal(t, requirementsPath, filePath)
+		require.Equal(t, path.Join(runtime.State.WorkingPath, "requirements.txt"), filePath)
 	})
 
 	t.Run("returns error when no dependency file exists", func(t *testing.T) {
-		tempDir := t.TempDir()
-
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: tempDir,
-				},
-			},
-		}
+		runtime := createTestRuntime(t, "plugin-without-dependencies")
 
 		filePath, err := runtime.getDependencyFilePath()
 		require.Error(t, err)
