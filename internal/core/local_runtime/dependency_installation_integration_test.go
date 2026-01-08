@@ -68,31 +68,25 @@ func TestInitPythonEnvironmentWithPyprojectToml(t *testing.T) {
 			tempDir := t.TempDir()
 			pluginSourceDir := path.Join("testdata", tc.pluginDir)
 
-			workingPath := path.Join(tempDir, "test-plugin")
-			require.NoError(t, copyDir(pluginSourceDir, workingPath))
-
-			pluginDecoder, err := decoder.NewFSPluginDecoder(workingPath)
-			require.NoError(t, err)
-			manifest, err := pluginDecoder.Manifest()
+			// Create decoder from source directory
+			pluginDecoder, err := decoder.NewFSPluginDecoder(pluginSourceDir)
 			require.NoError(t, err)
 
-			runtime := &LocalPluginRuntime{
-				PluginRuntime: plugin_entities.PluginRuntime{
-					Config: manifest,
-					State: plugin_entities.PluginRuntimeState{
-						WorkingPath: workingPath,
-					},
-				},
-				defaultPythonInterpreterPath: pythonPath,
-				uvPath:                       uvPath,
-				appConfig: &app.Config{
-					PythonInterpreterPath: pythonPath,
-					UvPath:                uvPath,
-					PythonEnvInitTimeout:  120,
-				},
+			appConfig := &app.Config{
+				PythonInterpreterPath: pythonPath,
+				UvPath:                uvPath,
+				PythonEnvInitTimeout:  120,
+				PluginWorkingPath:     tempDir,
 			}
 
-			t.Logf("Testing plugin in: %s", workingPath)
+			// Use ConstructPluginRuntime to properly initialize all fields
+			runtime, err := ConstructPluginRuntime(appConfig, pluginDecoder)
+			require.NoError(t, err)
+
+			// Copy plugin files to the computed working path
+			require.NoError(t, copyDir(pluginSourceDir, runtime.State.WorkingPath))
+
+			t.Logf("Testing plugin in: %s", runtime.State.WorkingPath)
 
 			if tc.shouldFail {
 				// Test that file detection fails
@@ -116,7 +110,7 @@ func TestInitPythonEnvironmentWithPyprojectToml(t *testing.T) {
 				err = runtime.InitPythonEnvironment()
 				require.NoError(t, err, "InitPythonEnvironment should succeed")
 
-				venvPath := path.Join(workingPath, ".venv")
+				venvPath := path.Join(runtime.State.WorkingPath, ".venv")
 				require.DirExists(t, venvPath, "Virtual environment should be created")
 
 				pythonBinPath := path.Join(venvPath, "bin", "python")
@@ -126,7 +120,7 @@ func TestInitPythonEnvironmentWithPyprojectToml(t *testing.T) {
 				require.FileExists(t, validFlagPath, "Valid flag file should exist")
 
 				cmd := exec.Command(pythonBinPath, "-c", "import dify_plugin; print('SUCCESS')")
-				cmd.Dir = workingPath
+				cmd.Dir = runtime.State.WorkingPath
 				output, err := cmd.CombinedOutput()
 				if err != nil {
 					t.Logf("Python import failed. Output: %s", string(output))
@@ -136,7 +130,7 @@ func TestInitPythonEnvironmentWithPyprojectToml(t *testing.T) {
 				t.Logf("dify_plugin imported successfully")
 
 				if tc.shouldPreferPyproject {
-					lockfilePath := path.Join(workingPath, "uv.lock")
+					lockfilePath := path.Join(runtime.State.WorkingPath, "uv.lock")
 					t.Logf("Checking for uv.lock at: %s", lockfilePath)
 					if _, err := os.Stat(lockfilePath); err == nil {
 						t.Logf("uv.lock exists (uv sync was used)")
