@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/stretchr/testify/require"
@@ -153,25 +152,24 @@ func TestInitPythonEnvironmentErrorHandling(t *testing.T) {
 
 	t.Run("fails when no dependency file exists", func(t *testing.T) {
 		tempDir := t.TempDir()
-		workingPath := path.Join(tempDir, "empty-plugin")
-		require.NoError(t, os.MkdirAll(workingPath, 0755))
+		pluginSourceDir := path.Join("testdata", "plugin-without-dependencies")
 
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: workingPath,
-				},
-			},
-			defaultPythonInterpreterPath: pythonPath,
-			uvPath:                       uvPath,
-			appConfig: &app.Config{
-				PythonInterpreterPath: pythonPath,
-				UvPath:                uvPath,
-				PythonEnvInitTimeout:  120,
-			},
+		pluginDecoder, err := decoder.NewFSPluginDecoder(pluginSourceDir)
+		require.NoError(t, err)
+
+		appConfig := &app.Config{
+			PythonInterpreterPath: pythonPath,
+			UvPath:                uvPath,
+			PythonEnvInitTimeout:  120,
+			PluginWorkingPath:     tempDir,
 		}
 
-		_, err := runtime.detectDependencyFileType()
+		runtime, err := ConstructPluginRuntime(appConfig, pluginDecoder)
+		require.NoError(t, err)
+
+		require.NoError(t, copyDir(pluginSourceDir, runtime.State.WorkingPath))
+
+		_, err = runtime.detectDependencyFileType()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "neither pyproject.toml nor requirements.txt found")
 	})
@@ -187,30 +185,22 @@ func TestCreateVirtualEnvironmentValidation(t *testing.T) {
 
 	t.Run("validates pyproject.toml exists", func(t *testing.T) {
 		tempDir := t.TempDir()
-		workingPath := path.Join(tempDir, "test-plugin")
-		require.NoError(t, os.MkdirAll(workingPath, 0755))
+		pluginSourceDir := path.Join("testdata", "plugin-with-pyproject")
 
-		pyprojectPath := path.Join(workingPath, "pyproject.toml")
-		require.NoError(t, os.WriteFile(pyprojectPath, []byte(`
-[project]
-name = "test"
-dependencies = ["dify-plugin>=0.1.0"]
-`), 0644))
+		pluginDecoder, err := decoder.NewFSPluginDecoder(pluginSourceDir)
+		require.NoError(t, err)
 
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: workingPath,
-				},
-			},
-			defaultPythonInterpreterPath: pythonPath,
-			uvPath:                       uvPath,
-			appConfig: &app.Config{
-				PythonInterpreterPath: pythonPath,
-				UvPath:                uvPath,
-				PythonEnvInitTimeout:  120,
-			},
+		appConfig := &app.Config{
+			PythonInterpreterPath: pythonPath,
+			UvPath:                uvPath,
+			PythonEnvInitTimeout:  120,
+			PluginWorkingPath:     tempDir,
 		}
+
+		runtime, err := ConstructPluginRuntime(appConfig, pluginDecoder)
+		require.NoError(t, err)
+
+		require.NoError(t, copyDir(pluginSourceDir, runtime.State.WorkingPath))
 
 		venv, err := runtime.createVirtualEnvironment(uvPath)
 		require.NoError(t, err, "Should create venv when pyproject.toml exists")
@@ -219,26 +209,22 @@ dependencies = ["dify-plugin>=0.1.0"]
 
 	t.Run("validates requirements.txt exists", func(t *testing.T) {
 		tempDir := t.TempDir()
-		workingPath := path.Join(tempDir, "test-plugin")
-		require.NoError(t, os.MkdirAll(workingPath, 0755))
+		pluginSourceDir := path.Join("testdata", "plugin-with-requirements")
 
-		requirementsPath := path.Join(workingPath, "requirements.txt")
-		require.NoError(t, os.WriteFile(requirementsPath, []byte("dify-plugin>=0.1.0\n"), 0644))
+		pluginDecoder, err := decoder.NewFSPluginDecoder(pluginSourceDir)
+		require.NoError(t, err)
 
-		runtime := &LocalPluginRuntime{
-			PluginRuntime: plugin_entities.PluginRuntime{
-				State: plugin_entities.PluginRuntimeState{
-					WorkingPath: workingPath,
-				},
-			},
-			defaultPythonInterpreterPath: pythonPath,
-			uvPath:                       uvPath,
-			appConfig: &app.Config{
-				PythonInterpreterPath: pythonPath,
-				UvPath:                uvPath,
-				PythonEnvInitTimeout:  120,
-			},
+		appConfig := &app.Config{
+			PythonInterpreterPath: pythonPath,
+			UvPath:                uvPath,
+			PythonEnvInitTimeout:  120,
+			PluginWorkingPath:     tempDir,
 		}
+
+		runtime, err := ConstructPluginRuntime(appConfig, pluginDecoder)
+		require.NoError(t, err)
+
+		require.NoError(t, copyDir(pluginSourceDir, runtime.State.WorkingPath))
 
 		venv, err := runtime.createVirtualEnvironment(uvPath)
 		require.NoError(t, err, "Should create venv when requirements.txt exists")
