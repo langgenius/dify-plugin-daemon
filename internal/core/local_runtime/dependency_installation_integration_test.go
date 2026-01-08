@@ -246,14 +246,14 @@ func findUVPath(t *testing.T) string {
 		cmd = exec.Command("python3", "-c", "from uv._find_uv import find_uv_bin; print(find_uv_bin())")
 		output, err = cmd.Output()
 		if err != nil {
-			t.Skip("UV not found. Install UV to run integration tests: https://docs.astral.sh/uv/")
+			t.Fatal("UV not found. Install UV to run integration tests: https://docs.astral.sh/uv/")
 			return ""
 		}
 	}
 
 	uvPath = strings.TrimSpace(string(output))
 	if uvPath == "" {
-		t.Skip("UV not found. Install UV to run integration tests")
+		t.Fatal("UV not found. Install UV to run integration tests: https://docs.astral.sh/uv/")
 	}
 
 	t.Logf("Found UV at: %s", uvPath)
@@ -280,7 +280,7 @@ func findPythonPath(t *testing.T) string {
 		}
 	}
 
-	t.Skip("Python 3 not found. Install Python 3.10+ to run integration tests")
+	t.Fatal("Python 3 not found. Install Python 3.10+ to run integration tests")
 	return ""
 }
 
