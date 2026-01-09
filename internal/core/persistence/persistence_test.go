@@ -14,7 +14,7 @@ import (
 )
 
 func TestPersistenceStoreAndLoad(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 }
 
 func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	assert.Nil(t, err)
 	defer cache.Close()
 	db.Init(&app.Config{
@@ -104,7 +104,7 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 }
 
 func TestPersistenceDelete(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	assert.Nil(t, err)
 	defer cache.Close()
 	db.Init(&app.Config{
@@ -151,7 +151,7 @@ func TestPersistenceDelete(t *testing.T) {
 }
 
 func TestPersistencePathTraversal(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
