@@ -42,9 +42,9 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
 
 	// fallback to lowercase proxy environment variables if uppercase is empty
-	setDefaultStringFromEnv(&config.HttpProxy, "http_proxy")
-	setDefaultStringFromEnv(&config.HttpsProxy, "https_proxy")
-	setDefaultStringFromEnv(&config.NoProxy, "no_proxy")
+	setDefaultString(&config.HttpProxy, os.Getenv("http_proxy"))
+	setDefaultString(&config.HttpsProxy, os.Getenv("https_proxy"))
+	setDefaultString(&config.NoProxy, os.Getenv("no_proxy"))
 	if config.DBType == DB_TYPE_POSTGRESQL || config.DBType == DB_TYPE_PG_BOUNCER {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
 	} else if config.DBType == DB_TYPE_MYSQL {
@@ -61,11 +61,5 @@ func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
 func setDefaultString(value *string, defaultValue string) {
 	if *value == "" {
 		*value = defaultValue
-	}
-}
-
-func setDefaultStringFromEnv(value *string, envKey string) {
-	if *value == "" {
-		*value = os.Getenv(envKey)
 	}
 }
