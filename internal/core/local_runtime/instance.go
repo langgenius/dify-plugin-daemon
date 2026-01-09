@@ -127,6 +127,36 @@ func (s *PluginInstance) Stop() {
 // Once the subprocess exists itself, STDOUT always close, which results in `CLOSE STDOUT`
 func (s *PluginInstance) StartStdout() {
 	defer func() {
+		// mark shutdown to stop monitor loop
+		s.shutdown = true
+		// best-effort kill process (and its group on supported platforms)
+		if s.cmd != nil && s.cmd.Process != nil {
+			pid := s.cmd.Process.Pid
+			pgid, getpgidErr, groupKillErr := tryKillProcessGroup(s.cmd)
+			if getpgidErr == nil {
+				if groupKillErr != nil {
+					s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+						notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to kill process group %d: %s", pgid, groupKillErr.Error()))
+					})
+				}
+			} else {
+				// fallback to single-process kill
+				s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+					notifier.OnInstanceWarningLog(s, fmt.Sprintf("failed to get pgid for pid %d: %s. fallback to killing process", pid, getpgidErr.Error()))
+				})
+				if err := killProcess(s.cmd); err != nil {
+					s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+						notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to kill process %d: %s", pid, err.Error()))
+					})
+				}
+			}
+			// reap once
+			if err := s.cmd.Wait(); err != nil {
+				s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+					notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to reap process %d: %s", pid, err.Error()))
+				})
+			}
+		}
 		// notify shutdown signal
 		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 			notifier.OnInstanceShutdown(s)
@@ -171,22 +201,7 @@ func (s *PluginInstance) StartStdout() {
 			)
 		})
 	}
-
-	// once reader of stdout is closed, kill subprocess
-	if err := s.cmd.Process.Kill(); err != nil {
-		// no need to return here, just log the error, it's perhaps the process was exited already
-		// and the kill command fails
-		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to kill subprocess: %s", err.Error()))
-		})
-	}
-
-	// collect subprocess, avoid zombie processes
-	if _, err := s.cmd.Process.Wait(); err != nil {
-		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
-			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to reap subprocess: %s", err.Error()))
-		})
-	}
+	// process kill and wait are handled in the deferred cleanup above
 }
 
 // handles stdout data and notify corresponding listeners
