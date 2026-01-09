@@ -47,30 +47,34 @@ func TestRedisTLSConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "SSL enabled with CERT_REQUIRED explicit",
+			name: "SSL enabled with CERT_REQUIRED explicit and CA cert provided",
 			config: Config{
 				RedisUseSsl:      true,
 				RedisSSLCertReqs: "CERT_REQUIRED",
 			},
+			setupCA:       true,
 			expectedTLS:   true,
 			expectedError: false,
 			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
 				assert.NotNil(t, tlsConfig)
 				assert.Equal(t, uint16(tls.VersionTLS12), tlsConfig.MinVersion)
 				assert.False(t, tlsConfig.InsecureSkipVerify)
+				assert.NotNil(t, tlsConfig.RootCAs)
 			},
 		},
 		{
-			name: "SSL enabled with CERT_REQUIRED lowercase",
+			name: "SSL enabled with CERT_REQUIRED lowercase and CA cert provided",
 			config: Config{
 				RedisUseSsl:      true,
 				RedisSSLCertReqs: "cert_required",
 			},
+			setupCA:       true,
 			expectedTLS:   true,
 			expectedError: false,
 			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
 				assert.NotNil(t, tlsConfig)
 				assert.False(t, tlsConfig.InsecureSkipVerify)
+				assert.NotNil(t, tlsConfig.RootCAs)
 			},
 		},
 		{
@@ -120,11 +124,13 @@ func TestRedisTLSConfig(t *testing.T) {
 				RedisUseSsl:      true,
 				RedisSSLCertReqs: "  CERT_REQUIRED  ",
 			},
+			setupCA:       true,
 			expectedTLS:   true,
 			expectedError: false,
 			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
 				assert.NotNil(t, tlsConfig)
 				assert.False(t, tlsConfig.InsecureSkipVerify)
+				assert.NotNil(t, tlsConfig.RootCAs)
 			},
 		},
 		{
@@ -170,17 +176,60 @@ func TestRedisTLSConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "SSL enabled with empty CA certificate path (whitespace only)",
+			name: "SSL enabled with CERT_REQUIRED but no CA certificate - should fail",
+			config: Config{
+				RedisUseSsl:      true,
+				RedisSSLCertReqs: "CERT_REQUIRED",
+				RedisSSLCACerts:  "",
+			},
+			expectedTLS:   false,
+			expectedError: true,
+			errorContains: "REDIS_SSL_CA_CERTS must be provided when REDIS_SSL_CERT_REQS is set to CERT_REQUIRED",
+			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
+				assert.Nil(t, tlsConfig)
+			},
+		},
+		{
+			name: "SSL enabled with CERT_REQUIRED and whitespace-only CA certificate - should fail",
 			config: Config{
 				RedisUseSsl:      true,
 				RedisSSLCertReqs: "CERT_REQUIRED",
 				RedisSSLCACerts:  "   ",
 			},
+			expectedTLS:   false,
+			expectedError: true,
+			errorContains: "REDIS_SSL_CA_CERTS must be provided when REDIS_SSL_CERT_REQS is set to CERT_REQUIRED",
+			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
+				assert.Nil(t, tlsConfig)
+			},
+		},
+		{
+			name: "SSL enabled with CERT_OPTIONAL and no CA certificate - should succeed (uses system CAs)",
+			config: Config{
+				RedisUseSsl:      true,
+				RedisSSLCertReqs: "CERT_OPTIONAL",
+				RedisSSLCACerts:  "",
+			},
 			expectedTLS:   true,
 			expectedError: false,
 			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
 				assert.NotNil(t, tlsConfig)
-				assert.Nil(t, tlsConfig.RootCAs)
+				assert.Nil(t, tlsConfig.RootCAs) // RootCAs is nil, will use system default
+				assert.False(t, tlsConfig.InsecureSkipVerify)
+			},
+		},
+		{
+			name: "SSL enabled with empty string (defaults to CERT_REQUIRED) and no CA certificate - should succeed (uses system CAs)",
+			config: Config{
+				RedisUseSsl:      true,
+				RedisSSLCertReqs: "",
+				RedisSSLCACerts:  "",
+			},
+			expectedTLS:   true,
+			expectedError: false,
+			validateConfig: func(t *testing.T, tlsConfig *tls.Config) {
+				assert.NotNil(t, tlsConfig)
+				assert.Nil(t, tlsConfig.RootCAs) // Empty string case allows system CAs
 				assert.False(t, tlsConfig.InsecureSkipVerify)
 			},
 		},
@@ -253,11 +302,12 @@ func TestRedisTLSConfigCombinations(t *testing.T) {
 	tests := []struct {
 		name     string
 		certReqs string
+		setupCA  bool
 	}{
-		{"CERT_NONE", "CERT_NONE"},
-		{"CERT_OPTIONAL", "CERT_OPTIONAL"},
-		{"CERT_REQUIRED", "CERT_REQUIRED"},
-		{"Empty (default)", ""},
+		{"CERT_NONE", "CERT_NONE", false},
+		{"CERT_OPTIONAL", "CERT_OPTIONAL", false},
+		{"CERT_REQUIRED", "CERT_REQUIRED", true}, // CERT_REQUIRED now requires CA cert
+		{"Empty (default)", "", false},
 	}
 
 	for _, tt := range tests {
@@ -265,6 +315,19 @@ func TestRedisTLSConfigCombinations(t *testing.T) {
 			config := Config{
 				RedisUseSsl:      true,
 				RedisSSLCertReqs: tt.certReqs,
+			}
+
+			// Setup CA certificate if needed
+			if tt.setupCA {
+				tempDir, err := os.MkdirTemp("", "redis-tls-test-*")
+				require.NoError(t, err)
+				defer os.RemoveAll(tempDir)
+
+				caFile := filepath.Join(tempDir, "ca.crt")
+				err = os.WriteFile(caFile, []byte(testCACert), 0644)
+				require.NoError(t, err)
+
+				config.RedisSSLCACerts = caFile
 			}
 
 			tlsConfig, err := config.RedisTLSConfig()
@@ -277,23 +340,39 @@ func TestRedisTLSConfigCombinations(t *testing.T) {
 }
 
 func TestRedisTLSConfigCaseInsensitivity(t *testing.T) {
-	cases := []string{
-		"CERT_NONE",
-		"cert_none",
-		"Cert_None",
-		"CERT_OPTIONAL",
-		"cert_optional",
-		"Cert_Optional",
-		"CERT_REQUIRED",
-		"cert_required",
-		"Cert_Required",
+	cases := []struct {
+		certReqs string
+		needsCA  bool
+	}{
+		{"CERT_NONE", false},
+		{"cert_none", false},
+		{"Cert_None", false},
+		{"CERT_OPTIONAL", false},
+		{"cert_optional", false},
+		{"Cert_Optional", false},
+		{"CERT_REQUIRED", true},
+		{"cert_required", true},
+		{"Cert_Required", true},
 	}
 
-	for _, certReqs := range cases {
-		t.Run(certReqs, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.certReqs, func(t *testing.T) {
 			config := Config{
 				RedisUseSsl:      true,
-				RedisSSLCertReqs: certReqs,
+				RedisSSLCertReqs: tc.certReqs,
+			}
+
+			// Setup CA certificate if needed for CERT_REQUIRED variants
+			if tc.needsCA {
+				tempDir, err := os.MkdirTemp("", "redis-tls-test-*")
+				require.NoError(t, err)
+				defer os.RemoveAll(tempDir)
+
+				caFile := filepath.Join(tempDir, "ca.crt")
+				err = os.WriteFile(caFile, []byte(testCACert), 0644)
+				require.NoError(t, err)
+
+				config.RedisSSLCACerts = caFile
 			}
 
 			tlsConfig, err := config.RedisTLSConfig()

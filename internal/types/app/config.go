@@ -322,6 +322,11 @@ func (c *Config) RedisTLSConfig() (*tls.Config, error) {
 		// as servers almost always present certificates and the client's
 		// choice is whether to validate them or not
 		tlsConf.InsecureSkipVerify = false
+
+		// Require CA certs to be explicitly provided when CERT_REQUIRED is set
+		if certReqs == "CERT_REQUIRED" && strings.TrimSpace(c.RedisSSLCACerts) == "" {
+			return nil, fmt.Errorf("REDIS_SSL_CA_CERTS must be provided when REDIS_SSL_CERT_REQS is set to CERT_REQUIRED")
+		}
 	default:
 		// Invalid value - return an error instead of silently defaulting
 		return nil, fmt.Errorf("invalid REDIS_SSL_CERT_REQS value: %s (valid options: CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED)", certReqs)
