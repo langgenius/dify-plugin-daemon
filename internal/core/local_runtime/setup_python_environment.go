@@ -277,11 +277,15 @@ func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvi
 
 func (p *LocalPluginRuntime) deleteVirtualEnvironment() error {
 	// check if virtual environment exists
-	if _, err := os.Stat(path.Join(p.State.WorkingPath, envPath)); err != nil {
-		return nil
+	venvDir := path.Join(p.State.WorkingPath, envPath)
+	if _, err := os.Stat(venvDir); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
 	}
-
-	return os.RemoveAll(path.Join(p.State.WorkingPath, envPath))
+	log.Warn("deleting existing Python virtual environment for %s at %s", p.Config.Identity(), venvDir)
+	return os.RemoveAll(venvDir)
 }
 
 func (p *LocalPluginRuntime) createVirtualEnvironment(
