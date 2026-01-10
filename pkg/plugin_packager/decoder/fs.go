@@ -125,12 +125,44 @@ func (d *FSPluginDecoder) Close() error {
 	return nil
 }
 
+func ensureUnderRoot(root, name string) (string, error) {
+	p := filepath.Join(root, filepath.FromSlash(name))
+	clean := filepath.Clean(p)
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	cleanAbs, err := filepath.Abs(clean)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(rootAbs, cleanAbs)
+	if err != nil {
+		return "", err
+	}
+	if rel == "." {
+		return cleanAbs, nil
+	}
+	if strings.HasPrefix(rel, "..") {
+		return "", os.ErrPermission
+	}
+	return cleanAbs, nil
+}
+
 func (d *FSPluginDecoder) Stat(filename string) (fs.FileInfo, error) {
-	return os.Stat(filepath.Join(d.root, filename))
+	abs, err := ensureUnderRoot(d.root, filename)
+	if err != nil {
+		return nil, err
+	}
+	return os.Stat(abs)
 }
 
 func (d *FSPluginDecoder) ReadFile(filename string) ([]byte, error) {
-	return os.ReadFile(filepath.Join(d.root, filename))
+	abs, err := ensureUnderRoot(d.root, filename)
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadFile(abs)
 }
 
 func (d *FSPluginDecoder) ReadDir(dirname string) ([]string, error) {
@@ -158,7 +190,11 @@ func (d *FSPluginDecoder) ReadDir(dirname string) ([]string, error) {
 }
 
 func (d *FSPluginDecoder) FileReader(filename string) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(d.root, filename))
+	abs, err := ensureUnderRoot(d.root, filename)
+	if err != nil {
+		return nil, err
+	}
+	return os.Open(abs)
 }
 
 func (d *FSPluginDecoder) Signature() (string, error) {
