@@ -19,6 +19,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	switch err {
 	case ErrVirtualEnvironmentInvalid:
 		// remove the venv and rebuild it
+		log.Warn("virtual environment for %s is invalid; deleting and recreating", p.Config.Identity())
 		p.deleteVirtualEnvironment()
 
 		// create virtual environment
