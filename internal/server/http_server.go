@@ -66,7 +66,7 @@ func (app *App) server(config *app.Config) func() {
 	app.pprofGroup(pprofGroup, config)
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.ServerPort),
+		Addr:    fmt.Sprintf("%s:%d", config.ServerHost, config.ServerPort),
 		Handler: engine,
 	}
 
