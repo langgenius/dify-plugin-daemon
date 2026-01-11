@@ -1,6 +1,7 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -13,8 +14,12 @@ func GenerateValidateJson(schema map[string]any) (map[string]any, error) {
 
 	result := map[string]any{}
 
-	// Get the schema type
-	schemaLoader := gojsonschema.NewGoLoader(schema)
+	// Get the schema type using an immutable bytes loader to avoid races on live maps
+	schemaBytes, err := json.Marshal(schema)
+	if err != nil {
+		return nil, err
+	}
+	schemaLoader := gojsonschema.NewBytesLoader(schemaBytes)
 	schemaDoc, err := schemaLoader.LoadJSON()
 	if err != nil {
 		return nil, err
