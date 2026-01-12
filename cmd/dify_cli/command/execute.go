@@ -155,6 +155,10 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API returned status %d with message: %s", resp.StatusCode, resp.Body)
+	}
+
 	err = parser.LengthPrefixedChunking(resp.Body, 0x0f, 1024*1024*30, func(data []byte) error {
 		chunk, err := parser.UnmarshalJsonBytes[types.DifyInnerAPIResponse[types.DifyToolResponseChunk]](data)
 		if err != nil {
