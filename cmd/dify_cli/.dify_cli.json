@@ -1,8 +1,9 @@
 {
   "env": {
     "files_url": "http://localhost:5001",
-    "inner_api_url": "http://localhost:5001",
-    "inner_api_session_id": "4aa8482c-09d9-40b7-a5b0-0301ec432740"
+    "cli_api_url": "https://difyai.ngrok.dev",
+    "cli_api_session_id": "4aa8482c-09d9-40b7-a5b0-0301ec432740",
+    "cli_api_secret": "e29816c3-2882-4139-a68a-649704305650"
   },
   "tools": []
 }

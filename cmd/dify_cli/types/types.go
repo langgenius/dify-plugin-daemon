@@ -1,9 +1,10 @@
 package types
 
 type EnvConfig struct {
-	FilesURL          string `json:"files_url" validate:"required"`
-	InnerAPIURL       string `json:"inner_api_url" validate:"required"`
-	InnerAPISessionID string `json:"inner_api_session_id" validate:"required"`
+	FilesURL        string `json:"files_url" validate:"required"`
+	CliApiURL       string `json:"cli_api_url" validate:"required"`
+	CliApiSessionID string `json:"cli_api_session_id" validate:"required"`
+	CliApiSecret    string `json:"cli_api_secret" validate:"required"`
 }
 
 type I18nObject struct {

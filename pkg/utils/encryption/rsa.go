@@ -4,10 +4,12 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"io"
@@ -102,4 +104,10 @@ func LoadPublicKey(data []byte) (*rsa.PublicKey, error) {
 	}
 
 	return publicKey, nil
+}
+
+func HmacSha256(secret string, data []byte) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write(data)
+	return hex.EncodeToString(h.Sum(nil))
 }

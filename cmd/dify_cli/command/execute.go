@@ -1,16 +1,19 @@
 package command
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	toolhandler "github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/tool"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/spf13/cobra"
@@ -100,6 +103,11 @@ func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]an
 	return params
 }
 
+func signRequest(secret string, timestamp string, body []byte) string {
+	data := append([]byte(timestamp+"."), body...)
+	return "sha256=" + encryption.HmacSha256(secret, data)
+}
+
 func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params map[string]any) error {
 	if cfg.Env.FilesURL != "" {
 		toolhandler.SetFilesURL(cfg.Env.FilesURL)
@@ -115,7 +123,15 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 		CredentialType: tool.CredentialType,
 	}
 
-	url := strings.TrimSuffix(cfg.Env.InnerAPIURL, "/") + "/inner/api/invoke/tool"
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	signature := signRequest(cfg.Env.CliApiSecret, timestamp, body)
+
+	url := strings.TrimSuffix(cfg.Env.CliApiURL, "/") + "/cli/api/invoke/tool"
 
 	client := &http.Client{
 		Timeout: 5 * time.Minute,
@@ -126,7 +142,9 @@ func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params 
 		url,
 		"POST",
 		http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Session-Id": cfg.Env.InnerAPISessionID,
+			"X-Cli-Api-Session-Id": cfg.Env.CliApiSessionID,
+			"X-Cli-Api-Timestamp":  timestamp,
+			"X-Cli-Api-Signature":  signature,
 		}),
 		http_requests.HttpPayloadJson(reqBody),
 		http_requests.HttpWriteTimeout(5000),

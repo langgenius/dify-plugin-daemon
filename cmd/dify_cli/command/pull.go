@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -91,23 +92,29 @@ func loadEnvConfig() types.EnvConfig {
 		return existingCfg.Env
 	}
 
-	innerAPIURL := os.Getenv("DIFY_INNER_API_URL")
-	innerAPISessionID := os.Getenv("DIFY_INNER_API_SESSION_ID")
+	cliApiURL := os.Getenv("DIFY_CLI_API_URL")
+	cliApiSessionID := os.Getenv("DIFY_CLI_API_SESSION_ID")
+	cliApiSecret := os.Getenv("DIFY_CLI_API_SECRET")
 
-	if innerAPIURL == "" || innerAPISessionID == "" {
-		fmt.Fprintln(os.Stderr, "Error: DIFY_INNER_API_URL and DIFY_INNER_API_SESSION_ID environment variables are required")
+	if cliApiURL == "" || cliApiSessionID == "" || cliApiSecret == "" {
+		fmt.Fprintln(os.Stderr, "Error: DIFY_CLI_API_URL, DIFY_CLI_API_SESSION_ID and DIFY_CLI_API_SECRET environment variables are required")
 		fmt.Fprintln(os.Stderr, "Or create a .dify_cli.json config file first")
 		os.Exit(1)
 	}
 
 	return types.EnvConfig{
-		InnerAPIURL:       innerAPIURL,
-		InnerAPISessionID: innerAPISessionID,
+		CliApiURL:       cliApiURL,
+		CliApiSessionID: cliApiSessionID,
+		CliApiSecret:    cliApiSecret,
 	}
 }
 
 func fetchProviders(envCfg types.EnvConfig) ([]providerEntity, error) {
-	url := strings.TrimSuffix(envCfg.InnerAPIURL, "/") + "/inner/api/fetch/tools/list"
+	url := strings.TrimSuffix(envCfg.CliApiURL, "/") + "/cli/api/fetch/tools/list"
+
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	body := []byte("{}")
+	signature := signRequest(envCfg.CliApiSecret, timestamp, body)
 
 	client := &http.Client{
 		Timeout: 2 * time.Minute,
@@ -118,9 +125,12 @@ func fetchProviders(envCfg types.EnvConfig) ([]providerEntity, error) {
 		url,
 		"POST",
 		http_requests.HttpHeader(map[string]string{
-			"X-Inner-Api-Session-Id": envCfg.InnerAPISessionID,
-			"Content-Type":           "application/json",
+			"X-Cli-Api-Session-Id": envCfg.CliApiSessionID,
+			"X-Cli-Api-Timestamp":  timestamp,
+			"X-Cli-Api-Signature":  signature,
+			"Content-Type":         "application/json",
 		}),
+		http_requests.HttpPayloadText("{}"),
 		http_requests.HttpWriteTimeout(5000),
 		http_requests.HttpReadTimeout(120000),
 	)
