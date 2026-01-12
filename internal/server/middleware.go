@@ -3,6 +3,8 @@ package server
 import (
 	"errors"
 	"io"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -13,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/metrics"
 )
 
 func CheckingKey(key string) gin.HandlerFunc {
@@ -185,5 +188,21 @@ func (app *App) AdminAPIKey(key string) gin.HandlerFunc {
 		}
 
 		ctx.Next()
+	}
+}
+
+func PrometheusMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.FullPath()
+		method := c.Request.Method
+
+		c.Next()
+
+		status := strconv.Itoa(c.Writer.Status())
+		duration := time.Since(start).Seconds()
+
+		metrics.HTTPRequestsTotal.WithLabelValues(method, path, status).Inc()
+		metrics.HTTPRequestDuration.WithLabelValues(method, path).Observe(duration)
 	}
 }
