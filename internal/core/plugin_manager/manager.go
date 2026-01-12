@@ -87,6 +87,7 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 	// mount control panel notifiers
 	manager.controlPanel.AddNotifier(&controlpanel.StandardLogger{})
 	manager.controlPanel.AddNotifier(&install_service.InstallListener{})
+	manager.controlPanel.AddNotifier(controlpanel.NewMetricsNotifier())
 
 	return manager
 }
