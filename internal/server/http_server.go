@@ -33,7 +33,9 @@ func (app *App) server(config *app.Config) func() {
 	engine.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
 	})
-	engine.Use(PrometheusMiddleware())
+	if config.PrometheusEnabled {
+		engine.Use(PrometheusMiddleware())
+	}
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
@@ -41,8 +43,10 @@ func (app *App) server(config *app.Config) func() {
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
 
-	metricsGroup := engine.Group("/metrics")
-	metricsGroup.GET("/", gin.WrapH(promhttp.Handler()))
+	if config.PrometheusEnabled {
+		metricsGroup := engine.Group("/metrics")
+		metricsGroup.GET("/", gin.WrapH(promhttp.Handler()))
+	}
 
 	if config.AdminApiEnabled {
 		if len(config.AdminApiKey) < 10 {

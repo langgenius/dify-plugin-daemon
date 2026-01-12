@@ -194,6 +194,8 @@ type Config struct {
 
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
 
+	PrometheusEnabled bool `envconfig:"PROMETHEUS_ENABLED" default:"true"`
+
 	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`
 	SentryDSN              string  `envconfig:"SENTRY_DSN"`
 	SentryAttachStacktrace bool    `envconfig:"SENTRY_ATTACH_STACKTRACE"`
