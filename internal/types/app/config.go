@@ -68,7 +68,7 @@ type Config struct {
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
 	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
 	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
-	HuaweiOBSPathStyle  bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
+	HuaweiOBSPathStyle bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
@@ -213,6 +213,12 @@ type Config struct {
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
 	// dify invocation read timeout in milliseconds
 	DifyInvocationReadTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_READ_TIMEOUT" default:"240000"`
+
+	// zero-downtime upgrade configuration
+	EnableZeroDowntimeUpgrade bool `envconfig:"ENABLE_ZERO_DOWNTIME_UPGRADE" default:"true"`
+	HealthCheckMaxWaitTime    int  `envconfig:"HEALTH_CHECK_MAX_WAIT_TIME" default:"300"`
+	HealthCheckInterval       int  `envconfig:"HEALTH_CHECK_INTERVAL" default:"5"`
+	HealthCheckSuccessCount   int  `envconfig:"HEALTH_CHECK_SUCCESS_COUNT" default:"3"`
 }
 
 func (c *Config) Validate() error {

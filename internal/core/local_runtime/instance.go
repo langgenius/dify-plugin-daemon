@@ -360,3 +360,11 @@ func (s *PluginInstance) GracefulStop(maxWaitTime time.Duration) {
 func (s *PluginInstance) ID() string {
 	return s.instanceId
 }
+
+func (s *PluginInstance) IsReady() bool {
+	return s.started && !s.shutdown
+}
+
+func (s *PluginInstance) LastHeartbeat() time.Time {
+	return s.lastActiveAt
+}

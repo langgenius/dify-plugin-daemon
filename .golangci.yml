@@ -1,0 +1,193 @@
+version: 2
+
+run:
+  timeout: 5m
+  concurrency: 4
+  skip-dirs:
+    - vendor
+    - third_party
+    - testdata
+    - examples
+    - Godeps
+    - builtin
+    - pkg/license/private_key
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+    - misspell
+    - revive
+    - unconvert
+    - wastedassign
+
+    - prealloc
+    - unparam
+    - nilerr
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  gofmt:
+    simplify: true
+
+  goimports:
+    local-prefixes: github.com/langgenius/dify-plugin-daemon
+
+  revive:
+    enable-all-rules: true
+    disable:
+      - exported
+      - var-naming
+      - context-as-argument
+      - context-keys-type
+      - error-strings
+      - if-return
+      - unnecessary-stmt
+      - bare
+      - cognitive-complexity
+      - funlen
+      - line-length-limit
+      - max-public-structs
+      - exported-parameter-format
+    rules:
+      - name: blank-imports
+        severity: error
+
+      - name: context-as-argument
+        severity: warning
+
+      - name: context-keys-type
+        severity: warning
+
+      - name: dot-imports
+        severity: warning
+
+      - name: error-return
+        severity: error
+
+      - name: error-naming
+        severity: warning
+
+      - name: if-return
+        severity: warning
+
+      - name: increment-decrement
+        severity: warning
+
+      - name: var-naming
+        severity: warning
+
+      - name: var-declaration
+        severity: warning
+
+      - name: package-comments
+        severity: warning
+
+      - name: range
+        severity: warning
+
+      - name: receiver-naming
+        severity: warning
+
+      - name: time-naming
+        severity: warning
+
+      - name: unexported-return
+        severity: warning
+
+      - name: indent-error-flow
+        severity: warning
+
+      - name: errorf
+        severity: warning
+
+      - name: empty-block
+        severity: warning
+
+      - name: superfluous-else
+        severity: warning
+
+      - name: unused-parameter
+        severity: warning
+
+      - name: unreachable-code
+        severity: error
+
+  staticcheck:
+    checks: ["all"]
+
+  unused:
+    check-exported: false
+
+  misspell:
+    locale: US
+    ignore-words:
+      - someword
+      - somepackage
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    - path: internal/core/health_checker/
+      text: "is not used"
+
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck
+        - dupl
+        - goconst
+        - gocritic
+
+    - path: internal/server/http_server.gen.go
+      linters:
+        - unused
+
+    - path: vendor/
+  exclude-use-default: false
+  exclude:
+    - "G404: Use of weak random number generator"
+    - "pattern PRIVATE_KEY.pem: no matching files found"
+
+    - "should have comment or be unexported"
+    - "comment on exported"
+
+  exclude-dirs:
+    - vendor
+    - third_party
+    - testdata
+    - examples
+    - Godeps
+    - builtin
+
+output:
+  formats:
+    colored-line-number: true
+  print-linter-name: true
+  sort-results: true
+  uniq-by-line: true

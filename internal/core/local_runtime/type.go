@@ -72,3 +72,15 @@ func (r *LocalPluginRuntime) WalkNotifiers(callback func(notifier PluginRuntimeN
 		callback(notifier)
 	}
 }
+
+func (r *LocalPluginRuntime) Instances() []*PluginInstance {
+	r.instanceLocker.RLock()
+	defer r.instanceLocker.RUnlock()
+	instances := make([]*PluginInstance, len(r.instances))
+	copy(instances, r.instances)
+	return instances
+}
+
+func (r *LocalPluginRuntime) Status() string {
+	return r.State.Status
+}

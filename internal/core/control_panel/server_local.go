@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
@@ -39,6 +41,12 @@ func (c *ControlPanel) removeUnusedLocalPlugins() {
 			if exists, err := c.installedBucket.Exists(key); err != nil {
 				log.Error("check if plugin %s is installed failed: %s", key.String(), err.Error())
 			} else if !exists {
+				// Check if this is an old version being upgraded
+				if c.isOldVersionBeingUpgraded(key) {
+					// Skip cleanup - this is the old version during an upgrade
+					return true
+				}
+
 				// Trigger a signal to stop a local plugin runtime
 				if _, err := c.ShutdownLocalPluginGracefully(key); err != nil {
 					log.Error("shutdown local plugin %s failed: %s", key.String(), err.Error())
@@ -48,6 +56,27 @@ func (c *ControlPanel) removeUnusedLocalPlugins() {
 			return true
 		})
 	}
+}
+
+func (c *ControlPanel) isOldVersionBeingUpgraded(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) bool {
+	installations, err := db.GetAll[models.PluginInstallation](
+		db.Equal("upgrade_original_version", pluginUniqueIdentifier.String()),
+		db.NotEqual("upgrade_state", ""),
+	)
+	if err != nil {
+		log.Error("failed to get plugin installations for upgrade check: %v", err)
+		return false
+	}
+
+	for _, installation := range installations {
+		if installation.UpgradeState != "" && installation.UpgradeState != "completed" && installation.UpgradeState != "rolled_back" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // continue check if a new plugin was installed.

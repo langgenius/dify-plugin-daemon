@@ -12,4 +12,7 @@ type PluginInstallation struct {
 	EndpointsActive        int            `json:"endpoints_active"`
 	Source                 string         `json:"source" gorm:"column:source;size:63"`
 	Meta                   map[string]any `json:"meta" gorm:"column:meta;serializer:json"`
+	UpgradeState           string         `json:"upgrade_state" gorm:"size:63;index"`
+	UpgradeOriginalVersion string         `json:"upgrade_original_version" gorm:"size:255"`
+	UpgradeStartedAt       *int64         `json:"upgrade_started_at"`
 }

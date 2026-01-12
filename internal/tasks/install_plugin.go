@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/health_checker"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
@@ -114,6 +115,32 @@ func ProcessUpgradeJob(
 		case installation_entities.PluginInstallEventError:
 			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, resp.Data)
 		case installation_entities.PluginInstallEventDone:
+			// Perform health check if zero-downtime upgrade is enabled
+			if manager.Config().EnableZeroDowntimeUpgrade {
+				SetTaskMessageForOnePlugin(taskIDs, job.NewIdentifier, "Waiting for new plugin to be ready...")
+
+				checker, err := health_checker.NewHealthChecker(
+					runtimeType,
+					manager.ControlPanel(),
+					manager.Config(),
+				)
+				if err != nil {
+					SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to create health checker: %v", err))
+					return
+				}
+
+				ready, err := checker.WaitForReady(
+					job.NewIdentifier,
+					manager.Config().HealthCheckMaxWaitTime,
+				)
+				if err != nil || !ready {
+					SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, fmt.Sprintf("new plugin failed health checks: %v", err))
+					return
+				}
+
+				SetTaskMessageForOnePlugin(taskIDs, job.NewIdentifier, "New plugin is ready, switching to new version...")
+			}
+
 			for _, tenantID := range tenants {
 				response, err := curd.UpgradePlugin(
 					tenantID,
