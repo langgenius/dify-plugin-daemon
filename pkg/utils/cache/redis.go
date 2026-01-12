@@ -29,8 +29,14 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsCo
 		DB:       db,
 	}
 	if useSsl {
-		// The provided tlsConf is guaranteed to be non-nil when useSsl is true.
-		opts.TLSConfig = tlsConf
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			// Create a default TLS configuration when SSL is enabled but no config is provided
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 	}
 	return opts
 }
@@ -65,8 +71,14 @@ func InitRedisSentinelClient(
 	}
 
 	if useSsl {
-		// The provided tlsConf is guaranteed to be non-nil when useSsl is true.
-		opts.TLSConfig = tlsConf
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			// Create a default TLS configuration when SSL is enabled but no config is provided
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 	}
 
 	if socketTimeout > 0 {
