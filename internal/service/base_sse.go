@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/metrics"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
@@ -98,6 +99,8 @@ func baseSSEWithSession[T any, R any](
 	ctx *gin.Context,
 	max_timeout_seconds int,
 ) {
+	startTime := time.Now()
+
 	session, err := createSession(
 		request,
 		access_type,
@@ -106,6 +109,8 @@ func baseSSEWithSession[T any, R any](
 		ctx.Request.Context(),
 	)
 	if err != nil {
+		duration := time.Since(startTime).Seconds()
+		recordPluginInvocationMetrics(request, session, access_type, access_action, "error", duration)
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
@@ -115,9 +120,86 @@ func baseSSEWithSession[T any, R any](
 
 	baseSSEService(
 		func() (*stream.Stream[R], error) {
-			return generator(session)
+			pluginID, runtimeType := getPluginMetricLabels(session)
+
+			metrics.PluginInvocationsActive.WithLabelValues(
+				pluginID,
+				string(access_type),
+				runtimeType,
+			).Inc()
+
+			stream, err := generator(session)
+
+			duration := time.Since(startTime).Seconds()
+			status := "success"
+			if err != nil {
+				status = "error"
+			}
+
+			metrics.PluginInvocationsTotal.WithLabelValues(
+				pluginID,
+				string(access_type),
+				runtimeType,
+				string(access_action),
+				status,
+			).Inc()
+			metrics.PluginInvocationDuration.WithLabelValues(
+				pluginID,
+				string(access_type),
+				runtimeType,
+				string(access_action),
+			).Observe(duration)
+
+			metrics.PluginInvocationsActive.WithLabelValues(
+				pluginID,
+				string(access_type),
+				runtimeType,
+			).Dec()
+
+			return stream, err
 		},
 		ctx,
 		max_timeout_seconds,
 	)
+}
+
+func getPluginMetricLabels(session *session_manager.Session) (pluginID, runtimeType string) {
+	pluginID = "unknown"
+	runtimeType = "unknown"
+
+	if session != nil && session.Runtime() != nil {
+		pluginRuntime := session.Runtime()
+		if identity, err := pluginRuntime.Identity(); err == nil {
+			pluginID = identity.PluginID()
+		}
+		runtimeType = string(pluginRuntime.Type())
+	}
+
+	return
+}
+
+func recordPluginInvocationMetrics[T any](
+	request *plugin_entities.InvokePluginRequest[T],
+	session *session_manager.Session,
+	access_type access_types.PluginAccessType,
+	access_action access_types.PluginAccessAction,
+	status string,
+	duration float64,
+) {
+	pluginID, runtimeType := getPluginMetricLabels(session)
+
+	metrics.PluginInvocationsTotal.WithLabelValues(
+		pluginID,
+		string(access_type),
+		runtimeType,
+		string(access_action),
+		status,
+	).Inc()
+
+	metrics.PluginInvocationDuration.WithLabelValues(
+		pluginID,
+		string(access_type),
+		runtimeType,
+		string(access_action),
+	).Observe(duration)
 }

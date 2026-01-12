@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	sentrygin "github.com/getsentry/sentry-go/gin"
 )
@@ -36,6 +37,7 @@ func (app *App) server(config *app.Config) func() {
 	engine.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
 	})
+	engine.Use(PrometheusMiddleware())
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
@@ -43,6 +45,9 @@ func (app *App) server(config *app.Config) func() {
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
 	invokeGroup := engine.Group("/v2/invoke")
+
+	metricsGroup := engine.Group("/metrics")
+	metricsGroup.GET("/", gin.WrapH(promhttp.Handler()))
 
 	if config.AdminApiEnabled {
 		if len(config.AdminApiKey) < 10 {
