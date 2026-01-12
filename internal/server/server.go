@@ -81,6 +81,9 @@ func initOSS(config *app.Config) oss.OSS {
 }
 
 func (app *App) Run(config *app.Config) {
+	// store config reference
+	app.config = config
+
 	// init routine pool
 	if config.SentryEnabled {
 		routine.InitPool(config.RoutinePoolSize, sentry.ClientOptions{
@@ -112,8 +115,10 @@ func (app *App) Run(config *app.Config) {
 	// init persistence
 	persistence.InitPersistence(oss, config)
 
-	// launch cluster
-	app.cluster.Launch()
+	// launch cluster only if not disabled
+	if !config.ClusterDisabled {
+		app.cluster.Launch()
+	}
 
 	// setup signal handler, for a graceful shutdown to cleanup resources like async tasks
 	tasks.SetupSignalHandler()

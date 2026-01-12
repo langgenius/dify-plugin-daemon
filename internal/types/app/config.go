@@ -193,6 +193,9 @@ type Config struct {
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
+	// Disable cluster mode for single-node deployments (e.g., ECS Fargate)
+	ClusterDisabled bool `envconfig:"CLUSTER_DISABLED" default:"false"`
+
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
 
 	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`

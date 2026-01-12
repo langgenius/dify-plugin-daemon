@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 )
 
 func constructRedirectUrl(ip address, request *http.Request) string {
@@ -36,7 +37,9 @@ func redirectRequestToIp(ip address, request *http.Request) (int, http.Header, i
 		}
 	}
 
-	client := http.DefaultClient
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
 	resp, err := client.Do(redirectedRequest)
 
 	if err != nil {
@@ -55,12 +58,22 @@ func (c *Cluster) RedirectRequest(
 		return 0, nil, nil, errors.New("node not found")
 	}
 
+	// Sort IPs by voting results to try the most likely healthy address first.
+	// See voteAddresses/SortIps for the voting mechanism.
 	ips := c.SortIps(node)
 	if len(ips) == 0 {
 		return 0, nil, nil, errors.New("no available ip found")
 	}
 
-	ip := ips[0]
+	// Try each IP until we find a working one
+	var lastErr error
+	for _, ip := range ips {
+		statusCode, header, body, err := redirectRequestToIp(ip, request)
+		if err == nil {
+			return statusCode, header, body, nil
+		}
+		lastErr = err
+	}
 
-	return redirectRequestToIp(ip, request)
+	return 0, nil, nil, lastErr
 }

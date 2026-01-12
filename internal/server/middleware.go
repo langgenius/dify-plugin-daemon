@@ -82,6 +82,12 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 // RedirectPluginInvoke redirects the request to the correct cluster node
 func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		// If cluster mode is disabled, always proceed to next handler
+		if app.config != nil && app.config.ClusterDisabled {
+			ctx.Next()
+			return
+		}
+
 		// get plugin unique identifier
 		identityAny, ok := ctx.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
 		if !ok {

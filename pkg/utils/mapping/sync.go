@@ -55,7 +55,7 @@ func (m *Map[K, V]) Range(f func(key K, value V) bool) {
 func (m *Map[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	v, loaded := m.store.LoadOrStore(key, value)
 	actual = v.(V)
 	if !loaded {
