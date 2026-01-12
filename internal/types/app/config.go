@@ -17,6 +17,7 @@ const (
 
 type Config struct {
 	// server
+	ServerHost string `envconfig:"SERVER_HOST"`
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
