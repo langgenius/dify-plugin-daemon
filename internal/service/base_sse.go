@@ -24,7 +24,9 @@ func baseSSEService[R any](
 	generator func() (*stream.Stream[R], error),
 	ctx *gin.Context,
 	max_timeout_seconds int,
+	onCompletion func(status string, duration float64),
 ) {
+	startTime := time.Now()
 	writer := ctx.Writer
 	writer.WriteHeader(200)
 	writer.Header().Set("Content-Type", "text/event-stream")
@@ -47,6 +49,10 @@ func baseSSEService[R any](
 
 	if err != nil {
 		writeData(exception.InternalServerError(err).ToResponse())
+		duration := time.Since(startTime).Seconds()
+		if onCompletion != nil {
+			onCompletion("error", duration)
+		}
 		close(done)
 		return
 	}
@@ -55,13 +61,20 @@ func baseSSEService[R any](
 		routinepkg.RoutineLabelKeyModule: "service",
 		routinepkg.RoutineLabelKeyMethod: "baseSSEService",
 	}, func() {
+		status := "success"
 		for pluginDaemonResponse.Next() {
 			chunk, err := pluginDaemonResponse.Read()
 			if err != nil {
 				writeData(exception.InvokePluginError(err).ToResponse())
+				status = "error"
 				break
 			}
 			writeData(entities.NewSuccessResponse(chunk))
+		}
+
+		duration := time.Since(startTime).Seconds()
+		if onCompletion != nil {
+			onCompletion(status, duration)
 		}
 
 		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
@@ -79,11 +92,19 @@ func baseSSEService[R any](
 	select {
 	case <-writer.CloseNotify():
 		pluginDaemonResponse.Close()
+		duration := time.Since(startTime).Seconds()
+		if onCompletion != nil {
+			onCompletion("client_disconnect", duration)
+		}
 		return
 	case <-done:
 		return
 	case <-timer.C:
 		writeData(exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
+		duration := time.Since(startTime).Seconds()
+		if onCompletion != nil {
+			onCompletion("timeout", duration)
+		}
 		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
 			close(done)
 		}
@@ -128,13 +149,12 @@ func baseSSEWithSession[T any, R any](
 				runtimeType,
 			).Inc()
 
-			stream, err := generator(session)
-
-			duration := time.Since(startTime).Seconds()
-			status := "success"
-			if err != nil {
-				status = "error"
-			}
+			return generator(session)
+		},
+		ctx,
+		max_timeout_seconds,
+		func(status string, duration float64) {
+			pluginID, runtimeType := getPluginMetricLabels(session)
 
 			metrics.PluginInvocationsTotal.WithLabelValues(
 				pluginID,
@@ -155,11 +175,7 @@ func baseSSEWithSession[T any, R any](
 				string(access_type),
 				runtimeType,
 			).Dec()
-
-			return stream, err
 		},
-		ctx,
-		max_timeout_seconds,
 	)
 }
 
