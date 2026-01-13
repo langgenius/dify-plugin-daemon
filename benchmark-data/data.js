@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768280106328,
+  "lastUpdate": 1768292979787,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11074,6 +11074,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 31.18,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oscaner1997@gmail.com",
+            "name": "Oscaner Miao",
+            "username": "Oscaner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2be1f651a96350a32ba3545dec40fe3657a95086",
+          "message": "feat(#450): add Redis SSL/TLS configuration support (#558)\n\n* feat(#450): add Redis SSL/TLS configuration support\n\nAdd comprehensive SSL/TLS support for Redis connections with configurable certificate verification modes. Introduces new environment variables for SSL configuration including REDIS_USE_SSL, REDIS_SSL_CERT_REQS (supporting CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED), and REDIS_SSL_CA_CERTS for custom CA certificates.\n\nChanges:\n- Add Redis SSL configuration options to .env.example\n- Implement RedisTLSConfig() method to build tls.Config based on environment settings\n- Pass TLS config to both standard Redis and Sentinel mode initializers\n- Support custom CA certificate loading and verification modes\n- Set minimum TLS version to 1.2 for security\n- Minor whitespace cleanup in existing config comments\n\nThis enables secure Redis connections in production environments with flexible certificate verification options.\n\n* fix(#450): prevent reference cycle in TLS config and simplify SSL setup\n\n- Capture only RootCAs in VerifyConnection closure to avoid retaining\n  entire tlsConf and potential reference cycles\n- Remove redundant nil checks for tlsConf in Redis client initialization\n  since tlsConf is guaranteed to be non-nil when useSsl is true\n- Update comments to reflect actual behavior and constraints\n\n* fix(#450): improve Redis TLS certificate verification logic for optional certificates\n\n* fix(#450): simplify Redis TLS certificate verification logic for optional and required certificates\n\n* docs(#450): add note for CA certificate file path in Redis SSL configuration\n\n* test(#450): add comprehensive tests for Redis TLS configuration\n\n* fix(#450): enhance Redis SSL configuration documentation and enforce CA cert requirement\n\n* fix(#450): add nil TLS parameter to InitRedisClient calls in tests\n\nUpdate all InitRedisClient function calls across test files to include the new nil parameter for TLS configuration. This change maintains backward compatibility by explicitly passing nil for TLS settings in non-TLS test scenarios.\n\n* fix(#450): add default TLS configuration for Redis client when no tlsConf is provided",
+          "timestamp": "2026-01-13T16:27:16+08:00",
+          "tree_id": "0a03c4b13ddb2dda4230a4a639f716c8e5aba9ed",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/2be1f651a96350a32ba3545dec40fe3657a95086"
+        },
+        "date": 1768292978756,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.42,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.42,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
