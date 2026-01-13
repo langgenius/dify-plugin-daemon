@@ -26,6 +26,8 @@ func (r *LocalPluginRuntime) getInstanceCmd() (*exec.Cmd, error) {
 			return nil, err
 		}
 		cmd = exec.Command(pythonPath, "-m", r.Config.Meta.Runner.Entrypoint)
+		// ensure child is placed in its own process group on supported platforms
+		setProcGroup(cmd)
 
 	default:
 		return nil, fmt.Errorf("unsupported language: %s", r.Config.Meta.Runner.Language)
