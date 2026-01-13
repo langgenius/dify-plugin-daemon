@@ -63,7 +63,7 @@ func TestGetSessionTraceInMemory(t *testing.T) {
 }
 
 func TestGetSessionTraceFromDistributedCache(t *testing.T) {
-	require.NoError(t, cache.InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0))
+	require.NoError(t, cache.InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0, nil))
 	t.Cleanup(func() {
 		cache.Close()
 	})

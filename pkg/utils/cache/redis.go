@@ -21,7 +21,7 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func getRedisOptions(addr, username, password string, useSsl bool, db int) *redis.Options {
+func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
 		Username: username,
@@ -29,13 +29,20 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int) *redi
 		DB:       db,
 	}
 	if useSsl {
-		opts.TLSConfig = &tls.Config{}
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			// Create a default TLS configuration when SSL is enabled but no config is provided
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 	}
 	return opts
 }
 
-func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
-	opts := getRedisOptions(addr, username, password, useSsl, db)
+func InitRedisClient(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) error {
+	opts := getRedisOptions(addr, username, password, useSsl, db, tlsConf)
 	client = redis.NewClient(opts)
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
@@ -45,7 +52,14 @@ func InitRedisClient(addr, username, password string, useSsl bool, db int) error
 	return nil
 }
 
-func InitRedisSentinelClient(sentinels []string, masterName, username, password, sentinelUsername, sentinelPassword string, useSsl bool, db int, socketTimeout float64) error {
+func InitRedisSentinelClient(
+	sentinels []string,
+	masterName, username, password, sentinelUsername, sentinelPassword string,
+	useSsl bool,
+	db int,
+	socketTimeout float64,
+	tlsConf *tls.Config,
+) error {
 	opts := &redis.FailoverOptions{
 		MasterName:       masterName,
 		SentinelAddrs:    sentinels,
@@ -57,7 +71,14 @@ func InitRedisSentinelClient(sentinels []string, masterName, username, password,
 	}
 
 	if useSsl {
-		opts.TLSConfig = &tls.Config{}
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			// Create a default TLS configuration when SSL is enabled but no config is provided
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 	}
 
 	if socketTimeout > 0 {
@@ -366,13 +387,15 @@ func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[str
 
 	result := make(map[string]V)
 
-	ScanMapAsync[V](key, match, func(m map[string]V) error {
+	if err := ScanMapAsync[V](key, match, func(m map[string]V) error {
 		for k, v := range m {
 			result[k] = v
 		}
 
 		return nil
-	})
+	}, context...); err != nil {
+		return nil, err
+	}
 
 	return result, nil
 }

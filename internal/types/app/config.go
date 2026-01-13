@@ -1,7 +1,11 @@
 package app
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -69,7 +73,7 @@ type Config struct {
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
 	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
 	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
-	HuaweiOBSPathStyle  bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
+	HuaweiOBSPathStyle bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
@@ -110,12 +114,14 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	// redis
-	RedisHost   string `envconfig:"REDIS_HOST"`
-	RedisPort   uint16 `envconfig:"REDIS_PORT"`
-	RedisPass   string `envconfig:"REDIS_PASSWORD"`
-	RedisUser   string `envconfig:"REDIS_USERNAME"`
-	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
-	RedisDB     int    `envconfig:"REDIS_DB"`
+	RedisHost        string `envconfig:"REDIS_HOST"`
+	RedisPort        uint16 `envconfig:"REDIS_PORT"`
+	RedisPass        string `envconfig:"REDIS_PASSWORD"`
+	RedisUser        string `envconfig:"REDIS_USERNAME"`
+	RedisDB          int    `envconfig:"REDIS_DB"`
+	RedisUseSsl      bool   `envconfig:"REDIS_USE_SSL"`
+	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
+	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
 
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
@@ -280,6 +286,54 @@ func (c *Config) GetLocalRuntimeMaxBufferSize() int {
 		return c.PluginStdioMaxBufferSize
 	}
 	return c.PluginRuntimeMaxBufferSize
+}
+
+// RedisTLSConfig builds a *tls.Config for Redis based on envs.
+func (c *Config) RedisTLSConfig() (*tls.Config, error) {
+	if !c.RedisUseSsl {
+		return nil, nil
+	}
+
+	tlsConf := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	// Load custom CA certificates if provided
+	if strings.TrimSpace(c.RedisSSLCACerts) != "" {
+		pem, err := os.ReadFile(c.RedisSSLCACerts)
+		if err != nil {
+			return nil, fmt.Errorf("read REDIS_SSL_CA_CERTS: %w", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pem) {
+			return nil, fmt.Errorf("failed to append CA certs from %s", c.RedisSSLCACerts)
+		}
+		tlsConf.RootCAs = pool
+	}
+
+	// Configure certificate verification based on REDIS_SSL_CERT_REQS
+	certReqs := strings.ToUpper(strings.TrimSpace(c.RedisSSLCertReqs))
+	switch certReqs {
+	case "CERT_NONE":
+		// Skip all certificate verification (insecure)
+		tlsConf.InsecureSkipVerify = true
+	case "CERT_OPTIONAL", "CERT_REQUIRED", "":
+		// Require valid certificate verification (default and most secure)
+		// CERT_OPTIONAL is treated as CERT_REQUIRED for client-side TLS,
+		// as servers almost always present certificates and the client's
+		// choice is whether to validate them or not
+		tlsConf.InsecureSkipVerify = false
+
+		// Require CA certs to be explicitly provided when CERT_REQUIRED is set
+		if certReqs == "CERT_REQUIRED" && strings.TrimSpace(c.RedisSSLCACerts) == "" {
+			return nil, fmt.Errorf("REDIS_SSL_CA_CERTS must be provided when REDIS_SSL_CERT_REQS is set to CERT_REQUIRED")
+		}
+	default:
+		// Invalid value - return an error instead of silently defaulting
+		return nil, fmt.Errorf("invalid REDIS_SSL_CERT_REQS value: %s (valid options: CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED)", certReqs)
+	}
+
+	return tlsConf, nil
 }
 
 type PlatformType string
