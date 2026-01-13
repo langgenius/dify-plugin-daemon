@@ -14,6 +14,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	toolhandler "github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/tool"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
+	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/uploader"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
@@ -54,17 +55,24 @@ func InvokeTool(name string, args []string) {
 		return
 	}
 
-	params := parseToolArgs(tool, args)
+	params, fileParams := parseToolArgs(tool, args)
 
-	err = callDifyAPI(cfg, tool, params)
+	err = callDifyAPI(cfg, tool, params, fileParams)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: API call failed: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]any {
+type fileParamInfo struct {
+	paramName string
+	paramType types.ToolParameterType
+	paths     []string
+}
+
+func parseToolArgs(tool *types.DifyToolDeclaration, args []string) (map[string]any, []fileParamInfo) {
 	params := make(map[string]any)
+	var fileParams []fileParamInfo
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -89,6 +97,22 @@ func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]an
 					params[name] = num
 				case types.ToolParameterTypeBoolean:
 					params[name] = value == "true" || value == "1"
+				case types.ToolParameterTypeFile:
+					fileParams = append(fileParams, fileParamInfo{
+						paramName: name,
+						paramType: p.Type,
+						paths:     []string{value},
+					})
+				case types.ToolParameterTypeFiles:
+					paths := strings.Split(value, ",")
+					for j := range paths {
+						paths[j] = strings.TrimSpace(paths[j])
+					}
+					fileParams = append(fileParams, fileParamInfo{
+						paramName: name,
+						paramType: p.Type,
+						paths:     paths,
+					})
 				default:
 					params[name] = value
 				}
@@ -101,7 +125,7 @@ func parseToolArgs(tool *types.DifyToolDeclaration, args []string) map[string]an
 		}
 	}
 
-	return params
+	return params, fileParams
 }
 
 func signRequest(secret string, timestamp string, body []byte) string {
@@ -109,9 +133,32 @@ func signRequest(secret string, timestamp string, body []byte) string {
 	return "sha256=" + encryption.HmacSha256(secret, data)
 }
 
-func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params map[string]any) error {
+func callDifyAPI(cfg *types.DifyConfig, tool *types.DifyToolDeclaration, params map[string]any, fileParams []fileParamInfo) error {
 	if cfg.Env.FilesURL != "" {
 		toolhandler.SetFilesURL(cfg.Env.FilesURL)
+	}
+
+	for _, fp := range fileParams {
+		if fp.paramType == types.ToolParameterTypeFile {
+			if len(fp.paths) == 0 {
+				continue
+			}
+			fileObj, err := uploader.UploadFile(cfg, fp.paths[0])
+			if err != nil {
+				return fmt.Errorf("failed to upload file for parameter '%s': %w", fp.paramName, err)
+			}
+			params[fp.paramName] = fileObj
+		} else if fp.paramType == types.ToolParameterTypeFiles {
+			var fileObjs []*types.ToolFileObject
+			for _, path := range fp.paths {
+				fileObj, err := uploader.UploadFile(cfg, path)
+				if err != nil {
+					return fmt.Errorf("failed to upload file '%s' for parameter '%s': %w", path, fp.paramName, err)
+				}
+				fileObjs = append(fileObjs, fileObj)
+			}
+			params[fp.paramName] = fileObjs
+		}
 	}
 
 	reqBody := types.InvokeToolRequest{

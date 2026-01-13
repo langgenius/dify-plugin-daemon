@@ -62,6 +62,56 @@ type ParameterOption struct {
 	Label I18nObject `json:"label" yaml:"label"`
 }
 
+type FileTransferMethod string
+
+const (
+	FileTransferMethodRemoteURL      FileTransferMethod = "remote_url"
+	FileTransferMethodLocalFile      FileTransferMethod = "local_file"
+	FileTransferMethodToolFile       FileTransferMethod = "tool_file"
+	FileTransferMethodDatasourceFile FileTransferMethod = "datasource_file"
+)
+
+type FileType string
+
+const (
+	FileTypeImage    FileType = "image"
+	FileTypeDocument FileType = "document"
+	FileTypeAudio    FileType = "audio"
+	FileTypeVideo    FileType = "video"
+	FileTypeCustom   FileType = "custom"
+)
+
+type ToolFileObject struct {
+	DifyModelIdentity string   `json:"dify_model_identity"`
+	URL               string   `json:"url"`
+	MimeType          string   `json:"mime_type,omitempty"`
+	Filename          string   `json:"filename,omitempty"`
+	Extension         string   `json:"extension,omitempty"`
+	Size              int      `json:"size,omitempty"`
+	Type              FileType `json:"type"`
+}
+
+const DifyFileIdentity = "__dify__file__"
+
+type SignedURLResponse struct {
+	URL string `json:"url"`
+}
+
+type FileUploadResponse struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Size           int    `json:"size"`
+	Extension      string `json:"extension"`
+	MimeType       string `json:"mime_type"`
+	PreviewURL     string `json:"preview_url"`
+	SourceURL      string `json:"source_url"`
+	OriginalURL    string `json:"original_url"`
+	UserID         string `json:"user_id"`
+	TenantID       string `json:"tenant_id"`
+	ConversationID string `json:"conversation_id"`
+	FileKey        string `json:"file_key"`
+}
+
 type ToolParameter struct {
 	Name             string            `json:"name" yaml:"name"`
 	Label            I18nObject        `json:"label" yaml:"label"`
