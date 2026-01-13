@@ -113,6 +113,32 @@ func PrintToolHelp(tool *types.DifyToolDeclaration) {
 		if param.Default != nil {
 			fmt.Printf("      Default: %v\n", param.Default)
 		}
+
+		switch param.Type {
+		case "select":
+			if len(param.Options) > 0 {
+				fmt.Printf("      Options:\n")
+				for _, opt := range param.Options {
+					label := opt.Label.EnUS
+					if label == "" {
+						label = opt.Value
+					}
+					if label == opt.Value {
+						fmt.Printf("        - %s\n", opt.Value)
+					} else {
+						fmt.Printf("        - %s (%s)\n", opt.Value, label)
+					}
+				}
+			}
+		case "file":
+			fmt.Printf("      Accepts: single file path (relative or absolute)\n")
+		case "files":
+			fmt.Printf("      Accepts: multiple file paths (relative or absolute, comma-separated)\n")
+		case "boolean":
+			fmt.Printf("      Values: true, false\n")
+		case "number":
+			fmt.Printf("      Values: numeric value\n")
+		}
 	}
 }
 
