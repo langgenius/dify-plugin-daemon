@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/metrics"
 )
 
 type PluginInstallJob struct {
@@ -37,12 +38,23 @@ func ProcessInstallJob(
 	taskIDs []string,
 	job PluginInstallJob,
 ) {
+	startTime := time.Now()
+	pluginID := job.Identifier.PluginID()
+	status := "success"
+
+	defer func() {
+		duration := time.Since(startTime).Seconds()
+		metrics.PluginInstallationsTotal.WithLabelValues(pluginID, status).Inc()
+		metrics.PluginInstallationDuration.WithLabelValues(pluginID).Observe(duration)
+	}()
+
 	startTasks(taskIDs)
 	defer endTasks(taskIDs)
 
 	// if the plugin does not need runtime install, just save the installation to the database
 	if !job.NeedsRuntimeInstall {
 		if err := SaveInstallationForTenantsToDB(tenants, job, runtimeType, source); err != nil {
+			status = "failed"
 			SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, err.Error())
 			return
 		}
@@ -56,6 +68,7 @@ func ProcessInstallJob(
 	// start installation process
 	installationStream, err := manager.Install(ctx, job.Identifier)
 	if err != nil {
+		status = "failed"
 		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
 		return
 	}
@@ -66,9 +79,11 @@ func ProcessInstallJob(
 		case installation_entities.PluginInstallEventInfo:
 			SetTaskMessageForOnePlugin(taskIDs, job.Identifier, resp.Data)
 		case installation_entities.PluginInstallEventError:
+			status = "failed"
 			SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, resp.Data)
 		case installation_entities.PluginInstallEventDone:
 			if err := SaveInstallationForTenantsToDB(tenants, job, runtimeType, source); err != nil {
+				status = "failed"
 				SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, err.Error())
 				return
 			}
@@ -84,6 +99,7 @@ func ProcessInstallJob(
 		}
 	})
 	if err != nil {
+		status = "failed"
 		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, err.Error())
 	}
 }

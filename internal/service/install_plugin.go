@@ -186,7 +186,7 @@ func ReinstallPluginFromIdentifier(
 		})
 
 		return retStream, nil
-	}, ctx, 1800)
+	}, ctx, 1800, nil)
 }
 
 /*
