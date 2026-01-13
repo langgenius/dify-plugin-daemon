@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768215803297,
+  "lastUpdate": 1768280106328,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11026,6 +11026,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.8,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Stream_2@qq.com",
+            "name": "Stream",
+            "username": "Stream29"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "91c5db64b5c25b3d1a751307f985ce34ab91d3c9",
+          "message": "feat: prioritize `pyproject.toml` when installing plugin dependencies (#557)\n\n* feat: prioritize `pyproject.toml` when installing plugin dependencies\n\n* refactor: rename variable for clarity in SDK version extraction logic\n\n* refactor: use local_runtime.ConstructPluginRuntime\n\n* refactor: use local_runtime.ConstructPluginRuntime\n\n* refactor: fail when uv not found\n\n* refactor: use more realistic test plugin data\n\n* refactor: don't accept dependencyFileType other than pyprojectTomlFile and requirementsTxtFile\n\n* refactor: use type-safe constant to replace hard-coded string\n\n* refactor: use factory function of LocalPluginRuntime",
+          "timestamp": "2026-01-13T12:52:41+08:00",
+          "tree_id": "eec093577cbec806debd6145fa577b68120a32e8",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/91c5db64b5c25b3d1a751307f985ce34ab91d3c9"
+        },
+        "date": 1768280105731,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 31.18,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 31.18,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
