@@ -73,9 +73,11 @@ func (b *InstalledBucket) List() ([]plugin_entities.PluginUniqueIdentifier, erro
 		if strings.HasPrefix(path.Path, ".") {
 			continue
 		}
-		// remove prefix
+		// remove prefix and leading slash
+		// GCS returns path like "plugins/org/plugin:1.0@hash", after TrimPrefix("plugins")
+		// it becomes "/org/plugin:1.0@hash" with a leading slash that needs to be removed
 		identifier, err := plugin_entities.NewPluginUniqueIdentifier(
-			strings.TrimPrefix(path.Path, b.installedPath),
+			strings.TrimPrefix(strings.TrimPrefix(path.Path, b.installedPath), "/"),
 		)
 		if err != nil {
 			log.Error("failed to create PluginUniqueIdentifier from path", "path", path.Path, "error", err)
