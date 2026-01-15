@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768292979787,
+  "lastUpdate": 1768468112108,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11122,6 +11122,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.42,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e8f8f17f1ae21fc3cdd071887d8129a2bea1bd28",
+          "message": "feat: add redis distribute lock (#564)\n\n* feat: add redis distribute lock\n\n* refactor: use structured logging for python env\n\n---------\n\nCo-authored-by: Yeuoly <admin@srmxy.cn>",
+          "timestamp": "2026-01-15T17:06:02+08:00",
+          "tree_id": "d44bee9282f3b508ddb04ecf2f2d8f48eab0ec7e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/e8f8f17f1ae21fc3cdd071887d8129a2bea1bd28"
+        },
+        "date": 1768468111489,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 31.24,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 31.24,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
