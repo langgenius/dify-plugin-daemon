@@ -284,7 +284,7 @@ func (p *LocalPluginRuntime) deleteVirtualEnvironment() error {
 		}
 		return err
 	}
-	log.Warn("deleting existing Python virtual environment for %s at %s", p.Config.Identity(), venvDir)
+	log.Warn("deleting existing Python virtual environment", "plugin", p.Config.Identity(), "path", venvDir)
 	return os.RemoveAll(venvDir)
 }
 

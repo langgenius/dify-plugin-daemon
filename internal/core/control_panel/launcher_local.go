@@ -71,7 +71,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		// expire: generous upper bound for env initialization; tryLockTimeout: wait up to the same duration
 		expire := 15 * time.Minute
 		tryTimeout := 2 * time.Minute
-		log.Info("acquiring distributed init lock, plugin", pluginUniqueIdentifier.String(), "expire", expire.String())
+		log.Info("acquiring distributed init lock", "plugin", pluginUniqueIdentifier.String(), "expire", expire.String())
 		if err := cache.Lock(lockKey, expire, tryTimeout); err != nil {
 			// failed to acquire the lock within timeout
 			err = errors.Join(err, fmt.Errorf("failed to acquire distributed env-init lock"))
@@ -84,9 +84,9 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		}
 		defer func() {
 			if unlockErr := cache.Unlock(lockKey); unlockErr != nil {
-				log.Warn("failed to release distributed init lock", pluginUniqueIdentifier.String(), "error", unlockErr.Error())
+				log.Warn("failed to release distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", unlockErr.Error())
 			} else {
-				log.Info("released distributed init lock", pluginUniqueIdentifier.String())
+				log.Info("released distributed init lock", "plugin", pluginUniqueIdentifier.String())
 			}
 		}()
 
