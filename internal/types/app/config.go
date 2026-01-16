@@ -177,6 +177,7 @@ type Config struct {
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
+	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
 	UvPath                    string `envconfig:"UV_PATH"  default:""`
