@@ -205,7 +205,7 @@ func TestInvokeServerlessWithRetry_MaxRetriesExceeded(t *testing.T) {
 		t.Errorf("Expected 3 attempts, got %d", attemptCount.Load())
 	}
 
-	expectedError := "attempt 3/3 failed with status code: 502"
+	expectedError := "all 3 attempts failed, last error: attempt 3/3 failed with status code: 502"
 	if err.Error()[:len(expectedError)] != expectedError {
 		t.Errorf("Expected error message to start with '%s', got '%s'", expectedError, err.Error())
 	}
