@@ -46,7 +46,6 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 	data []byte,
 ) (*http.Response, error) {
 	var lastErr error
-	var response *http.Response
 
 	maxRetries := r.MaxRetryTimes
 	if maxRetries <= 0 {
@@ -78,11 +77,6 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		}
 
 		statusCode := response.StatusCode
-		// Success - return immediately
-		if statusCode >= 200 && statusCode < 300 {
-			return response, nil
-		}
-
 		// Check if status code should trigger a retry (502 Bad Gateway only)
 		if shouldRetryStatusCode(statusCode) {
 			if response.Body != nil {
@@ -96,11 +90,7 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		return response, nil
 	}
 
-	if lastErr != nil {
-		return nil, fmt.Errorf("all %d attempts failed, last error: %w", maxRetries, lastErr)
-	}
-
-	return response, nil
+	return nil, lastErr
 }
 
 // For Serverless, write is equivalent to http request, it's not a normal stream like stdio and tcp
