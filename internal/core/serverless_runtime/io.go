@@ -40,11 +40,14 @@ func shouldRetryStatusCode(statusCode int) bool {
 
 // invokeServerlessWithRetry invokes the serverless endpoint with retry logic
 // It will retry up to MaxRetryTimes attempts on 502 errors with exponential backoff
+// Backoff duration is capped at 30 seconds to prevent unreasonable wait times
 func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 	url string,
 	sessionId string,
 	data []byte,
 ) (*http.Response, error) {
+	const maxBackoffDuration = 30 * time.Second
+
 	var lastErr error
 
 	maxRetries := r.MaxRetryTimes
@@ -54,8 +57,12 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Apply exponential backoff for retry attempts (500ms, 1000ms, 2000ms, ...)
+		// Capped at 30 seconds to prevent unreasonable wait times
 		if attempt > 0 {
 			backoffDuration := time.Duration(500*(1<<uint(attempt-1))) * time.Millisecond
+			if backoffDuration > maxBackoffDuration {
+				backoffDuration = maxBackoffDuration
+			}
 			time.Sleep(backoffDuration)
 		}
 
@@ -77,6 +84,11 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		}
 
 		statusCode := response.StatusCode
+		// Success - return immediately
+		if statusCode >= 200 && statusCode < 300 {
+			return response, nil
+		}
+
 		// Check if status code should trigger a retry (502 Bad Gateway only)
 		if shouldRetryStatusCode(statusCode) {
 			if response.Body != nil {
@@ -90,7 +102,11 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		return response, nil
 	}
 
-	return nil, lastErr
+	if lastErr != nil {
+		return nil, fmt.Errorf("all %d attempts failed, last error: %w", maxRetries, lastErr)
+	}
+
+	return nil, fmt.Errorf("all %d attempts failed with unknown error", maxRetries)
 }
 
 // For Serverless, write is equivalent to http request, it's not a normal stream like stdio and tcp
