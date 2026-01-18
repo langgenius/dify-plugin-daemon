@@ -95,19 +95,27 @@ func Endpoint(
 	path string,
 ) {
 	if !endpoint.Enabled {
-		ctx.JSON(404, exception.NotFoundError(errors.New("endpoint not found")).ToResponse())
+		ctx.JSON(404, exception.PluginNotFoundErrorWithContext("Endpoint", endpoint.HookID).ToResponse())
 		return
 	}
 
 	buffer, err := copyRequest(ctx.Request, endpoint.HookID, path)
 	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
+		ctx.JSON(500, exception.PluginInstallationError(
+			pluginInstallation.PluginUniqueIdentifier,
+			"copy request",
+			err,
+		).ToResponse())
 		return
 	}
 
 	identifier, err := plugin_entities.NewPluginUniqueIdentifier(pluginInstallation.PluginUniqueIdentifier)
 	if err != nil {
-		ctx.JSON(400, exception.UniqueIdentifierError(err).ToResponse())
+		ctx.JSON(400, exception.PluginValidationError(
+			"plugin_unique_identifier",
+			pluginInstallation.PluginUniqueIdentifier,
+			"invalid format",
+		).ToResponse())
 		return
 	}
 
@@ -115,14 +123,14 @@ func Endpoint(
 	manager := plugin_manager.Manager()
 	runtime, err := manager.GetPluginRuntime(identifier)
 	if err != nil {
-		ctx.JSON(404, exception.ErrPluginNotFound().ToResponse())
+		ctx.JSON(404, exception.PluginNotFoundErrorWithContext("Plugin runtime", identifier.String()).ToResponse())
 		return
 	}
 
 	// fetch endpoint declaration
 	endpointDeclaration := runtime.Configuration().Endpoint
 	if endpointDeclaration == nil {
-		ctx.JSON(404, exception.ErrPluginNotFound().ToResponse())
+		ctx.JSON(404, exception.PluginConfigurationError(identifier.String(), "plugin does not have endpoint support").ToResponse())
 		return
 	}
 
@@ -143,7 +151,10 @@ func Endpoint(
 	})
 
 	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
+		ctx.JSON(500, exception.PluginConfigurationError(
+			identifier.String(),
+			"failed to decrypt endpoint settings",
+		).ToResponse())
 		return
 	}
 
@@ -174,7 +185,11 @@ func Endpoint(
 		},
 	)
 	if err != nil {
-		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
+		ctx.JSON(500, exception.PluginInstallationError(
+			identifier.String(),
+			"invoke endpoint",
+			err,
+		).ToResponse())
 		return
 	}
 	defer response.Close()
@@ -217,7 +232,8 @@ func Endpoint(
 	case <-ctx.Writer.CloseNotify():
 	case <-done:
 	case <-time.After(maxExecutionTime):
-		ctx.JSON(500, exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
+		timeoutSeconds := int(maxExecutionTime.Seconds())
+		ctx.JSON(500, exception.PluginTimeoutError("invoke endpoint", timeoutSeconds).ToResponse())
 	}
 }
 
@@ -248,9 +264,9 @@ func handleEndpointStateError(err error, action string) *entities.Response {
 		return nil
 	}
 	if errors.Is(err, db.ErrDatabaseNotFound) {
-		return exception.NotFoundError(errors.New("endpoint not found")).ToResponse()
+		return exception.PluginNotFoundErrorWithContext("Endpoint", "").ToResponse()
 	}
-	return exception.InternalServerError(fmt.Errorf("failed to %s endpoint: %w", action, err)).ToResponse()
+	return exception.PluginDatabaseError(fmt.Sprintf("%s endpoint", action), err).ToResponse()
 }
 
 func invalidateEndpointCache(hookID string) {
@@ -267,12 +283,12 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 		db.Page(page, page_size),
 	)
 	if err != nil {
-		return exception.InternalServerError(fmt.Errorf("failed to list endpoints: %v", err)).ToResponse()
+		return exception.PluginDatabaseError("list endpoints", err).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return exception.InternalServerError(errors.New("failed to get plugin manager")).ToResponse()
+		return exception.PluginConfigurationError("", "plugin manager is not initialized").ToResponse()
 	}
 
 	// decrypt settings
@@ -297,8 +313,10 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			pluginInstallation.PluginUniqueIdentifier,
 		)
 		if err != nil {
-			return exception.UniqueIdentifierError(
-				fmt.Errorf("failed to parse plugin unique identifier: %v", err),
+			return exception.PluginValidationError(
+				"plugin_unique_identifier",
+				pluginInstallation.PluginUniqueIdentifier,
+				"invalid format",
 			).ToResponse()
 		}
 
@@ -308,13 +326,18 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			plugin_entities.PluginRuntimeType(pluginInstallation.RuntimeType),
 		)
 		if err != nil {
-			return exception.InternalServerError(
-				fmt.Errorf("failed to get plugin declaration: %v", err),
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
 			).ToResponse()
 		}
 
 		if pluginDeclaration.Endpoint == nil {
-			return exception.NotFoundError(errors.New("plugin does not have an endpoint")).ToResponse()
+			return exception.PluginConfigurationError(
+				pluginUniqueIdentifier.String(),
+				"plugin does not have endpoint support",
+			).ToResponse()
 		}
 
 		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
@@ -332,8 +355,9 @@ func ListEndpoints(tenant_id string, page int, page_size int) *entities.Response
 			},
 		})
 		if err != nil {
-			return exception.InternalServerError(
-				fmt.Errorf("failed to decrypt settings: %v", err),
+			return exception.PluginConfigurationError(
+				pluginUniqueIdentifier.String(),
+				"failed to decrypt endpoint settings",
 			).ToResponse()
 		}
 
@@ -357,16 +381,12 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		db.Page(page, page_size),
 	)
 	if err != nil {
-		return exception.InternalServerError(
-			fmt.Errorf("failed to list endpoints: %v", err),
-		).ToResponse()
+		return exception.PluginDatabaseError("list plugin endpoints", err).ToResponse()
 	}
 
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return exception.InternalServerError(
-			errors.New("failed to get plugin manager"),
-		).ToResponse()
+		return exception.PluginConfigurationError("", "plugin manager is not initialized").ToResponse()
 	}
 
 	// decrypt settings
@@ -377,9 +397,10 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 			db.Equal("tenant_id", tenant_id),
 		)
 		if err != nil {
-			return exception.NotFoundError(
-				fmt.Errorf("failed to find plugin installation: %v", err),
-			).ToResponse()
+			if err == db.ErrDatabaseNotFound {
+				return exception.PluginNotFoundErrorWithContext("Plugin installation", plugin_id).ToResponse()
+			}
+			return exception.PluginDatabaseError("fetch plugin installation", err).ToResponse()
 		}
 
 		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
@@ -387,8 +408,10 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 		)
 
 		if err != nil {
-			return exception.UniqueIdentifierError(
-				fmt.Errorf("failed to parse plugin unique identifier: %v", err),
+			return exception.PluginValidationError(
+				"plugin_unique_identifier",
+				pluginInstallation.PluginUniqueIdentifier,
+				"invalid format",
 			).ToResponse()
 		}
 
@@ -398,13 +421,18 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 			plugin_entities.PluginRuntimeType(pluginInstallation.RuntimeType),
 		)
 		if err != nil {
-			return exception.InternalServerError(
-				fmt.Errorf("failed to get plugin declaration: %v", err),
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
 			).ToResponse()
 		}
 
 		if pluginDeclaration.Endpoint == nil {
-			return exception.NotFoundError(errors.New("plugin does not have an endpoint")).ToResponse()
+			return exception.PluginConfigurationError(
+				pluginUniqueIdentifier.String(),
+				"plugin does not have endpoint support",
+			).ToResponse()
 		}
 
 		decryptedSettings, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{
@@ -422,8 +450,9 @@ func ListPluginEndpoints(tenant_id string, plugin_id string, page int, page_size
 			},
 		})
 		if err != nil {
-			return exception.InternalServerError(
-				fmt.Errorf("failed to decrypt settings: %v", err),
+			return exception.PluginConfigurationError(
+				pluginUniqueIdentifier.String(),
+				"failed to decrypt endpoint settings",
 			).ToResponse()
 		}
 

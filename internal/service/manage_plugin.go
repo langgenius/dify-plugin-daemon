@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -46,7 +45,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("count plugin installations", err).ToResponse()
 	}
 
 	pluginInstallations, err := db.GetAll[models.PluginInstallation](
@@ -56,7 +55,7 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("fetch plugin installations", err).ToResponse()
 	}
 
 	data := make([]installation, 0, len(pluginInstallations))
@@ -66,7 +65,11 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			plugin_installation.PluginUniqueIdentifier,
 		)
 		if err != nil {
-			return exception.UniqueIdentifierError(err).ToResponse()
+			return exception.PluginValidationError(
+				"plugin_unique_identifier",
+				plugin_installation.PluginUniqueIdentifier,
+				"invalid format",
+			).ToResponse()
 		}
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
@@ -74,7 +77,11 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 		)
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		data = append(data, installation{
@@ -126,7 +133,7 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("batch fetch plugin installations", err).ToResponse()
 	}
 
 	data := make([]installation, 0, len(pluginInstallations))
@@ -137,7 +144,11 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 		)
 
 		if err != nil {
-			return exception.InternalServerError(errors.Join(errors.New("invalid plugin unique identifier found"), err)).ToResponse()
+			return exception.PluginValidationError(
+				"plugin_unique_identifier",
+				plugin_installation.PluginUniqueIdentifier,
+				"invalid format",
+			).ToResponse()
 		}
 
 		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
@@ -145,7 +156,11 @@ func BatchFetchPluginInstallationByIDs(tenant_id string, plugin_ids []string) *e
 			plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
 		)
 		if err != nil {
-			return exception.InternalServerError(errors.Join(errors.New("failed to get plugin declaration"), err)).ToResponse()
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		data = append(data, installation{
@@ -186,7 +201,7 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("fetch installed plugins", err).ToResponse()
 	}
 
 	// check which plugin is missing
@@ -229,7 +244,7 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("list tools", err).ToResponse()
 	}
 
 	data := make([]Tool, 0, len(providers))
@@ -251,7 +266,11 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 		)
 
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				uniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		data = append(data, Tool{
@@ -276,7 +295,7 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("list models", err).ToResponse()
 	}
 
 	data := make([]AIModel, 0, len(providers))
@@ -296,7 +315,11 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 		)
 
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				uniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		data = append(data, AIModel{
@@ -323,14 +346,14 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 
 	if err != nil {
 		if err == db.ErrDatabaseNotFound {
-			return exception.ErrPluginNotFound().ToResponse()
+			return exception.PluginNotFoundErrorWithContext("Tool", plugin_id).ToResponse()
 		}
 
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("fetch tool", err).ToResponse()
 	}
 
 	if tool.Provider != provider {
-		return exception.ErrPluginNotFound().ToResponse()
+		return exception.PluginNotFoundErrorWithContext("Tool provider", provider).ToResponse()
 	}
 
 	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(tool.PluginUniqueIdentifier)
@@ -372,7 +395,7 @@ func CheckToolExistence(tenantId string, providerIds []RequestCheckToolExistence
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("check tool existence", err).ToResponse()
 	}
 
 	// check provider id
@@ -405,7 +428,7 @@ func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Re
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("list agent strategies", err).ToResponse()
 	}
 
 	data := make([]AgentStrategy, 0, len(providers))
@@ -425,7 +448,11 @@ func ListAgentStrategies(tenant_id string, page int, page_size int) *entities.Re
 		)
 
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				uniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		data = append(data, AgentStrategy{
@@ -453,14 +480,14 @@ func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *enti
 
 	if err != nil {
 		if err == db.ErrDatabaseNotFound {
-			return exception.ErrPluginNotFound().ToResponse()
+			return exception.PluginNotFoundErrorWithContext("Agent strategy", plugin_id).ToResponse()
 		}
 
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("fetch agent strategy", err).ToResponse()
 	}
 
 	if agent_strategy.Provider != provider {
-		return exception.ErrPluginNotFound().ToResponse()
+		return exception.PluginNotFoundErrorWithContext("Agent strategy provider", provider).ToResponse()
 	}
 
 	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(agent_strategy.PluginUniqueIdentifier)
@@ -500,7 +527,7 @@ func ListDatasources(tenant_id string, page int, page_size int) *entities.Respon
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("list datasources", err).ToResponse()
 	}
 
 	data := make([]Datasource, 0, len(providers))
@@ -520,7 +547,11 @@ func ListDatasources(tenant_id string, page int, page_size int) *entities.Respon
 		)
 
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				uniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		data = append(data, Datasource{
@@ -545,11 +576,15 @@ func GetDatasource(tenant_id string, plugin_id string, provider string) *entitie
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		if err == db.ErrDatabaseNotFound {
+			return exception.PluginNotFoundErrorWithContext("Datasource", plugin_id).ToResponse()
+		}
+
+		return exception.PluginDatabaseError("fetch datasource", err).ToResponse()
 	}
 
 	if datasource.Provider != provider {
-		return exception.ErrPluginNotFound().ToResponse()
+		return exception.PluginNotFoundErrorWithContext("Datasource provider", provider).ToResponse()
 	}
 
 	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(datasource.PluginUniqueIdentifier)

@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
@@ -41,7 +40,7 @@ func InstallMultiplePluginsToTenant(
 	runtimeType := config.Platform.ToPluginRuntimeType()
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
+		return exception.PluginConfigurationError("", "plugin manager is not initialized").ToResponse()
 	}
 
 	// create len(pluginUniqueIdentifiers) jobs, each job is for one plugin
@@ -56,7 +55,11 @@ func InstallMultiplePluginsToTenant(
 			runtimeType,
 		)
 		if err != nil {
-			return exception.InternalServerError(errors.Join(err, errors.New("failed to get plugin declaration"))).ToResponse()
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"load plugin declaration",
+				err,
+			).ToResponse()
 		}
 
 		_, err = db.GetOne[models.Plugin](
@@ -68,7 +71,7 @@ func InstallMultiplePluginsToTenant(
 			needsRuntimeInstall = true
 			allInstalled = false
 		} else if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginDatabaseError("check plugin installation status", err).ToResponse()
 		}
 
 		job := tasks.PluginInstallJob{
@@ -94,7 +97,11 @@ func InstallMultiplePluginsToTenant(
 				runtimeType,
 				source,
 			); err != nil {
-				return exception.InternalServerError(errors.Join(err, errors.New("failed on plugin installation"))).ToResponse()
+				return exception.PluginInstallationError(
+					jobs[i].Identifier.String(),
+					"save installation record to database",
+					err,
+				).ToResponse()
 			}
 		}
 
@@ -108,7 +115,7 @@ func InstallMultiplePluginsToTenant(
 	statuses := buildTaskStatuses(pluginUniqueIdentifiers, declarations)
 	taskRegistry, err := createInstallTasks(tenants, statuses)
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("create installation tasks", err).ToResponse()
 	}
 	taskIDs := taskRegistry.IDs()
 
@@ -198,7 +205,7 @@ func UpgradePlugin(
 ) *entities.Response {
 	manager := plugin_manager.Manager()
 	if manager == nil {
-		return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
+		return exception.PluginConfigurationError("", "plugin manager is not initialized").ToResponse()
 	}
 
 	installation, err := db.GetOne[models.PluginInstallation](
@@ -207,19 +214,27 @@ func UpgradePlugin(
 		db.Equal("source", source),
 	)
 	if err == db.ErrDatabaseNotFound {
-		return exception.NotFoundError(errors.New("plugin installation not found for this tenant")).ToResponse()
+		return exception.PluginNotFoundErrorWithContext("Plugin installation", originalPluginUniqueIdentifier.String()).ToResponse()
 	} else if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("fetch plugin installation", err).ToResponse()
 	}
 
 	runtimeType := plugin_entities.PluginRuntimeType(installation.RuntimeType)
 	originalDeclaration, err := helper.CombinedGetPluginDeclaration(originalPluginUniqueIdentifier, runtimeType)
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginInstallationError(
+			originalPluginUniqueIdentifier.String(),
+			"load plugin declaration",
+			err,
+		).ToResponse()
 	}
 	newDeclaration, err := helper.CombinedGetPluginDeclaration(newPluginUniqueIdentifier, runtimeType)
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginInstallationError(
+			newPluginUniqueIdentifier.String(),
+			"load plugin declaration",
+			err,
+		).ToResponse()
 	}
 
 	// check if the new plugin is already installed
@@ -238,7 +253,11 @@ func UpgradePlugin(
 			meta,
 		)
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				newPluginUniqueIdentifier.String(),
+				"upgrade plugin",
+				err,
+			).ToResponse()
 		}
 
 		// call RemovePluginIfNeeded in a new goroutine
@@ -256,7 +275,7 @@ func UpgradePlugin(
 			TaskID:       "",
 		})
 	} else if err != db.ErrDatabaseNotFound {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("check plugin installation", err).ToResponse()
 	}
 
 	// construct tenant jobs
@@ -277,7 +296,7 @@ func UpgradePlugin(
 
 	taskRegistry, err := createInstallTasks(tenants, statuses)
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("create upgrade tasks", err).ToResponse()
 	}
 
 	taskIDs := taskRegistry.IDs()
@@ -311,15 +330,19 @@ func UninstallPlugin(
 		db.Equal("id", plugin_installation_id),
 	)
 	if err == db.ErrDatabaseNotFound {
-		return exception.ErrPluginNotFound().ToResponse()
+		return exception.PluginNotFoundErrorWithContext("Plugin installation", plugin_installation_id).ToResponse()
 	}
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginDatabaseError("fetch plugin installation", err).ToResponse()
 	}
 
 	pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
 	if err != nil {
-		return exception.UniqueIdentifierError(err).ToResponse()
+		return exception.PluginValidationError(
+			"plugin_unique_identifier",
+			installation.PluginUniqueIdentifier,
+			"invalid format",
+		).ToResponse()
 	}
 
 	declaration, err := helper.CombinedGetPluginDeclaration(
@@ -327,7 +350,11 @@ func UninstallPlugin(
 		plugin_entities.PluginRuntimeType(installation.RuntimeType),
 	)
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return exception.PluginInstallationError(
+			pluginUniqueIdentifier.String(),
+			"load plugin declaration",
+			err,
+		).ToResponse()
 	}
 
 	deleteResponse, err := curd.UninstallPlugin(
@@ -337,7 +364,11 @@ func UninstallPlugin(
 		declaration,
 	)
 	if err != nil {
-		return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()
+		return exception.PluginInstallationError(
+			pluginUniqueIdentifier.String(),
+			"uninstall",
+			err,
+		).ToResponse()
 	}
 
 	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenant_id)
@@ -346,22 +377,34 @@ func UninstallPlugin(
 	if deleteResponse.IsPluginDeleted && deleteResponse.Plugin != nil && deleteResponse.Plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
 		manager := plugin_manager.Manager()
 		if manager == nil {
-			return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
+			return exception.PluginConfigurationError("", "plugin manager is not initialized").ToResponse()
 		}
 
 		if err := manager.RemoveLocalPlugin(pluginUniqueIdentifier); err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"remove plugin",
+				err,
+			).ToResponse()
 		}
 
 		shutdownCh, err := manager.ShutdownLocalPluginGracefully(pluginUniqueIdentifier)
 		if err == controlpanel.ErrLocalPluginRuntimeNotFound {
 			return entities.NewSuccessResponse(true)
 		} else if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"shutdown plugin",
+				err,
+			).ToResponse()
 		}
 
 		if err := waitGracefulShutdown(shutdownCh); err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return exception.PluginInstallationError(
+				pluginUniqueIdentifier.String(),
+				"wait for graceful shutdown",
+				err,
+			).ToResponse()
 		}
 	}
 
