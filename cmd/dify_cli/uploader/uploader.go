@@ -18,7 +18,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 )
 
-func signRequest(secret string, timestamp string, body []byte) string {
+func SignRequest(secret string, timestamp string, body []byte) string {
 	data := append([]byte(timestamp+"."), body...)
 	return "sha256=" + encryption.HmacSha256(secret, data)
 }
@@ -35,7 +35,7 @@ func getSignedURL(cfg *types.DifyConfig, filename, mimetype string) (string, err
 	}
 
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	signature := signRequest(cfg.Env.CliApiSecret, timestamp, body)
+	signature := SignRequest(cfg.Env.CliApiSecret, timestamp, body)
 
 	url := strings.TrimSuffix(cfg.Env.CliApiURL, "/") + "/cli/api/upload/file/request"
 

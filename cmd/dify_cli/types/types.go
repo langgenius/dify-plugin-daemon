@@ -147,9 +147,18 @@ type DifyToolDeclaration struct {
 	CredentialId   string           `json:"credential_id" yaml:"credential_id" validate:"omitempty"`
 }
 
+type ToolReference struct {
+	ID           string         `json:"id"`
+	ToolName     string         `json:"tool_name"`
+	ToolProvider string         `json:"tool_provider"`
+	CredentialID string         `json:"credential_id"`
+	DefaultValue map[string]any `json:"default_value"`
+}
+
 type DifyConfig struct {
-	Env   EnvConfig             `json:"env"`
-	Tools []DifyToolDeclaration `json:"tools"`
+	Env            EnvConfig             `json:"env"`
+	Tools          []DifyToolDeclaration `json:"tools"`
+	ToolReferences []ToolReference       `json:"tool_references"`
 }
 
 type DifyInnerAPIResponse[T any] struct {

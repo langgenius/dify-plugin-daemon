@@ -2,8 +2,825 @@
   "env": {
     "files_url": "http://localhost:5001",
     "cli_api_url": "https://difyai.ngrok.dev",
-    "cli_api_session_id": "4aa8482c-09d9-40b7-a5b0-0301ec432740",
-    "cli_api_secret": "e29816c3-2882-4139-a68a-649704305650"
+    "cli_api_session_id": "32a13f93-dff7-4bbe-a5a5-de1e64117cac",
+    "cli_api_secret": "ii15eAKTre49iWqddvF1dnSFbe7Iy6TjYhxrODTcrbg"
   },
-  "tools": []
+  "tool_references": [
+    {
+      "id": "4a2vzsdja",
+      "tool_name": "send_message",
+      "tool_provider": "langgenius/dify-gmail/dify-gmail",
+      "credential_id": "v1a2ifhsai1asdagdqwd",
+      "default_value": {
+        "to": "test@example.com"
+      }
+    }
+  ],
+  "tools": [
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "send_message",
+        "label": {
+          "en_US": "Send Gmail Message",
+          "zh_Hans": "发送Gmail邮件",
+          "pt_BR": "Enviar Mensagem do Gmail",
+          "ja_JP": "Gmailメッセージを送信"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Send an email message via Gmail with recipients, subject, and body content",
+          "zh_Hans": "通过Gmail发送电子邮件，包含收件人、主题和正文内容",
+          "pt_BR": "Enviar uma mensagem de email via Gmail com destinatários, assunto e conteúdo do corpo",
+          "ja_JP": "受信者、件名、本文を含むGmailでメールを送信"
+        },
+        "llm": "Send an email message via Gmail with recipients, subject, and body content"
+      },
+      "parameters": [
+        {
+          "name": "to",
+          "label": {
+            "en_US": "To (Recipients)",
+            "zh_Hans": "收件人",
+            "pt_BR": "Para (Destinatários)",
+            "ja_JP": "宛先（受信者）"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "Email addresses of the primary recipients (comma-separated for multiple recipients)",
+            "zh_Hans": "主要收件人的电子邮件地址（多个收件人用逗号分隔）",
+            "pt_BR": "Endereços de email dos destinatários principais (separados por vírgula para múltiplos destinatários)",
+            "ja_JP": "主要な受信者のメールアドレス（複数の受信者はカンマで区切る）"
+          },
+          "llm_description": "Email addresses of the primary recipients. Multiple recipients can be separated by commas."
+        },
+        {
+          "name": "subject",
+          "label": {
+            "en_US": "Subject",
+            "zh_Hans": "主题",
+            "pt_BR": "Assunto",
+            "ja_JP": "件名"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "Subject line of the email",
+            "zh_Hans": "电子邮件的主题行",
+            "pt_BR": "Linha de assunto do email",
+            "ja_JP": "メールの件名"
+          },
+          "llm_description": "Subject line of the email message"
+        },
+        {
+          "name": "body",
+          "label": {
+            "en_US": "Email Body",
+            "zh_Hans": "邮件正文",
+            "pt_BR": "Corpo do Email",
+            "ja_JP": "メール本文"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "Content of the email message (supports plain text)",
+            "zh_Hans": "电子邮件的内容（支持纯文本）",
+            "pt_BR": "Conteúdo da mensagem de email (suporta texto simples)",
+            "ja_JP": "メールメッセージの内容（プレーンテキストをサポート）"
+          },
+          "llm_description": "Content of the email message. Currently supports plain text format."
+        },
+        {
+          "name": "cc",
+          "label": {
+            "en_US": "CC (Carbon Copy)",
+            "zh_Hans": "抄送",
+            "pt_BR": "CC (Cópia)",
+            "ja_JP": "CC（カーボンコピー）"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email addresses to carbon copy (comma-separated for multiple recipients)",
+            "zh_Hans": "要抄送的电子邮件地址（多个收件人用逗号分隔）",
+            "pt_BR": "Endereços de email para cópia (separados por vírgula para múltiplos destinatários)",
+            "ja_JP": "カーボンコピーするメールアドレス（複数の受信者はカンマで区切る）"
+          },
+          "llm_description": "Email addresses to carbon copy. Multiple recipients can be separated by commas. Leave empty if not needed."
+        },
+        {
+          "name": "bcc",
+          "label": {
+            "en_US": "BCC (Blind Carbon Copy)",
+            "zh_Hans": "密送",
+            "pt_BR": "BCC (Cópia Oculta)",
+            "ja_JP": "BCC（ブラインドカーボンコピー）"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email addresses to blind carbon copy (comma-separated for multiple recipients)",
+            "zh_Hans": "要密送的电子邮件地址（多个收件人用逗号分隔）",
+            "pt_BR": "Endereços de email para cópia oculta (separados por vírgula para múltiplos destinatários)",
+            "ja_JP": "ブラインドカーボンコピーするメールアドレス（複数の受信者はカンマで区切る）"
+          },
+          "llm_description": "Email addresses to blind carbon copy. Multiple recipients can be separated by commas. Leave empty if not needed."
+        },
+        {
+          "name": "reply_to",
+          "label": {
+            "en_US": "Reply-To",
+            "zh_Hans": "回复地址",
+            "pt_BR": "Responder Para",
+            "ja_JP": "返信先"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email address for replies (if different from sender)",
+            "zh_Hans": "回复的电子邮件地址（如果与发件人不同）",
+            "pt_BR": "Endereço de email para respostas (se diferente do remetente)",
+            "ja_JP": "返信用のメールアドレス（送信者と異なる場合）"
+          },
+          "llm_description": "Email address for replies. If not specified, replies will go to the sender's email address."
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "image_generate",
+        "label": {
+          "en_US": "Gemini Image Generate and Edit",
+          "zh_Hans": "Gemini 图像生成与编辑",
+          "pt_BR": "Gemini Image Generate and Edit",
+          "ja_JP": "Gemini 画像生成・編集"
+        },
+        "provider": "langgenius/gemini_image/gemini_image"
+      },
+      "description": {
+        "human": {
+          "en_US": "Gemini Image Generate is a text to image generation and editing tool",
+          "zh_Hans": "Gemini Image Generate 是一个文本到图像的生成与编辑工具",
+          "pt_BR": "Gemini Image Generate is a text to image generation and editing tool",
+          "ja_JP": "Gemini 画像生成はテキストから画像を生成・編集するツールです。"
+        },
+        "llm": "Gemini Image Generate is a text to image generation and editing tool"
+      },
+      "parameters": [
+        {
+          "name": "prompt",
+          "label": {
+            "en_US": "Prompt",
+            "zh_Hans": "提示词",
+            "pt_BR": "Prompt",
+            "ja_JP": "プロンプト"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "Detailed description of the image you want to generate (max 32000 tokens). Check the official Gemini documentation.",
+            "zh_Hans": "您想要生成的图像的详细描述（最多 32000 tokens）。请查看 Gemini 的官方文档。",
+            "pt_BR": "Detailed description of the image you want to generate (max 32000 tokens). Check the official Gemini documentation.",
+            "ja_JP": "生成したい画像の細かな説明(最大 32000 トークン)。Gemini 公式ドキュメントを参照してください。"
+          },
+          "llm_description": "Detailed image prompt for Gemini Image Generate(max 32000 tokens). Describe the desired image clearly."
+        },
+        {
+          "name": "images",
+          "label": {
+            "en_US": "Image(s)",
+            "zh_Hans": "图像",
+            "pt_BR": "Image(s)",
+            "ja_JP": "画像"
+          },
+          "type": "files",
+          "human_description": {
+            "en_US": "One or more images to edit (PNG, JPEG, or WebP, each <7MB).",
+            "zh_Hans": "要编辑的一张或多张图像（PNG、JPEG 或 WebP，每张小于 7MB）。",
+            "pt_BR": "One or more images to edit (PNG, JPEG, or WebP, each <7MB).",
+            "ja_JP": "編集対象の画像(PNG, JPEG, or WebP, 1つ当たり最大 7MB)"
+          },
+          "llm_description": ""
+        },
+        {
+          "name": "model",
+          "label": {
+            "en_US": "Gemini Model",
+            "zh_Hans": "Gemini 模型",
+            "pt_BR": "Gemini Model",
+            "ja_JP": "Gemini モデル"
+          },
+          "default": "gemini-2.5-flash-image-preview",
+          "options": [
+            {
+              "value": "gemini-2.5-flash-image-preview",
+              "label": {
+                "en_US": "Nano Banana",
+                "zh_Hans": "Nano Banana",
+                "pt_BR": "Nano Banana",
+                "ja_JP": "Nano Banana"
+              },
+              "icon": ""
+            },
+            {
+              "value": "gemini-3-pro-image-preview",
+              "label": {
+                "en_US": "Nano Banana Pro",
+                "zh_Hans": "Nano Banana Pro",
+                "pt_BR": "Nano Banana Pro",
+                "ja_JP": "Nano Banana Pro"
+              },
+              "icon": ""
+            }
+          ],
+          "type": "select",
+          "human_description": {
+            "en_US": "Select the gemini model",
+            "zh_Hans": "选择Gemini模型",
+            "pt_BR": "Select the gemini model",
+            "ja_JP": "Gemini モデルを選択"
+          },
+          "llm_description": ""
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "get_message",
+        "label": {
+          "en_US": "Get Gmail Message Details",
+          "zh_Hans": "获取Gmail邮件详情",
+          "pt_BR": "Obter Detalhes da Mensagem do Gmail",
+          "ja_JP": "Gmailメッセージの詳細を取得"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Get detailed information about a specific Gmail message including headers, body, and attachments",
+          "zh_Hans": "获取特定Gmail邮件的详细信息，包括邮件头、正文和附件",
+          "pt_BR": "Obter informações detalhadas sobre uma mensagem específica do Gmail, incluindo cabeçalhos, corpo e anexos",
+          "ja_JP": "特定のGmailメッセージの詳細情報を取得し、ヘッダー、本文、添付ファイルを含む"
+        },
+        "llm": "Get detailed information about a specific Gmail message including headers, body, and attachments"
+      },
+      "parameters": [
+        {
+          "name": "message_id",
+          "label": {
+            "en_US": "Message ID",
+            "zh_Hans": "邮件ID",
+            "pt_BR": "ID da Mensagem",
+            "ja_JP": "メッセージID"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "The unique identifier of the Gmail message to retrieve",
+            "zh_Hans": "要检索的Gmail邮件的唯一标识符",
+            "pt_BR": "Identificador único da mensagem do Gmail a ser recuperada",
+            "ja_JP": "取得するGmailメッセージの一意の識別子"
+          },
+          "llm_description": "The unique message ID of the Gmail message to retrieve. This ID can be obtained from the list_messages tool or other Gmail operations."
+        },
+        {
+          "name": "include_body",
+          "label": {
+            "en_US": "Include Email Body",
+            "zh_Hans": "包含邮件正文",
+            "pt_BR": "Incluir Corpo do Email",
+            "ja_JP": "メール本文を含める"
+          },
+          "default": true,
+          "type": "boolean",
+          "human_description": {
+            "en_US": "Whether to include the full email body content in the results",
+            "zh_Hans": "是否在结果中包含完整的邮件正文内容",
+            "pt_BR": "Se deve incluir o conteúdo completo do corpo do email nos resultados",
+            "ja_JP": "結果にメール本文の完全な内容を含めるかどうか"
+          },
+          "llm_description": "Set to true to include full email body content, false to include only headers and metadata"
+        },
+        {
+          "name": "include_attachments",
+          "label": {
+            "en_US": "Include Attachment Details",
+            "zh_Hans": "包含附件详情",
+            "pt_BR": "Incluir Detalhes dos Anexos",
+            "ja_JP": "添付ファイルの詳細を含める"
+          },
+          "default": false,
+          "type": "boolean",
+          "human_description": {
+            "en_US": "Whether to include detailed information about attachments (names, sizes, types)",
+            "zh_Hans": "是否包含关于附件的详细信息（名称、大小、类型）",
+            "pt_BR": "Se deve incluir informações detalhadas sobre anexos (nomes, tamanhos, tipos)",
+            "ja_JP": "添付ファイルに関する詳細情報（名前、サイズ、タイプ）を含めるかどうか"
+          },
+          "llm_description": "Set to true to include detailed attachment information, false to include only basic attachment metadata"
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "draft_message",
+        "label": {
+          "en_US": "Create Gmail Draft",
+          "zh_Hans": "创建Gmail草稿",
+          "pt_BR": "Criar Rascunho do Gmail",
+          "ja_JP": "Gmail下書きを作成"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Create a draft email message in Gmail that can be edited and sent later",
+          "zh_Hans": "在Gmail中创建草稿邮件，可以稍后编辑和发送",
+          "pt_BR": "Criar uma mensagem de email rascunho no Gmail que pode ser editada e enviada posteriormente",
+          "ja_JP": "後で編集して送信できるGmailの下書きメールを作成"
+        },
+        "llm": "Create a draft email message in Gmail that can be edited and sent later"
+      },
+      "parameters": [
+        {
+          "name": "to",
+          "label": {
+            "en_US": "To (Recipients)",
+            "zh_Hans": "收件人",
+            "pt_BR": "Para (Destinatários)",
+            "ja_JP": "宛先（受信者）"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email addresses of the primary recipients (comma-separated for multiple recipients)",
+            "zh_Hans": "主要收件人的电子邮件地址（多个收件人用逗号分隔）",
+            "pt_BR": "Endereços de email dos destinatários principais (separados por vírgula para múltiplos destinatários)",
+            "ja_JP": "主要な受信者のメールアドレス（複数の受信者はカンマで区切る）"
+          },
+          "llm_description": "Email addresses of the primary recipients. Multiple recipients can be separated by commas. Can be left empty for drafts."
+        },
+        {
+          "name": "subject",
+          "label": {
+            "en_US": "Subject",
+            "zh_Hans": "主题",
+            "pt_BR": "Assunto",
+            "ja_JP": "件名"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Subject line of the email (can be left empty for drafts)",
+            "zh_Hans": "电子邮件的主题行（草稿可以留空）",
+            "pt_BR": "Linha de assunto do email (pode ser deixada em branco para rascunhos)",
+            "ja_JP": "メールの件名（下書きは空にできます）"
+          },
+          "llm_description": "Subject line of the email message. Can be left empty for drafts."
+        },
+        {
+          "name": "body",
+          "label": {
+            "en_US": "Email Body",
+            "zh_Hans": "邮件正文",
+            "pt_BR": "Corpo do Email",
+            "ja_JP": "メール本文"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Content of the email message (can be left empty for drafts)",
+            "zh_Hans": "电子邮件的内容（草稿可以留空）",
+            "pt_BR": "Conteúdo da mensagem de email (pode ser deixado em branco para rascunhos)",
+            "ja_JP": "メールメッセージの内容（下書きは空にできます）"
+          },
+          "llm_description": "Content of the email message. Can be left empty for drafts. Currently supports plain text format."
+        },
+        {
+          "name": "cc",
+          "label": {
+            "en_US": "CC (Carbon Copy)",
+            "zh_Hans": "抄送",
+            "pt_BR": "CC (Cópia)",
+            "ja_JP": "CC（カーボンコピー）"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email addresses to carbon copy (comma-separated for multiple recipients)",
+            "zh_Hans": "要抄送的电子邮件地址（多个收件人用逗号分隔）",
+            "pt_BR": "Endereços de email para cópia (separados por vírgula para múltiplos destinatários)",
+            "ja_JP": "カーボンコピーするメールアドレス（複数の受信者はカンマで区切る）"
+          },
+          "llm_description": "Email addresses to carbon copy. Multiple recipients can be separated by commas. Leave empty if not needed."
+        },
+        {
+          "name": "bcc",
+          "label": {
+            "en_US": "BCC (Blind Carbon Copy)",
+            "zh_Hans": "密送",
+            "pt_BR": "BCC (Cópia Oculta)",
+            "ja_JP": "BCC（ブラインドカーボンコピー）"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email addresses to blind carbon copy (comma-separated for multiple recipients)",
+            "zh_Hans": "要密送的电子邮件地址（多个收件人用逗号分隔）",
+            "pt_BR": "Endereços de email para cópia oculta (separados por vírgula para múltiplos destinatários)",
+            "ja_JP": "ブラインドカーボンコピーするメールアドレス（複数の受信者はカンマで区切る）"
+          },
+          "llm_description": "Email addresses to blind carbon copy. Multiple recipients can be separated by commas. Leave empty if not needed."
+        },
+        {
+          "name": "reply_to",
+          "label": {
+            "en_US": "Reply-To",
+            "zh_Hans": "回复地址",
+            "pt_BR": "Responder Para",
+            "ja_JP": "返信先"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Email address for replies (if different from sender)",
+            "zh_Hans": "回复的电子邮件地址（如果与发件人不同）",
+            "pt_BR": "Endereço de email para respostas (se diferente do remetente)",
+            "ja_JP": "返信用のメールアドレス（送信者と異なる場合）"
+          },
+          "llm_description": "Email address for replies. If not specified, replies will go to the sender's email address."
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "list_drafts",
+        "label": {
+          "en_US": "List Gmail Drafts",
+          "zh_Hans": "列出Gmail草稿",
+          "pt_BR": "Listar Rascunhos do Gmail",
+          "ja_JP": "Gmail下書きを一覧表示"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "List draft email messages from Gmail drafts folder with optional filtering",
+          "zh_Hans": "从Gmail草稿文件夹列出草稿邮件，支持可选的过滤",
+          "pt_BR": "Listar mensagens de email rascunho da pasta de rascunhos do Gmail com filtros opcionais",
+          "ja_JP": "Gmailの下書きフォルダから下書きメールを一覧表示し、オプションのフィルタリングをサポート"
+        },
+        "llm": "List draft email messages from Gmail drafts folder with optional filtering"
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "label": {
+            "en_US": "Maximum Results",
+            "zh_Hans": "最大结果数",
+            "pt_BR": "Resultados Máximos",
+            "ja_JP": "最大結果数"
+          },
+          "default": 10,
+          "type": "number",
+          "human_description": {
+            "en_US": "Maximum number of drafts to retrieve (1-100)",
+            "zh_Hans": "要检索的最大草稿数量（1-100）",
+            "pt_BR": "Número máximo de rascunhos a recuperar (1-100)",
+            "ja_JP": "取得する下書きの最大数（1-100）"
+          },
+          "llm_description": "Maximum number of drafts to return (between 1 and 100, default is 10)"
+        },
+        {
+          "name": "include_body",
+          "label": {
+            "en_US": "Include Email Body",
+            "zh_Hans": "包含邮件正文",
+            "pt_BR": "Incluir Corpo do Email",
+            "ja_JP": "メール本文を含める"
+          },
+          "default": false,
+          "type": "boolean",
+          "human_description": {
+            "en_US": "Whether to include the full email body content in the results (may increase response time)",
+            "zh_Hans": "是否在结果中包含完整的邮件正文内容（可能会增加响应时间）",
+            "pt_BR": "Se deve incluir o conteúdo completo do corpo do email nos resultados (pode aumentar o tempo de resposta)",
+            "ja_JP": "結果にメール本文の完全な内容を含めるかどうか（応答時間が増加する可能性があります）"
+          },
+          "llm_description": "Set to true to include full email body content, false to include only headers and metadata. Including body content will increase response time."
+        },
+        {
+          "name": "search_query",
+          "label": {
+            "en_US": "Search Query",
+            "zh_Hans": "搜索查询",
+            "pt_BR": "Consulta de Pesquisa",
+            "ja_JP": "検索クエリ"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Optional Gmail search query to filter drafts (e.g., 'subject:meeting', 'to:example@gmail.com')",
+            "zh_Hans": "可选的Gmail搜索查询来过滤草稿（例如：'subject:meeting'、'to:example@gmail.com'）",
+            "pt_BR": "Consulta de pesquisa opcional do Gmail para filtrar rascunhos (ex: 'subject:meeting', 'to:example@gmail.com')",
+            "ja_JP": "下書きをフィルタリングするオプションのGmail検索クエリ（例：'subject:meeting'、'to:example@gmail.com'）"
+          },
+          "llm_description": "Optional Gmail search query to filter drafts. Use Gmail search operators like 'subject:', 'to:', 'from:', 'has:attachment'. Leave empty to get all drafts."
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "send_draft",
+        "label": {
+          "en_US": "Send Gmail Draft",
+          "zh_Hans": "发送Gmail草稿",
+          "pt_BR": "Enviar Rascunho do Gmail",
+          "ja_JP": "Gmail下書きを送信"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Send a draft email message that was previously created in Gmail",
+          "zh_Hans": "发送之前在Gmail中创建的草稿邮件",
+          "pt_BR": "Enviar uma mensagem de email rascunho que foi previamente criada no Gmail",
+          "ja_JP": "以前にGmailで作成された下書きメールを送信"
+        },
+        "llm": "Send a draft email message that was previously created in Gmail"
+      },
+      "parameters": [
+        {
+          "name": "draft_id",
+          "label": {
+            "en_US": "Draft ID",
+            "zh_Hans": "草稿ID",
+            "pt_BR": "ID do Rascunho",
+            "ja_JP": "下書きID"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "The unique identifier of the draft email to send",
+            "zh_Hans": "要发送的草稿邮件的唯一标识符",
+            "pt_BR": "Identificador único do rascunho de email a ser enviado",
+            "ja_JP": "送信する下書きメールの一意の識別子"
+          },
+          "llm_description": "The unique draft ID of the Gmail draft to send. This ID can be obtained from the list_drafts tool or draft_message tool."
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "add_attachment_to_draft",
+        "label": {
+          "en_US": "Add Attachment to Gmail Draft",
+          "zh_Hans": "向Gmail草稿添加附件",
+          "pt_BR": "Adicionar Anexo ao Rascunho do Gmail",
+          "ja_JP": "Gmail下書きに添付ファイルを追加"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Add a file attachment to an existing Gmail draft message",
+          "zh_Hans": "向现有的Gmail草稿邮件添加文件附件",
+          "pt_BR": "Adicionar um anexo de arquivo a uma mensagem de rascunho existente do Gmail",
+          "ja_JP": "既存のGmail下書きメッセージにファイル添付を追加"
+        },
+        "llm": "Add a file attachment to an existing Gmail draft message"
+      },
+      "parameters": [
+        {
+          "name": "draft_id",
+          "label": {
+            "en_US": "Draft ID",
+            "zh_Hans": "草稿ID",
+            "pt_BR": "ID do Rascunho",
+            "ja_JP": "下書きID"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "The unique identifier of the Gmail draft to add the attachment to",
+            "zh_Hans": "要添加附件的Gmail草稿的唯一标识符",
+            "pt_BR": "Identificador único do rascunho do Gmail ao qual adicionar o anexo",
+            "ja_JP": "添付ファイルを追加するGmail下書きの一意の識別子"
+          },
+          "llm_description": "The unique draft ID of the Gmail draft to add the attachment to. This ID can be obtained from the list_drafts tool or draft_message tool."
+        },
+        {
+          "name": "file_to_attach",
+          "label": {
+            "en_US": "Files to Attach",
+            "zh_Hans": "要附加的文件",
+            "pt_BR": "Arquivos para Anexar",
+            "ja_JP": "添付するファイル"
+          },
+          "required": true,
+          "type": "files",
+          "human_description": {
+            "en_US": "The files to attach to the draft email",
+            "zh_Hans": "要附加到草稿邮件的文件",
+            "pt_BR": "Os arquivos para anexar ao rascunho de e-mail",
+            "ja_JP": "下書きメールに添付するファイル"
+          },
+          "llm_description": "The files to attach to the draft email, you can upload multiple files"
+        },
+        {
+          "name": "attachment_name",
+          "label": {
+            "en_US": "Attachment Name",
+            "zh_Hans": "附件名称",
+            "pt_BR": "Nome do Anexo",
+            "ja_JP": "添付ファイル名"
+          },
+          "default": "",
+          "type": "string",
+          "human_description": {
+            "en_US": "Custom name for the attachment (if different from the original filename)",
+            "zh_Hans": "附件的自定义名称（如果与原始文件名不同）",
+            "pt_BR": "Nome personalizado para o anexo (se diferente do nome do arquivo original)",
+            "ja_JP": "添付ファイルのカスタム名（元のファイル名と異なる場合）"
+          },
+          "llm_description": "Custom name for the attachment. If not specified, the original filename will be used."
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "flag_message",
+        "label": {
+          "en_US": "Flag Gmail Message",
+          "zh_Hans": "标记Gmail邮件",
+          "pt_BR": "Marcar Mensagem do Gmail",
+          "ja_JP": "Gmailメッセージにフラグを立てる"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Flag or unflag a Gmail message for follow-up using Gmail's built-in flagging system",
+          "zh_Hans": "使用Gmail的内置标记系统标记或取消标记邮件以便后续跟进",
+          "pt_BR": "Marcar ou desmarcar uma mensagem do Gmail para acompanhamento usando o sistema de marcação integrado do Gmail",
+          "ja_JP": "Gmailの組み込みフラグシステムを使用して、後でフォローアップするためにGmailメッセージにフラグを立てるか、フラグを外す"
+        },
+        "llm": "Flag or unflag a Gmail message for follow-up using Gmail's built-in flagging system"
+      },
+      "parameters": [
+        {
+          "name": "message_id",
+          "label": {
+            "en_US": "Message ID",
+            "zh_Hans": "邮件ID",
+            "pt_BR": "ID da Mensagem",
+            "ja_JP": "メッセージID"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "The unique identifier of the Gmail message to flag or unflag",
+            "zh_Hans": "要标记或取消标记的Gmail邮件的唯一标识符",
+            "pt_BR": "Identificador único da mensagem do Gmail a ser marcada ou desmarcada",
+            "ja_JP": "フラグを立てるか、フラグを外すGmailメッセージの一意の識別子"
+          },
+          "llm_description": "The unique message ID of the Gmail message to flag or unflag. This ID can be obtained from the list_messages tool or get_message tool."
+        },
+        {
+          "name": "action",
+          "label": {
+            "en_US": "Action",
+            "zh_Hans": "操作",
+            "pt_BR": "Ação",
+            "ja_JP": "アクション"
+          },
+          "required": true,
+          "default": "flag",
+          "type": "string",
+          "human_description": {
+            "en_US": "Whether to flag or unflag the message ('flag' to add star, 'unflag' to remove star)",
+            "zh_Hans": "是标记还是取消标记邮件（'flag'添加星标，'unflag'移除星标）",
+            "pt_BR": "Se deve marcar ou desmarcar a mensagem ('flag' para adicionar estrela, 'unflag' para remover estrela)",
+            "ja_JP": "メッセージにフラグを立てるか、フラグを外すか（'flag'でスターを追加、'unflag'でスターを削除）"
+          },
+          "llm_description": "Action to perform: 'flag' to add the starred label (mark for follow-up), 'unflag' to remove the starred label."
+        }
+      ]
+    },
+    {
+      "provider_type": "builtin",
+      "identity": {
+        "author": "langgenius",
+        "name": "search_messages",
+        "label": {
+          "en_US": "Search Gmail Messages",
+          "zh_Hans": "搜索Gmail邮件",
+          "pt_BR": "Pesquisar Mensagens do Gmail",
+          "ja_JP": "Gmailメッセージを検索"
+        },
+        "provider": "langgenius/dify-gmail/dify-gmail"
+      },
+      "description": {
+        "human": {
+          "en_US": "Search Gmail messages using advanced Gmail search operators and filters",
+          "zh_Hans": "使用高级Gmail搜索操作符和过滤器搜索Gmail邮件",
+          "pt_BR": "Pesquisar mensagens do Gmail usando operadores de pesquisa avançados e filtros do Gmail",
+          "ja_JP": "高度なGmail検索演算子とフィルターを使用してGmailメッセージを検索"
+        },
+        "llm": "Search Gmail messages using advanced Gmail search operators and filters"
+      },
+      "parameters": [
+        {
+          "name": "query",
+          "label": {
+            "en_US": "Search Query",
+            "zh_Hans": "搜索查询",
+            "pt_BR": "Consulta de Pesquisa",
+            "ja_JP": "検索クエリ"
+          },
+          "required": true,
+          "type": "string",
+          "human_description": {
+            "en_US": "Gmail search query using Gmail search syntax (e.g., 'from:example@gmail.com subject:meeting after:2024/01/01 has:attachment')",
+            "zh_Hans": "使用Gmail搜索语法的Gmail搜索查询（例如：'from:example@gmail.com subject:meeting after:2024/01/01 has:attachment'）",
+            "pt_BR": "Consulta de pesquisa do Gmail usando sintaxe de pesquisa do Gmail (ex: 'from:example@gmail.com subject:meeting after:2024/01/01 has:attachment')",
+            "ja_JP": "Gmail検索構文を使用したGmail検索クエリ（例：'from:example@gmail.com subject:meeting after:2024/01/01 has:attachment'）"
+          },
+          "llm_description": "Gmail search query string. Use Gmail search operators like 'from:', 'to:', 'subject:', 'is:unread', 'has:attachment', 'after:2024/01/01', 'before:2024/12/31', 'label:inbox', 'larger:10M', 'smaller:1M', etc."
+        },
+        {
+          "name": "max_results",
+          "label": {
+            "en_US": "Maximum Results",
+            "zh_Hans": "最大结果数",
+            "pt_BR": "Resultados Máximos",
+            "ja_JP": "最大結果数"
+          },
+          "default": 20,
+          "type": "number",
+          "human_description": {
+            "en_US": "Maximum number of messages to retrieve (1-100)",
+            "zh_Hans": "要检索的最大邮件数量（1-100）",
+            "pt_BR": "Número máximo de mensagens a recuperar (1-100)",
+            "ja_JP": "取得するメッセージの最大数（1-100）"
+          },
+          "llm_description": "Maximum number of messages to return (between 1 and 100, default is 20)"
+        },
+        {
+          "name": "include_body",
+          "label": {
+            "en_US": "Include Email Body",
+            "zh_Hans": "包含邮件正文",
+            "pt_BR": "Incluir Corpo do Email",
+            "ja_JP": "メール本文を含める"
+          },
+          "default": false,
+          "type": "boolean",
+          "human_description": {
+            "en_US": "Whether to include the full email body content in the results (may increase response time)",
+            "zh_Hans": "是否在结果中包含完整的邮件正文内容（可能会增加响应时间）",
+            "pt_BR": "Se deve incluir o conteúdo completo do corpo do email nos resultados (pode aumentar o tempo de resposta)",
+            "ja_JP": "結果にメール本文の完全な内容を含めるかどうか（応答時間が増加する可能性があります）"
+          },
+          "llm_description": "Set to true to include full email body content, false to include only headers and metadata. Including body content will increase response time."
+        },
+        {
+          "name": "sort_by",
+          "label": {
+            "en_US": "Sort By",
+            "zh_Hans": "排序方式",
+            "pt_BR": "Ordenar Por",
+            "ja_JP": "並び替え"
+          },
+          "default": "date",
+          "type": "string",
+          "human_description": {
+            "en_US": "How to sort the search results ('date' for newest first, 'from' for sender, 'subject' for subject line)",
+            "zh_Hans": "如何对搜索结果进行排序（'date'按日期最新优先，'from'按发件人，'subject'按主题行）",
+            "pt_BR": "Como ordenar os resultados da pesquisa ('date' para mais recente primeiro, 'from' para remetente, 'subject' para linha de assunto)",
+            "ja_JP": "検索結果の並び替え方法（'date'で最新順、'from'で送信者順、'subject'で件名順）"
+          },
+          "llm_description": "Sort order for search results. Options: 'date' (newest first), 'from' (sender), 'subject' (alphabetical). Default is 'date'."
+        }
+      ]
+    }
+  ]
 }

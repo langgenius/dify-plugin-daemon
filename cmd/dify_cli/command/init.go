@@ -11,7 +11,7 @@ import (
 var InitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize tool symlinks from config",
-	Long:  `Create symlinks for all tools defined in .dify_cli.json`,
+	Long:  `Create symlinks for all tools and tool references defined in .dify_cli.json`,
 	Run:   runInit,
 }
 
@@ -22,8 +22,8 @@ func runInit(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	if len(cfg.Tools) == 0 {
-		fmt.Fprintf(os.Stderr, "No tools defined in config\n")
+	if len(cfg.Tools) == 0 && len(cfg.ToolReferences) == 0 {
+		fmt.Fprintf(os.Stderr, "No tools or tool references defined in config\n")
 		return
 	}
 
@@ -35,6 +35,7 @@ func runInit(cmd *cobra.Command, args []string) {
 
 	created := 0
 	skipped := 0
+
 	for _, tool := range cfg.Tools {
 		name := tool.Identity.Name
 		if _, err := os.Lstat(name); err == nil {
@@ -47,6 +48,21 @@ func runInit(cmd *cobra.Command, args []string) {
 			continue
 		}
 		fmt.Fprintf(os.Stdout, "  [OK] %s\n", name)
+		created++
+	}
+
+	for _, ref := range cfg.ToolReferences {
+		name := config.GetReferenceSymlinkName(&ref)
+		if _, err := os.Lstat(name); err == nil {
+			fmt.Fprintf(os.Stdout, "  [SKIP] %s (already exists)\n", name)
+			skipped++
+			continue
+		}
+		if err := os.Symlink(selfPath, name); err != nil {
+			fmt.Fprintf(os.Stderr, "  [FAIL] %s: %v\n", name, err)
+			continue
+		}
+		fmt.Fprintf(os.Stdout, "  [OK] %s (reference)\n", name)
 		created++
 	}
 

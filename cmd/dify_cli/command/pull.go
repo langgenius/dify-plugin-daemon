@@ -11,6 +11,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/config"
 	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/types"
+	"github.com/langgenius/dify-plugin-daemon/cmd/dify_cli/uploader"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/spf13/cobra"
 )
@@ -114,7 +115,7 @@ func fetchProviders(envCfg types.EnvConfig) ([]providerEntity, error) {
 
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	body := []byte("{}")
-	signature := signRequest(envCfg.CliApiSecret, timestamp, body)
+	signature := uploader.SignRequest(envCfg.CliApiSecret, timestamp, body)
 
 	client := &http.Client{
 		Timeout: 2 * time.Minute,

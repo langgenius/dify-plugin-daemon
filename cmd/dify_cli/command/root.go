@@ -34,7 +34,7 @@ func Execute() {
 
 	// Check if invoked via symlink to self (BusyBox style)
 	if progName != "dify" && isSymlinkToSelf() {
-		InvokeTool(progName, os.Args[1:])
+		Invoke(progName, os.Args[1:])
 		return
 	}
 
