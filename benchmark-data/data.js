@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768468112108,
+  "lastUpdate": 1768898918560,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11170,6 +11170,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 31.24,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45712896+Yeuoly@users.noreply.github.com",
+            "name": "Yeuoly",
+            "username": "Yeuoly"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "23a4662e65a2bdeb7e7731a9081e6ba545f9838a",
+          "message": "feat: add retry mechanism for serverless invocation on 502 errors (#569)\n\n* feat: add retry mechanism for serverless invocation on 502 errors\n\n- Add MAX_SERVERLESS_RETRY_TIMES config (default: 3) for configurable retry attempts\n- Implement exponential backoff retry logic (500ms, 1s, 2s, ...) for 502 Bad Gateway errors\n- Only retry on 502 status code as it indicates transient AWS Lambda gateway issues\n- Add comprehensive test suite with 11 test cases covering all retry scenarios\n- Ensure proper HTTP response body cleanup on retries to prevent resource leaks\n\n* refactor: simplify retry logic and error handling in serverless invocation\n\n* fix: max time\n\n* fix: test",
+          "timestamp": "2026-01-20T16:46:39+08:00",
+          "tree_id": "452b8a8a521bff0d46eec0537ef257d465a83fe2",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/23a4662e65a2bdeb7e7731a9081e6ba545f9838a"
+        },
+        "date": 1768898918087,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.28,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.28,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
