@@ -23,7 +23,7 @@ func runInit(cmd *cobra.Command, args []string) {
 	}
 
 	if len(cfg.Tools) == 0 && len(cfg.ToolReferences) == 0 {
-		fmt.Fprintf(os.Stderr, "No tools or tool references defined in config\n")
+		fmt.Fprintf(os.Stdout, "No tools or tool references defined in config\n")
 		return
 	}
 

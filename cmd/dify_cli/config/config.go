@@ -12,6 +12,9 @@ import (
 const configFileName = ".dify_cli.json"
 
 func GetConfigPath() string {
+	if envPath := os.Getenv("DIFY_CLI_CONFIG"); envPath != "" {
+		return envPath
+	}
 	return configFileName
 }
 
