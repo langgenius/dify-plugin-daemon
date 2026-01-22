@@ -6,9 +6,9 @@ import (
 
 func TestServerHostDefault(t *testing.T) {
 	tests := []struct {
-		name          string
-		inputHost     string
-		expectedHost  string
+		name         string
+		inputHost    string
+		expectedHost string
 	}{
 		{
 			name:         "empty host should default to 0.0.0.0",
