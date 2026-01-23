@@ -262,7 +262,7 @@ func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvi
 	}
 
 	if _, err := os.Stat(pythonPath); err != nil {
-		return nil, fmt.Errorf("failed to find python: %s", err)
+		return nil, ErrVirtualEnvironmentInvalid
 	}
 
 	// check if dify/plugin.json exists
