@@ -8,7 +8,8 @@ import (
 type Plugin struct {
 	Model
 	// PluginUniqueIdentifier is a unique identifier for the plugin, it contains version and checksum
-	PluginUniqueIdentifier string `json:"plugin_unique_identifier" gorm:"index;size:255"`
+	// Enforce uniqueness to guarantee idempotency under concurrency
+	PluginUniqueIdentifier string `json:"plugin_unique_identifier" gorm:"size:255;uniqueIndex:idx_plugin_unique_identifier"`
 	// PluginID is the id of the plugin, only plugin name is considered
 	PluginID          string                             `json:"id" gorm:"index;size:255"`
 	Refers            int                                `json:"refers" gorm:"default:0"`
