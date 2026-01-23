@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768898918560,
+  "lastUpdate": 1769178097220,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11218,6 +11218,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.28,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "777abb7826ba50d7a0a8d6a1f544781549eac2a1",
+          "message": "fix: fix missing .venv can not self healing (#579)",
+          "timestamp": "2026-01-23T22:19:11+08:00",
+          "tree_id": "8ce03604d715ea942a1d278f34d6bff9148b897c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/777abb7826ba50d7a0a8d6a1f544781549eac2a1"
+        },
+        "date": 1769178096197,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.57,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.57,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
