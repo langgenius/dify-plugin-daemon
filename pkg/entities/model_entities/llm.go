@@ -56,6 +56,7 @@ type PromptMessage struct {
 	Name       string                  `json:"name"`
 	ToolCalls  []PromptMessageToolCall `json:"tool_calls" validate:"dive"`
 	ToolCallId string                  `json:"tool_call_id"`
+	OpaqueBody json.RawMessage         `json:"opaque_body,omitempty"`
 }
 
 func isPromptMessageContent(fl validator.FieldLevel) bool {
@@ -109,6 +110,7 @@ type PromptMessageContent struct {
 	MimeType     string                   `json:"mime_type"`
 	Detail       string                   `json:"detail"`   // for multi-modal data
 	Filename     string                   `json:"filename"` // for multi-modal data
+	OpaqueBody   json.RawMessage          `json:"opaque_body,omitempty"`
 }
 
 type PromptMessageToolCall struct {
@@ -174,6 +176,10 @@ func (p *PromptMessage) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(toolCallId, &p.ToolCallId); err != nil {
 			return err
 		}
+	}
+
+	if opaqueBody, ok := raw["opaque_body"]; ok {
+		p.OpaqueBody = opaqueBody
 	}
 
 	return nil
