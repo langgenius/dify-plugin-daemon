@@ -1,17 +1,22 @@
 package local_runtime
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
@@ -37,8 +42,15 @@ func (p *LocalPluginRuntime) prepareUV() (string, error) {
 func (p *LocalPluginRuntime) preparePipArgs() []string {
 	args := []string{"install"}
 
-	if p.appConfig.PipMirrorUrl != "" {
-		args = append(args, "-i", p.appConfig.PipMirrorUrl)
+	// Determine index URL precedence for pip install:
+	indexURL := p.appConfig.PipMirrorUrl
+	// Extra index URLs (comma or space separated); fallback to UV extras
+	extra := p.appConfig.PipExtraIndexUrl
+	args = addIndexArgs(args, indexURL, extra)
+
+	// Derive trusted-host from index/extra URLs
+	for _, h := range deriveTrustedHosts(indexURL, extra) {
+		args = append(args, "--trusted-host", h)
 	}
 
 	args = append(args, "-r", "requirements.txt")
@@ -60,9 +72,11 @@ func (p *LocalPluginRuntime) preparePipArgs() []string {
 func (p *LocalPluginRuntime) prepareSyncArgs() []string {
 	args := []string{"sync", "--no-dev"}
 
-	if p.appConfig.PipMirrorUrl != "" {
-		args = append(args, "-i", p.appConfig.PipMirrorUrl)
-	}
+	// Determine index URL precedence for uv sync:
+	indexURL := p.appConfig.PipMirrorUrl
+	// Extra index URLs; fallback to pip extras
+	extra := p.appConfig.PipExtraIndexUrl
+	args = addIndexArgs(args, indexURL, extra)
 
 	if p.appConfig.PipVerbose {
 		args = append(args, "-v")
@@ -91,6 +105,50 @@ func (p *LocalPluginRuntime) detectDependencyFileType() (PythonDependencyFileTyp
 	return "", fmt.Errorf("neither %s nor %s found in plugin directory", pyprojectTomlFile, requirementsTxtFile)
 }
 
+// buildDependencyInstallEnv builds environment variables for dependency installation.
+func (p *LocalPluginRuntime) buildDependencyInstallEnv(virtualEnvPath string) []string {
+	env := []string{
+		"VIRTUAL_ENV=" + virtualEnvPath,
+		"PATH=" + os.Getenv("PATH"),
+	}
+
+	// Provide PIP_TRUSTED_HOST (space-separated) for pip under uv
+	pipIndex := p.appConfig.PipMirrorUrl
+	pipExtra := p.appConfig.PipExtraIndexUrl
+	if hosts := deriveTrustedHosts(pipIndex, pipExtra); len(hosts) > 0 {
+		env = append(env, fmt.Sprintf("PIP_TRUSTED_HOST=%s", strings.Join(hosts, " ")))
+	}
+
+	if p.appConfig.HttpProxy != "" {
+		env = append(env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
+	}
+	if p.appConfig.HttpsProxy != "" {
+		env = append(env, fmt.Sprintf("HTTPS_PROXY=%s", p.appConfig.HttpsProxy))
+	}
+	if p.appConfig.NoProxy != "" {
+		env = append(env, fmt.Sprintf("NO_PROXY=%s", p.appConfig.NoProxy))
+	}
+	return env
+}
+
+// withOpLogging wraps fn with standardized start/finish logging and duration measurement.
+func (p *LocalPluginRuntime) withOpLogging(op string, kvs []any, fn func() error) error {
+	startAt := time.Now()
+	base := []any{"plugin", p.Config.Identity()}
+	log.Info("starting "+op, append(base, kvs...)...)
+	err := fn()
+	if err != nil {
+		fields := append(append([]any{}, base...), kvs...)
+		fields = append(fields, "duration", time.Since(startAt).String(), "error", err)
+		log.Error(op+" failed", fields...)
+		return err
+	}
+	fields := append(append([]any{}, base...), kvs...)
+	fields = append(fields, "duration", time.Since(startAt).String())
+	log.Info(op+" finished", fields...)
+	return nil
+}
+
 func (p *LocalPluginRuntime) installDependencies(
 	uvPath string,
 	dependencyFileType PythonDependencyFileType,
@@ -99,134 +157,161 @@ func (p *LocalPluginRuntime) installDependencies(
 	defer cancel()
 
 	var args []string
+	var methodLabel string
 	switch dependencyFileType {
 	case pyprojectTomlFile:
 		args = p.prepareSyncArgs()
-		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv sync", "file", pyprojectTomlFile)
+		methodLabel = "uv sync"
 	case requirementsTxtFile:
 		args = p.preparePipArgs()
-		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv pip install", "file", requirementsTxtFile)
+		methodLabel = "uv pip install"
 	default:
 		return fmt.Errorf("unsupported dependency file type: %s", dependencyFileType)
 	}
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
-	cmd := exec.CommandContext(ctx, uvPath, args...)
-	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
-	if p.appConfig.HttpProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
-	}
-	if p.appConfig.HttpsProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", p.appConfig.HttpsProxy))
-	}
-	if p.appConfig.NoProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", p.appConfig.NoProxy))
-	}
-	cmd.Dir = p.State.WorkingPath
+	sanitized := sanitizeArgs(args)
 
-	// get stdout and stderr
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("failed to get stdout: %s", err)
-	}
-	defer stdout.Close()
+	return p.withOpLogging("dependency installation", []any{
+		"method", methodLabel,
+		"args", strings.Join(sanitized, " "),
+	}, func() error {
+		cmd := exec.CommandContext(ctx, uvPath, args...)
+		cmd.Env = append(cmd.Env, p.buildDependencyInstallEnv(virtualEnvPath)...)
+		cmd.Dir = p.State.WorkingPath
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("failed to get stderr: %s", err)
-	}
-	defer stderr.Close()
-
-	// start command
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start command: %s", err)
-	}
-
-	defer func() {
-		if cmd.Process != nil {
-			cmd.Process.Kill()
+		// get stdout and stderr
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return fmt.Errorf("failed to get stdout: %s", err)
 		}
-	}()
+		defer stdout.Close()
 
-	var errMsg strings.Builder
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	lastActiveAt := time.Now()
-
-	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule: "plugin_manager",
-		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
-	}, func() {
-		defer wg.Done()
-		// read stdout
-		buf := make([]byte, 1024)
-		for {
-			n, err := stdout.Read(buf)
-			if err != nil {
-				break
-			}
-			// FIXME: move the log to separated layer
-			log.Info("installing plugin", "plugin", p.Config.Identity(), "output", string(buf[:n]))
-			lastActiveAt = time.Now()
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return fmt.Errorf("failed to get stderr: %s", err)
 		}
-	})
+		defer stderr.Close()
 
-	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule: "plugin_manager",
-		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
-	}, func() {
-		defer wg.Done()
-		// read stderr
-		buf := make([]byte, 1024)
-		for {
-			n, err := stderr.Read(buf)
-			if err != nil && err != os.ErrClosed {
-				lastActiveAt = time.Now()
-				errMsg.WriteString(string(buf[:n]))
-				break
-			} else if err == os.ErrClosed {
-				break
-			}
-
-			if n > 0 {
-				errMsg.WriteString(string(buf[:n]))
-				lastActiveAt = time.Now()
-			}
+		// start command
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start command: %s", err)
 		}
-	})
 
-	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule: "plugin_manager",
-		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
-	}, func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for range ticker.C {
-			if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-				break
-			}
-
-			if time.Since(lastActiveAt) > time.Duration(
-				p.appConfig.PythonEnvInitTimeout,
-			)*time.Second {
+		defer func() {
+			if cmd.Process != nil {
 				cmd.Process.Kill()
-				errMsg.WriteString(fmt.Sprintf(
-					"init process exited due to no activity for %d seconds",
-					p.appConfig.PythonEnvInitTimeout,
-				))
-				break
 			}
+		}()
+
+		var errMsg strings.Builder
+		var errMu sync.Mutex
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		var lastActiveAt atomic.Int64
+		lastActiveAt.Store(time.Now().UnixNano())
+
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "plugin_manager",
+			routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
+		}, func() {
+			defer wg.Done()
+			// read stdout line by line
+			scanner := bufio.NewScanner(stdout)
+			buf := make([]byte, 0, 64*1024)
+			scanner.Buffer(buf, 10*1024*1024)
+			for scanner.Scan() {
+				line := scanner.Text()
+				log.Info("install deps", "plugin", p.Config.Identity(), "stream", "stdout", "line", line)
+				lastActiveAt.Store(time.Now().UnixNano())
+			}
+			if err := scanner.Err(); err != nil {
+				errMu.Lock()
+				errMsg.WriteString("stdout scan error: ")
+				errMsg.WriteString(err.Error())
+				errMsg.WriteString("\n")
+				errMu.Unlock()
+				log.Warn("install deps", "plugin", p.Config.Identity(), "stream", "stdout", "scanner_err", err.Error())
+			}
+		})
+
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "plugin_manager",
+			routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
+		}, func() {
+			defer wg.Done()
+			// read stderr line by line
+			scanner := bufio.NewScanner(stderr)
+			buf := make([]byte, 0, 64*1024)
+			scanner.Buffer(buf, 10*1024*1024)
+			for scanner.Scan() {
+				line := scanner.Text()
+				errMu.Lock()
+				errMsg.WriteString(line)
+				errMsg.WriteString("\n")
+				errMu.Unlock()
+				log.Warn("install deps", "plugin", p.Config.Identity(), "stream", "stderr", "line", line)
+				lastActiveAt.Store(time.Now().UnixNano())
+			}
+			if err := scanner.Err(); err != nil {
+				errMu.Lock()
+				errMsg.WriteString("stderr scan error: ")
+				errMsg.WriteString(err.Error())
+				errMsg.WriteString("\n")
+				errMu.Unlock()
+				log.Warn("install deps", "plugin", p.Config.Identity(), "stream", "stderr", "scanner_err", err.Error())
+			}
+		})
+
+		routine.Submit(routinepkg.Labels{
+			routinepkg.RoutineLabelKeyModule: "plugin_manager",
+			routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
+		}, func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
+					break
+				}
+
+				if time.Since(time.Unix(0, lastActiveAt.Load())) > time.Duration(
+					p.appConfig.PythonEnvInitTimeout,
+				)*time.Second {
+					cmd.Process.Kill()
+					errMu.Lock()
+					errMsg.WriteString(fmt.Sprintf(
+						"init process exited due to no activity for %d seconds",
+						p.appConfig.PythonEnvInitTimeout,
+					))
+					errMu.Unlock()
+					break
+				}
+			}
+		})
+
+		wg.Wait()
+
+		if err := cmd.Wait(); err != nil {
+			return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 		}
+		return nil
 	})
+}
 
-	wg.Wait()
+// sanitizeArgs redacts credentials in any URL-like arguments to avoid leaking secrets in logs.
+func sanitizeArgs(args []string) []string {
+	// Match https://user:pass@ and https://user@
+	reWithPass := regexp.MustCompile(`(https?://)[^/@:]+:[^/@]+@`)
+	reUserOnly := regexp.MustCompile(`(https?://)[^/@:]+@`)
 
-	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
+	out := make([]string, len(args))
+	for i, a := range args {
+		s := reWithPass.ReplaceAllString(a, "${1}****:****@")
+		s = reUserOnly.ReplaceAllString(s, "${1}****:****@")
+		out[i] = s
 	}
-
-	return nil
+	return out
 }
 
 type PythonVirtualEnvironment struct {
@@ -354,6 +439,69 @@ func (p *LocalPluginRuntime) markVirtualEnvironmentAsValid() error {
 	}
 
 	return nil
+}
+
+// splitByCommaOrSpace splits a list like "a,b c" into tokens.
+func splitByCommaOrSpace(s string) []string {
+	// replace comma with space then split by spaces
+	s = strings.ReplaceAll(s, ",", " ")
+	fields := strings.Fields(s)
+	return fields
+}
+
+// selectURL returns the first non-empty URL from the provided list.
+func selectURL(urls ...string) string {
+	for _, u := range urls {
+		if u != "" {
+			return u
+		}
+	}
+	return ""
+}
+
+// addIndexArgs appends index and extra-index URL arguments to args.
+func addIndexArgs(args []string, indexURL string, extraIndexURL string) []string {
+	if indexURL != "" {
+		args = append(args, "-i", indexURL)
+	}
+	if extraIndexURL != "" {
+		for _, u := range splitByCommaOrSpace(extraIndexURL) {
+			if u != "" {
+				args = append(args, "--extra-index-url", u)
+			}
+		}
+	}
+	return args
+}
+
+// deriveTrustedHosts parses hostnames from index/extra URLs and returns a de-duplicated list.
+func deriveTrustedHosts(indexURL string, extraIndexURL string) []string {
+	set := map[string]struct{}{}
+	add := func(raw string) {
+		if strings.TrimSpace(raw) == "" {
+			return
+		}
+		u, err := url.Parse(raw)
+		if err != nil || u.Host == "" {
+			return
+		}
+		host := u.Host
+		if i := strings.Index(host, ":"); i >= 0 {
+			host = host[:i]
+		}
+		set[host] = struct{}{}
+	}
+	add(indexURL)
+	for _, raw := range splitByCommaOrSpace(extraIndexURL) {
+		add(raw)
+	}
+	out := make([]string, 0, len(set))
+	for h := range set {
+		out = append(out, h)
+	}
+	// preserve deterministic order: sort hostnames
+	sort.Strings(out)
+	return out
 }
 
 func (p *LocalPluginRuntime) preCompile(
