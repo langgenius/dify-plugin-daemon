@@ -10,7 +10,9 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	gootel "go.opentelemetry.io/otel"
 )
 
 var (
@@ -44,6 +46,8 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsCo
 func InitRedisClient(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) error {
 	opts := getRedisOptions(addr, username, password, useSsl, db, tlsConf)
 	client = redis.NewClient(opts)
+	// instrument tracing for redis client
+	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
@@ -86,6 +90,7 @@ func InitRedisSentinelClient(
 	}
 
 	client = redis.NewFailoverClient(opts)
+	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err

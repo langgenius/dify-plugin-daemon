@@ -8,6 +8,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	otelhttp "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -26,15 +27,14 @@ func Init(config *app.Config) {
 	}
 
 	client = &http.Client{
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
+		Transport: otelhttp.NewTransport(&http.Transport{
+			DialContext: (&net.Dialer{
 				Timeout:   5 * time.Second,   // how long a http connection can be alive before it's closed
 				KeepAlive: 120 * time.Second, // how long a real tcp connection can be idle before it's closed
-			}).Dial,
+			}).DialContext,
 			IdleConnTimeout: 120 * time.Second,
-		},
+		}),
 	}
-
 	SERVERLESS_CONNECTOR_API_KEY = *config.DifyPluginServerlessConnectorAPIKey
 
 	if err := PingWithContext(ctx); err != nil {

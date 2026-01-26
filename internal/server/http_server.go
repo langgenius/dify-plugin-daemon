@@ -18,9 +18,13 @@ import (
 
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
-	engine := gin.New()
+engine := gin.New()
 	engine.Use(log.RecoveryMiddleware())
 	engine.Use(log.TraceMiddleware())
+	// OpenTelemetry middleware (extracts upstream trace context and starts server spans)
+	if config.EnableOtel {
+		engine.Use(OtelGinMiddleware())
+	}
 	if config.HealthApiLogEnabled {
 		engine.Use(log.LoggerMiddleware())
 	} else {

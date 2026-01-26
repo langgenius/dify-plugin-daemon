@@ -201,6 +201,22 @@ type Config struct {
 
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
 
+	// OpenTelemetry
+	EnableOtel                 bool    `envconfig:"ENABLE_OTEL" default:"false"`
+	OtlpTraceEndpoint          string  `envconfig:"OTLP_TRACE_ENDPOINT"`
+	OtlpMetricEndpoint         string  `envconfig:"OTLP_METRIC_ENDPOINT"`
+	OtlpBaseEndpoint           string  `envconfig:"OTLP_BASE_ENDPOINT" default:"http://localhost:4318"`
+	OtelApiKey                 string  `envconfig:"OTEL_API_KEY"`
+	OtelExporterProtocol       string  `envconfig:"OTEL_EXPORTER_OTLP_PROTOCOL" default:"http/protobuf"` // or grpc
+	OtelExporterType           string  `envconfig:"OTEL_EXPORTER_TYPE" default:"otlp"`
+	OtelSamplingRate           float64 `envconfig:"OTEL_SAMPLING_RATE" default:"1.0"`
+	OtelBatchScheduleDelayMS   int     `envconfig:"OTEL_BATCH_EXPORT_SCHEDULE_DELAY" default:"5000"`
+	OtelMaxQueueSize           int     `envconfig:"OTEL_MAX_QUEUE_SIZE" default:"2048"`
+	OtelMaxExportBatchSize     int     `envconfig:"OTEL_MAX_EXPORT_BATCH_SIZE" default:"512"`
+	OtelMetricExportIntervalMS int     `envconfig:"OTEL_METRIC_EXPORT_INTERVAL" default:"60000"`
+	OtelBatchExportTimeoutMS   int     `envconfig:"OTEL_BATCH_EXPORT_TIMEOUT" default:"10000"`
+	OtelMetricExportTimeoutMS  int     `envconfig:"OTEL_METRIC_EXPORT_TIMEOUT" default:"30000"`
+
 	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`
 	SentryDSN              string  `envconfig:"SENTRY_DSN"`
 	SentryAttachStacktrace bool    `envconfig:"SENTRY_ATTACH_STACKTRACE"`

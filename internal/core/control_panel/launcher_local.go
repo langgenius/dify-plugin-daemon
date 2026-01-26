@@ -1,6 +1,7 @@
 package controlpanel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -23,6 +24,7 @@ import (
 //
 // Returns a channel that notifies if the process finished (both success and failed)
 func (c *ControlPanel) LaunchLocalPlugin(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*local_runtime.LocalPluginRuntime, <-chan error, error) {
 	c.localPluginInstallationLock.Lock(pluginUniqueIdentifier.String())
@@ -61,6 +63,8 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		releaseLockAndSemaphore()
 		return nil, nil, err
 	}
+	// attach trace context for env initialization spans
+	runtime.SetTraceContext(ctx)
 
 	// init environment
 	// whatever it's a user request to launch a plugin or a new plugin was found
