@@ -62,6 +62,28 @@ Daemon uses `uv` to manage the dependencies of plugins, before you start the dae
 #### Interpreter
 There is a possibility that you have multiple python versions installed on your machine, a variable `PYTHON_INTERPRETER_PATH` is provided to specify the python interpreter path for you.
 
+#### Speeding up Python dependency installation (uv/pip)
+You can speed up plugin dependency installation by configuring Python package indexes via environment variables (set them in your shell or `.env`). The daemon reads these into its config on startup.
+
+Supported variables
+- PIP_MIRROR_URL: Primary index for both uv sync and uv pip install
+- PIP_EXTRA_INDEX_URL: One or more extra indexes (comma or space separated)
+
+Behavior
+- Applies uniformly to both dependency styles:
+  - pyproject.toml (using `uv sync`)
+  - requirements.txt (using `uv pip install`)
+- Trusted hosts are derived automatically from the configured URLs.
+
+Examples
+```bash
+# Use the official PyPI index
+PIP_MIRROR_URL=https://pypi.org/simple
+
+# Add multiple mirrors (comma or space separated)
+PIP_EXTRA_INDEX_URL="https://my.mirror/simple, https://another.mirror/simple"
+```
+
 ## Deployment
 
 Currently, the daemon only supports Linux and MacOS, lots of adaptions are needed for Windows, feel free to contribute if you need it.
