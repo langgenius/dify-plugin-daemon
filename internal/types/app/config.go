@@ -174,13 +174,13 @@ type Config struct {
 	DifyPluginServerlessConnectorAPIKey        *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
+	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
-	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
-	UvPath                    string `envconfig:"UV_PATH"  default:""`
+	UvPath                    string `envconfig:"UV_PATH"  default:"`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`

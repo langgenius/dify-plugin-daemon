@@ -160,7 +160,9 @@ func RemovePluginIfNeeded(
 	originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	response *curd.UpgradePluginResponse,
 ) error {
-	if response.IsOriginalPluginDeleted && response.DeletedPlugin != nil && response.DeletedPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
+	shouldCleanup := response.IsOriginalPluginDeleted
+
+	if shouldCleanup && response.DeletedPlugin != nil && response.DeletedPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
 		// uninstall plugin from local install bucket
 		if err := manager.RemoveLocalPlugin(originalPluginUniqueIdentifier); err != nil {
 			return errors.Join(err, errors.New("failed to remove plugin from local install bucket"))
