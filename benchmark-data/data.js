@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769492350948,
+  "lastUpdate": 1769502639606,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11328,6 +11328,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "927238125 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f272e6c3fcd8a18c6ff571d7fcbfde857f63ef99",
+          "message": "feat: install plugin should be idempotent (#576)\n\n* feat: install plugin should be idempotent\n\n* chore: add new test",
+          "timestamp": "2026-01-27T16:28:23+08:00",
+          "tree_id": "e0f1032ea6338c0d91e2dae777969a8d88ed58d2",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f272e6c3fcd8a18c6ff571d7fcbfde857f63ef99"
+        },
+        "date": 1769502638571,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.69,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "977390448 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.69,
+            "unit": "ns/op",
+            "extra": "977390448 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "977390448 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "977390448 times\n4 procs"
           }
         ]
       }
