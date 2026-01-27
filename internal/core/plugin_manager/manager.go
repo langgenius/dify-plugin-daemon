@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -169,28 +170,28 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (bool, error) {
-	// debugging runtime were stored in control panel
-	if identity.RemoteLike() {
-		_, err := c.controlPanel.GetPluginRuntime(identity)
+	if c.config.Platform == app.PLATFORM_SERVERLESS {
+		_, err := c.getServerlessPluginRuntimeModel(identity)
 		if err != nil {
-			return true, err
+			return true, errors.New("serverless runtime not installed")
 		}
 		return false, nil
 	}
 
-	if c.config.Platform == app.PLATFORM_SERVERLESS {
-		// under serverless mode, it's no need to do redirecting
-		return false, nil
-	} else if c.config.Platform == app.PLATFORM_LOCAL {
-		// under local mode, check if the plugin is already running on this node
-		_, err := c.controlPanel.GetPluginRuntime(identity)
-		if err != nil {
-			// not found on this node, need to redirecting
-			return true, err
+	if c.config.Platform == app.PLATFORM_LOCAL {
+		if identity.RemoteLike() {
+			_, err := c.controlPanel.GetPluginRuntime(identity)
+			if err != nil {
+				return true, err
+			}
+			return false, nil
+		} else {
+			_, err := c.controlPanel.GetPluginRuntime(identity)
+			if err != nil {
+				return true, err
+			}
+			return false, nil
 		}
-
-		// found on current node
-		return false, nil
 	}
 
 	return true, nil
