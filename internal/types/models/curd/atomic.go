@@ -61,10 +61,25 @@ func InstallPlugin(
 
 			err := db.Create(plugin, tx)
 			if err != nil {
-				return err
+				// Handle potential duplicate creation due to race: refetch and update refers
+				// to achieve idempotent behavior under concurrency.
+				p2, gerr := db.GetOne[models.Plugin](
+					db.WithTransactionContext(tx),
+					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+					db.Equal("install_type", string(installType)),
+					db.WLock(),
+				)
+				if gerr != nil {
+					return err
+				}
+				p2.Refers++
+				if uerr := db.Update(&p2, tx); uerr != nil {
+					return uerr
+				}
+				pluginToBeReturns = &p2
+			} else {
+				pluginToBeReturns = plugin
 			}
-
-			pluginToBeReturns = plugin
 		} else if err != nil {
 			return err
 		} else {
@@ -604,7 +619,7 @@ func UpgradePlugin(
 	if err != nil {
 		return nil, err
 	}
-    pluginId := newPluginUniqueIdentifier.PluginID()  // get the pluginId
+	pluginId := newPluginUniqueIdentifier.PluginID()                                    // get the pluginId
 	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId) // make cache key
 	if _, err = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); err != nil {
 		return nil, err
