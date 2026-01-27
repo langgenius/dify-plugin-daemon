@@ -1,6 +1,7 @@
 package local_runtime
 
 import (
+	"context"
 	"sync"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
@@ -45,6 +46,14 @@ type LocalPluginRuntime struct {
 	// notifier
 	notifiers    []PluginRuntimeNotifier
 	notifierLock *sync.Mutex
+
+	// otel parent context for env initialization spans
+	traceCtx context.Context
+}
+
+// SetTraceContext sets parent context for tracing spans.
+func (r *LocalPluginRuntime) SetTraceContext(ctx context.Context) {
+	r.traceCtx = ctx
 }
 
 type LocalPluginRuntimeConfig struct {

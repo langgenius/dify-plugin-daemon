@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	otelhttp "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type NewDifyInvocationDaemonPayload struct {
@@ -25,15 +26,14 @@ func NewDifyInvocationDaemon(payload NewDifyInvocationDaemonPayload) (dify_invoc
 	}
 
 	client := &http.Client{
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
+		Transport: otelhttp.NewTransport(&http.Transport{
+			DialContext: (&net.Dialer{
 				Timeout:   5 * time.Second,
 				KeepAlive: 120 * time.Second,
-			}).Dial,
+			}).DialContext,
 			IdleConnTimeout: 120 * time.Second,
-		},
+		}),
 	}
-
 	invocation.difyInnerApiBaseurl = baseurl
 	invocation.client = client
 	invocation.difyInnerApiKey = payload.CallingKey

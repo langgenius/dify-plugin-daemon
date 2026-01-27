@@ -5,9 +5,14 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
+	// root span for python env init
+_, span := p.startSpan("python.init_env", attribute.String("plugin.identity", p.Config.Identity()))
+	defer span.End()
+
 	// prepare uv environment
 	uvPath, err := p.prepareUV()
 	if err != nil {

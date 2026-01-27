@@ -29,7 +29,7 @@ func (p *PluginManager) Install(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	if p.config.Platform == app.PLATFORM_LOCAL {
-		return p.installLocal(pluginUniqueIdentifier)
+		return p.installLocal(ctx, pluginUniqueIdentifier)
 	}
 
 	return p.installServerless(ctx, pluginUniqueIdentifier)
@@ -273,6 +273,7 @@ func (p *PluginManager) installServerless(
 }
 
 func (p *PluginManager) installLocal(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	responseStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
@@ -319,7 +320,7 @@ func (p *PluginManager) installLocal(
 
 		// call `LaunchLocalPlugin` to launch the plugin
 		// `ch` is used to wait for the plugin to be ready or failed
-		runtime, ch, err = p.controlPanel.LaunchLocalPlugin(pluginUniqueIdentifier)
+		runtime, ch, err = p.controlPanel.LaunchLocalPlugin(ctx, pluginUniqueIdentifier)
 
 		// if the plugin is already launched, just return success
 		if err == controlpanel.ErrorPluginAlreadyLaunched {

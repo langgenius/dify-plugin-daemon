@@ -1,6 +1,7 @@
 package controlpanel
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -101,7 +102,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			routinepkg.RoutineLabelKeyMethod: "handleNewLocalPlugins",
 		}, func() {
 			defer wg.Done()
-			_, ch, err := c.LaunchLocalPlugin(uniquePluginIdentifier)
+			_, ch, err := c.LaunchLocalPlugin(context.Background(), uniquePluginIdentifier)
 			if err != nil {
 				log.Error("launch local plugin failed", "error", err, "retry_in_seconds", waitTime)
 				return

@@ -6,6 +6,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	gootel "go.opentelemetry.io/otel"
+	oteltracing "gorm.io/plugin/opentelemetry/tracing"
 )
 
 func autoMigrate() error {
@@ -105,6 +107,13 @@ func Init(config *app.Config) {
 	err = autoMigrate()
 	if err != nil {
 		log.Panic("failed to auto migrate", "error", err)
+	}
+
+	// attach GORM OpenTelemetry plugin if enabled
+	if config.EnableOtel {
+		if err := DifyPluginDB.Use(oteltracing.NewPlugin(oteltracing.WithTracerProvider(gootel.GetTracerProvider()))); err != nil {
+			log.Warn("failed to init gorm otel plugin", "error", err)
+		}
 	}
 
 	log.Info("dify plugin db initialized")

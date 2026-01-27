@@ -53,9 +53,10 @@ func ConstructPluginRuntime(
 		instanceLocker: &sync.RWMutex{},
 
 		notifiers:    []PluginRuntimeNotifier{},
-		notifierLock: &sync.Mutex{},
-	}
-	return runtime, nil
+			notifierLock: &sync.Mutex{},
+			traceCtx:     nil,
+		}
+		return runtime, nil
 }
 
 // generate plugin working path using author/name@checksum, but replace : with -
