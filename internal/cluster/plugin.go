@@ -37,7 +37,19 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	}
 
 	if c.plugins.Exists(identity.String()) {
-		return errors.New("plugin has been registered")
+		// idempotent: plugin already registered, just update its state
+		if existing, ok := c.plugins.Load(identity.String()); ok {
+			// update the lifetime reference
+			existing.lifetime = lifetime
+			// update plugin state immediately
+			err = c.doPluginStateUpdate(existing)
+			if err != nil {
+				return errors.Join(err, errors.New("failed to update plugin state"))
+			}
+		} else {
+			log.Warn("plugin does not exist", "identity", identity.String())
+		}
+		return nil
 	}
 
 	l := &pluginLifeTime{
@@ -49,7 +61,7 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	// do plugin state update immediately
 	err = c.doPluginStateUpdate(l)
 	if err != nil {
-return errors.Join(err, errors.New("failed to update plugin state"))
+		return errors.Join(err, errors.New("failed to update plugin state"))
 	}
 
 	if c.showLog {
@@ -143,10 +155,6 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		return err
 	}
 
-	if c.showLog {
-		log.Info("updating plugin state", "identity", identity.String())
-	}
-
 	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
 	scheduleState := &pluginState{
@@ -167,9 +175,6 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 			return err
 		}
 	} else {
-		if c.showLog {
-			log.Info("updating plugin state", "identity", identity.String())
-		}
 		// update plugin state
 		scheduleState.ScheduledAt = &[]time.Time{time.Now()}[0]
 		err = cache.SetMapOneField(PLUGIN_STATE_MAP_KEY, stateKey, scheduleState)
@@ -178,7 +183,12 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		}
 		lifetime.UpdateScheduledAt(*scheduleState.ScheduledAt)
 		if c.showLog {
-			log.Info("updated plugin state", "identity", identity.String())
+			log.Info("updated plugin state",
+				"identity", identity.String(),
+				"state_key", stateKey,
+				"scheduled_at", scheduleState.ScheduledAt,
+				"status", state.Status,
+			)
 		}
 	}
 
@@ -278,6 +288,18 @@ func (c *Cluster) autoGCPlugins() error {
 					nodeId, _, err := c.splitNodePluginJoin(node_plugin_join)
 					if err != nil {
 						return err
+					}
+
+					if plugin_state.ScheduledAt != nil {
+						timeSinceScheduled := time.Since(*plugin_state.ScheduledAt)
+						log.Warn("auto gc inactive plugin",
+							"plugin", plugin_state.Identity,
+							"node_id", nodeId,
+							"scheduled_at", plugin_state.ScheduledAt,
+							"time_since_scheduled", timeSinceScheduled.String(),
+							"timeout", c.pluginDeactivatedTimeout.String(),
+							"status", plugin_state.Status,
+						)
 					}
 
 					// force gc the plugin

@@ -6,6 +6,7 @@ import (
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/calldify"
@@ -80,6 +81,7 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 			mediaBucket,
 			packageBucket,
 			installedBucket,
+			nil, // cluster will be set later via SetCluster
 		),
 		config: config,
 	}
@@ -89,6 +91,10 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 	manager.controlPanel.AddNotifier(&install_service.InstallListener{})
 
 	return manager
+}
+
+func (p *PluginManager) SetCluster(cluster *cluster.Cluster) {
+	p.controlPanel.SetCluster(cluster)
 }
 
 func Manager() *PluginManager {

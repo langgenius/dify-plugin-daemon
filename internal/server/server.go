@@ -106,6 +106,9 @@ func (app *App) Run(config *app.Config) {
 	// create cluster
 	app.cluster = cluster.NewCluster(config)
 
+	// set cluster to control panel for remote debugging plugin synchronization
+	app.pluginManager.SetCluster(app.cluster)
+
 	// init manager
 	app.pluginManager.Launch(config)
 

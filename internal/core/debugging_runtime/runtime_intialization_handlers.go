@@ -106,6 +106,7 @@ func (d *DifyServer) handleInitializationEndEvent(
 	runtime.checksum = runtime.calculateChecksum()
 	runtime.InitState()
 	runtime.SetActiveAt(time.Now())
+	runtime.SetActive()
 
 	if err := runtime.Config.ManifestValidate(); err != nil {
 		return fmt.Errorf("register failed, invalid manifest detected: %v", err)

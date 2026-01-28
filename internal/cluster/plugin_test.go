@@ -140,130 +140,103 @@ func TestPluginScheduleLifetime(t *testing.T) {
 	}
 }
 
-// TODO: I need to implement this test, now it's randomly working
-// func TestPluginScheduleWhenMasterClusterShutdown(t *testing.T) {
-// 	plugins := []fakePlugin{
-// 		getRandomPluginRuntime(),
-// 		getRandomPluginRuntime(),
-// 	}
+func TestPluginRegisterIdempotent(t *testing.T) {
+	plugin := getRandomPluginRuntime()
+	cluster, err := createSimulationCluster(1)
+	if err != nil {
+		t.Errorf("create simulation cluster failed: %v", err)
+		return
+	}
 
-// 	cluster, err := createSimulationCluster(2)
-// 	if err != nil {
-// 		t.Errorf("create simulation cluster failed: %v", err)
-// 		return
-// 	}
+	launchSimulationCluster(cluster)
+	defer closeSimulationCluster(cluster, t)
 
-// 	// set master gc interval to 1 second
-// 	for _, node := range cluster {
-// 		node.nodeDisconnectedTimeout = time.Second * 2
-// 		node.masterGcInterval = time.Second * 1
-// 		node.pluginSchedulerInterval = time.Second * 1
-// 		node.pluginSchedulerTickerInterval = time.Second * 1
-// 		node.updateNodeStatusInterval = time.Second * 1
-// 		node.pluginDeactivatedTimeout = time.Second * 2
-// 		node.showLog = true
-// 	}
+	// wait for cluster to be ready
+	time.Sleep(time.Second * 1)
 
-// 	launchSimulationCluster(cluster)
-// 	defer closeSimulationCluster(cluster, t)
+	// first registration should succeed
+	err = cluster[0].RegisterPlugin(&plugin)
+	if err != nil {
+		t.Errorf("first register plugin failed: %v", err)
+		return
+	}
 
-// 	// add plugin to the cluster
-// 	for i, plugin := range plugins {
-// 		err = cluster[i].RegisterPlugin(&plugin)
-// 		if err != nil {
-// 			t.Errorf("register plugin failed: %v", err)
-// 			return
-// 		}
-// 	}
+	identity, err := plugin.Identity()
+	if err != nil {
+		t.Errorf("get plugin identity failed: %v", err)
+		return
+	}
 
-// 	// wait for the plugin to be scheduled
-// 	time.Sleep(time.Second * 1)
+	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
-// 	// close master node and wait for new master to be elected
-// 	masterIdx := -1
+	// wait for plugin to be scheduled
+	time.Sleep(time.Second * 1)
 
-// 	for i, node := range cluster {
-// 		if node.IsMaster() {
-// 			masterIdx = i
-// 			// close the master node
-// 			node.Close()
-// 			break
-// 		}
-// 	}
+	// verify plugin is registered
+	nodes, err := cluster[0].FetchPluginAvailableNodesByHashedId(hashedIdentity)
+	if err != nil {
+		t.Errorf("fetch plugin available nodes failed: %v", err)
+		return
+	}
 
-// 	if masterIdx == -1 {
-// 		t.Errorf("master node not found")
-// 		return
-// 	}
+	if len(nodes) != 1 {
+		t.Errorf("plugin not scheduled after first registration")
+		return
+	}
 
-// 	// wait for the new master to be elected
-// 	i := 0
-// 	for ; i < 10; i++ {
-// 		time.Sleep(time.Second * 1)
-// 		found := false
-// 		for i, node := range cluster {
-// 			if node.IsMaster() && i != masterIdx {
-// 				found = true
-// 				break
-// 			}
-// 		}
+	// second registration with same identity should be idempotent (no error)
+	err = cluster[0].RegisterPlugin(&plugin)
+	if err != nil {
+		t.Errorf("second register plugin failed (should be idempotent): %v", err)
+		return
+	}
 
-// 		if found {
-// 			break
-// 		}
-// 	}
+	// verify plugin is still registered after second registration
+	nodes, err = cluster[0].FetchPluginAvailableNodesByHashedId(hashedIdentity)
+	if err != nil {
+		t.Errorf("fetch plugin available nodes failed after second registration: %v", err)
+		return
+	}
 
-// 	if i == 10 {
-// 		t.Errorf("master node is not elected")
-// 		return
-// 	}
+	if len(nodes) != 1 {
+		t.Errorf("plugin not available after second registration")
+		return
+	}
 
-// 	// check if plugins[master_idx] is removed
-// 	identity, err := plugins[masterIdx].Identity()
-// 	if err != nil {
-// 		t.Errorf("get plugin identity failed: %v", err)
-// 		return
-// 	}
+	// unregister the plugin
+	if err := cluster[0].UnregisterPlugin(&plugin); err != nil {
+		t.Errorf("unregister plugin failed: %v", err)
+		return
+	}
 
-// 	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
+	// verify plugin is unregistered
+	nodes, err = cluster[0].FetchPluginAvailableNodesByHashedId(hashedIdentity)
+	if err != nil {
+		t.Errorf("fetch plugin available nodes failed after unregister: %v", err)
+		return
+	}
 
-// 	ticker := time.NewTicker(time.Second)
-// 	timeout := time.NewTimer(time.Second * 20)
-// 	done := false
-// 	for !done {
-// 		select {
-// 		case <-ticker.C:
-// 			nodes, err := cluster[masterIdx].FetchPluginAvailableNodesByHashedId(hashedIdentity)
-// 			if err != nil {
-// 				t.Errorf("fetch plugin available nodes failed: %v", err)
-// 				return
-// 			}
-// 			if len(nodes) == 0 {
-// 				done = true
-// 			}
-// 		case <-timeout.C:
-// 			t.Errorf("plugin not removed")
-// 			return
-// 		}
-// 	}
+	if len(nodes) != 0 {
+		t.Errorf("plugin still available after unregister")
+		return
+	}
 
-// 	// check if plugins[1-master_idx] is still scheduled
-// 	identity, err = plugins[1-masterIdx].Identity()
-// 	if err != nil {
-// 		t.Errorf("get plugin identity failed: %v", err)
-// 		return
-// 	}
+	// registration after unregister should succeed again
+	err = cluster[0].RegisterPlugin(&plugin)
+	if err != nil {
+		t.Errorf("register after unregister failed: %v", err)
+		return
+	}
 
-// 	hashedIdentity = plugin_entities.HashedIdentity(identity.String())
+	// verify plugin is registered again
+	nodes, err = cluster[0].FetchPluginAvailableNodesByHashedId(hashedIdentity)
+	if err != nil {
+		t.Errorf("fetch plugin available nodes failed after re-registration: %v", err)
+		return
+	}
 
-// 	nodes, err := cluster[1-masterIdx].FetchPluginAvailableNodesByHashedId(hashedIdentity)
-// 	if err != nil {
-// 		t.Errorf("fetch plugin available nodes failed: %v", err)
-// 		return
-// 	}
-
-// 	if len(nodes) != 1 {
-// 		t.Errorf("plugin not scheduled")
-// 		return
-// 	}
-// }
+	if len(nodes) != 1 {
+		t.Errorf("plugin not available after re-registration")
+		return
+	}
+}

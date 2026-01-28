@@ -316,10 +316,10 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenant_id),
 		db.Equal("id", plugin_installation_id),
 	)
-	if err == db.ErrDatabaseNotFound {
-		return exception.ErrPluginNotFound().ToResponse()
-	}
 	if err != nil {
+		if errors.Is(err, db.ErrDatabaseNotFound) {
+			return entities.NewSuccessResponse(true)
+		}
 		return exception.InternalServerError(err).ToResponse()
 	}
 
@@ -349,7 +349,7 @@ func UninstallPlugin(
 	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenant_id)
 	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
-	if deleteResponse.IsPluginDeleted && deleteResponse.Plugin != nil && deleteResponse.Plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
+	if deleteResponse != nil && deleteResponse.IsPluginDeleted && deleteResponse.Plugin != nil && deleteResponse.Plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
 		manager := plugin_manager.Manager()
 		if manager == nil {
 			return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
@@ -360,7 +360,7 @@ func UninstallPlugin(
 		}
 
 		shutdownCh, err := manager.ShutdownLocalPluginGracefully(pluginUniqueIdentifier)
-		if err == controlpanel.ErrLocalPluginRuntimeNotFound {
+		if errors.Is(err, controlpanel.ErrLocalPluginRuntimeNotFound) {
 			return entities.NewSuccessResponse(true)
 		} else if err != nil {
 			return exception.InternalServerError(err).ToResponse()
