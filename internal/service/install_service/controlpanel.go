@@ -1,8 +1,13 @@
 package install_service
 
 import (
+	"errors"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
@@ -49,8 +54,18 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 		map[string]any{},
 	)
 	if err != nil {
-		log.Error("install debugging plugin failed", "error", err)
-		return
+		if !errors.Is(err, curd.ErrPluginAlreadyInstalled) {
+			log.Error("install debugging plugin failed", "error", err)
+			return
+		}
+		// Plugin already installed, fetch existing installation
+		pluginIdentifier, _ := runtime.Identity()
+		existingInstallation, fetchErr := fetchPluginInstallationByUniqueId(runtime.TenantId(), pluginIdentifier.String())
+		if fetchErr != nil {
+			log.Error("failed to fetch existing installation", "error", fetchErr)
+			return
+		}
+		installation = existingInstallation
 	}
 
 	// FIXME(Yeuoly): temporary solution for managing plugin installation model in DB
@@ -71,4 +86,15 @@ func (l *InstallListener) OnDebuggingRuntimeDisconnected(runtime *debugging_runt
 	); err != nil {
 		log.Error("uninstall debugging plugin failed", "error", err)
 	}
+}
+
+func fetchPluginInstallationByUniqueId(tenantId string, pluginUniqueIdentifier string) (*models.PluginInstallation, error) {
+	installation, err := db.GetOne[models.PluginInstallation](
+		db.Equal("tenant_id", tenantId),
+		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &installation, nil
 }

@@ -37,7 +37,17 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	}
 
 	if c.plugins.Exists(identity.String()) {
-		return errors.New("plugin has been registered")
+		// idempotent: plugin already registered, just update its state
+		if existing, ok := c.plugins.Load(identity.String()); ok {
+			// update the lifetime reference
+			existing.lifetime = lifetime
+			// update plugin state immediately
+			err = c.doPluginStateUpdate(existing)
+			if err != nil {
+				return errors.Join(err, errors.New("failed to update plugin state"))
+			}
+		}
+		return nil
 	}
 
 	l := &pluginLifeTime{
