@@ -131,6 +131,11 @@ type Config struct {
 	RedisSentinelPassword      string  `envconfig:"REDIS_SENTINEL_PASSWORD"`
 	RedisSentinelSocketTimeout float64 `envconfig:"REDIS_SENTINEL_SOCKET_TIMEOUT"`
 
+	// redis clusters
+	RedisUseClusters      bool     `envconfig:"REDIS_USE_CLUSTERS"`
+	RedisClusters         []string `envconfig:"REDIS_CLUSTERS"`
+	RedisClustersPassword string   `envconfig:"REDIS_CLUSTERS_PASSWORD"`
+
 	// database
 	DBType            string `envconfig:"DB_TYPE" default:"postgresql"`
 	DBUsername        string `envconfig:"DB_USERNAME" validate:"required"`
