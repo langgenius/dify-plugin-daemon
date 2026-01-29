@@ -88,3 +88,11 @@ func GetSelfPath() (string, error) {
 	}
 	return filepath.EvalSymlinks(exe)
 }
+
+func Save(cfg *types.DifyConfig) error {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(GetConfigPath(), data, 0644)
+}

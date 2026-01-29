@@ -9,6 +9,14 @@ import (
 
 func PrintHelp(tool *types.DifyToolDeclaration, fixedParams map[string]any) {
 	fmt.Printf("Tool: %s\n", tool.Identity.Name)
+
+	if tool.Enabled != nil && !*tool.Enabled {
+		fmt.Println("Status: disabled by user")
+		fmt.Println()
+		fmt.Println("This tool has been disabled by the user. You are not allowed to use it.")
+		return
+	}
+
 	fmt.Println()
 
 	desc := tool.Description.LLM

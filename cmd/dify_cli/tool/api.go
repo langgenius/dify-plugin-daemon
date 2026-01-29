@@ -129,3 +129,66 @@ func processResponse(body io.Reader) error {
 		return Dispatch(chunk.Data)
 	})
 }
+
+func FetchToolsBatch(cfg *types.DifyConfig, refs []types.ToolReference) ([]types.DifyToolDeclaration, error) {
+	if len(refs) == 0 {
+		return nil, nil
+	}
+
+	items := make([]types.FetchToolItem, 0, len(refs))
+	for _, ref := range refs {
+		items = append(items, types.FetchToolItem{
+			ToolType:     ref.ToolType,
+			ToolProvider: ref.ToolProvider,
+			ToolName:     ref.ToolName,
+			CredentialID: ref.CredentialID,
+		})
+	}
+
+	reqBody := types.FetchToolBatchRequest{Tools: items}
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	signature := uploader.SignRequest(cfg.Env.CliApiSecret, timestamp, body)
+	url := strings.TrimSuffix(cfg.Env.CliApiURL, "/") + "/cli/api/fetch/tools/batch"
+
+	client := &http.Client{Timeout: 2 * time.Minute}
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(body)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Cli-Api-Session-Id", cfg.Env.CliApiSessionID)
+	req.Header.Set("X-Cli-Api-Timestamp", timestamp)
+	req.Header.Set("X-Cli-Api-Signature", signature)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result types.DifyInnerAPIResponse[types.FetchToolBatchResponse]
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if result.Error != "" {
+		return nil, fmt.Errorf("API error: %s", result.Error)
+	}
+
+	if result.Data == nil {
+		return nil, errors.New("response data is nil")
+	}
+
+	return result.Data.Tools, nil
+}

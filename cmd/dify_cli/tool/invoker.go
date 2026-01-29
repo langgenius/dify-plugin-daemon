@@ -15,43 +15,35 @@ type Invoker interface {
 }
 
 func NewInvoker(cfg *types.DifyConfig, name string) (Invoker, error) {
-	if ref := config.FindToolReference(cfg, name); ref != nil {
-		tool := config.FindToolByReference(cfg, ref)
-		if tool == nil {
-			return nil, fmt.Errorf("referenced tool '%s' from provider '%s' not found", ref.ToolName, ref.ToolProvider)
-		}
-		return &ReferenceInvoker{tool: tool, ref: ref}, nil
+	ref := config.FindToolReference(cfg, name)
+	if ref == nil {
+		return nil, fmt.Errorf("tool reference not found: %s (must use format: tool_name_uuid)", name)
 	}
 
-	tool := config.FindTool(cfg, name)
+	tool := config.FindToolByReference(cfg, ref)
 	if tool == nil {
-		return nil, fmt.Errorf("tool not found: %s", name)
+		tools, err := FetchToolsBatch(cfg, []types.ToolReference{*ref})
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch tool info: %w", err)
+		}
+		if len(tools) == 0 {
+			return nil, fmt.Errorf("tool '%s' from provider '%s' not found on server", ref.ToolName, ref.ToolProvider)
+		}
+
+		cfg.Tools = append(cfg.Tools, tools[0])
+		if err := config.Save(cfg); err != nil {
+			return nil, fmt.Errorf("failed to save config: %w", err)
+		}
+		tool = &cfg.Tools[len(cfg.Tools)-1]
 	}
-	return &DirectInvoker{tool: tool}, nil
+
+	if tool.Enabled != nil && !*tool.Enabled {
+		return nil, fmt.Errorf("tool '%s' has been disabled by the user, you are not allowed to use it", ref.ToolName)
+	}
+
+	return &ReferenceInvoker{tool: tool, ref: ref}, nil
 }
 
-// DirectInvoker handles direct tool invocation
-type DirectInvoker struct {
-	tool *types.DifyToolDeclaration
-}
-
-func (d *DirectInvoker) ShowHelp() {
-	PrintHelp(d.tool, nil)
-}
-
-func (d *DirectInvoker) PrepareParams(args []string) (map[string]any, error) {
-	return ParseArgs(d.tool, args), nil
-}
-
-func (d *DirectInvoker) GetCredentialID() string {
-	return d.tool.CredentialId
-}
-
-func (d *DirectInvoker) GetTool() *types.DifyToolDeclaration {
-	return d.tool
-}
-
-// ReferenceInvoker handles tool reference invocation with fixed params
 type ReferenceInvoker struct {
 	tool *types.DifyToolDeclaration
 	ref  *types.ToolReference
@@ -78,8 +70,8 @@ func (r *ReferenceInvoker) PrepareParams(args []string) (map[string]any, error) 
 }
 
 func (r *ReferenceInvoker) GetCredentialID() string {
-	if r.ref.CredentialID != "" {
-		return r.ref.CredentialID
+	if r.ref.CredentialID != nil && *r.ref.CredentialID != "" {
+		return *r.ref.CredentialID
 	}
 	return r.tool.CredentialId
 }

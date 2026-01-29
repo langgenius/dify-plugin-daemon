@@ -145,13 +145,15 @@ type DifyToolDeclaration struct {
 	OutputSchema   ToolOutputSchema `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 	CredentialType string           `json:"credential_type" yaml:"credential_type" validate:"omitempty"`
 	CredentialId   string           `json:"credential_id" yaml:"credential_id" validate:"omitempty"`
+	Enabled        *bool            `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 }
 
 type ToolReference struct {
 	ID           string         `json:"id"`
+	ToolType     string         `json:"tool_type"`
 	ToolName     string         `json:"tool_name"`
 	ToolProvider string         `json:"tool_provider"`
-	CredentialID string         `json:"credential_id"`
+	CredentialID *string        `json:"credential_id"`
 	DefaultValue map[string]any `json:"default_value"`
 }
 
@@ -197,4 +199,19 @@ type InvokeToolRequest struct {
 	ToolParameters map[string]any `json:"tool_parameters"`
 	CredentialId   string         `json:"credential_id"`
 	CredentialType string         `json:"credential_type"`
+}
+
+type FetchToolBatchRequest struct {
+	Tools []FetchToolItem `json:"tools"`
+}
+
+type FetchToolItem struct {
+	ToolType     string  `json:"tool_type"`
+	ToolProvider string  `json:"tool_provider"`
+	ToolName     string  `json:"tool_name"`
+	CredentialID *string `json:"credential_id,omitempty"`
+}
+
+type FetchToolBatchResponse struct {
+	Tools []DifyToolDeclaration `json:"tools"`
 }

@@ -25,7 +25,6 @@ func init() {
 	RootCmd.AddCommand(ExecuteCmd)
 	RootCmd.AddCommand(ListCmd)
 	RootCmd.AddCommand(HelpCmd)
-	RootCmd.AddCommand(PullCmd)
 	RootCmd.AddCommand(EnvCmd)
 }
 
