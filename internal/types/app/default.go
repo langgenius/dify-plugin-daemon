@@ -39,7 +39,6 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PythonEnvInitTimeout, 120)
 	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
 	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
-	setDefaultString(&config.LogFile, "")
 	if config.DBType == DB_TYPE_POSTGRESQL || config.DBType == DB_TYPE_PG_BOUNCER {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
 	} else if config.DBType == DB_TYPE_MYSQL {

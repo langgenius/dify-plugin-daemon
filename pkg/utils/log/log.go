@@ -20,12 +20,10 @@ func Init(json bool, filename string) (io.Closer, error) {
 	var closer io.Closer
 	if filename != "" {
 		dir := filepath.Dir(filename)
-		if dir != "." && dir != "" {
-			if err := os.MkdirAll(dir, 0755); err != nil {
-				return nil, fmt.Errorf("create log directory %q: %w", dir, err)
-			}
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return nil, fmt.Errorf("create log directory %q: %w", dir, err)
 		}
-		file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			return nil, fmt.Errorf("open log file %q: %w", filename, err)
 		}
