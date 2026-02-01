@@ -3,8 +3,10 @@ package log
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -13,15 +15,32 @@ import (
 
 const ServiceName = "dify-plugin-daemon"
 
-func Init(json bool) {
+func Init(json bool, filename string) (io.Closer, error) {
+	var w io.Writer = os.Stdout
+	var closer io.Closer
+	if filename != "" {
+		dir := filepath.Dir(filename)
+		if dir != "." && dir != "" {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return nil, fmt.Errorf("create log directory %q: %w", dir, err)
+			}
+		}
+		file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return nil, fmt.Errorf("open log file %q: %w", filename, err)
+		}
+		w = io.MultiWriter(os.Stdout, file)
+		closer = file
+	}
 	handler := NewHandler(Options{
 		Level:   slog.LevelInfo,
 		Service: ServiceName,
 		JSON:    json,
-		Out:     os.Stdout,
+		Out:     w,
 	})
 	slog.SetDefault(slog.New(handler))
 	setupGinDebug()
+	return closer, nil
 }
 
 func setupGinDebug() {
