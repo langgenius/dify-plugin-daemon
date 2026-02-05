@@ -18,6 +18,7 @@ import (
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/system"
 	gootel "go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
@@ -299,11 +300,17 @@ const (
 	requirementsTxtFile PythonDependencyFileType = "requirements.txt"
 )
 
+var envPythonPath string
+var envValidFlagFile string
+
 const (
-	envPath          = ".venv"
-	envPythonPath    = envPath + "/bin/python"
-	envValidFlagFile = envPath + "/dify/plugin.json"
+	envPath = ".venv"
 )
+
+func init() {
+	envPythonPath = system.GetEnvPythonPath(envPath)
+	envValidFlagFile = system.GetEnvValidFlagFile(envPath)
+}
 
 func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvironment, error) {
 	_, span := p.startSpan("python.check_venv")

@@ -17,7 +17,7 @@ func (c *ControlPanel) StartWatchDog() {
 func (c *ControlPanel) startLocalPluginWatchDog() {
 	if c.config.Platform == app.PLATFORM_LOCAL {
 		// start local monitor
-		go c.startLocalMonitor()
+		// go c.startLocalMonitor()
 
 		// continue check if a plugin was uninstalled
 		// AS plugin_daemon supports cluster mode
@@ -25,7 +25,7 @@ func (c *ControlPanel) startLocalPluginWatchDog() {
 		// it's a stateless across all plugin_daemon nodes
 		// a plugin may be uninstalled by other nodes
 		// to ensure all uninstalled plugin running in all nodes are stopped
-		go c.removeUnusedLocalPlugins()
+		// go c.removeUnusedLocalPlugins()
 	}
 }
 

@@ -2,10 +2,12 @@ package plugin_entities
 
 import (
 	"testing"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/system"
 )
 
 func TestPluginUniqueIdentifier(t *testing.T) {
-	i, err := NewPluginUniqueIdentifier("langgenius/test:1.0.0@1234567890abcdef1234567890abcdef1234567890abcdef")
+	i, err := NewPluginUniqueIdentifier("langgenius/test" + system.DelimiterFLag + "1.0.0@1234567890abcdef1234567890abcdef1234567890abcdef")
 	if err != nil {
 		t.Fatalf("NewPluginUniqueIdentifier() returned an error: %v", err)
 	}
@@ -22,7 +24,7 @@ func TestPluginUniqueIdentifier(t *testing.T) {
 		t.Fatalf("Checksum() = %s; want 1234567890abcdef1234567890abcdef1234567890abcdef", i.Checksum())
 	}
 
-	_, err = NewPluginUniqueIdentifier("test:1.0.0@1234567890abcdef1234567890abcdef1234567890abcdef")
+	_, err = NewPluginUniqueIdentifier("test" + system.DelimiterFLag + "1.0.0@1234567890abcdef1234567890abcdef1234567890abcdef")
 	if err != nil {
 		t.Fatalf("NewPluginUniqueIdentifier() returned an error: %v", err)
 	}
@@ -37,12 +39,12 @@ func TestPluginUniqueIdentifier(t *testing.T) {
 		t.Fatalf("NewPluginUniqueIdentifier() returned nil error for invalid identifier")
 	}
 
-	_, err = NewPluginUniqueIdentifier("langgenius/test:1.0.0@123456")
+	_, err = NewPluginUniqueIdentifier("langgenius/test" + system.DelimiterFLag + "1.0.0@123456")
 	if err == nil {
 		t.Fatalf("NewPluginUniqueIdentifier() returned nil error for invalid identifier")
 	}
 
-	_, err = NewPluginUniqueIdentifier("langgenius/test:1.0.0")
+	_, err = NewPluginUniqueIdentifier("langgenius/test" + system.DelimiterFLag + "1.0.0")
 	if err == nil {
 		t.Fatalf("NewPluginUniqueIdentifier() returned nil error for invalid identifier")
 	}
