@@ -23,12 +23,13 @@ func (app *App) server(config *app.Config) func() {
 		engine.Use(gin.Logger())
 	} else {
 		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
-			SkipPaths: []string{"/health/check"},
+			SkipPaths: []string{"/health/check", "/ready/check"},
 		}))
 	}
 	engine.Use(gin.Recovery())
 	engine.Use(controllers.CollectActiveRequests())
 	engine.GET("/health/check", controllers.HealthCheck(config))
+	engine.GET("/ready/check", controllers.ReadyCheck(config))
 
 	endpointGroup := engine.Group("/e")
 	serverlessTransactionGroup := engine.Group("/backwards-invocation")

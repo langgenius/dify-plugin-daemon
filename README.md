@@ -76,6 +76,38 @@ uses docker volume to share the directory with the host machine, it's better for
 
 For now, Daemon community edition does not support smoothly scale out with the number of replicas, If you are interested in this feature, please contact us. we have a more production-ready version for enterprise users.
 
+#### Health Endpoints
+
+- `GET /health/check`: liveness-style health check, returns 200 as long as the HTTP server is running.
+- `GET /ready/check`: readiness check for Kubernetes. In `PLATFORM=local`, it returns 200 only after **all initial plugins (at pod startup) have completed their startup attempts** (success or exhausted retries). It returns 503 while initial plugins are still loading. **Once 200, it will never become 503 again due to runtime plugin additions.** For other platforms, behavior may vary.
+
+Example probes:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health/check
+    port: 5002
+  initialDelaySeconds: 5
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /ready/check
+    port: 5002
+  periodSeconds: 5
+  failureThreshold: 3
+  # Once pod is Ready (200), it will NEVER become NotReady
+  # due to runtime plugin additions - guaranteed stable ✅
+```
+
+Notes:
+
+- `readinessProbe` failing will not restart the container, it only blocks traffic, which is ideal for slow plugin bootstrapping.
+- If you have very slow initial startup and still want a strict liveness probe, consider adding `startupProbe` in Kubernetes to delay liveness enforcement.
+- For local runtime, you can tune plugin boot concurrency via `PLUGIN_LOCAL_LAUNCHING_CONCURRENT` to balance startup time and resource usage.
+- **Initial Plugin Set Locking Strategy**: The readiness probe uses an "initial plugin set locking" mechanism. At pod startup, all installed plugins are captured as the "initial set". Once all initial plugins complete their startup attempts (within 225 seconds by default), readiness returns 200. If users install new plugins at runtime, they are tracked separately and do NOT affect the readiness probe status. This ensures service stability during normal operation.
+- **Configurable Retry Behavior**: Set `PLUGIN_LOCAL_MAX_RETRY_COUNT` (default: 5) to control maximum retry attempts. Maximum startup time is approximately 225 seconds (0+15+30+60+120 seconds between retries).
+
 ## Documentation
 
 ### Development Guide
