@@ -29,7 +29,7 @@ engine := gin.New()
 		engine.Use(log.LoggerMiddleware())
 	} else {
 		engine.Use(log.LoggerMiddlewareWithConfig(log.LoggerConfig{
-			SkipPaths: []string{"/health/check"},
+			SkipPaths: []string{"/health/check", "/ready/check"},
 		}))
 	}
 	engine.Use(controllers.CollectActiveRequests())
@@ -37,6 +37,7 @@ engine := gin.New()
 		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
 	})
 	engine.GET("/health/check", controllers.HealthCheck(config))
+	engine.GET("/ready/check", controllers.ReadyCheck(config))
 
 	endpointGroup := engine.Group("/e")
 	serverlessTransactionGroup := engine.Group("/backwards-invocation")

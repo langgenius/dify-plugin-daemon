@@ -107,6 +107,9 @@ type Config struct {
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
 
+	// plugin local max retry count
+	PluginLocalMaxRetryCount int32 `envconfig:"PLUGIN_LOCAL_MAX_RETRY_COUNT" default:"15"`
+
 	// platform like local or aws lambda
 	Platform PlatformType `envconfig:"PLATFORM" validate:"required"`
 

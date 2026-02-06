@@ -15,6 +15,7 @@ import (
 func (c *ControlPanel) startLocalMonitor() {
 	log.Info("start to handle new plugins", "path", c.config.PluginInstalledPath)
 	log.Info("launch plugins with max concurrency", "concurrency", c.config.PluginLocalLaunchingConcurrent)
+	log.Info("plugin max retry count", "max_retry_count", c.config.PluginLocalMaxRetryCount)
 
 	c.handleNewLocalPlugins()
 	// sync every 30 seconds
@@ -83,10 +84,11 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			retry = LocalPluginFailsRecord{
 				RetryCount:  0,
 				LastTriedAt: time.Now(),
+				LastError:   err.Error(),
 			}
 		}
 
-		if retry.RetryCount >= MAX_RETRY_COUNT {
+		if retry.RetryCount >= c.config.PluginLocalMaxRetryCount {
 			continue
 		}
 
@@ -114,6 +116,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 				c.localPluginFailsRecord.Store(uniquePluginIdentifier, LocalPluginFailsRecord{
 					RetryCount:  retry.RetryCount + 1,
 					LastTriedAt: time.Now(),
+					LastError:   err.Error(),
 				})
 			} else {
 				// reset the failure record
@@ -124,17 +127,18 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 
 	// wait for all plugins to be launched
 	wg.Wait()
+
+	// update readiness snapshot
+	c.updateLocalReadinessSnapshot(plugins)
 }
 
 var (
-	MAX_RETRY_COUNT = int32(15)
-
 	RETRY_WAIT_INTERVAL_MAP = map[int32]time.Duration{
-		0:               0 * time.Second,
-		3:               30 * time.Second,
-		8:               60 * time.Second,
-		MAX_RETRY_COUNT: 240 * time.Second,
-		// stop
+		0: 0 * time.Second,
+		1: 15 * time.Second,
+		2: 30 * time.Second,
+		3: 60 * time.Second,
+		4: 120 * time.Second,
 	}
 )
 
