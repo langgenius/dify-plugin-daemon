@@ -10,6 +10,7 @@ func (config *Config) SetDefault() {
 	case DB_TYPE_OCEANBASE, DB_TYPE_SEEKDB:
 		config.DBType = DB_TYPE_MYSQL
 	}
+	setDefaultString(&config.ServerHost, "0.0.0.0")
 	setDefaultInt(&config.ServerPort, 5002)
 	setDefaultInt(&config.RoutinePoolSize, 10000)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)

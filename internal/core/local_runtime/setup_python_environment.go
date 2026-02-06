@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -17,9 +18,48 @@ import (
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	gootel "go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
+// tracing helpers
+func (p *LocalPluginRuntime) otelTracer() trace.Tracer {
+	return gootel.Tracer("dify-plugin-daemon/python")
+}
+
+func (p *LocalPluginRuntime) ensureTraceCtx() context.Context {
+	if p.traceCtx != nil {
+		return p.traceCtx
+	}
+	c := log.EnsureTrace(p.traceCtx)
+	if tp := log.GetTraceparentHeader(c); tp != "" {
+		h := http.Header{}
+		h.Set("traceparent", tp)
+		c = gootel.GetTextMapPropagator().Extract(c, propagation.HeaderCarrier(h))
+	}
+	p.traceCtx = c
+	return c
+}
+
+func (p *LocalPluginRuntime) startSpan(name string, attrs ...attribute.KeyValue) (context.Context, trace.Span) {
+	ctx := p.ensureTraceCtx()
+	ctx, sp := p.otelTracer().Start(ctx, name)
+	if id, ok := log.IdentityFromContext(ctx); ok && id.TenantID != "" {
+		sp.SetAttributes(attribute.String("tenant_id", id.TenantID))
+	}
+	if len(attrs) > 0 {
+		sp.SetAttributes(attrs...)
+	}
+	// keep last context for potential child spans
+	p.traceCtx = ctx
+	return ctx, sp
+}
+
 func (p *LocalPluginRuntime) prepareUV() (string, error) {
+	_, span := p.startSpan("python.prepare_uv", attribute.String("workdir", p.State.WorkingPath))
+	defer span.End()
 	if p.uvPath != "" {
 		return p.uvPath, nil
 	}
@@ -57,16 +97,74 @@ func (p *LocalPluginRuntime) preparePipArgs() []string {
 	return args
 }
 
+func (p *LocalPluginRuntime) prepareSyncArgs() []string {
+	args := []string{"sync", "--no-dev"}
+
+	if p.appConfig.PipMirrorUrl != "" {
+		args = append(args, "-i", p.appConfig.PipMirrorUrl)
+	}
+
+	if p.appConfig.PipVerbose {
+		args = append(args, "-v")
+	}
+
+	if p.appConfig.PipExtraArgs != "" {
+		extraArgs := strings.Split(p.appConfig.PipExtraArgs, " ")
+		args = append(args, extraArgs...)
+	}
+
+	return args
+}
+
+func (p *LocalPluginRuntime) detectDependencyFileType() (PythonDependencyFileType, error) {
+	_, span := p.startSpan("python.detect_dependency_file")
+	defer span.End()
+	pyprojectPath := path.Join(p.State.WorkingPath, string(pyprojectTomlFile))
+	requirementsPath := path.Join(p.State.WorkingPath, string(requirementsTxtFile))
+
+	if _, err := os.Stat(pyprojectPath); err == nil {
+		return pyprojectTomlFile, nil
+	}
+
+	if _, err := os.Stat(requirementsPath); err == nil {
+		return requirementsTxtFile, nil
+	}
+
+	return "", fmt.Errorf("neither %s nor %s found in plugin directory", pyprojectTomlFile, requirementsTxtFile)
+}
+
 func (p *LocalPluginRuntime) installDependencies(
 	uvPath string,
+	dependencyFileType PythonDependencyFileType,
 ) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	baseCtx, parent := p.startSpan("python.install_deps", attribute.String("plugin.identity", p.Config.Identity()))
+	defer parent.End()
+	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
-	args := p.preparePipArgs()
+	var args []string
+	switch dependencyFileType {
+	case pyprojectTomlFile:
+		args = p.prepareSyncArgs()
+		parent.SetAttributes(
+			attribute.String("python.install.method", "uv sync"),
+			attribute.String("python.install.file", string(pyprojectTomlFile)),
+		)
+		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv sync", "file", pyprojectTomlFile)
+	case requirementsTxtFile:
+		args = p.preparePipArgs()
+		parent.SetAttributes(
+			attribute.String("python.install.method", "uv pip install"),
+			attribute.String("python.install.file", string(requirementsTxtFile)),
+		)
+		log.Info("installing plugin dependencies", "plugin", p.Config.Identity(), "method", "uv pip install", "file", requirementsTxtFile)
+	default:
+		return fmt.Errorf("unsupported dependency file type: %s", dependencyFileType)
+	}
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
 	cmd := exec.CommandContext(ctx, uvPath, args...)
+	parent.SetAttributes(attribute.String("uv.path", uvPath), attribute.StringSlice("uv.args", args))
 	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
 	if p.appConfig.HttpProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
@@ -122,7 +220,7 @@ func (p *LocalPluginRuntime) installDependencies(
 				break
 			}
 			// FIXME: move the log to separated layer
-			log.Info("installing %s - %s", p.Config.Identity(), string(buf[:n]))
+			log.Info("installing plugin", "plugin", p.Config.Identity(), "output", string(buf[:n]))
 			lastActiveAt = time.Now()
 		}
 	})
@@ -178,6 +276,7 @@ func (p *LocalPluginRuntime) installDependencies(
 	wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
+		parent.RecordError(err)
 		return fmt.Errorf("failed to install dependencies: %s, output: %s", err, errMsg.String())
 	}
 
@@ -193,6 +292,13 @@ var (
 	ErrVirtualEnvironmentInvalid  = errors.New("virtual environment is invalid")
 )
 
+type PythonDependencyFileType string
+
+const (
+	pyprojectTomlFile   PythonDependencyFileType = "pyproject.toml"
+	requirementsTxtFile PythonDependencyFileType = "requirements.txt"
+)
+
 const (
 	envPath          = ".venv"
 	envPythonPath    = envPath + "/bin/python"
@@ -200,6 +306,8 @@ const (
 )
 
 func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvironment, error) {
+	_, span := p.startSpan("python.check_venv")
+	defer span.End()
 	if _, err := os.Stat(path.Join(p.State.WorkingPath, envPath)); err != nil {
 		return nil, ErrVirtualEnvironmentNotFound
 	}
@@ -210,7 +318,7 @@ func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvi
 	}
 
 	if _, err := os.Stat(pythonPath); err != nil {
-		return nil, fmt.Errorf("failed to find python: %s", err)
+		return nil, ErrVirtualEnvironmentInvalid
 	}
 
 	// check if dify/plugin.json exists
@@ -225,22 +333,29 @@ func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvi
 
 func (p *LocalPluginRuntime) deleteVirtualEnvironment() error {
 	// check if virtual environment exists
-	if _, err := os.Stat(path.Join(p.State.WorkingPath, envPath)); err != nil {
-		return nil
+	venvDir := path.Join(p.State.WorkingPath, envPath)
+	if _, err := os.Stat(venvDir); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
 	}
-
-	return os.RemoveAll(path.Join(p.State.WorkingPath, envPath))
+	log.Warn("deleting existing Python virtual environment", "plugin", p.Config.Identity(), "path", venvDir)
+	return os.RemoveAll(venvDir)
 }
 
 func (p *LocalPluginRuntime) createVirtualEnvironment(
 	uvPath string,
 ) (*PythonVirtualEnvironment, error) {
+	_, span := p.startSpan("python.create_venv", attribute.String("workdir", p.State.WorkingPath))
+	defer span.End()
 	cmd := exec.Command(uvPath, "venv", envPath, "--python", "3.12")
 	cmd.Dir = p.State.WorkingPath
 	b := bytes.NewBuffer(nil)
 	cmd.Stdout = b
 	cmd.Stderr = b
 	if err := cmd.Run(); err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to create virtual environment: %s, output: %s", err, b.String())
 	}
 
@@ -253,11 +368,13 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 		return nil, fmt.Errorf("failed to find python: %s", err)
 	}
 
-	// try find requirements.txt
-	requirementsPath := path.Join(p.State.WorkingPath, "requirements.txt")
-	if _, err := os.Stat(requirementsPath); err != nil {
-		return nil, fmt.Errorf("failed to find requirements.txt: %s", err)
+	// try find pyproject.toml or requirements.txt
+	dependencyFileType, err := p.detectDependencyFileType()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find dependency file: %s", err)
 	}
+
+	log.Info("detected dependency file", "plugin", p.Config.Identity(), "file", dependencyFileType)
 
 	return &PythonVirtualEnvironment{
 		pythonInterpreterPath: pythonPath,
@@ -265,7 +382,15 @@ func (p *LocalPluginRuntime) createVirtualEnvironment(
 }
 
 func (p *LocalPluginRuntime) getRequirementsPath() string {
-	return path.Join(p.State.WorkingPath, "requirements.txt")
+	return path.Join(p.State.WorkingPath, string(requirementsTxtFile))
+}
+
+func (p *LocalPluginRuntime) getDependencyFilePath() (string, error) {
+	dependencyFileType, err := p.detectDependencyFileType()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(p.State.WorkingPath, string(dependencyFileType)), nil
 }
 
 func (p *LocalPluginRuntime) markVirtualEnvironmentAsValid() error {
@@ -293,7 +418,9 @@ func (p *LocalPluginRuntime) markVirtualEnvironmentAsValid() error {
 func (p *LocalPluginRuntime) preCompile(
 	pythonPath string,
 ) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	baseCtx, span := p.startSpan("python.precompile")
+	defer span.End()
+	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
 	compileArgs := []string{"-m", "compileall"}
@@ -354,9 +481,9 @@ func (p *LocalPluginRuntime) preCompile(
 
 			if len(lines) > 0 {
 				if len(lines) > 1 {
-					log.Info("pre-compiling %s - %s...", p.Config.Identity(), lines[0])
+					log.Info("pre-compiling plugin", "plugin", p.Config.Identity(), "file", lines[0], "more", true)
 				} else {
-					log.Info("pre-compiling %s - %s", p.Config.Identity(), lines[0])
+					log.Info("pre-compiling plugin", "plugin", p.Config.Identity(), "file", lines[0])
 				}
 			}
 		}
@@ -384,10 +511,10 @@ func (p *LocalPluginRuntime) preCompile(
 		// ISSUE: for some weird reasons, plugins may reference to a broken sdk but it works well itself
 		// we need to skip it but log the messages
 		// https://github.com/langgenius/dify/issues/16292
-		log.Warn("failed to pre-compile the plugin: %s", compileErrMsg.String())
+		log.Warn("failed to pre-compile the plugin", "error", compileErrMsg.String())
 	}
 
-	log.Info("pre-loaded the plugin %s", p.Config.Identity())
+	log.Info("pre-loaded the plugin", "plugin", p.Config.Identity())
 
 	// import dify_plugin to speedup the first launching
 	// ISSUE: it takes too long to setup all the deps, that's why we choose to preload it

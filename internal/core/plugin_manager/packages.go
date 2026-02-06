@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -56,23 +57,43 @@ func (p *PluginManager) SavePackage(
 		return nil, err
 	}
 
-	// create plugin if not exists
+	// create plugin if not exists (idempotent under concurrency)
 	if _, err := db.GetOne[models.PluginDeclaration](
 		db.Equal("plugin_unique_identifier", uniqueIdentifier.String()),
 	); err == db.ErrDatabaseNotFound {
-		err = db.Create(&models.PluginDeclaration{
+		createErr := db.Create(&models.PluginDeclaration{
 			PluginUniqueIdentifier: uniqueIdentifier.String(),
 			PluginID:               uniqueIdentifier.PluginID(),
 			Declaration:            declaration,
 		})
-		if err != nil {
-			return nil, err
+		if createErr != nil {
+			// ignore Postgres unique-violation (23505) errors triggered by concurrent inserts
+			if isUniqueViolation(createErr) {
+				return &declaration, nil
+			}
+			// fallback: if another goroutine has just inserted, read-after-write should succeed
+			if _, again := db.GetOne[models.PluginDeclaration](
+				db.Equal("plugin_unique_identifier", uniqueIdentifier.String()),
+			); again == nil {
+				return &declaration, nil
+			}
+			return nil, createErr
 		}
 	} else if err != nil {
 		return nil, err
 	}
 
 	return &declaration, nil
+}
+
+// isUniqueViolation returns true if err indicates a PostgreSQL unique constraint violation (SQLSTATE 23505).
+// Works across common drivers by matching canonical substrings to avoid hard dependency on driver types.
+func isUniqueViolation(err error) bool {
+	if err == nil {
+		return false
+	}
+	s := err.Error()
+	return strings.Contains(s, "SQLSTATE 23505") || strings.Contains(s, "duplicate key value violates unique constraint")
 }
 
 func (p *PluginManager) GetPackage(

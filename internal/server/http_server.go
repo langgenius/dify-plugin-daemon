@@ -19,15 +19,23 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
+	engine.Use(log.RecoveryMiddleware())
+	engine.Use(log.TraceMiddleware())
+	// OpenTelemetry middleware (extracts upstream trace context and starts server spans)
+	if config.EnableOtel {
+		engine.Use(OtelGinMiddleware())
+	}
 	if config.HealthApiLogEnabled {
-		engine.Use(gin.Logger())
+		engine.Use(log.LoggerMiddleware())
 	} else {
-		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		engine.Use(log.LoggerMiddlewareWithConfig(log.LoggerConfig{
 			SkipPaths: []string{"/health/check", "/ready/check"},
 		}))
 	}
-	engine.Use(gin.Recovery())
 	engine.Use(controllers.CollectActiveRequests())
+	engine.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
+	})
 	engine.GET("/health/check", controllers.HealthCheck(config))
 	engine.GET("/ready/check", controllers.ReadyCheck(config))
 
@@ -67,19 +75,19 @@ func (app *App) server(config *app.Config) func() {
 	app.pprofGroup(pprofGroup, config)
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.ServerPort),
+		Addr:    fmt.Sprintf("%s:%d", config.ServerHost, config.ServerPort),
 		Handler: engine,
 	}
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Panic("listen: %s\n", err)
+			log.Panic("listen failed", "error", err)
 		}
 	}()
 
 	return func() {
 		if err := srv.Shutdown(context.Background()); err != nil {
-			log.Panic("Server Shutdown: %s\n", err)
+			log.Panic("server shutdown failed", "error", err)
 		}
 	}
 }

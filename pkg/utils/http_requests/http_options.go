@@ -1,6 +1,9 @@
 package http_requests
 
-import "io"
+import (
+	"context"
+	"io"
+)
 
 type HttpOptions struct {
 	Type  string
@@ -20,6 +23,7 @@ const (
 	HttpOptionTypeDirectReferer                    = "directReferer"
 	HttpOptionTypeRetCode                          = "retCode"
 	HttpOptionTypeUsingLengthPrefixed              = "usingLengthPrefixed"
+	HttpOptionTypeContext                          = "context"
 )
 
 // milliseconds
@@ -108,4 +112,8 @@ func HttpWithRetCode(retCode *int) HttpOptions {
 // with the above format, we can achieve a better performance, avoid unexpected memory growth
 func HttpUsingLengthPrefixed(using bool) HttpOptions {
 	return HttpOptions{HttpOptionTypeUsingLengthPrefixed, using}
+}
+
+func HttpContext(ctx context.Context) HttpOptions {
+	return HttpOptions{HttpOptionTypeContext, ctx}
 }

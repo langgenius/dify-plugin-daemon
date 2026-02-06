@@ -140,7 +140,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	nodeId := nodes[0]
 	statusCode, header, body, err := app.cluster.RedirectRequest(nodeId, ctx.Request)
 	if err != nil {
-		log.Error("redirect request failed: %s", err.Error())
+		log.Error("redirect request failed", "error", err)
 		ctx.AbortWithStatusJSON(
 			500,
 			exception.InternalServerError(errors.New("redirect request failed: "+err.Error())).ToResponse(),
@@ -161,12 +161,12 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	defer func(body io.ReadCloser) {
 		err := body.Close()
 		if err != nil {
-			log.Error("body close failed: %s", err.Error())
+			log.Error("body close failed", "error", err)
 		}
 	}(body)
 
 	if _, err := io.Copy(ctx.Writer, body); err != nil {
-		log.Error("failed to write response body: %s", err.Error())
+		log.Error("failed to write response body", "error", err)
 	}
 }
 

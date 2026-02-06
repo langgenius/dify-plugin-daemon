@@ -1,12 +1,16 @@
 package dify_invocation
 
 import (
+	"context"
+
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/tool_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 type BackwardsInvocation interface {
+	SetContext(ctx context.Context)
+	Context() context.Context
 	// InvokeLLM
 	InvokeLLM(payload *InvokeLLMRequest) (*stream.Stream[model_entities.LLMResultChunk], error)
 	// InvokeLLMWithStructuredOutput

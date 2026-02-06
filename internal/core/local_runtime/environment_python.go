@@ -5,9 +5,14 @@ import (
 	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
+	// root span for python env init
+	_, span := p.startSpan("python.init_env", attribute.String("plugin.identity", p.Config.Identity()))
+	defer span.End()
+
 	// prepare uv environment
 	uvPath, err := p.prepareUV()
 	if err != nil {
@@ -19,6 +24,7 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	switch err {
 	case ErrVirtualEnvironmentInvalid:
 		// remove the venv and rebuild it
+		log.Warn("virtual environment for %s is invalid; deleting and recreating", p.Config.Identity())
 		p.deleteVirtualEnvironment()
 
 		// create virtual environment
@@ -37,11 +43,14 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
 		//  to reach a better user experience, we will patch it here using a patched file
 		// https://github.com/langgenius/dify-plugin-sdks/commit/161045b65f708d8ef0837da24440ab3872821b3b
-		if err := p.patchPluginSdk(
-			p.getRequirementsPath(),
+		dependencyFilePath, err := p.getDependencyFilePath()
+		if err != nil {
+			log.Error("failed to get dependency file path for patching", "error", err)
+		} else if err := p.patchPluginSdk(
+			dependencyFilePath,
 			venv.pythonInterpreterPath,
 		); err != nil {
-			log.Error("failed to patch the plugin sdk: %s", err)
+			log.Error("failed to patch the plugin sdk", "error", err)
 		}
 
 		// everything is good, return nil
@@ -50,8 +59,13 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 		return fmt.Errorf("failed to check virtual environment: %w", err)
 	}
 
-	// install dependencies
-	if err := p.installDependencies(uvPath); err != nil {
+	// detect dependency file type and install dependencies
+	dependencyFileType, err := p.detectDependencyFileType()
+	if err != nil {
+		return fmt.Errorf("failed to detect dependency file: %w", err)
+	}
+
+	if err := p.installDependencies(uvPath, dependencyFileType); err != nil {
 		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
@@ -64,16 +78,19 @@ func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	//  plugin sdk version less than 0.0.1b70 contains a memory leak bug
 	//  to reach a better user experience, we will patch it here using a patched file
 	// https://github.com/langgenius/dify-plugin-sdks/commit/161045b65f708d8ef0837da24440ab3872821b3b
-	if err := p.patchPluginSdk(
-		p.getRequirementsPath(),
+	dependencyFilePath, err := p.getDependencyFilePath()
+	if err != nil {
+		log.Error("failed to get dependency file path for patching", "error", err)
+	} else if err := p.patchPluginSdk(
+		dependencyFilePath,
 		venv.pythonInterpreterPath,
 	); err != nil {
-		log.Error("failed to patch the plugin sdk: %s", err)
+		log.Error("failed to patch the plugin sdk", "error", err)
 	}
 
 	// mark the virtual environment as valid if everything goes well
 	if err := p.markVirtualEnvironmentAsValid(); err != nil {
-		log.Error("failed to mark the virtual environment as valid: %s", err)
+		log.Error("failed to mark the virtual environment as valid", "error", err)
 	}
 
 	return nil

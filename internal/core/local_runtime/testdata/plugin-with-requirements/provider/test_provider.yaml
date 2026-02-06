@@ -1,0 +1,14 @@
+identity:
+  author: test
+  name: test_provider
+  label:
+    en_US: Test Provider
+  description:
+    en_US: A test tool provider
+  icon: icon.svg
+credentials_for_provider: {}
+tools:
+  - tools/test_tool.yaml
+extra:
+  python:
+    source: provider/test_provider.py

@@ -159,6 +159,7 @@ func Endpoint(
 			BackwardsInvocation:    manager.BackwardsInvocation(),
 			IgnoreCache:            false,
 			EndpointID:             &endpoint.ID,
+			RequestContext:         ctx.Request.Context(),
 		},
 	)
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -256,7 +257,7 @@ func handleEndpointStateError(err error, action string) *entities.Response {
 func invalidateEndpointCache(hookID string) {
 	endpointCacheKey := helper.EndpointCacheKey(hookID)
 	if _, err := cache.AutoDelete[models.Endpoint](endpointCacheKey); err != nil {
-		log.Warn("failed to invalidate endpoint cache for hookID %s: %v", hookID, err)
+		log.Warn("failed to invalidate endpoint cache", "hook_id", hookID, "error", err)
 	}
 }
 

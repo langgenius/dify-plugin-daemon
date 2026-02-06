@@ -8,6 +8,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	otelhttp "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -17,27 +18,28 @@ var (
 )
 
 func Init(config *app.Config) {
+	ctx := log.EnsureTrace(nil)
+
 	var err error
 	baseurl, err = url.Parse(*config.DifyPluginServerlessConnectorURL)
 	if err != nil {
-		log.Panic("Failed to parse serverless connector url", err)
+		log.PanicContext(ctx, "Failed to parse serverless connector url", "error", err)
 	}
 
 	client = &http.Client{
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
+		Transport: otelhttp.NewTransport(&http.Transport{
+			DialContext: (&net.Dialer{
 				Timeout:   5 * time.Second,   // how long a http connection can be alive before it's closed
 				KeepAlive: 120 * time.Second, // how long a real tcp connection can be idle before it's closed
-			}).Dial,
+			}).DialContext,
 			IdleConnTimeout: 120 * time.Second,
-		},
+		}),
 	}
-
 	SERVERLESS_CONNECTOR_API_KEY = *config.DifyPluginServerlessConnectorAPIKey
 
-	if err := Ping(); err != nil {
-		log.Panic("Failed to ping serverless connector", err)
+	if err := PingWithContext(ctx); err != nil {
+		log.PanicContext(ctx, "Failed to ping serverless connector", "error", err)
 	}
 
-	log.Info("Serverless connector initialized")
+	log.InfoContext(ctx, "Serverless connector initialized")
 }

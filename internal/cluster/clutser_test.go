@@ -6,12 +6,11 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func createSimulationCluster(nums int) ([]*Cluster, error) {
-	err := cache.InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -22,8 +21,6 @@ func createSimulationCluster(nums int) ([]*Cluster, error) {
 			ServerPort: 12121,
 		}))
 	}
-
-	log.SetLogVisibility(false)
 
 	routine.InitPool(1024)
 

@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -28,6 +29,7 @@ type PluginUpgradeJob struct {
 }
 
 func ProcessInstallJob(
+	ctx context.Context,
 	manager *plugin_manager.PluginManager,
 	tenants []string,
 	runtimeType plugin_entities.PluginRuntimeType,
@@ -52,7 +54,7 @@ func ProcessInstallJob(
 	SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusRunning, "starting")
 
 	// start installation process
-	installationStream, err := manager.Install(job.Identifier)
+	installationStream, err := manager.Install(ctx, job.Identifier)
 	if err != nil {
 		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
 		return
@@ -75,7 +77,7 @@ func ProcessInstallJob(
 			time.AfterFunc(time.Second*60, func() {
 				for _, taskID := range taskIDs {
 					if err := DeleteTask(taskID); err != nil {
-						log.Error("failed to delete task %s: %v", taskID, err)
+						log.Error("failed to delete task", "task_id", taskID, "error", err)
 					}
 				}
 			})
@@ -87,6 +89,7 @@ func ProcessInstallJob(
 }
 
 func ProcessUpgradeJob(
+	ctx context.Context,
 	manager *plugin_manager.PluginManager,
 	tenants []string,
 	runtimeType plugin_entities.PluginRuntimeType,
@@ -101,7 +104,7 @@ func ProcessUpgradeJob(
 	SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusRunning, "starting")
 
 	// start installation process
-	installationStream, err := manager.Install(job.NewIdentifier)
+	installationStream, err := manager.Install(ctx, job.NewIdentifier)
 	if err != nil {
 		SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
 		return
@@ -131,7 +134,7 @@ func ProcessUpgradeJob(
 				}
 
 				if err := RemovePluginIfNeeded(manager, job.OriginalIdentifier, response); err != nil {
-					log.Error("failed to remove uninstalled plugin: %v", err)
+					log.Error("failed to remove uninstalled plugin", "error", err)
 				}
 			}
 

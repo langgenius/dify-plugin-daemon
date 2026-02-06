@@ -13,7 +13,7 @@ func marshalYamlBytes(v any) []byte {
 	encoder.SetIndent(2)
 	err := encoder.Encode(v)
 	if err != nil {
-		log.Error("failed to marshal yaml: %s", err)
+		log.Error("failed to marshal yaml", "error", err)
 		return nil
 	}
 	return buf.Bytes()

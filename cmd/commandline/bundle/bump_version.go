@@ -8,19 +8,19 @@ import (
 func BumpVersion(bundlePath string, targetVersion string) {
 	packager, err := loadBundlePackager(bundlePath)
 	if err != nil {
-		log.Error("Failed to load bundle packager: %v", err)
+		log.Error("failed to load bundle packager", "error", err)
 		return
 	}
 
 	targetVersionObject, err := manifest_entities.NewVersion(targetVersion)
 	if err != nil {
-		log.Error("Failed to parse target version: %v", err)
+		log.Error("failed to parse target version", "error", err)
 		return
 	}
 
 	packager.BumpVersion(targetVersionObject)
 	if err := packager.Save(); err != nil {
-		log.Error("Failed to save bundle packager: %v", err)
+		log.Error("failed to save bundle packager", "error", err)
 		return
 	}
 }

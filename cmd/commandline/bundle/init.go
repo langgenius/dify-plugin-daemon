@@ -55,20 +55,20 @@ func generateNewBundle() (*bundle_entities.Bundle, error) {
 func InitBundle() {
 	bundle, err := generateNewBundle()
 	if err != nil {
-		log.Error("Failed to generate new bundle: %v", err)
+		log.Error("failed to generate new bundle", "error", err)
 		return
 	}
 
 	// create bundle directory
 	cwd, err := os.Getwd()
 	if err != nil {
-		log.Error("Error getting current directory: %v", err)
+		log.Error("error getting current directory", "error", err)
 		return
 	}
 
 	bundleDir := path.Join(cwd, bundle.Name)
 	if err := os.MkdirAll(bundleDir, 0755); err != nil {
-		log.Error("Error creating bundle directory: %v", err)
+		log.Error("error creating bundle directory", "error", err)
 		return
 	}
 
@@ -82,7 +82,7 @@ func InitBundle() {
 	// save
 	bundleYaml := marshalYamlBytes(bundle)
 	if err := os.WriteFile(path.Join(bundleDir, "manifest.yaml"), bundleYaml, 0644); err != nil {
-		log.Error("Error saving manifest.yaml: %v", err)
+		log.Error("error saving manifest.yaml", "error", err)
 		return
 	}
 
@@ -95,34 +95,34 @@ func InitBundle() {
 		"Version": bundle.Version,
 		"Date":    time.Now().Format(time.DateOnly),
 	}); err != nil {
-		log.Error("Error rendering README template: %v", err)
+		log.Error("error rendering README template", "error", err)
 		return
 	}
 
 	// save README.md
 	if err := os.WriteFile(path.Join(bundleDir, "README.md"), buf.Bytes(), 0644); err != nil {
-		log.Error("Error saving README.md: %v", err)
+		log.Error("error saving README.md", "error", err)
 		return
 	}
 
 	// create _assets directory
 	if err := os.MkdirAll(path.Join(bundleDir, "_assets"), 0755); err != nil {
-		log.Error("Error creating _assets directory: %v", err)
+		log.Error("error creating _assets directory", "error", err)
 		return
 	}
 
 	// create _assets/icon.svg
 	if err := os.WriteFile(path.Join(bundleDir, "_assets", "icon.svg"), BUNDLE_ICON, 0644); err != nil {
-		log.Error("Error saving icon.svg: %v", err)
+		log.Error("error saving icon.svg", "error", err)
 		return
 	}
 	// create .github/workflows/plugin-publish.yml
 	if err := os.MkdirAll(path.Join(bundleDir, ".github", "workflows"), 0755); err != nil {
-		log.Error("Error creating .github/workflows directory: %v", err)
+		log.Error("error creating .github/workflows directory", "error", err)
 		return
 	}
 
 	success = true
 
-	log.Info("Bundle created successfully: %s", bundleDir)
+	log.Info("bundle created successfully", "directory", bundleDir)
 }

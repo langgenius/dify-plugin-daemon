@@ -54,6 +54,7 @@ func ConstructPluginRuntime(
 
 		notifiers:    []PluginRuntimeNotifier{},
 		notifierLock: &sync.Mutex{},
+		traceCtx:     nil,
 	}
 	return runtime, nil
 }

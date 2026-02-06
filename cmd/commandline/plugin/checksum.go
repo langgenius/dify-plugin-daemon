@@ -13,32 +13,32 @@ func CalculateChecksum(pluginPath string) {
 		if stat.IsDir() {
 			pluginDecoder, err = decoder.NewFSPluginDecoder(pluginPath)
 			if err != nil {
-				log.Error("failed to create plugin decoder, plugin path: %s, error: %v", pluginPath, err)
+				log.Error("failed to create plugin decoder", "plugin_path", pluginPath, "error", err)
 				return
 			}
 		} else {
 			bytes, err := os.ReadFile(pluginPath)
 			if err != nil {
-				log.Error("failed to read plugin file, plugin path: %s, error: %v", pluginPath, err)
+				log.Error("failed to read plugin file", "plugin_path", pluginPath, "error", err)
 				return
 			}
 
 			pluginDecoder, err = decoder.NewZipPluginDecoder(bytes)
 			if err != nil {
-				log.Error("failed to create plugin decoder, plugin path: %s, error: %v", pluginPath, err)
+				log.Error("failed to create plugin decoder", "plugin_path", pluginPath, "error", err)
 				return
 			}
 		}
 	} else {
-		log.Error("failed to get plugin file info, plugin path: %s, error: %v", pluginPath, err)
+		log.Error("failed to get plugin file info", "plugin_path", pluginPath, "error", err)
 		return
 	}
 
 	checksum, err := pluginDecoder.Checksum()
 	if err != nil {
-		log.Error("failed to calculate checksum, plugin path: %s, error: %v", pluginPath, err)
+		log.Error("failed to calculate checksum", "plugin_path", pluginPath, "error", err)
 		return
 	}
 
-	log.Info("plugin checksum: %s", checksum)
+	log.Info("plugin checksum", "checksum", checksum)
 }

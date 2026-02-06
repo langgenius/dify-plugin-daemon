@@ -1,7 +1,11 @@
 package app
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -17,6 +21,7 @@ const (
 
 type Config struct {
 	// server
+	ServerHost string `envconfig:"SERVER_HOST"`
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
@@ -68,7 +73,7 @@ type Config struct {
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
 	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
 	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
-	HuaweiOBSPathStyle  bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
+	HuaweiOBSPathStyle bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
@@ -112,12 +117,14 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	// redis
-	RedisHost   string `envconfig:"REDIS_HOST"`
-	RedisPort   uint16 `envconfig:"REDIS_PORT"`
-	RedisPass   string `envconfig:"REDIS_PASSWORD"`
-	RedisUser   string `envconfig:"REDIS_USERNAME"`
-	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
-	RedisDB     int    `envconfig:"REDIS_DB"`
+	RedisHost        string `envconfig:"REDIS_HOST"`
+	RedisPort        uint16 `envconfig:"REDIS_PORT"`
+	RedisPass        string `envconfig:"REDIS_PASSWORD"`
+	RedisUser        string `envconfig:"REDIS_USERNAME"`
+	RedisDB          int    `envconfig:"REDIS_DB"`
+	RedisUseSsl      bool   `envconfig:"REDIS_USE_SSL"`
+	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
+	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
 
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
@@ -173,6 +180,7 @@ type Config struct {
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
+	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
 	UvPath                    string `envconfig:"UV_PATH"  default:""`
@@ -197,6 +205,22 @@ type Config struct {
 
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
 
+	// OpenTelemetry
+	EnableOtel                 bool    `envconfig:"ENABLE_OTEL" default:"false"`
+	OtlpTraceEndpoint          string  `envconfig:"OTLP_TRACE_ENDPOINT"`
+	OtlpMetricEndpoint         string  `envconfig:"OTLP_METRIC_ENDPOINT"`
+	OtlpBaseEndpoint           string  `envconfig:"OTLP_BASE_ENDPOINT" default:"http://localhost:4318"`
+	OtelApiKey                 string  `envconfig:"OTEL_API_KEY"`
+	OtelExporterProtocol       string  `envconfig:"OTEL_EXPORTER_OTLP_PROTOCOL" default:"http/protobuf"` // or grpc
+	OtelExporterType           string  `envconfig:"OTEL_EXPORTER_TYPE" default:"otlp"`
+	OtelSamplingRate           float64 `envconfig:"OTEL_SAMPLING_RATE" default:"1.0"`
+	OtelBatchScheduleDelayMS   int     `envconfig:"OTEL_BATCH_EXPORT_SCHEDULE_DELAY" default:"5000"`
+	OtelMaxQueueSize           int     `envconfig:"OTEL_MAX_QUEUE_SIZE" default:"2048"`
+	OtelMaxExportBatchSize     int     `envconfig:"OTEL_MAX_EXPORT_BATCH_SIZE" default:"512"`
+	OtelMetricExportIntervalMS int     `envconfig:"OTEL_METRIC_EXPORT_INTERVAL" default:"60000"`
+	OtelBatchExportTimeoutMS   int     `envconfig:"OTEL_BATCH_EXPORT_TIMEOUT" default:"10000"`
+	OtelMetricExportTimeoutMS  int     `envconfig:"OTEL_METRIC_EXPORT_TIMEOUT" default:"30000"`
+
 	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`
 	SentryDSN              string  `envconfig:"SENTRY_DSN"`
 	SentryAttachStacktrace bool    `envconfig:"SENTRY_ATTACH_STACKTRACE"`
@@ -210,7 +234,8 @@ type Config struct {
 	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
-	HealthApiLogEnabled bool `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
+	HealthApiLogEnabled bool   `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
+	LogOutputFormat     string `envconfig:"LOG_OUTPUT_FORMAT" default:"text"`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
@@ -281,6 +306,54 @@ func (c *Config) GetLocalRuntimeMaxBufferSize() int {
 		return c.PluginStdioMaxBufferSize
 	}
 	return c.PluginRuntimeMaxBufferSize
+}
+
+// RedisTLSConfig builds a *tls.Config for Redis based on envs.
+func (c *Config) RedisTLSConfig() (*tls.Config, error) {
+	if !c.RedisUseSsl {
+		return nil, nil
+	}
+
+	tlsConf := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	// Load custom CA certificates if provided
+	if strings.TrimSpace(c.RedisSSLCACerts) != "" {
+		pem, err := os.ReadFile(c.RedisSSLCACerts)
+		if err != nil {
+			return nil, fmt.Errorf("read REDIS_SSL_CA_CERTS: %w", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pem) {
+			return nil, fmt.Errorf("failed to append CA certs from %s", c.RedisSSLCACerts)
+		}
+		tlsConf.RootCAs = pool
+	}
+
+	// Configure certificate verification based on REDIS_SSL_CERT_REQS
+	certReqs := strings.ToUpper(strings.TrimSpace(c.RedisSSLCertReqs))
+	switch certReqs {
+	case "CERT_NONE":
+		// Skip all certificate verification (insecure)
+		tlsConf.InsecureSkipVerify = true
+	case "CERT_OPTIONAL", "CERT_REQUIRED", "":
+		// Require valid certificate verification (default and most secure)
+		// CERT_OPTIONAL is treated as CERT_REQUIRED for client-side TLS,
+		// as servers almost always present certificates and the client's
+		// choice is whether to validate them or not
+		tlsConf.InsecureSkipVerify = false
+
+		// Require CA certs to be explicitly provided when CERT_REQUIRED is set
+		if certReqs == "CERT_REQUIRED" && strings.TrimSpace(c.RedisSSLCACerts) == "" {
+			return nil, fmt.Errorf("REDIS_SSL_CA_CERTS must be provided when REDIS_SSL_CERT_REQS is set to CERT_REQUIRED")
+		}
+	default:
+		// Invalid value - return an error instead of silently defaulting
+		return nil, fmt.Errorf("invalid REDIS_SSL_CERT_REQS value: %s (valid options: CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED)", certReqs)
+	}
+
+	return tlsConf, nil
 }
 
 type PlatformType string

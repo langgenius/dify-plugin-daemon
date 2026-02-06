@@ -57,7 +57,7 @@ func SetTaskMessageForOnePlugin(
 		if err := UpdateTaskStatus(taskID, pluginUniqueIdentifier, func(task *models.InstallTask, plugin *models.InstallTaskPluginStatus) {
 			plugin.Message = message
 		}); err != nil {
-			log.Error("failed to update task message for %s: %v", pluginUniqueIdentifier.String(), err)
+			log.Error("failed to update task message", "plugin_unique_identifier", pluginUniqueIdentifier.String(), "error", err)
 		}
 	}
 }
@@ -86,7 +86,7 @@ func SetTaskStatusForOnePlugin(
 				}
 			}
 		}); err != nil {
-			log.Error("failed to update task status for %s: %v", pluginUniqueIdentifier.String(), err)
+			log.Error("failed to update task status", "plugin_unique_identifier", pluginUniqueIdentifier.String(), "error", err)
 		}
 	}
 }

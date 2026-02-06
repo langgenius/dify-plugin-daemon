@@ -16,26 +16,26 @@ func Sign(difypkgPath string, privateKeyPath string, verification *decoder.Verif
 	// read the plugin and private key
 	plugin, err := os.ReadFile(difypkgPath)
 	if err != nil {
-		log.Error("Failed to read plugin file: %v", err)
+		log.Error("failed to read plugin file", "error", err)
 		return err
 	}
 
 	privateKeyBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		log.Error("Failed to read private key file: %v", err)
+		log.Error("failed to read private key file", "error", err)
 		return err
 	}
 
 	privateKey, err := encryption.LoadPrivateKey(privateKeyBytes)
 	if err != nil {
-		log.Error("Failed to load private key: %v", err)
+		log.Error("failed to load private key", "error", err)
 		return err
 	}
 
 	// sign the plugin
 	pluginFile, err := withkey.SignPluginWithPrivateKey(plugin, verification, privateKey)
 	if err != nil {
-		log.Error("Failed to sign plugin: %v", err)
+		log.Error("failed to sign plugin", "error", err)
 		return err
 	}
 
@@ -48,11 +48,11 @@ func Sign(difypkgPath string, privateKeyPath string, verification *decoder.Verif
 
 	err = os.WriteFile(outputPath, pluginFile, 0644)
 	if err != nil {
-		log.Error("Failed to write signed plugin file: %v", err)
+		log.Error("failed to write signed plugin file", "error", err)
 		return err
 	}
 
-	log.Info("Plugin signed successfully, output path: %s", outputPath)
+	log.Info("plugin signed successfully", "output_path", outputPath)
 
 	return nil
 }

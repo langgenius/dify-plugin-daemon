@@ -39,7 +39,7 @@ func (c *ControlPanel) startDebuggingServerWatchDog() {
 		go func() {
 			err := c.startDebuggingServer()
 			if err != nil {
-				log.Error("start remote plugin server failed: %s", err.Error())
+				log.Error("start remote plugin server failed", "error", err)
 			}
 		}()
 	}

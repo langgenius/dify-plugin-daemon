@@ -1,13 +1,17 @@
 package controlpanel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
@@ -20,6 +24,7 @@ import (
 //
 // Returns a channel that notifies if the process finished (both success and failed)
 func (c *ControlPanel) LaunchLocalPlugin(
+	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*local_runtime.LocalPluginRuntime, <-chan error, error) {
 	c.localPluginInstallationLock.Lock(pluginUniqueIdentifier.String())
@@ -58,19 +63,47 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		releaseLockAndSemaphore()
 		return nil, nil, err
 	}
+	// attach trace context for env initialization spans
+	runtime.SetTraceContext(ctx)
 
 	// init environment
 	// whatever it's a user request to launch a plugin or a new plugin was found
 	// by watch dog, initialize environment is a must
-	if err := runtime.InitEnvironment(decoder); err != nil {
-		err = errors.Join(err, fmt.Errorf("failed to init environment"))
-		// notify new runtime launch failed
-		c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-			notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
-		})
-		// release semaphore
-		releaseLockAndSemaphore()
-		return nil, nil, err
+	// To avoid cross-pod races on Python venv creation, guard InitEnvironment with a Redis-based distributed lock.
+	{
+		lockKey := fmt.Sprintf("env_init_lock:%s", pluginUniqueIdentifier.String())
+		// expire: generous upper bound for env initialization; tryLockTimeout: wait up to the same duration
+		expire := 15 * time.Minute
+		tryTimeout := 2 * time.Minute
+		log.Info("acquiring distributed init lock", "plugin", pluginUniqueIdentifier.String(), "expire", expire.String())
+		if err := cache.Lock(lockKey, expire, tryTimeout); err != nil {
+			// failed to acquire the lock within timeout
+			err = errors.Join(err, fmt.Errorf("failed to acquire distributed env-init lock"))
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
+			})
+			// release semaphore and local lock
+			releaseLockAndSemaphore()
+			return nil, nil, err
+		}
+		defer func() {
+			if unlockErr := cache.Unlock(lockKey); unlockErr != nil {
+				log.Warn("failed to release distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", unlockErr.Error())
+			} else {
+				log.Info("released distributed init lock", "plugin", pluginUniqueIdentifier.String())
+			}
+		}()
+
+		if err := runtime.InitEnvironment(decoder); err != nil {
+			err = errors.Join(err, fmt.Errorf("failed to init environment"))
+			// notify new runtime launch failed
+			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
+				notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
+			})
+			// release semaphore
+			releaseLockAndSemaphore()
+			return nil, nil, err
+		}
 	}
 
 	once := sync.Once{}

@@ -10,7 +10,9 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	gootel "go.opentelemetry.io/otel"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 	ErrNotFound  = errors.New("key not found")
 )
 
-func getRedisOptions(addr, username, password string, useSsl bool, db int) *redis.Options {
+func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) *redis.Options {
 	opts := &redis.Options{
 		Addr:     addr,
 		Username: username,
@@ -29,14 +31,23 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int) *redi
 		DB:       db,
 	}
 	if useSsl {
-		opts.TLSConfig = &tls.Config{}
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			// Create a default TLS configuration when SSL is enabled but no config is provided
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 	}
 	return opts
 }
 
-func InitRedisClient(addr, username, password string, useSsl bool, db int) error {
-	opts := getRedisOptions(addr, username, password, useSsl, db)
+func InitRedisClient(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) error {
+	opts := getRedisOptions(addr, username, password, useSsl, db, tlsConf)
 	client = redis.NewClient(opts)
+	// instrument tracing for redis client
+	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
@@ -45,7 +56,14 @@ func InitRedisClient(addr, username, password string, useSsl bool, db int) error
 	return nil
 }
 
-func InitRedisSentinelClient(sentinels []string, masterName, username, password, sentinelUsername, sentinelPassword string, useSsl bool, db int, socketTimeout float64) error {
+func InitRedisSentinelClient(
+	sentinels []string,
+	masterName, username, password, sentinelUsername, sentinelPassword string,
+	useSsl bool,
+	db int,
+	socketTimeout float64,
+	tlsConf *tls.Config,
+) error {
 	opts := &redis.FailoverOptions{
 		MasterName:       masterName,
 		SentinelAddrs:    sentinels,
@@ -57,7 +75,14 @@ func InitRedisSentinelClient(sentinels []string, masterName, username, password,
 	}
 
 	if useSsl {
-		opts.TLSConfig = &tls.Config{}
+		if tlsConf != nil {
+			opts.TLSConfig = tlsConf
+		} else {
+			// Create a default TLS configuration when SSL is enabled but no config is provided
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 	}
 
 	if socketTimeout > 0 {
@@ -65,6 +90,7 @@ func InitRedisSentinelClient(sentinels []string, masterName, username, password,
 	}
 
 	client = redis.NewFailoverClient(opts)
+	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return err
@@ -366,13 +392,15 @@ func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[str
 
 	result := make(map[string]V)
 
-	ScanMapAsync[V](key, match, func(m map[string]V) error {
+	if err := ScanMapAsync[V](key, match, func(m map[string]V) error {
 		for k, v := range m {
 			result[k] = v
 		}
 
 		return nil
-	})
+	}, context...); err != nil {
+		return nil, err
+	}
 
 	return result, nil
 }
@@ -549,7 +577,7 @@ func Subscribe[T any](channel string) (<-chan T, func()) {
 		for alive {
 			iface, err := pubsub.Receive(context.Background())
 			if err != nil {
-				log.Error("failed to receive message from redis: %s, will retry in 1 second", err.Error())
+				log.Error("failed to receive message from redis, will retry in 1 second", "error", err)
 				time.Sleep(1 * time.Second)
 				continue
 			}

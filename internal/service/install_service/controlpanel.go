@@ -49,7 +49,7 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 		map[string]any{},
 	)
 	if err != nil {
-		log.Error("install debugging plugin failed, error: %v", err)
+		log.Error("install debugging plugin failed", "error", err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 func (l *InstallListener) OnDebuggingRuntimeDisconnected(runtime *debugging_runtime.RemotePluginRuntime) {
 	pluginIdentifier, err := runtime.Identity()
 	if err != nil {
-		log.Error("failed to get plugin identity, check if your declaration is invalid: %s", err)
+		log.Error("failed to get plugin identity, check if your declaration is invalid", "error", err)
 	}
 
 	if err := UninstallPlugin(
@@ -69,6 +69,6 @@ func (l *InstallListener) OnDebuggingRuntimeDisconnected(runtime *debugging_runt
 		pluginIdentifier,
 		plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
 	); err != nil {
-		log.Error("uninstall debugging plugin failed, error: %v", err)
+		log.Error("uninstall debugging plugin failed", "error", err)
 	}
 }

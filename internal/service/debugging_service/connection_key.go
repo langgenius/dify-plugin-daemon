@@ -81,13 +81,13 @@ func GetConnectionKey(info ConnectionInfo) (string, error) {
 		// update expire time
 		_, err = cache.Expire(strings.Join([]string{CONNECTION_KEY_MANAGER_ID2KEY_PREFIX, info.TenantId}, ":"), CONNECTION_KEY_EXPIRE_TIME)
 		if err != nil {
-			log.Error("failed to update connection key expire time: %s", err.Error())
+			log.Error("failed to update connection key expire time", "error", err)
 		}
 
 		// update expire time for key
 		_, err = cache.Expire(strings.Join([]string{CONNECTION_KEY_MANAGER_KEY2ID_PREFIX, key.Key}, ":"), CONNECTION_KEY_EXPIRE_TIME)
 		if err != nil {
-			log.Error("failed to update connection key expire time: %s", err.Error())
+			log.Error("failed to update connection key expire time", "error", err)
 		}
 	}
 
