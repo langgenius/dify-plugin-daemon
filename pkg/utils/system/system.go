@@ -32,14 +32,7 @@ func GetZipReadPath(dir string, filename string) string {
 
 func GetEnvPythonPath(envPath string) string {
 	if runtime.GOOS == "windows" {
-		return envPath + "\\Scripts\\python.exe"
+		return envPath + "/Scripts/python.exe"
 	}
 	return envPath + "/bin/python"
-}
-
-func GetEnvValidFlagFile(envPath string) string {
-	if runtime.GOOS == "windows" {
-		return envPath + "\\dify\\plugin.json"
-	}
-	return envPath + "/dify/plugin.json"
 }

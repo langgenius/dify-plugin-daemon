@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -140,6 +141,9 @@ func (p *LocalPluginRuntime) installDependencies(
 ) error {
 	baseCtx, parent := p.startSpan("python.install_deps", attribute.String("plugin.identity", p.Config.Identity()))
 	defer parent.End()
+	if runtime.GOOS == "windows" {
+		baseCtx = context.Background()
+	}
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
@@ -175,6 +179,10 @@ func (p *LocalPluginRuntime) installDependencies(
 	}
 	if p.appConfig.NoProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", p.appConfig.NoProxy))
+	}
+	if p.appConfig.TempDir != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("TEMP=%s", p.appConfig.TempDir))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("TMP=%s", p.appConfig.TempDir))
 	}
 	cmd.Dir = p.State.WorkingPath
 
@@ -309,7 +317,7 @@ const (
 
 func init() {
 	envPythonPath = system.GetEnvPythonPath(envPath)
-	envValidFlagFile = system.GetEnvValidFlagFile(envPath)
+	envValidFlagFile = envPath + "/dify/plugin.json"
 }
 
 func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvironment, error) {
@@ -427,6 +435,9 @@ func (p *LocalPluginRuntime) preCompile(
 ) error {
 	baseCtx, span := p.startSpan("python.precompile")
 	defer span.End()
+	if runtime.GOOS == "windows" {
+		baseCtx = context.Background()
+	}
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
