@@ -76,6 +76,10 @@ func (b *InstalledBucket) List() ([]plugin_entities.PluginUniqueIdentifier, erro
 		}
 
 		convertPath := system.ConvertPath(path.Path)
+		// windows path start with "/"
+		if after, ok := strings.CutPrefix(convertPath, "/"); ok {
+			convertPath = after
+		}
 		// remove prefix
 		identifier, err := plugin_entities.NewPluginUniqueIdentifier(
 			strings.TrimPrefix(convertPath, b.installedPath),

@@ -1,6 +1,7 @@
 package system
 
 import (
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -18,14 +19,14 @@ func init() {
 
 func ConvertPath(input string) string {
 	if runtime.GOOS == "windows" {
-		return strings.ReplaceAll(input, "\\", "/")[1:]
+		return strings.ReplaceAll(input, "\\", "/")
 	}
 	return input
 }
 
 func GetZipReadPath(dir string, filename string) string {
 	if runtime.GOOS == "windows" {
-		return dir + filename
+		return path.Join(dir, filename)
 	}
 	return filepath.Join(dir, filename)
 }
