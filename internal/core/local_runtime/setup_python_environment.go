@@ -142,7 +142,7 @@ func (p *LocalPluginRuntime) installDependencies(
 	baseCtx, parent := p.startSpan("python.install_deps", attribute.String("plugin.identity", p.Config.Identity()))
 	defer parent.End()
 	if runtime.GOOS == "windows" {
-		baseCtx = context.Background()
+		baseCtx = context.WithoutCancel(baseCtx)
 	}
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
@@ -436,7 +436,7 @@ func (p *LocalPluginRuntime) preCompile(
 	baseCtx, span := p.startSpan("python.precompile")
 	defer span.End()
 	if runtime.GOOS == "windows" {
-		baseCtx = context.Background()
+		baseCtx = context.WithoutCancel(baseCtx)
 	}
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
