@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/system"
 	gootel "go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
@@ -139,6 +141,9 @@ func (p *LocalPluginRuntime) installDependencies(
 ) error {
 	baseCtx, parent := p.startSpan("python.install_deps", attribute.String("plugin.identity", p.Config.Identity()))
 	defer parent.End()
+	if runtime.GOOS == "windows" {
+		baseCtx = context.WithoutCancel(baseCtx)
+	}
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
@@ -174,6 +179,10 @@ func (p *LocalPluginRuntime) installDependencies(
 	}
 	if p.appConfig.NoProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", p.appConfig.NoProxy))
+	}
+	if p.appConfig.TempDir != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("TEMP=%s", p.appConfig.TempDir))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("TMP=%s", p.appConfig.TempDir))
 	}
 	cmd.Dir = p.State.WorkingPath
 
@@ -299,11 +308,17 @@ const (
 	requirementsTxtFile PythonDependencyFileType = "requirements.txt"
 )
 
+var envPythonPath string
+var envValidFlagFile string
+
 const (
-	envPath          = ".venv"
-	envPythonPath    = envPath + "/bin/python"
-	envValidFlagFile = envPath + "/dify/plugin.json"
+	envPath = ".venv"
 )
+
+func init() {
+	envPythonPath = system.GetEnvPythonPath(envPath)
+	envValidFlagFile = envPath + "/dify/plugin.json"
+}
 
 func (p *LocalPluginRuntime) checkPythonVirtualEnvironment() (*PythonVirtualEnvironment, error) {
 	_, span := p.startSpan("python.check_venv")
@@ -420,6 +435,9 @@ func (p *LocalPluginRuntime) preCompile(
 ) error {
 	baseCtx, span := p.startSpan("python.precompile")
 	defer span.End()
+	if runtime.GOOS == "windows" {
+		baseCtx = context.WithoutCancel(baseCtx)
+	}
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
