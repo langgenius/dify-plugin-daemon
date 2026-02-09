@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769502639606,
+  "lastUpdate": 1770608925245,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11376,6 +11376,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "977390448 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0917707477c0ac2f8e33315a15f801f916d4098a",
+          "message": "bump alpine and golang version in dockerfile (#605)\n\n* bump alpine and golang version in docker file\n\n* update golang base image",
+          "timestamp": "2026-02-09T11:45:58+08:00",
+          "tree_id": "ea705faf4609cef48dca7a1cd74cbda405fd8cef",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/0917707477c0ac2f8e33315a15f801f916d4098a"
+        },
+        "date": 1770608924772,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 38.24,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "941330604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 38.24,
+            "unit": "ns/op",
+            "extra": "941330604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "941330604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "941330604 times\n4 procs"
           }
         ]
       }
