@@ -71,6 +71,9 @@ type ControlPanel struct {
 		*debugging_runtime.RemotePluginRuntime,
 	]
 
+	// initial plugin set (locked at startup)
+	initialPlugins *initialPluginSet
+
 	localReadinessSnapshot atomic.Pointer[LocalReadinessSnapshot]
 }
 
@@ -101,5 +104,10 @@ func NewControlPanel(
 
 		// local plugin installation lock
 		localPluginInstallationLock: lock.NewGranularityLock(),
+
+		// initial plugin set
+		initialPlugins: &initialPluginSet{
+			ids: make(map[string]bool),
+		},
 	}
 }

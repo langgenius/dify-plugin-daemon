@@ -84,7 +84,7 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			retry = LocalPluginFailsRecord{
 				RetryCount:  0,
 				LastTriedAt: time.Now(),
-				LastError:   err.Error(),
+				LastError:   "",
 			}
 		}
 

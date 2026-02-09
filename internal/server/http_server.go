@@ -37,7 +37,7 @@ engine := gin.New()
 		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
 	})
 	engine.GET("/health/check", controllers.HealthCheck(config))
-	engine.GET("/ready/check", controllers.ReadyCheck(config))
+	engine.GET("/ready/check", controllers.ReadyCheck())
 
 	endpointGroup := engine.Group("/e")
 	serverlessTransactionGroup := engine.Group("/backwards-invocation")

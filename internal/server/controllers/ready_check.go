@@ -5,19 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 )
 
-func ReadyCheck(appConfig *app.Config) gin.HandlerFunc {
+func ReadyCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_ = appConfig
 		report := plugin_manager.Manager().Readiness()
 		if report.Ready {
 			c.JSON(http.StatusOK, gin.H{
 				"status": "ok",
 				"ready":  true,
 				"reason": report.Reason,
-				"detail": report.Plugins,
 			})
 			return
 		}

@@ -8,22 +8,22 @@ import (
 )
 
 type LocalReadinessSnapshot struct {
-	// ⭐ 核心：readiness 只基于初始插件状态
-	// Pod 一旦 ready，永远不会因为运行时新增插件而变为 not ready
+	// ⭐ Core: readiness is only based on initial plugin state
+	// Once Pod is ready, it will never become not ready due to runtime new plugins
 	Ready bool
 
-	// 初始插件状态（Pod启动时锁定，之后永不改变）
+	// Initial plugin state (locked at Pod startup, never changed afterward)
 	InitialPluginsReady bool
 	InitialExpected     int
 	InitialRunning      int
 	InitialMissing      []string
 	InitialFailed       []string
 
-	// 运行时新增插件状态（与readiness无关，仅供监控）
+	// Runtime added plugin state (not related to readiness, for monitoring only)
 	RuntimePluginsLoading int
 	RuntimeMissing        []string
 
-	// 全量统计（包含初始+运行时）
+	// Total statistics (including initial + runtime)
 	Expected   int
 	Running    int
 	Missing    []string
@@ -38,11 +38,15 @@ type LocalReadinessSnapshot struct {
 type initialPluginSet struct {
 	lock  sync.RWMutex
 	ids   map[string]bool // plugin id → true
-	ready bool            // 是否已锁定
+	ready bool            // whether it has been locked
 }
 
-var initialPlugins = &initialPluginSet{
-	ids: make(map[string]bool),
+type initialPluginsStatus struct {
+	ready   bool
+	expected int
+	running int
+	missing []string
+	failed  []string
 }
 
 func (c *ControlPanel) LocalReadiness() (LocalReadinessSnapshot, bool) {
@@ -68,7 +72,7 @@ func (c *ControlPanel) updateLocalReadinessSnapshot(
 		expected = append(expected, id)
 	}
 
-	// 计算全量插件状态
+	// Calculate total plugin state
 	missing := make([]string, 0)
 	failed := make([]string, 0)
 	running := 0
@@ -85,15 +89,10 @@ func (c *ControlPanel) updateLocalReadinessSnapshot(
 		missing = append(missing, id.String())
 	}
 
-	// 计算初始插件的状态
-	initialMissing := make([]string, 0)
-	initialFailed := make([]string, 0)
-	initialRunning := 0
-	initialExpected := 0
+	// Calculate initial plugin state
+	initialStatus := c.isInitialPluginsReady(expected)
 
-	isInitialReady := c.isInitialPluginsReady(expected, &initialExpected, &initialRunning, &initialMissing, &initialFailed)
-
-	// 计算运行时新增插件
+	// Calculate runtime added plugins
 	runtimeMissing := make([]string, 0)
 	runtimeLoading := 0
 
@@ -101,7 +100,7 @@ func (c *ControlPanel) updateLocalReadinessSnapshot(
 	for _, id := range expected {
 		idStr := id.String()
 		if !initialSet[idStr] {
-			// 这是运行时新增的插件
+			// This is a plugin added at runtime
 			if !c.localPluginRuntimes.Exists(id) {
 				if retry, ok := c.localPluginFailsRecord.Load(id); !ok || retry.RetryCount < c.config.PluginLocalMaxRetryCount {
 					runtimeMissing = append(runtimeMissing, idStr)
@@ -111,15 +110,15 @@ func (c *ControlPanel) updateLocalReadinessSnapshot(
 		}
 	}
 
-	// 🔑 关键：readiness ONLY depends on initial plugins
+	// 🔑 Key: readiness ONLY depends on initial plugins
 	// Once ready, it will never become not ready due to runtime plugin additions
 	snapshot := &LocalReadinessSnapshot{
-		Ready:                 isInitialReady,
-		InitialPluginsReady:   isInitialReady,
-		InitialExpected:       initialExpected,
-		InitialRunning:        initialRunning,
-		InitialMissing:        initialMissing,
-		InitialFailed:         initialFailed,
+		Ready:                 initialStatus.ready,
+		InitialPluginsReady:   initialStatus.ready,
+		InitialExpected:       initialStatus.expected,
+		InitialRunning:        initialStatus.running,
+		InitialMissing:        initialStatus.missing,
+		InitialFailed:         initialStatus.failed,
 		RuntimePluginsLoading: runtimeLoading,
 		RuntimeMissing:        runtimeMissing,
 		Expected:              len(expected),
@@ -135,17 +134,13 @@ func (c *ControlPanel) updateLocalReadinessSnapshot(
 	c.localReadinessSnapshot.Store(snapshot)
 }
 
-// isInitialPluginsReady 检查初始插件是否全部启动完成
+// isInitialPluginsReady checks if all initial plugins have been started
 func (c *ControlPanel) isInitialPluginsReady(
 	current []plugin_entities.PluginUniqueIdentifier,
-	initialExpected *int,
-	initialRunning *int,
-	initialMissing *[]string,
-	initialFailed *[]string,
-) bool {
+) initialPluginsStatus {
 	initialSet := c.getInitialPluginSet()
 	if len(initialSet) == 0 && len(current) > 0 {
-		// 首次启动，锁定初始插件集合
+		// First startup, lock the initial plugin set
 		c.lockInitialPlugins(current)
 		initialSet = c.getInitialPluginSet()
 	}
@@ -174,38 +169,39 @@ func (c *ControlPanel) isInitialPluginsReady(
 		missingList = append(missingList, idStr)
 	}
 
-	*initialExpected = expected
-	*initialRunning = running
-	*initialMissing = missingList
-	*initialFailed = failedList
-
-	return len(missingList) == 0
+	return initialPluginsStatus{
+		ready:    len(missingList) == 0,
+		expected: expected,
+		running:  running,
+		missing:  missingList,
+		failed:   failedList,
+	}
 }
 
-// lockInitialPlugins 锁定初始插件集合（仅在首次调用时）
+// lockInitialPlugins locks the initial plugin set (only on first call)
 func (c *ControlPanel) lockInitialPlugins(
 	plugins []plugin_entities.PluginUniqueIdentifier,
 ) {
-	initialPlugins.lock.Lock()
-	defer initialPlugins.lock.Unlock()
+	c.initialPlugins.lock.Lock()
+	defer c.initialPlugins.lock.Unlock()
 
-	if initialPlugins.ready {
+	if c.initialPlugins.ready {
 		return
 	}
 
 	for _, id := range plugins {
-		initialPlugins.ids[id.String()] = true
+		c.initialPlugins.ids[id.String()] = true
 	}
-	initialPlugins.ready = true
+	c.initialPlugins.ready = true
 }
 
-// getInitialPluginSet 获取初始插件集合（只读）
+// getInitialPluginSet returns the initial plugin set (read-only)
 func (c *ControlPanel) getInitialPluginSet() map[string]bool {
-	initialPlugins.lock.RLock()
-	defer initialPlugins.lock.RUnlock()
+	c.initialPlugins.lock.RLock()
+	defer c.initialPlugins.lock.RUnlock()
 
 	result := make(map[string]bool)
-	for k, v := range initialPlugins.ids {
+	for k, v := range c.initialPlugins.ids {
 		result[k] = v
 	}
 	return result
