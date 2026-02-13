@@ -49,22 +49,31 @@ func main() {
 }
 
 func loadDotEnv() error {
-	dotEnvMode := strings.ToLower(strings.TrimSpace(os.Getenv("DIFY_DOTENV_MODE")))
+	const (
+		dotEnvModeEnvVar = "DIFY_DOTENV_MODE"
+		dotEnvFileEnvVar = "DIFY_ENV_FILE"
+
+		dotEnvModeOptional = "optional"
+		dotEnvModeRequire  = "require"
+		dotEnvModeDisabled = "disabled"
+	)
+
+	dotEnvMode := strings.ToLower(strings.TrimSpace(os.Getenv(dotEnvModeEnvVar)))
 	if dotEnvMode == "" {
-		dotEnvMode = "optional"
+		dotEnvMode = dotEnvModeOptional
 	}
 
 	switch dotEnvMode {
-	case "optional", "require", "disabled":
+	case dotEnvModeOptional, dotEnvModeRequire, dotEnvModeDisabled:
 	default:
-		return fmt.Errorf("invalid DIFY_DOTENV_MODE: %s (valid options: optional, require, disabled)", dotEnvMode)
+		return fmt.Errorf("invalid %s: %s (valid options: %s, %s, %s)", dotEnvModeEnvVar, dotEnvMode, dotEnvModeOptional, dotEnvModeRequire, dotEnvModeDisabled)
 	}
 
-	if dotEnvMode == "disabled" {
+	if dotEnvMode == dotEnvModeDisabled {
 		return nil
 	}
 
-	dotEnvFilePath := strings.TrimSpace(os.Getenv("DIFY_ENV_FILE"))
+	dotEnvFilePath := strings.TrimSpace(os.Getenv(dotEnvFileEnvVar))
 	if dotEnvFilePath == "" {
 		dotEnvFilePath = ".env"
 	}
@@ -72,7 +81,7 @@ func loadDotEnv() error {
 	fileInfo, err := os.Stat(dotEnvFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if dotEnvMode == "require" {
+			if dotEnvMode == dotEnvModeRequire {
 				return fmt.Errorf("required .env file not found: %s", dotEnvFilePath)
 			}
 			return nil
