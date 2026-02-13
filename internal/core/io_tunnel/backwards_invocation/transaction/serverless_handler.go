@@ -75,16 +75,34 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
-				ctx.Writer.Write([]byte(err.Error()))
-				writer.Close()
+				_, _ = ctx.Writer.Write([]byte(err.Error()))
+				_ = writer.Close()
 				return
 			}
 
 			session, err := session_manager.GetSession(sessionId)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
-				ctx.Writer.Write([]byte(err.Error()))
-				writer.Close()
+				invokePayload, _ := parser.UnmarshalJsonBytes2Map(sessionMessage.Data)
+				backwardsRequestId, _ := invokePayload["backwards_request_id"].(string)
+
+				respData := backwards_invocation.BackwardsInvocationResponseEvent{
+					BackwardsRequestId: backwardsRequestId,
+					Event:              backwards_invocation.REQUEST_EVENT_ERROR,
+					Message:            "failed to get session info from cache",
+					Data: map[string]any{
+						"error_type": "SessionNotFound",
+						"detail":     err.Error(), // 保留“key not found”作为 detail
+						"session_id": sessionId,
+					},
+				}
+				_, err = ctx.Writer.Write(parser.MarshalJsonBytes(respData))
+				if err != nil {
+					log.Error("failed to write response", "error", err)
+				} else {
+					log.Info("successfully written backwards_invocation response", "data", respData)
+				}
+				_ = writer.Close()
 				return
 			}
 
@@ -95,8 +113,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			ctx.Request = ctx.Request.WithContext(ctxRequestContext)
 
 			// bind the backwards invocation
-			plugin_manager := plugin_manager.Manager()
-			session.BindBackwardsInvocation(plugin_manager.BackwardsInvocation())
+			pluginManager := plugin_manager.Manager()
+			session.BindBackwardsInvocation(pluginManager.BackwardsInvocation())
 
 			serverlessResponseWriter := NewServerlessTransactionWriter(session, writer)
 
@@ -108,8 +126,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 				sessionMessage.Data,
 			); err != nil {
 				ctx.Writer.WriteHeader(http.StatusInternalServerError)
-				ctx.Writer.Write([]byte("failed to parse request"))
-				writer.Close()
+				_, _ = ctx.Writer.Write([]byte("failed to parse request"))
+				_ = writer.Close()
 			}
 		},
 		func() {},
