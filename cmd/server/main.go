@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -13,8 +16,7 @@ import (
 func main() {
 	var config app.Config
 
-	// load env
-	err := godotenv.Load()
+	err := loadDotEnv()
 	if err != nil {
 		log.Panic("failed to load .env file", "error", err)
 	}
@@ -44,4 +46,60 @@ func main() {
 	}
 
 	(&server.App{}).Run(&config)
+}
+
+func loadDotEnv() error {
+	dotEnvMode := strings.ToLower(strings.TrimSpace(os.Getenv("DIFY_DOTENV_MODE")))
+	if dotEnvMode == "" {
+		dotEnvMode = "optional"
+	}
+
+	switch dotEnvMode {
+	case "optional", "require", "disabled":
+	default:
+		return fmt.Errorf("invalid DIFY_DOTENV_MODE: %s (valid options: optional, require, disabled)", dotEnvMode)
+	}
+
+	if dotEnvMode == "disabled" {
+		return nil
+	}
+
+	dotEnvFilePath := strings.TrimSpace(os.Getenv("DIFY_ENV_FILE"))
+	if dotEnvFilePath == "" {
+		dotEnvFilePath = ".env"
+	}
+
+	fileInfo, err := os.Stat(dotEnvFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if dotEnvMode == "require" {
+				return fmt.Errorf("required .env file not found: %s", dotEnvFilePath)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("failed to stat .env file %s: %w", dotEnvFilePath, err)
+	}
+
+	if fileInfo.IsDir() {
+		return fmt.Errorf(".env path is a directory: %s", dotEnvFilePath)
+	}
+
+	dotEnvValues, err := godotenv.Read(dotEnvFilePath)
+	if err != nil {
+		return fmt.Errorf("invalid .env file %s: %w", dotEnvFilePath, err)
+	}
+
+	for key, value := range dotEnvValues {
+		if _, exists := os.LookupEnv(key); exists {
+			continue
+		}
+
+		err = os.Setenv(key, value)
+		if err != nil {
+			return fmt.Errorf("failed to set env var from .env (%s): %w", key, err)
+		}
+	}
+
+	return nil
 }
