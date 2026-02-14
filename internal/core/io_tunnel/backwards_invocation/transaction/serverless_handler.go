@@ -83,8 +83,27 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			session, err := session_manager.GetSession(sessionId)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
-				ctx.Writer.Write([]byte(err.Error()))
-				writer.Close()
+				invokePayload, marshalErr := parser.UnmarshalJsonBytes2Map(sessionMessage.Data)
+				var backwardsRequestId string
+				if marshalErr == nil {
+					backwardsRequestId, _ = invokePayload["backwards_request_id"].(string)
+				}
+
+				respData := backwards_invocation.BackwardsInvocationResponseEvent{
+					BackwardsRequestId: backwardsRequestId,
+					Event:              backwards_invocation.REQUEST_EVENT_ERROR,
+					Message:            "failed to get session info from cache",
+					Data: map[string]any{
+						"error_type": "SessionNotFound",
+						"detail":     err.Error(), // 保留“key not found”作为 detail
+						"session_id": sessionId,
+					},
+				}
+				_, err = ctx.Writer.Write(parser.MarshalJsonBytes(respData))
+				if err != nil {
+					log.Error("failed to write response", "error", err)
+				}
+				_ = writer.Close()
 				return
 			}
 
