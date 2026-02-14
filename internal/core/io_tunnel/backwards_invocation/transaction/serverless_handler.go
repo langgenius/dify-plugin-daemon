@@ -89,6 +89,14 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 					backwardsRequestId, _ = invokePayload["backwards_request_id"].(string)
 				}
 
+				log.ErrorContext(
+					ctx.Request.Context(),
+					"failed to get session info from cache",
+					"session_id", sessionId,
+					"backwards_request_id", backwardsRequestId,
+					"error", err,
+				)
+
 				respData := backwards_invocation.BackwardsInvocationResponseEvent{
 					BackwardsRequestId: backwardsRequestId,
 					Event:              backwards_invocation.REQUEST_EVENT_ERROR,
@@ -99,9 +107,15 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 						"session_id": sessionId,
 					},
 				}
-				_, err = ctx.Writer.Write(parser.MarshalJsonBytes(respData))
-				if err != nil {
-					log.Error("failed to write response", "error", err)
+				_, writeErr := ctx.Writer.Write(parser.MarshalJsonBytes(respData))
+				if writeErr != nil {
+					log.ErrorContext(
+						ctx.Request.Context(),
+						"failed to write serverless transaction error response",
+						"session_id", sessionId,
+						"backwards_request_id", backwardsRequestId,
+						"error", writeErr,
+					)
 				}
 				_ = writer.Close()
 				return
@@ -133,7 +147,12 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 		},
 		func() {},
 		func(err string) {
-			log.Warn("invoke dify failed, received errors", "error", err)
+			log.WarnContext(
+				ctx.Request.Context(),
+				"invoke dify failed, received errors",
+				"session_id", sessionId,
+				"error", err,
+			)
 		},
 		func(plugin_entities.PluginLogEvent) {}, //log
 	)
