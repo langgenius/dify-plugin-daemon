@@ -2,6 +2,7 @@ package controlpanel
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
@@ -69,11 +70,17 @@ type ControlPanel struct {
 		plugin_entities.PluginUniqueIdentifier,
 		*debugging_runtime.RemotePluginRuntime,
 	]
+
+	// initial plugin set (locked at startup)
+	initialPlugins *initialPluginSet
+
+	localReadinessSnapshot atomic.Pointer[LocalReadinessSnapshot]
 }
 
 type LocalPluginFailsRecord struct {
 	RetryCount  int32
 	LastTriedAt time.Time
+	LastError   string
 }
 
 // create a new control panel as the engine of the local plugin daemon
@@ -97,5 +104,10 @@ func NewControlPanel(
 
 		// local plugin installation lock
 		localPluginInstallationLock: lock.NewGranularityLock(),
+
+		// initial plugin set
+		initialPlugins: &initialPluginSet{
+			ids: make(map[string]bool),
+		},
 	}
 }
