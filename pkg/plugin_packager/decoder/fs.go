@@ -125,12 +125,72 @@ func (d *FSPluginDecoder) Close() error {
 	return nil
 }
 
+// secureResolvePath securely resolves a path relative to a root directory.
+//
+// This function prevents path traversal attacks by validating that the resolved
+// path stays within the root directory. It handles both forward slashes and
+// OS-specific path separators, making it safe for cross-platform use.
+//
+// Parameters:
+//   - root: The base directory path that acts as a security boundary
+//   - name: A relative path (potentially with forward slashes) to resolve
+//
+// Returns:
+//   - The absolute, resolved path if it stays within root
+//   - An error if the path attempts to escape the root directory
+//
+// Security: This prevents attacks like "../../../etc/passwd" by computing
+// the relative path from root to the target and rejecting any path that
+// starts with ".." (indicating an escape attempt).
+//
+// Algorithm:
+//  1. Join root with name, converting forward slashes to OS format
+//  2. Clean the joined path to resolve any "." or ".." segments
+//  3. Convert both root and target to absolute paths
+//  4. Compute the relative path from root to target
+//  5. If relative path starts with "..", reject as path traversal
+//
+// Example:
+//   root="/app/plugins", name="config/settings.yaml" -> "/app/plugins/config/settings.yaml"
+//   root="/app/plugins", name="../../../etc/passwd" -> error (path traversal)
+func secureResolvePath(root, name string) (string, error) {
+	p := filepath.Join(root, filepath.FromSlash(name))
+	clean := filepath.Clean(p)
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	cleanAbs, err := filepath.Abs(clean)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(rootAbs, cleanAbs)
+	if err != nil {
+		return "", err
+	}
+	if rel == "." {
+		return cleanAbs, nil
+	}
+	if strings.HasPrefix(rel, "..") {
+		return "", os.ErrPermission
+	}
+	return cleanAbs, nil
+}
+
 func (d *FSPluginDecoder) Stat(filename string) (fs.FileInfo, error) {
-	return os.Stat(filepath.Join(d.root, filename))
+	abs, err := secureResolvePath(d.root, filename)
+	if err != nil {
+		return nil, err
+	}
+	return os.Stat(abs)
 }
 
 func (d *FSPluginDecoder) ReadFile(filename string) ([]byte, error) {
-	return os.ReadFile(filepath.Join(d.root, filename))
+	abs, err := secureResolvePath(d.root, filename)
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadFile(abs)
 }
 
 func (d *FSPluginDecoder) ReadDir(dirname string) ([]string, error) {
@@ -158,7 +218,11 @@ func (d *FSPluginDecoder) ReadDir(dirname string) ([]string, error) {
 }
 
 func (d *FSPluginDecoder) FileReader(filename string) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(d.root, filename))
+	abs, err := secureResolvePath(d.root, filename)
+	if err != nil {
+		return nil, err
+	}
+	return os.Open(abs)
 }
 
 func (d *FSPluginDecoder) Signature() (string, error) {
