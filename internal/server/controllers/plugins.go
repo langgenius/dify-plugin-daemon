@@ -18,6 +18,9 @@ func GetAsset(c *gin.Context) {
 	asset, err := pluginManager.GetAsset(c.Param("id"))
 
 	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			return
+		}
 		c.JSON(http.StatusInternalServerError, exception.InternalServerError(err).ToResponse())
 		return
 	}

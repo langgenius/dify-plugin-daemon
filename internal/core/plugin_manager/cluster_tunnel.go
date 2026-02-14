@@ -67,3 +67,25 @@ func (t *ClusterTunnel) OnLocalRuntimeStopped(
 ) {
 	// NOP
 }
+
+func (t *ClusterTunnel) OnLocalRuntimeScaleUp(
+	runtime *local_runtime.LocalPluginRuntime,
+	instanceNums int32,
+) {
+	// NOP
+}
+
+func (t *ClusterTunnel) OnLocalRuntimeScaleDown(
+	runtime *local_runtime.LocalPluginRuntime,
+	instanceNums int32,
+) {
+	// NOP
+}
+
+func (t *ClusterTunnel) OnLocalRuntimeInstanceLog(
+	runtime *local_runtime.LocalPluginRuntime,
+	instance *local_runtime.PluginInstance,
+	event plugin_entities.PluginLogEvent,
+) {
+	// NOP
+}
