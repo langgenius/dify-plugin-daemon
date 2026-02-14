@@ -218,6 +218,8 @@ type Config struct {
 	OtelBatchExportTimeoutMS   int     `envconfig:"OTEL_BATCH_EXPORT_TIMEOUT" default:"10000"`
 	OtelMetricExportTimeoutMS  int     `envconfig:"OTEL_METRIC_EXPORT_TIMEOUT" default:"30000"`
 
+	PrometheusEnabled bool `envconfig:"PROMETHEUS_ENABLED" default:"true"`
+
 	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`
 	SentryDSN              string  `envconfig:"SENTRY_DSN"`
 	SentryAttachStacktrace bool    `envconfig:"SENTRY_ATTACH_STACKTRACE"`
