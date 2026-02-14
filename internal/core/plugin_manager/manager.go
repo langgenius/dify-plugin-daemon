@@ -165,6 +165,10 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 	return p.backwardsInvocation
 }
 
+func (p *PluginManager) Config() *app.Config {
+	return p.config
+}
+
 // check if the plugin is already running on this node
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
