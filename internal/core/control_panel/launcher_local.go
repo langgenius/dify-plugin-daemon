@@ -64,7 +64,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		return nil, nil, err
 	}
 	// attach trace context for env initialization spans
-	runtime.SetTraceContext(ctx)
+	runtime.SetTraceContext(context.WithoutCancel(ctx))
 
 	// init environment
 	// whatever it's a user request to launch a plugin or a new plugin was found
