@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771035623351,
+  "lastUpdate": 1771055733467,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11472,6 +11472,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "935170479 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Stream_2@qq.com",
+            "name": "Stream",
+            "username": "Stream29"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "da9b7ae7ce7bd351cdbbf1df2b02353fe8b32b41",
+          "message": "chore: add logging for session and redis (#614)",
+          "timestamp": "2026-02-14T15:52:45+08:00",
+          "tree_id": "c49318f0480298c09f98f8dc636dcf21fa27c3a7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/da9b7ae7ce7bd351cdbbf1df2b02353fe8b32b41"
+        },
+        "date": 1771055732407,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 35.52,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 35.52,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
           }
         ]
       }
