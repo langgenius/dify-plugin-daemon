@@ -32,6 +32,7 @@ func initOSS(config *app.Config) oss.OSS {
 			Bucket:       config.PluginStorageOSSBucket,
 			Region:       config.AWSRegion,
 			UseIamRole:   config.S3UseAwsManagedIam,
+			SignatureVersion: config.S3SignatureVersion,
 		},
 		TencentCOS: &oss.TencentCOS{
 			Region:    config.TencentCOSRegion,
