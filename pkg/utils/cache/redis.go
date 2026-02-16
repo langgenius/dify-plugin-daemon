@@ -99,6 +99,25 @@ func InitRedisSentinelClient(
 	return nil
 }
 
+// InitRedisClusterClient 初始化集群 Redis 客户端
+func InitRedisClusterClient(addrs []string, password string, useSsl bool) error {
+	opts := &redis.ClusterOptions{
+		Addrs:    addrs,
+		Password: password,
+	}
+
+	if useSsl {
+		opts.TLSConfig = &tls.Config{}
+	}
+
+	client = redis.NewClusterClient(opts)
+
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close the redis client
 func Close() error {
 	if client == nil {
@@ -536,9 +555,24 @@ func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, err
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
 }
 
-func Transaction(fn func(redis.Pipeliner) error) error {
+func Transaction(fn func(redis.Pipeliner) error, keys ...string) error {
 	if client == nil {
 		return ErrDBNotInit
+	}
+
+	// Fix: If no keys provided, use plain Pipeline instead of Watch transaction
+	if len(keys) == 0 {
+		_, err := client.TxPipelined(ctx, fn)
+		if err == redis.Nil {
+			return nil
+		}
+		return err
+	}
+
+	// Serialize watch keys
+	watchKeys := make([]string, len(keys))
+	for i, key := range keys {
+		watchKeys[i] = serialKey(key)
 	}
 
 	return client.Watch(ctx, func(tx *redis.Tx) error {
@@ -549,7 +583,7 @@ func Transaction(fn func(redis.Pipeliner) error) error {
 			return nil
 		}
 		return err
-	})
+	}, watchKeys...)
 }
 
 func Publish(channel string, message any, context ...redis.Cmdable) error {
@@ -565,8 +599,15 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 }
 
 func Subscribe[T any](channel string) (<-chan T, func()) {
-	pubsub := client.Subscribe(ctx, channel)
 	ch := make(chan T)
+
+	if client == nil {
+		log.Error("redis client not initialized")
+		close(ch)
+		return ch, func() {}
+	}
+
+	pubsub := client.Subscribe(ctx, channel)
 	connectionEstablished := make(chan bool)
 
 	go func() {
