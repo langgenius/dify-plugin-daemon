@@ -51,7 +51,7 @@ func (c *Cluster) voteAddresses() error {
 				}
 			}
 
-			ipsVoting[addr.fullAddress()] = c.voteAddress(addr) == nil
+			ipsVoting[addr.fullAddress()] = time.Since(time.Unix(nodeStatus.LastPingAt, 0)) < c.nodeDisconnectedTimeout
 		}
 
 		// lock the node status
