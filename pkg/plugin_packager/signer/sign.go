@@ -25,14 +25,3 @@ func SignPlugin(plugin []byte, verification *decoder.Verification) ([]byte, erro
 	return withkey.SignPluginWithPrivateKey(plugin, verification, privateKey)
 }
 
-// TraditionalSignPlugin, only used for testing
-// WARNING: This function is deprecated, use SignPlugin instead
-func TraditionalSignPlugin(plugin []byte) ([]byte, error) {
-	// load private key
-	privateKey, err := encryption.LoadPrivateKey(private_key.PRIVATE_KEY)
-	if err != nil {
-		return nil, err
-	}
-
-	return withkey.TraditionalSignPlugin(plugin, privateKey)
-}
