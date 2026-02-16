@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/langgenius/dify-cloud-kit/oss"
 	"golang.org/x/exp/constraints"
 )
@@ -39,6 +41,17 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PythonEnvInitTimeout, 120)
 	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
 	setDefaultInt(&config.DifyInvocationReadTimeout, 240000)
+
+	// fallback to lowercase proxy environment variables if uppercase is not set
+	if _, ok := os.LookupEnv("HTTP_PROXY"); !ok {
+		config.HttpProxy = os.Getenv("http_proxy")
+	}
+	if _, ok := os.LookupEnv("HTTPS_PROXY"); !ok {
+		config.HttpsProxy = os.Getenv("https_proxy")
+	}
+	if _, ok := os.LookupEnv("NO_PROXY"); !ok {
+		config.NoProxy = os.Getenv("no_proxy")
+	}
 	if config.DBType == DB_TYPE_POSTGRESQL || config.DBType == DB_TYPE_PG_BOUNCER {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
 	} else if config.DBType == DB_TYPE_MYSQL {
