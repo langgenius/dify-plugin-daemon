@@ -110,6 +110,7 @@ const (
 	PRESENCE_PENALTY  DefaultParameterName = "presence_penalty"
 	FREQUENCY_PENALTY DefaultParameterName = "frequency_penalty"
 	MAX_TOKENS        DefaultParameterName = "max_tokens"
+	MAX_COMPLETION_TOKENS DefaultParameterName = "max_completion_tokens"
 	RESPONSE_FORMAT   DefaultParameterName = "response_format"
 	JSON_SCHEMA       DefaultParameterName = "json_schema"
 )
@@ -217,6 +218,26 @@ var PARAMETER_RULE_TEMPLATE = map[DefaultParameterName]ModelParameterRule{
 			ZhHans: "最大标记",
 			JaJp:   "最大トークン",
 			PtBr:   "Máximo de tokens",
+		},
+		Type: parser.ToPtr(PARAMETER_TYPE_INT),
+		Help: &I18nObject{
+			EnUS:   "Specifies the upper limit on the length of generated results. If the generated results are truncated, you can increase this parameter.",
+			ZhHans: "指定生成结果长度的上限。如果生成结果截断，可以调大该参数。",
+			JaJp:   "生成結果の長さの上限を指定します。生成結果が切り捨てられた場合は、このパラメータを大きくすることができます。",
+			PtBr:   "Especifica o limite superior para o comprimento dos resultados gerados. Se os resultados gerados forem truncados, você pode aumentar este parâmetro.",
+		},
+		Required:  false,
+		Default:   parser.ToPtr(any(64)),
+		Min:       parser.ToPtr(1.0),
+		Max:       parser.ToPtr(2048.0),
+		Precision: parser.ToPtr(0),
+	},
+	MAX_COMPLETION_TOKENS: {
+		Label: &I18nObject{
+			EnUS:   "Max Completion Tokens",
+			ZhHans: "最大完成标记",
+			JaJp:   "最大完了トークン",
+			PtBr:   "Máximo de tokens de conclusão",
 		},
 		Type: parser.ToPtr(PARAMETER_TYPE_INT),
 		Help: &I18nObject{
