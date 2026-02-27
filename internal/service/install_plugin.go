@@ -114,6 +114,7 @@ func InstallMultiplePluginsToTenant(
 	}
 	taskIDs := taskRegistry.IDs()
 
+	ctx = context.WithoutCancel(log.EnsureTrace(ctx))
 	for _, job := range jobs {
 		jobCopy := job
 		// start a new goroutine to install the plugin
@@ -286,6 +287,7 @@ func UpgradePlugin(
 	}
 
 	taskIDs := taskRegistry.IDs()
+	ctx = context.WithoutCancel(log.EnsureTrace(ctx))
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule: "service",
