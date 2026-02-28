@@ -57,7 +57,7 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			},
 		)
 
-		if err == db.ErrDatabaseNotFound {
+		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
 			return
 		}
@@ -119,6 +119,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	// try find the correct node
 	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_unique_identifier.String())
 	if err != nil {
+		log.Error("Failed to fetch plugin nodes by id", "error", err)
 		ctx.AbortWithStatusJSON(
 			500,
 			exception.InternalServerError(
@@ -127,6 +128,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		)
 		return
 	} else if len(nodes) == 0 {
+		log.Error("no plugin available nodes found", "plugin", plugin_unique_identifier.String())
 		ctx.AbortWithStatusJSON(
 			404,
 			exception.InternalServerError(

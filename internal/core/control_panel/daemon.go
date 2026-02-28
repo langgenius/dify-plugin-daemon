@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/media_transport"
@@ -16,6 +17,9 @@ import (
 type ControlPanel struct {
 	// app config
 	config *app.Config
+
+	// cluster for remote debugging plugins
+	cluster *cluster.Cluster
 
 	// debugging server
 	debuggingServer *debugging_runtime.RemotePluginServer
@@ -82,12 +86,14 @@ func NewControlPanel(
 	mediaBucket *media_transport.MediaBucket,
 	packageBucket *media_transport.PackageBucket,
 	installedBucket *media_transport.InstalledBucket,
+	cluster *cluster.Cluster,
 ) *ControlPanel {
 	return &ControlPanel{
 		config:          config,
 		mediaBucket:     mediaBucket,
 		packageBucket:   packageBucket,
 		installedBucket: installedBucket,
+		cluster:         cluster,
 
 		localPluginLaunchingSemaphore: make(chan bool, config.PluginLocalLaunchingConcurrent),
 
@@ -98,4 +104,8 @@ func NewControlPanel(
 		// local plugin installation lock
 		localPluginInstallationLock: lock.NewGranularityLock(),
 	}
+}
+
+func (c *ControlPanel) SetCluster(cluster *cluster.Cluster) {
+	c.cluster = cluster
 }

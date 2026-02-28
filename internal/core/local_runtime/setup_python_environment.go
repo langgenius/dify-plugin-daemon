@@ -163,9 +163,13 @@ func (p *LocalPluginRuntime) installDependencies(
 	}
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
+	uvCacheDir := path.Join(p.State.WorkingPath, ".uv-cache")
 	cmd := exec.CommandContext(ctx, uvPath, args...)
 	parent.SetAttributes(attribute.String("uv.path", uvPath), attribute.StringSlice("uv.args", args))
 	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
+	// set UV_CACHE_DIR to the same filesystem as the plugin working directory
+	// to avoid cross-device link errors (os error 95)
+	cmd.Env = append(cmd.Env, "UV_CACHE_DIR="+uvCacheDir)
 	if p.appConfig.HttpProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
 	}

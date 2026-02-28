@@ -132,6 +132,25 @@ func (c *Cluster) FetchPluginAvailableNodesByHashedId(hashedPluginId string) ([]
 		}
 	}
 
+	if len(nodes) == 0 {
+		if len(states) > 0 {
+			// found states but no valid nodes, log details
+			for key, state := range states {
+				log.Warn("found plugin state but node not available",
+					"key", key,
+					"scheduled_at", state.ScheduledAt,
+					"status", state.Status,
+				)
+			}
+		} else {
+			// no states found at all
+			log.Warn("no plugin states found in redis",
+				"hashed_plugin_id", hashedPluginId,
+				"scan_pattern", c.getScanPluginsByIdKey(hashedPluginId),
+			)
+		}
+	}
+
 	return nodes, nil
 }
 

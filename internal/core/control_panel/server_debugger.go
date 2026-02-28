@@ -33,6 +33,12 @@ func (c *ControlPanel) onDebuggingRuntimeConnected(
 	// store plugin runtime
 	c.debuggingPluginRuntime.Store(pluginIdentifier, rpr)
 
+	if c.cluster != nil {
+		if err = c.cluster.RegisterPlugin(rpr); err != nil {
+			log.Error("failed to register remote debugging plugin to cluster", "error", err)
+		}
+	}
+
 	// notify notifiers a new debugging runtime is connected
 	c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 		notifier.OnDebuggingRuntimeConnected(rpr)
@@ -49,6 +55,12 @@ func (c *ControlPanel) onDebuggingRuntimeDisconnected(
 	if err != nil {
 		log.Error("failed to get plugin identity, check if your declaration is invalid", "error", err)
 		return
+	}
+
+	if c.cluster != nil {
+		if err = c.cluster.UnregisterPlugin(rpr); err != nil {
+			log.Error("failed to unregister remote debugging plugin from cluster", "error", err)
+		}
 	}
 
 	// delete plugin runtime
