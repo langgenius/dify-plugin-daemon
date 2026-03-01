@@ -23,7 +23,10 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		assistant_message = `
 		{
 			"role": "assistant",
-			"content": "you are a helpful assistant"
+			"content": "you are a helpful assistant",
+			"opaque_body": {
+				"provider_message_id": "msg_123"
+			}
 		}`
 		image_message = `
 		{
@@ -31,7 +34,10 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 			"content": [
 				{
 					"type": "image",
-					"data": "base64"
+					"data": "base64",
+					"opaque_body": {
+						"segment_id": 1
+					}
 				}
 			]
 		}`
@@ -67,6 +73,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 	if promptMessage.Role != "assistant" {
 		t.Error("role is not assistant")
 	}
+	assert.JSONEq(t, `{"provider_message_id":"msg_123"}`, string(promptMessage.OpaqueBody))
 
 	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(image_message))
 	if err != nil {
@@ -78,6 +85,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 	if promptMessage.Content.([]PromptMessageContent)[0].Type != "image" {
 		t.Error("type is not image")
 	}
+	assert.JSONEq(t, `{"segment_id":1}`, string(promptMessage.Content.([]PromptMessageContent)[0].OpaqueBody))
 
 	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(tool_message))
 	if err != nil {
