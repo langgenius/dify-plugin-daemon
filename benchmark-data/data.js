@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772182560163,
+  "lastUpdate": 1772384982670,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11568,6 +11568,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "935354570 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c8c48a16975f99ebdb6c8e8d33738e254f6cf79f",
+          "message": "fix: fix install context is not right (#613)",
+          "timestamp": "2026-03-02T01:06:53+08:00",
+          "tree_id": "885610b1e03f756ea449ea982bf47c1e9fa9347c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/c8c48a16975f99ebdb6c8e8d33738e254f6cf79f"
+        },
+        "date": 1772384982198,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.91,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "955996783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.91,
+            "unit": "ns/op",
+            "extra": "955996783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "955996783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "955996783 times\n4 procs"
           }
         ]
       }
