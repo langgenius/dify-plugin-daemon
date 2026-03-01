@@ -1,6 +1,7 @@
 package model_entities
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 
@@ -128,60 +129,67 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("prompt_message_content_type", isPromptMessageContentType)
 }
 
+func unmarshalPromptMessageContent(data json.RawMessage) (any, error) {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, errors.New("content field is required")
+	}
+
+	switch trimmed[0] {
+	case '"':
+		var contentAsString string
+		if err := json.Unmarshal(trimmed, &contentAsString); err != nil {
+			return nil, err
+		}
+		return contentAsString, nil
+	case '[':
+		var contentAsArray []PromptMessageContent
+		if err := json.Unmarshal(trimmed, &contentAsArray); err != nil {
+			return nil, err
+		}
+		return contentAsArray, nil
+	default:
+		return nil, errors.New("content must be a string or an array of prompt message content")
+	}
+}
+
 func (p *PromptMessage) UnmarshalJSON(data []byte) error {
-	// Unmarshal the JSON data into a map
-	var raw map[string]json.RawMessage
+	type promptMessageJSON struct {
+		Role       PromptMessageRole       `json:"role"`
+		Content    json.RawMessage         `json:"content"`
+		Name       string                  `json:"name,omitempty"`
+		ToolCalls  []PromptMessageToolCall `json:"tool_calls,omitempty"`
+		ToolCallId string                  `json:"tool_call_id,omitempty"`
+		OpaqueBody json.RawMessage         `json:"opaque_body,omitempty"`
+	}
+
+	var raw promptMessageJSON
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
 
-	// Check if content is a string or an array which contains type and content
-	if _, ok := raw["content"]; ok {
-		var content string
-		if err := json.Unmarshal(raw["content"], &content); err == nil {
-			p.Content = content
-		} else {
-			var content []PromptMessageContent
-			if err := json.Unmarshal(raw["content"], &content); err != nil {
-				return err
-			}
-			p.Content = content
-		}
-	} else {
+	if raw.Role == "" {
+		return errors.New("role field is required")
+	}
+	if len(raw.Content) == 0 {
 		return errors.New("content field is required")
 	}
 
-	// Unmarshal the rest of the fields
-	if role, ok := raw["role"]; ok {
-		if err := json.Unmarshal(role, &p.Role); err != nil {
-			return err
-		}
-	} else {
-		return errors.New("role field is required")
+	content, err := unmarshalPromptMessageContent(raw.Content)
+	if err != nil {
+		return err
 	}
 
-	if name, ok := raw["name"]; ok {
-		if err := json.Unmarshal(name, &p.Name); err != nil {
-			return err
-		}
+	msg := PromptMessage{
+		Role:       raw.Role,
+		Content:    content,
+		Name:       raw.Name,
+		ToolCalls:  raw.ToolCalls,
+		ToolCallId: raw.ToolCallId,
+		OpaqueBody: raw.OpaqueBody,
 	}
 
-	if toolCalls, ok := raw["tool_calls"]; ok {
-		if err := json.Unmarshal(toolCalls, &p.ToolCalls); err != nil {
-			return err
-		}
-	}
-
-	if toolCallId, ok := raw["tool_call_id"]; ok {
-		if err := json.Unmarshal(toolCallId, &p.ToolCallId); err != nil {
-			return err
-		}
-	}
-
-	if opaqueBody, ok := raw["opaque_body"]; ok {
-		p.OpaqueBody = opaqueBody
-	}
-
+	*p = msg
 	return nil
 }
 
