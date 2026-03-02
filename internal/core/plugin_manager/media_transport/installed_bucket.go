@@ -9,6 +9,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/system"
 )
 
 type InstalledBucket struct {
@@ -73,9 +74,15 @@ func (b *InstalledBucket) List() ([]plugin_entities.PluginUniqueIdentifier, erro
 		if strings.HasPrefix(path.Path, ".") {
 			continue
 		}
+
+		convertPath := system.ConvertPath(path.Path)
+		// windows path start with "/"
+		if after, ok := strings.CutPrefix(convertPath, "/"); ok {
+			convertPath = after
+		}
 		// remove prefix
 		identifier, err := plugin_entities.NewPluginUniqueIdentifier(
-			strings.TrimPrefix(path.Path, b.installedPath),
+			strings.TrimPrefix(convertPath, b.installedPath),
 		)
 		if err != nil {
 			log.Error("failed to create PluginUniqueIdentifier from path", "path", path.Path, "error", err)

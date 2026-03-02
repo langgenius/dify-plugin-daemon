@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/system"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
@@ -20,7 +21,7 @@ var (
 	// for checksum, it must be a 32-character hexadecimal string.
 	// the author part is optional, if not specified, it will be empty.
 	pluginUniqueIdentifierRegexp = regexp.MustCompile(
-		`^(?:([a-z0-9_-]{1,64})\/)?([a-z0-9_-]{1,255}):([0-9]{1,4})(\.[0-9]{1,4}){1,3}(-\w{1,16})?@[a-f0-9]{32,64}$`,
+		`^(?:([a-z0-9_-]{1,64})\/)?([a-z0-9_-]{1,255})` + system.DelimiterFLag + `([0-9]{1,4})(\.[0-9]{1,4}){1,3}(-\w{1,16})?@[a-f0-9]{32,64}$`,
 	)
 )
 
@@ -33,7 +34,7 @@ func NewPluginUniqueIdentifier(identifier string) (PluginUniqueIdentifier, error
 
 func (p PluginUniqueIdentifier) PluginID() string {
 	// try find :
-	split := strings.Split(p.String(), ":")
+	split := strings.Split(p.String(), system.DelimiterFLag)
 	if len(split) == 2 {
 		return split[0]
 	}
@@ -44,7 +45,7 @@ func (p PluginUniqueIdentifier) Version() manifest_entities.Version {
 	// extract version part from the string
 	split := strings.Split(p.String(), "@")
 	if len(split) == 2 {
-		split = strings.Split(split[0], ":")
+		split = strings.Split(split[0], system.DelimiterFLag)
 		if len(split) == 2 {
 			return manifest_entities.Version(split[1])
 		}
@@ -60,7 +61,7 @@ func (p PluginUniqueIdentifier) RemoteLike() bool {
 
 func (p PluginUniqueIdentifier) Author() string {
 	// extract author part from the string
-	split := strings.Split(p.String(), ":")
+	split := strings.Split(p.String(), system.DelimiterFLag)
 	if len(split) == 2 {
 		split = strings.Split(split[0], "/")
 		if len(split) == 2 {
