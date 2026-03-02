@@ -24,6 +24,7 @@ var permissionKeySeq = []string{
 	"model.speech2text",
 	"model.moderation",
 	"app.enabled",
+	"node.enabled",
 	"storage.enabled",
 	"storage.size",
 	"endpoint.enabled",
@@ -78,6 +79,8 @@ func (p permission) View() string {
 	s += fmt.Sprintf("  %sModeration: %v %s You can invoke moderation models inside Dify if it's enabled %s\n", cursor("model.moderation"), checked(p.permission.AllowInvokeModeration()), YELLOW, RESET)
 	s += "Apps:\n"
 	s += fmt.Sprintf("  %sEnabled: %v %s Ability to invoke apps like BasicChat/ChatFlow/Agent/Workflow etc. %s\n", cursor("app.enabled"), checked(p.permission.AllowInvokeApp()), YELLOW, RESET)
+	s += "Nodes:\n"
+	s += fmt.Sprintf("  %sEnabled: %v %s Ability to invoke nodes inside Dify ChatFlow/Workflow %s\n", cursor("node.enabled"), checked(p.permission.AllowInvokeNode()), YELLOW, RESET)
 	s += "Resources:\n"
 	s += "Storage:\n"
 	s += fmt.Sprintf("  %sEnabled: %v %s Persistence storage for the plugin %s\n", cursor("storage.enabled"), checked(p.permission.AllowInvokeStorage()), YELLOW, RESET)
@@ -170,6 +173,16 @@ func (p *permission) edit() {
 			p.permission.App = nil
 		} else {
 			p.permission.App = &plugin_entities.PluginPermissionAppRequirement{
+				Enabled: true,
+			}
+		}
+	}
+
+	if p.cursor == "node.enabled" {
+		if p.permission.AllowInvokeNode() {
+			p.permission.Node = nil
+		} else {
+			p.permission.Node = &plugin_entities.PluginPermissionNodeRequirement{
 				Enabled: true,
 			}
 		}
