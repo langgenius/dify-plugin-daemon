@@ -233,6 +233,7 @@ type Config struct {
 	// log settings
 	HealthApiLogEnabled bool   `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
 	LogOutputFormat     string `envconfig:"LOG_OUTPUT_FORMAT" default:"text"`
+	LogFile             string `envconfig:"LOG_FILE" default:""`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
