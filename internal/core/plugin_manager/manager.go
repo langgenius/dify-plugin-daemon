@@ -200,6 +200,14 @@ var (
 	pluginAssetCache *lru.Cache[string, []byte]
 )
 
+func init() {
+	var err error
+	pluginAssetCache, err = lru.New[string, []byte](256)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func pluginAssetCacheKey(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	path string,
