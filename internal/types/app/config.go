@@ -43,6 +43,7 @@ type Config struct {
 	S3UseAWS           bool   `envconfig:"S3_USE_AWS" default:"true"`
 	S3Endpoint         string `envconfig:"S3_ENDPOINT"`
 	S3UsePathStyle     bool   `envconfig:"S3_USE_PATH_STYLE" default:"true"`
+	S3SignatureVersion string `envconfig:"S3_SIGNATURE_VERSION" default:"v4"`
 	AWSAccessKey       string `envconfig:"AWS_ACCESS_KEY"`
 	AWSSecretKey       string `envconfig:"AWS_SECRET_KEY"`
 	AWSRegion          string `envconfig:"AWS_REGION"`
