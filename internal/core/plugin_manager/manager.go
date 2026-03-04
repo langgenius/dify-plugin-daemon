@@ -42,6 +42,8 @@ type PluginManager struct {
 
 	config *app.Config
 
+	pluginAssetCache *lru.Cache[string, []byte]
+
 	// plugin lifecycle controller
 	//
 	// whatever it's local mode or serverless mode, all the signals and calls
@@ -71,10 +73,16 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 		config.PluginPackageCachePath,
 	)
 
+	pluginAssetCache, err := lru.New[string, []byte](int(config.PluginAssetCacheSize))
+	if err != nil {
+		log.Panic("init plugin asset cache failed", "error", err)
+	}
+
 	manager = &PluginManager{
-		mediaBucket:     mediaBucket,
-		packageBucket:   packageBucket,
-		installedBucket: installedBucket,
+		mediaBucket:      mediaBucket,
+		packageBucket:    packageBucket,
+		installedBucket:  installedBucket,
+		pluginAssetCache: pluginAssetCache,
 		controlPanel: controlpanel.NewControlPanel(
 			config,
 			mediaBucket,
@@ -196,26 +204,23 @@ func (c *PluginManager) NeedRedirecting(
 	return true, nil
 }
 
-var (
-	pluginAssetCache *lru.Cache[string, []byte]
-)
-
 func pluginAssetCacheKey(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	path string,
 ) string {
 	return fmt.Sprintf("%s/%s", pluginUniqueIdentifier.String(), path)
 }
+
 func (p *PluginManager) ExtractPluginAsset(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	path string,
 ) ([]byte, error) {
 	key := pluginAssetCacheKey(pluginUniqueIdentifier, path)
-	cached, ok := pluginAssetCache.Get(key)
+	cached, ok := p.pluginAssetCache.Get(key)
 	if ok {
 		return cached, nil
 	}
-	pkgBytes, err := manager.GetPackage(pluginUniqueIdentifier)
+	pkgBytes, err := p.GetPackage(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -227,6 +232,6 @@ func (p *PluginManager) ExtractPluginAsset(
 	if err != nil {
 		return nil, err
 	}
-	pluginAssetCache.Add(key, assets[path])
+	p.pluginAssetCache.Add(key, assets[path])
 	return assets[path], nil
 }
