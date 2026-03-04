@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772598760171,
+  "lastUpdate": 1772619357927,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11712,6 +11712,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "947457804 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Stream_2@qq.com",
+            "name": "Stream",
+            "username": "Stream29"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "752cfbdf6a1c286a23ab5592170fbcdf477e1009",
+          "message": "fix: align index with SaaS (#617)",
+          "timestamp": "2026-03-04T18:13:36+08:00",
+          "tree_id": "ce4d8b9411f3f0b4242d0d50371a407bf1625932",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/752cfbdf6a1c286a23ab5592170fbcdf477e1009"
+        },
+        "date": 1772619356640,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 39.46,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "913872544 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 39.46,
+            "unit": "ns/op",
+            "extra": "913872544 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "913872544 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "913872544 times\n4 procs"
           }
         ]
       }
