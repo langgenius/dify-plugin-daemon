@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772591303563,
+  "lastUpdate": 1772598760171,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11664,6 +11664,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "922720344 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "07815fd34cc823e9eba0964dfb217ca25822d275",
+          "message": "fix: fix lru miss init (#622)\n\n* fix: fix lru miss init\n\n* fix: gemini review\n\n---------\n\nCo-authored-by: Stream <Stream_2@qq.com>",
+          "timestamp": "2026-03-04T12:30:25+08:00",
+          "tree_id": "b84b539a776fd6feaf233b1e2d7d3ea3e62d65d7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/07815fd34cc823e9eba0964dfb217ca25822d275"
+        },
+        "date": 1772598759738,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.81,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "947457804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.81,
+            "unit": "ns/op",
+            "extra": "947457804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "947457804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "947457804 times\n4 procs"
           }
         ]
       }
