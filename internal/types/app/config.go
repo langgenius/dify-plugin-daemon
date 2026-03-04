@@ -97,6 +97,7 @@ type Config struct {
 
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
+	PluginAssetCacheSize   uint16 `envconfig:"PLUGIN_ASSET_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
