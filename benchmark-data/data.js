@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772384982670,
+  "lastUpdate": 1772591303563,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11616,6 +11616,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "955996783 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f96a0f19619a00070f299c48f9cba64035b40c93",
+          "message": "bump otel package from 1.39.0 to 1.41.0 (#618)",
+          "timestamp": "2026-03-04T10:25:25+08:00",
+          "tree_id": "7992685d951f47c70336f62d07e768de5b5b91dd",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f96a0f19619a00070f299c48f9cba64035b40c93"
+        },
+        "date": 1772591302463,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 38.73,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "922720344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 38.73,
+            "unit": "ns/op",
+            "extra": "922720344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "922720344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "922720344 times\n4 procs"
           }
         ]
       }
