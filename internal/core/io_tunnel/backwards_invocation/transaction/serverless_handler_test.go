@@ -19,8 +19,8 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 	// Arrange: craft a valid PluginUniversalEvent that will trigger the session handler path
 	// with a backwards_request_id extracted from SessionMessage.Data
 	const (
-		testSessionID       = "test-session-not-exist"
-		testBackwardsReqID  = "req-123"
+		testSessionID      = "test-session-not-exist"
+		testBackwardsReqID = "req-123"
 	)
 
 	invokePayload := map[string]any{
@@ -85,7 +85,7 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 		t.Fatalf("expected data.error_type=SessionNotFound, got %v", m["error_type"])
 	}
 	if v, _ := m["session_id"].(string); v != testSessionID {
-		t.Fatalf("expected data.session_id=%q, got %v", testSessionID, m["session_id"]) 
+		t.Fatalf("expected data.session_id=%q, got %v", testSessionID, m["session_id"])
 	}
 	if v, _ := m["detail"].(string); v == "" {
 		t.Fatalf("expected non-empty data.detail, got empty")
