@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772619357927,
+  "lastUpdate": 1772693315371,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11760,6 +11760,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "913872544 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4314b8f1ee34d90ec9d7f1e12f4c150cbb76b9cb",
+          "message": "fix: synchronize remote debugging plugins across cluster nodes (#589)\n\nRemote debugging plugins were not being synchronized across cluster nodes,\ncausing \"no plugin available nodes found\" errors when trying to invoke\nplugins from different nodes.\n\n1. **Remote debugging plugins not registered to cluster** - The\n   `ClusterTunnel` notifier was not being added to ControlPanel\n2. **Plugin ID inconsistency** - Remote plugins used different plugin_id\n   formats during installation vs. querying\n3. **Non-idempotent registration** - `RegisterPlugin` failed on reconnection\n   with \"plugin has been registered\" error\n\n- **internal/types/models/curd/atomic.go**:\n  - Unify plugin_id calculation for remote plugins (author/name without version)\n  - Remove plugin_id from plugin query conditions\n  - Clear old cache when plugin_id is updated\n\n- **internal/cluster/plugin.go**:\n  - Make `RegisterPlugin` idempotent by updating existing plugin instead\n    of returning error\n\n- **internal/core/control_panel/daemon.go**:\n  - Add cluster field to ControlPanel\n  - Add SetCluster() method for lazy cluster initialization\n\n- **internal/core/control_panel/server_debugger.go**:\n  - Register remote debugging plugins to cluster on connection\n  - Unregister from cluster on disconnection\n\n- **internal/core/plugin_manager/manager.go**:\n  - Add SetCluster() method to set cluster after initialization\n\n- **internal/server/server.go**:\n  - Call SetCluster() instead of AddClusterTunnel()\n\nOnly remote debugging plugins are synchronized across cluster nodes.\nLocal plugins run only on the node where they are installed and are\nnot registered to the cluster.\n\n- Error handling improvements using `errors.Is()` instead of `==`\n- Handle 404 for missing plugin assets gracefully\n- Handle already-installed debugging plugins gracefully\n\n- Remote debugging plugin can be invoked from any node in the cluster\n- Plugin reconnection works without errors\n- Cache invalidation works correctly when plugin_id changes",
+          "timestamp": "2026-03-05T14:46:13+08:00",
+          "tree_id": "14068473b8442555fc2b725de93abba2c8cb5dac",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/4314b8f1ee34d90ec9d7f1e12f4c150cbb76b9cb"
+        },
+        "date": 1772693314739,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.81,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "940966054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.81,
+            "unit": "ns/op",
+            "extra": "940966054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "940966054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "940966054 times\n4 procs"
           }
         ]
       }
