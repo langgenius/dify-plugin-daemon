@@ -170,6 +170,21 @@ If no parameters are provided, an interactive mode will be started.`,
 		Long:  "Readme",
 	}
 
+	pluginCleanupCommand = &cobra.Command{
+		Use:   "cleanup",
+		Short: "Cleanup old plugin versions in a working path",
+		Long:  "List all plugins under the working path, keep only the latest version per plugin, and delete older versions. Supports dry-run and interactive confirmation.",
+		Run: func(cmd *cobra.Command, args []string) {
+			workingPath := cmd.Flag("path").Value.String()
+			if workingPath == "" {
+				fmt.Println("Error: --path is required")
+				return
+			}
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
+			yes, _ := cmd.Flags().GetBool("yes")
+			plugin.CleanupWorkingPath(workingPath, dryRun, yes)
+		},
+	}
 	pluginReadmeListCommand = &cobra.Command{
 		Use:   "list [plugin_path]",
 		Short: "List available README languages",
@@ -239,6 +254,11 @@ func init() {
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendToolsCommand)
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendEndpointsCommand)
 	pluginReadmeCommand.AddCommand(pluginReadmeListCommand)
+
+	pluginCommand.AddCommand(pluginCleanupCommand)
+	pluginCleanupCommand.Flags().StringP("path", "p", "", "plugin working path")
+	pluginCleanupCommand.Flags().Bool("dry-run", false, "show what would be deleted without deleting anything")
+	pluginCleanupCommand.Flags().BoolP("yes", "y", false, "do not prompt for confirmation, delete directly")
 
 	pluginInitCommand.Flags().StringVar(&author, "author", "", "Author name (1-64 characters, lowercase letters, numbers, dashes and underscores only)")
 	pluginInitCommand.Flags().StringVar(&name, "name", "", "Plugin name (1-128 characters, lowercase letters, numbers, dashes and underscores only)")
