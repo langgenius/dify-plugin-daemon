@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
@@ -117,16 +116,13 @@ func InstallMultiplePluginsToTenant(
 
 	for _, job := range jobs {
 		jobCopy := job
-		// create a detached context for async task to avoid http request cancellation
-		taskCtx, taskCancel := context.WithTimeout(context.Background(), 15*time.Minute)
 		// start a new goroutine to install the plugin
 		routine.Submit(routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "service",
 			routinepkg.RoutineLabelKeyMethod: "InstallPlugin",
 		}, func() {
-			defer taskCancel()
 			tasks.ProcessInstallJob(
-				taskCtx,
+				ctx,
 				manager,
 				tenants,
 				runtimeType,

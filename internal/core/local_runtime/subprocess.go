@@ -236,6 +236,10 @@ func (r *LocalPluginRuntime) gracefullyStopLowestLoadInstance() error {
 }
 
 func (p *LocalPluginRuntime) isManuallyUploaded() bool {
+	if p.Decoder == nil {
+		return false
+	}
+
 	uniqueIdentifier, err := p.Decoder.UniqueIdentity()
 	if err != nil {
 		return false

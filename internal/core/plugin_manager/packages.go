@@ -60,7 +60,7 @@ func (p *PluginManager) SavePackage(
 	}
 
 	cacheKey := "manually_uploaded:" + plugin_unique_identifier.String()
-	err = cache.Store(cacheKey, true, time.Hour*24)
+	err = cache.Store(cacheKey, true, time.Second*10)
 	if err != nil {
 		return nil, err
 	}

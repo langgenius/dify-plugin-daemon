@@ -83,41 +83,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			session, err := session_manager.GetSession(sessionId)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
-				invokePayload, marshalErr := parser.UnmarshalJsonBytes2Map(sessionMessage.Data)
-				var backwardsRequestId string
-				if marshalErr == nil {
-					backwardsRequestId, _ = invokePayload["backwards_request_id"].(string)
-				}
-
-				log.ErrorContext(
-					ctx.Request.Context(),
-					"failed to get session info from cache",
-					"session_id", sessionId,
-					"backwards_request_id", backwardsRequestId,
-					"error", err,
-				)
-
-				respData := backwards_invocation.BackwardsInvocationResponseEvent{
-					BackwardsRequestId: backwardsRequestId,
-					Event:              backwards_invocation.REQUEST_EVENT_ERROR,
-					Message:            "failed to get session info from cache",
-					Data: map[string]any{
-						"error_type": "SessionNotFound",
-						"detail":     err.Error(), // 保留“key not found”作为 detail
-						"session_id": sessionId,
-					},
-				}
-				_, writeErr := ctx.Writer.Write(parser.MarshalJsonBytes(respData))
-				if writeErr != nil {
-					log.ErrorContext(
-						ctx.Request.Context(),
-						"failed to write serverless transaction error response",
-						"session_id", sessionId,
-						"backwards_request_id", backwardsRequestId,
-						"error", writeErr,
-					)
-				}
-				_ = writer.Close()
+				ctx.Writer.Write([]byte(err.Error()))
+				writer.Close()
 				return
 			}
 
@@ -147,12 +114,7 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 		},
 		func() {},
 		func(err string) {
-			log.WarnContext(
-				ctx.Request.Context(),
-				"invoke dify failed, received errors",
-				"session_id", sessionId,
-				"error", err,
-			)
+			log.Warn("invoke dify failed, received errors", "error", err)
 		},
 		func(plugin_entities.PluginLogEvent) {}, //log
 	)
