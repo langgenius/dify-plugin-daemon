@@ -113,6 +113,10 @@ func (p *LocalPluginRuntime) prepareSyncArgs() []string {
 		args = append(args, extraArgs...)
 	}
 
+	if p.isManuallyUploaded() {
+		args = append(args, "--offline")
+	}
+
 	return args
 }
 
