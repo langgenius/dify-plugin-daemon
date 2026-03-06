@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
@@ -117,13 +118,26 @@ func ProcessUpgradeJob(
 		case installation_entities.PluginInstallEventError:
 			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, resp.Data)
 		case installation_entities.PluginInstallEventDone:
+			// Fetch the new declaration from DB now that the package has been installed.
+			// It may have been unavailable (nil) at job creation time when the new version
+			// was not yet downloaded.
+			newDeclaration := job.NewDeclaration
+			if newDeclaration == nil {
+				decl, err := helper.CombinedGetPluginDeclaration(job.NewIdentifier, runtimeType)
+				if err != nil {
+					SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed,
+						fmt.Sprintf("failed to get new plugin declaration after install: %v", err))
+					return
+				}
+				newDeclaration = decl
+			}
 			for _, tenantID := range tenants {
 				response, err := curd.UpgradePlugin(
 					tenantID,
 					job.OriginalIdentifier,
 					job.NewIdentifier,
 					job.OriginalDeclaration,
-					job.NewDeclaration,
+					newDeclaration,
 					runtimeType,
 					source,
 					job.Meta,
