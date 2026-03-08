@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"gorm.io/gorm"
 )
 
 type Persistence struct {
@@ -48,6 +49,12 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 		maxSize = c.maxStorageSize
 	}
 
+	lockKey := fmt.Sprintf("persistence:lock:%s:%s:%s", tenantId, pluginId, key)
+	if err := cache.Lock(lockKey, 30*time.Second, 3*time.Second); err != nil {
+		return err
+	}
+	defer func() { _ = cache.Unlock(lockKey) }()
+
 	newSize := int64(len(data))
 	var oldSize int64 = 0
 	if exist, err := c.storage.Exists(tenantId, pluginId, key); err == nil && exist {
@@ -57,62 +64,57 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 	}
 	delta := newSize - oldSize
 
-	record, err := db.GetOne[models.TenantStorage](
-		db.Equal("tenant_id", tenantId),
-		db.Equal("plugin_id", pluginId),
-	)
-	if err != nil {
-		if !errors.Is(err, db.ErrDatabaseNotFound) {
-			return err
-		}
+	txErr := db.WithTransaction(func(tx *gorm.DB) error {
+		record, err := db.GetOne[models.TenantStorage](
+			db.WithTransactionContext(tx),
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
+			db.WLock(),
+		)
 
-		if newSize > c.maxStorageSize || newSize > maxSize {
-			return fmt.Errorf("allocated size is greater than max storage size")
-		}
-	} else {
-		if delta > 0 && (record.Size+delta > maxSize || record.Size+delta > c.maxStorageSize) {
-			return fmt.Errorf("allocated size is greater than max storage size")
-		}
-	}
-
-	if err := c.storage.Save(tenantId, pluginId, key, data); err != nil {
-		return err
-	}
-
-	if errors.Is(err, db.ErrDatabaseNotFound) {
-		rec := models.TenantStorage{TenantID: tenantId, PluginID: pluginId, Size: newSize}
-		if err := db.Create(&rec); err != nil {
-			return err
-		}
-	} else {
-		if delta != 0 {
-			if delta > 0 {
-				if err := db.Run(
-					db.Model(&models.TenantStorage{}),
-					db.Equal("tenant_id", tenantId),
-					db.Equal("plugin_id", pluginId),
-					db.Inc(map[string]int64{"size": delta}),
-				); err != nil {
-					return err
-				}
-			} else {
-				if err := db.Run(
-					db.Model(&models.TenantStorage{}),
-					db.Equal("tenant_id", tenantId),
-					db.Equal("plugin_id", pluginId),
-					db.Dec(map[string]int64{"size": -delta}),
-				); err != nil {
-					return err
-				}
+		if err != nil {
+			if !errors.Is(err, db.ErrDatabaseNotFound) {
+				return err
+			}
+			record = models.TenantStorage{TenantID: tenantId, PluginID: pluginId, Size: 0}
+			if cerr := db.Create(&record, tx); cerr != nil {
+				return cerr
 			}
 		}
+
+		if delta > 0 {
+			if record.Size+delta > c.maxStorageSize || record.Size+delta > maxSize {
+				return fmt.Errorf("allocated size is greater than max storage size")
+			}
+		}
+
+		if err := c.storage.Save(tenantId, pluginId, key, data); err != nil {
+			return err
+		}
+
+		if delta != 0 {
+			if err := db.Run(
+				db.WithTransactionContext(tx),
+				db.Model(&models.TenantStorage{}),
+				db.Equal("tenant_id", tenantId),
+				db.Equal("plugin_id", pluginId),
+				db.Inc(map[string]int64{"size": delta}),
+			); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if txErr != nil {
+		return txErr
 	}
 
-	// delete from cache
-	if _, err = cache.Del(c.getCacheKey(tenantId, pluginId, key)); errors.Is(err, cache.ErrNotFound) {
+	if _, err := cache.Del(c.getCacheKey(tenantId, pluginId, key)); errors.Is(err, cache.ErrNotFound) {
 		return nil
+	} else {
+		return err
 	}
-	return nil
 }
 
 // TODO: raises specific error to avoid confusion
@@ -143,6 +145,12 @@ func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte
 }
 
 func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int64, error) {
+	lockKey := fmt.Sprintf("persistence:lock:%s:%s:%s", tenantId, pluginId, key)
+	if err := cache.Lock(lockKey, 30*time.Second, 3*time.Second); err != nil {
+		return 0, err
+	}
+	defer func() { _ = cache.Unlock(lockKey) }()
+
 	// delete from cache and storage
 	deletedNum, err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil {
@@ -155,19 +163,25 @@ func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int6
 		return 0, err
 	}
 
-	err = c.storage.Delete(tenantId, pluginId, key)
-	if err != nil {
+	if err = c.storage.Delete(tenantId, pluginId, key); err != nil {
 		return 0, err
 	}
 
-	// update storage size
-	err = db.Run(
-		db.Model(&models.TenantStorage{}),
-		db.Equal("tenant_id", tenantId),
-		db.Equal("plugin_id", pluginId),
-		db.Dec(map[string]int64{"size": size}),
-	)
-	if err != nil {
+	if err := db.WithTransaction(func(tx *gorm.DB) error {
+		_, _ = db.GetOne[models.TenantStorage](
+			db.WithTransactionContext(tx),
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
+			db.WLock(),
+		)
+		return db.Run(
+			db.WithTransactionContext(tx),
+			db.Model(&models.TenantStorage{}),
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
+			db.Inc(map[string]int64{"size": -size}),
+		)
+	}); err != nil {
 		return 0, err
 	}
 
