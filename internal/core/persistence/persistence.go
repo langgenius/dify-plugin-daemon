@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -47,54 +48,71 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 		maxSize = c.maxStorageSize
 	}
 
-	if err := c.storage.Save(tenantId, pluginId, key, data); err != nil {
-		return err
+	newSize := int64(len(data))
+	var oldSize int64 = 0
+	if exist, err := c.storage.Exists(tenantId, pluginId, key); err == nil && exist {
+		if s, err2 := c.storage.StateSize(tenantId, pluginId, key); err2 == nil {
+			oldSize = s
+		}
 	}
+	delta := newSize - oldSize
 
-	allocatedSize := int64(len(data))
-
-	storage, err := db.GetOne[models.TenantStorage](
+	record, err := db.GetOne[models.TenantStorage](
 		db.Equal("tenant_id", tenantId),
 		db.Equal("plugin_id", pluginId),
 	)
 	if err != nil {
-		if allocatedSize > c.maxStorageSize || allocatedSize > maxSize {
-			return fmt.Errorf("allocated size is greater than max storage size")
+		if !errors.Is(err, db.ErrDatabaseNotFound) {
+			return err
 		}
 
-		if err == db.ErrDatabaseNotFound {
-			storage = models.TenantStorage{
-				TenantID: tenantId,
-				PluginID: pluginId,
-				Size:     allocatedSize,
-			}
-			if err := db.Create(&storage); err != nil {
-				return err
-			}
-		} else {
+		if newSize > c.maxStorageSize || newSize > maxSize {
+			return fmt.Errorf("allocated size is greater than max storage size")
+		}
+	} else {
+		if delta > 0 && (record.Size+delta > maxSize || record.Size+delta > c.maxStorageSize) {
+			return fmt.Errorf("allocated size is greater than max storage size")
+		}
+	}
+
+	if err := c.storage.Save(tenantId, pluginId, key, data); err != nil {
+		return err
+	}
+
+	if errors.Is(err, db.ErrDatabaseNotFound) {
+		rec := models.TenantStorage{TenantID: tenantId, PluginID: pluginId, Size: newSize}
+		if err := db.Create(&rec); err != nil {
 			return err
 		}
 	} else {
-		if allocatedSize+storage.Size > maxSize || allocatedSize+storage.Size > c.maxStorageSize {
-			return fmt.Errorf("allocated size is greater than max storage size")
-		}
-
-		err = db.Run(
-			db.Model(&models.TenantStorage{}),
-			db.Equal("tenant_id", tenantId),
-			db.Equal("plugin_id", pluginId),
-			db.Inc(map[string]int64{"size": allocatedSize}),
-		)
-		if err != nil {
-			return err
+		if delta != 0 {
+			if delta > 0 {
+				if err := db.Run(
+					db.Model(&models.TenantStorage{}),
+					db.Equal("tenant_id", tenantId),
+					db.Equal("plugin_id", pluginId),
+					db.Inc(map[string]int64{"size": delta}),
+				); err != nil {
+					return err
+				}
+			} else {
+				if err := db.Run(
+					db.Model(&models.TenantStorage{}),
+					db.Equal("tenant_id", tenantId),
+					db.Equal("plugin_id", pluginId),
+					db.Dec(map[string]int64{"size": -delta}),
+				); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
 	// delete from cache
-	if _, err = cache.Del(c.getCacheKey(tenantId, pluginId, key)); err == cache.ErrNotFound {
+	if _, err = cache.Del(c.getCacheKey(tenantId, pluginId, key)); errors.Is(err, cache.ErrNotFound) {
 		return nil
 	}
-	return err
+	return nil
 }
 
 // TODO: raises specific error to avoid confusion
