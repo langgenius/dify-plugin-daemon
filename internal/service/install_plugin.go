@@ -108,7 +108,7 @@ func InstallMultiplePluginsToTenant(
 	}
 
 	// create tasks for each plugin
-	statuses := buildTaskStatuses(pluginUniqueIdentifiers, declarations)
+	statuses := buildTaskStatuses(pluginUniqueIdentifiers, declarations, source)
 	taskRegistry, err := createInstallTasks(tenants, statuses)
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
@@ -282,6 +282,7 @@ func UpgradePlugin(
 	statuses := buildTaskStatuses(
 		[]plugin_entities.PluginUniqueIdentifier{newPluginUniqueIdentifier},
 		[]*plugin_entities.PluginDeclaration{newDeclaration},
+		source,
 	)
 
 	taskRegistry, err := createInstallTasks(tenants, statuses)

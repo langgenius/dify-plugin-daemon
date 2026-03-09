@@ -10,6 +10,7 @@ import (
 func buildTaskStatuses(
 	pluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier,
 	declarations []*plugin_entities.PluginDeclaration,
+	source string,
 ) []models.InstallTaskPluginStatus {
 	statuses := make([]models.InstallTaskPluginStatus, len(pluginUniqueIdentifiers))
 	for i, identifier := range pluginUniqueIdentifiers {
@@ -21,6 +22,7 @@ func buildTaskStatuses(
 			IconDark:               declarations[i].IconDark,
 			Labels:                 declarations[i].Label,
 			Message:                "",
+			Source:                 source,
 		}
 	}
 	return statuses
