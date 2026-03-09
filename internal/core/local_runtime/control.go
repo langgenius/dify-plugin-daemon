@@ -161,7 +161,6 @@ func (r *LocalPluginRuntime) forcefullyShutdownAllInstances() {
 		}
 		instance := instances[0]
 		instance.Stop()
-		r.instanceLocker.RUnlock()
 
 		// sleep for 1 second to avoid busy waiting
 		time.Sleep(time.Second * 1)
