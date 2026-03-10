@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773124772356,
+  "lastUpdate": 1773126187108,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12000,6 +12000,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "952231993 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1b58a5866f26edf6788e1cce9706ef75c63f8b34",
+          "message": "Support simultaneous file and stdout logging via LOG_FILE (#594)\n\n* adding LOG_FILE to .env prevents logs from being output to both the file and stdout\n\n* update the logfile permission to 600",
+          "timestamp": "2026-03-10T15:00:15+08:00",
+          "tree_id": "106a349bbd0887bd15680eb24e171c036fa2dfa1",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1b58a5866f26edf6788e1cce9706ef75c63f8b34"
+        },
+        "date": 1773126186388,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.77,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "951337617 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.77,
+            "unit": "ns/op",
+            "extra": "951337617 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "951337617 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "951337617 times\n4 procs"
           }
         ]
       }
