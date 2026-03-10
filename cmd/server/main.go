@@ -16,7 +16,7 @@ func main() {
 	// load env
 	err := godotenv.Load()
 	if err != nil {
-		log.Panic("failed to load .env file", "error", err)
+		log.Warn("failed to load .env file", "error", err)
 	}
 
 	err = envconfig.Process("", &config)
