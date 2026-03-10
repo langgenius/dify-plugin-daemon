@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773036256156,
+  "lastUpdate": 1773124772356,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -11952,6 +11952,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "975818607 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Stream_2@qq.com",
+            "name": "Stream",
+            "username": "Stream29"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82d29df1c43fc59c1b37589d10893d07a81656ef",
+          "message": "fix: don't panic on env loading error (#629)",
+          "timestamp": "2026-03-10T14:36:40+08:00",
+          "tree_id": "efda18da6f4c342a70a4522a1ef5e0392af95126",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/82d29df1c43fc59c1b37589d10893d07a81656ef"
+        },
+        "date": 1773124771148,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.93,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "952231993 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.93,
+            "unit": "ns/op",
+            "extra": "952231993 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "952231993 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "952231993 times\n4 procs"
           }
         ]
       }
