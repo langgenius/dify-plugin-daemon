@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773126187108,
+  "lastUpdate": 1773218632241,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12048,6 +12048,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "951337617 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "beautyyuyanli@gmail.com",
+            "name": "盐粒 Yanli",
+            "username": "BeautyyuYanli"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c674859085dafad9fea5e9fa46d9298e578a2246",
+          "message": "feat: support opaque_body in prompt messages (#585)\n\n* add message level and content level opaque_body\n\n* refactor: make PromptMessage unmarshal type-safe",
+          "timestamp": "2026-03-11T16:41:06+08:00",
+          "tree_id": "164665ee78791be2451cc41ee3c631650867055c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/c674859085dafad9fea5e9fa46d9298e578a2246"
+        },
+        "date": 1773218631438,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.53,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "980031496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.53,
+            "unit": "ns/op",
+            "extra": "980031496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "980031496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "980031496 times\n4 procs"
           }
         ]
       }
