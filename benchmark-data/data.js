@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773218632241,
+  "lastUpdate": 1773228280195,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12096,6 +12096,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "980031496 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "euxx@users.noreply.github.com",
+            "name": "eux",
+            "username": "euxx"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "afd12a2d65cdacff0e70aa9fee84590027bf48ba",
+          "message": "fix: upgrade plugin fails when new version declaration is not yet in DB (#625)\n\n* fix: upgrade fails when new version declaration not in daemon DB\n\nThe UpgradePlugin service called CombinedGetPluginDeclaration for the\nnew version before checking whether it was already installed. Since the\nnew version had never been downloaded, models.PluginDeclaration had no\nrecord for it, causing an immediate InternalServerError(\"plugin not\nfound\") before any download attempt.\n\nFix: check models.Plugin existence first. Sync path (new version\nalready in DB) fetches the declaration up-front as before. Async path\nstarts the download with NewDeclaration=nil and fetches it from DB\ninside ProcessUpgradeJob after PluginInstallEventDone fires (at which\npoint packages.go has written the record).\n\n* test: add unit tests for resolveNewDeclaration in ProcessUpgradeJob",
+          "timestamp": "2026-03-11T19:21:50+08:00",
+          "tree_id": "3afe4fa3b9973d4c473baa22570389cd92647e41",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/afd12a2d65cdacff0e70aa9fee84590027bf48ba"
+        },
+        "date": 1773228279748,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.46,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "959779015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.46,
+            "unit": "ns/op",
+            "extra": "959779015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "959779015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "959779015 times\n4 procs"
           }
         ]
       }
