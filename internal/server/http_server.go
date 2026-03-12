@@ -18,7 +18,7 @@ import (
 
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
-engine := gin.New()
+	engine := gin.New()
 	engine.Use(log.RecoveryMiddleware())
 	engine.Use(log.TraceMiddleware())
 	// OpenTelemetry middleware (extracts upstream trace context and starts server spans)
@@ -42,6 +42,7 @@ engine := gin.New()
 	serverlessTransactionGroup := engine.Group("/backwards-invocation")
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
+	invokeGroup := engine.Group("/v2/invoke")
 
 	if config.AdminApiEnabled {
 		if len(config.AdminApiKey) < 10 {
@@ -72,6 +73,7 @@ engine := gin.New()
 	app.serverlessTransactionGroup(serverlessTransactionGroup, config)
 	app.pluginGroup(pluginGroup, config)
 	app.pprofGroup(pprofGroup, config)
+	app.invokeGroup(invokeGroup, config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", config.ServerHost, config.ServerPort),
@@ -211,4 +213,18 @@ func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
 		group.GET("/mutex", controllers.PprofMutex)
 		group.GET("/threadcreate", controllers.PprofThreadcreate)
 	}
+}
+
+func (app *App) invokeGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(CheckingKey(config.ServerKey))
+	dispatchGroup := group.Group("/dispatch")
+	dispatchGroup.Use(controllers.CollectActiveDispatchRequests())
+	dispatchGroup.Use(app.FetchPluginDirect())
+	dispatchGroup.Use(app.RedirectPluginInvoke())
+	dispatchGroup.Use(app.InitClusterID())
+
+	dispatchGroup.POST("/agent_strategy/invoke",
+		controllers.InvokeAgentStrategy(config))
+
+	app.setupGeneratedRoutes(dispatchGroup, config)
 }

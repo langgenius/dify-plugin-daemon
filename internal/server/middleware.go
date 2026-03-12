@@ -182,10 +182,30 @@ func (app *App) InitClusterID() gin.HandlerFunc {
 func (app *App) AdminAPIKey(key string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if ctx.GetHeader(constants.X_ADMIN_API_KEY) != key {
-			ctx.AbortWithStatusJSON(401, gin.H{"message": "unauthorized"})
+			ctx.AbortWithStatusJSON(
+				401,
+				exception.UnauthorizedError().ToResponse())
 			return
 		}
+		ctx.Next()
+	}
+}
 
+func (app *App) FetchPluginDirect() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		identifier := ctx.Request.Header.Get(constants.PluginUniqueIdentifier)
+		if identifier == "" {
+			ctx.AbortWithStatusJSON(400, gin.H{"message": "X-Plugin-Unique-Identifier header is required"})
+			return
+		}
+		pluginID, err := plugin_entities.NewPluginUniqueIdentifier(identifier)
+		if err != nil {
+			ctx.AbortWithStatusJSON(400,
+				exception.UniqueIdentifierError(err).ToResponse(),
+			)
+			return
+		}
+		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, pluginID)
 		ctx.Next()
 	}
 }
