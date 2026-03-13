@@ -68,10 +68,25 @@ func main() {
 
 func fatal(err error) {
 	exitCode := slim.ExitPluginError
+	var errorToMarshal *slim.SlimError
+
 	if se, ok := err.(*slim.SlimError); ok {
+		errorToMarshal = se
 		exitCode = se.ExitCode()
+	} else {
+		// Wrap non-SlimError types to ensure they are marshalled to JSON correctly.
+		errorToMarshal = slim.NewError(slim.ErrPluginExec, err.Error())
 	}
-	b, _ := json.Marshal(err)
+
+	b, marshalErr := json.Marshal(errorToMarshal)
+	if marshalErr != nil {
+		// This should be practically impossible since SlimError is designed for JSON.
+		// As a last resort, print a hardcoded error message.
+		os.Stderr.Write([]byte(`{"code":"INTERNAL_ERROR","message":"failed to marshal error to JSON"}`))
+		os.Stderr.Write([]byte("\n"))
+		os.Exit(slim.ExitPluginError)
+	}
+
 	os.Stderr.Write(b)
 	os.Stderr.Write([]byte("\n"))
 	os.Exit(exitCode)

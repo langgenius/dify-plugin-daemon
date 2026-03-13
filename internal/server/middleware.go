@@ -195,7 +195,9 @@ func (app *App) FetchPluginDirect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		identifier := ctx.Request.Header.Get(constants.PluginUniqueIdentifier)
 		if identifier == "" {
-			ctx.AbortWithStatusJSON(400, gin.H{"message": "X-Plugin-Unique-Identifier header is required"})
+			ctx.AbortWithStatusJSON(
+				400,
+				exception.BadRequestError(errors.New("X-Plugin-Unique-Identifier header is required")).ToResponse())
 			return
 		}
 		pluginID, err := plugin_entities.NewPluginUniqueIdentifier(identifier)

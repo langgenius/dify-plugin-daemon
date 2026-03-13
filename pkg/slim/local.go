@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -120,7 +121,7 @@ func downloadFromMarketplace(marketplaceURL, pluginID string) ([]byte, error) {
 	client := &http.Client{Timeout: downloadTimeout}
 	resp, err := client.Get(u.String())
 	if err != nil {
-		if os.IsTimeout(err) {
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			return nil, NewError(ErrPluginDownloadTimeout,
 				fmt.Sprintf("marketplace download timed out after %s for %s", downloadTimeout, pluginID))
 		}
@@ -284,7 +285,10 @@ func execPlugin(
 
 	if execErr != nil {
 		if stderrMsg != "" {
-			return NewError(execErr.(*SlimError).Code, execErr.Error()+"; stderr: "+truncate(stderrMsg, 512))
+			if se, ok := execErr.(*SlimError); ok {
+				return NewError(se.Code, se.Error()+"; stderr: "+truncate(stderrMsg, 512))
+			}
+			return NewError(ErrPluginExec, "stderr: "+truncate(stderrMsg, 512))
 		}
 		return execErr
 	}
