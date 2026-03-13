@@ -19,6 +19,7 @@ type InstallTaskPluginStatus struct {
 	PluginID               string                                 `json:"plugin_id"`
 	Status                 InstallTaskStatus                      `json:"status"`
 	Message                string                                 `json:"message"`
+	Source                 string                                 `json:"source"`
 }
 
 type InstallTask struct {
