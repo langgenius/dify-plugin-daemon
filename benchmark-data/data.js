@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773228280195,
+  "lastUpdate": 1773380848716,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12144,6 +12144,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "959779015 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "916125788@qq.com",
+            "name": "zyssyz123",
+            "username": "zyssyz123"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "128338710681ed8482e6ac21b41acf79093bb81f",
+          "message": "add source for plugin task query api (#628)",
+          "timestamp": "2026-03-13T13:44:33+08:00",
+          "tree_id": "4f951037320816f9740841afdd26da0b415fc800",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/128338710681ed8482e6ac21b41acf79093bb81f"
+        },
+        "date": 1773380847649,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 37.78,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "954840217 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 37.78,
+            "unit": "ns/op",
+            "extra": "954840217 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "954840217 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "954840217 times\n4 procs"
           }
         ]
       }
