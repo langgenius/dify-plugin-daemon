@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
@@ -150,6 +151,8 @@ func downloadFromMarketplace(marketplaceURL, pluginID string) ([]byte, error) {
 	return data, nil
 }
 
+const maxStderrSize = 64 * 1024
+
 func execPlugin(
 	rt *local_runtime.LocalPluginRuntime,
 	local *LocalConfig,
@@ -186,18 +189,25 @@ func execPlugin(
 
 	stderrCh := make(chan string, 1)
 	go func() {
-		b, _ := io.ReadAll(stderr)
+		b, _ := io.ReadAll(io.LimitReader(stderr, maxStderrSize))
 		stderrCh <- string(b)
 	}()
 
 	if _, err := stdin.Write(append(reqBytes, '\n')); err != nil {
 		cmd.Process.Kill()
+		cmd.Wait()
+		<-stderrCh
 		return NewError(ErrPluginExec, fmt.Sprintf("write stdin: %s", err))
 	}
 	stdin.Close()
 
 	timeout := time.Duration(local.MaxExecutionTimeout) * time.Second
-	deadline := time.Now().Add(timeout)
+	var timedOut atomic.Bool
+	killTimer := time.AfterFunc(timeout, func() {
+		timedOut.Store(true)
+		cmd.Process.Kill()
+	})
+	defer killTimer.Stop()
 
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(
@@ -209,11 +219,6 @@ func execPlugin(
 	done := false
 
 	for scanner.Scan() {
-		if time.Now().After(deadline) {
-			execErr = NewError(ErrPluginExec, "execution timeout")
-			break
-		}
-
 		data := scanner.Bytes()
 		if len(data) == 0 {
 			continue
@@ -249,7 +254,7 @@ func execPlugin(
 				}
 			},
 			func() {
-				deadline = time.Now().Add(timeout)
+				killTimer.Reset(timeout)
 			},
 			func(errMsg string) {
 				out.Error(ErrPluginExec, errMsg)
@@ -265,14 +270,19 @@ func execPlugin(
 	}
 
 	if scanErr := scanner.Err(); scanErr != nil && execErr == nil {
-		execErr = NewError(ErrStreamRead, scanErr.Error())
+		if timedOut.Load() {
+			execErr = NewError(ErrPluginExec, "execution timeout")
+		} else {
+			execErr = NewError(ErrStreamRead, scanErr.Error())
+		}
 	}
 
 	cmd.Process.Kill()
 	cmd.Wait()
 
+	stderrMsg := <-stderrCh
+
 	if execErr != nil {
-		stderrMsg := <-stderrCh
 		if stderrMsg != "" {
 			return NewError(execErr.(*SlimError).Code, execErr.Error()+"; stderr: "+truncate(stderrMsg, 512))
 		}

@@ -142,7 +142,6 @@ func RunRemote(ctx *InvokeContext, remote *RemoteConfig, out *OutputWriter) erro
 		}
 		payload := strings.TrimPrefix(line, "data: ")
 		if !json.Valid([]byte(payload)) {
-			out.Error(ErrStreamParse, "invalid JSON in SSE frame")
 			return NewError(ErrStreamParse, "invalid JSON in SSE frame")
 		}
 		if err := out.Chunk(json.RawMessage(payload)); err != nil {
@@ -150,7 +149,6 @@ func RunRemote(ctx *InvokeContext, remote *RemoteConfig, out *OutputWriter) erro
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		out.Error(ErrStreamRead, err.Error())
 		return NewError(ErrStreamRead, err.Error())
 	}
 

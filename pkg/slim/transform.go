@@ -2,7 +2,6 @@ package slim
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -38,7 +37,7 @@ func TransformRequest(ctx *InvokeContext) ([]byte, string, error) {
 
 	b, err := json.Marshal(message)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to marshal message: %w", err)
+		return nil, "", NewError(ErrInvalidInput, "failed to marshal message: "+err.Error())
 	}
 	return b, sessionID, nil
 }

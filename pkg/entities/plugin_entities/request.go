@@ -22,7 +22,3 @@ type InvokePluginRequest[T any] struct {
 
 	Data T `json:"data" validate:"required"`
 }
-
-type DirectInvokeIdentity struct {
-	PluginUniqueIdentifier string `json:"-"`
-}
