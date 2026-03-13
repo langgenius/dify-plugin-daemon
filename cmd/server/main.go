@@ -16,7 +16,7 @@ func main() {
 	// load env
 	err := godotenv.Load()
 	if err != nil {
-		log.Panic("failed to load .env file", "error", err)
+		log.Warn("failed to load .env file", "error", err)
 	}
 
 	err = envconfig.Process("", &config)
@@ -26,7 +26,17 @@ func main() {
 
 	config.SetDefault()
 
-	log.Init(config.LogOutputFormat == "json")
+	logCloser, err := log.Init(config.LogOutputFormat == "json", config.LogFile)
+	if err != nil {
+		log.Panic("failed to init logger", "error", err)
+	}
+	if logCloser != nil {
+		defer func() {
+			if err := logCloser.Close(); err != nil {
+				log.Error("failed to close log file", "error", err)
+			}
+		}()
+	}
 	defer log.RecoverAndExit()
 
 	if err = config.Validate(); err != nil {

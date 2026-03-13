@@ -226,16 +226,17 @@ func UpgradePlugin(
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
-	newDeclaration, err := helper.CombinedGetPluginDeclaration(newPluginUniqueIdentifier, runtimeType)
-	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
-	}
 
 	// check if the new plugin is already installed
 	_, err = db.GetOne[models.Plugin](
 		db.Equal("plugin_unique_identifier", newPluginUniqueIdentifier.String()),
 	)
 	if err == nil {
+		// new version already downloaded — fetch its declaration for a synchronous upgrade
+		newDeclaration, err := helper.CombinedGetPluginDeclaration(newPluginUniqueIdentifier, runtimeType)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
 		response, err := curd.UpgradePlugin(
 			tenantId,
 			originalPluginUniqueIdentifier,
@@ -271,9 +272,11 @@ func UpgradePlugin(
 	// construct tenant jobs
 	tenants := []string{tenantId}
 
+	// new declaration is not yet available — it will be fetched inside ProcessUpgradeJob
+	// after the package download completes
 	job := tasks.PluginUpgradeJob{
 		NewIdentifier:       newPluginUniqueIdentifier,
-		NewDeclaration:      newDeclaration,
+		NewDeclaration:      nil,
 		OriginalIdentifier:  originalPluginUniqueIdentifier,
 		OriginalDeclaration: originalDeclaration,
 		Meta:                meta,
@@ -281,7 +284,7 @@ func UpgradePlugin(
 
 	statuses := buildTaskStatuses(
 		[]plugin_entities.PluginUniqueIdentifier{newPluginUniqueIdentifier},
-		[]*plugin_entities.PluginDeclaration{newDeclaration},
+		[]*plugin_entities.PluginDeclaration{{}},
 		source,
 	)
 
