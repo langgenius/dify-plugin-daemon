@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 
-	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/langgenius/dify-plugin-daemon/internal/server"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -13,13 +12,7 @@ import (
 func main() {
 	var config app.Config
 
-	// load env
-	err := godotenv.Load()
-	if err != nil {
-		log.Warn("failed to load .env file", "error", err)
-	}
-
-	err = envconfig.Process("", &config)
+	err := envconfig.Process("", &config)
 	if err != nil {
 		log.Panic("error processing environment variables", "error", err)
 	}
