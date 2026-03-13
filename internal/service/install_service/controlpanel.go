@@ -58,13 +58,15 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 			log.Error("install debugging plugin failed", "error", err)
 			return
 		}
-		// Plugin already installed, fetch existing installation
-		pluginIdentifier, err := runtime.Identity()
+
+		_, err := runtime.Identity()
 		if err != nil {
 			log.Error("failed to get plugin identity", "error", err)
 			return
 		}
-		existingInstallation, fetchErr := fetchPluginInstallationByUniqueId(runtime.TenantId(), pluginIdentifier.String())
+		decl := runtime.Configuration()
+		pluginID := decl.Author + "/" + decl.Name
+		existingInstallation, fetchErr := fetchPluginInstallationByPluginID(runtime.TenantId(), pluginID)
 		if fetchErr != nil {
 			log.Error("failed to fetch existing installation", "error", fetchErr)
 			return
@@ -77,9 +79,30 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 }
 
 func (l *InstallListener) OnDebuggingRuntimeDisconnected(runtime *debugging_runtime.RemotePluginRuntime) {
-	pluginIdentifier, err := runtime.Identity()
-	if err != nil {
-		log.Error("failed to get plugin identity, check if your declaration is invalid", "error", err)
+	var (
+		pluginIdentifier plugin_entities.PluginUniqueIdentifier
+	)
+
+	installationID := runtime.InstallationId()
+	if installationID != "" {
+		inst, err := db.GetOne[models.PluginInstallation](
+			db.Equal("tenant_id", runtime.TenantId()),
+			db.Equal("id", installationID),
+		)
+		if err == nil && inst.PluginUniqueIdentifier != "" {
+			pluginIdentifier, _ = plugin_entities.NewPluginUniqueIdentifier(inst.PluginUniqueIdentifier)
+		} else if err != nil && !errors.Is(err, db.ErrDatabaseNotFound) {
+			log.Warn("failed to fetch installation for debugging runtime disconnect; falling back to runtime identity", "error", err)
+		}
+	}
+
+	if pluginIdentifier == "" {
+		pi, err := runtime.Identity()
+		if err != nil {
+			log.Error("failed to get plugin identity, check if your declaration is invalid", "error", err)
+		} else {
+			pluginIdentifier = pi
+		}
 	}
 
 	if err := UninstallPlugin(
@@ -92,10 +115,10 @@ func (l *InstallListener) OnDebuggingRuntimeDisconnected(runtime *debugging_runt
 	}
 }
 
-func fetchPluginInstallationByUniqueId(tenantId string, pluginUniqueIdentifier string) (*models.PluginInstallation, error) {
+func fetchPluginInstallationByPluginID(tenantId string, pluginID string) (*models.PluginInstallation, error) {
 	installation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("tenant_id", tenantId),
-		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier),
+		db.Equal("plugin_id", pluginID),
 	)
 	if err != nil {
 		return nil, err
