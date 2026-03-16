@@ -406,3 +406,221 @@ func TestIncorrectHandshake(t *testing.T) {
 		return
 	}
 }
+
+
+// TestServerStopWithNilServer tests stopping a server with nil server field
+func TestServerStopWithNilServer(t *testing.T) {
+	server := &RemotePluginServer{}
+	err := server.Stop()
+	if err != nil {
+		t.Errorf("expected no error when stopping nil server, got: %v", err)
+	}
+}
+
+// TestServerStartAndStop tests basic server start and stop
+func TestServerStartAndStop(t *testing.T) {
+	port, err := network.GetRandomPort()
+	if err != nil {
+		t.Fatalf("failed to get random port: %v", err)
+	}
+
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed to load local storage: %v", err)
+	}
+
+	config := &app.Config{
+		PluginRemoteInstallingHost:             "127.0.0.1",
+		PluginRemoteInstallingPort:             port,
+		PluginRemoteInstallingMaxConn:          1,
+		PluginRemoteInstallServerEventLoopNums: 1,
+	}
+
+	server := NewDebuggingPluginServer(config, media_transport.NewAssetsBucket(oss, "assets", 10))
+
+	// Start server in background
+	done := make(chan error, 1)
+	go func() {
+		done <- server.Launch()
+	}()
+
+	// Wait for server to start
+	time.Sleep(1 * time.Second)
+
+	// Verify server is listening
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 500*time.Millisecond)
+	if err != nil {
+		t.Fatalf("server not listening after 1s: %v", err)
+	}
+	conn.Close()
+
+	// Stop server
+	if err := server.Stop(); err != nil {
+		t.Errorf("failed to stop server: %v", err)
+	}
+
+	// Wait for launch to return
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Logf("launch returned error (expected): %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Error("launch did not return after stop")
+	}
+
+	// Verify server is not listening
+	time.Sleep(100 * time.Millisecond)
+	conn, err = net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 500*time.Millisecond)
+	if err == nil {
+		conn.Close()
+		t.Error("server still listening after stop")
+	}
+}
+
+// TestServerStopIdempotent tests that stopping multiple times is safe
+func TestServerStopIdempotent(t *testing.T) {
+	port, err := network.GetRandomPort()
+	if err != nil {
+		t.Fatalf("failed to get random port: %v", err)
+	}
+
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed to load local storage: %v", err)
+	}
+
+	config := &app.Config{
+		PluginRemoteInstallingHost:             "127.0.0.1",
+		PluginRemoteInstallingPort:             port,
+		PluginRemoteInstallingMaxConn:          1,
+		PluginRemoteInstallServerEventLoopNums: 1,
+	}
+
+	server := NewDebuggingPluginServer(config, media_transport.NewAssetsBucket(oss, "assets", 10))
+
+	// Start server
+	go func() {
+		server.Launch()
+	}()
+
+	time.Sleep(1 * time.Second)
+
+	// Stop multiple times
+	for i := 0; i < 3; i++ {
+		if err := server.Stop(); err != nil {
+			t.Errorf("stop %d failed: %v", i+1, err)
+		}
+	}
+}
+
+// TestServerQuickRestart tests immediate restart after stop
+func TestServerQuickRestart(t *testing.T) {
+	port, err := network.GetRandomPort()
+	if err != nil {
+		t.Fatalf("failed to get random port: %v", err)
+	}
+
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed to load local storage: %v", err)
+	}
+
+	config := &app.Config{
+		PluginRemoteInstallingHost:             "127.0.0.1",
+		PluginRemoteInstallingPort:             port,
+		PluginRemoteInstallingMaxConn:          1,
+		PluginRemoteInstallServerEventLoopNums: 1,
+	}
+
+	// First server
+	server1 := NewDebuggingPluginServer(config, media_transport.NewAssetsBucket(oss, "assets", 10))
+	go server1.Launch()
+	time.Sleep(1 * time.Second)
+
+	// Verify first server is listening
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 500*time.Millisecond)
+	if err != nil {
+		t.Fatalf("first server not listening: %v", err)
+	}
+	conn.Close()
+
+	// Stop first server
+	server1.Stop()
+	time.Sleep(200 * time.Millisecond)
+
+	// Start second server on same port
+	server2 := NewDebuggingPluginServer(config, media_transport.NewAssetsBucket(oss, "assets", 10))
+	go server2.Launch()
+	time.Sleep(1 * time.Second)
+
+	// Verify second server is listening
+	conn, err = net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 500*time.Millisecond)
+	if err != nil {
+		t.Errorf("second server not listening: %v", err)
+	} else {
+		conn.Close()
+	}
+
+	// Cleanup
+	server2.Stop()
+}
+
+// TestServerStopConcurrent tests concurrent stop calls
+func TestServerStopConcurrent(t *testing.T) {
+	port, err := network.GetRandomPort()
+	if err != nil {
+		t.Fatalf("failed to get random port: %v", err)
+	}
+
+	oss, err := factory.Load("local", cloudoss.OSSArgs{
+		Local: &cloudoss.Local{
+			Path: "./storage",
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed to load local storage: %v", err)
+	}
+
+	config := &app.Config{
+		PluginRemoteInstallingHost:             "127.0.0.1",
+		PluginRemoteInstallingPort:             port,
+		PluginRemoteInstallingMaxConn:          1,
+		PluginRemoteInstallServerEventLoopNums: 1,
+	}
+
+	server := NewDebuggingPluginServer(config, media_transport.NewAssetsBucket(oss, "assets", 10))
+	go server.Launch()
+	time.Sleep(1 * time.Second)
+
+	// Concurrent stops
+	done := make(chan struct{})
+	for i := 0; i < 3; i++ {
+		go func() {
+			server.Stop()
+			done <- struct{}{}
+		}()
+	}
+
+	// Wait for all stops to complete
+	for i := 0; i < 3; i++ {
+		<-done
+	}
+}
+
+// TestServerLaunchWithRetry is skipped due to long execution time
+func TestServerLaunchWithRetry(t *testing.T) {
+	t.Skip("Skipping - requires 12+ seconds for retry mechanism")
+}
