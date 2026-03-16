@@ -81,10 +81,31 @@ func (c *Cluster) UnregisterPlugin(lifetime plugin_entities.PluginLifetime) erro
 		log.Info("unregistering plugin", "identity", identity.String())
 	}
 
-	// remove plugin from cluster
-	err = c.removePluginState(c.id, plugin_entities.HashedIdentity(identity.String()))
+	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
+	const UNREGISTER_PLUGIN_RETRY_BASE_DELAY = 10 * time.Millisecond
+
+	// remove plugin from cluster with retry logic
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		err = c.removePluginState(c.id, hashedIdentity)
+		if err == nil {
+			break
+		}
+
+		// Log retry attempt
+		if i < maxRetries-1 {
+			log.Warn("failed to remove plugin state, retrying",
+				"identity", identity.String(),
+				"attempt", i+1,
+				"max_retries", maxRetries,
+				"error", err,
+			)
+			time.Sleep(time.Duration(i+1) * UNREGISTER_PLUGIN_RETRY_BASE_DELAY)
+		}
+	}
+
 	if err != nil {
-		return errors.Join(err, errors.New("failed to remove plugin state"))
+		return errors.Join(err, errors.New("failed to remove plugin state after retries"))
 	}
 
 	c.plugins.Delete(identity.String())
@@ -257,6 +278,23 @@ func (c *Cluster) isPluginActive(state *pluginState) bool {
 		return false
 	}
 	if time.Since(*state.ScheduledAt) > c.pluginDeactivatedTimeout {
+		return false
+	}
+	return true
+}
+
+// isPluginStateValid checks if a plugin runtime state is still valid
+// A state is considered valid if it has been scheduled within the deactivated timeout
+func (c *Cluster) isPluginStateValid(state *plugin_entities.PluginRuntimeState) bool {
+	if state == nil {
+		return false
+	}
+	if state.ScheduledAt == nil {
+		return false
+	}
+	// Consider state invalid if it hasn't been updated in more than half the deactivated timeout
+	// This allows us to clean up stale states faster
+	if time.Since(*state.ScheduledAt) > c.pluginDeactivatedTimeout/2 {
 		return false
 	}
 	return true
