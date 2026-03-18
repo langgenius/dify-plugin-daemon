@@ -112,7 +112,6 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 			}
 
 			c.JSON(http.StatusOK, service.UpgradePlugin(
-				c.Request.Context(),
 				app,
 				request.TenantID,
 				request.Source,
