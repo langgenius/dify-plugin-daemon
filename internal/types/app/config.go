@@ -105,6 +105,9 @@ type Config struct {
 	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
+	// plugin install timeout in minutes
+	PluginInstallTimeout int `envconfig:"PLUGIN_INSTALL_TIMEOUT" default:"15"`
+
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
 

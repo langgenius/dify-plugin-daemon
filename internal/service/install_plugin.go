@@ -118,7 +118,7 @@ func InstallMultiplePluginsToTenant(
 	for _, job := range jobs {
 		jobCopy := job
 		// create a detached context for async task to avoid http request cancellation
-		taskCtx, taskCancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		taskCtx, taskCancel := context.WithTimeout(context.Background(), time.Duration(config.PluginInstallTimeout)*time.Minute)
 		// start a new goroutine to install the plugin
 		routine.Submit(routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "service",
@@ -197,7 +197,6 @@ func ReinstallPluginFromIdentifier(
  * Upgrade a plugin between 2 identifiers
  */
 func UpgradePlugin(
-	ctx context.Context,
 	config *app.Config,
 	tenantId string,
 	source string,
@@ -299,8 +298,10 @@ func UpgradePlugin(
 		routinepkg.RoutineLabelKeyModule: "service",
 		routinepkg.RoutineLabelKeyMethod: "UpgradePlugin",
 	}, func() {
+		taskCtx, taskCancel := context.WithTimeout(context.Background(), time.Duration(config.PluginInstallTimeout)*time.Minute)
+		defer taskCancel()
 		tasks.ProcessUpgradeJob(
-			ctx,
+			taskCtx,
 			manager,
 			tenants,
 			runtimeType,
