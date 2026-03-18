@@ -240,3 +240,4 @@ func TestPluginRegisterIdempotent(t *testing.T) {
 		return
 	}
 }
+

@@ -122,7 +122,23 @@ func (c *Cluster) FetchPluginAvailableNodesByHashedId(hashedPluginId string) ([]
 	}
 
 	nodes := make([]string, 0)
-	for key := range states {
+	for key, state := range states {
+		// Check if the plugin state is still valid (not expired)
+		if !c.isPluginStateValid(&state) {
+			// State is expired, clean it up
+			nodeId, _, err := c.splitNodePluginJoin(key)
+			if err == nil {
+				log.Warn("found expired plugin state, cleaning up",
+					"key", key,
+					"node_id", nodeId,
+					"scheduled_at", state.ScheduledAt,
+				)
+				// Clean up expired state immediately
+				c.forceGCPluginByNodePluginJoin(key)
+			}
+			continue
+		}
+
 		nodeId, _, err := c.splitNodePluginJoin(key)
 		if err != nil {
 			continue
