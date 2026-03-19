@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773813100579,
+  "lastUpdate": 1773905337501,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12480,6 +12480,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "956902344 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59ac5e630f6b233f134a45267112700dfe86f9e0",
+          "message": "fix: fix uv offline set position (#644)",
+          "timestamp": "2026-03-19T15:26:00+08:00",
+          "tree_id": "95f99bc5837c3cdbc562b2dc0439cb9f99745f97",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/59ac5e630f6b233f134a45267112700dfe86f9e0"
+        },
+        "date": 1773905336274,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 38.41,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "943780904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 38.41,
+            "unit": "ns/op",
+            "extra": "943780904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "943780904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "943780904 times\n4 procs"
           }
         ]
       }
