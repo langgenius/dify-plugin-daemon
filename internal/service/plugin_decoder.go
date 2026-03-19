@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"mime/multipart"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -14,6 +15,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 )
 
@@ -66,11 +68,8 @@ func UploadPluginPkg(
 		verification = decoder.DefaultVerification()
 	}
 
-	// if config.EnforceLanggeniusSignatures {
-	// 	if isUnauthorizedLanggenius(declaration, verification) {
-	// 		return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
-	// 	}
-	// }
+	cacheKey := "manually_uploaded:" + pluginUniqueIdentifier.String()
+	err = cache.Store(cacheKey, true, time.Second*10)
 
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": pluginUniqueIdentifier,
