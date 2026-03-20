@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 )
 
@@ -58,9 +56,6 @@ func (p *PluginManager) SavePackage(
 	if err != nil {
 		return nil, err
 	}
-
-	cacheKey := "manually_uploaded:" + plugin_unique_identifier.String()
-	err = cache.Store(cacheKey, true, time.Second*10)
 
 	// create plugin if not exists (idempotent under concurrency)
 	if _, err := db.GetOne[models.PluginDeclaration](

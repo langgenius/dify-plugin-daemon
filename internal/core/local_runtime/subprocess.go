@@ -12,7 +12,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
@@ -233,19 +232,4 @@ func (r *LocalPluginRuntime) gracefullyStopLowestLoadInstance() error {
 	// gracefully shutdown the instance
 	instance.GracefulStop(time.Duration(r.appConfig.PluginMaxExecutionTimeout) * time.Second)
 	return nil
-}
-
-func (p *LocalPluginRuntime) isManuallyUploaded() bool {
-	if p.Decoder == nil {
-		return false
-	}
-
-	uniqueIdentifier, err := p.Decoder.UniqueIdentity()
-	if err != nil {
-		return false
-	}
-	cacheKey := "manually_uploaded:" + uniqueIdentifier.String()
-
-	exists, err := cache.Get[bool](cacheKey)
-	return err == nil && *exists
 }
