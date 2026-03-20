@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773905337501,
+  "lastUpdate": 1773983466967,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12528,6 +12528,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "943780904 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1ae057ce10011919573f6080d8a8d5c8ded7e93d",
+          "message": "fix: fix trace ctx should not be overwrite (#648)",
+          "timestamp": "2026-03-20T13:08:18+08:00",
+          "tree_id": "3158642cde0f7cad634a0e6889c4fb0d8d2906a0",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/1ae057ce10011919573f6080d8a8d5c8ded7e93d"
+        },
+        "date": 1773983466478,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 38.86,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "941580810 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 38.86,
+            "unit": "ns/op",
+            "extra": "941580810 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "941580810 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "941580810 times\n4 procs"
           }
         ]
       }
