@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type MySQLConfig struct {
@@ -21,6 +23,7 @@ type MySQLConfig struct {
 	ConnMaxLifetime int
 	Charset         string
 	Extras          string
+	LogLevel        string
 }
 
 func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
@@ -31,6 +34,7 @@ func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
 		user:     config.User,
 		password: config.Pass,
 		sslMode:  config.SSLMode,
+		logLevel: config.LogLevel,
 	}
 
 	// first try to connect to target database
@@ -74,11 +78,17 @@ type mysqlDbInitializer struct {
 	user     string
 	password string
 	sslMode  string
+	logLevel string
 }
 
 func (m *mysqlDbInitializer) connect(dbName string) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&tls=%v", m.user, m.password, m.host, m.port, dbName, m.sslMode == "require")
-	return gorm.Open(myDialector{Dialector: mysql.Open(dsn).(*mysql.Dialector)}, &gorm.Config{})
+
+	config := &gorm.Config{}
+	if m.logLevel != "" {
+		config.Logger = logger.Default.LogMode(gormConfig.GetGormLogLevel(m.logLevel))
+	}
+	return gorm.Open(myDialector{Dialector: mysql.Open(dsn).(*mysql.Dialector)}, config)
 }
 
 func (m *mysqlDbInitializer) createDatabaseIfNotExists(db *gorm.DB, dbName string) error {
