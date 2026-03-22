@@ -6,6 +6,7 @@ import (
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
+	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/calldify"
@@ -42,6 +43,8 @@ type PluginManager struct {
 
 	config *app.Config
 
+	pluginAssetCache *lru.Cache[string, []byte]
+
 	// plugin lifecycle controller
 	//
 	// whatever it's local mode or serverless mode, all the signals and calls
@@ -71,15 +74,22 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 		config.PluginPackageCachePath,
 	)
 
+	pluginAssetCache, err := lru.New[string, []byte](int(config.PluginAssetCacheSize))
+	if err != nil {
+		log.Panic("init plugin asset cache failed", "error", err)
+	}
+
 	manager = &PluginManager{
-		mediaBucket:     mediaBucket,
-		packageBucket:   packageBucket,
-		installedBucket: installedBucket,
+		mediaBucket:      mediaBucket,
+		packageBucket:    packageBucket,
+		installedBucket:  installedBucket,
+		pluginAssetCache: pluginAssetCache,
 		controlPanel: controlpanel.NewControlPanel(
 			config,
 			mediaBucket,
 			packageBucket,
 			installedBucket,
+			nil, // cluster will be set later via SetCluster
 		),
 		config: config,
 	}
@@ -89,6 +99,10 @@ func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
 	manager.controlPanel.AddNotifier(&install_service.InstallListener{})
 
 	return manager
+}
+
+func (p *PluginManager) SetCluster(cluster *cluster.Cluster) {
+	p.controlPanel.SetCluster(cluster)
 }
 
 func Manager() *PluginManager {
@@ -165,6 +179,10 @@ func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocatio
 	return p.backwardsInvocation
 }
 
+func (p *PluginManager) Config() *app.Config {
+	return p.config
+}
+
 // check if the plugin is already running on this node
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
@@ -196,26 +214,23 @@ func (c *PluginManager) NeedRedirecting(
 	return true, nil
 }
 
-var (
-	pluginAssetCache *lru.Cache[string, []byte]
-)
-
 func pluginAssetCacheKey(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	path string,
 ) string {
 	return fmt.Sprintf("%s/%s", pluginUniqueIdentifier.String(), path)
 }
+
 func (p *PluginManager) ExtractPluginAsset(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	path string,
 ) ([]byte, error) {
 	key := pluginAssetCacheKey(pluginUniqueIdentifier, path)
-	cached, ok := pluginAssetCache.Get(key)
+	cached, ok := p.pluginAssetCache.Get(key)
 	if ok {
 		return cached, nil
 	}
-	pkgBytes, err := manager.GetPackage(pluginUniqueIdentifier)
+	pkgBytes, err := p.GetPackage(pluginUniqueIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -227,6 +242,6 @@ func (p *PluginManager) ExtractPluginAsset(
 	if err != nil {
 		return nil, err
 	}
-	pluginAssetCache.Add(key, assets[path])
+	p.pluginAssetCache.Add(key, assets[path])
 	return assets[path], nil
 }

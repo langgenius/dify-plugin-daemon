@@ -97,12 +97,16 @@ type Config struct {
 
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
+	PluginAssetCacheSize   uint16 `envconfig:"PLUGIN_ASSET_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
 
 	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
+
+	// plugin install timeout in minutes
+	PluginInstallTimeout int `envconfig:"PLUGIN_INSTALL_TIMEOUT" default:"15"`
 
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
@@ -174,13 +178,13 @@ type Config struct {
 	DifyPluginServerlessConnectorAPIKey        *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
+	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
-	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
-	UvPath                    string `envconfig:"UV_PATH"  default:""`
+	UvPath                    string `envconfig:"UV_PATH"  default:"`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
@@ -234,6 +238,7 @@ type Config struct {
 	// log settings
 	HealthApiLogEnabled bool   `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
 	LogOutputFormat     string `envconfig:"LOG_OUTPUT_FORMAT" default:"text"`
+	LogFile             string `envconfig:"LOG_FILE" default:""`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`

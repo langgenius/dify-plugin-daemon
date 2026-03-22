@@ -2,8 +2,10 @@ package curd
 
 import (
 	"errors"
+
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -27,28 +29,37 @@ func InstallPlugin(
 	var pluginToBeReturns *models.Plugin
 	var installationToBeReturns *models.PluginInstallation
 
-	// check if already installed
-	_, err := db.GetOne[models.PluginInstallation](
-		db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
-		db.Equal("tenant_id", tenantId),
-	)
+	err := db.WithTransaction(func(tx *gorm.DB) error {
+		// For remote plugins, use the original plugin_id from declaration
+		// instead of the modified one (with tenant_id as author)
+		pluginID := pluginUniqueIdentifier.PluginID()
+		log.Info("Installing plugin", "pluginID", pluginID)
+		if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE && declaration != nil {
+			// Use author/name without version
+			pluginID = declaration.Author + "/" + declaration.Name
+		}
 
-	if err == nil {
-		return nil, nil, ErrPluginAlreadyInstalled
-	}
+		// check if already installed
+		_, err := db.GetOne[models.PluginInstallation](
+			db.Equal("plugin_id", pluginID),
+			db.Equal("tenant_id", tenantId),
+		)
 
-	err = db.WithTransaction(func(tx *gorm.DB) error {
+		if err == nil {
+			return ErrPluginAlreadyInstalled
+		}
+
+		// Find existing plugin by unique_identifier only
+		// Don't use plugin_id in query since it may differ for remote plugins
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-			db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
-			db.Equal("install_type", string(installType)),
 			db.WLock(),
 		)
 
-		if err == db.ErrDatabaseNotFound {
+		if errors.Is(err, db.ErrDatabaseNotFound) {
 			plugin := &models.Plugin{
-				PluginID:               pluginUniqueIdentifier.PluginID(),
+				PluginID:               pluginID,
 				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
 				InstallType:            installType,
 				Refers:                 1,
@@ -83,12 +94,26 @@ func InstallPlugin(
 		} else if err != nil {
 			return err
 		} else {
+			// Update plugin_id if it differs (e.g., for remote plugins)
+			oldPluginID := p.PluginID
+			if p.PluginID != pluginID {
+				log.Info("Updating plugin_id", "from", p.PluginID, "to", pluginID)
+				p.PluginID = pluginID
+			}
 			p.Refers++
 			err := db.Update(&p, tx)
 			if err != nil {
 				return err
 			}
 			pluginToBeReturns = &p
+
+			// Clear cache for old plugin_id if it changed
+			if oldPluginID != pluginID {
+				oldCacheKey := helper.PluginInstallationCacheKey(oldPluginID, tenantId)
+				if _, err = cache.AutoDelete[models.PluginInstallation](oldCacheKey); err != nil {
+					log.Warn("failed to clear old plugin installation cache", "key", oldCacheKey, "error", err)
+				}
+			}
 		}
 
 		// remove exists installation
@@ -232,22 +257,34 @@ func UninstallPlugin(
 	)
 
 	if err != nil {
-		if err == db.ErrDatabaseNotFound {
-			return nil, errors.New("plugin has not been installed")
+		if errors.Is(err, db.ErrDatabaseNotFound) {
+			return nil, nil
 		} else {
 			return nil, err
 		}
 	}
 
 	err = db.WithTransaction(func(tx *gorm.DB) error {
+		installation, err := db.GetOne[models.PluginInstallation](
+			db.WithTransactionContext(tx),
+			db.Equal("id", installationId),
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+			db.Equal("tenant_id", tenantId),
+			db.WLock(),
+		)
+
+		if err != nil {
+			return err
+		}
+
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 			db.WLock(),
 		)
 
-		if err == db.ErrDatabaseNotFound {
-			return errors.New("plugin has not been installed")
+		if errors.Is(err, db.ErrDatabaseNotFound) {
+			// Plugin not found, but we should still delete the installation
 		} else if err != nil {
 			return err
 		} else {
@@ -259,28 +296,23 @@ func UninstallPlugin(
 			pluginToBeReturns = &p
 		}
 
-		installation, err := db.GetOne[models.PluginInstallation](
-			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-			db.Equal("tenant_id", tenantId),
-		)
-
-		if err == db.ErrDatabaseNotFound {
-			return errors.New("plugin has not been installed")
-		} else if err != nil {
+		err = db.Delete(&installation, tx)
+		if err != nil {
 			return err
-		} else {
-			err := db.Delete(&installation, tx)
-			if err != nil {
-				return err
+		}
+		installationToBeReturns = &installation
+
+		getPluginID := func() string {
+			if pluginToBeReturns != nil {
+				return pluginToBeReturns.PluginID
 			}
-			installationToBeReturns = &installation
+			return installation.PluginID
 		}
 
 		// delete tool installation
 		if declaration.Tool != nil {
 			toolInstallation := &models.ToolInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -293,7 +325,7 @@ func UninstallPlugin(
 		// delete agent installation
 		if declaration.AgentStrategy != nil {
 			agentStrategyInstallation := &models.AgentStrategyInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -306,7 +338,7 @@ func UninstallPlugin(
 		// delete model installation
 		if declaration.Model != nil {
 			modelInstallation := &models.AIModelInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -319,7 +351,7 @@ func UninstallPlugin(
 		// delete datasource installation
 		if declaration.Datasource != nil {
 			datasourceInstallation := &models.DatasourceInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -332,7 +364,7 @@ func UninstallPlugin(
 		// delete trigger installation
 		if declaration.Trigger != nil {
 			triggerInstallation := &models.TriggerInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -342,7 +374,7 @@ func UninstallPlugin(
 			}
 		}
 
-		if pluginToBeReturns.Refers == 0 {
+		if pluginToBeReturns != nil && pluginToBeReturns.Refers == 0 {
 			err := db.Delete(&pluginToBeReturns, tx)
 			if err != nil {
 				return err
@@ -356,11 +388,20 @@ func UninstallPlugin(
 		return nil, err
 	}
 
-	return &DeletePluginResponse{
-		Plugin:          pluginToBeReturns,
-		Installation:    installationToBeReturns,
-		IsPluginDeleted: pluginToBeReturns.Refers == 0,
-	}, nil
+	if pluginToBeReturns == nil {
+		return &DeletePluginResponse{
+			Plugin:          nil,
+			Installation:    installationToBeReturns,
+			IsPluginDeleted: true,
+		}, nil
+	} else {
+		return &DeletePluginResponse{
+			Plugin:          pluginToBeReturns,
+			Installation:    installationToBeReturns,
+			IsPluginDeleted: pluginToBeReturns.Refers == 0,
+		}, nil
+	}
+
 }
 
 type UpgradePluginResponse struct {

@@ -46,16 +46,14 @@ func (p *LocalPluginRuntime) ensureTraceCtx() context.Context {
 }
 
 func (p *LocalPluginRuntime) startSpan(name string, attrs ...attribute.KeyValue) (context.Context, trace.Span) {
-	ctx := p.ensureTraceCtx()
-	ctx, sp := p.otelTracer().Start(ctx, name)
+	rootCtx := p.ensureTraceCtx()
+	ctx, sp := p.otelTracer().Start(rootCtx, name)
 	if id, ok := log.IdentityFromContext(ctx); ok && id.TenantID != "" {
 		sp.SetAttributes(attribute.String("tenant_id", id.TenantID))
 	}
 	if len(attrs) > 0 {
 		sp.SetAttributes(attrs...)
 	}
-	// keep last context for potential child spans
-	p.traceCtx = ctx
 	return ctx, sp
 }
 
@@ -115,6 +113,10 @@ func (p *LocalPluginRuntime) prepareSyncArgs() []string {
 		args = append(args, extraArgs...)
 	}
 
+	if p.isManuallyUploaded() {
+		args = append(args, "--offline")
+	}
+
 	return args
 }
 
@@ -168,9 +170,13 @@ func (p *LocalPluginRuntime) installDependencies(
 	}
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
+	uvCacheDir := path.Join(p.State.WorkingPath, ".uv-cache")
 	cmd := exec.CommandContext(ctx, uvPath, args...)
 	parent.SetAttributes(attribute.String("uv.path", uvPath), attribute.StringSlice("uv.args", args))
 	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
+	// set UV_CACHE_DIR to the same filesystem as the plugin working directory
+	// to avoid cross-device link errors (os error 95)
+	cmd.Env = append(cmd.Env, "UV_CACHE_DIR="+uvCacheDir)
 	if p.appConfig.HttpProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
 	}
@@ -206,11 +212,15 @@ func (p *LocalPluginRuntime) installDependencies(
 
 	defer func() {
 		if cmd.Process != nil {
-			cmd.Process.Kill()
+			err := cmd.Process.Kill()
+			if err != nil {
+				log.Warn("failed to kill python process", "error", err)
+			}
 		}
 	}()
 
 	var errMsg strings.Builder
+	var errMsgMu sync.Mutex
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -221,14 +231,12 @@ func (p *LocalPluginRuntime) installDependencies(
 		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		defer wg.Done()
-		// read stdout
 		buf := make([]byte, 1024)
 		for {
 			n, err := stdout.Read(buf)
 			if err != nil {
 				break
 			}
-			// FIXME: move the log to separated layer
 			log.Info("installing plugin", "plugin", p.Config.Identity(), "output", string(buf[:n]))
 			lastActiveAt = time.Now()
 		}
@@ -239,20 +247,23 @@ func (p *LocalPluginRuntime) installDependencies(
 		routinepkg.RoutineLabelKeyMethod: "InitPythonEnvironment",
 	}, func() {
 		defer wg.Done()
-		// read stderr
 		buf := make([]byte, 1024)
 		for {
 			n, err := stderr.Read(buf)
-			if err != nil && err != os.ErrClosed {
+			if err != nil && !errors.Is(err, os.ErrClosed) {
 				lastActiveAt = time.Now()
+				errMsgMu.Lock()
 				errMsg.WriteString(string(buf[:n]))
+				errMsgMu.Unlock()
 				break
-			} else if err == os.ErrClosed {
+			} else if errors.Is(err, os.ErrClosed) {
 				break
 			}
 
 			if n > 0 {
+				errMsgMu.Lock()
 				errMsg.WriteString(string(buf[:n]))
+				errMsgMu.Unlock()
 				lastActiveAt = time.Now()
 			}
 		}
@@ -272,11 +283,16 @@ func (p *LocalPluginRuntime) installDependencies(
 			if time.Since(lastActiveAt) > time.Duration(
 				p.appConfig.PythonEnvInitTimeout,
 			)*time.Second {
-				cmd.Process.Kill()
+				err := cmd.Process.Kill()
+				errMsgMu.Lock()
+				if err != nil {
+					errMsg.WriteString(fmt.Sprintf("failed to kill python process: %s", err))
+				}
 				errMsg.WriteString(fmt.Sprintf(
 					"init process exited due to no activity for %d seconds",
 					p.appConfig.PythonEnvInitTimeout,
 				))
+				errMsgMu.Unlock()
 				break
 			}
 		}

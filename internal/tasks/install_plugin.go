@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
@@ -117,13 +118,27 @@ func ProcessUpgradeJob(
 		case installation_entities.PluginInstallEventError:
 			SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, resp.Data)
 		case installation_entities.PluginInstallEventDone:
+			// Fetch the new declaration from DB now that the package has been installed.
+			// It may have been unavailable (nil) at job creation time when the new version
+			// was not yet downloaded.
+			newDeclaration, err := resolveNewDeclaration(
+				job.NewDeclaration, job.NewIdentifier, runtimeType,
+				func(id plugin_entities.PluginUniqueIdentifier, rt plugin_entities.PluginRuntimeType) (*plugin_entities.PluginDeclaration, error) {
+					return helper.CombinedGetPluginDeclaration(id, rt)
+				},
+			)
+			if err != nil {
+				SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed,
+					fmt.Sprintf("failed to get new plugin declaration after install: %v", err))
+				return
+			}
 			for _, tenantID := range tenants {
 				response, err := curd.UpgradePlugin(
 					tenantID,
 					job.OriginalIdentifier,
 					job.NewIdentifier,
 					job.OriginalDeclaration,
-					job.NewDeclaration,
+					newDeclaration,
 					runtimeType,
 					source,
 					job.Meta,
@@ -145,6 +160,20 @@ func ProcessUpgradeJob(
 		SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, err.Error())
 	}
 
+}
+
+// resolveNewDeclaration returns decl if non-nil; otherwise it calls fetch to retrieve it.
+// Extracting this logic as a pure function makes it straightforward to unit-test.
+func resolveNewDeclaration(
+	decl *plugin_entities.PluginDeclaration,
+	identifier plugin_entities.PluginUniqueIdentifier,
+	runtimeType plugin_entities.PluginRuntimeType,
+	fetch func(plugin_entities.PluginUniqueIdentifier, plugin_entities.PluginRuntimeType) (*plugin_entities.PluginDeclaration, error),
+) (*plugin_entities.PluginDeclaration, error) {
+	if decl != nil {
+		return decl, nil
+	}
+	return fetch(identifier, runtimeType)
 }
 
 func SaveInstallationForTenantsToDB(

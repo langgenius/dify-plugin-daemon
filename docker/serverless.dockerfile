@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25.7-alpine AS builder
 
 ARG VERSION=unknown
 
@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 go build \
     -o /app/main cmd/server/main.go
 
 # Use Alpine for better permission handling with mounted volumes
-FROM alpine:3.20
+FROM alpine:3.23
 
 # Install ca-certificates for SSL/TLS
 RUN apk add --no-cache ca-certificates tzdata && \

@@ -95,7 +95,15 @@ func NewSession(payload NewSessionPayload) *Session {
 
 	if !payload.IgnoreCache {
 		if err := cache.Store(sessionKey(s.ID), s, time.Minute*30); err != nil {
-			log.Error("set session info to cache failed", "error", err)
+			log.ErrorContext(
+				s.RequestContext(),
+				"set session info to cache failed",
+				"session_id", s.ID,
+				"cache_key", sessionKey(s.ID),
+				"cluster_id", s.ClusterID,
+				"plugin_unique_identifier", s.PluginUniqueIdentifier.String(),
+				"error", err,
+			)
 		}
 	}
 
@@ -139,12 +147,32 @@ type DeleteSessionPayload struct {
 
 func DeleteSession(payload DeleteSessionPayload) {
 	sessionLock.Lock()
+	session := sessions[payload.ID]
 	delete(sessions, payload.ID)
 	sessionLock.Unlock()
 
 	if !payload.IgnoreCache {
-		if _, err := cache.Del(sessionKey(payload.ID)); err != nil {
-			log.Error("delete session info from cache failed", "error", err)
+		cacheKey := sessionKey(payload.ID)
+		if _, err := cache.Del(cacheKey); err != nil {
+			if session != nil {
+				log.ErrorContext(
+					session.RequestContext(),
+					"delete session info from cache failed",
+					"session_id", payload.ID,
+					"cache_key", cacheKey,
+					"cluster_id", session.ClusterID,
+					"plugin_unique_identifier", session.PluginUniqueIdentifier.String(),
+					"error", err,
+				)
+			} else {
+				log.ErrorContext(
+					context.Background(),
+					"delete session info from cache failed",
+					"session_id", payload.ID,
+					"cache_key", cacheKey,
+					"error", err,
+				)
+			}
 		}
 	}
 }

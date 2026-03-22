@@ -37,7 +37,19 @@ func (c *Cluster) RegisterPlugin(lifetime plugin_entities.PluginLifetime) error 
 	}
 
 	if c.plugins.Exists(identity.String()) {
-		return errors.New("plugin has been registered")
+		// idempotent: plugin already registered, just update its state
+		if existing, ok := c.plugins.Load(identity.String()); ok {
+			// update the lifetime reference
+			existing.lifetime = lifetime
+			// update plugin state immediately
+			err = c.doPluginStateUpdate(existing)
+			if err != nil {
+				return errors.Join(err, errors.New("failed to update plugin state"))
+			}
+		} else {
+			log.Warn("plugin does not exist", "identity", identity.String())
+		}
+		return nil
 	}
 
 	l := &pluginLifeTime{
@@ -69,10 +81,31 @@ func (c *Cluster) UnregisterPlugin(lifetime plugin_entities.PluginLifetime) erro
 		log.Info("unregistering plugin", "identity", identity.String())
 	}
 
-	// remove plugin from cluster
-	err = c.removePluginState(c.id, plugin_entities.HashedIdentity(identity.String()))
+	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
+	const UNREGISTER_PLUGIN_RETRY_BASE_DELAY = 10 * time.Millisecond
+
+	// remove plugin from cluster with retry logic
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		err = c.removePluginState(c.id, hashedIdentity)
+		if err == nil {
+			break
+		}
+
+		// Log retry attempt
+		if i < maxRetries-1 {
+			log.Warn("failed to remove plugin state, retrying",
+				"identity", identity.String(),
+				"attempt", i+1,
+				"max_retries", maxRetries,
+				"error", err,
+			)
+			time.Sleep(time.Duration(i+1) * UNREGISTER_PLUGIN_RETRY_BASE_DELAY)
+		}
+	}
+
 	if err != nil {
-		return errors.Join(err, errors.New("failed to remove plugin state"))
+		return errors.Join(err, errors.New("failed to remove plugin state after retries"))
 	}
 
 	c.plugins.Delete(identity.String())
@@ -143,10 +176,6 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		return err
 	}
 
-	if c.showLog {
-		log.Info("updating plugin state", "identity", identity.String())
-	}
-
 	hashedIdentity := plugin_entities.HashedIdentity(identity.String())
 
 	scheduleState := &pluginState{
@@ -167,9 +196,6 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 			return err
 		}
 	} else {
-		if c.showLog {
-			log.Info("updating plugin state", "identity", identity.String())
-		}
 		// update plugin state
 		scheduleState.ScheduledAt = &[]time.Time{time.Now()}[0]
 		err = cache.SetMapOneField(PLUGIN_STATE_MAP_KEY, stateKey, scheduleState)
@@ -178,7 +204,12 @@ func (c *Cluster) doPluginStateUpdate(lifetime *pluginLifeTime) error {
 		}
 		lifetime.UpdateScheduledAt(*scheduleState.ScheduledAt)
 		if c.showLog {
-			log.Info("updated plugin state", "identity", identity.String())
+			log.Info("updated plugin state",
+				"identity", identity.String(),
+				"state_key", stateKey,
+				"scheduled_at", scheduleState.ScheduledAt,
+				"status", state.Status,
+			)
 		}
 	}
 
@@ -252,6 +283,23 @@ func (c *Cluster) isPluginActive(state *pluginState) bool {
 	return true
 }
 
+// isPluginStateValid checks if a plugin runtime state is still valid
+// A state is considered valid if it has been scheduled within the deactivated timeout
+func (c *Cluster) isPluginStateValid(state *plugin_entities.PluginRuntimeState) bool {
+	if state == nil {
+		return false
+	}
+	if state.ScheduledAt == nil {
+		return false
+	}
+	// Consider state invalid if it hasn't been updated in more than half the deactivated timeout
+	// This allows us to clean up stale states faster
+	if time.Since(*state.ScheduledAt) > c.pluginDeactivatedTimeout/2 {
+		return false
+	}
+	return true
+}
+
 func (c *Cluster) splitNodePluginJoin(node_plugin_join string) (nodeId string, plugin_hashed_id string, err error) {
 	split := strings.Split(node_plugin_join, ":")
 	if len(split) != 2 {
@@ -278,6 +326,18 @@ func (c *Cluster) autoGCPlugins() error {
 					nodeId, _, err := c.splitNodePluginJoin(node_plugin_join)
 					if err != nil {
 						return err
+					}
+
+					if plugin_state.ScheduledAt != nil {
+						timeSinceScheduled := time.Since(*plugin_state.ScheduledAt)
+						log.Warn("auto gc inactive plugin",
+							"plugin", plugin_state.Identity,
+							"node_id", nodeId,
+							"scheduled_at", plugin_state.ScheduledAt,
+							"time_since_scheduled", timeSinceScheduled.String(),
+							"timeout", c.pluginDeactivatedTimeout.String(),
+							"status", plugin_state.Status,
+						)
 					}
 
 					// force gc the plugin

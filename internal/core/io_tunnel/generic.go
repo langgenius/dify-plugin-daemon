@@ -17,14 +17,19 @@ func GenericInvokePlugin[Req any, Rsp any](
 	request *Req,
 	response_buffer_size int,
 ) (*stream.Stream[Rsp], error) {
+	recorder := newPluginInvocationRecorder(session)
+	outcome := &pluginInvocationOutcomeTracker{}
+
 	runtime := session.Runtime()
 	if runtime == nil {
+		recorder.record(pluginInvocationOutcomeError)
 		return nil, errors.New("plugin runtime not found")
 	}
 
 	response := stream.NewStream[Rsp](response_buffer_size)
 	listener, err := runtime.Listen(session.ID)
 	if err != nil {
+		recorder.record(pluginInvocationOutcomeError)
 		return nil, err
 	}
 
@@ -33,6 +38,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
 			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
 			if err != nil {
+				outcome.markError()
 				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 					"error_type": "unmarshal_error",
 					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
@@ -44,6 +50,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
 			if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+				outcome.markError()
 				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 					"error_type": "serverless_event_not_supported",
 					"message":    "serverless event is not supported by full duplex",
@@ -58,6 +65,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 				transaction.NewFullDuplexEventWriter(session),
 				chunk.Data,
 			); err != nil {
+				outcome.markError()
 				response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 					"error_type": "invoke_dify_error",
 					"message":    fmt.Sprintf("invoke dify failed: %s", err.Error()),
@@ -66,8 +74,10 @@ func GenericInvokePlugin[Req any, Rsp any](
 				return
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_END:
+			outcome.markSuccess()
 			response.Close()
 		case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
+			outcome.markError()
 			e, err := parser.UnmarshalJsonBytes[plugin_entities.ErrorResponse](chunk.Data)
 			if err != nil {
 				break
@@ -75,6 +85,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 			response.WriteError(errors.New(e.Error()))
 			response.Close()
 		default:
+			outcome.markError()
 			response.WriteError(errors.New(parser.MarshalJson(map[string]string{
 				"error_type": "unknown_stream_message_type",
 				"message":    "unknown stream message type: " + string(chunk.Type),
@@ -87,6 +98,9 @@ func GenericInvokePlugin[Req any, Rsp any](
 	response.OnClose(func() {
 		listener.Close()
 	})
+	response.OnClose(func() {
+		recorder.record(outcome.outcome())
+	})
 
 	if err := session.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
@@ -97,6 +111,7 @@ func GenericInvokePlugin[Req any, Rsp any](
 		),
 	); err != nil {
 		listener.Close()
+		recorder.record(pluginInvocationOutcomeError)
 		return nil, errors.Join(err, errors.New("failed to write request"))
 	}
 

@@ -10,7 +10,7 @@ import (
 
 func (p *LocalPluginRuntime) InitPythonEnvironment() error {
 	// root span for python env init
-_, span := p.startSpan("python.init_env", attribute.String("plugin.identity", p.Config.Identity()))
+	_, span := p.startSpan("python.init_env", attribute.String("plugin.identity", p.Config.Identity()))
 	defer span.End()
 
 	// prepare uv environment
@@ -25,7 +25,10 @@ _, span := p.startSpan("python.init_env", attribute.String("plugin.identity", p.
 	case ErrVirtualEnvironmentInvalid:
 		// remove the venv and rebuild it
 		log.Warn("virtual environment for %s is invalid; deleting and recreating", p.Config.Identity())
-		p.deleteVirtualEnvironment()
+		err = p.deleteVirtualEnvironment()
+		if err != nil {
+			return err
+		}
 
 		// create virtual environment
 		venv, err = p.createVirtualEnvironment(uvPath)
