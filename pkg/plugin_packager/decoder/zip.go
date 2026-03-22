@@ -16,6 +16,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/system"
 )
 
 type ZipPluginDecoder struct {
@@ -304,7 +305,7 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 			return err
 		}
 
-		bytes, err := z.ReadFile(filepath.Join(dir, filename))
+		bytes, err := z.ReadFile(system.GetZipReadPath(dir, filename))
 		if err != nil {
 			return err
 		}
