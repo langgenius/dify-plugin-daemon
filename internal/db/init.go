@@ -80,6 +80,7 @@ func Init(config *app.Config) {
 			// enable prepared statements only for native PostgreSQL, disable for PgBouncer
 			// as it's not supported on transaction pooling mode
 			PreparedStatements: config.DBType == app.DB_TYPE_POSTGRESQL,
+			LogLevel:           config.DBGormLogLevel,
 		})
 	} else if config.DBType == app.DB_TYPE_MYSQL {
 		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
@@ -95,6 +96,7 @@ func Init(config *app.Config) {
 			ConnMaxLifetime: config.DBConnMaxLifetime,
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
+			LogLevel:        config.DBGormLogLevel,
 		})
 	} else {
 		log.Panic("unsupported database type", "type", config.DBType)

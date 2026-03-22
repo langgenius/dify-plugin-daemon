@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -151,6 +152,7 @@ type Config struct {
 	DBConnMaxLifetime int    `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
 	DBExtras          string `envconfig:"DB_EXTRAS"`
 	DBCharset         string `envconfig:"DB_CHARSET"`
+	DBGormLogLevel    string `envconfig:"DB_GORM_LOG_LEVEL"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`
@@ -291,6 +293,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("plugin package cache path is empty")
 	}
 
+	if c.DBGormLogLevel != "" {
+		if !gormConfig.ValidateGormLogLevel(c.DBGormLogLevel) {
+			return fmt.Errorf("invalid gorm log level: '%s'. Valid levels are: silent, error, warn, info", c.DBGormLogLevel)
+		}
+	}
 	return nil
 }
 
