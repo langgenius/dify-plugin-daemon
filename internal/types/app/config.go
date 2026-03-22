@@ -295,7 +295,7 @@ func (c *Config) Validate() error {
 
 	if c.DBGormLogLevel != "" {
 		if !gormConfig.ValidateGormLogLevel(c.DBGormLogLevel) {
-			return fmt.Errorf("invalid gorm log level")
+			return fmt.Errorf("invalid gorm log level: '%s'. Valid levels are: silent, error, warn, info", c.DBGormLogLevel)
 		}
 	}
 	return nil
