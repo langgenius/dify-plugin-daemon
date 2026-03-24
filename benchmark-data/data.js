@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774320130183,
+  "lastUpdate": 1774320437923,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12624,6 +12624,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "954836712 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "daisuke.mino@gmail.com",
+            "name": "Daisuke Mino",
+            "username": "minodisk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f5e745a1a14872d53f4284bb0840370a59ad9650",
+          "message": "fix: accept plugin_unique_identifier from query params for DecodePluginFromIdentifier (#593)\n\nChanged the struct tag from `json:` to `form:` for PluginUniqueIdentifier field\nin DecodePluginFromIdentifier handler. This allows the parameter to be bound\nfrom query string instead of JSON body.\n\nThis is consistent with similar GET endpoints (FetchPluginManifest,\nFetchPluginFromIdentifier) which already use `form:` tags.\n\nThe change is needed because:\n- GET requests with body are rejected by some HTTP intermediaries (e.g., Cloud Run)\n- HTTP standards state that GET request body has no defined semantics\n- Query parameters are the appropriate way to pass data in GET requests\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-authored-by: Claude Opus 4.5 <noreply@anthropic.com>",
+          "timestamp": "2026-03-24T10:44:33+08:00",
+          "tree_id": "79977538e47ac407ffd99e5ab4e9a271bbf2915e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f5e745a1a14872d53f4284bb0840370a59ad9650"
+        },
+        "date": 1774320437188,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.47,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.47,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
           }
         ]
       }
