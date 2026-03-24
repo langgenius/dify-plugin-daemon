@@ -5,8 +5,10 @@ import (
 	"strings"
 	"time"
 
+	appDbConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type PGConfig struct {
@@ -23,6 +25,7 @@ type PGConfig struct {
 	Charset            string
 	Extras             string
 	PreparedStatements bool
+	LogLevel           string
 }
 
 func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
@@ -30,6 +33,9 @@ func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 	dsn := buildDSN(config, false)
 	gormConfig := &gorm.Config{
 		PrepareStmt: config.PreparedStatements,
+	}
+	if config.LogLevel != "" {
+		gormConfig.Logger = logger.Default.LogMode(appDbConfig.GetGormLogLevel(config.LogLevel))
 	}
 	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
