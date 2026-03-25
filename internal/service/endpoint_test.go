@@ -50,10 +50,10 @@ func TestEndpointWithOriginalHost(t *testing.T) {
 
 func TestEndpointWithHeaderDifyHookURLEmpty(t *testing.T) {
 	req, err := http.NewRequest("GET", "http://example.com/test?test=123", nil)
-	req.Header.Set(endpoint_entities.HeaderDifyHookURL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
+	req.Header.Set(endpoint_entities.HeaderDifyHookURL, "")
 	payload := "test"
 	req.Body = io.NopCloser(bytes.NewReader([]byte(payload)))
 
@@ -70,11 +70,11 @@ func TestEndpointWithHeaderDifyHookURLEmpty(t *testing.T) {
 
 func TestEndpointWithHeaderDifyHookURLEmptyAndTLS(t *testing.T) {
 	req, err := http.NewRequest("GET", "https://example.com/test?test=123", nil)
-	req.TLS = &tls.ConnectionState{}
-	req.Header.Set(endpoint_entities.HeaderDifyHookURL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
+	req.TLS = &tls.ConnectionState{}
+	req.Header.Set(endpoint_entities.HeaderDifyHookURL, "")
 	payload := "test"
 	req.Body = io.NopCloser(bytes.NewReader([]byte(payload)))
 
