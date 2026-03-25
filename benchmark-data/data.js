@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774411366198,
+  "lastUpdate": 1774443298342,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12706,6 +12706,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.96,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kuro664@gmail.com",
+            "name": "kurokobo",
+            "username": "kurokobo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "778fb254f12ba2c2bfce1499bb792f6c8441eae7",
+          "message": "revert: \"feat: add uv sync offline flag (#624)\" and \"fix: fix uv offline set position (#644)\" (#651)\n\n* Revert \"fix: fix uv offline set position (#644)\"\n\nThis reverts commit 59ac5e630f6b233f134a45267112700dfe86f9e0.\n\n* Revert \"feat: add uv sync offline flag (#624)\"\n\nThis reverts commit c100de86651fe979a700cc9a28e3fbebf78197c9.",
+          "timestamp": "2026-03-25T20:52:59+08:00",
+          "tree_id": "8aa48aaa8d22f01ca1d98d074cf99f90ebf2f9a2",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/778fb254f12ba2c2bfce1499bb792f6c8441eae7"
+        },
+        "date": 1774443297845,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 29.59,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 29.59,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
