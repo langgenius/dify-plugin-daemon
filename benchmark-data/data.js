@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774320437923,
+  "lastUpdate": 1774411366198,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12658,6 +12658,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.47,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "zhangxin@dify.ai",
+            "name": "Xin Zhang",
+            "username": "zhangx1n"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a638bcc59628de1db99451c0dbedea688ce2a876",
+          "message": "chore: bump grpc to v1.79.3 and x/net to v0.51.0 (#655)\n\n* chore: bump grpc to v1.79.3 and x/net to v0.51.0\n\n* chore: update golang version to 1.25.8 in Dockerfiles",
+          "timestamp": "2026-03-25T11:59:52+08:00",
+          "tree_id": "1a25b3315aea8d2ee85b3c3c1b55bdc0d32a24e0",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a638bcc59628de1db99451c0dbedea688ce2a876"
+        },
+        "date": 1774411365674,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.96,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.96,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
