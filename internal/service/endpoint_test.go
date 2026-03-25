@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"testing"
@@ -43,6 +44,47 @@ func TestEndpointWithOriginalHost(t *testing.T) {
 
 	str := buffer.String()
 	if str != "GET /test?test=123 HTTP/1.1\r\nHost: example.com\r\nUser-Agent: Go-http-client/1.1\r\nContent-Length: 4\r\nDify-Hook-Id: 123\r\nDify-Hook-Url: http://example.com/e/123/test\r\n\r\ntest" {
+		t.Fatal("request body is not equal, ", str)
+	}
+}
+
+func TestEndpointWithHeaderDifyHookURLEmpty(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://example.com/test?test=123", nil)
+	req.Header.Set(endpoint_entities.HeaderDifyHookURL, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := "test"
+	req.Body = io.NopCloser(bytes.NewReader([]byte(payload)))
+
+	buffer, err := copyRequest(req, "123", "/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	str := buffer.String()
+	if str != "GET /test?test=123 HTTP/1.1\r\nHost: example.com\r\nUser-Agent: Go-http-client/1.1\r\nContent-Length: 4\r\nDify-Hook-Id: 123\r\nDify-Hook-Url: http://example.com/e/123/test\r\n\r\ntest" {
+		t.Fatal("request body is not equal, ", str)
+	}
+}
+
+func TestEndpointWithHeaderDifyHookURLEmptyAndTLS(t *testing.T) {
+	req, err := http.NewRequest("GET", "https://example.com/test?test=123", nil)
+	req.TLS = &tls.ConnectionState{}
+	req.Header.Set(endpoint_entities.HeaderDifyHookURL, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := "test"
+	req.Body = io.NopCloser(bytes.NewReader([]byte(payload)))
+
+	buffer, err := copyRequest(req, "123", "/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	str := buffer.String()
+	if str != "GET /test?test=123 HTTP/1.1\r\nHost: example.com\r\nUser-Agent: Go-http-client/1.1\r\nContent-Length: 4\r\nDify-Hook-Id: 123\r\nDify-Hook-Url: https://example.com/e/123/test\r\n\r\ntest" {
 		t.Fatal("request body is not equal, ", str)
 	}
 }
