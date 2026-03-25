@@ -8,4 +8,5 @@ type EndpointResponseChunk struct {
 
 const (
 	HeaderXOriginalHost = "X-Original-Host"
+	HeaderDifyHookURL   = "Dify-Hook-Url"
 )

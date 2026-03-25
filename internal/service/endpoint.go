@@ -72,13 +72,13 @@ func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, 
 	// setup hook id to request
 	newReq.Header.Set("Dify-Hook-Id", hookId)
 	// check if Dify-Hook-Url is set
-	if url := req.Header.Get("Dify-Hook-Url"); url == "" {
+	if url := req.Header.Get(endpoint_entities.HeaderDifyHookURL); url == "" {
 		scheme := "http"
 		if req.TLS != nil || req.Header.Get("X-Forwarded-Proto") == "https" {
 			scheme = "https"
 		}
 		newReq.Header.Set(
-			"Dify-Hook-Url",
+			endpoint_entities.HeaderDifyHookURL,
 			fmt.Sprintf("%s://%s/e/%s%s", scheme, newReq.Host, hookId, path),
 		)
 	}
