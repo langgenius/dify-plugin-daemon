@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774443549971,
+  "lastUpdate": 1774445189535,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12802,6 +12802,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.38,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5cfc353884933530fc315f3d5485254d30e66a19",
+          "message": "feat: add slim cli for local and remote plugin invocation (#630)\n\n* add slim command run plugin locally\n\n* add tests and remove unused code\n\n* handle more error",
+          "timestamp": "2026-03-25T21:24:30+08:00",
+          "tree_id": "8b04bc12456d669a885172300ff83f9339d3a1b6",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/5cfc353884933530fc315f3d5485254d30e66a19"
+        },
+        "date": 1774445189067,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 29.63,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 29.63,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
