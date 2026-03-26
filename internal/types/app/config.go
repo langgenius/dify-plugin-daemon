@@ -153,6 +153,9 @@ type Config struct {
 	DBExtras          string `envconfig:"DB_EXTRAS"`
 	DBCharset         string `envconfig:"DB_CHARSET"`
 	DBGormLogLevel    string `envconfig:"DB_GORM_LOG_LEVEL"`
+	DBConnectTimeout  int    `envconfig:"DB_CONNECT_TIMEOUT" default:"5"`
+	DBReadTimeout     int    `envconfig:"DB_READ_TIMEOUT" default:"30"`
+	DBWriteTimeout    int    `envconfig:"DB_WRITE_TIMEOUT" default:"30"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`

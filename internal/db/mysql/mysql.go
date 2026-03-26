@@ -24,17 +24,23 @@ type MySQLConfig struct {
 	Charset         string
 	Extras          string
 	LogLevel        string
+	ConnectTimeout  int
+	ReadTimeout     int
+	WriteTimeout    int
 }
 
 func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
 	// TODO: MySQL dose not support DB_EXTRAS now
 	initializer := mysqlDbInitializer{
-		host:     config.Host,
-		port:     config.Port,
-		user:     config.User,
-		password: config.Pass,
-		sslMode:  config.SSLMode,
-		logLevel: config.LogLevel,
+		host:           config.Host,
+		port:           config.Port,
+		user:           config.User,
+		password:       config.Pass,
+		sslMode:        config.SSLMode,
+		logLevel:       config.LogLevel,
+		connectTimeout: config.ConnectTimeout,
+		readTimeout:    config.ReadTimeout,
+		writeTimeout:   config.WriteTimeout,
 	}
 
 	// first try to connect to target database
@@ -73,16 +79,21 @@ func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
 
 // mysqlDbInitializer initializes database for MySQL.
 type mysqlDbInitializer struct {
-	host     string
-	port     int
-	user     string
-	password string
-	sslMode  string
-	logLevel string
+	host           string
+	port           int
+	user           string
+	password       string
+	sslMode        string
+	logLevel       string
+	connectTimeout int
+	readTimeout    int
+	writeTimeout   int
 }
 
 func (m *mysqlDbInitializer) connect(dbName string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&tls=%v", m.user, m.password, m.host, m.port, dbName, m.sslMode == "require")
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&tls=%v&timeout=%ds&readTimeout=%ds&writeTimeout=%ds",
+		m.user, m.password, m.host, m.port, dbName, m.sslMode == "require",
+		m.connectTimeout, m.readTimeout, m.writeTimeout)
 
 	config := &gorm.Config{}
 	if m.logLevel != "" {

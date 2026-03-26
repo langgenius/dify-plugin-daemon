@@ -97,6 +97,9 @@ func Init(config *app.Config) {
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
 			LogLevel:        config.DBGormLogLevel,
+			ConnectTimeout:  config.DBConnectTimeout,
+			ReadTimeout:     config.DBReadTimeout,
+			WriteTimeout:    config.DBWriteTimeout,
 		})
 	} else {
 		log.Panic("unsupported database type", "type", config.DBType)
