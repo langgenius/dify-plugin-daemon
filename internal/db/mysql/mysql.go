@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"net/url"
+
 	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -91,9 +93,15 @@ type mysqlDbInitializer struct {
 }
 
 func (m *mysqlDbInitializer) connect(dbName string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&tls=%v&timeout=%ds&readTimeout=%ds&writeTimeout=%ds",
-		m.user, m.password, m.host, m.port, dbName, m.sslMode == "require",
-		m.connectTimeout, m.readTimeout, m.writeTimeout)
+	query := url.Values{}
+	query.Set("charset", "utf8mb4")
+	query.Set("parseTime", "true")
+	query.Set("tls", fmt.Sprintf("%v", m.sslMode == "require"))
+	query.Set("timeout", fmt.Sprintf("%ds", m.connectTimeout))
+	query.Set("readTimeout", fmt.Sprintf("%ds", m.readTimeout))
+	query.Set("writeTimeout", fmt.Sprintf("%ds", m.writeTimeout))
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
+		m.user, m.password, m.host, m.port, dbName, query.Encode())
 
 	config := &gorm.Config{}
 	if m.logLevel != "" {
