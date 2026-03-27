@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774445189535,
+  "lastUpdate": 1774583874742,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12850,6 +12850,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 29.63,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "3281328128@qq.com",
+            "name": "James Sun",
+            "username": "shootercheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a68342b014a6fa2b0c22333b73bd8defe2ec8f8b",
+          "message": "fix : convert if {} else if {}  code to switch-case statements. (#657)",
+          "timestamp": "2026-03-27T11:55:51+08:00",
+          "tree_id": "d6b48ea7c8632d7bf2164fe5fc2d7d80354a397a",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a68342b014a6fa2b0c22333b73bd8defe2ec8f8b"
+        },
+        "date": 1774583874266,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.51,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.51,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
