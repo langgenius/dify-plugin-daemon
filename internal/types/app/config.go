@@ -186,7 +186,7 @@ type Config struct {
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
 	PythonInterpreterPath     string `envconfig:"PYTHON_INTERPRETER_PATH"`
-	UvPath                    string `envconfig:"UV_PATH"  default:"`
+	UvPath                    string `envconfig:"UV_PATH"  default:""`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
@@ -269,7 +269,8 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.Platform == PLATFORM_SERVERLESS {
+	switch c.Platform {
+	case PLATFORM_SERVERLESS:
 		if c.DifyPluginServerlessConnectorURL == nil {
 			return fmt.Errorf("dify plugin serverless connector url is empty")
 		}
@@ -281,11 +282,11 @@ func (c *Config) Validate() error {
 		if c.MaxServerlessTransactionTimeout == 0 {
 			return fmt.Errorf("max serverless transaction timeout is empty")
 		}
-	} else if c.Platform == PLATFORM_LOCAL {
+	case PLATFORM_LOCAL:
 		if c.PluginWorkingPath == "" {
 			return fmt.Errorf("plugin working path is empty")
 		}
-	} else {
+	default:
 		return fmt.Errorf("invalid platform")
 	}
 
