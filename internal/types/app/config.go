@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -147,15 +149,15 @@ type Config struct {
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	// database connection pool settings
-	DBMaxIdleConns    int    `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
-	DBMaxOpenConns    int    `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
-	DBConnMaxLifetime int    `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
-	DBExtras          string `envconfig:"DB_EXTRAS"`
-	DBCharset         string `envconfig:"DB_CHARSET"`
-	DBGormLogLevel    string `envconfig:"DB_GORM_LOG_LEVEL"`
-	DBConnectTimeout  int    `envconfig:"DB_CONNECT_TIMEOUT" default:"5"`
-	DBReadTimeout     int    `envconfig:"DB_READ_TIMEOUT" default:"30"`
-	DBWriteTimeout    int    `envconfig:"DB_WRITE_TIMEOUT" default:"30"`
+	DBMaxIdleConns    int           `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
+	DBMaxOpenConns    int           `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
+	DBConnMaxLifetime int           `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
+	DBExtras          string        `envconfig:"DB_EXTRAS"`
+	DBCharset         string        `envconfig:"DB_CHARSET"`
+	DBGormLogLevel    string        `envconfig:"DB_GORM_LOG_LEVEL"`
+	DBConnectTimeout  time.Duration `envconfig:"DB_CONNECT_TIMEOUT" default:"5s"`
+	DBReadTimeout     time.Duration `envconfig:"DB_READ_TIMEOUT" default:"30s"`
+	DBWriteTimeout    time.Duration `envconfig:"DB_WRITE_TIMEOUT" default:"30s"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`

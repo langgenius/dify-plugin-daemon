@@ -26,9 +26,9 @@ type MySQLConfig struct {
 	Charset         string
 	Extras          string
 	LogLevel        string
-	ConnectTimeout  int
-	ReadTimeout     int
-	WriteTimeout    int
+	ConnectTimeout  time.Duration
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
 }
 
 func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
@@ -87,9 +87,9 @@ type mysqlDbInitializer struct {
 	password       string
 	sslMode        string
 	logLevel       string
-	connectTimeout int
-	readTimeout    int
-	writeTimeout   int
+	connectTimeout time.Duration
+	readTimeout    time.Duration
+	writeTimeout   time.Duration
 }
 
 func (m *mysqlDbInitializer) connect(dbName string) (*gorm.DB, error) {
@@ -97,9 +97,9 @@ func (m *mysqlDbInitializer) connect(dbName string) (*gorm.DB, error) {
 	query.Set("charset", "utf8mb4")
 	query.Set("parseTime", "true")
 	query.Set("tls", fmt.Sprintf("%v", m.sslMode == "require"))
-	query.Set("timeout", fmt.Sprintf("%ds", m.connectTimeout))
-	query.Set("readTimeout", fmt.Sprintf("%ds", m.readTimeout))
-	query.Set("writeTimeout", fmt.Sprintf("%ds", m.writeTimeout))
+	query.Set("timeout", fmt.Sprintf("%s", m.connectTimeout))
+	query.Set("readTimeout", fmt.Sprintf("%s", m.readTimeout))
+	query.Set("writeTimeout", fmt.Sprintf("%s", m.writeTimeout))
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
 		m.user, m.password, m.host, m.port, dbName, query.Encode())
 
