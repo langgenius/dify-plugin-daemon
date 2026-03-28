@@ -63,7 +63,8 @@ func autoMigrate() error {
 
 func Init(config *app.Config) {
 	var err error
-	if config.DBType == app.DB_TYPE_POSTGRESQL || config.DBType == app.DB_TYPE_PG_BOUNCER {
+	switch config.DBType {
+	case app.DB_TYPE_POSTGRESQL, app.DB_TYPE_PG_BOUNCER:
 		DifyPluginDB, err = pg.InitPluginDB(&pg.PGConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),
@@ -82,7 +83,7 @@ func Init(config *app.Config) {
 			PreparedStatements: config.DBType == app.DB_TYPE_POSTGRESQL,
 			LogLevel:           config.DBGormLogLevel,
 		})
-	} else if config.DBType == app.DB_TYPE_MYSQL {
+	case app.DB_TYPE_MYSQL:
 		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),
@@ -101,7 +102,7 @@ func Init(config *app.Config) {
 			ReadTimeout:     config.DBReadTimeout,
 			WriteTimeout:    config.DBWriteTimeout,
 		})
-	} else {
+	default:
 		log.Panic("unsupported database type", "type", config.DBType)
 	}
 
