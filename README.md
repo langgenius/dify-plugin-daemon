@@ -48,6 +48,18 @@ Firstly copy the `.env.example` file to `.env` and set the correct environment v
 cp .env.example .env
 ```
 
+Install `godotenv` to load the environment variables from `.env` file.
+
+```bash
+go install github.com/joho/godotenv/cmd/godotenv@latest
+```
+
+Run the daemon with the following command:
+
+```bash
+godotenv -f .env go run cmd/server/main.go
+```
+
 If you were using a non-AWS S3 storage before version 0.1.2, you need to manually set the S3_USE_AWS environment variable to false in the .env file.
 
 Attention that the `PYTHON_INTERPRETER_PATH` is the path to the python interpreter, please specify the correct path according to your python installation and make sure the python version is 3.11 or higher, as dify-plugin-sdk requires.
