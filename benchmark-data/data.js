@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774583874742,
+  "lastUpdate": 1774784155085,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12898,6 +12898,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.51,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "3281328128@qq.com",
+            "name": "James Sun",
+            "username": "shootercheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2500c2022db2f746a37615ac3d7396d547ee57ee",
+          "message": "fix:  https://github.com/langgenius/dify-plugin-daemon/issues/658 (#659)\n\n* fix:  Fix the issue of the program getting stuck when starting. Add a MySQL connection timeout configuration\n\n* refactoring the DSN query string construction to use net/url.Values~\n\n* fix : Add unit support for mysql database connection timeout configuration items",
+          "timestamp": "2026-03-29T19:33:53+08:00",
+          "tree_id": "f463e297eb7896903a0260fae5a086a7666eb49d",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/2500c2022db2f746a37615ac3d7396d547ee57ee"
+        },
+        "date": 1774784154633,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 30.2,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 30.2,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
