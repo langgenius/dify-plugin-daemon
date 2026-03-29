@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"net/url"
+
 	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -24,17 +26,23 @@ type MySQLConfig struct {
 	Charset         string
 	Extras          string
 	LogLevel        string
+	ConnectTimeout  time.Duration
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
 }
 
 func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
 	// TODO: MySQL dose not support DB_EXTRAS now
 	initializer := mysqlDbInitializer{
-		host:     config.Host,
-		port:     config.Port,
-		user:     config.User,
-		password: config.Pass,
-		sslMode:  config.SSLMode,
-		logLevel: config.LogLevel,
+		host:           config.Host,
+		port:           config.Port,
+		user:           config.User,
+		password:       config.Pass,
+		sslMode:        config.SSLMode,
+		logLevel:       config.LogLevel,
+		connectTimeout: config.ConnectTimeout,
+		readTimeout:    config.ReadTimeout,
+		writeTimeout:   config.WriteTimeout,
 	}
 
 	// first try to connect to target database
@@ -73,16 +81,27 @@ func InitPluginDB(config *MySQLConfig) (*gorm.DB, error) {
 
 // mysqlDbInitializer initializes database for MySQL.
 type mysqlDbInitializer struct {
-	host     string
-	port     int
-	user     string
-	password string
-	sslMode  string
-	logLevel string
+	host           string
+	port           int
+	user           string
+	password       string
+	sslMode        string
+	logLevel       string
+	connectTimeout time.Duration
+	readTimeout    time.Duration
+	writeTimeout   time.Duration
 }
 
 func (m *mysqlDbInitializer) connect(dbName string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&tls=%v", m.user, m.password, m.host, m.port, dbName, m.sslMode == "require")
+	query := url.Values{}
+	query.Set("charset", "utf8mb4")
+	query.Set("parseTime", "true")
+	query.Set("tls", fmt.Sprintf("%v", m.sslMode == "require"))
+	query.Set("timeout", fmt.Sprintf("%s", m.connectTimeout))
+	query.Set("readTimeout", fmt.Sprintf("%s", m.readTimeout))
+	query.Set("writeTimeout", fmt.Sprintf("%s", m.writeTimeout))
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
+		m.user, m.password, m.host, m.port, dbName, query.Encode())
 
 	config := &gorm.Config{}
 	if m.logLevel != "" {
