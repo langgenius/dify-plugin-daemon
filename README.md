@@ -52,6 +52,7 @@ Run the daemon with the following command. It uses `godotenv` to load environmen
 
 ```bash
 go run github.com/joho/godotenv/cmd/godotenv@latest -f .env go run cmd/server/main.go
+```
 
 If you were using a non-AWS S3 storage before version 0.1.2, you need to manually set the S3_USE_AWS environment variable to false in the .env file.
 
