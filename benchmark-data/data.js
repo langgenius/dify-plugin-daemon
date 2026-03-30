@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774851062689,
+  "lastUpdate": 1774852746636,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13042,6 +13042,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 29.43,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a722a22ed0719ef7cec86a05c84dafc801d566e",
+          "message": "refactor: remove unused code and deprecated features (#422)\n\n* clean up unused code\n\n* fix sign_with_key test",
+          "timestamp": "2026-03-30T14:36:12+08:00",
+          "tree_id": "53e9d4afc1660a97dc6b5fd389a5269a3ae7693a",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/2a722a22ed0719ef7cec86a05c84dafc801d566e"
+        },
+        "date": 1774852745520,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 29.74,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 29.74,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
