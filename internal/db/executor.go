@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -316,7 +316,7 @@ func WithTransaction(fn func(tx *gorm.DB) error, ctx ...*gorm.DB) error {
 	err := fn(tx)
 	if err != nil {
 		if err := tx.Rollback().Error; err != nil {
-			log.Error("failed to rollback tx: %v", err)
+			log.Error("failed to rollback tx", "error", err)
 		}
 		return err
 	}

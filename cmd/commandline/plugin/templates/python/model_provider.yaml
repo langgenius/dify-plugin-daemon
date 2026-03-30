@@ -4,6 +4,7 @@ label:
 description:
   en_US: "Models provided by {{ .PluginName }}."
   zh_Hans: "{{ .PluginName | SnakeToCamel }} 提供的模型。"
+  ja_JP: "{{ .PluginName | SnakeToCamel }}が提供するモデル。"
 icon_small:
   en_US: "icon_s_en.svg"
 icon_large:
@@ -13,6 +14,7 @@ help:
   title:
     en_US: "Get your API Key from {{ .PluginName }}"
     zh_Hans: "从 {{ .PluginName | SnakeToCamel }} 获取 API Key"
+    ja_JP: "{{ .PluginName | SnakeToCamel }}からAPIキーを取得"
   url:
     en_US: "https://__put_your_url_here__/account/api-keys"
 supported_model_types:
@@ -27,9 +29,11 @@ model_credential_schema:
     label:
       en_US: Model Name
       zh_Hans: 模型名称
+      ja_JP: モデル名
     placeholder:
       en_US: Enter your model name
       zh_Hans: 输入模型名称
+      ja_JP: モデル名を入力してください
   credential_form_schemas:
     - variable: openai_api_key
       label:

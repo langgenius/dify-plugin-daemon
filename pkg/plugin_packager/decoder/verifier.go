@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/license/public_key"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/license/public_key"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 )
 
 // VerifyPlugin is a function that verifies the signature of a plugin

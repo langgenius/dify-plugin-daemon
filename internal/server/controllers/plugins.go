@@ -18,6 +18,9 @@ func GetAsset(c *gin.Context) {
 	asset, err := pluginManager.GetAsset(c.Param("id"))
 
 	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			return
+		}
 		c.JSON(http.StatusInternalServerError, exception.InternalServerError(err).ToResponse())
 		return
 	}
@@ -98,6 +101,16 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 			Source                         string                                 `json:"source" validate:"required"`
 			Meta                           map[string]any                         `json:"meta" validate:"omitempty"`
 		}) {
+			if request.OriginalPluginUniqueIdentifier == request.NewPluginUniqueIdentifier {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse())
+				return
+			}
+
+			if request.OriginalPluginUniqueIdentifier.PluginID() != request.NewPluginUniqueIdentifier.PluginID() {
+				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse())
+				return
+			}
+
 			c.JSON(http.StatusOK, service.UpgradePlugin(
 				app,
 				request.TenantID,
@@ -133,8 +146,8 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 				}
 			}
 
-			c.JSON(http.StatusOK, service.InstallPluginFromIdentifiers(
-				app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
+			c.JSON(http.StatusOK, service.InstallMultiplePluginsToTenant(
+				c.Request.Context(), app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
 		})
 	}
@@ -153,7 +166,7 @@ func ReinstallPluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 func DecodePluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		BindRequest(c, func(request struct {
-			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 		}) {
 			c.JSON(http.StatusOK, service.DecodePluginFromIdentifier(app, request.PluginUniqueIdentifier))
 		})
@@ -222,6 +235,15 @@ func FetchPluginManifest(c *gin.Context) {
 	})
 }
 
+func FetchPluginReadme(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		Language               string                                 `form:"language" validate:"omitempty"`
+	}) {
+		c.JSON(http.StatusOK, service.FetchPluginReadme(request.PluginUniqueIdentifier, request.Language))
+	})
+}
+
 func UninstallPlugin(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID             string `uri:"tenant_id" validate:"required"`
@@ -264,5 +286,38 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 		PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=256,dive,plugin_unique_identifier"`
 	}) {
 		c.JSON(http.StatusOK, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
+	})
+}
+
+func ExtractPluginAsset(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID               string                                 `uri:"tenant_id" validate:"required"`
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier "form:\"plugin_unique_identifier\" validate:\"required,plugin_unique_identifier\""
+		FilePath               string                                 `form:"file_path" validate:"required"`
+	}) {
+		manager := plugin_manager.Manager()
+		asset, err := manager.ExtractPluginAsset(request.PluginUniqueIdentifier, request.FilePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, exception.InternalServerError(err).ToResponse())
+			return
+		}
+		c.Data(http.StatusOK, "application/octet-stream", asset)
+	})
+}
+
+func SwitchServerlessEndpoint(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
+		FunctionName           string                                 `json:"function_name" validate:"required"`
+		FunctionURL            string                                 `json:"function_url" validate:"required"`
+	}) {
+		c.JSON(
+			http.StatusOK,
+			service.SwitchServerlessEndpoint(
+				request.PluginUniqueIdentifier,
+				request.FunctionName,
+				request.FunctionURL,
+			),
+		)
 	})
 }

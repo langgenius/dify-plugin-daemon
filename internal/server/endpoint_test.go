@@ -8,8 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/network"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
 )
 
 func TestEndpointParams(t *testing.T) {
@@ -32,8 +31,8 @@ func TestEndpointParams(t *testing.T) {
 	}
 	cancel := appPointer.server(&app.Config{
 		ServerPort:            port,
-		PluginEndpointEnabled: parser.ToPtr(true),
-		HealthApiLogEnabled:   parser.ToPtr(true),
+		PluginEndpointEnabled: true,
+		HealthApiLogEnabled:   true,
 	})
 	defer cancel()
 

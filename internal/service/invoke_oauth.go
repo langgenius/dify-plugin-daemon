@@ -4,13 +4,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/oauth_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func OAuthGetAuthorizationURL(
@@ -20,7 +20,7 @@ func OAuthGetAuthorizationURL(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthGetAuthorizationURLResult], error) {
-			return plugin_daemon.OAuthGetAuthorizationURL(session, &r.Data)
+			return io_tunnel.OAuthGetAuthorizationURL(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
 		access_types.PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL,
@@ -37,7 +37,7 @@ func OAuthGetCredentials(
 ) {
 	baseSSEWithSession(
 		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthGetCredentialsResult], error) {
-			return plugin_daemon.OAuthGetCredentials(session, &r.Data)
+			return io_tunnel.OAuthGetCredentials(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
 		access_types.PLUGIN_ACCESS_ACTION_GET_CREDENTIALS,

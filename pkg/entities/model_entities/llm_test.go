@@ -3,7 +3,7 @@ package model_entities
 import (
 	"testing"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +23,10 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 		assistant_message = `
 		{
 			"role": "assistant",
-			"content": "you are a helpful assistant"
+			"content": "you are a helpful assistant",
+			"opaque_body": {
+				"provider_message_id": "msg_123"
+			}
 		}`
 		image_message = `
 		{
@@ -31,7 +34,10 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 			"content": [
 				{
 					"type": "image",
-					"data": "base64"
+					"data": "base64",
+					"opaque_body": {
+						"segment_id": 1
+					}
 				}
 			]
 		}`
@@ -67,6 +73,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 	if promptMessage.Role != "assistant" {
 		t.Error("role is not assistant")
 	}
+	assert.JSONEq(t, `{"provider_message_id":"msg_123"}`, string(promptMessage.OpaqueBody))
 
 	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(image_message))
 	if err != nil {
@@ -78,6 +85,7 @@ func TestFullFunctionPromptMessage(t *testing.T) {
 	if promptMessage.Content.([]PromptMessageContent)[0].Type != "image" {
 		t.Error("type is not image")
 	}
+	assert.JSONEq(t, `{"segment_id":1}`, string(promptMessage.Content.([]PromptMessageContent)[0].OpaqueBody))
 
 	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(tool_message))
 	if err != nil {
@@ -311,4 +319,180 @@ func TestLLMResultChunkCompatibility(t *testing.T) {
 	llmResultChunkPointer := &llmResultChunk
 	result = parser.MarshalJson(llmResultChunkPointer)
 	assert.Contains(t, string(result), `"prompt_messages":[]`)
+}
+
+func TestMultiModalPromptMessageWithFilename(t *testing.T) {
+	const (
+		imageMessageWithFilename = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "image",
+					"data": "base64encodeddata",
+					"filename": "example_image.jpg"
+				}
+			]
+		}`
+
+		documentMessageWithFilename = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "document",
+					"url": "https://example.com/document.pdf",
+					"filename": "document.pdf",
+					"mime_type": "application/pdf"
+				}
+			]
+		}`
+
+		audioMessageWithFilename = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "audio",
+					"base64_data": "base64audioencodeddata",
+					"filename": "audio_sample.mp3",
+					"format": "mp3"
+				}
+			]
+		}`
+
+		videoMessageWithFilename = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "video",
+					"url": "https://example.com/video.mp4",
+					"filename": "video_sample.mp4"
+				}
+			]
+		}`
+
+		mixedContentWithFilename = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "text",
+					"data": "Please analyze this image"
+				},
+				{
+					"type": "image",
+					"data": "base64encodeddata",
+					"filename": "screenshot.png"
+				}
+			]
+		}`
+	)
+
+	// Test image message with filename
+	promptMessage, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(imageMessageWithFilename))
+	if err != nil {
+		t.Error(err)
+	}
+	if promptMessage.Role != "user" {
+		t.Error("role is not user")
+	}
+	content := promptMessage.Content.([]PromptMessageContent)
+	if content[0].Type != "image" {
+		t.Error("type is not image")
+	}
+	if content[0].Filename != "example_image.jpg" {
+		t.Errorf("expected filename 'example_image.jpg', got '%s'", content[0].Filename)
+	}
+
+	// Test document message with filename
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(documentMessageWithFilename))
+	if err != nil {
+		t.Error(err)
+	}
+	content = promptMessage.Content.([]PromptMessageContent)
+	if content[0].Type != "document" {
+		t.Error("type is not document")
+	}
+	if content[0].Filename != "document.pdf" {
+		t.Errorf("expected filename 'document.pdf', got '%s'", content[0].Filename)
+	}
+	if content[0].MimeType != "application/pdf" {
+		t.Error("mime_type is not application/pdf")
+	}
+
+	// Test audio message with filename
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(audioMessageWithFilename))
+	if err != nil {
+		t.Error(err)
+	}
+	content = promptMessage.Content.([]PromptMessageContent)
+	if content[0].Type != "audio" {
+		t.Error("type is not audio")
+	}
+	if content[0].Filename != "audio_sample.mp3" {
+		t.Errorf("expected filename 'audio_sample.mp3', got '%s'", content[0].Filename)
+	}
+
+	// Test video message with filename
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(videoMessageWithFilename))
+	if err != nil {
+		t.Error(err)
+	}
+	content = promptMessage.Content.([]PromptMessageContent)
+	if content[0].Type != "video" {
+		t.Error("type is not video")
+	}
+	if content[0].Filename != "video_sample.mp4" {
+		t.Errorf("expected filename 'video_sample.mp4', got '%s'", content[0].Filename)
+	}
+
+	// Test mixed content with filename
+	promptMessage, err = parser.UnmarshalJsonBytes[PromptMessage]([]byte(mixedContentWithFilename))
+	if err != nil {
+		t.Error(err)
+	}
+	content = promptMessage.Content.([]PromptMessageContent)
+	if len(content) != 2 {
+		t.Errorf("expected 2 content items, got %d", len(content))
+	}
+	if content[0].Type != "text" {
+		t.Error("first content type is not text")
+	}
+	if content[1].Type != "image" {
+		t.Error("second content type is not image")
+	}
+	if content[1].Filename != "screenshot.png" {
+		t.Errorf("expected filename 'screenshot.png', got '%s'", content[1].Filename)
+	}
+}
+
+func TestPromptMessageContentWithoutFilename(t *testing.T) {
+	const (
+		imageWithoutFilename = `
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "image",
+					"data": "base64encodeddata"
+				}
+			]
+		}`
+	)
+
+	// Test that messages without filename still work (backward compatibility)
+	promptMessage, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(imageWithoutFilename))
+	if err != nil {
+		t.Error(err)
+	}
+	content := promptMessage.Content.([]PromptMessageContent)
+	if content[0].Type != "image" {
+		t.Error("type is not image")
+	}
+	// Filename should be empty string when not provided
+	if content[0].Filename != "" {
+		t.Errorf("expected empty filename, got '%s'", content[0].Filename)
+	}
 }

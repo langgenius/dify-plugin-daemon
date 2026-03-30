@@ -4,11 +4,10 @@ import (
 	"archive/zip"
 	"bytes"
 	"io"
-	"path/filepath"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/bundle_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 type MemoryZipBundlePackager struct {
@@ -64,7 +63,9 @@ func NewMemoryZipBundlePackager(zipFile []byte) (*MemoryZipBundlePackager, error
 	// walk through the zip file and load the assets
 	for _, file := range zipReader.File {
 		// if file starts with "_assets/"
-		if strings.HasPrefix(file.Name, "_assets"+string(filepath.Separator)) {
+		// FIXES: https://github.com/langgenius/dify/issues/32650
+		// zip file is os-independent, `/` is the separator
+		if strings.HasPrefix(file.Name, "_assets/") {
 			// load the asset
 			asset, err := file.Open()
 			if err != nil {
@@ -78,7 +79,7 @@ func NewMemoryZipBundlePackager(zipFile []byte) (*MemoryZipBundlePackager, error
 			}
 
 			// trim the prefix "_assets/"
-			assetName := strings.TrimPrefix(file.Name, "_assets"+string(filepath.Separator))
+			assetName := strings.TrimPrefix(file.Name, "_assets/")
 
 			packager.assets[assetName] = bytes.NewBuffer(assetBytes)
 		}

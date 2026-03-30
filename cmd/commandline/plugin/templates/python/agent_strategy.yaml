@@ -3,8 +3,12 @@ identity:
   author: {{ .Author }}
   label:
     en_US: "{{ .PluginName | SnakeToCamel }}"
+    zh_Hans: "{{ .PluginName | SnakeToCamel }}"
+    ja_JP: "{{ .PluginName | SnakeToCamel }}"
 description:
   en_US: "{{ .PluginName | SnakeToCamel }}"
+  zh_Hans: "{{ .PluginName | SnakeToCamel }}"
+  ja_JP: "{{ .PluginName | SnakeToCamel }}"
 parameters:
   - name: model
     type: model-selector
@@ -14,6 +18,7 @@ parameters:
       en_US: Model
       zh_Hans: 模型
       pt_BR: Model
+      ja_JP: モデル
   - name: tools
     type: array[tools]
     required: true
@@ -21,6 +26,7 @@ parameters:
       en_US: Tools list
       zh_Hans: 工具列表
       pt_BR: Tools list
+      ja_JP: ツールリスト
 extra:
   python:
     source: strategies/{{ .PluginName }}.py

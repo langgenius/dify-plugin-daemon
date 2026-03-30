@@ -270,3 +270,65 @@ func createPythonAgentStrategy(root string, manifest *plugin_entities.PluginDecl
 
 	return nil
 }
+
+func createPythonDatasource(root string, manifest *plugin_entities.PluginDeclaration) error {
+	datasourceFileContent, err := renderTemplate(PYTHON_DATASOURCE_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	datasourceFilePath := filepath.Join(root, "datasources", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(datasourceFilePath, datasourceFileContent); err != nil {
+		return err
+	}
+
+	datasourceManifestFilePath := filepath.Join(root, "datasources", fmt.Sprintf("%s.yaml", manifest.Name))
+	datasourceManifestFileContent, err := renderTemplate(PYTHON_DATASOURCE_MANIFEST_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	if err := writeFile(datasourceManifestFilePath, datasourceManifestFileContent); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createPythonTrigger(root string, manifest *plugin_entities.PluginDeclaration) error {
+	triggerProviderPyContent, err := renderTemplate(PYTHON_TRIGGER_PROVIDER_PY_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	triggerProviderPyPath := filepath.Join(root, "provider", fmt.Sprintf("%s.py", manifest.Name))
+	if err := writeFile(triggerProviderPyPath, triggerProviderPyContent); err != nil {
+		return err
+	}
+
+	triggerProviderManifestContent, err := renderTemplate(PYTHON_TRIGGER_PROVIDER_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	triggerProviderManifestPath := filepath.Join(root, "provider", fmt.Sprintf("%s.yaml", manifest.Name))
+	if err := writeFile(triggerProviderManifestPath, triggerProviderManifestContent); err != nil {
+		return err
+	}
+
+	triggerEventManifestContent, err := renderTemplate(PYTHON_TRIGGER_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	triggerEventManifestPath := filepath.Join(root, "events", fmt.Sprintf("%s_event.yaml", manifest.Name))
+	if err := writeFile(triggerEventManifestPath, triggerEventManifestContent); err != nil {
+		return err
+	}
+
+	triggerEventPyContent, err := renderTemplate(PYTHON_TRIGGER_EVENT_PY_TEMPLATE, manifest, []string{""})
+	if err != nil {
+		return err
+	}
+	triggerEventPyPath := filepath.Join(root, "events", fmt.Sprintf("%s_event.py", manifest.Name))
+	if err := writeFile(triggerEventPyPath, triggerEventPyContent); err != nil {
+		return err
+	}
+
+	return nil
+}

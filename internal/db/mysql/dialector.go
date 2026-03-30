@@ -32,20 +32,22 @@ type myMigrator struct {
 }
 
 func (migrator myMigrator) FullDataTypeOf(field *schema.Field) clause.Expr {
-	if field.DataType == "uuid" {
+	switch field.DataType {
+	case "uuid":
 		field.DataType = "char(36)"
-		if field.HasDefaultValue && field.DefaultValue == "uuid_generate_v4()" {
-			field.HasDefaultValue = false
-			field.DefaultValue = ""
-			var fieldsWithDefault []*schema.Field
-			for _, fieldWithDefault := range field.Schema.FieldsWithDefaultDBValue {
-				if fieldWithDefault.DBName != "id" {
-					fieldsWithDefault = append(fieldsWithDefault, fieldWithDefault)
-				}
-			}
-			field.Schema.FieldsWithDefaultDBValue = fieldsWithDefault
-		}
-	} else if field.DataType == "text" {
+		// remove default value uuid_generate_v4(), see https://github.com/langgenius/dify-plugin-daemon/issues/469
+		// if field.HasDefaultValue && field.DefaultValue == "uuid_generate_v4()" {
+		// 	field.HasDefaultValue = false
+		// 	field.DefaultValue = ""
+		// 	var fieldsWithDefault []*schema.Field
+		// 	for _, fieldWithDefault := range field.Schema.FieldsWithDefaultDBValue {
+		// 		if fieldWithDefault.DBName != "id" {
+		// 			fieldsWithDefault = append(fieldsWithDefault, fieldWithDefault)
+		// 		}
+		// 	}
+		// 	field.Schema.FieldsWithDefaultDBValue = fieldsWithDefault
+		// }
+	case "text":
 		field.DataType = "longtext"
 	}
 	return migrator.Migrator.FullDataTypeOf(field)

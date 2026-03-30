@@ -1,0 +1,13 @@
+identity:
+  name: test_tool
+  author: test
+  label:
+    en_US: Test Tool
+description:
+  human:
+    en_US: A simple test tool
+  llm: A simple test tool for testing purposes
+parameters: []
+extra:
+  python:
+    source: tools/test_tool.py

@@ -9,10 +9,9 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
-	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,6 +47,9 @@ const (
 	// TOOL_PARAMETER_TYPE_TOOL_SELECTOR  ToolParameterType = TOOL_SELECTOR
 	TOOL_PARAMETER_TYPE_ANY            ToolParameterType = ANY
 	TOOL_PARAMETER_TYPE_DYNAMIC_SELECT ToolParameterType = DYNAMIC_SELECT
+	TOOL_PARAMETER_ARRAY               ToolParameterType = ARRAY
+	TOOL_PARAMETER_OBJECT              ToolParameterType = OBJECT
+	TOOL_PARAMETER_TYPE_CHECKBOX       ToolParameterType = CHECKBOX
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -64,7 +66,10 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_APP_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_ANY),
-		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT):
+		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT),
+		string(TOOL_PARAMETER_ARRAY),
+		string(TOOL_PARAMETER_OBJECT),
+		string(TOOL_PARAMETER_TYPE_CHECKBOX):
 		return true
 	}
 	return false
@@ -127,9 +132,10 @@ type ToolParameter struct {
 	Required         bool                   `json:"required" yaml:"required"`
 	AutoGenerate     *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
 	Template         *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
-	Default          any                    `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Default          any                    `json:"default" yaml:"default" validate:"omitempty"`
 	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
 	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
+	Multiple         bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
 	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
 	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
 }
@@ -141,60 +147,32 @@ type ToolDescription struct {
 
 type ToolOutputSchema map[string]any
 
+// UnmarshalYAML handles YAML unmarshaling
+func (t *ToolOutputSchema) UnmarshalYAML(value *yaml.Node) error {
+	var rawData map[string]any
+	if err := value.Decode(&rawData); err != nil {
+		return err
+	}
+	*t = ToolOutputSchema(rawData)
+	return nil
+}
+
+// UnmarshalJSON handles JSON unmarshaling
+func (t *ToolOutputSchema) UnmarshalJSON(data []byte) error {
+	var temp map[string]any
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	*t = ToolOutputSchema(temp)
+	return nil
+}
+
 type ToolDeclaration struct {
 	Identity             ToolIdentity     `json:"identity" yaml:"identity" validate:"required"`
 	Description          ToolDescription  `json:"description" yaml:"description" validate:"required"`
 	Parameters           []ToolParameter  `json:"parameters" yaml:"parameters" validate:"omitempty,dive"`
-	OutputSchema         ToolOutputSchema `json:"output_schema" yaml:"output_schema" validate:"omitempty,json_schema"`
+	OutputSchema         ToolOutputSchema `json:"output_schema,omitempty" yaml:"output_schema,omitempty"`
 	HasRuntimeParameters bool             `json:"has_runtime_parameters" yaml:"has_runtime_parameters"`
-}
-
-func isJSONSchema(fl validator.FieldLevel) bool {
-	// get schema from interface
-	schemaMapInf := fl.Field().Interface()
-	// convert to map[string]any
-	var schemaMap map[string]any
-	toolSchemaMap, ok := schemaMapInf.(ToolOutputSchema)
-	if !ok {
-		agentSchemaMap, ok := schemaMapInf.(AgentStrategyOutputSchema)
-		if !ok {
-			return false
-		}
-		schemaMap = agentSchemaMap
-	} else {
-		schemaMap = toolSchemaMap
-	}
-
-	// validate root schema must be object type
-	rootType, ok := schemaMap["type"].(string)
-	if !ok || rootType != "object" {
-		return false
-	}
-
-	// validate properties
-	properties, ok := schemaMap["properties"].(map[string]any)
-	if !ok {
-		return false
-	}
-
-	// disallow text, json, files as property names
-	disallowedProps := []string{"text", "json", "files"}
-	for _, prop := range disallowedProps {
-		if _, exists := properties[prop]; exists {
-			return false
-		}
-	}
-
-	_, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(fl.Field().Interface()))
-	if err != nil {
-		return false
-	}
-
-	return err == nil
-}
-
-func init() {
-	validators.GlobalEntitiesValidator.RegisterValidation("json_schema", isJSONSchema)
 }
 
 type ToolProviderIdentity struct {
@@ -202,7 +180,7 @@ type ToolProviderIdentity struct {
 	Name        string                        `json:"name" validate:"required,tool_provider_identity_name"`
 	Description I18nObject                    `json:"description"`
 	Icon        string                        `json:"icon" validate:"required"`
-	IconDark    string                        `json:"icon_dark" validate:"omitempty"`
+	IconDark    string                        `json:"icon_dark" yaml:"icon_dark" validate:"omitempty"`
 	Label       I18nObject                    `json:"label" validate:"required"`
 	Tags        []manifest_entities.PluginTag `json:"tags" validate:"omitempty,dive,plugin_tag"`
 }

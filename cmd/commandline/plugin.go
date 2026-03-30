@@ -30,8 +30,8 @@ var (
 	language                 string
 	minDifyVersion           string
 	quick                    bool
-
-	pluginInitCommand = &cobra.Command{
+	maxSizeMB                int64
+	pluginInitCommand        = &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a new plugin",
 		Long: `Initialize a new plugin with the given parameters.
@@ -95,7 +95,16 @@ If no parameters are provided, an interactive mode will be started.`,
 				outputPath = base + ".difypkg"
 			}
 
-			plugin.PackagePlugin(inputPath, outputPath)
+			// read max-size flag (in MB), default 50
+			maxSizeMB, err := cmd.Flags().GetInt64("max-size")
+			if err != nil {
+				maxSizeMB = 50
+			}
+			if maxSizeMB <= 0 {
+				maxSizeMB = 50
+			}
+			maxSizeBytes := maxSizeMB * 1024 * 1024
+			plugin.PackagePlugin(inputPath, outputPath, maxSizeBytes)
 		},
 	}
 
@@ -161,6 +170,21 @@ If no parameters are provided, an interactive mode will be started.`,
 		Long:  "Readme",
 	}
 
+	pluginCleanupCommand = &cobra.Command{
+		Use:   "cleanup",
+		Short: "Cleanup old plugin versions in a working path",
+		Long:  "List all plugins under the working path, keep only the latest version per plugin, and delete older versions. Supports dry-run and interactive confirmation.",
+		Run: func(cmd *cobra.Command, args []string) {
+			workingPath := cmd.Flag("path").Value.String()
+			if workingPath == "" {
+				fmt.Println("Error: --path is required")
+				return
+			}
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
+			yes, _ := cmd.Flags().GetBool("yes")
+			plugin.CleanupWorkingPath(workingPath, dryRun, yes)
+		},
+	}
 	pluginReadmeListCommand = &cobra.Command{
 		Use:   "list [plugin_path]",
 		Short: "List available README languages",
@@ -186,6 +210,11 @@ func init() {
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendToolsCommand)
 	pluginModuleAppendCommand.AddCommand(pluginModuleAppendEndpointsCommand)
 	pluginReadmeCommand.AddCommand(pluginReadmeListCommand)
+
+	pluginCommand.AddCommand(pluginCleanupCommand)
+	pluginCleanupCommand.Flags().StringP("path", "p", "", "plugin working path")
+	pluginCleanupCommand.Flags().Bool("dry-run", false, "show what would be deleted without deleting anything")
+	pluginCleanupCommand.Flags().BoolP("yes", "y", false, "do not prompt for confirmation, delete directly")
 
 	pluginInitCommand.Flags().StringVar(&author, "author", "", "Author name (1-64 characters, lowercase letters, numbers, dashes and underscores only)")
 	pluginInitCommand.Flags().StringVar(&name, "name", "", "Plugin name (1-128 characters, lowercase letters, numbers, dashes and underscores only)")
@@ -220,4 +249,5 @@ func init() {
 	pluginInitCommand.Flags().BoolVar(&quick, "quick", false, "Skip interactive mode and create plugin directly")
 
 	pluginPackageCommand.Flags().StringP("output_path", "o", "", "output path")
+	pluginPackageCommand.Flags().Int64Var(&maxSizeMB, "max-size", 50, "Maximum uncompressed size in MB")
 }

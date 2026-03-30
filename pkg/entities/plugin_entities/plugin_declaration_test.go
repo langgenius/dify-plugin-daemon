@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 func preparePluginDeclaration() PluginDeclaration {

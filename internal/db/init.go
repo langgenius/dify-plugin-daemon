@@ -5,7 +5,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db/pg"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	gootel "go.opentelemetry.io/otel"
+	oteltracing "gorm.io/plugin/opentelemetry/tracing"
 )
 
 func autoMigrate() error {
@@ -15,11 +17,14 @@ func autoMigrate() error {
 		models.PluginDeclaration{},
 		models.Endpoint{},
 		models.ServerlessRuntime{},
+		models.DatasourceInstallation{},
 		models.ToolInstallation{},
 		models.AIModelInstallation{},
 		models.InstallTask{},
 		models.TenantStorage{},
 		models.AgentStrategyInstallation{},
+		models.TriggerInstallation{},
+		models.PluginReadmeRecord{},
 	)
 
 	if err != nil {
@@ -44,6 +49,7 @@ func autoMigrate() error {
 		"tool_installations",
 		"ai_model_installations",
 		"agent_strategy_installations",
+		"trigger_installations",
 	}
 
 	for _, table := range tables {
@@ -57,7 +63,8 @@ func autoMigrate() error {
 
 func Init(config *app.Config) {
 	var err error
-	if config.DBType == "postgresql" {
+	switch config.DBType {
+	case app.DB_TYPE_POSTGRESQL, app.DB_TYPE_PG_BOUNCER:
 		DifyPluginDB, err = pg.InitPluginDB(&pg.PGConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),
@@ -71,8 +78,12 @@ func Init(config *app.Config) {
 			ConnMaxLifetime: config.DBConnMaxLifetime,
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
+			// enable prepared statements only for native PostgreSQL, disable for PgBouncer
+			// as it's not supported on transaction pooling mode
+			PreparedStatements: config.DBType == app.DB_TYPE_POSTGRESQL,
+			LogLevel:           config.DBGormLogLevel,
 		})
-	} else if config.DBType == "mysql" {
+	case app.DB_TYPE_MYSQL:
 		DifyPluginDB, err = mysql.InitPluginDB(&mysql.MySQLConfig{
 			Host:            config.DBHost,
 			Port:            int(config.DBPort),
@@ -86,18 +97,29 @@ func Init(config *app.Config) {
 			ConnMaxLifetime: config.DBConnMaxLifetime,
 			Charset:         config.DBCharset,
 			Extras:          config.DBExtras,
+			LogLevel:        config.DBGormLogLevel,
+			ConnectTimeout:  config.DBConnectTimeout,
+			ReadTimeout:     config.DBReadTimeout,
+			WriteTimeout:    config.DBWriteTimeout,
 		})
-	} else {
-		log.Panic("unsupported database type: %v", config.DBType)
+	default:
+		log.Panic("unsupported database type", "type", config.DBType)
 	}
 
 	if err != nil {
-		log.Panic("failed to init dify plugin db: %v", err)
+		log.Panic("failed to init dify plugin db", "error", err)
 	}
 
 	err = autoMigrate()
 	if err != nil {
-		log.Panic("failed to auto migrate: %v", err)
+		log.Panic("failed to auto migrate", "error", err)
+	}
+
+	// attach GORM OpenTelemetry plugin if enabled
+	if config.EnableOtel {
+		if err := DifyPluginDB.Use(oteltracing.NewPlugin(oteltracing.WithTracerProvider(gootel.GetTracerProvider()))); err != nil {
+			log.Warn("failed to init gorm otel plugin", "error", err)
+		}
 	}
 
 	log.Info("dify plugin db initialized")
@@ -106,13 +128,13 @@ func Init(config *app.Config) {
 func Close() {
 	db, err := DifyPluginDB.DB()
 	if err != nil {
-		log.Error("failed to close dify plugin db: %v", err)
+		log.Error("failed to close dify plugin db", "error", err)
 		return
 	}
 
 	err = db.Close()
 	if err != nil {
-		log.Error("failed to close dify plugin db: %v", err)
+		log.Error("failed to close dify plugin db", "error", err)
 		return
 	}
 

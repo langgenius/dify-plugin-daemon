@@ -8,8 +8,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 )
 
 func (c *Cluster) voteAddresses() error {

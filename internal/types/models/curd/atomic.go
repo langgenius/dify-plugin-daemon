@@ -2,9 +2,10 @@ package curd
 
 import (
 	"errors"
-	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
@@ -23,38 +24,46 @@ func InstallPlugin(
 	declaration *plugin_entities.PluginDeclaration,
 	source string,
 	meta map[string]any,
-) (
-	*models.Plugin, *models.PluginInstallation, error,
-) {
+) (*models.Plugin, *models.PluginInstallation, error) {
 
 	var pluginToBeReturns *models.Plugin
 	var installationToBeReturns *models.PluginInstallation
 
-	// check if already installed
-	_, err := db.GetOne[models.PluginInstallation](
-		db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
-		db.Equal("tenant_id", tenantId),
-	)
+	err := db.WithTransaction(func(tx *gorm.DB) error {
+		// For remote plugins, use the original plugin_id from declaration
+		// instead of the modified one (with tenant_id as author)
+		pluginID := pluginUniqueIdentifier.PluginID()
+		log.Info("Installing plugin", "pluginID", pluginID)
+		if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE && declaration != nil {
+			// Use author/name without version
+			pluginID = declaration.Author + "/" + declaration.Name
+		}
 
-	if err == nil {
-		return nil, nil, ErrPluginAlreadyInstalled
-	}
+		// check if already installed
+		_, err := db.GetOne[models.PluginInstallation](
+			db.Equal("plugin_id", pluginID),
+			db.Equal("tenant_id", tenantId),
+		)
 
-	err = db.WithTransaction(func(tx *gorm.DB) error {
+		if err == nil {
+			return ErrPluginAlreadyInstalled
+		}
+
+		// Find existing plugin by unique_identifier only
+		// Don't use plugin_id in query since it may differ for remote plugins
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-			db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
-			db.Equal("install_type", string(installType)),
 			db.WLock(),
 		)
 
-		if err == db.ErrDatabaseNotFound {
+		if errors.Is(err, db.ErrDatabaseNotFound) {
 			plugin := &models.Plugin{
-				PluginID:               pluginUniqueIdentifier.PluginID(),
+				PluginID:               pluginID,
 				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
 				InstallType:            installType,
 				Refers:                 1,
+				Source:                 source,
 			}
 
 			if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
@@ -63,19 +72,48 @@ func InstallPlugin(
 
 			err := db.Create(plugin, tx)
 			if err != nil {
-				return err
+				// Handle potential duplicate creation due to race: refetch and update refers
+				// to achieve idempotent behavior under concurrency.
+				p2, gerr := db.GetOne[models.Plugin](
+					db.WithTransactionContext(tx),
+					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+					db.Equal("install_type", string(installType)),
+					db.WLock(),
+				)
+				if gerr != nil {
+					return err
+				}
+				p2.Refers++
+				if uerr := db.Update(&p2, tx); uerr != nil {
+					return uerr
+				}
+				pluginToBeReturns = &p2
+			} else {
+				pluginToBeReturns = plugin
 			}
-
-			pluginToBeReturns = plugin
 		} else if err != nil {
 			return err
 		} else {
+			// Update plugin_id if it differs (e.g., for remote plugins)
+			oldPluginID := p.PluginID
+			if p.PluginID != pluginID {
+				log.Info("Updating plugin_id", "from", p.PluginID, "to", pluginID)
+				p.PluginID = pluginID
+			}
 			p.Refers++
 			err := db.Update(&p, tx)
 			if err != nil {
 				return err
 			}
 			pluginToBeReturns = &p
+
+			// Clear cache for old plugin_id if it changed
+			if oldPluginID != pluginID {
+				oldCacheKey := helper.PluginInstallationCacheKey(oldPluginID, tenantId)
+				if _, err = cache.AutoDelete[models.PluginInstallation](oldCacheKey); err != nil {
+					log.Warn("failed to clear old plugin installation cache", "key", oldCacheKey, "error", err)
+				}
+			}
 		}
 
 		// remove exists installation
@@ -151,6 +189,36 @@ func InstallPlugin(
 			}
 		}
 
+		// create datasource installation
+		if declaration.Datasource != nil {
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenantId,
+				Provider:               declaration.Datasource.Identity.Name,
+			}
+
+			err := db.Create(datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// create trigger installation
+		if declaration.Trigger != nil {
+			triggerInstallation := &models.TriggerInstallation{
+				PluginID:               pluginToBeReturns.PluginID,
+				PluginUniqueIdentifier: pluginToBeReturns.PluginUniqueIdentifier,
+				TenantID:               tenantId,
+				Provider:               declaration.Trigger.Identity.Name,
+			}
+
+			err := db.Create(triggerInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -188,35 +256,35 @@ func UninstallPlugin(
 		db.Equal("tenant_id", tenantId),
 	)
 
-	pluginInstallationCacheKey := strings.Join(
-		[]string{
-			"plugin_id",
-			pluginUniqueIdentifier.PluginID(),
-			"tenant_id",
-			tenantId,
-		},
-		":",
-	)
-
-	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
-
 	if err != nil {
-		if err == db.ErrDatabaseNotFound {
-			return nil, errors.New("plugin has not been installed")
+		if errors.Is(err, db.ErrDatabaseNotFound) {
+			return nil, nil
 		} else {
 			return nil, err
 		}
 	}
 
 	err = db.WithTransaction(func(tx *gorm.DB) error {
+		installation, err := db.GetOne[models.PluginInstallation](
+			db.WithTransactionContext(tx),
+			db.Equal("id", installationId),
+			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+			db.Equal("tenant_id", tenantId),
+			db.WLock(),
+		)
+
+		if err != nil {
+			return err
+		}
+
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 			db.WLock(),
 		)
 
-		if err == db.ErrDatabaseNotFound {
-			return errors.New("plugin has not been installed")
+		if errors.Is(err, db.ErrDatabaseNotFound) {
+			// Plugin not found, but we should still delete the installation
 		} else if err != nil {
 			return err
 		} else {
@@ -228,28 +296,23 @@ func UninstallPlugin(
 			pluginToBeReturns = &p
 		}
 
-		installation, err := db.GetOne[models.PluginInstallation](
-			db.WithTransactionContext(tx),
-			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-			db.Equal("tenant_id", tenantId),
-		)
-
-		if err == db.ErrDatabaseNotFound {
-			return errors.New("plugin has not been installed")
-		} else if err != nil {
+		err = db.Delete(&installation, tx)
+		if err != nil {
 			return err
-		} else {
-			err := db.Delete(&installation, tx)
-			if err != nil {
-				return err
+		}
+		installationToBeReturns = &installation
+
+		getPluginID := func() string {
+			if pluginToBeReturns != nil {
+				return pluginToBeReturns.PluginID
 			}
-			installationToBeReturns = &installation
+			return installation.PluginID
 		}
 
 		// delete tool installation
 		if declaration.Tool != nil {
 			toolInstallation := &models.ToolInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -262,7 +325,7 @@ func UninstallPlugin(
 		// delete agent installation
 		if declaration.AgentStrategy != nil {
 			agentStrategyInstallation := &models.AgentStrategyInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -275,7 +338,7 @@ func UninstallPlugin(
 		// delete model installation
 		if declaration.Model != nil {
 			modelInstallation := &models.AIModelInstallation{
-				PluginID: pluginToBeReturns.PluginID,
+				PluginID: getPluginID(),
 				TenantID: tenantId,
 			}
 
@@ -285,7 +348,33 @@ func UninstallPlugin(
 			}
 		}
 
-		if pluginToBeReturns.Refers == 0 {
+		// delete datasource installation
+		if declaration.Datasource != nil {
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginID: getPluginID(),
+				TenantID: tenantId,
+			}
+
+			err := db.DeleteByCondition(&datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete trigger installation
+		if declaration.Trigger != nil {
+			triggerInstallation := &models.TriggerInstallation{
+				PluginID: getPluginID(),
+				TenantID: tenantId,
+			}
+
+			err := db.DeleteByCondition(&triggerInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		if pluginToBeReturns != nil && pluginToBeReturns.Refers == 0 {
 			err := db.Delete(&pluginToBeReturns, tx)
 			if err != nil {
 				return err
@@ -299,11 +388,20 @@ func UninstallPlugin(
 		return nil, err
 	}
 
-	return &DeletePluginResponse{
-		Plugin:          pluginToBeReturns,
-		Installation:    installationToBeReturns,
-		IsPluginDeleted: pluginToBeReturns.Refers == 0,
-	}, nil
+	if pluginToBeReturns == nil {
+		return &DeletePluginResponse{
+			Plugin:          nil,
+			Installation:    installationToBeReturns,
+			IsPluginDeleted: true,
+		}, nil
+	} else {
+		return &DeletePluginResponse{
+			Plugin:          pluginToBeReturns,
+			Installation:    installationToBeReturns,
+			IsPluginDeleted: pluginToBeReturns.Refers == 0,
+		}, nil
+	}
+
 }
 
 type UpgradePluginResponse struct {
@@ -500,12 +598,72 @@ func UpgradePlugin(
 			}
 		}
 
+		// update datasource installation
+		if originalDeclaration.Datasource != nil {
+			// delete the original datasource installation
+			err := db.DeleteByCondition(&models.DatasourceInstallation{
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Datasource != nil {
+			// create the new datasource installation
+			datasourceInstallation := &models.DatasourceInstallation{
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
+				Provider:               newDeclaration.Datasource.Identity.Name,
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
+			}
+
+			err := db.Create(datasourceInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update trigger installation
+		if originalDeclaration.Trigger != nil {
+			// delete the original trigger installation
+			err := db.DeleteByCondition(&models.TriggerInstallation{
+				PluginID: originalPluginUniqueIdentifier.PluginID(),
+				TenantID: tenantId,
+			}, tx)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if newDeclaration.Trigger != nil {
+			// create the new trigger installation
+			triggerInstallation := &models.TriggerInstallation{
+				PluginUniqueIdentifier: newPluginUniqueIdentifier.String(),
+				TenantID:               tenantId,
+				Provider:               newDeclaration.Trigger.Identity.Name,
+				PluginID:               newPluginUniqueIdentifier.PluginID(),
+			}
+
+			err := db.Create(triggerInstallation, tx)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
-
+	pluginId := newPluginUniqueIdentifier.PluginID()                                    // get the pluginId
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId) // make cache key
+	if _, err = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); err != nil {
+		return nil, err
+	}
 	return &response, nil
 }

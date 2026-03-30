@@ -10,10 +10,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service/install_service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 )
 
 func SetupEndpoint(
@@ -102,18 +103,14 @@ func SetupEndpoint(
 }
 
 func RemoveEndpoint(endpoint_id string, tenant_id string) *entities.Response {
-	endpoint, err := db.GetOne[models.Endpoint](
-		db.Equal("id", endpoint_id),
-		db.Equal("tenant_id", tenant_id),
-	)
-	if err != nil {
-		return exception.NotFoundError(fmt.Errorf("failed to find endpoint: %v", err)).ToResponse()
-	}
-
-	err = install_service.UninstallEndpoint(&endpoint)
+	endpoint, err := install_service.UninstallEndpoint(endpoint_id, tenant_id)
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to remove endpoint: %v", err)).ToResponse()
 	}
+
+	// invalidate endpoint cache
+	endpointCacheKey := helper.EndpointCacheKey(endpoint.HookID)
+	_, _ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
 
 	manager := plugin_manager.Manager()
 	if manager == nil {
@@ -256,6 +253,10 @@ func UpdateEndpoint(endpoint_id string, tenant_id string, user_id string, name s
 	if err := install_service.UpdateEndpoint(&endpoint, name, encryptedSettings); err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to update endpoint: %v", err)).ToResponse()
 	}
+
+	// invalidate endpoint cache
+	endpointCacheKey := helper.EndpointCacheKey(endpoint.HookID)
+	_, _ = cache.AutoDelete[models.Endpoint](endpointCacheKey)
 
 	// clear credentials cache
 	if _, err := manager.BackwardsInvocation().InvokeEncrypt(&dify_invocation.InvokeEncryptRequest{

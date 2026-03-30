@@ -1,6 +1,6 @@
 package cluster
 
-import "github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
+import "github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 
 func clearClusterState() {
 	cache.Del(CLUSTER_STATUS_HASH_MAP_KEY)

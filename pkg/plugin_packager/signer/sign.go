@@ -1,10 +1,10 @@
 package signer
 
 import (
-	"github.com/langgenius/dify-plugin-daemon/internal/core/license/private_key"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/license/private_key"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/signer/withkey"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 )
 
 /*

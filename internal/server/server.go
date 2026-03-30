@@ -8,9 +8,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/tasks"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func initOSS(config *app.Config) oss.OSS {
@@ -33,6 +35,7 @@ func initOSS(config *app.Config) oss.OSS {
 		},
 		TencentCOS: &oss.TencentCOS{
 			Region:    config.TencentCOSRegion,
+			Endpoint:  config.TencentCOSEndpoint,
 			SecretID:  config.TencentCOSSecretId,
 			SecretKey: config.TencentCOSSecretKey,
 			Bucket:    config.PluginStorageOSSBucket,
@@ -53,12 +56,14 @@ func initOSS(config *app.Config) oss.OSS {
 			AuthVersion: config.AliyunOSSAuthVersion,
 			Path:        config.AliyunOSSPath,
 			Bucket:      config.PluginStorageOSSBucket,
+			CloudBoxId:  config.AliyunOSSCloudBoxId,
 		},
 		HuaweiOBS: &oss.HuaweiOBS{
 			AccessKey: config.HuaweiOBSAccessKey,
 			SecretKey: config.HuaweiOBSSecretKey,
 			Server:    config.HuaweiOBSServer,
 			Bucket:    config.PluginStorageOSSBucket,
+			PathStyle: config.HuaweiOBSPathStyle,
 		},
 		VolcengineTOS: &oss.VolcengineTOS{
 			Region:    config.VolcengineTOSRegion,
@@ -69,7 +74,7 @@ func initOSS(config *app.Config) oss.OSS {
 		},
 	})
 	if err != nil {
-		log.Panic("Failed to create storage: %s", err)
+		log.Panic("failed to create storage", "error", err)
 	}
 
 	return storage
@@ -96,22 +101,28 @@ func (app *App) Run(config *app.Config) {
 	oss := initOSS(config)
 
 	// create manager
-	manager := plugin_manager.InitGlobalManager(oss, config)
+	app.pluginManager = plugin_manager.InitGlobalManager(oss, config)
 
 	// create cluster
-	app.cluster = cluster.NewCluster(config, manager)
+	app.cluster = cluster.NewCluster(config)
 
-	// register plugin lifetime event
-	manager.AddPluginRegisterHandler(app.cluster.RegisterPlugin)
+	// set cluster to control panel for remote debugging plugin synchronization
+	app.pluginManager.SetCluster(app.cluster)
 
 	// init manager
-	manager.Launch(config)
+	app.pluginManager.Launch(config)
 
 	// init persistence
 	persistence.InitPersistence(oss, config)
 
 	// launch cluster
 	app.cluster.Launch()
+
+	// setup signal handler, for a graceful shutdown to cleanup resources like async tasks
+	tasks.SetupSignalHandler()
+	tasks.RegisterFinalizers(tasks.RecycleTasks)
+	tasks.RegisterFinalizers(cache.ReleaseAllLocks)
+	tasks.MonitorTimeoutTasks(app.cluster, config)
 
 	// start http server
 	app.server(config)

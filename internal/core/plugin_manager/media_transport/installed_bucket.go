@@ -7,8 +7,8 @@ import (
 
 	"github.com/langgenius/dify-cloud-kit/oss"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 type InstalledBucket struct {
@@ -21,10 +21,10 @@ func NewInstalledBucket(oss oss.OSS, installedPath string) *InstalledBucket {
 	if len(installedPath) > 0 {
 		firstChar := installedPath[0]
 		if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(string(firstChar)) {
-			log.Warn("installed_path starts with non-alphanumeric characters: %s", installedPath)
+			log.Warn("installed_path starts with non-alphanumeric characters", "path", installedPath)
 		}
 	} else {
-		log.Warn("installed_path is empty")
+		log.Warn("installed_path is empty", "path", "")
 	}
 	return &InstalledBucket{oss: oss, installedPath: installedPath}
 }
@@ -78,7 +78,7 @@ func (b *InstalledBucket) List() ([]plugin_entities.PluginUniqueIdentifier, erro
 			strings.TrimPrefix(path.Path, b.installedPath),
 		)
 		if err != nil {
-			log.Error("failed to create PluginUniqueIdentifier from path %s: %v", path.Path, err)
+			log.Error("failed to create PluginUniqueIdentifier from path", "path", path.Path, "error", err)
 			continue
 		}
 		identifiers = append(identifiers, identifier)

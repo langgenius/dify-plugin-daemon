@@ -2,9 +2,10 @@ package server
 
 import (
 	"errors"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"strings"
 	"time"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
@@ -12,9 +13,9 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 // DifyPlugin supports register and use endpoint to improve the plugin's functionality
@@ -43,13 +44,7 @@ func (app *App) Endpoint(config *app.Config) func(c *gin.Context) {
 }
 
 func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTime time.Duration, path string) {
-	endpointCacheKey := strings.Join(
-		[]string{
-			"hook_id",
-			hookId,
-		},
-		":",
-	)
+	endpointCacheKey := helper.EndpointCacheKey(hookId)
 	endpoint, err := cache.AutoGetWithGetter[models.Endpoint](
 		endpointCacheKey,
 		func() (*models.Endpoint, error) {
@@ -58,27 +53,20 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 			)
 			return &v, err
 		})
-	if err == db.ErrDatabaseNotFound {
+
+	if errors.Is(err, db.ErrDatabaseNotFound) {
 		ctx.JSON(404, exception.BadRequestError(errors.New("endpoint not found")).ToResponse())
 		return
 	}
 
 	if err != nil {
-		log.Error("get endpoint error %v", err)
+		log.Error("get endpoint error", "error", err)
 		ctx.JSON(500, exception.InternalServerError(errors.New("internal server error")).ToResponse())
 		return
 	}
 
 	// get plugin installation
-	pluginInstallationCacheKey := strings.Join(
-		[]string{
-			"plugin_id",
-			endpoint.PluginID,
-			"tenant_id",
-			endpoint.TenantID,
-		},
-		":",
-	)
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(endpoint.PluginID, endpoint.TenantID)
 	pluginInstallation, err := cache.AutoGetWithGetter[models.PluginInstallation](
 		pluginInstallationCacheKey,
 		func() (*models.PluginInstallation, error) {
@@ -105,7 +93,7 @@ func (app *App) EndpointHandler(ctx *gin.Context, hookId string, maxExecutionTim
 	}
 
 	// check if plugin exists in current node
-	if ok, originalError := app.cluster.IsPluginOnCurrentNode(pluginUniqueIdentifier); !ok {
+	if needRedirecting, originalError := app.pluginManager.NeedRedirecting(pluginUniqueIdentifier); needRedirecting {
 		app.redirectPluginInvokeByPluginIdentifier(ctx, pluginUniqueIdentifier, originalError)
 	} else {
 		service.Endpoint(ctx, endpoint, pluginInstallation, maxExecutionTime, path)

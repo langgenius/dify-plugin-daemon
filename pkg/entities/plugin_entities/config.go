@@ -287,6 +287,7 @@ type ProviderConfig struct {
 	Required    bool           `json:"required"`
 	Default     any            `json:"default" validate:"omitempty,is_basic_type"`
 	Options     []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
+	Multiple    bool           `json:"multiple" validate:"omitempty"`
 	Label       I18nObject     `json:"label" validate:"required"`
 	Help        *I18nObject    `json:"help" validate:"omitempty"`
 	URL         *string        `json:"url" validate:"omitempty"`

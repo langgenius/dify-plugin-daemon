@@ -49,6 +49,19 @@ func InvokeTextEmbedding(config *app.Config) gin.HandlerFunc {
 	}
 }
 
+func InvokeMultimodalEmbedding(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeMultimodalEmbedding]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(
+			c,
+			func(itr request) {
+				service.InvokeMultimodalEmbedding(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
+
 func GetTextEmbeddingNumTokens(config *app.Config) gin.HandlerFunc {
 	type request = plugin_entities.InvokePluginRequest[requests.RequestGetTextEmbeddingNumTokens]
 
@@ -70,6 +83,19 @@ func InvokeRerank(config *app.Config) gin.HandlerFunc {
 			c,
 			func(itr request) {
 				service.InvokeRerank(&itr, c, config.PluginMaxExecutionTimeout)
+			},
+		)
+	}
+}
+
+func InvokeMultimodalRerank(config *app.Config) gin.HandlerFunc {
+	type request = plugin_entities.InvokePluginRequest[requests.RequestInvokeMultimodalRerank]
+
+	return func(c *gin.Context) {
+		BindPluginDispatchRequest(
+			c,
+			func(itr request) {
+				service.InvokeMultimodalRerank(&itr, c, config.PluginMaxExecutionTimeout)
 			},
 		)
 	}

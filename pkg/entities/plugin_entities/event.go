@@ -3,8 +3,8 @@ package plugin_entities
 import (
 	"encoding/json"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 type PluginUniversalEvent struct {
@@ -22,7 +22,7 @@ func ParsePluginUniversalEvent(
 	sessionHandler func(sessionId string, data []byte),
 	heartbeatHandler func(),
 	errorHandler func(err string),
-	infoHandler func(message string),
+	logHandler func(logEvent PluginLogEvent),
 ) {
 	// handle event
 	event, err := parser.UnmarshalJsonBytes[PluginUniversalEvent](data)
@@ -44,11 +44,13 @@ func ParsePluginUniversalEvent(
 				event.Data,
 			)
 			if err != nil {
-				log.Error("unmarshal json failed: %s", err.Error())
+				log.Error("unmarshal json failed", "error", err)
 				return
 			}
 
-			infoHandler(logEvent.Message)
+			if logHandler != nil {
+				logHandler(logEvent)
+			}
 		}
 	case PLUGIN_EVENT_SESSION:
 		sessionHandler(sessionId, event.Data)

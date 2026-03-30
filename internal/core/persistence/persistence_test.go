@@ -8,20 +8,20 @@ import (
 	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPersistenceStoreAndLoad(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBType:            "postgresql",
+		DBType:            app.DB_TYPE_POSTGRESQL,
 		DBUsername:        "postgres",
 		DBPassword:        "difyai123456",
 		DBHost:            "localhost",
@@ -70,11 +70,11 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 }
 
 func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	assert.Nil(t, err)
 	defer cache.Close()
 	db.Init(&app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",
@@ -104,11 +104,11 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 }
 
 func TestPersistenceDelete(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	assert.Nil(t, err)
 	defer cache.Close()
 	db.Init(&app.Config{
-		DBType:     "postgresql",
+		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
 		DBPassword: "difyai123456",
 		DBHost:     "localhost",
@@ -151,14 +151,14 @@ func TestPersistenceDelete(t *testing.T) {
 }
 
 func TestPersistencePathTraversal(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0)
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
 	if err != nil {
 		t.Fatalf("Failed to init redis client: %v", err)
 	}
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBType:            "postgresql",
+		DBType:            app.DB_TYPE_POSTGRESQL,
 		DBUsername:        "postgres",
 		DBPassword:        "difyai123456",
 		DBHost:            "localhost",

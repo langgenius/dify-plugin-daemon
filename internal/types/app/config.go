@@ -1,13 +1,30 @@
 package app
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
+	"strings"
+
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+)
+
+const (
+	DB_TYPE_POSTGRESQL = "postgresql"
+	DB_TYPE_PG_BOUNCER = "pgbouncer"
+	DB_TYPE_MYSQL      = "mysql"
+	DB_TYPE_OCEANBASE  = "oceanbase"
+	DB_TYPE_SEEKDB     = "seekdb"
 )
 
 type Config struct {
 	// server
+	ServerHost string `envconfig:"SERVER_HOST"`
 	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
 
@@ -37,6 +54,7 @@ type Config struct {
 	TencentCOSSecretKey string `envconfig:"TENCENT_COS_SECRET_KEY"`
 	TencentCOSSecretId  string `envconfig:"TENCENT_COS_SECRET_ID"`
 	TencentCOSRegion    string `envconfig:"TENCENT_COS_REGION"`
+	TencentCOSEndpoint  string `envconfig:"TENCENT_COS_ENDPOINT"`
 
 	// azure blob
 	AzureBlobStorageContainerName    string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
@@ -49,6 +67,7 @@ type Config struct {
 	AliyunOSSAccessKeySecret string `envconfig:"ALIYUN_OSS_ACCESS_KEY_SECRET"`
 	AliyunOSSAuthVersion     string `envconfig:"ALIYUN_OSS_AUTH_VERSION" default:"v4"`
 	AliyunOSSPath            string `envconfig:"ALIYUN_OSS_PATH"`
+	AliyunOSSCloudBoxId      string `envconfig:"ALIYUN_OSS_CLOUDBOX_ID" default:""`
 
 	// google gcs
 	GoogleCloudStorageCredentialsB64 string `envconfig:"GCS_CREDENTIALS"`
@@ -57,6 +76,7 @@ type Config struct {
 	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
 	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
 	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
+	HuaweiOBSPathStyle bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
@@ -70,23 +90,26 @@ type Config struct {
 	// plugin remote installing
 	PluginRemoteInstallingHost                string `envconfig:"PLUGIN_REMOTE_INSTALLING_HOST"`
 	PluginRemoteInstallingPort                uint16 `envconfig:"PLUGIN_REMOTE_INSTALLING_PORT"`
-	PluginRemoteInstallingEnabled             *bool  `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED"`
+	PluginRemoteInstallingEnabled             bool   `envconfig:"PLUGIN_REMOTE_INSTALLING_ENABLED" default:"true"`
 	PluginRemoteInstallingMaxConn             int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_CONN"`
 	PluginRemoteInstallingMaxSingleTenantConn int    `envconfig:"PLUGIN_REMOTE_INSTALLING_MAX_SINGLE_TENANT_CONN"`
 	PluginRemoteInstallServerEventLoopNums    int    `envconfig:"PLUGIN_REMOTE_INSTALL_SERVER_EVENT_LOOP_NUMS"`
 
 	// plugin endpoint
-	PluginEndpointEnabled *bool `envconfig:"PLUGIN_ENDPOINT_ENABLED"`
+	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED" default:"true"`
 
-	// storage
 	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
+	PluginAssetCacheSize   uint16 `envconfig:"PLUGIN_ASSET_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
 
 	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
+
+	// plugin install timeout in minutes
+	PluginInstallTimeout int `envconfig:"PLUGIN_INSTALL_TIMEOUT" default:"15"`
 
 	// local launching max concurrent
 	PluginLocalLaunchingConcurrent int `envconfig:"PLUGIN_LOCAL_LAUNCHING_CONCURRENT" validate:"required"`
@@ -98,12 +121,14 @@ type Config struct {
 	RoutinePoolSize int `envconfig:"ROUTINE_POOL_SIZE" validate:"required"`
 
 	// redis
-	RedisHost   string `envconfig:"REDIS_HOST"`
-	RedisPort   uint16 `envconfig:"REDIS_PORT"`
-	RedisPass   string `envconfig:"REDIS_PASSWORD"`
-	RedisUser   string `envconfig:"REDIS_USERNAME"`
-	RedisUseSsl bool   `envconfig:"REDIS_USE_SSL"`
-	RedisDB     int    `envconfig:"REDIS_DB"`
+	RedisHost        string `envconfig:"REDIS_HOST"`
+	RedisPort        uint16 `envconfig:"REDIS_PORT"`
+	RedisPass        string `envconfig:"REDIS_PASSWORD"`
+	RedisUser        string `envconfig:"REDIS_USERNAME"`
+	RedisDB          int    `envconfig:"REDIS_DB"`
+	RedisUseSsl      bool   `envconfig:"REDIS_USE_SSL"`
+	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
+	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
 
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
@@ -124,23 +149,30 @@ type Config struct {
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
 	// database connection pool settings
-	DBMaxIdleConns    int    `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
-	DBMaxOpenConns    int    `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
-	DBConnMaxLifetime int    `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
-	DBExtras          string `envconfig:"DB_EXTRAS"`
-	DBCharset         string `envconfig:"DB_CHARSET"`
+	DBMaxIdleConns    int           `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
+	DBMaxOpenConns    int           `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`
+	DBConnMaxLifetime int           `envconfig:"DB_CONN_MAX_LIFETIME" default:"3600"`
+	DBExtras          string        `envconfig:"DB_EXTRAS"`
+	DBCharset         string        `envconfig:"DB_CHARSET"`
+	DBGormLogLevel    string        `envconfig:"DB_GORM_LOG_LEVEL"`
+	DBConnectTimeout  time.Duration `envconfig:"DB_CONNECT_TIMEOUT" default:"5s"`
+	DBReadTimeout     time.Duration `envconfig:"DB_READ_TIMEOUT" default:"30s"`
+	DBWriteTimeout    time.Duration `envconfig:"DB_WRITE_TIMEOUT" default:"30s"`
 
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`
 	PersistenceStorageMaxSize int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
 
 	// force verifying signature for all plugins, not allowing install plugin not signed
-	ForceVerifyingSignature *bool `envconfig:"FORCE_VERIFYING_SIGNATURE"`
+	ForceVerifyingSignature bool `envconfig:"FORCE_VERIFYING_SIGNATURE" default:"true"`
 
 	// enable or disable third-party signature verification for plugins
 	ThirdPartySignatureVerificationEnabled bool `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_ENABLED"  default:"false"`
 	// a comma-separated list of file paths to public keys in addition to the official public key for signature verification
 	ThirdPartySignatureVerificationPublicKeys []string `envconfig:"THIRD_PARTY_SIGNATURE_VERIFICATION_PUBLIC_KEYS"  default:""`
+
+	// Enforce signature verification for plugins claiming Langgenius authorship
+	EnforceLanggeniusSignatures bool `envconfig:"ENFORCE_LANGGENIUS_PLUGIN_SIGNATURES" default:"true"`
 
 	// lifetime state management
 	LifetimeCollectionHeartbeatInterval int `envconfig:"LIFETIME_COLLECTION_HEARTBEAT_INTERVAL"  validate:"required"`
@@ -153,6 +185,7 @@ type Config struct {
 	DifyPluginServerlessConnectorAPIKey        *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
+	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
@@ -162,16 +195,39 @@ type Config struct {
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary           *bool  `envconfig:"PIP_PREFER_BINARY"`
-	PipVerbose                *bool  `envconfig:"PIP_VERBOSE"`
+	PipPreferBinary           bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
+	PipVerbose                bool   `envconfig:"PIP_VERBOSE" default:"true"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
 
+	// Runtime buffer configuration (applies to both local and serverless runtimes)
+	// These are the new generic names that should be used going forward
+	PluginRuntimeBufferSize    int `envconfig:"PLUGIN_RUNTIME_BUFFER_SIZE" default:"1024"`
+	PluginRuntimeMaxBufferSize int `envconfig:"PLUGIN_RUNTIME_MAX_BUFFER_SIZE" default:"5242880"`
+
+	// Legacy STDIO-specific buffer configuration (kept for backward compatibility)
+	// If the new PluginRuntime* configs are not set, these will be used as fallback
 	PluginStdioBufferSize    int `envconfig:"PLUGIN_STDIO_BUFFER_SIZE" default:"1024"`
 	PluginStdioMaxBufferSize int `envconfig:"PLUGIN_STDIO_MAX_BUFFER_SIZE" default:"5242880"`
 
 	DisplayClusterLog bool `envconfig:"DISPLAY_CLUSTER_LOG"`
 
 	PPROFEnabled bool `envconfig:"PPROF_ENABLED"`
+
+	// OpenTelemetry
+	EnableOtel                 bool    `envconfig:"ENABLE_OTEL" default:"false"`
+	OtlpTraceEndpoint          string  `envconfig:"OTLP_TRACE_ENDPOINT"`
+	OtlpMetricEndpoint         string  `envconfig:"OTLP_METRIC_ENDPOINT"`
+	OtlpBaseEndpoint           string  `envconfig:"OTLP_BASE_ENDPOINT" default:"http://localhost:4318"`
+	OtelApiKey                 string  `envconfig:"OTEL_API_KEY"`
+	OtelExporterProtocol       string  `envconfig:"OTEL_EXPORTER_OTLP_PROTOCOL" default:"http/protobuf"` // or grpc
+	OtelExporterType           string  `envconfig:"OTEL_EXPORTER_TYPE" default:"otlp"`
+	OtelSamplingRate           float64 `envconfig:"OTEL_SAMPLING_RATE" default:"1.0"`
+	OtelBatchScheduleDelayMS   int     `envconfig:"OTEL_BATCH_EXPORT_SCHEDULE_DELAY" default:"5000"`
+	OtelMaxQueueSize           int     `envconfig:"OTEL_MAX_QUEUE_SIZE" default:"2048"`
+	OtelMaxExportBatchSize     int     `envconfig:"OTEL_MAX_EXPORT_BATCH_SIZE" default:"512"`
+	OtelMetricExportIntervalMS int     `envconfig:"OTEL_METRIC_EXPORT_INTERVAL" default:"60000"`
+	OtelBatchExportTimeoutMS   int     `envconfig:"OTEL_BATCH_EXPORT_TIMEOUT" default:"10000"`
+	OtelMetricExportTimeoutMS  int     `envconfig:"OTEL_METRIC_EXPORT_TIMEOUT" default:"30000"`
 
 	SentryEnabled          bool    `envconfig:"SENTRY_ENABLED"`
 	SentryDSN              string  `envconfig:"SENTRY_DSN"`
@@ -186,7 +242,9 @@ type Config struct {
 	NoProxy    string `envconfig:"NO_PROXY"`
 
 	// log settings
-	HealthApiLogEnabled *bool `envconfig:"HEALTH_API_LOG_ENABLED"`
+	HealthApiLogEnabled bool   `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
+	LogOutputFormat     string `envconfig:"LOG_OUTPUT_FORMAT" default:"text"`
+	LogFile             string `envconfig:"LOG_FILE" default:""`
 
 	// dify invocation write timeout in milliseconds
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
@@ -201,7 +259,7 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if c.PluginRemoteInstallingEnabled != nil && *c.PluginRemoteInstallingEnabled {
+	if c.PluginRemoteInstallingEnabled {
 		if c.PluginRemoteInstallingHost == "" {
 			return fmt.Errorf("plugin remote installing host is empty")
 		}
@@ -216,7 +274,8 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.Platform == PLATFORM_SERVERLESS {
+	switch c.Platform {
+	case PLATFORM_SERVERLESS:
 		if c.DifyPluginServerlessConnectorURL == nil {
 			return fmt.Errorf("dify plugin serverless connector url is empty")
 		}
@@ -228,11 +287,11 @@ func (c *Config) Validate() error {
 		if c.MaxServerlessTransactionTimeout == 0 {
 			return fmt.Errorf("max serverless transaction timeout is empty")
 		}
-	} else if c.Platform == PLATFORM_LOCAL {
+	case PLATFORM_LOCAL:
 		if c.PluginWorkingPath == "" {
 			return fmt.Errorf("plugin working path is empty")
 		}
-	} else {
+	default:
 		return fmt.Errorf("invalid platform")
 	}
 
@@ -240,7 +299,76 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("plugin package cache path is empty")
 	}
 
+	if c.DBGormLogLevel != "" {
+		if !gormConfig.ValidateGormLogLevel(c.DBGormLogLevel) {
+			return fmt.Errorf("invalid gorm log level: '%s'. Valid levels are: silent, error, warn, info", c.DBGormLogLevel)
+		}
+	}
 	return nil
+}
+
+// Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
+func (c *Config) GetLocalRuntimeBufferSize() int {
+	if c.PluginStdioBufferSize != 1024 && c.PluginStdioBufferSize != 0 {
+		return c.PluginStdioBufferSize
+	}
+	return c.PluginRuntimeBufferSize
+}
+
+// Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
+func (c *Config) GetLocalRuntimeMaxBufferSize() int {
+	if c.PluginStdioMaxBufferSize != 5242880 && c.PluginStdioMaxBufferSize != 0 {
+		return c.PluginStdioMaxBufferSize
+	}
+	return c.PluginRuntimeMaxBufferSize
+}
+
+// RedisTLSConfig builds a *tls.Config for Redis based on envs.
+func (c *Config) RedisTLSConfig() (*tls.Config, error) {
+	if !c.RedisUseSsl {
+		return nil, nil
+	}
+
+	tlsConf := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	// Load custom CA certificates if provided
+	if strings.TrimSpace(c.RedisSSLCACerts) != "" {
+		pem, err := os.ReadFile(c.RedisSSLCACerts)
+		if err != nil {
+			return nil, fmt.Errorf("read REDIS_SSL_CA_CERTS: %w", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pem) {
+			return nil, fmt.Errorf("failed to append CA certs from %s", c.RedisSSLCACerts)
+		}
+		tlsConf.RootCAs = pool
+	}
+
+	// Configure certificate verification based on REDIS_SSL_CERT_REQS
+	certReqs := strings.ToUpper(strings.TrimSpace(c.RedisSSLCertReqs))
+	switch certReqs {
+	case "CERT_NONE":
+		// Skip all certificate verification (insecure)
+		tlsConf.InsecureSkipVerify = true
+	case "CERT_OPTIONAL", "CERT_REQUIRED", "":
+		// Require valid certificate verification (default and most secure)
+		// CERT_OPTIONAL is treated as CERT_REQUIRED for client-side TLS,
+		// as servers almost always present certificates and the client's
+		// choice is whether to validate them or not
+		tlsConf.InsecureSkipVerify = false
+
+		// Require CA certs to be explicitly provided when CERT_REQUIRED is set
+		if certReqs == "CERT_REQUIRED" && strings.TrimSpace(c.RedisSSLCACerts) == "" {
+			return nil, fmt.Errorf("REDIS_SSL_CA_CERTS must be provided when REDIS_SSL_CERT_REQS is set to CERT_REQUIRED")
+		}
+	default:
+		// Invalid value - return an error instead of silently defaulting
+		return nil, fmt.Errorf("invalid REDIS_SSL_CERT_REQS value: %s (valid options: CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED)", certReqs)
+	}
+
+	return tlsConf, nil
 }
 
 type PlatformType string
@@ -249,3 +377,10 @@ const (
 	PLATFORM_LOCAL      PlatformType = "local"
 	PLATFORM_SERVERLESS PlatformType = "serverless"
 )
+
+func (p PlatformType) ToPluginRuntimeType() plugin_entities.PluginRuntimeType {
+	if p == PLATFORM_LOCAL {
+		return plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	}
+	return plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS
+}

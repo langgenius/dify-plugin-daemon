@@ -1,6 +1,6 @@
 package entities
 
-import "github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
+import "github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 
 type Error struct {
 	ErrorType string `json:"error_type"`

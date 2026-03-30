@@ -4,14 +4,15 @@ import (
 	"errors"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/cache/helper"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/strings"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 )
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
@@ -97,8 +98,8 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	finalData := responseData{
-		List: 	data,
-		Total: 	totalCount,
+		List:  data,
+		Total: totalCount,
 	}
 
 	return entities.NewSuccessResponse(finalData)
@@ -484,4 +485,104 @@ func GetAgentStrategy(tenant_id string, plugin_id string, provider string) *enti
 		Declaration:               declaration.AgentStrategy,
 		Meta:                      declaration.Meta,
 	})
+}
+
+func ListDatasources(tenant_id string, page int, page_size int) *entities.Response {
+	type Datasource struct {
+		models.DatasourceInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.DatasourceProviderDeclaration `json:"declaration"`
+	}
+
+	providers, err := db.GetAll[models.DatasourceInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Page(page, page_size),
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	data := make([]Datasource, 0, len(providers))
+
+	for _, provider := range providers {
+		uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(provider.PluginUniqueIdentifier)
+		var runtimeType plugin_entities.PluginRuntimeType
+		if uniqueIdentifier.RemoteLike() {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+		} else {
+			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+		}
+
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			uniqueIdentifier,
+			runtimeType,
+		)
+
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		data = append(data, Datasource{
+			DatasourceInstallation: provider,
+			Declaration:            declaration.Datasource,
+		})
+	}
+
+	return entities.NewSuccessResponse(data)
+}
+
+func GetDatasource(tenant_id string, plugin_id string, provider string) *entities.Response {
+	type Datasource struct {
+		models.DatasourceInstallation // pointer to avoid deep copy
+
+		Declaration *plugin_entities.DatasourceProviderDeclaration `json:"declaration"`
+	}
+
+	datasource, err := db.GetOne[models.DatasourceInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Equal("plugin_id", plugin_id),
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	if datasource.Provider != provider {
+		return exception.ErrPluginNotFound().ToResponse()
+	}
+
+	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(datasource.PluginUniqueIdentifier)
+	var runtimeType plugin_entities.PluginRuntimeType
+	if uniqueIdentifier.RemoteLike() {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+	} else {
+		runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	}
+
+	declaration, err := helper.CombinedGetPluginDeclaration(
+		uniqueIdentifier,
+		runtimeType,
+	)
+
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	return entities.NewSuccessResponse(Datasource{
+		DatasourceInstallation: datasource,
+		Declaration:            declaration.Datasource,
+	})
+}
+
+func SwitchServerlessEndpoint(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	functionName string,
+	functionURL string) *entities.Response {
+	manager := plugin_manager.Manager()
+	err := manager.SwitchServerlessEndpoint(pluginUniqueIdentifier, functionName, functionURL)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+	return entities.NewSuccessResponse(true)
 }

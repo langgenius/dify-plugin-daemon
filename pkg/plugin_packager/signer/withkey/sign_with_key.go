@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/encryption"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 // SignPluginWithPrivateKey is a function that signs a plugin

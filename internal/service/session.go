@@ -1,9 +1,10 @@
 package service
 
 import (
+	"context"
 	"errors"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/access_types"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -14,6 +15,7 @@ func createSession[T any](
 	access_type access_types.PluginAccessType,
 	access_action access_types.PluginAccessAction,
 	cluster_id string,
+	requestContext context.Context,
 ) (*session_manager.Session, error) {
 	manager := plugin_manager.Manager()
 	if manager == nil {
@@ -21,8 +23,7 @@ func createSession[T any](
 	}
 
 	// try fetch plugin identifier from plugin id
-
-	runtime, err := manager.Get(r.UniqueIdentifier)
+	runtime, err := manager.GetPluginRuntime(r.UniqueIdentifier)
 	if err != nil {
 		return nil, errors.New("failed to get plugin runtime")
 	}
@@ -43,6 +44,7 @@ func createSession[T any](
 			AppID:                  r.AppID,
 			EndpointID:             r.EndpointID,
 			Context:                r.Context,
+			RequestContext:         requestContext,
 		},
 	)
 

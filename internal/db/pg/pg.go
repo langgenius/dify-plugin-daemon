@@ -5,33 +5,43 @@ import (
 	"strings"
 	"time"
 
+	appDbConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type PGConfig struct {
-	Host            string
-	Port            int
-	DBName          string
-	DefaultDBName   string
-	User            string
-	Pass            string
-	SSLMode         string
-	MaxIdleConns    int
-	MaxOpenConns    int
-	ConnMaxLifetime int
-	Charset         string
-	Extras          string
+	Host               string
+	Port               int
+	DBName             string
+	DefaultDBName      string
+	User               string
+	Pass               string
+	SSLMode            string
+	MaxIdleConns       int
+	MaxOpenConns       int
+	ConnMaxLifetime    int
+	Charset            string
+	Extras             string
+	PreparedStatements bool
+	LogLevel           string
 }
 
 func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 	// first try to connect to target database
 	dsn := buildDSN(config, false)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	gormConfig := &gorm.Config{
+		PrepareStmt: config.PreparedStatements,
+	}
+	if config.LogLevel != "" {
+		gormConfig.Logger = logger.Default.LogMode(appDbConfig.GetGormLogLevel(config.LogLevel))
+	}
+	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		// if connection fails, try to create database
 		dsn = buildDSN(config, true)
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err = gorm.Open(postgres.Open(dsn), gormConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +68,7 @@ func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 
 		// connect to the new db
 		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", config.Host, config.Port, config.User, config.Pass, config.DBName, config.SSLMode)
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err = gorm.Open(postgres.Open(dsn), gormConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -67,20 +77,6 @@ func InitPluginDB(config *PGConfig) (*gorm.DB, error) {
 	pgsqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
-	}
-
-	// check if uuid-ossp extension exists
-	rows, err := pgsqlDB.Query("SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp'")
-	if err != nil {
-		return nil, err
-	}
-
-	if !rows.Next() {
-		// create the uuid-ossp extension
-		_, err = pgsqlDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// configure connection pool

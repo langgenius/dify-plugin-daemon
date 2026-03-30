@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 type ZipPluginDecoder struct {

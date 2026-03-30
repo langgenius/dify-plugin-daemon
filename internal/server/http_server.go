@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_daemon/backwards_invocation/transaction"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 	sentrygin "github.com/getsentry/sentry-go/gin"
 )
@@ -19,21 +19,30 @@ import (
 // server starts a http server and returns a function to stop it
 func (app *App) server(config *app.Config) func() {
 	engine := gin.New()
-	if *config.HealthApiLogEnabled {
-		engine.Use(gin.Logger())
+	engine.Use(log.RecoveryMiddleware())
+	engine.Use(log.TraceMiddleware())
+	// OpenTelemetry middleware (extracts upstream trace context and starts server spans)
+	if config.EnableOtel {
+		engine.Use(OtelGinMiddleware())
+	}
+	if config.HealthApiLogEnabled {
+		engine.Use(log.LoggerMiddleware())
 	} else {
-		engine.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		engine.Use(log.LoggerMiddlewareWithConfig(log.LoggerConfig{
 			SkipPaths: []string{"/health/check"},
 		}))
 	}
-	engine.Use(gin.Recovery())
 	engine.Use(controllers.CollectActiveRequests())
+	engine.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{"code": "not_found", "message": "route not found"})
+	})
 	engine.GET("/health/check", controllers.HealthCheck(config))
 
 	endpointGroup := engine.Group("/e")
-	awsLambdaTransactionGroup := engine.Group("/backwards-invocation")
+	serverlessTransactionGroup := engine.Group("/backwards-invocation")
 	pluginGroup := engine.Group("/plugin/:tenant_id")
 	pprofGroup := engine.Group("/debug/pprof")
+	invokeGroup := engine.Group("/v2/invoke")
 
 	if config.AdminApiEnabled {
 		if len(config.AdminApiKey) < 10 {
@@ -50,7 +59,7 @@ func (app *App) server(config *app.Config) func() {
 		// setup sentry for all groups
 		sentryGroup := []*gin.RouterGroup{
 			endpointGroup,
-			awsLambdaTransactionGroup,
+			serverlessTransactionGroup,
 			pluginGroup,
 		}
 		for _, group := range sentryGroup {
@@ -61,24 +70,25 @@ func (app *App) server(config *app.Config) func() {
 	}
 
 	app.endpointGroup(endpointGroup, config)
-	app.awsLambdaTransactionGroup(awsLambdaTransactionGroup, config)
+	app.serverlessTransactionGroup(serverlessTransactionGroup, config)
 	app.pluginGroup(pluginGroup, config)
 	app.pprofGroup(pprofGroup, config)
+	app.invokeGroup(invokeGroup, config)
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.ServerPort),
+		Addr:    fmt.Sprintf("%s:%d", config.ServerHost, config.ServerPort),
 		Handler: engine,
 	}
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Panic("listen: %s\n", err)
+			log.Panic("listen failed", "error", err)
 		}
 	}()
 
 	return func() {
 		if err := srv.Shutdown(context.Background()); err != nil {
-			log.Panic("Server Shutdown: %s\n", err)
+			log.Panic("server shutdown failed", "error", err)
 		}
 	}
 }
@@ -91,6 +101,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 	app.pluginManagementGroup(group.Group("/management"), config)
 	app.endpointManagementGroup(group.Group("/endpoint"))
 	app.pluginAssetGroup(group.Group("/asset"))
+	app.pluginAssetExtractGroup(group.Group("/extract-asset"))
 }
 
 func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) {
@@ -99,20 +110,19 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.Use(app.RedirectPluginInvoke())
 	group.Use(app.InitClusterID())
 
-	group.POST("/tool/invoke", controllers.InvokeTool(config))
 	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
 
 	app.setupGeneratedRoutes(group, config)
 }
 
 func (app *App) remoteDebuggingGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginRemoteInstallingEnabled != nil && *config.PluginRemoteInstallingEnabled {
+	if config.PluginRemoteInstallingEnabled {
 		group.POST("/key", CheckingKey(config.ServerKey), controllers.GetRemoteDebuggingKey)
 	}
 }
 
 func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
-	if config.PluginEndpointEnabled != nil && *config.PluginEndpointEnabled {
+	if config.PluginEndpointEnabled {
 		group.HEAD("/:hook_id/*path", app.Endpoint(config))
 		group.POST("/:hook_id/*path", app.Endpoint(config))
 		group.GET("/:hook_id/*path", app.Endpoint(config))
@@ -122,14 +132,14 @@ func (app *App) endpointGroup(group *gin.RouterGroup, config *app.Config) {
 	}
 }
 
-func (appRef *App) awsLambdaTransactionGroup(group *gin.RouterGroup, config *app.Config) {
+func (appRef *App) serverlessTransactionGroup(group *gin.RouterGroup, config *app.Config) {
 	if config.Platform == app.PLATFORM_SERVERLESS {
-		appRef.awsTransactionHandler = transaction.NewAWSTransactionHandler(
+		appRef.serverlessTransactionHandler = transaction.NewServerlessTransactionHandler(
 			time.Duration(config.MaxServerlessTransactionTimeout) * time.Second,
 		)
 		group.POST(
 			"/transaction",
-			service.HandleAWSPluginTransaction(appRef.awsTransactionHandler),
+			service.HandleServerlessPluginTransaction(appRef.serverlessTransactionHandler),
 		)
 	}
 }
@@ -157,6 +167,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/decode/from_identifier", controllers.DecodePluginFromIdentifier(config))
 	group.GET("/fetch/manifest", controllers.FetchPluginManifest)
 	group.GET("/fetch/identifier", controllers.FetchPluginFromIdentifier)
+	group.GET("/fetch/readme", controllers.FetchPluginReadme)
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", controllers.ListPlugins)
 	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)
@@ -164,17 +175,26 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/models", controllers.ListModels)
 	group.GET("/tools", controllers.ListTools)
 	group.GET("/tool", controllers.GetTool)
+	group.GET("/triggers", controllers.ListTriggers)
+	group.GET("/trigger", controllers.GetTrigger)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)
 	group.GET("/agent_strategies", controllers.ListAgentStrategies)
 	group.GET("/agent_strategy", controllers.GetAgentStrategy)
+	group.GET("/datasources", controllers.ListDatasources)
+	group.GET("/datasource", controllers.GetDatasource)
 }
 
 func (app *App) adminGroup(group *gin.RouterGroup, config *app.Config) {
 	group.POST("/plugin/serverless/reinstall", controllers.ReinstallPluginFromIdentifier(config))
+	group.POST("/plugin/serverless/switch-endpoint", controllers.SwitchServerlessEndpoint)
 }
 
 func (app *App) pluginAssetGroup(group *gin.RouterGroup) {
 	group.GET("/:id", controllers.GetAsset)
+}
+
+func (app *App) pluginAssetExtractGroup(group *gin.RouterGroup) {
+	group.GET("/", controllers.ExtractPluginAsset)
 }
 
 func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
@@ -193,4 +213,18 @@ func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
 		group.GET("/mutex", controllers.PprofMutex)
 		group.GET("/threadcreate", controllers.PprofThreadcreate)
 	}
+}
+
+func (app *App) invokeGroup(group *gin.RouterGroup, config *app.Config) {
+	group.Use(CheckingKey(config.ServerKey))
+	dispatchGroup := group.Group("/dispatch")
+	dispatchGroup.Use(controllers.CollectActiveDispatchRequests())
+	dispatchGroup.Use(app.FetchPluginDirect())
+	dispatchGroup.Use(app.RedirectPluginInvoke())
+	dispatchGroup.Use(app.InitClusterID())
+
+	dispatchGroup.POST("/agent_strategy/invoke",
+		controllers.InvokeAgentStrategy(config))
+
+	app.setupGeneratedRoutes(dispatchGroup, config)
 }

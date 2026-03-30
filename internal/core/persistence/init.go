@@ -4,7 +4,7 @@ import (
 	"github.com/langgenius/dify-cloud-kit/oss"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 var (
@@ -17,7 +17,7 @@ func InitPersistence(oss oss.OSS, config *app.Config) {
 		maxStorageSize: config.PersistenceStorageMaxSize,
 	}
 
-	log.Info("Persistence initialized")
+	log.Info("persistence initialized")
 }
 
 func GetPersistence() *Persistence {

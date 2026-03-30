@@ -9,16 +9,15 @@ import (
 	"syscall"
 
 	"github.com/google/uuid"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/tester"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/local_runtime"
-	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/test_utils"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/mock"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/parser"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/routine"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/stream"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/testutils"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func logResponse(response GenericResponse, responseFormat string, client client) {
@@ -47,9 +46,9 @@ func systemLog(response GenericResponse, responseFormat string) {
 	} else if responseFormat == "text" {
 		switch response.Type {
 		case GENERIC_RESPONSE_TYPE_INFO:
-			logger.Output(3, log.LOG_LEVEL_DEBUG_COLOR+"[INFO]"+response.Response["info"].(string)+log.LOG_LEVEL_COLOR_END)
+			logger.Output(3, "[INFO]"+response.Response["info"].(string))
 		case GENERIC_RESPONSE_TYPE_ERROR:
-			logger.Output(3, log.LOG_LEVEL_ERROR_COLOR+"[ERROR]"+response.Response["error"].(string)+log.LOG_LEVEL_COLOR_END)
+			logger.Output(3, "[ERROR]"+response.Response["error"].(string))
 		}
 	}
 }
@@ -73,7 +72,7 @@ func handleClient(
 	pluginUniqueIdentifier, _ := runtime.Identity()
 
 	// mocked invocation
-	mockedInvocation := tester.NewMockedDifyInvocation()
+	mockedInvocation := mock.NewMockedDifyInvocation()
 
 	logResponse(GenericResponse{
 		Type:     GENERIC_RESPONSE_TYPE_PLUGIN_READY,
@@ -120,7 +119,7 @@ func handleClient(
 			},
 		)
 
-		stream, err := test_utils.RunOnceWithSession[map[string]any, map[string]any](
+		stream, err := testutils.RunOnceWithSession[map[string]any, map[string]any](
 			runtime,
 			session,
 			invokePayload.Request,
@@ -194,9 +193,6 @@ func setupSignalHandler(dir string) {
 }
 
 func runPlugin(payload RunPluginPayload) error {
-	// disable logs
-	log.SetLogVisibility(payload.EnableLogs)
-
 	// init routine pool
 	routine.InitPool(10000)
 
@@ -206,7 +202,7 @@ func runPlugin(payload RunPluginPayload) error {
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("create temp directory error"))
 	}
-	defer test_utils.ClearTestingPath(dir)
+	defer testutils.ClearTestingPath(dir)
 
 	// remove the temp directory when the program shuts down
 	setupSignalHandler(dir)
@@ -233,7 +229,7 @@ func runPlugin(payload RunPluginPayload) error {
 	}, payload.ResponseFormat)
 
 	// launch the plugin locally and returns a local runtime
-	runtime, err := test_utils.GetRuntime(pluginFile, dir)
+	runtime, err := testutils.GetRuntime(pluginFile, dir, 1)
 	if err != nil {
 		return err
 	}

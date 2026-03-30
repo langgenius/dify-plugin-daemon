@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/cmd/commandline/signature"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +41,7 @@ var (
 				if !strings.EqualFold(authorizedCategory, string(decoder.AUTHORIZED_CATEGORY_LANGGENIUS)) &&
 					!strings.EqualFold(authorizedCategory, string(decoder.AUTHORIZED_CATEGORY_PARTNER)) &&
 					!strings.EqualFold(authorizedCategory, string(decoder.AUTHORIZED_CATEGORY_COMMUNITY)) {
-					log.Error("invalid authorized category: %s", authorizedCategory)
+					log.Error("invalid authorized category", "category", authorizedCategory)
 					os.Exit(1)
 				}
 			}

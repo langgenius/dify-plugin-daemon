@@ -1,0 +1,76 @@
+identity:
+  name: "{{ .PluginName }}"
+  author: "{{ .Author }}"
+  label:
+    en_US: "{{ .PluginName }}"
+    zh_Hans: "{{ .PluginName }}"
+    pt_BR: "{{ .PluginName }}"
+    ja_JP: "{{ .PluginName }}"
+description:
+  human:
+    en_US: "{{ .PluginDescription }}"
+    zh_Hans: "{{ .PluginDescription }}"
+    pt_BR: "{{ .PluginDescription }}"
+    ja_JP: "{{ .PluginDescription }}"
+  llm: "{{ .PluginDescription }}"
+
+# For website crawl, you can use the following code:
+parameters:
+  - name: query
+    type: string
+    required: true
+    label:
+      en_US: Query string
+      zh_Hans: 查询语句
+      pt_BR: Query string
+      ja_JP: クエリ文字列
+    human_description:
+      en_US: "{{ .PluginDescription }}"
+      zh_Hans: "{{ .PluginDescription }}"
+      pt_BR: "{{ .PluginDescription }}"
+      ja_JP: "{{ .PluginDescription }}"
+    llm_description: "{{ .PluginDescription }}"
+    form: llm
+output_schema:
+    type: object
+    properties:
+      source_url:
+        type: string
+        description: the source url of the website
+      content:
+        type: string
+        description: the content from the website
+      title:
+        type: string
+        description: the title of the website
+      "description":
+        type: string
+        description: the description of the website
+
+# For online document, you can use the following code:
+parameters:
+output_schema:
+    type: object
+    properties:
+      workspace_id:
+        type: string
+        description: workspace id
+      page_id:
+        type: string
+        description: page id
+      content:
+        type: string
+        description: page content
+
+
+# For online drive, you can use the following code:
+parameters:
+output_schema:
+    type: object
+    properties:
+      file:
+        $ref: "https://dify.ai/schemas/v1/file.json"
+
+extra:
+  python:
+    source: datasources/{{ .PluginName }}.py

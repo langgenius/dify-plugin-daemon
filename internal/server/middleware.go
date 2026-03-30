@@ -9,8 +9,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
-	"github.com/langgenius/dify-plugin-daemon/internal/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func CheckingKey(key string) gin.HandlerFunc {
@@ -39,13 +41,23 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		// fetch plugin installation
-		installation, err := db.GetOne[models.PluginInstallation](
-			db.Equal("tenant_id", tenantId),
-			db.Equal("plugin_id", pluginId),
+		// fetch plugin installation with caching
+		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
+		installation, err := cache.AutoGetWithGetter(
+			cacheKey,
+			func() (*models.PluginInstallation, error) {
+				inst, err := db.GetOne[models.PluginInstallation](
+					db.Equal("tenant_id", tenantId),
+					db.Equal("plugin_id", pluginId),
+				)
+				if err != nil {
+					return nil, err
+				}
+				return &inst, nil
+			},
 		)
 
-		if err == db.ErrDatabaseNotFound {
+		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
 			return
 		}
@@ -61,7 +73,7 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, installation)
+		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
 		ctx.Next()
 	}
@@ -90,7 +102,7 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 		}
 
 		// check if plugin in current node
-		if ok, originalError := app.cluster.IsPluginOnCurrentNode(identity); !ok {
+		if needRedirecting, originalError := app.pluginManager.NeedRedirecting(identity); needRedirecting {
 			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, originalError)
 			ctx.Abort()
 		} else {
@@ -107,6 +119,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	// try find the correct node
 	nodes, err := app.cluster.FetchPluginAvailableNodesById(plugin_unique_identifier.String())
 	if err != nil {
+		log.Error("Failed to fetch plugin nodes by id", "error", err)
 		ctx.AbortWithStatusJSON(
 			500,
 			exception.InternalServerError(
@@ -115,6 +128,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		)
 		return
 	} else if len(nodes) == 0 {
+		log.Error("no plugin available nodes found", "plugin", plugin_unique_identifier.String())
 		ctx.AbortWithStatusJSON(
 			404,
 			exception.InternalServerError(
@@ -128,7 +142,7 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 	nodeId := nodes[0]
 	statusCode, header, body, err := app.cluster.RedirectRequest(nodeId, ctx.Request)
 	if err != nil {
-		log.Error("redirect request failed: %s", err.Error())
+		log.Error("redirect request failed", "error", err)
 		ctx.AbortWithStatusJSON(
 			500,
 			exception.InternalServerError(errors.New("redirect request failed: "+err.Error())).ToResponse(),
@@ -146,21 +160,15 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		}
 	}
 
-	for {
-		buf := make([]byte, 1024)
-		n, err := body.Read(buf)
-		if err != nil && err != io.EOF {
-			break
-		} else if err != nil {
-			ctx.Writer.Write(buf[:n])
-			ctx.Writer.Flush()
-			break
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			log.Error("body close failed", "error", err)
 		}
+	}(body)
 
-		if n > 0 {
-			ctx.Writer.Write(buf[:n])
-			ctx.Writer.Flush()
-		}
+	if _, err := io.Copy(ctx.Writer, body); err != nil {
+		log.Error("failed to write response body", "error", err)
 	}
 }
 
@@ -174,10 +182,32 @@ func (app *App) InitClusterID() gin.HandlerFunc {
 func (app *App) AdminAPIKey(key string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if ctx.GetHeader(constants.X_ADMIN_API_KEY) != key {
-			ctx.AbortWithStatusJSON(401, gin.H{"message": "unauthorized"})
+			ctx.AbortWithStatusJSON(
+				401,
+				exception.UnauthorizedError().ToResponse())
 			return
 		}
+		ctx.Next()
+	}
+}
 
+func (app *App) FetchPluginDirect() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		identifier := ctx.Request.Header.Get(constants.PluginUniqueIdentifier)
+		if identifier == "" {
+			ctx.AbortWithStatusJSON(
+				400,
+				exception.BadRequestError(errors.New("X-Plugin-Unique-Identifier header is required")).ToResponse())
+			return
+		}
+		pluginID, err := plugin_entities.NewPluginUniqueIdentifier(identifier)
+		if err != nil {
+			ctx.AbortWithStatusJSON(400,
+				exception.UniqueIdentifierError(err).ToResponse(),
+			)
+			return
+		}
+		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, pluginID)
 		ctx.Next()
 	}
 }
