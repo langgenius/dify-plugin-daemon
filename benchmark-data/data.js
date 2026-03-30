@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774850904431,
+  "lastUpdate": 1774851062689,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12994,6 +12994,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 29.62,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f3e9ffd8320ecb969c7709c361642b7a12b011d2",
+          "message": "feat: auto use uv --frozen when there is a uv.lock file (#663)",
+          "timestamp": "2026-03-30T14:08:21+08:00",
+          "tree_id": "9f3ae60367efd817b0de13cf900f262addc19d46",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/f3e9ffd8320ecb969c7709c361642b7a12b011d2"
+        },
+        "date": 1774851062146,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 29.43,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 29.43,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
