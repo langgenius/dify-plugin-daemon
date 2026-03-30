@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774784155085,
+  "lastUpdate": 1774850904431,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -12946,6 +12946,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 30.2,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "3281328128@qq.com",
+            "name": "James Sun",
+            "username": "shootercheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0f75a4e3d8a690fe090936a4c6297246b5c2d480",
+          "message": "feat : Add command line startup instructions (#660)\n\n* feat : Add command line startup instructions\n\n* Update README.md\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>\n\n* feat : update readme\n\n---------\n\nCo-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>",
+          "timestamp": "2026-03-30T14:05:40+08:00",
+          "tree_id": "44067c0780bec0d6c36915bdd879ab69e78d9539",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/0f75a4e3d8a690fe090936a4c6297246b5c2d480"
+        },
+        "date": 1774850903974,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 29.62,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 29.62,
             "unit": "ns/op",
             "extra": "1000000000 times\n4 procs"
           },
