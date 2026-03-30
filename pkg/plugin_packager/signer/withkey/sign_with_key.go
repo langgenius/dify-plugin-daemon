@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"io"
 	"path"
 	"strconv"
@@ -28,10 +27,6 @@ func SignPluginWithPrivateKey(
 	decoder, err := decoder.NewZipPluginDecoder(plugin)
 	if err != nil {
 		return nil, err
-	}
-
-	if verification == nil {
-		return nil, errors.New("verification cannot be nil")
 	}
 
 	// create a new zip writer
@@ -74,29 +69,31 @@ func SignPluginWithPrivateKey(
 		return nil, err
 	}
 
-	// write the verification into data
-	// NOTE: .verification.dify.json is a special file that contains the verification information
-	// and it will be placed at the end of the zip file, checksum is calculated using it also
-	verificationBytes := parser.MarshalJsonBytes(verification)
+	if verification != nil {
+		// write the verification into data
+		// NOTE: .verification.dify.json is a special file that contains the verification information
+		// and it will be placed at the end of the zip file, checksum is calculated using it also
+		verificationBytes := parser.MarshalJsonBytes(verification)
 
-	// write verification into the zip file
-	fileWriter, err := zipWriter.Create(consts.VERIFICATION_FILE)
-	if err != nil {
-		return nil, err
-	}
+		// write verification into the zip file
+		fileWriter, err := zipWriter.Create(consts.VERIFICATION_FILE)
+		if err != nil {
+			return nil, err
+		}
 
-	if _, err := fileWriter.Write(verificationBytes); err != nil {
-		return nil, err
-	}
+		if _, err := fileWriter.Write(verificationBytes); err != nil {
+			return nil, err
+		}
 
-	// hash the verification
-	hash := sha256.New()
-	hash.Write(verificationBytes)
-	hashed := hash.Sum(nil)
+		// hash the verification
+		hash := sha256.New()
+		hash.Write(verificationBytes)
+		hashed := hash.Sum(nil)
 
-	// write the hash into data
-	if _, err := data.Write(hashed); err != nil {
-		return nil, err
+		// write the hash into data
+		if _, err := data.Write(hashed); err != nil {
+			return nil, err
+		}
 	}
 
 	// get current time
