@@ -121,7 +121,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 			appConfig: &app.Config{},
 		}
 
-		args := runtime.prepareSyncArgs()
+		args := runtime.prepareSyncArgs(false)
 		require.Equal(t, []string{"sync", "--no-dev"}, args)
 	})
 
@@ -132,7 +132,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 			},
 		}
 
-		args := runtime.prepareSyncArgs()
+		args := runtime.prepareSyncArgs(false)
 		require.Equal(t, []string{"sync", "--no-dev", "-i", "https://pypi.tuna.tsinghua.edu.cn/simple"}, args)
 	})
 
@@ -143,7 +143,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 			},
 		}
 
-		args := runtime.prepareSyncArgs()
+		args := runtime.prepareSyncArgs(false)
 		require.Equal(t, []string{"sync", "--no-dev", "-v"}, args)
 	})
 
@@ -154,7 +154,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 			},
 		}
 
-		args := runtime.prepareSyncArgs()
+		args := runtime.prepareSyncArgs(false)
 		require.Equal(t, []string{"sync", "--no-dev", "--no-cache", "--retries", "3"}, args)
 	})
 
@@ -167,7 +167,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 			},
 		}
 
-		args := runtime.prepareSyncArgs()
+		args := runtime.prepareSyncArgs(false)
 		require.Equal(t, []string{
 			"sync",
 			"--no-dev",
@@ -175,6 +175,37 @@ func TestPrepareSyncArgs(t *testing.T) {
 			"-v",
 			"--no-cache",
 		}, args)
+	})
+
+	t.Run("sync args with uv.lock adds --frozen", func(t *testing.T) {
+		runtime := &LocalPluginRuntime{
+			appConfig: &app.Config{},
+		}
+
+		args := runtime.prepareSyncArgs(true)
+		require.Equal(t, []string{"sync", "--no-dev", "--frozen"}, args)
+	})
+
+	t.Run("sync args with uv.lock deduplicates --frozen from extra args", func(t *testing.T) {
+		runtime := &LocalPluginRuntime{
+			appConfig: &app.Config{
+				PipExtraArgs: "--frozen --no-cache",
+			},
+		}
+
+		args := runtime.prepareSyncArgs(true)
+		require.Equal(t, []string{"sync", "--no-dev", "--frozen", "--no-cache"}, args)
+	})
+
+	t.Run("sync args without uv.lock keeps --frozen from extra args", func(t *testing.T) {
+		runtime := &LocalPluginRuntime{
+			appConfig: &app.Config{
+				PipExtraArgs: "--frozen --no-cache",
+			},
+		}
+
+		args := runtime.prepareSyncArgs(false)
+		require.Equal(t, []string{"sync", "--no-dev", "--frozen", "--no-cache"}, args)
 	})
 }
 

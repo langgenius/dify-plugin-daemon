@@ -9,6 +9,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func FetchPluginFromIdentifier(
@@ -40,6 +41,7 @@ func DecodePluginFromIdentifier(
 	manager := plugin_manager.Manager()
 	pkgFile, err := manager.GetPackage(pluginUniqueIdentifier)
 	if err != nil {
+		log.Error("failed to get plugin package", "error", err)
 		return exception.BadRequestError(err).ToResponse()
 	}
 
@@ -51,8 +53,16 @@ func DecodePluginFromIdentifier(
 		},
 	)
 	if err != nil {
+		log.Error("failed to get plugin package", "error", err)
 		return exception.BadRequestError(err).ToResponse()
 	}
+
+	defer func(zipDecoder *decoder.ZipPluginDecoder) {
+		err := zipDecoder.Close()
+		if err != nil {
+			log.Error("failed to close zip decoder", "error", err)
+		}
+	}(zipDecoder)
 
 	verification, _ := zipDecoder.Verification()
 	if verification == nil && zipDecoder.Verified() {
