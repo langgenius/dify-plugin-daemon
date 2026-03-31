@@ -226,6 +226,13 @@ func InstallPlugin(
 		return nil, nil, err
 	}
 
+	// Invalidate plugin installation cache to avoid stale reads
+	pluginID := pluginToBeReturns.PluginID
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginID, tenantId)
+	if _, delErr := cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); delErr != nil {
+		log.Warn("failed to clear plugin installation cache", "key", pluginInstallationCacheKey, "error", delErr)
+	}
+
 	return pluginToBeReturns, installationToBeReturns, nil
 }
 
@@ -660,8 +667,8 @@ func UpgradePlugin(
 	if err != nil {
 		return nil, err
 	}
-	pluginId := newPluginUniqueIdentifier.PluginID()                                    // get the pluginId
-	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId) // make cache key
+	pluginID := newPluginUniqueIdentifier.PluginID()                                    // get the pluginId
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginID, tenantId) // make cache key
 	if _, err = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); err != nil {
 		return nil, err
 	}
