@@ -9,6 +9,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
@@ -72,6 +74,11 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 			return
 		}
 		installation = existingInstallation
+		
+		key := helper.PluginInstallationCacheKey(pluginID, runtime.TenantId())
+		if _, delErr := cache.AutoDelete[models.PluginInstallation](key); delErr != nil {
+			log.Warn("failed to invalidate plugin installation cache", "key", key, "error", delErr)
+		}
 	}
 
 	// FIXME(Yeuoly): temporary solution for managing plugin installation model in DB
