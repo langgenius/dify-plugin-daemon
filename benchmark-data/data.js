@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774852746636,
+  "lastUpdate": 1774964438543,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13104,6 +13104,54 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "1000000000 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "90c5939450ca267a9c5c099f8f86ecee8321376a",
+          "message": "feat: remote plugin disconnect clean the plugin cache (#667)",
+          "timestamp": "2026-03-31T21:37:42+08:00",
+          "tree_id": "b8c8490ffaee3588b96700541b08766acef4e7ca",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/90c5939450ca267a9c5c099f8f86ecee8321376a"
+        },
+        "date": 1774964437274,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 36.99,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "991412737 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 36.99,
+            "unit": "ns/op",
+            "extra": "991412737 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "991412737 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "991412737 times\n4 procs"
           }
         ]
       }
