@@ -20,6 +20,7 @@ const (
 	DataSourceResponseChunkTypeLink               DataSourceResponseChunkType = "link"
 	DataSourceResponseChunkTypeImage              DataSourceResponseChunkType = "image"
 	DataSourceResponseChunkTypeImageLink          DataSourceResponseChunkType = "image_link"
+	DataSourceResponseChunkTypeBinaryLink         DataSourceResponseChunkType = "binary_link"
 	DataSourceResponseChunkTypeVariable           DataSourceResponseChunkType = "variable"
 	DataSourceResponseChunkTypeLog                DataSourceResponseChunkType = "log"
 	DataSourceResponseChunkTypeRetrieverResources DataSourceResponseChunkType = "retriever_resources"
@@ -36,6 +37,7 @@ func IsValidDataSourceResponseChunkType(fl validator.FieldLevel) bool {
 		DataSourceResponseChunkTypeLink,
 		DataSourceResponseChunkTypeImage,
 		DataSourceResponseChunkTypeImageLink,
+		DataSourceResponseChunkTypeBinaryLink,
 		DataSourceResponseChunkTypeVariable,
 		DataSourceResponseChunkTypeLog,
 		DataSourceResponseChunkTypeRetrieverResources:
