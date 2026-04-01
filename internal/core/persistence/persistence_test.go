@@ -8,6 +8,7 @@ import (
 	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 	"github.com/stretchr/testify/assert"
@@ -67,6 +68,104 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 	cacheDataBytes, err := hex.DecodeString(cacheData)
 	assert.Nil(t, err)
 	assert.Equal(t, string(cacheDataBytes), "data")
+}
+
+func TestPersistenceOverwriteAdjustsCounter(t *testing.T) {
+	// init deps
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
+	assert.Nil(t, err)
+	defer cache.Close()
+
+	db.Init(&app.Config{
+		DBType:     app.DB_TYPE_POSTGRESQL,
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
+	})
+	defer db.Close()
+
+	oss, err := factory.Load("local", cloudoss.OSSArgs{Local: &cloudoss.Local{Path: "./storage"}})
+	assert.Nil(t, err)
+
+	InitPersistence(oss, &app.Config{PersistenceStoragePath: "./persistence_storage", PersistenceStorageMaxSize: 1024 * 1024})
+
+	tenant := "tenant_" + strings.RandomString(6)
+	plugin := "plugin_" + strings.RandomString(6)
+	key := "k_" + strings.RandomString(6)
+
+	// write 4 bytes
+	assert.Nil(t, persistence.Save(tenant, plugin, -1, key, []byte("abcd")))
+	st, err := db.GetOne[models.TenantStorage](db.Equal("tenant_id", tenant), db.Equal("plugin_id", plugin))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(4), st.Size)
+
+	// overwrite with 2 bytes -> size should be 2
+	assert.Nil(t, persistence.Save(tenant, plugin, -1, key, []byte("bb")))
+	st, err = db.GetOne[models.TenantStorage](db.Equal("tenant_id", tenant), db.Equal("plugin_id", plugin))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(2), st.Size)
+
+	// overwrite with 3 bytes -> size should be 3
+	assert.Nil(t, persistence.Save(tenant, plugin, -1, key, []byte("ccc")))
+	st, err = db.GetOne[models.TenantStorage](db.Equal("tenant_id", tenant), db.Equal("plugin_id", plugin))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(3), st.Size)
+
+	// and data should be latest
+	data, err := persistence.Load(tenant, plugin, key)
+	assert.Nil(t, err)
+	assert.Equal(t, "ccc", string(data))
+}
+
+func TestPersistenceOverwriteLimitEnforcedByDelta(t *testing.T) {
+	// init deps
+	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
+	assert.Nil(t, err)
+	defer cache.Close()
+
+	db.Init(&app.Config{
+		DBType:     app.DB_TYPE_POSTGRESQL,
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
+	})
+	defer db.Close()
+
+	oss, err := factory.Load("local", cloudoss.OSSArgs{Local: &cloudoss.Local{Path: "./storage"}})
+	assert.Nil(t, err)
+
+	// set a small global limit 5 bytes
+	InitPersistence(oss, &app.Config{PersistenceStoragePath: "./persistence_storage", PersistenceStorageMaxSize: 5})
+
+	tenant := "tenant_" + strings.RandomString(6)
+	plugin := "plugin_" + strings.RandomString(6)
+	key := "k_" + strings.RandomString(6)
+
+	// write 4 bytes OK
+	assert.Nil(t, persistence.Save(tenant, plugin, -1, key, []byte("aaaa")))
+	st, err := db.GetOne[models.TenantStorage](db.Equal("tenant_id", tenant), db.Equal("plugin_id", plugin))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(4), st.Size)
+
+	// overwrite with 6 bytes -> delta = +2, 4+2=6 > 5 -> expect error, no change
+	if err := persistence.Save(tenant, plugin, -1, key, []byte("abcdef")); err == nil {
+		t.Fatalf("expected limit error, got nil")
+	}
+
+	st, err = db.GetOne[models.TenantStorage](db.Equal("tenant_id", tenant), db.Equal("plugin_id", plugin))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(4), st.Size)
+
+	// stored data should remain old value
+	data, err := persistence.Load(tenant, plugin, key)
+	assert.Nil(t, err)
+	assert.Equal(t, "aaaa", string(data))
 }
 
 func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
