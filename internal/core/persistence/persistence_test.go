@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"encoding/hex"
+	"os"
 	"testing"
 
 	cloudoss "github.com/langgenius/dify-cloud-kit/oss"
@@ -13,25 +14,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPersistenceStoreAndLoad(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
-	if err != nil {
-		t.Fatalf("Failed to init redis client: %v", err)
+func TestMain(m *testing.M) {
+	if err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil); err != nil {
+		panic("Failed to init redis client: " + err.Error())
 	}
 	defer cache.Close()
 
 	db.Init(&app.Config{
-		DBType:            app.DB_TYPE_POSTGRESQL,
-		DBUsername:        "postgres",
-		DBPassword:        "difyai123456",
-		DBHost:            "localhost",
-		DBDefaultDatabase: "postgres",
-		DBPort:            5432,
-		DBDatabase:        "dify_plugin_daemon",
-		DBSslMode:         "disable",
+		DBType:     app.DB_TYPE_POSTGRESQL,
+		DBUsername: "postgres",
+		DBPassword: "difyai123456",
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBDatabase: "dify_plugin_daemon",
+		DBSslMode:  "disable",
 	})
 	defer db.Close()
 
+	if err := db.AutoMigrate(); err != nil {
+		panic("Failed to auto migrate: " + err.Error())
+	}
+
+	os.Exit(m.Run())
+}
+
+func TestPersistenceStoreAndLoad(t *testing.T) {
 	oss, err := factory.Load("local", cloudoss.OSSArgs{
 		Local: &cloudoss.Local{
 			Path: "./storage",
@@ -70,20 +77,6 @@ func TestPersistenceStoreAndLoad(t *testing.T) {
 }
 
 func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
-	assert.Nil(t, err)
-	defer cache.Close()
-	db.Init(&app.Config{
-		DBType:     app.DB_TYPE_POSTGRESQL,
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
-	})
-	defer db.Close()
-
 	oss, err := factory.Load("local", cloudoss.OSSArgs{
 		Local: &cloudoss.Local{
 			Path: "./storage",
@@ -104,20 +97,6 @@ func TestPersistenceSaveAndLoadWithLongKey(t *testing.T) {
 }
 
 func TestPersistenceDelete(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
-	assert.Nil(t, err)
-	defer cache.Close()
-	db.Init(&app.Config{
-		DBType:     app.DB_TYPE_POSTGRESQL,
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
-	})
-	defer db.Close()
-
 	oss, err := factory.Load("local", cloudoss.OSSArgs{
 		Local: &cloudoss.Local{
 			Path: "./storage",
@@ -151,24 +130,6 @@ func TestPersistenceDelete(t *testing.T) {
 }
 
 func TestPersistencePathTraversal(t *testing.T) {
-	err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil)
-	if err != nil {
-		t.Fatalf("Failed to init redis client: %v", err)
-	}
-	defer cache.Close()
-
-	db.Init(&app.Config{
-		DBType:            app.DB_TYPE_POSTGRESQL,
-		DBUsername:        "postgres",
-		DBPassword:        "difyai123456",
-		DBHost:            "localhost",
-		DBDefaultDatabase: "postgres",
-		DBPort:            5432,
-		DBDatabase:        "dify_plugin_daemon",
-		DBSslMode:         "disable",
-	})
-	defer db.Close()
-
 	oss, err := factory.Load("local", cloudoss.OSSArgs{
 		Local: &cloudoss.Local{
 			Path: "./storage",

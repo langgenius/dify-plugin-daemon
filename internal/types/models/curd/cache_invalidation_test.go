@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
@@ -17,24 +16,6 @@ import (
 // Test that InstallPlugin invalidates PluginInstallation cache key so that
 // subsequent reads fall back to DB instead of returning stale data.
 func TestInstallPlugin_InvalidateInstallationCache(t *testing.T) {
-	// Init Redis
-	require.NoError(t, cache.InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0, nil))
-	t.Cleanup(func() { _ = cache.Close() })
-
-	// Init DB
-	cfg := &app.Config{
-		DBType:     app.DB_TYPE_POSTGRESQL,
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
-	}
-	cfg.SetDefault()
-	db.Init(cfg)
-	t.Cleanup(db.Close)
-
 	tenantID := uuid.NewString()
 	pluginName := "cache_invalidate_" + uuid.NewString()
 	checksum := strings.ReplaceAll(uuid.NewString(), "-", "")
