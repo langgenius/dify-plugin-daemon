@@ -1,12 +1,20 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
+)
+
+var (
+	installationTasksGroup singleflight.Group
+	installationTaskGroup  singleflight.Group
 )
 
 func FetchPluginInstallationTasks(
@@ -14,31 +22,45 @@ func FetchPluginInstallationTasks(
 	page int,
 	page_size int,
 ) *entities.Response {
-	tasks, err := db.GetAll[models.InstallTask](
-		db.Equal("tenant_id", tenant_id),
-		db.OrderBy("created_at", true),
-		db.Page(page, page_size),
-	)
+	key := fmt.Sprintf("tasks:%s:%d:%d", tenant_id, page, page_size)
+	v, err, _ := installationTasksGroup.Do(key, func() (interface{}, error) {
+		tasks, err := db.GetAll[models.InstallTask](
+			db.Equal("tenant_id", tenant_id),
+			db.OrderBy("created_at", true),
+			db.Page(page, page_size),
+		)
+		if err != nil {
+			return nil, err
+		}
+		return tasks, nil
+	})
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	return entities.NewSuccessResponse(tasks)
+	return entities.NewSuccessResponse(v)
 }
 
 func FetchPluginInstallationTask(
 	tenant_id string,
 	task_id string,
 ) *entities.Response {
-	task, err := db.GetOne[models.InstallTask](
-		db.Equal("id", task_id),
-		db.Equal("tenant_id", tenant_id),
-	)
+	key := fmt.Sprintf("task:%s:%s", tenant_id, task_id)
+	v, err, _ := installationTaskGroup.Do(key, func() (interface{}, error) {
+		task, err := db.GetOne[models.InstallTask](
+			db.Equal("id", task_id),
+			db.Equal("tenant_id", tenant_id),
+		)
+		if err != nil {
+			return nil, err
+		}
+		return task, nil
+	})
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	return entities.NewSuccessResponse(task)
+	return entities.NewSuccessResponse(v)
 }
 
 func DeletePluginInstallationTask(
