@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
-	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/stretchr/testify/require"
@@ -16,19 +15,6 @@ import (
 // TestInstallPlugin_IdempotentUnderConcurrency ensures creating the same plugin/installation
 // concurrently is idempotent: only one plugin and one installation row are persisted.
 func TestInstallPlugin_IdempotentUnderConcurrency(t *testing.T) {
-	cfg := &app.Config{
-		DBType:     app.DB_TYPE_POSTGRESQL,
-		DBUsername: "postgres",
-		DBPassword: "difyai123456",
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBDatabase: "dify_plugin_daemon",
-		DBSslMode:  "disable",
-	}
-	cfg.SetDefault()
-	db.Init(cfg)
-	t.Cleanup(db.Close)
-
 	tenantID := uuid.NewString()
 	pluginName := "concurrency_demo_" + uuid.NewString()
 	checksum := uuid.NewString()

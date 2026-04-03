@@ -53,6 +53,7 @@ func init() {
 	rootCommand.AddCommand(bundleCommand)
 	rootCommand.AddCommand(signatureCommand)
 	rootCommand.AddCommand(versionCommand)
+	rootCommand.AddCommand(migrateCommand)
 }
 
 func initConfig() {

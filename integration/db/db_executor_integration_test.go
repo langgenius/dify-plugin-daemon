@@ -61,6 +61,10 @@ func TestTransactionAcrossDatabases(t *testing.T) {
 			db.Init(&tc.config)
 			t.Cleanup(db.Close)
 
+			if err := db.AutoMigrate(); err != nil {
+				t.Fatalf("Failed to auto migrate: %v", err)
+			}
+
 			model := &models.ToolInstallation{
 				PluginID:               uuid.New().String(),
 				PluginUniqueIdentifier: uuid.New().String(),

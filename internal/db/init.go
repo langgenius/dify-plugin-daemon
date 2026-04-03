@@ -10,7 +10,7 @@ import (
 	oteltracing "gorm.io/plugin/opentelemetry/tracing"
 )
 
-func autoMigrate() error {
+func AutoMigrate() error {
 	err := DifyPluginDB.AutoMigrate(
 		models.Plugin{},
 		models.PluginInstallation{},
@@ -108,11 +108,6 @@ func Init(config *app.Config) {
 
 	if err != nil {
 		log.Panic("failed to init dify plugin db", "error", err)
-	}
-
-	err = autoMigrate()
-	if err != nil {
-		log.Panic("failed to auto migrate", "error", err)
 	}
 
 	// attach GORM OpenTelemetry plugin if enabled
