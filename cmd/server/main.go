@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"time"
+
 	"github.com/kelseyhightower/envconfig"
 	"github.com/langgenius/dify-plugin-daemon/internal/server"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
@@ -15,6 +17,14 @@ func main() {
 	err := envconfig.Process("", &config)
 	if err != nil {
 		log.Panic("error processing environment variables", "error", err)
+	}
+
+	if config.ServerTimeZone != "" {
+		loc, err := time.LoadLocation(config.ServerTimeZone)
+		if err != nil {
+			log.Panic("load location error", "error", err)
+		}
+		time.Local = loc
 	}
 
 	config.SetDefault()

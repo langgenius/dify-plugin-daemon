@@ -24,9 +24,10 @@ const (
 
 type Config struct {
 	// server
-	ServerHost string `envconfig:"SERVER_HOST"`
-	ServerPort uint16 `envconfig:"SERVER_PORT" validate:"required"`
-	ServerKey  string `envconfig:"SERVER_KEY" validate:"required"`
+	ServerHost     string `envconfig:"SERVER_HOST"`
+	ServerPort     uint16 `envconfig:"SERVER_PORT" validate:"required"`
+	ServerKey      string `envconfig:"SERVER_KEY" validate:"required"`
+	ServerTimeZone string `envconfig:"SERVER_TZ"`
 
 	// admin api enable
 	AdminApiEnabled bool   `envconfig:"ADMIN_API_ENABLED" default:"false"`
