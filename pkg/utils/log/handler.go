@@ -44,7 +44,7 @@ func (h *Handler) Enabled(_ context.Context, level slog.Level) bool {
 func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	fields := make(map[string]any)
 
-	fields["ts"] = r.Time.UTC().Format(time.RFC3339Nano)
+	fields["ts"] = r.Time.Local().Format(time.RFC3339Nano)
 	fields["severity"] = levelToSeverity(r.Level)
 	fields["service"] = h.opts.Service
 	fields["caller"] = getCaller(r.PC)
