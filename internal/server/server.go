@@ -77,6 +77,20 @@ func initOSS(config *app.Config) oss.OSS {
 		log.Panic("failed to create storage", "error", err)
 	}
 
+	if config.PluginStorageType != oss.OSS_TYPE_LOCAL && config.PluginStorageType != "local_file" {
+		fallbackStorage, fallbackErr := factory.Load("local", oss.OSSArgs{
+			Local: &oss.Local{
+				Path: config.PluginStorageLocalRoot,
+			},
+		})
+		if fallbackErr != nil {
+			log.Warn("failed to create local fallback storage, running without fallback", "error", fallbackErr)
+			return storage
+		}
+		log.Info("storage: wrapping primary with local fallback", "primary_type", storage.Type())
+		return NewFallbackOSS(storage, fallbackStorage)
+	}
+
 	return storage
 }
 

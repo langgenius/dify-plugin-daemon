@@ -50,6 +50,7 @@ func (s *DifyServer) OnBoot(c gnet.Engine) (action gnet.Action) {
 
 func (s *DifyServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	// new plugin connected
+	log.Info("new debugging connection", "remote", c.RemoteAddr().String())
 	c.SetContext(&codec{})
 	runtime := &RemotePluginRuntime{
 		MediaTransport: basic_runtime.NewMediaTransport(
@@ -104,10 +105,11 @@ func (s *DifyServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	// close plugin
 	plugin.cleanupResources()
 
-	// trigger runtime disconnected event
-	s.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
-		notifier.OnRuntimeDisconnected(plugin)
-	})
+	if plugin.initialized {
+		s.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+			notifier.OnRuntimeDisconnected(plugin)
+		})
+	}
 
 	// decrease current connection
 	atomic.AddInt32(&s.currentConn, -1)
