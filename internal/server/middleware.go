@@ -103,6 +103,11 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 
 		// check if plugin in current node
 		if needRedirecting, originalError := app.pluginManager.NeedRedirecting(identity); needRedirecting {
+			if app.pluginManager.TryLaunchLocalPlugin(identity) {
+				log.Info("on-demand launch succeeded, serving locally", "plugin", identity.String())
+				ctx.Next()
+				return
+			}
 			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, originalError)
 			ctx.Abort()
 		} else {
