@@ -48,17 +48,20 @@ func (f *FallbackOSS) Load(key string) ([]byte, error) {
 
 func (f *FallbackOSS) Exists(key string) (bool, error) {
 	exists, err := f.primary.Exists(key)
-	if err == nil {
-		return exists, nil
+	if err == nil && exists {
+		return true, nil
 	}
 
 	fallbackExists, fallbackErr := f.fallback.Exists(key)
-	if fallbackErr != nil {
-		return false, err
+	if fallbackErr == nil && fallbackExists {
+		log.Warn("fallback: primary Exists failed or returned false, found in local cache", "key", key, "error", err)
+		return true, nil
 	}
 
-	log.Warn("fallback: primary Exists failed, using local cache", "key", key, "error", err)
-	return fallbackExists, nil
+	if err != nil {
+		return false, err
+	}
+	return false, nil
 }
 
 func (f *FallbackOSS) State(key string) (oss.OSSState, error) {
@@ -77,9 +80,12 @@ func (f *FallbackOSS) State(key string) (oss.OSSState, error) {
 }
 
 func (f *FallbackOSS) List(prefix string) ([]oss.OSSPath, error) {
+	allPaths := make([]oss.OSSPath, 0)
+	duplicatePaths := make(map[string]bool)
+
 	paths, err := f.primary.List(prefix)
-	if err == nil {
-		return paths, nil
+	if err != nil {
+		return nil, err
 	}
 
 	fallbackPaths, fallbackErr := f.fallback.List(prefix)
@@ -87,11 +93,26 @@ func (f *FallbackOSS) List(prefix string) ([]oss.OSSPath, error) {
 		return nil, err
 	}
 
+	for _, path := range paths {
+		if _, ok := duplicatePaths[path.Path]; !ok {
+			allPaths = append(allPaths, path)
+			duplicatePaths[path.Path] = true
+		}
+	}
+
+	for _, path := range fallbackPaths {
+		if _, ok := duplicatePaths[path.Path]; !ok {
+			allPaths = append(allPaths, path)
+			duplicatePaths[path.Path] = true
+		}
+	}
+
 	log.Warn("fallback: primary List failed, using local cache", "prefix", prefix, "error", err)
-	return fallbackPaths, nil
+	return allPaths, nil
 }
 
 func (f *FallbackOSS) Delete(key string) error {
+	_ = f.fallback.Delete(key)
 	return f.primary.Delete(key)
 }
 
