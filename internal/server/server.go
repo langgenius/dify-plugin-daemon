@@ -43,7 +43,7 @@ func initOSS(config *app.Config) oss.OSS {
 		AzureBlob: &oss.AzureBlob{
 			ConnectionString:   config.AzureBlobStorageConnectionString,
 			ContainerName:      config.AzureBlobStorageContainerName,
-			ServiceURL:         config.AzureBlobStorageAccountUrl,
+			ServiceURL:         config.AzureBlobStorageAccountURL,
 			UseManagedIdentity: config.AzureBlobStorageUseManagedIdentity,
 		},
 		GoogleCloudStorage: &oss.GoogleCloudStorage{

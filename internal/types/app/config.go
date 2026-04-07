@@ -59,7 +59,7 @@ type Config struct {
 	// azure blob
 	AzureBlobStorageContainerName      string `envconfig:"AZURE_BLOB_STORAGE_CONTAINER_NAME"`
 	AzureBlobStorageConnectionString   string `envconfig:"AZURE_BLOB_STORAGE_CONNECTION_STRING"`
-	AzureBlobStorageAccountUrl         string `envconfig:"AZURE_BLOB_STORAGE_ACCOUNT_URL"`
+	AzureBlobStorageAccountURL         string `envconfig:"AZURE_BLOB_STORAGE_ACCOUNT_URL"`
 	AzureBlobStorageUseManagedIdentity bool   `envconfig:"AZURE_BLOB_STORAGE_USE_MANAGED_IDENTITY" default:"false"`
 
 	// aliyun oss
