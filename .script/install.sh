@@ -23,9 +23,10 @@ if [ "$OS" != "darwin" ] && [ "$OS" != "linux" ]; then
     exit 1
 fi
 
-# Define download URL and binary name
-BINARY_NAME="dify-plugin-$OS-$ARCH"
-DOWNLOAD_URL="https://github.com/langgenius/dify-plugin-daemon/releases/download/$VERSION/$BINARY_NAME"
+# Define download URL and archive layout
+PACKAGE_NAME="dify-plugin-$OS-$ARCH"
+ARCHIVE_NAME="$PACKAGE_NAME.tar.gz"
+DOWNLOAD_URL="https://github.com/langgenius/dify-plugin-daemon/releases/download/$VERSION/$ARCHIVE_NAME"
 
 # Set installation directory based on OS
 if [ "$OS" = "darwin" ]; then
@@ -46,28 +47,36 @@ fi
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR" || exit 1
 
-# Download the binary
-echo "Downloading $BINARY_NAME..."
+# Download and extract the archive
+echo "Downloading $ARCHIVE_NAME..."
 if command -v curl >/dev/null 2>&1; then
-    curl -L -o "dify-plugin-daemon" "$DOWNLOAD_URL"
+    curl -L -o "$ARCHIVE_NAME" "$DOWNLOAD_URL"
 elif command -v wget >/dev/null 2>&1; then
-    wget -O "dify-plugin-daemon" "$DOWNLOAD_URL"
+    wget -O "$ARCHIVE_NAME" "$DOWNLOAD_URL"
 else
     echo "Error: Neither curl nor wget is installed"
     rm -rf "$TMP_DIR"
     exit 1
 fi
 
-# Make binary executable
-chmod +x "dify-plugin-daemon"
+tar -xzf "$ARCHIVE_NAME"
+
+EXTRACTED_BINARY="$PACKAGE_NAME/dify-plugin"
+if [ ! -f "$EXTRACTED_BINARY" ]; then
+    echo "Error: Expected binary not found at $EXTRACTED_BINARY"
+    rm -rf "$TMP_DIR"
+    exit 1
+fi
+
+chmod +x "$EXTRACTED_BINARY"
 
 # Install the binary with the new name
 if [ "$NEED_SUDO" = true ]; then
     echo "Installing to $INSTALL_DIR (requires sudo)..."
-    sudo mv "dify-plugin-daemon" "$INSTALL_DIR/dify-plugin"
+    sudo mv "$EXTRACTED_BINARY" "$INSTALL_DIR/dify-plugin"
 else
     echo "Installing to $INSTALL_DIR..."
-    mv "dify-plugin-daemon" "$INSTALL_DIR/dify-plugin"
+    mv "$EXTRACTED_BINARY" "$INSTALL_DIR/dify-plugin"
 fi
 
 # Clean up

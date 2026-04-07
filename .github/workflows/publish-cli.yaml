@@ -8,52 +8,56 @@ concurrency:
   group: publish-cli-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.goarch == 'arm64' && 'arm64_runner' || 'ubuntu-latest' }}
     if: github.repository == 'langgenius/dify-plugin-daemon'
     strategy:
       matrix:
         include:
-          - platform: linux/amd64
-          - platform: linux/arm64
+          - goarch: amd64
+          - goarch: arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Transform platform
-        run: |
-          GOARCH=$(echo "${{ matrix.platform }}" | cut -d '/' -f 2)
-          echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
 
-      - name: Build CLI
+      - name: Build Linux archive
         run: |
-          go mod tidy
-          CGO_ENABLED=0 GOOS=windows GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-windows-${{ env.GOARCH }}.exe ./cmd/commandline
-          CGO_ENABLED=0 GOOS=darwin GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-darwin-${{ env.GOARCH }} ./cmd/commandline
-          CGO_ENABLED=0 GOOS=linux GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-linux-${{ env.GOARCH }} ./cmd/commandline
+          make package-cli GOOS=linux GOARCH=${{ matrix.goarch }} VERSION=v${{ github.event.release.tag_name }}
 
-      - name: Upload Artifacts
+      - name: Build Windows archive
+        run: |
+          make package-cli GOOS=windows GOARCH=${{ matrix.goarch }} VERSION=v${{ github.event.release.tag_name }}
+
+      - name: Build Darwin binary for signing
+        run: |
+          make build-cli GOOS=darwin GOARCH=${{ matrix.goarch }} VERSION=v${{ github.event.release.tag_name }}
+
+      - name: Upload Darwin build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: builds-${{ env.GOARCH }}
-          path: |
-            dify-plugin-darwin-${{ env.GOARCH }}
+          name: cli-darwin-${{ matrix.goarch }}
+          path: dist/build/cli/darwin-${{ matrix.goarch }}
 
-      - name: Upload windows/linux binaries to release
+      - name: Upload Linux and Windows archives to release
         if: github.event_name == 'release'
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-${{ env.GOARCH }}.exe --clobber
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-${{ env.GOARCH }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} \
+            dist/assets/dify-plugin-linux-${{ matrix.goarch }}.tar.gz \
+            dist/assets/dify-plugin-windows-${{ matrix.goarch }}.zip \
+            --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sign-macos-binary-and-upload:
+  sign-macos-archive-and-upload:
     needs: build
     runs-on: macos-latest
     if: github.repository == 'langgenius/dify-plugin-daemon'
@@ -70,35 +74,44 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERT_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
-      - name: Download arm64 binary
+      - name: Download arm64 build artifact
         uses: actions/download-artifact@v4
         with:
-          name: builds-arm64
+          name: cli-darwin-arm64
+          path: dist/build/cli/darwin-arm64
 
-      - name: Download amd64 binary
+      - name: Download amd64 build artifact
         uses: actions/download-artifact@v4
         with:
-          name: builds-amd64
+          name: cli-darwin-amd64
+          path: dist/build/cli/darwin-amd64
 
       - name: Sign binaries
         run: |
-          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dify-plugin-darwin-arm64
-          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dify-plugin-darwin-amd64
+          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dist/build/cli/darwin-arm64/dify-plugin-darwin-arm64/dify-plugin
+          codesign --timestamp --options=runtime --sign "${{ secrets.MACOS_CERT_NAME }}" ./dist/build/cli/darwin-amd64/dify-plugin-darwin-amd64/dify-plugin
 
-      - name: Create zip for notarization
+      - name: Create notarization bundles
         run: |
-          zip -r dify-plugin-darwin-arm64.zip ./dify-plugin-darwin-arm64
-          zip -r dify-plugin-darwin-amd64.zip ./dify-plugin-darwin-amd64
+          mkdir -p dist/notary
+          (
+            cd dist/build/cli/darwin-arm64
+            zip -rq "$GITHUB_WORKSPACE/dist/notary/dify-plugin-darwin-arm64.zip" dify-plugin-darwin-arm64
+          )
+          (
+            cd dist/build/cli/darwin-amd64
+            zip -rq "$GITHUB_WORKSPACE/dist/notary/dify-plugin-darwin-amd64.zip" dify-plugin-darwin-amd64
+          )
 
       - name: Notarize binaries
         run: |
-          xcrun notarytool submit dify-plugin-darwin-arm64.zip \
+          xcrun notarytool submit dist/notary/dify-plugin-darwin-arm64.zip \
             --apple-id "${{ secrets.AC_USERNAME }}" \
             --password "${{ secrets.AC_PASSWORD }}" \
             --team-id "${{ secrets.TEAM_ID }}" \
             --wait &
           
-          xcrun notarytool submit dify-plugin-darwin-amd64.zip \
+          xcrun notarytool submit dist/notary/dify-plugin-darwin-amd64.zip \
             --apple-id "${{ secrets.AC_USERNAME }}" \
             --password "${{ secrets.AC_PASSWORD }}" \
             --team-id "${{ secrets.TEAM_ID }}" \
@@ -106,21 +119,17 @@ jobs:
           
           wait
 
-      # Staple is not needed for CLI
-      # - name: Staple notarization ticket to binaries
-      #   run: |
-      #     xcrun stapler staple ./dify-plugin-darwin-arm64
-      #     xcrun stapler staple ./dify-plugin-darwin-amd64
+      - name: Package signed Darwin archives
+        run: |
+          make archive-cli GOOS=darwin GOARCH=arm64
+          make archive-cli GOOS=darwin GOARCH=amd64
 
-      # - name: Verify signatures
-      #   run: |
-      #     spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-arm64
-      #     spctl --assess --type exec --verbose=4 ./dify-plugin-darwin-amd64
-
-      - name: Upload signed binaries
+      - name: Upload signed Darwin archives
         if: github.event_name == 'release'
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-arm64 --clobber
-          gh release upload ${{ github.event.release.tag_name }} dify-plugin-darwin-amd64 --clobber
+          gh release upload ${{ github.event.release.tag_name }} \
+            dist/assets/dify-plugin-darwin-arm64.tar.gz \
+            dist/assets/dify-plugin-darwin-amd64.tar.gz \
+            --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
