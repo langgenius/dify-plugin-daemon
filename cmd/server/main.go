@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
@@ -21,17 +20,11 @@ func main() {
 
 	config.SetDefault()
 
-	if err = config.Validate(); err != nil {
-		log.Panic("invalid configuration", "error", err)
+	loc, err := time.LoadLocation(config.ServerTimeZone)
+	if err != nil {
+		log.Panic("load location error", "error", err)
 	}
-
-	if config.ServerTimeZone != "" {
-		loc, err := time.LoadLocation(config.ServerTimeZone)
-		if err != nil {
-			log.Panic("load location error", "error", err)
-		}
-		time.Local = loc
-	}
+	time.Local = loc
 
 	logCloser, err := log.Init(config.LogOutputFormat == "json", config.LogFile)
 	if err != nil {
@@ -45,6 +38,10 @@ func main() {
 		}()
 	}
 	defer log.RecoverAndExit()
+
+	if err = config.Validate(); err != nil {
+		log.Panic("invalid configuration", "error", err)
+	}
 
 	// Initialize OpenTelemetry if enabled
 	if config.EnableOtel {
