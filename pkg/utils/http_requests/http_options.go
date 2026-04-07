@@ -24,6 +24,7 @@ const (
 	HttpOptionTypeRetCode                          = "retCode"
 	HttpOptionTypeUsingLengthPrefixed              = "usingLengthPrefixed"
 	HttpOptionTypeContext                          = "context"
+	HttpOptionTypeMaxChunkSize                     = "maxChunkSize"
 )
 
 // milliseconds
@@ -116,4 +117,8 @@ func HttpUsingLengthPrefixed(using bool) HttpOptions {
 
 func HttpContext(ctx context.Context) HttpOptions {
 	return HttpOptions{HttpOptionTypeContext, ctx}
+}
+
+func HttpMaxChunkSize(size int64) HttpOptions {
+	return HttpOptions{HttpOptionTypeMaxChunkSize, size}
 }
