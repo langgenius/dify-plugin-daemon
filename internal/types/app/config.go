@@ -27,7 +27,7 @@ type Config struct {
 	ServerHost     string `envconfig:"SERVER_HOST"`
 	ServerPort     uint16 `envconfig:"SERVER_PORT" validate:"required"`
 	ServerKey      string `envconfig:"SERVER_KEY" validate:"required"`
-	ServerTimeZone string `envconfig:"SERVER_TZ"`
+	ServerTimeZone string `envconfig:"SERVER_TZ" default:"UTC" validate:"timezone"`
 
 	// admin api enable
 	AdminApiEnabled bool   `envconfig:"ADMIN_API_ENABLED" default:"false"`

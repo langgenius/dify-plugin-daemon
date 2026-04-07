@@ -19,6 +19,12 @@ func main() {
 		log.Panic("error processing environment variables", "error", err)
 	}
 
+	config.SetDefault()
+
+	if err = config.Validate(); err != nil {
+		log.Panic("invalid configuration", "error", err)
+	}
+
 	if config.ServerTimeZone != "" {
 		loc, err := time.LoadLocation(config.ServerTimeZone)
 		if err != nil {
@@ -26,8 +32,6 @@ func main() {
 		}
 		time.Local = loc
 	}
-
-	config.SetDefault()
 
 	logCloser, err := log.Init(config.LogOutputFormat == "json", config.LogFile)
 	if err != nil {
@@ -41,10 +45,6 @@ func main() {
 		}()
 	}
 	defer log.RecoverAndExit()
-
-	if err = config.Validate(); err != nil {
-		log.Panic("invalid configuration", "error", err)
-	}
 
 	// Initialize OpenTelemetry if enabled
 	if config.EnableOtel {

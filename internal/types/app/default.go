@@ -12,6 +12,7 @@ func (config *Config) SetDefault() {
 	}
 	setDefaultString(&config.ServerHost, "0.0.0.0")
 	setDefaultInt(&config.ServerPort, 5002)
+	setDefaultString(&config.ServerTimeZone, "UTC")
 	setDefaultInt(&config.RoutinePoolSize, 10000)
 	setDefaultInt(&config.LifetimeCollectionGCInterval, 60)
 	setDefaultInt(&config.LifetimeCollectionHeartbeatInterval, 5)
