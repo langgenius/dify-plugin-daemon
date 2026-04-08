@@ -150,6 +150,10 @@ type Config struct {
 	DBDefaultDatabase string `envconfig:"DB_DEFAULT_DATABASE" validate:"required"`
 	DBSslMode         string `envconfig:"DB_SSL_MODE" validate:"required,oneof=disable require"`
 
+	// plugin-specific database credentials, fallback to DB_USERNAME/DB_PASSWORD if not set
+	PluginDBUsername string `envconfig:"PLUGIN_DB_USER"`
+	PluginDBPassword string `envconfig:"PLUGIN_DB_PASS"`
+
 	// database connection pool settings
 	DBMaxIdleConns    int           `envconfig:"DB_MAX_IDLE_CONNS" default:"10"`
 	DBMaxOpenConns    int           `envconfig:"DB_MAX_OPEN_CONNS" default:"30"`

@@ -46,6 +46,13 @@ func (config *Config) SetDefault() {
 	case DB_TYPE_MYSQL:
 		setDefaultString(&config.DBDefaultDatabase, "mysql")
 	}
+
+	if config.PluginDBUsername != "" {
+		config.DBUsername = config.PluginDBUsername
+	}
+	if config.PluginDBPassword != "" {
+		config.DBPassword = config.PluginDBPassword
+	}
 }
 
 func setDefaultInt[T constraints.Integer](value *T, defaultValue T) {
