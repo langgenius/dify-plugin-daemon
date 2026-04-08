@@ -16,12 +16,14 @@ jobs:
           mkdir -p $RUNNER_TEMP/bin
           cd $RUNNER_TEMP/bin
 
-          wget https://github.com/langgenius/dify-plugin-daemon/releases/download/0.0.6/dify-plugin-linux-amd64
-          chmod +x dify-plugin-linux-amd64
+          wget https://github.com/langgenius/dify-plugin-daemon/releases/download/0.0.7/dify-plugin-linux-amd64.tar.gz
+          tar -xzf dify-plugin-linux-amd64.tar.gz
+          chmod +x dify-plugin-linux-amd64/dify-plugin
+          mv dify-plugin-linux-amd64/dify-plugin dify-plugin
 
           echo "CLI tool location:"
           pwd
-          ls -la dify-plugin-linux-amd64
+          ls -la dify-plugin
 
       - name: Get basic info from manifest
         id: get_basic_info
@@ -44,7 +46,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           PACKAGE_NAME="${{ steps.get_basic_info.outputs.plugin_name }}-${{ steps.get_basic_info.outputs.version }}.difypkg"
-          $RUNNER_TEMP/bin/dify-plugin-linux-amd64 plugin package . -o "$PACKAGE_NAME"
+          $RUNNER_TEMP/bin/dify-plugin plugin package . -o "$PACKAGE_NAME"
 
           echo "Package result:"
           ls -la "$PACKAGE_NAME"
