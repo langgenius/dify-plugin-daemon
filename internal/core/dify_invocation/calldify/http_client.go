@@ -11,10 +11,11 @@ import (
 )
 
 type NewDifyInvocationDaemonPayload struct {
-	BaseUrl      string
-	CallingKey   string
-	WriteTimeout int64
-	ReadTimeout  int64
+	BaseUrl              string
+	CallingKey           string
+	WriteTimeout         int64
+	ReadTimeout          int64
+	ResponseMaxBufferSize int64
 }
 
 func NewDifyInvocationDaemon(payload NewDifyInvocationDaemonPayload) (dify_invocation.BackwardsInvocation, error) {
@@ -39,6 +40,7 @@ func NewDifyInvocationDaemon(payload NewDifyInvocationDaemonPayload) (dify_invoc
 	invocation.difyInnerApiKey = payload.CallingKey
 	invocation.writeTimeout = payload.WriteTimeout
 	invocation.readTimeout = payload.ReadTimeout
+	invocation.responseMaxBufferSize = payload.ResponseMaxBufferSize
 
 	return invocation, nil
 }

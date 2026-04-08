@@ -93,6 +93,7 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 	readTimeout := int64(60000)
 	raiseErrorWhenStreamDataNotMatch := false
 	usingLengthPrefixed := false
+	maxChunkSize := int64(1024 * 1024 * 30)
 	for _, option := range options {
 		if option.Type == HttpOptionTypeReadTimeout {
 			readTimeout = option.Value.(int64)
@@ -100,6 +101,8 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			raiseErrorWhenStreamDataNotMatch = option.Value.(bool)
 		} else if option.Type == HttpOptionTypeUsingLengthPrefixed {
 			usingLengthPrefixed = option.Value.(bool)
+		} else if option.Type == HttpOptionTypeMaxChunkSize {
+			maxChunkSize = option.Value.(int64)
 		}
 	}
 	time.AfterFunc(time.Millisecond*time.Duration(readTimeout), func() {
@@ -132,10 +135,9 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 
 		var err error
 		if usingLengthPrefixed {
-			// at most 30MB a single chunk
-			err = parser.LengthPrefixedChunking(resp.Body, 0x0f, 1024*1024*30, processData)
+			err = parser.LengthPrefixedChunking(resp.Body, 0x0f, uint32(maxChunkSize), processData)
 		} else {
-			err = parser.LineBasedChunking(resp.Body, 1024*1024*30, func(data []byte) error {
+			err = parser.LineBasedChunking(resp.Body, int(maxChunkSize), func(data []byte) error {
 				if len(data) == 0 {
 					return nil
 				}

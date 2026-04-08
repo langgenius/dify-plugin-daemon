@@ -254,6 +254,8 @@ type Config struct {
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
 	// dify invocation read timeout in milliseconds
 	DifyInvocationReadTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_READ_TIMEOUT" default:"240000"`
+
+	ResponseMaxBufferSize int64 `envconfig:"RESPONSE_MAX_BUFFER_SIZE" default:"31457280"`
 }
 
 func (c *Config) Validate() error {

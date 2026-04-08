@@ -62,6 +62,7 @@ func StreamResponse[T any](i *RealBackwardsInvocation, method string, path strin
 		http_requests.HttpWriteTimeout(i.writeTimeout),
 		http_requests.HttpReadTimeout(i.readTimeout),
 		http_requests.HttpUsingLengthPrefixed(true),
+		http_requests.HttpMaxChunkSize(i.responseMaxBufferSize),
 	)
 
 	response, err := http_requests.RequestAndParseStream[BaseBackwardsInvocationResponse[T]](

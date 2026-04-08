@@ -7,12 +7,13 @@ import (
 )
 
 type RealBackwardsInvocation struct {
-	difyInnerApiKey     string
-	difyInnerApiBaseurl *url.URL
-	client              *http.Client
-	writeTimeout        int64
-	readTimeout         int64
-	traceCtx            context.Context
+	difyInnerApiKey        string
+	difyInnerApiBaseurl    *url.URL
+	client                 *http.Client
+	writeTimeout           int64
+	readTimeout            int64
+	responseMaxBufferSize  int64
+	traceCtx               context.Context
 }
 
 func (i *RealBackwardsInvocation) SetContext(ctx context.Context) {
