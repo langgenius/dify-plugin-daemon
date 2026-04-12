@@ -47,18 +47,26 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 		maxSize = c.maxStorageSize
 	}
 
+	oldSize := int64(0)
+	if exists, err := c.storage.Exists(tenantId, pluginId, key); err == nil && exists {
+		if size, err := c.storage.StateSize(tenantId, pluginId, key); err == nil {
+			oldSize = size
+		}
+	}
+
 	if err := c.storage.Save(tenantId, pluginId, key, data); err != nil {
 		return err
 	}
 
 	allocatedSize := int64(len(data))
+	sizeDiff := allocatedSize - oldSize
 
 	storage, err := db.GetOne[models.TenantStorage](
 		db.Equal("tenant_id", tenantId),
 		db.Equal("plugin_id", pluginId),
 	)
 	if err != nil {
-		if allocatedSize > c.maxStorageSize || allocatedSize > maxSize {
+		if sizeDiff > c.maxStorageSize || sizeDiff > maxSize {
 			return fmt.Errorf("allocated size is greater than max storage size")
 		}
 
@@ -66,7 +74,7 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 			storage = models.TenantStorage{
 				TenantID: tenantId,
 				PluginID: pluginId,
-				Size:     allocatedSize,
+				Size:     sizeDiff,
 			}
 			if err := db.Create(&storage); err != nil {
 				return err
@@ -75,7 +83,7 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 			return err
 		}
 	} else {
-		if allocatedSize+storage.Size > maxSize || allocatedSize+storage.Size > c.maxStorageSize {
+		if sizeDiff+storage.Size > maxSize || sizeDiff+storage.Size > c.maxStorageSize {
 			return fmt.Errorf("allocated size is greater than max storage size")
 		}
 
@@ -83,7 +91,7 @@ func (c *Persistence) Save(tenantId string, pluginId string, maxSize int64, key 
 			db.Model(&models.TenantStorage{}),
 			db.Equal("tenant_id", tenantId),
 			db.Equal("plugin_id", pluginId),
-			db.Inc(map[string]int64{"size": allocatedSize}),
+			db.Inc(map[string]int64{"size": sizeDiff}),
 		)
 		if err != nil {
 			return err
