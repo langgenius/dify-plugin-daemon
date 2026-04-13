@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	gormConfig "github.com/langgenius/dify-plugin-daemon/internal/db/config"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	pkglog "github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 const (
@@ -248,6 +249,7 @@ type Config struct {
 
 	// log settings
 	HealthApiLogEnabled bool   `envconfig:"HEALTH_API_LOG_ENABLED" default:"true"`
+	LogLevel            string `envconfig:"LOG_LEVEL" default:"INFO"`
 	LogOutputFormat     string `envconfig:"LOG_OUTPUT_FORMAT" default:"text"`
 	LogFile             string `envconfig:"LOG_FILE" default:""`
 
@@ -308,6 +310,9 @@ func (c *Config) Validate() error {
 		if !gormConfig.ValidateGormLogLevel(c.DBGormLogLevel) {
 			return fmt.Errorf("invalid gorm log level: '%s'. Valid levels are: silent, error, warn, info", c.DBGormLogLevel)
 		}
+	}
+	if _, err := pkglog.ParseLevel(c.LogLevel); err != nil {
+		return err
 	}
 	return nil
 }

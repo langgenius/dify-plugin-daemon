@@ -10,6 +10,73 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newValidConfigForValidation() *Config {
+	config := &Config{
+		ServerPort:        5002,
+		ServerKey:         "test-key",
+		DifyInnerApiURL:   "http://localhost",
+		DifyInnerApiKey:   "test-api-key",
+		Platform:          PLATFORM_LOCAL,
+		PluginWorkingPath: "plugin-working",
+		DBType:            DB_TYPE_POSTGRESQL,
+		DBUsername:        "postgres",
+		DBPassword:        "postgres",
+		DBHost:            "localhost",
+		DBPort:            5432,
+		DBDatabase:        "plugin",
+	}
+	config.SetDefault()
+	return config
+}
+
+func TestValidateLogLevel(t *testing.T) {
+	tests := []struct {
+		name        string
+		logLevel    string
+		expectedErr string
+	}{
+		{
+			name:     "empty uses default",
+			logLevel: "",
+		},
+		{
+			name:     "uppercase info",
+			logLevel: "INFO",
+		},
+		{
+			name:     "uppercase warn",
+			logLevel: "WARN",
+		},
+		{
+			name:        "invalid level",
+			logLevel:    "verbose",
+			expectedErr: `invalid LOG_LEVEL "verbose". Valid values are: DEBUG, INFO, WARN, ERROR`,
+		},
+		{
+			name:        "lowercase rejected",
+			logLevel:    "info",
+			expectedErr: `invalid LOG_LEVEL "info". Valid values are: DEBUG, INFO, WARN, ERROR`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := newValidConfigForValidation()
+			config.LogLevel = tt.logLevel
+
+			err := config.Validate()
+
+			if tt.expectedErr != "" {
+				require.Error(t, err)
+				assert.Equal(t, tt.expectedErr, err.Error())
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestRedisTLSConfig(t *testing.T) {
 	tests := []struct {
 		name           string

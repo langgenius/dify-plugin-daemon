@@ -15,7 +15,24 @@ import (
 
 const ServiceName = "dify-plugin-daemon"
 
-func Init(json bool, filename string) (io.Closer, error) {
+func ParseLevel(value string) (slog.Level, error) {
+	switch value {
+	case "":
+		return slog.LevelInfo, nil
+	case "DEBUG":
+		return slog.LevelDebug, nil
+	case "INFO":
+		return slog.LevelInfo, nil
+	case "WARN":
+		return slog.LevelWarn, nil
+	case "ERROR":
+		return slog.LevelError, nil
+	default:
+		return 0, fmt.Errorf("invalid LOG_LEVEL %q. Valid values are: DEBUG, INFO, WARN, ERROR", value)
+	}
+}
+
+func Init(json bool, filename string, level string) (io.Closer, error) {
 	var w io.Writer = os.Stdout
 	var closer io.Closer
 	if filename != "" {
@@ -30,8 +47,17 @@ func Init(json bool, filename string) (io.Closer, error) {
 		w = io.MultiWriter(os.Stdout, file)
 		closer = file
 	}
+
+	logLevel, err := ParseLevel(level)
+	if err != nil {
+		if closer != nil {
+			_ = closer.Close()
+		}
+		return nil, err
+	}
+
 	handler := NewHandler(Options{
-		Level:   slog.LevelInfo,
+		Level:   logLevel,
 		Service: ServiceName,
 		JSON:    json,
 		Out:     w,
