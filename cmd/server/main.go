@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/langgenius/dify-plugin-daemon/internal/server"
@@ -18,6 +19,12 @@ func main() {
 	}
 
 	config.SetDefault()
+
+	loc, err := time.LoadLocation(config.ServerTimeZone)
+	if err != nil {
+		log.Panic("load location error", "error", err)
+	}
+	time.Local = loc
 
 	logCloser, err := log.Init(config.LogOutputFormat == "json", config.LogFile)
 	if err != nil {
