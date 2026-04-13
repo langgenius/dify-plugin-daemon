@@ -82,6 +82,18 @@ uses docker volume to share the directory with the host machine, it's better for
 
 For now, Daemon community edition does not support smoothly scale out with the number of replicas, If you are interested in this feature, please contact us. we have a more production-ready version for enterprise users.
 
+### Redis namespacing
+
+Enterprise deployments often share Redis across multiple systems or subsystems. The
+daemon supports a global Redis prefix via `REDIS_KEY_PREFIX`.
+
+- Default value: `plugin_daemon`
+- Applies to Redis keys and pub/sub channels used by the daemon
+- Safe for Redis Cluster logical keys that already use hash tags such as
+  `{remote:key:manager}`
+- Changing the prefix changes the active namespace; existing cache and coordination
+  data under the old prefix is not migrated automatically
+
 ## Documentation
 
 ### Development Guide

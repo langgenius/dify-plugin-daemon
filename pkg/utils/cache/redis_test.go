@@ -11,6 +11,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -19,6 +20,117 @@ const (
 
 func getRedisConnection() error {
 	return InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0, nil)
+}
+
+func TestStoreUsesDefaultPrefix(t *testing.T) {
+	require.NoError(t, getRedisConnection())
+	defer Close()
+
+	SetKeyPrefix("")
+	t.Cleanup(func() { SetKeyPrefix("plugin_daemon") })
+
+	require.NoError(t, client.Del(ctx, "plugin_daemon:test:key").Err())
+	t.Cleanup(func() {
+		_ = client.Del(ctx, "plugin_daemon:test:key").Err()
+	})
+	require.NoError(t, Store("test:key", "value", time.Minute))
+
+	val, err := client.Get(ctx, "plugin_daemon:test:key").Result()
+	require.NoError(t, err)
+	assert.Equal(t, "value", val)
+}
+
+func TestStoreUsesCustomPrefix(t *testing.T) {
+	require.NoError(t, getRedisConnection())
+	defer Close()
+
+	SetKeyPrefix("enterprise-a")
+	t.Cleanup(func() { SetKeyPrefix("plugin_daemon") })
+
+	require.NoError(t, client.Del(ctx, "enterprise-a:test:key").Err())
+	t.Cleanup(func() {
+		_ = client.Del(ctx, "enterprise-a:test:key").Err()
+	})
+	require.NoError(t, Store("test:key", "value", time.Minute))
+
+	val, err := client.Get(ctx, "enterprise-a:test:key").Result()
+	require.NoError(t, err)
+	assert.Equal(t, "value", val)
+}
+
+func TestRedisPubSubUsesConfiguredPrefix(t *testing.T) {
+	require.NoError(t, getRedisConnection())
+	defer Close()
+
+	SetKeyPrefix("enterprise-a")
+	t.Cleanup(func() { SetKeyPrefix("plugin_daemon") })
+
+	type testEvent struct{}
+
+	sub, cancel := Subscribe[testEvent]("cluster-events")
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		<-sub
+		close(done)
+	}()
+
+	require.NoError(t, Publish("cluster-events", testEvent{}))
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for prefixed pubsub event")
+	}
+}
+
+func TestScanKeysUsesConfiguredPrefix(t *testing.T) {
+	require.NoError(t, getRedisConnection())
+	defer Close()
+
+	SetKeyPrefix("enterprise-a")
+	t.Cleanup(func() { SetKeyPrefix("plugin_daemon") })
+
+	require.NoError(t, client.Set(ctx, "enterprise-a:scan:key1", "1", time.Minute).Err())
+	require.NoError(t, client.Set(ctx, "other:scan:key1", "1", time.Minute).Err())
+	t.Cleanup(func() {
+		_ = client.Del(ctx, "enterprise-a:scan:key1", "other:scan:key1").Err()
+	})
+
+	keys, err := ScanKeys("scan:*")
+	require.NoError(t, err)
+	assert.Contains(t, keys, "enterprise-a:scan:key1")
+	assert.NotContains(t, keys, "other:scan:key1")
+}
+
+func TestKeyPrefixPreservesRedisClusterHashTag(t *testing.T) {
+	require.NoError(t, getRedisConnection())
+	defer Close()
+
+	SetKeyPrefix("enterprise-a")
+	t.Cleanup(func() { SetKeyPrefix("plugin_daemon") })
+
+	logicalKey := "{remote:key:manager}:id2key:tenant-a"
+	physicalKey := "enterprise-a:{remote:key:manager}:id2key:tenant-a"
+	t.Cleanup(func() {
+		_ = client.Del(ctx, physicalKey).Err()
+	})
+
+	require.NoError(t, Store(logicalKey, "value", time.Minute))
+
+	val, err := client.Get(ctx, physicalKey).Result()
+	require.NoError(t, err)
+	assert.Equal(t, "value", val)
+}
+
+func TestSerialKey(t *testing.T) {
+	t.Cleanup(func() { SetKeyPrefix("plugin_daemon") })
+
+	SetKeyPrefix("enterprise-a")
+	assert.Equal(t, "enterprise-a", serialKey())
+	assert.Equal(t, "enterprise-a:test:key", serialKey("test:key"))
+	assert.Equal(t, "enterprise-a:auto_type:full.Type:test:key", serialKey("auto_type", "full.Type", "test:key"))
 }
 
 func TestRedisConnection(t *testing.T) {
@@ -43,11 +155,16 @@ func TestRedisTransaction(t *testing.T) {
 	}
 	defer Close()
 
+	SetKeyPrefix("plugin_daemon")
+
+	transactionKey := strings.Join([]string{TEST_PREFIX, "key"}, ":")
+	_, _ = Del(transactionKey)
+
 	// test transaction
 	err := Transaction(func(p redis.Pipeliner) error {
 		// set key
 		if err := Store(
-			strings.Join([]string{TEST_PREFIX, "key"}, ":"),
+			transactionKey,
 			"value",
 			time.Second,
 			p,
@@ -66,7 +183,7 @@ func TestRedisTransaction(t *testing.T) {
 
 	// get key
 	value, err := GetString(
-		strings.Join([]string{TEST_PREFIX, "key"}, ":"),
+		transactionKey,
 	)
 
 	if err != ErrNotFound {
@@ -83,7 +200,7 @@ func TestRedisTransaction(t *testing.T) {
 	err = Transaction(func(p redis.Pipeliner) error {
 		// set key
 		if err := Store(
-			strings.Join([]string{TEST_PREFIX, "key"}, ":"),
+			transactionKey,
 			"value",
 			time.Second,
 			p,
@@ -100,11 +217,11 @@ func TestRedisTransaction(t *testing.T) {
 		return
 	}
 
-	defer Del(strings.Join([]string{TEST_PREFIX, "key"}, ":"))
+	defer Del(transactionKey)
 
 	// get key
 	value, err = GetString(
-		strings.Join([]string{TEST_PREFIX, "key"}, ":"),
+		transactionKey,
 	)
 
 	if err != nil {

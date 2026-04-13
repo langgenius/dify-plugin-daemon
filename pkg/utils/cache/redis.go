@@ -21,6 +21,9 @@ var (
 
 	ErrDBNotInit = errors.New("redis client not init")
 	ErrNotFound  = errors.New("key not found")
+
+	keyPrefix     = "plugin_daemon"
+	keyPrefixLock sync.RWMutex
 )
 
 func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) *redis.Options {
@@ -116,11 +119,52 @@ func getCmdable(context ...redis.Cmdable) redis.Cmdable {
 	return client
 }
 
+func SetKeyPrefix(prefix string) {
+	prefix = strings.TrimSpace(prefix)
+	if prefix == "" {
+		prefix = "plugin_daemon"
+	}
+
+	keyPrefixLock.Lock()
+	keyPrefix = prefix
+	keyPrefixLock.Unlock()
+}
+
+func currentKeyPrefix() string {
+	keyPrefixLock.RLock()
+	defer keyPrefixLock.RUnlock()
+
+	return keyPrefix
+}
+
 func serialKey(keys ...string) string {
-	return strings.Join(append(
-		[]string{"plugin_daemon"},
-		keys...,
-	), ":")
+	prefix := currentKeyPrefix()
+	if len(keys) == 0 {
+		return prefix
+	}
+
+	totalLen := len(prefix)
+	for _, key := range keys {
+		totalLen += 1 + len(key)
+	}
+
+	var builder strings.Builder
+	builder.Grow(totalLen)
+	builder.WriteString(prefix)
+	for _, key := range keys {
+		builder.WriteByte(':')
+		builder.WriteString(key)
+	}
+
+	return builder.String()
+}
+
+func serialChannel(channel string) string {
+	return serialKey(channel)
+}
+
+func serialKeyMatch(match string) string {
+	return serialKey(match)
 }
 
 // Store the key-value pair
@@ -362,6 +406,8 @@ func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdab
 		return ErrDBNotInit
 	}
 
+	match = serialKeyMatch(match)
+
 	cursor := uint64(0)
 
 	for {
@@ -561,11 +607,11 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 		message = parser.MarshalJson(message)
 	}
 
-	return getCmdable(context...).Publish(ctx, channel, message).Err()
+	return getCmdable(context...).Publish(ctx, serialChannel(channel), message).Err()
 }
 
 func Subscribe[T any](channel string) (<-chan T, func()) {
-	pubsub := client.Subscribe(ctx, channel)
+	pubsub := client.Subscribe(ctx, serialChannel(channel))
 	ch := make(chan T)
 	connectionEstablished := make(chan bool)
 

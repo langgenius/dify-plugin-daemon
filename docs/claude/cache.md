@@ -9,6 +9,10 @@ Redis-based caching system (`internal/utils/cache/`).
 
 ## Basic Operations
 
+All cache helpers accept logical names and apply the configured Redis prefix internally.
+By default the daemon uses `plugin_daemon`, and operators can override it with
+`REDIS_KEY_PREFIX`.
+
 ```go
 // Store and retrieve
 cache.Store("key", value, time.Minute*30)
@@ -38,6 +42,9 @@ cache.DelMapField(CLUSTER_STATUS_KEY, nodeId)
 ```
 
 ## Pub/Sub Pattern
+
+Pub/sub channels are prefixed with the same `REDIS_KEY_PREFIX` value as keys, so
+callers should always pass logical channel names.
 
 ```go
 // Publish event
@@ -104,3 +111,11 @@ cache.InitRedisClient(
     db,        // database number
 )
 ```
+
+Redis naming behavior:
+
+- `REDIS_KEY_PREFIX` defaults to `plugin_daemon`
+- applies to keys and pub/sub channels managed by this package
+- changing the prefix switches the active Redis namespace and does not migrate old data
+- logical keys that contain Redis Cluster hash tags such as `{remote:key:manager}` keep
+  those tags intact because the prefix is prepended to the full logical key
