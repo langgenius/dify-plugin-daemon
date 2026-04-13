@@ -26,7 +26,7 @@ func main() {
 	}
 	time.Local = loc
 
-	logCloser, err := log.Init(config.LogOutputFormat == "json", config.LogFile)
+	logCloser, err := log.Init(config.LogOutputFormat == "json", config.LogFile, config.LogLevel)
 	if err != nil {
 		log.Panic("failed to init logger", "error", err)
 	}

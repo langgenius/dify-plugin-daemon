@@ -33,6 +33,7 @@ func (config *Config) SetDefault() {
 	setDefaultString(&config.PluginStorageLocalRoot, "storage")
 	setDefaultString(&config.PluginInstalledPath, "plugin")
 	setDefaultString(&config.PluginMediaCachePath, "assets")
+	setDefaultString(&config.LogLevel, "INFO")
 	setDefaultString(&config.PersistenceStoragePath, "persistence")
 	setDefaultInt(&config.PluginLocalLaunchingConcurrent, 2)
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
