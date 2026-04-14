@@ -123,6 +123,8 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		log.Panic("invalid Redis TLS config: %s", err.Error())
 	}
 
+	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
+
 	// init redis client
 	if configuration.RedisUseSentinel {
 		// use Redis Sentinel

@@ -130,6 +130,7 @@ type Config struct {
 	RedisPass        string `envconfig:"REDIS_PASSWORD"`
 	RedisUser        string `envconfig:"REDIS_USERNAME"`
 	RedisDB          int    `envconfig:"REDIS_DB"`
+	RedisKeyPrefix   string `envconfig:"REDIS_KEY_PREFIX" default:"plugin_daemon"`
 	RedisUseSsl      bool   `envconfig:"REDIS_USE_SSL"`
 	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
 	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`

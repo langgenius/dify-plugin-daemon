@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kelseyhightower/envconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,6 +76,14 @@ func TestValidateLogLevel(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestConfigRedisKeyPrefixField(t *testing.T) {
+	t.Setenv("REDIS_KEY_PREFIX", "enterprise-a")
+
+	cfg := Config{}
+	require.NoError(t, envconfig.Process("", &cfg))
+	assert.Equal(t, "enterprise-a", cfg.RedisKeyPrefix)
 }
 
 func TestRedisTLSConfig(t *testing.T) {
