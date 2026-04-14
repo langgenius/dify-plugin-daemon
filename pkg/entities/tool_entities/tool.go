@@ -17,6 +17,7 @@ const (
 	ToolResponseChunkTypeLink               ToolResponseChunkType = "link"
 	ToolResponseChunkTypeImage              ToolResponseChunkType = "image"
 	ToolResponseChunkTypeImageLink          ToolResponseChunkType = "image_link"
+	ToolResponseChunkTypeBinaryLink         ToolResponseChunkType = "binary_link"
 	ToolResponseChunkTypeVariable           ToolResponseChunkType = "variable"
 	ToolResponseChunkTypeLog                ToolResponseChunkType = "log"
 	ToolResponseChunkTypeRetrieverResources ToolResponseChunkType = "retriever_resources"
@@ -33,6 +34,7 @@ func IsValidToolResponseChunkType(fl validator.FieldLevel) bool {
 		ToolResponseChunkTypeLink,
 		ToolResponseChunkTypeImage,
 		ToolResponseChunkTypeImageLink,
+		ToolResponseChunkTypeBinaryLink,
 		ToolResponseChunkTypeVariable,
 		ToolResponseChunkTypeLog,
 		ToolResponseChunkTypeRetrieverResources:
