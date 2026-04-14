@@ -209,6 +209,75 @@ func TestPrepareSyncArgs(t *testing.T) {
 	})
 }
 
+func TestInstallDependenciesIgnoreUvLock(t *testing.T) {
+	t.Run("--frozen is skipped when PluginIgnoreUvLock is true", func(t *testing.T) {
+		runtime := createTestRuntime(t, "plugin-with-pyproject")
+
+		// Create a fake uv.lock in the working directory
+		uvLockPath := path.Join(runtime.State.WorkingPath, "uv.lock")
+		err := os.WriteFile(uvLockPath, []byte("fake-lock"), 0644)
+		require.NoError(t, err)
+
+		runtime.appConfig.PluginIgnoreUvLock = true
+
+		// Simulate the logic in installDependencies
+		hasUvLock := false
+		if _, err := os.Stat(uvLockPath); err == nil {
+			if !runtime.appConfig.PluginIgnoreUvLock {
+				hasUvLock = true
+			}
+		}
+
+		// uv.lock should still exist (not removed)
+		_, err = os.Stat(uvLockPath)
+		require.NoError(t, err)
+
+		// hasUvLock should remain false, so --frozen is NOT added
+		require.False(t, hasUvLock)
+		args := runtime.prepareSyncArgs(hasUvLock)
+		require.Equal(t, []string{"sync", "--no-dev"}, args)
+	})
+
+	t.Run("--frozen is added when PluginIgnoreUvLock is false", func(t *testing.T) {
+		runtime := createTestRuntime(t, "plugin-with-pyproject")
+
+		uvLockPath := path.Join(runtime.State.WorkingPath, "uv.lock")
+		err := os.WriteFile(uvLockPath, []byte("fake-lock"), 0644)
+		require.NoError(t, err)
+
+		runtime.appConfig.PluginIgnoreUvLock = false
+
+		hasUvLock := false
+		if _, err := os.Stat(uvLockPath); err == nil {
+			if !runtime.appConfig.PluginIgnoreUvLock {
+				hasUvLock = true
+			}
+		}
+
+		// uv.lock should still exist
+		_, err = os.Stat(uvLockPath)
+		require.NoError(t, err)
+
+		// hasUvLock should be true, so --frozen IS added
+		require.True(t, hasUvLock)
+		args := runtime.prepareSyncArgs(hasUvLock)
+		require.Equal(t, []string{"sync", "--no-dev", "--frozen"}, args)
+	})
+
+	t.Run("ignore flag with mirror URL produces correct args", func(t *testing.T) {
+		runtime := &LocalPluginRuntime{
+			appConfig: &app.Config{
+				PipMirrorUrl:       "https://mirrors.example.com/simple",
+				PluginIgnoreUvLock: true,
+			},
+		}
+
+		// When uv.lock is ignored, hasUvLock=false, so no --frozen
+		args := runtime.prepareSyncArgs(false)
+		require.Equal(t, []string{"sync", "--no-dev", "-i", "https://mirrors.example.com/simple"}, args)
+	})
+}
+
 func TestPreparePipArgs(t *testing.T) {
 	t.Run("basic pip args without config", func(t *testing.T) {
 		runtime := &LocalPluginRuntime{

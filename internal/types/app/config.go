@@ -202,6 +202,7 @@ type Config struct {
 	PipPreferBinary           bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
 	PipVerbose                bool   `envconfig:"PIP_VERBOSE" default:"true"`
 	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
+	PluginIgnoreUvLock        bool   `envconfig:"PLUGIN_IGNORE_UV_LOCK" default:"false"`
 
 	// Runtime buffer configuration (applies to both local and serverless runtimes)
 	// These are the new generic names that should be used going forward

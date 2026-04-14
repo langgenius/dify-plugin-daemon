@@ -21,3 +21,12 @@ func envInt(name string, d int) int {
 	}
 	return i
 }
+
+func envBool(name string, d bool) bool {
+	v := os.Getenv(name)
+	b, err := strconv.ParseBool(v)
+	if err != nil || v == "" {
+		return d
+	}
+	return b
+}
