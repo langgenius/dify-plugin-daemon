@@ -164,7 +164,12 @@ func (p *LocalPluginRuntime) installDependencies(
 		uvLockPath := path.Join(p.State.WorkingPath, "uv.lock")
 		hasUvLock := false
 		if _, err := os.Stat(uvLockPath); err == nil {
-			hasUvLock = true
+			if p.appConfig.PluginIgnoreUvLock {
+				log.Info("PLUGIN_IGNORE_UV_LOCK is set, skipping --frozen to allow fresh resolution",
+					"plugin", p.Config.Identity())
+			} else {
+				hasUvLock = true
+			}
 		}
 		args = p.prepareSyncArgs(hasUvLock)
 		parent.SetAttributes(

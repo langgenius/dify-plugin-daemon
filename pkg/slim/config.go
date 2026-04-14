@@ -23,6 +23,7 @@ type LocalConfig struct {
 	PipMirrorURL         string `json:"pip_mirror_url"`
 	PipExtraArgs         string `json:"pip_extra_args"`
 	MarketplaceURL       string `json:"marketplace_url"`
+	IgnoreUvLock         bool   `json:"ignore_uv_lock"`
 }
 
 type RemoteConfig struct {
@@ -87,9 +88,10 @@ func LoadConfig() (*SlimConfig, error) {
 			UvPath:               env("SLIM_UV_PATH", ""),
 			PythonEnvInitTimeout: envInt("SLIM_PYTHON_ENV_INIT_TIMEOUT", 0),
 			MaxExecutionTimeout:  envInt("SLIM_MAX_EXECUTION_TIMEOUT", 0),
-			PipMirrorURL:         env("SLIM_PIP_MIRROR_URL", ""),
-			PipExtraArgs:         env("SLIM_PIP_EXTRA_ARGS", ""),
-			MarketplaceURL:       env("SLIM_MARKETPLACE_URL", ""),
+		PipMirrorURL:         env("SLIM_PIP_MIRROR_URL", ""),
+		PipExtraArgs:         env("SLIM_PIP_EXTRA_ARGS", ""),
+		MarketplaceURL:       env("SLIM_MARKETPLACE_URL", ""),
+		IgnoreUvLock:         envBool("SLIM_IGNORE_UV_LOCK", false),
 		}
 	case ModeRemote:
 		cfg.Remote = RemoteConfig{
@@ -115,6 +117,7 @@ func (lc *LocalConfig) toAppConfig() *app.Config {
 		PluginMaxExecutionTimeout:  lc.MaxExecutionTimeout,
 		PipMirrorUrl:               lc.PipMirrorURL,
 		PipExtraArgs:               lc.PipExtraArgs,
+		PluginIgnoreUvLock:         lc.IgnoreUvLock,
 		PipPreferBinary:            true,
 		PipVerbose:                 true,
 		PluginRuntimeBufferSize:    1024,
