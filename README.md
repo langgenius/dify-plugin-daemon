@@ -61,6 +61,12 @@ Attention that the `PYTHON_INTERPRETER_PATH` is the path to the python interpret
 We recommend you to use `vscode` to debug the daemon,  and a `launch.json` file is provided in the `.vscode` directory.
 
 
+### Run db migration
+
+```bash
+go run ./cmd/commandline/ migrate
+```
+
 ### Python environment
 #### UV
 Daemon uses `uv` to manage the dependencies of plugins, before you start the daemon, you need to install [uv](https://github.com/astral-sh/uv) by yourself. 
