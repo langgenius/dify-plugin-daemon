@@ -12,16 +12,15 @@ WORKDIR /app
 # using goproxy if you have network issues
 # ENV GOPROXY=https://goproxy.cn,direct
 
-# build
+# build server
 RUN go build \
     -ldflags "\
     -X 'github.com/langgenius/dify-plugin-daemon/pkg/manifest.VersionX=${VERSION}' \
     -X 'github.com/langgenius/dify-plugin-daemon/pkg/manifest.BuildTimeX=$(date -u +%Y-%m-%dT%H:%M:%S%z)'" \
     -o /app/main cmd/server/main.go
 
-# copy entrypoint.sh
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# build commandline (migrate)
+RUN go build -ldflags "-X 'main.VersionX=${VERSION}'" -o /app/commandline ./cmd/commandline/
 
 FROM ubuntu:24.04
 
@@ -73,8 +72,7 @@ ENV UV_PATH=/usr/local/bin/uv
 ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
-COPY --from=builder /app/main /app/entrypoint.sh /app/
+COPY --from=builder /app/main /app/commandline /app/
 
-# run the server, using sh as the entrypoint to avoid process being the root process
-# and using bash to recycle resources
-CMD ["/bin/bash", "-c", "/app/entrypoint.sh"]
+# run migrate then start the server
+CMD ["/bin/bash", "-c", "/app/commandline migrate && exec /app/main"]
