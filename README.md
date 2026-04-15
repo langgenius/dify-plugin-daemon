@@ -117,6 +117,23 @@ For developers working on this codebase, see our comprehensive development docum
 
 - **[SRI Docs](docs/runtime/sri.md)** - Serverless Runtime Interface documentation
 
+
+## Recommend env config
+
+```shell
+PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv" 
+```
+
+with `PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv"` compileall not compile site-package files, it will decrease cpu cost
+
+
+```shell
+PLUGIN_IGNORE_UV_LOCK=true
+PIP_MIRROR_URL=https://mirrors.aliyun.com/pypi/simple/
+```
+
+ignore uv.lock to use the user config pypi address
+
 ## Benchmark
 
 Refer to [Benchmark](https://langgenius.github.io/dify-plugin-daemon/benchmark-data/)
