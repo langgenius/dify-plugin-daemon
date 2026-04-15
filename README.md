@@ -121,18 +121,17 @@ For developers working on this codebase, see our comprehensive development docum
 ## Recommend env config
 
 ```shell
-PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv" 
+PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv"
 ```
 
-with `PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv"` compileall not compile site-package files, it will decrease cpu cost
-
+Using PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv" prevents compileall from compiling files within the virtual environment, which reduces CPU usage during plugin initialization.
 
 ```shell
 PLUGIN_IGNORE_UV_LOCK=true
 PIP_MIRROR_URL=https://mirrors.aliyun.com/pypi/simple/
 ```
 
-ignore uv.lock to use the user config pypi address
+Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the configured PyPI mirror for dependency resolution.
 
 ## Benchmark
 
