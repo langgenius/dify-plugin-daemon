@@ -117,6 +117,22 @@ For developers working on this codebase, see our comprehensive development docum
 
 - **[SRI Docs](docs/runtime/sri.md)** - Serverless Runtime Interface documentation
 
+
+## Recommend env config
+
+```shell
+PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv"
+```
+
+Using PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv" prevents compileall from compiling files within the virtual environment, which reduces CPU usage during plugin initialization.
+
+```shell
+PLUGIN_IGNORE_UV_LOCK=true
+PIP_MIRROR_URL=https://mirrors.aliyun.com/pypi/simple/
+```
+
+Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the configured PyPI mirror for dependency resolution.
+
 ## Benchmark
 
 Refer to [Benchmark](https://langgenius.github.io/dify-plugin-daemon/benchmark-data/)
