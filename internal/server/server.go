@@ -15,6 +15,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
+const OSS_TYPE_LOCAL_FILE = "local_file"
+
 func initOSS(config *app.Config) oss.OSS {
 	// init storage
 	var storage oss.OSS
@@ -77,6 +79,20 @@ func initOSS(config *app.Config) oss.OSS {
 	})
 	if err != nil {
 		log.Panic("failed to create storage", "error", err)
+	}
+
+	if config.PluginStorageType != oss.OSS_TYPE_LOCAL && config.PluginStorageType != OSS_TYPE_LOCAL_FILE {
+		fallbackStorage, fallbackErr := factory.Load("local", oss.OSSArgs{
+			Local: &oss.Local{
+				Path: config.PluginStorageLocalRoot,
+			},
+		})
+		if fallbackErr != nil {
+			log.Warn("failed to create local fallback storage, running without fallback", "error", fallbackErr)
+			return storage
+		}
+		log.Info("storage: wrapping primary with local fallback", "primary_type", storage.Type())
+		return NewFallbackOSS(storage, fallbackStorage)
 	}
 
 	return storage
