@@ -159,6 +159,9 @@ type Config struct {
 	DBReadTimeout     time.Duration `envconfig:"DB_READ_TIMEOUT" default:"30s"`
 	DBWriteTimeout    time.Duration `envconfig:"DB_WRITE_TIMEOUT" default:"30s"`
 
+	// global storage path prefix
+	StoragePathPrefix string `envconfig:"STORAGE_PATH_PREFIX"`
+
 	// persistence storage
 	PersistenceStoragePath    string `envconfig:"PERSISTENCE_STORAGE_PATH"`
 	PersistenceStorageMaxSize int64  `envconfig:"PERSISTENCE_STORAGE_MAX_SIZE"`
