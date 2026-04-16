@@ -2,6 +2,7 @@ package plugin_manager
 
 import (
 	"fmt"
+	"path"
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -58,20 +59,36 @@ var (
 )
 
 func InitGlobalManager(oss oss.OSS, config *app.Config) *PluginManager {
+	prefix := strings.Trim(config.StoragePathPrefix, "/")
+	if prefix != "" {
+		for _, seg := range strings.Split(prefix, "/") {
+			if seg == ".." {
+				log.Panic("STORAGE_PATH_PREFIX must not contain '..'")
+			}
+		}
+	}
+
+	joinPrefix := func(p string) string {
+		if prefix == "" {
+			return p
+		}
+		return path.Join(prefix, p)
+	}
+
 	mediaBucket := media_transport.NewAssetsBucket(
 		oss,
-		config.PluginMediaCachePath,
+		joinPrefix(config.PluginMediaCachePath),
 		config.PluginMediaCacheSize,
 	)
 
 	installedBucket := media_transport.NewInstalledBucket(
 		oss,
-		config.PluginInstalledPath,
+		joinPrefix(config.PluginInstalledPath),
 	)
 
 	packageBucket := media_transport.NewPackageBucket(
 		oss,
-		config.PluginPackageCachePath,
+		joinPrefix(config.PluginPackageCachePath),
 	)
 
 	pluginAssetCache, err := lru.New[string, []byte](int(config.PluginAssetCacheSize))
