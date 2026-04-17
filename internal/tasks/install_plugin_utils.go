@@ -155,23 +155,65 @@ func DeleteTask(taskId string) error {
 	})
 }
 
+// gracefulShutdownTimeout controls how long RemovePluginIfNeeded waits for
+// graceful and forceful shutdown to complete. Package-level variable for test override.
+var gracefulShutdownTimeout = 30 * time.Second
+
 func RemovePluginIfNeeded(
-	manager *plugin_manager.PluginManager,
+	manager plugin_manager.PluginShutdownManager,
 	originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 	response *curd.UpgradePluginResponse,
 ) error {
 	shouldCleanup := response.IsOriginalPluginDeleted
 
 	if shouldCleanup && response.DeletedPlugin != nil && response.DeletedPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
-		// uninstall plugin from local install bucket
+		// uninstall plugin from local install bucket first
+		// this must happen before shutdown so that the WatchDog safety net
+		// (removeUnusedLocalPlugins) can retry cleanup if shutdown fails
 		if err := manager.RemoveLocalPlugin(originalPluginUniqueIdentifier); err != nil {
 			return errors.Join(err, errors.New("failed to remove plugin from local install bucket"))
 		}
 
-		// shutdown it gracefully
-		_, err := manager.ShutdownLocalPluginGracefully(originalPluginUniqueIdentifier)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to shutdown plugin gracefully"))
+		shutdownGracefully := func() bool {
+			ch, err := manager.ShutdownLocalPluginGracefully(originalPluginUniqueIdentifier)
+			if err != nil {
+				// runtime not found in map, it may have been already cleaned up
+				return false
+			}
+			if ch == nil {
+				return true
+			}
+
+			// wait for graceful shutdown with a timeout
+			select {
+			case <-ch:
+				return true
+			case <-time.After(gracefulShutdownTimeout):
+				log.Warn("graceful shutdown timed out, trying forceful shutdown",
+					"plugin", originalPluginUniqueIdentifier.String())
+				return false
+			}
+		}
+
+		if shutdownGracefully() {
+			return nil
+		}
+
+		// graceful shutdown failed or timed out, try forceful as fallback
+		forceCh, forceErr := manager.ShutdownLocalPluginForcefully(originalPluginUniqueIdentifier)
+		if forceErr != nil {
+			return errors.Join(
+				forceErr,
+				errors.New("failed to shutdown plugin forcefully after graceful shutdown failed"),
+			)
+		}
+		if forceCh != nil {
+			select {
+			case <-forceCh:
+				// forceful shutdown completed
+			case <-time.After(gracefulShutdownTimeout):
+				return errors.New("forceful shutdown timed out")
+			}
 		}
 	}
 	return nil

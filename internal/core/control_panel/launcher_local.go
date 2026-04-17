@@ -149,17 +149,17 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			})
 		},
 		OnRuntimeCloseImpl: func() {
+			// delete the runtime from the map
+			// this must happen AFTER all instances are confirmed shutdown
+			// to prevent process leaks where the runtime disappears from the map
+			// but subprocesses are still alive and no safety net can find them
+			c.localPluginRuntimes.Delete(pluginUniqueIdentifier)
 			// notify the plugin totally stopped
 			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 				notifier.OnLocalRuntimeStopped(runtime)
 			})
 		},
 		OnRuntimeStopScheduleImpl: func() {
-			// delete the runtime from the map
-			// Even if the runtime is not ready, deleting it still makes sense
-			// once a plugin is stopping schedule, all new requests to it need to be rejected
-			// so just remove it from map
-			c.localPluginRuntimes.Delete(pluginUniqueIdentifier)
 			// notify the plugin is stopping
 			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 				notifier.OnLocalRuntimeStop(runtime)
