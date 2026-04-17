@@ -1,4 +1,5 @@
 release/
+dist/
 logs/
 .vscode/
 .idea/

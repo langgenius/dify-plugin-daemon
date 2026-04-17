@@ -34,9 +34,22 @@ brew tap langgenius/dify
 brew install dify
 ```
 
-- Install with the binary file
+- Install with the install script
 
-Download the binary file from the assets' list in [the release page](https://github.com/langgenius/dify-plugin-daemon/releases).
+```bash
+curl -fsSL https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/main/.script/install.sh | VERSION=0.0.7 bash
+```
+
+- Install manually
+
+Download the archive for your platform from [the release page](https://github.com/langgenius/dify-plugin-daemon/releases) and extract it:
+
+```bash
+# linux/macOS example (amd64)
+tar -xzf dify-plugin-linux-amd64.tar.gz
+chmod +x dify-plugin-linux-amd64/dify-plugin
+sudo mv dify-plugin-linux-amd64/dify-plugin /usr/local/bin/dify-plugin
+```
 
 ## Development
 
