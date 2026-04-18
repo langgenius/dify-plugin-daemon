@@ -126,7 +126,22 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
 
 	// init redis client
-	if configuration.RedisUseSentinel {
+	if configuration.RedisUseClusters {
+		addrs := splitAndTrimCSV(configuration.RedisClusters)
+		password := configuration.RedisClustersPassword
+		if password == "" {
+			password = configuration.RedisPass
+		}
+		if err := cache.InitRedisClusterClient(
+			addrs,
+			configuration.RedisUser,
+			password,
+			configuration.RedisUseSsl,
+			tlsConf,
+		); err != nil {
+			log.Panic("init redis cluster client failed", "error", err)
+		}
+	} else if configuration.RedisUseSentinel {
 		// use Redis Sentinel
 		sentinels := strings.Split(configuration.RedisSentinels, ",")
 		if err := cache.InitRedisSentinelClient(
@@ -248,4 +263,18 @@ func (p *PluginManager) ExtractPluginAsset(
 	}
 	p.pluginAssetCache.Add(key, assets[path])
 	return assets[path], nil
+}
+
+func splitAndTrimCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
 }
