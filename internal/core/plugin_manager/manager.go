@@ -128,6 +128,9 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	// init redis client
 	if configuration.RedisUseClusters {
 		addrs := splitAndTrimCSV(configuration.RedisClusters)
+		if len(addrs) == 0 {
+			log.Panic("REDIS_USE_CLUSTERS is true but REDIS_CLUSTERS is empty")
+		}
 		password := configuration.RedisClustersPassword
 		if password == "" {
 			password = configuration.RedisPass

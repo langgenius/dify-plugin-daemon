@@ -109,7 +109,7 @@ func InitRedisClusterClient(
 	tlsConf *tls.Config,
 ) error {
 	if len(addrs) == 0 {
-		return errors.New("REDIS_CLUSTERS is empty but REDIS_USE_CLUSTERS is true")
+		return errors.New("redis cluster addresses are empty")
 	}
 	opts := &redis.ClusterOptions{
 		Addrs:    addrs,
@@ -616,9 +616,14 @@ func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, err
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
 }
 
-func Transaction(fn func(redis.Pipeliner) error) error {
+func Transaction(fn func(redis.Pipeliner) error, keys ...string) error {
 	if client == nil {
 		return ErrDBNotInit
+	}
+
+	watchKeys := make([]string, len(keys))
+	for i, k := range keys {
+		watchKeys[i] = serialKey(k)
 	}
 
 	return client.Watch(ctx, func(tx *redis.Tx) error {
@@ -629,7 +634,7 @@ func Transaction(fn func(redis.Pipeliner) error) error {
 			return nil
 		}
 		return err
-	})
+	}, watchKeys...)
 }
 
 func Publish(channel string, message any, context ...redis.Cmdable) error {
