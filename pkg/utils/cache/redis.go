@@ -616,14 +616,14 @@ func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, err
 	return getCmdable(context...).Expire(ctx, serialKey(key), time).Result()
 }
 
-func Transaction(fn func(redis.Pipeliner) error, keys ...string) error {
+func Transaction(fn func(redis.Pipeliner) error, watchKeys ...string) error {
 	if client == nil {
 		return ErrDBNotInit
 	}
 
-	watchKeys := make([]string, len(keys))
-	for i, k := range keys {
-		watchKeys[i] = serialKey(k)
+	serialized := make([]string, len(watchKeys))
+	for i, k := range watchKeys {
+		serialized[i] = serialKey(k)
 	}
 
 	return client.Watch(ctx, func(tx *redis.Tx) error {
@@ -634,7 +634,7 @@ func Transaction(fn func(redis.Pipeliner) error, keys ...string) error {
 			return nil
 		}
 		return err
-	}, watchKeys...)
+	}, serialized...)
 }
 
 func Publish(channel string, message any, context ...redis.Cmdable) error {

@@ -2,7 +2,6 @@ package plugin_manager
 
 import (
 	"fmt"
-	"strings"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
@@ -18,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 type PluginManager struct {
@@ -126,8 +126,14 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
 
 	// init redis client
+	if configuration.RedisUseClusters && configuration.RedisUseSentinel {
+		log.Panic("REDIS_USE_CLUSTERS and REDIS_USE_SENTINEL cannot both be true")
+	}
 	if configuration.RedisUseClusters {
-		addrs := splitAndTrimCSV(configuration.RedisClusters)
+		if configuration.RedisDB != 0 {
+			log.Panic("REDIS_DB must be 0 when REDIS_USE_CLUSTERS is true (Redis Cluster does not support SELECT DB)")
+		}
+		addrs := parser.SplitAndTrimCSV(configuration.RedisClusters)
 		if len(addrs) == 0 {
 			log.Panic("REDIS_USE_CLUSTERS is true but REDIS_CLUSTERS is empty")
 		}
@@ -146,7 +152,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		}
 	} else if configuration.RedisUseSentinel {
 		// use Redis Sentinel
-		sentinels := strings.Split(configuration.RedisSentinels, ",")
+		sentinels := parser.SplitAndTrimCSV(configuration.RedisSentinels)
 		if err := cache.InitRedisSentinelClient(
 			sentinels,
 			configuration.RedisSentinelServiceName,
@@ -266,18 +272,4 @@ func (p *PluginManager) ExtractPluginAsset(
 	}
 	p.pluginAssetCache.Add(key, assets[path])
 	return assets[path], nil
-}
-
-func splitAndTrimCSV(s string) []string {
-	if s == "" {
-		return nil
-	}
-	parts := strings.Split(s, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if trimmed := strings.TrimSpace(p); trimmed != "" {
-			out = append(out, trimmed)
-		}
-	}
-	return out
 }
