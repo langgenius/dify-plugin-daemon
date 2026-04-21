@@ -135,11 +135,6 @@ type Config struct {
 	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
 	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
 
-	// redis cluster
-	RedisUseClusters      bool   `envconfig:"REDIS_USE_CLUSTERS" default:"false"`
-	RedisClusters         string `envconfig:"REDIS_CLUSTERS"`
-	RedisClustersPassword string `envconfig:"REDIS_CLUSTERS_PASSWORD"`
-
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
 	RedisSentinels             string  `envconfig:"REDIS_SENTINELS"`

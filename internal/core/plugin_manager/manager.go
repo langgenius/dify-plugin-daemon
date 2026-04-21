@@ -126,31 +126,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
 
 	// init redis client
-	if configuration.RedisUseClusters && configuration.RedisUseSentinel {
-		log.Panic("REDIS_USE_CLUSTERS and REDIS_USE_SENTINEL cannot both be true")
-	}
-	if configuration.RedisUseClusters {
-		if configuration.RedisDB != 0 {
-			log.Panic("REDIS_DB must be 0 when REDIS_USE_CLUSTERS is true (Redis Cluster does not support SELECT DB)")
-		}
-		addrs := parser.SplitAndTrimCSV(configuration.RedisClusters)
-		if len(addrs) == 0 {
-			log.Panic("REDIS_USE_CLUSTERS is true but REDIS_CLUSTERS is empty")
-		}
-		password := configuration.RedisClustersPassword
-		if password == "" {
-			password = configuration.RedisPass
-		}
-		if err := cache.InitRedisClusterClient(
-			addrs,
-			configuration.RedisUser,
-			password,
-			configuration.RedisUseSsl,
-			tlsConf,
-		); err != nil {
-			log.Panic("init redis cluster client failed", "error", err)
-		}
-	} else if configuration.RedisUseSentinel {
+	if configuration.RedisUseSentinel {
 		// use Redis Sentinel
 		sentinels := parser.SplitAndTrimCSV(configuration.RedisSentinels)
 		if err := cache.InitRedisSentinelClient(

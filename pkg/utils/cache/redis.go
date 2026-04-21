@@ -102,40 +102,6 @@ func InitRedisSentinelClient(
 	return nil
 }
 
-func InitRedisClusterClient(
-	addrs []string,
-	username, password string,
-	useSsl bool,
-	tlsConf *tls.Config,
-) error {
-	if len(addrs) == 0 {
-		return errors.New("redis cluster addresses are empty")
-	}
-	opts := &redis.ClusterOptions{
-		Addrs:    addrs,
-		Username: username,
-		Password: password,
-	}
-	if useSsl {
-		if tlsConf != nil {
-			opts.TLSConfig = tlsConf
-		} else {
-			opts.TLSConfig = &tls.Config{
-				MinVersion: tls.VersionTLS12,
-			}
-		}
-	}
-
-	client = redis.NewClusterClient(opts)
-	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
-
-	if _, err := client.Ping(ctx).Result(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Close the redis client
 func Close() error {
 	if client == nil {
