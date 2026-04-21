@@ -1,8 +1,11 @@
 package plugin_manager
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
@@ -216,6 +219,41 @@ func (c *PluginManager) NeedRedirecting(
 	}
 
 	return true, nil
+}
+
+// TryLaunchLocalPlugin attempts to launch a local plugin on-demand.
+// This is used as a fallback when the runtime is not found during dispatch,
+// instead of waiting for the WatchDog's 30s periodic scan.
+// Returns true if the plugin was successfully launched and is ready.
+func (p *PluginManager) TryLaunchLocalPlugin(
+	identity plugin_entities.PluginUniqueIdentifier,
+) bool {
+	if p.config.Platform != app.PLATFORM_LOCAL {
+		return false
+	}
+	
+	exists, err := p.installedBucket.Exists(identity)
+	if err != nil || !exists {
+		return false
+	}
+
+	_, ch, err := p.controlPanel.LaunchLocalPlugin(context.Background(), identity)
+	if err != nil {
+		if errors.Is(err, controlpanel.ErrorPluginAlreadyLaunched) {
+			// another goroutine launched it between our check and now
+			return true
+		}
+		log.Warn("on-demand launch failed", "plugin", identity.String(), "error", err)
+		return false
+	}
+
+	select {
+	case err := <-ch:
+		return err == nil
+	case <-time.After(2 * time.Minute):
+		log.Warn("on-demand launch timed out", "plugin", identity.String())
+		return false
+	}
 }
 
 func pluginAssetCacheKey(
