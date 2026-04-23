@@ -464,11 +464,21 @@ func (p *LocalPluginRuntime) preCompile(
 	ctx, cancel := context.WithTimeout(baseCtx, 10*time.Minute)
 	defer cancel()
 
+	const defaultExcludePattern = `\.venv|\.uv-cache`
+	excludePattern := defaultExcludePattern
 	compileArgs := []string{"-m", "compileall"}
 	if p.appConfig.PythonCompileAllExtraArgs != "" {
-		compileArgs = append(compileArgs, strings.Split(p.appConfig.PythonCompileAllExtraArgs, " ")...)
+		extraArgs := strings.Fields(p.appConfig.PythonCompileAllExtraArgs)
+		for i := 0; i < len(extraArgs); i++ {
+			if extraArgs[i] == "-x" && i+1 < len(extraArgs) {
+				excludePattern = defaultExcludePattern + "|" + extraArgs[i+1]
+				i++
+			} else {
+				compileArgs = append(compileArgs, extraArgs[i])
+			}
+		}
 	}
-	compileArgs = append(compileArgs, ".")
+	compileArgs = append(compileArgs, "-x", excludePattern, ".")
 
 	// pre-compile the plugin to avoid costly compilation on first invocation
 	compileCmd := exec.CommandContext(ctx, pythonPath, compileArgs...)
