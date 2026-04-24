@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
@@ -124,26 +125,49 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 	instance.AddNotifier(&PluginInstanceNotifierTemplate{
 		// the first heartbeat will trigger this
 		OnInstanceReadyImpl: func(pi *PluginInstance) {
-			// notify plugin started
-			r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
-				notifier.OnInstanceReady(instance)
-			})
 			// mark the instance as started
 			instance.started = true
 			// setup instance
 			r.instanceLocker.Lock()
+			before := len(r.instances)
 			r.instances = append(r.instances, instance)
+			after := len(r.instances)
 			r.instanceLocker.Unlock()
+			log.Info(
+				"local runtime instance ready",
+				"plugin", r.Config.Identity(),
+				"instance", instance.ID()[:8],
+				"pid", e.Process.Pid,
+				"instances_before", before,
+				"instances_after", after,
+			)
+			// notify plugin started
+			r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
+				notifier.OnInstanceReady(instance)
+			})
 
 			close(launchChannel)
 		},
 		OnInstanceShutdownImpl: func(pi *PluginInstance) {
 			// remove the instance from the list
 			r.instanceLocker.Lock()
+			before := len(r.instances)
 			r.instances = slices.DeleteFunc(r.instances, func(instance *PluginInstance) bool {
 				return instance.instanceId == pi.instanceId
 			})
+			after := len(r.instances)
 			r.instanceLocker.Unlock()
+			log.Warn(
+				"local runtime instance shutdown",
+				"plugin", r.Config.Identity(),
+				"instance", pi.ID()[:8],
+				"pid", e.Process.Pid,
+				"started", pi.started,
+				"shutdown", pi.shutdown,
+				"instances_before", before,
+				"instances_after", after,
+				"instance_error", pi.Error(),
+			)
 
 			if !instance.started {
 				// if the instance is not started, it means the plugin is not ready

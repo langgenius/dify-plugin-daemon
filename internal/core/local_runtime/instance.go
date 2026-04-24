@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 const (
@@ -124,6 +125,15 @@ func (s *PluginInstance) Stop() {
 // Once the subprocess exists itself, STDOUT always close, which results in `CLOSE STDOUT`
 func (s *PluginInstance) StartStdout() {
 	defer func() {
+		log.Info(
+			"plugin stdout reader exiting",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+			"started", s.started,
+			"shutdown", s.shutdown,
+			"last_active_at", s.lastActiveAt,
+			"instance_error", s.Error(),
+		)
 		// notify shutdown signal
 		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 			notifier.OnInstanceShutdown(s)
@@ -167,6 +177,15 @@ func (s *PluginInstance) StartStdout() {
 				),
 			)
 		})
+	} else {
+		log.Warn(
+			"plugin stdout reader reached eof",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+			"started", s.started,
+			"shutdown", s.shutdown,
+			"last_active_at", s.lastActiveAt,
+		)
 	}
 
 	// once reader of stdout is closed, kill subprocess
@@ -176,6 +195,18 @@ func (s *PluginInstance) StartStdout() {
 		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to kill subprocess: %s", err.Error()))
 		})
+		log.Warn(
+			"plugin subprocess kill returned",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+			"error", err,
+		)
+	} else {
+		log.Warn(
+			"plugin subprocess killed after stdout closed",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+		)
 	}
 
 	// collect subprocess, avoid zombie processes
@@ -183,6 +214,18 @@ func (s *PluginInstance) StartStdout() {
 		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 			notifier.OnInstanceErrorLog(s, fmt.Errorf("failed to reap subprocess: %s", err.Error()))
 		})
+		log.Warn(
+			"plugin subprocess wait returned error",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+			"error", err,
+		)
+	} else {
+		log.Info(
+			"plugin subprocess reaped",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+		)
 	}
 }
 
@@ -282,6 +325,13 @@ func (s *PluginInstance) Monitor() error {
 
 		// check heartbeat
 		if time.Since(s.lastActiveAt) > MAX_HEARTBEAT_INTERVAL {
+			log.Warn(
+				"plugin instance marked inactive",
+				"plugin", s.pluginUniqueIdentifier,
+				"instance", s.ID()[:8],
+				"inactive_seconds", time.Since(s.lastActiveAt).Seconds(),
+				"instance_error", s.Error(),
+			)
 			s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
 				// notify handlers
 				notifier.OnInstanceLaunchFailed(
