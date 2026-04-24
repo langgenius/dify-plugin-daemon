@@ -49,3 +49,9 @@ func (p *PluginManager) ShutdownLocalPluginGracefully(
 ) (<-chan error, error) {
 	return p.controlPanel.ShutdownLocalPluginGracefully(pluginUniqueIdentifier)
 }
+
+func (p *PluginManager) ShutdownLocalPluginForcefully(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) (<-chan error, error) {
+	return p.controlPanel.ShutdownLocalPluginForcefully(pluginUniqueIdentifier)
+}

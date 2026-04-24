@@ -53,6 +53,12 @@ type PluginManager struct {
 	controlPanel *controlpanel.ControlPanel
 }
 
+type PluginShutdownManager interface {
+	RemoveLocalPlugin(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) error
+	ShutdownLocalPluginGracefully(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) (<-chan error, error)
+	ShutdownLocalPluginForcefully(pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier) (<-chan error, error)
+}
+
 var (
 	manager *PluginManager
 )
