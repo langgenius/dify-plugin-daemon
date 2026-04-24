@@ -42,7 +42,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y curl python3.12 \
     python3.12-venv python3.12-dev python3-pip ffmpeg \
     build-essential git \
     cmake pkg-config \
-    libcairo2-dev libjpeg-dev libgif-dev
+    libcairo2-dev libjpeg-dev libgif-dev \
+    tini
 
 apt-get clean
 rm -rf /var/lib/apt/lists/*
@@ -73,6 +74,11 @@ ENV PLATFORM=$PLATFORM
 ENV GIN_MODE=release
 
 COPY --from=builder /app/main /app/commandline /app/
+
+# Use tini as PID 1 so that /app/main is NOT PID 1 inside the container.
+# The Python plugin SDK self-destructs (os._exit(-1), exit 255) when its
+# parent process is PID 1, because it treats that as an "orphaned" state.
+ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
 
 # run migrate then start the server
 CMD ["/bin/bash", "-c", "/app/commandline migrate && exec /app/main"]
