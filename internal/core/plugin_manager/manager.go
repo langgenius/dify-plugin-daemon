@@ -2,7 +2,6 @@ package plugin_manager
 
 import (
 	"fmt"
-	"strings"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
@@ -18,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 type PluginManager struct {
@@ -128,7 +128,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	// init redis client
 	if configuration.RedisUseSentinel {
 		// use Redis Sentinel
-		sentinels := strings.Split(configuration.RedisSentinels, ",")
+		sentinels := parser.SplitAndTrimCSV(configuration.RedisSentinels)
 		if err := cache.InitRedisSentinelClient(
 			sentinels,
 			configuration.RedisSentinelServiceName,

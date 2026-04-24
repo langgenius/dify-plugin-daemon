@@ -45,10 +45,11 @@ func GetConnectionKey(info ConnectionInfo) (string, error) {
 	)
 
 	if err == cache.ErrNotFound {
+		id2key := strings.Join([]string{CONNECTION_KEY_MANAGER_ID2KEY_PREFIX, info.TenantId}, ":")
 		err := cache.Transaction(func(p redis.Pipeliner) error {
 			k := uuid.New().String()
 			_, err = cache.SetNX(
-				strings.Join([]string{CONNECTION_KEY_MANAGER_ID2KEY_PREFIX, info.TenantId}, ":"),
+				id2key,
 				Key{Key: k},
 				CONNECTION_KEY_EXPIRE_TIME,
 				p,
@@ -70,7 +71,7 @@ func GetConnectionKey(info ConnectionInfo) (string, error) {
 			key = &Key{Key: k}
 
 			return nil
-		})
+		}, id2key)
 
 		if err != nil {
 			return "", err
