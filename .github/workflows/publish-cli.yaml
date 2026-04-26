@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'depot-ubuntu-24.04' }}
     if: github.repository == 'langgenius/dify-plugin-daemon'
     strategy:
       matrix:

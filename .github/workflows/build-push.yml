@@ -23,7 +23,7 @@ env:
 
 jobs:
   matrix_prepare:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -43,7 +43,7 @@ jobs:
 
   build:
     needs: matrix_prepare
-    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'depot-ubuntu-24.04-4' }}
     if: github.repository == 'langgenius/dify-plugin-daemon'
     strategy:
       matrix: ${{ fromJson(needs.matrix_prepare.outputs.matrix) }}
@@ -95,7 +95,7 @@ jobs:
   create-manifest:
     if: github.event_name != 'pull_request'
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     strategy:
       matrix:
         scope: [serverless, local]
