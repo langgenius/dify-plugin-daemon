@@ -34,8 +34,10 @@ jobs:
         id: bench_cold
         shell: bash
         run: |
-          rm -rf "$GOMODCACHE" "$GOCACHE"
-          mkdir -p "$GOMODCACHE" "$GOCACHE"
+          gomodcache=$(go env GOMODCACHE)
+          gocache=$(go env GOCACHE)
+          rm -rf "$gomodcache" "$gocache"
+          mkdir -p "$gomodcache" "$gocache"
 
           start=$(date +%s)
           go mod download
