@@ -43,8 +43,11 @@ jobs:
 
   build:
     needs: matrix_prepare
-    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64_runner' || 'depot-ubuntu-24.04-4' }}
+    runs-on: depot-ubuntu-24.04-4
     if: github.repository == 'langgenius/dify-plugin-daemon'
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix: ${{ fromJson(needs.matrix_prepare.outputs.matrix) }}
 
@@ -57,6 +60,9 @@ jobs:
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
           echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -76,21 +82,70 @@ jobs:
             type=sha,enable=true,priority=100,prefix=,suffix=,format=long
             type=raw,value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
-      - name: Run Build Docker Image
-        run: docker build --build-arg PLATFORM=${{ matrix.scope }} --build-arg VERSION=${{ github.sha }} -t dify-plugin-daemon -f ./docker/${{ matrix.scope }}.dockerfile .
+      - name: Compute arch tags
+        id: arch-tags
+        if: github.event_name != 'pull_request'
+        run: |
+          while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              printf '%s-%s-%s\n' "$tag" "${{ matrix.scope }}" "${{ env.PLATFORM_PAIR }}" >> "$RUNNER_TEMP/tags.txt"
+            fi
+          done <<'EOF'
+          ${{ steps.meta.outputs.tags }}
+          EOF
+          {
+            echo 'tags<<EOF'
+            cat "$RUNNER_TEMP/tags.txt"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Tag Docker Images
+      - name: Build Docker image for PR
+        if: github.event_name == 'pull_request'
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: .
+          file: ./docker/${{ matrix.scope }}.dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+          build-args: |
+            PLATFORM=${{ matrix.scope }}
+            VERSION=${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image
+        id: build
         if: github.event_name != 'pull_request'
-        run: for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n');
-          do
-          docker tag dify-plugin-daemon "$tag-${{ matrix.scope }}-${{ env.PLATFORM_PAIR }}";
-          done
-      - name: Push Docker Image
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: .
+          file: ./docker/${{ matrix.scope }}.dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.arch-tags.outputs.tags }}
+          build-args: |
+            PLATFORM=${{ matrix.scope }}
+            VERSION=${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Export digest
         if: github.event_name != 'pull_request'
-        run: for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n');
-          do
-          docker push $tag-${{ matrix.scope }}-${{ env.PLATFORM_PAIR }};
-          done
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          sanitized_digest=${DIGEST#sha256:}
+          touch "/tmp/digests/${sanitized_digest}"
+
+      - name: Upload digest
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.scope }}-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
 
   create-manifest:
     if: github.event_name != 'pull_request'
@@ -100,14 +155,18 @@ jobs:
       matrix:
         scope: [serverless, local]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKERHUB_USER }}
           password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-${{ matrix.scope }}-*
+          merge-multiple: true
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -121,8 +180,15 @@ jobs:
             type=raw,value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
       - name: Build Universal Docker Images
-        run: for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n');
-          do
-          docker manifest create $tag-${{ matrix.scope }} $tag-${{ matrix.scope }}-linux-amd64 $tag-${{ matrix.scope }}-linux-arm64;
-          docker manifest push $tag-${{ matrix.scope }};
-          done
+        working-directory: /tmp/digests
+        env:
+          IMAGE_NAME: ${{ env.DIFY_DAEMON_IMAGE_NAME }}
+        run: |
+          while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              docker buildx imagetools create -t "$tag-${{ matrix.scope }}" \
+                $(printf '%s@sha256:%s ' "$IMAGE_NAME" *)
+            fi
+          done <<'EOF'
+          ${{ steps.meta.outputs.tags }}
+          EOF
