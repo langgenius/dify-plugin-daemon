@@ -12,6 +12,8 @@ concurrency:
 
 jobs:
   benchmark:
+    env:
+      BENCH_CACHE_BASE: ${{ runner.temp }}/runner-benchmark
     strategy:
       fail-fast: false
       matrix:
@@ -33,11 +35,12 @@ jobs:
       - name: Benchmark CLI build
         id: bench_cold
         shell: bash
+        env:
+          GOMODCACHE: ${{ runner.temp }}/runner-benchmark/cold/gomod
+          GOCACHE: ${{ runner.temp }}/runner-benchmark/cold/gocache
         run: |
-          gomodcache=$(go env GOMODCACHE)
-          gocache=$(go env GOCACHE)
-          rm -rf "$gomodcache" "$gocache"
-          mkdir -p "$gomodcache" "$gocache"
+          rm -rf "$BENCH_CACHE_BASE/cold"
+          mkdir -p "$GOMODCACHE" "$GOCACHE"
 
           start=$(date +%s)
           go mod download
@@ -49,6 +52,9 @@ jobs:
       - name: Benchmark CLI build warm cache
         id: bench_warm
         shell: bash
+        env:
+          GOMODCACHE: ${{ runner.temp }}/runner-benchmark/cold/gomod
+          GOCACHE: ${{ runner.temp }}/runner-benchmark/cold/gocache
         run: |
           start=$(date +%s)
           go mod download
