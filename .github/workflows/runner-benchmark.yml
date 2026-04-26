@@ -12,8 +12,6 @@ concurrency:
 
 jobs:
   benchmark:
-    env:
-      BENCH_CACHE_BASE: ${{ runner.temp }}/runner-benchmark
     strategy:
       fail-fast: false
       matrix:
@@ -35,11 +33,11 @@ jobs:
       - name: Benchmark CLI build
         id: bench_cold
         shell: bash
-        env:
-          GOMODCACHE: ${{ runner.temp }}/runner-benchmark/cold/gomod
-          GOCACHE: ${{ runner.temp }}/runner-benchmark/cold/gocache
         run: |
-          rm -rf "$BENCH_CACHE_BASE/cold"
+          cache_base="$RUNNER_TEMP/runner-benchmark/cold"
+          export GOMODCACHE="$cache_base/gomod"
+          export GOCACHE="$cache_base/gocache"
+          rm -rf "$cache_base"
           mkdir -p "$GOMODCACHE" "$GOCACHE"
 
           start=$(date +%s)
@@ -52,10 +50,10 @@ jobs:
       - name: Benchmark CLI build warm cache
         id: bench_warm
         shell: bash
-        env:
-          GOMODCACHE: ${{ runner.temp }}/runner-benchmark/cold/gomod
-          GOCACHE: ${{ runner.temp }}/runner-benchmark/cold/gocache
         run: |
+          cache_base="$RUNNER_TEMP/runner-benchmark/cold"
+          export GOMODCACHE="$cache_base/gomod"
+          export GOCACHE="$cache_base/gocache"
           start=$(date +%s)
           go mod download
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /tmp/dify-plugin-darwin-amd64 ./cmd/commandline
