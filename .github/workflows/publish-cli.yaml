@@ -55,7 +55,7 @@ jobs:
 
   sign-macos-binary-and-upload:
     needs: build
-    runs-on: macos-latest
+    runs-on: depot-macos-latest
     if: github.repository == 'langgenius/dify-plugin-daemon'
     steps:
       - name: Checkout code
