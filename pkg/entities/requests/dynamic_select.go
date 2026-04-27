@@ -6,4 +6,5 @@ type RequestDynamicParameterSelect struct {
 	Provider       string         `json:"provider" validate:"required"`
 	ProviderAction string         `json:"provider_action" validate:"required"`
 	Parameter      string         `json:"parameter" validate:"required"`
+	Parent         *string        `json:"parent,omitempty" validate:"omitempty"`
 }

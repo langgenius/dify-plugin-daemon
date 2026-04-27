@@ -15,14 +15,16 @@ const (
 	TOOLS_SELECTOR = "array[tools]"
 	ANY            = "any"
 	// DynamicSelect
-	DYNAMIC_SELECT = "dynamic-select"
-	ARRAY          = "array"
+	DYNAMIC_SELECT      = "dynamic-select"
+	DYNAMIC_TREE_SELECT = "dynamic-tree-select"
+	ARRAY               = "array"
 	OBJECT         = "object"
 	CHECKBOX       = "checkbox"
 )
 
 type ParameterOption struct {
-	Value string     `json:"value" yaml:"value" validate:"required"`
-	Label I18nObject `json:"label" yaml:"label" validate:"required"`
-	Icon  string     `json:"icon" yaml:"icon" validate:"omitempty"`
+	Value    string           `json:"value" yaml:"value" validate:"required"`
+	Label    I18nObject       `json:"label" yaml:"label" validate:"required"`
+	Icon     string           `json:"icon" yaml:"icon" validate:"omitempty"`
+	Children []ParameterOption `json:"children,omitempty" yaml:"children,omitempty" validate:"omitempty,dive"`
 }

@@ -37,8 +37,9 @@ const (
 	EVENT_PARAMETER_TYPE_APP_SELECTOR   EventParameterType = APP_SELECTOR
 	EVENT_PARAMETER_TYPE_OBJECT         EventParameterType = OBJECT
 	EVENT_PARAMETER_TYPE_ARRAY          EventParameterType = ARRAY
-	EVENT_PARAMETER_TYPE_DYNAMIC_SELECT EventParameterType = DYNAMIC_SELECT
-	EVENT_PARAMETER_TYPE_CHECKBOX       EventParameterType = CHECKBOX
+	EVENT_PARAMETER_TYPE_DYNAMIC_SELECT     EventParameterType = DYNAMIC_SELECT
+	EVENT_PARAMETER_TYPE_DYNAMIC_TREE_SELECT EventParameterType = DYNAMIC_TREE_SELECT
+	EVENT_PARAMETER_TYPE_CHECKBOX           EventParameterType = CHECKBOX
 )
 
 func isEventParameterType(fl validator.FieldLevel) bool {
@@ -55,6 +56,7 @@ func isEventParameterType(fl validator.FieldLevel) bool {
 		string(EVENT_PARAMETER_TYPE_OBJECT),
 		string(EVENT_PARAMETER_TYPE_ARRAY),
 		string(EVENT_PARAMETER_TYPE_DYNAMIC_SELECT),
+		string(EVENT_PARAMETER_TYPE_DYNAMIC_TREE_SELECT),
 		string(EVENT_PARAMETER_TYPE_CHECKBOX):
 		return true
 	}
