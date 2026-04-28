@@ -96,37 +96,42 @@ func TestStreamGeneratorWrapper(t *testing.T) {
 
 func TestStreamBlockingWrite(t *testing.T) {
 	response := NewStream[int](1)
-	response.Write(1)
+	assert.NoError(t, response.Write(1))
 
-	const numWrites = 1000000
+	writerStarted := make(chan struct{})
+	writerFinished := make(chan struct{})
 
 	go func() {
-		for i := 0; i < numWrites; i++ {
-			response.WriteBlocking(1)
-			time.Sleep(time.Microsecond)
-		}
-		response.Close()
+		close(writerStarted)
+		response.WriteBlocking(2)
+		close(writerFinished)
 	}()
 
-	received := 0
-	done := make(chan bool)
-	go func() {
-		defer func() {
-			close(done)
-		}()
-		// wait for the blocking write to happen
-		time.Sleep(1 * time.Second)
-		for response.Next() {
-			_, err := response.Read()
-			if err != nil {
-				t.Error(err)
-			}
-			received += 1
-		}
-	}()
+	<-writerStarted
 
-	<-done
-	assert.Equal(t, received, numWrites+1)
+	select {
+	case <-writerFinished:
+		t.Fatal("WriteBlocking should block while the queue is full")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	assert.True(t, response.Next())
+
+	first, err := response.Read()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, first)
+
+	select {
+	case <-writerFinished:
+	case <-time.After(1 * time.Second):
+		t.Fatal("WriteBlocking did not unblock after the queue had space")
+	}
+
+	assert.True(t, response.Next())
+
+	second, err := response.Read()
+	assert.NoError(t, err)
+	assert.Equal(t, 2, second)
 }
 
 // WriteBlocking should return directly if the stream is closed

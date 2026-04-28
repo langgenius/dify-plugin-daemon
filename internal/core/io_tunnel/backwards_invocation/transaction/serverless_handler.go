@@ -1,8 +1,10 @@
 package transaction
 
 import (
+	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -28,17 +30,46 @@ func NewServerlessTransactionHandler(maxTimeout time.Duration) *ServerlessTransa
 type serverlessTransactionWriteCloser struct {
 	done   chan bool
 	closed int32
+	mu     sync.Mutex
 
 	writer func([]byte) (int, error)
 	flush  func()
 }
 
-func (a *serverlessTransactionWriteCloser) Write(data []byte) (int, error) {
-	return a.writer(data)
+func (w *serverlessTransactionWriteCloser) Write(data []byte) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if atomic.LoadInt32(&w.closed) != 0 {
+		return 0, io.ErrClosedPipe
+	}
+
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			n = 0
+			err = fmt.Errorf("serverless transaction write panic: %v", recovered)
+			_ = w.Close()
+		}
+	}()
+
+	return w.writer(data)
 }
 
-func (a *serverlessTransactionWriteCloser) Flush() {
-	a.flush()
+func (w *serverlessTransactionWriteCloser) Flush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if atomic.LoadInt32(&w.closed) != 0 {
+		return
+	}
+
+	defer func() {
+		if recover() != nil {
+			_ = w.Close()
+		}
+	}()
+
+	w.flush()
 }
 
 func (w *serverlessTransactionWriteCloser) Close() error {
@@ -63,9 +94,6 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 		ctx.Writer.Write([]byte(err.Error()))
 		return
 	}
-
-	ctx.Writer.WriteHeader(http.StatusOK)
-	ctx.Writer.Header().Set("Content-Type", "text/event-stream")
 
 	plugin_entities.ParsePluginUniversalEvent(
 		bytes,
@@ -121,6 +149,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 				return
 			}
 
+			ctx.Writer.Header().Set("Content-Type", "text/event-stream")
+
 			// replace trace context, propagate it to gin
 			ctxRequestContext := ctx.Request.Context()
 			ctxRequestContext = log.WithTrace(ctxRequestContext, session.TraceContext)
@@ -128,8 +158,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			ctx.Request = ctx.Request.WithContext(ctxRequestContext)
 
 			// bind the backwards invocation
-			plugin_manager := plugin_manager.Manager()
-			session.BindBackwardsInvocation(plugin_manager.BackwardsInvocation())
+			pluginManager := plugin_manager.Manager()
+			session.BindBackwardsInvocation(pluginManager.BackwardsInvocation())
 
 			serverlessResponseWriter := NewServerlessTransactionWriter(session, writer)
 
@@ -140,8 +170,10 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 				serverlessResponseWriter,
 				sessionMessage.Data,
 			); err != nil {
-				ctx.Writer.WriteHeader(http.StatusInternalServerError)
-				ctx.Writer.Write([]byte("failed to parse request"))
+				if !ctx.Writer.Written() {
+					ctx.Writer.WriteHeader(http.StatusInternalServerError)
+					ctx.Writer.Write([]byte("failed to parse request"))
+				}
 				writer.Close()
 			}
 		},

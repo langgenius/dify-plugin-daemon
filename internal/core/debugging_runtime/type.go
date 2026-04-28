@@ -156,6 +156,10 @@ func (r *RemotePluginRuntime) SetInstallationId(installationId string) {
 	r.installationId = installationId
 }
 
+func (r *RemotePluginRuntime) Initialized() bool {
+	return r.initialized
+}
+
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
 	// FIXME: it's a little bit tricky that replace author with current tenant_id
 	// just as a flag to identify debugging plugin
