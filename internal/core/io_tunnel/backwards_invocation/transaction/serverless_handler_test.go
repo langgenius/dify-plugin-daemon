@@ -3,7 +3,9 @@ package transaction
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -53,6 +55,10 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 	h.Handle(ctx, "ignored")
 
 	// Assert
+	if recorder.Code != 400 {
+		t.Fatalf("expected status code 400, got %d", recorder.Code)
+	}
+
 	var resp backwards_invocation.BackwardsInvocationResponseEvent
 	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("response should be JSON BackwardsInvocationResponseEvent, got error: %v, body: %s", err, recorder.Body.String())
@@ -89,5 +95,65 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 	}
 	if v, _ := m["detail"].(string); v == "" {
 		t.Fatalf("expected non-empty data.detail, got empty")
+	}
+}
+
+func TestServerlessTransactionWriteCloser_WriteRecoversFromPanic(t *testing.T) {
+	w := &serverlessTransactionWriteCloser{
+		done: make(chan bool),
+		writer: func([]byte) (int, error) {
+			panic("boom")
+		},
+		flush: func() {},
+	}
+
+	n, err := w.Write([]byte("payload"))
+	if err == nil {
+		t.Fatal("expected write error after panic")
+	}
+	if n != 0 {
+		t.Fatalf("expected zero bytes written, got %d", n)
+	}
+	if got := err.Error(); got != "serverless transaction write panic: boom" {
+		t.Fatalf("unexpected error: %q", got)
+	}
+	if atomic.LoadInt32(&w.closed) == 0 {
+		t.Fatal("expected writer to be closed after panic")
+	}
+}
+
+func TestServerlessTransactionWriteCloser_FlushRecoversFromPanic(t *testing.T) {
+	w := &serverlessTransactionWriteCloser{
+		done:   make(chan bool),
+		writer: func(data []byte) (int, error) { return len(data), nil },
+		flush: func() {
+			panic("boom")
+		},
+	}
+
+	w.Flush()
+
+	if atomic.LoadInt32(&w.closed) == 0 {
+		t.Fatal("expected writer to be closed after flush panic")
+	}
+}
+
+func TestServerlessTransactionWriteCloser_WriteAfterClose(t *testing.T) {
+	w := &serverlessTransactionWriteCloser{
+		done:   make(chan bool),
+		writer: func(data []byte) (int, error) { return len(data), nil },
+		flush:  func() {},
+	}
+
+	if err := w.Close(); err != nil {
+		t.Fatalf("close failed: %v", err)
+	}
+
+	_, err := w.Write([]byte("payload"))
+	if err == nil {
+		t.Fatal("expected closed pipe error")
+	}
+	if err != io.ErrClosedPipe {
+		t.Fatalf("expected io.ErrClosedPipe, got %v", err)
 	}
 }

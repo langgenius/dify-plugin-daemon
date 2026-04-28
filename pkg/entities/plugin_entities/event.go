@@ -2,6 +2,7 @@ package plugin_entities
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
@@ -24,13 +25,25 @@ func ParsePluginUniversalEvent(
 	errorHandler func(err string),
 	logHandler func(logEvent PluginLogEvent),
 ) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			errMsg := fmt.Sprintf("plugin event handler panic: %v", recovered)
+			log.Error("plugin event handler panic", "error", recovered, "event_payload", string(data))
+			if errorHandler != nil {
+				errorHandler(errMsg)
+			}
+		}
+	}()
+
 	// handle event
 	event, err := parser.UnmarshalJsonBytes[PluginUniversalEvent](data)
 	if err != nil {
-		if len(data) > 1024 {
-			errorHandler(err.Error() + " status: " + statusText + " original response: " + string(data[:1024]) + "...")
-		} else {
-			errorHandler(err.Error() + " status: " + statusText + " original response: " + string(data))
+		if errorHandler != nil {
+			if len(data) > 1024 {
+				errorHandler(err.Error() + " status: " + statusText + " original response: " + string(data[:1024]) + "...")
+			} else {
+				errorHandler(err.Error() + " status: " + statusText + " original response: " + string(data))
+			}
 		}
 		return
 	}
@@ -53,11 +66,17 @@ func ParsePluginUniversalEvent(
 			}
 		}
 	case PLUGIN_EVENT_SESSION:
-		sessionHandler(sessionId, event.Data)
+		if sessionHandler != nil {
+			sessionHandler(sessionId, event.Data)
+		}
 	case PLUGIN_EVENT_ERROR:
-		errorHandler(string(event.Data))
+		if errorHandler != nil {
+			errorHandler(string(event.Data))
+		}
 	case PLUGIN_EVENT_HEARTBEAT:
-		heartbeatHandler()
+		if heartbeatHandler != nil {
+			heartbeatHandler()
+		}
 	}
 }
 
