@@ -226,6 +226,12 @@ func (app *App) pprofGroup(group *gin.RouterGroup, config *app.Config) {
 
 func (app *App) invokeGroup(group *gin.RouterGroup, config *app.Config) {
 	group.Use(CheckingKey(config.ServerKey))
+
+	extractGroup := group.Group("/extract")
+	extractGroup.Use(app.FetchPluginDirect())
+	extractGroup.Use(app.InitClusterID())
+	extractGroup.GET("", controllers.ExtractPluginSchema(config))
+
 	dispatchGroup := group.Group("/dispatch")
 	dispatchGroup.Use(controllers.CollectActiveDispatchRequests())
 	dispatchGroup.Use(app.FetchPluginDirect())

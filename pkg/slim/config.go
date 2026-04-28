@@ -59,6 +59,18 @@ func NewInvokeContext(id, action, argsJSON string) (*InvokeContext, error) {
 }
 
 func LoadConfigFromFile(path string) (*SlimConfig, error) {
+	cfg, err := loadConfigFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := fillDefaults(cfg); err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+func loadConfigFromFile(path string) (*SlimConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, NewError(ErrConfigLoad, err.Error())
@@ -69,13 +81,18 @@ func LoadConfigFromFile(path string) (*SlimConfig, error) {
 		return nil, NewError(ErrConfigLoad, err.Error())
 	}
 
-	if err := fillDefaults(&cfg); err != nil {
-		return nil, err
-	}
 	return &cfg, nil
 }
 
 func LoadConfig() (*SlimConfig, error) {
+	cfg := loadConfigFromEnv()
+	if err := fillDefaults(cfg); err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+func loadConfigFromEnv() *SlimConfig {
 	cfg := &SlimConfig{
 		Mode: env("SLIM_MODE", ModeRemote),
 	}
@@ -88,10 +105,10 @@ func LoadConfig() (*SlimConfig, error) {
 			UvPath:               env("SLIM_UV_PATH", ""),
 			PythonEnvInitTimeout: envInt("SLIM_PYTHON_ENV_INIT_TIMEOUT", 0),
 			MaxExecutionTimeout:  envInt("SLIM_MAX_EXECUTION_TIMEOUT", 0),
-		PipMirrorURL:         env("SLIM_PIP_MIRROR_URL", ""),
-		PipExtraArgs:         env("SLIM_PIP_EXTRA_ARGS", ""),
-		MarketplaceURL:       env("SLIM_MARKETPLACE_URL", ""),
-		IgnoreUvLock:         envBool("SLIM_IGNORE_UV_LOCK", false),
+			PipMirrorURL:         env("SLIM_PIP_MIRROR_URL", ""),
+			PipExtraArgs:         env("SLIM_PIP_EXTRA_ARGS", ""),
+			MarketplaceURL:       env("SLIM_MARKETPLACE_URL", ""),
+			IgnoreUvLock:         envBool("SLIM_IGNORE_UV_LOCK", false),
 		}
 	case ModeRemote:
 		cfg.Remote = RemoteConfig{
@@ -100,7 +117,22 @@ func LoadConfig() (*SlimConfig, error) {
 		}
 	}
 
-	if err := fillDefaults(cfg); err != nil {
+	return cfg
+}
+
+func LoadExtractConfig(configFile string, hasLocalPath bool) (*SlimConfig, error) {
+	var cfg *SlimConfig
+	var err error
+	if configFile != "" {
+		cfg, err = loadConfigFromFile(configFile)
+	} else {
+		cfg = loadConfigFromEnv()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if err := fillExtractDefaults(cfg, hasLocalPath); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -156,6 +188,30 @@ func fillDefaults(cfg *SlimConfig) error {
 		if cfg.Remote.DaemonKey == "" {
 			return NewError(ErrConfigInvalid, "remote.daemon_key is required")
 		}
+	}
+
+	return nil
+}
+
+func fillExtractDefaults(cfg *SlimConfig, hasLocalPath bool) error {
+	if cfg.Mode == "" {
+		cfg.Mode = ModeRemote
+	}
+
+	switch cfg.Mode {
+	case ModeLocal:
+		if cfg.Local.Folder == "" && !hasLocalPath {
+			return NewError(ErrConfigInvalid, "local.folder is required when extract uses -id")
+		}
+	case ModeRemote:
+		if cfg.Remote.DaemonAddr == "" {
+			return NewError(ErrConfigInvalid, "remote.daemon_addr is required")
+		}
+		if cfg.Remote.DaemonKey == "" {
+			return NewError(ErrConfigInvalid, "remote.daemon_key is required")
+		}
+	default:
+		return NewError(ErrUnknownMode, cfg.Mode)
 	}
 
 	return nil
