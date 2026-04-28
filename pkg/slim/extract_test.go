@@ -51,6 +51,45 @@ func TestExtractLocal_FromPackage(t *testing.T) {
 	}
 }
 
+func TestExtractLocal_DownloadsMissingPluginByID(t *testing.T) {
+	fixture := filepath.Join("..", "..", "internal", "core", "local_runtime", "testdata", "plugin-without-dependencies")
+	pkgPath := zipFixture(t, fixture)
+	pkgBytes, err := os.ReadFile(pkgPath)
+	if err != nil {
+		t.Fatalf("read fixture package: %v", err)
+	}
+
+	pluginID := "test/no-deps-test-plugin:0.0.1@checksum"
+	var gotIdentifier string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/plugins/download" {
+			t.Fatalf("path = %q; want marketplace download path", r.URL.Path)
+		}
+		gotIdentifier = r.URL.Query().Get("unique_identifier")
+		w.Write(pkgBytes)
+	}))
+	defer srv.Close()
+
+	local := &LocalConfig{
+		Folder:         t.TempDir(),
+		MarketplaceURL: srv.URL,
+	}
+	result, err := ExtractLocal(ExtractOptions{PluginID: pluginID}, local)
+	if err != nil {
+		t.Fatalf("ExtractLocal() error: %v", err)
+	}
+
+	if gotIdentifier != pluginID {
+		t.Fatalf("unique_identifier = %q; want %q", gotIdentifier, pluginID)
+	}
+	if result.Manifest.Name != "no-deps-test-plugin" {
+		t.Fatalf("manifest name = %q; want no-deps-test-plugin", result.Manifest.Name)
+	}
+	if result.UniqueIdentifier != pluginID {
+		t.Fatalf("unique identifier = %q; want %q", result.UniqueIdentifier, pluginID)
+	}
+}
+
 func TestExtractLocal_Validation(t *testing.T) {
 	_, err := ExtractLocal(ExtractOptions{}, &LocalConfig{})
 	assertSlimErrorCode(t, err, ErrInvalidInput)

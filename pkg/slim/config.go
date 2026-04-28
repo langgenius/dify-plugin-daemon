@@ -203,6 +203,9 @@ func fillExtractDefaults(cfg *SlimConfig, hasLocalPath bool) error {
 		if cfg.Local.Folder == "" && !hasLocalPath {
 			return NewError(ErrConfigInvalid, "local.folder is required when extract uses -id")
 		}
+		if cfg.Local.MarketplaceURL == "" {
+			cfg.Local.MarketplaceURL = "https://marketplace.dify.ai"
+		}
 	case ModeRemote:
 		if cfg.Remote.DaemonAddr == "" {
 			return NewError(ErrConfigInvalid, "remote.daemon_addr is required")

@@ -23,7 +23,17 @@ func ExtractLocal(opts ExtractOptions, local *LocalConfig) (*ExtractResult, erro
 		return nil, NewError(ErrConfigInvalid, "local.folder is required when extract uses -id")
 	}
 
-	return extractLocalPath(pluginWorkingPath(local.Folder, opts.PluginID), opts.PluginID)
+	workingPath := pluginWorkingPath(local.Folder, opts.PluginID)
+	result, err := extractLocalPath(workingPath, opts.PluginID)
+	if err == nil {
+		return result, nil
+	}
+
+	dec, downloadErr := downloadAndExtract(local, opts.PluginID, workingPath)
+	if downloadErr != nil {
+		return nil, downloadErr
+	}
+	return extractFromDecoder(dec, opts.PluginID)
 }
 
 func extractLocalPath(path string, pluginID string) (*ExtractResult, error) {
