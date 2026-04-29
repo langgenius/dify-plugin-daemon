@@ -1,0 +1,73 @@
+name: Runner Benchmark
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: runner-benchmark-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            name: github-macos
+          - runner: depot-macos-latest
+            name: depot-macos
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Benchmark CLI build
+        id: bench_cold
+        shell: bash
+        run: |
+          cache_base="$RUNNER_TEMP/runner-benchmark/cold"
+          export GOMODCACHE="$cache_base/gomod"
+          export GOCACHE="$cache_base/gocache"
+          rm -rf "$cache_base"
+          mkdir -p "$GOMODCACHE" "$GOCACHE"
+
+          start=$(date +%s)
+          go mod download
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /tmp/dify-plugin-darwin-amd64 ./cmd/commandline
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o /tmp/dify-plugin-darwin-arm64 ./cmd/commandline
+          end=$(date +%s)
+          echo "elapsed=$((end - start))" >> "$GITHUB_OUTPUT"
+
+      - name: Benchmark CLI build warm cache
+        id: bench_warm
+        shell: bash
+        run: |
+          cache_base="$RUNNER_TEMP/runner-benchmark/cold"
+          export GOMODCACHE="$cache_base/gomod"
+          export GOCACHE="$cache_base/gocache"
+          start=$(date +%s)
+          go mod download
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /tmp/dify-plugin-darwin-amd64 ./cmd/commandline
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o /tmp/dify-plugin-darwin-arm64 ./cmd/commandline
+          end=$(date +%s)
+          echo "elapsed=$((end - start))" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize
+        shell: bash
+        run: |
+          {
+            echo "### Runner Benchmark"
+            echo ""
+            echo "- Runner: ${{ matrix.name }}"
+            echo "- Cold cache seconds: ${{ steps.bench_cold.outputs.elapsed }}"
+            echo "- Warm cache seconds: ${{ steps.bench_warm.outputs.elapsed }}"
+          } >> "$GITHUB_STEP_SUMMARY"
