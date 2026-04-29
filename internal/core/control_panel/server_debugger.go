@@ -50,6 +50,10 @@ func (c *ControlPanel) onDebuggingRuntimeConnected(
 func (c *ControlPanel) onDebuggingRuntimeDisconnected(
 	rpr *debugging_runtime.RemotePluginRuntime,
 ) {
+	if !rpr.Initialized() {
+		return
+	}
+
 	// handle plugin disconnecting
 	pluginIdentifier, err := rpr.Identity()
 	if err != nil {
