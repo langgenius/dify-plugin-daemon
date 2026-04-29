@@ -1,9 +1,12 @@
 package plugin_packager
 
 import (
+	"archive/zip"
+	"bytes"
 	"crypto/rsa"
 	"embed"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -266,6 +269,153 @@ func loadPrivateKeyFile(t *testing.T, keyFile string) *rsa.PrivateKey {
 		t.Fatalf("failed to load private key: %s", err.Error())
 	}
 	return key
+}
+
+func TestPackager_ExportsRequirementsFromUvLock(t *testing.T) {
+	tempDir := t.TempDir()
+	writePythonPluginFiles(t, tempDir, false)
+	writeFakeUV(t, tempDir, "dify-plugin==0.0.1\nrequests==2.32.3\n")
+
+	originDecoder, err := decoder.NewFSPluginDecoder(tempDir)
+	if err != nil {
+		t.Fatalf("failed to create decoder: %v", err)
+	}
+
+	p := packager.NewPackager(originDecoder)
+	zipBytes, err := p.Pack(52428800)
+	if err != nil {
+		t.Fatalf("failed to pack: %v", err)
+	}
+
+	files := unzipEntries(t, zipBytes)
+	if _, ok := files["pyproject.toml"]; !ok {
+		t.Fatal("expected pyproject.toml in package")
+	}
+	if _, ok := files["uv.lock"]; !ok {
+		t.Fatal("expected uv.lock in package")
+	}
+	got, ok := files["requirements.txt"]
+	if !ok {
+		t.Fatal("expected generated requirements.txt in package")
+	}
+	if string(got) != "dify-plugin==0.0.1\nrequests==2.32.3\n" {
+		t.Fatalf("unexpected generated requirements.txt: %q", string(got))
+	}
+	if _, err := os.Stat(filepath.Join(tempDir, "requirements.txt")); !os.IsNotExist(err) {
+		t.Fatalf("requirements.txt should not be created in source dir, stat err=%v", err)
+	}
+}
+
+func TestPackager_DoesNotRegenerateExistingRequirements(t *testing.T) {
+	tempDir := t.TempDir()
+	writePythonPluginFiles(t, tempDir, true)
+	writeFakeUV(t, tempDir, "generated-should-not-be-used==1.0.0\n")
+
+	originDecoder, err := decoder.NewFSPluginDecoder(tempDir)
+	if err != nil {
+		t.Fatalf("failed to create decoder: %v", err)
+	}
+
+	p := packager.NewPackager(originDecoder)
+	zipBytes, err := p.Pack(52428800)
+	if err != nil {
+		t.Fatalf("failed to pack: %v", err)
+	}
+
+	files := unzipEntries(t, zipBytes)
+	got, ok := files["requirements.txt"]
+	if !ok {
+		t.Fatal("expected existing requirements.txt in package")
+	}
+	if string(got) != "existing-package==1.0.0\n" {
+		t.Fatalf("existing requirements.txt should be preserved, got %q", string(got))
+	}
+}
+
+func TestPackager_PythonTemplateDifyignoreKeepsUvLock(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", "cmd", "commandline", "plugin", "templates", "python", ".difyignore"))
+	if err != nil {
+		t.Fatalf("failed to read template .difyignore: %v", err)
+	}
+	if strings.Contains(string(content), "\nuv.lock\n") {
+		t.Fatal("template .difyignore should not exclude uv.lock")
+	}
+}
+
+func TestPackager_PythonTemplateGitignoreKeepsUvLock(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", "cmd", "commandline", "plugin", "templates", "python", ".gitignore"))
+	if err != nil {
+		t.Fatalf("failed to read template .gitignore: %v", err)
+	}
+	if strings.Contains(string(content), "\nuv.lock\n") {
+		t.Fatal("template .gitignore should not exclude uv.lock")
+	}
+}
+
+func writePythonPluginFiles(t *testing.T, root string, withRequirements bool) {
+	t.Helper()
+
+	if err := os.WriteFile(filepath.Join(root, "manifest.yaml"), manifest, 0o644); err != nil {
+		t.Fatalf("failed to write manifest: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "neko.yaml"), neko, 0o644); err != nil {
+		t.Fatalf("failed to write neko.yaml: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "_assets"), 0o755); err != nil {
+		t.Fatalf("failed to create _assets dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "_assets", "test.svg"), test_svg, 0o644); err != nil {
+		t.Fatalf("failed to write test.svg: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "pyproject.toml"), []byte("[project]\nname = \"python-packager-test\"\nversion = \"1.0.0\"\ndependencies = [\"requests==2.32.3\"]\n"), 0o644); err != nil {
+		t.Fatalf("failed to write pyproject.toml: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "uv.lock"), []byte("version = 1\n"), 0o644); err != nil {
+		t.Fatalf("failed to write uv.lock: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "main.py"), []byte("print('hello')\n"), 0o644); err != nil {
+		t.Fatalf("failed to write main.py: %v", err)
+	}
+	if withRequirements {
+		if err := os.WriteFile(filepath.Join(root, "requirements.txt"), []byte("existing-package==1.0.0\n"), 0o644); err != nil {
+			t.Fatalf("failed to write requirements.txt: %v", err)
+		}
+	}
+}
+
+func writeFakeUV(t *testing.T, root string, output string) {
+	t.Helper()
+
+	scriptPath := filepath.Join(root, "fake-uv")
+	script := "#!/bin/sh\ncat <<'EOF'\n" + output + "EOF\n"
+	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("failed to write fake uv: %v", err)
+	}
+	t.Setenv("UV_PATH", scriptPath)
+}
+
+func unzipEntries(t *testing.T, data []byte) map[string][]byte {
+	t.Helper()
+
+	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		t.Fatalf("failed to open zip: %v", err)
+	}
+
+	files := make(map[string][]byte, len(reader.File))
+	for _, file := range reader.File {
+		rc, err := file.Open()
+		if err != nil {
+			t.Fatalf("failed to open zip entry %s: %v", file.Name, err)
+		}
+		content, err := io.ReadAll(rc)
+		_ = rc.Close()
+		if err != nil {
+			t.Fatalf("failed to read zip entry %s: %v", file.Name, err)
+		}
+		files[file.Name] = content
+	}
+	return files
 }
 
 // extractPublicKey extracts the key file from the embed.FS and returns the file path

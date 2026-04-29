@@ -60,6 +60,10 @@ func (d *FSPluginDecoder) Open() error {
 	return nil
 }
 
+func (d *FSPluginDecoder) Root() string {
+	return d.root
+}
+
 func (d *FSPluginDecoder) Walk(fn func(filename string, dir string) error) error {
 	// read .difyignore file
 	ignorePatterns := []gitignore.Pattern{}
