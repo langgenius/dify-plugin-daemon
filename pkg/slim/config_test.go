@@ -215,3 +215,41 @@ func TestLoadConfigFromFile_ValidationFails(t *testing.T) {
 		t.Fatal("LoadConfigFromFile() should fail when remote config is incomplete")
 	}
 }
+
+func TestLoadExtractConfig_LocalPathDoesNotRequireFolder(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.json")
+	content := `{"mode": "local"}`
+	if err := os.WriteFile(cfgPath, []byte(content), 0644); err != nil {
+		t.Fatalf("WriteFile() error: %v", err)
+	}
+
+	cfg, err := LoadExtractConfig(cfgPath, true)
+	if err != nil {
+		t.Fatalf("LoadExtractConfig() error: %v", err)
+	}
+	if cfg.Mode != ModeLocal {
+		t.Fatalf("Mode = %q; want %q", cfg.Mode, ModeLocal)
+	}
+}
+
+func TestLoadExtractConfig_LocalIDRequiresFolder(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.json")
+	content := `{"mode": "local"}`
+	if err := os.WriteFile(cfgPath, []byte(content), 0644); err != nil {
+		t.Fatalf("WriteFile() error: %v", err)
+	}
+
+	_, err := LoadExtractConfig(cfgPath, false)
+	if err == nil {
+		t.Fatal("LoadExtractConfig() should fail when local extract uses -id without folder")
+	}
+	se, ok := err.(*SlimError)
+	if !ok {
+		t.Fatalf("expected *SlimError, got %T", err)
+	}
+	if se.Code != ErrConfigInvalid {
+		t.Fatalf("Code = %q; want %q", se.Code, ErrConfigInvalid)
+	}
+}

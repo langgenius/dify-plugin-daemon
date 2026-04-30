@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
+	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
@@ -233,6 +234,26 @@ func FetchPluginManifest(c *gin.Context) {
 	}) {
 		c.JSON(http.StatusOK, service.FetchPluginManifest(request.PluginUniqueIdentifier))
 	})
+}
+
+func ExtractPluginSchema(config *app.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		identityAny, ok := c.Get(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER)
+		if !ok {
+			c.JSON(http.StatusInternalServerError,
+				exception.InternalServerError(errors.New("plugin unique identifier not found")).ToResponse())
+			return
+		}
+
+		identity, ok := identityAny.(plugin_entities.PluginUniqueIdentifier)
+		if !ok {
+			c.JSON(http.StatusInternalServerError,
+				exception.InternalServerError(errors.New("failed to parse plugin unique identifier")).ToResponse())
+			return
+		}
+
+		c.JSON(http.StatusOK, service.ExtractPluginSchema(config, identity))
+	}
 }
 
 func FetchPluginReadme(c *gin.Context) {
