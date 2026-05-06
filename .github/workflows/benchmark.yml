@@ -34,7 +34,7 @@ jobs:
         env:
           UV_PATH: ${{ env.UV_PATH }}
         run: |
-          go test -run=^$ -bench=. -benchmem -benchtime=30s ./...
+          go test -run=^$ -bench=. -benchmem -benchtime=30s ./... > result.txt
 
       - name: Remove License
         run: git stash

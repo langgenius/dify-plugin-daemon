@@ -2,24 +2,36 @@ package persistence
 
 import (
 	"encoding/hex"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	cloudoss "github.com/langgenius/dify-cloud-kit/oss"
 	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
+	if !network.IsTCPReachable("localhost:6379", 500*time.Millisecond) {
+		fmt.Fprintln(os.Stderr, "skipping persistence tests: redis is unavailable at localhost:6379")
+		os.Exit(0)
+	}
 	if err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil); err != nil {
-		panic("Failed to init redis client: " + err.Error())
+		fmt.Fprintf(os.Stderr, "skipping persistence tests: failed to init redis client: %v\n", err)
+		os.Exit(0)
 	}
 	defer cache.Close()
 
+	if !network.IsTCPReachable("localhost:5432", 500*time.Millisecond) {
+		fmt.Fprintln(os.Stderr, "skipping persistence tests: postgres is unavailable at localhost:5432")
+		os.Exit(0)
+	}
 	db.Init(&app.Config{
 		DBType:     app.DB_TYPE_POSTGRESQL,
 		DBUsername: "postgres",
