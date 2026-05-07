@@ -52,7 +52,7 @@ func RunExtract(cfg *SlimConfig, opts ExtractOptions, w io.Writer) error {
 	}
 
 	args := ExtractArgs{
-		TenantID: "00000000-0000-0000-0000-000000000000",
+		TenantID: uuid.Nil.String(),
 		Data:     BuildExtractData(*result),
 	}
 	if opts.Action != "" {
