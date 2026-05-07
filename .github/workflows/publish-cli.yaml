@@ -37,6 +37,7 @@ jobs:
           CGO_ENABLED=0 GOOS=windows GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-windows-${{ env.GOARCH }}.exe ./cmd/commandline
           CGO_ENABLED=0 GOOS=darwin GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-darwin-${{ env.GOARCH }} ./cmd/commandline
           CGO_ENABLED=0 GOOS=linux GOARCH=${{ env.GOARCH }} go build -ldflags "-X 'main.VersionX=v${{ github.event.release.tag_name }}'" -o dify-plugin-linux-${{ env.GOARCH }} ./cmd/commandline
+          CGO_ENABLED=0 GOOS=linux GOARCH=${{ env.GOARCH }} go build -o dify-plugin-slim-linux-${{ env.GOARCH }} ./cmd/slim
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -50,6 +51,7 @@ jobs:
         run: |
           gh release upload ${{ github.event.release.tag_name }} dify-plugin-windows-${{ env.GOARCH }}.exe --clobber
           gh release upload ${{ github.event.release.tag_name }} dify-plugin-linux-${{ env.GOARCH }} --clobber
+          gh release upload ${{ github.event.release.tag_name }} dify-plugin-slim-linux-${{ env.GOARCH }} --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
