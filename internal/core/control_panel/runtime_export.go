@@ -12,17 +12,13 @@ import (
 func (c *ControlPanel) GetPluginRuntime(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginRuntimeSessionIOInterface, error) {
-	if pluginUniqueIdentifier.RemoteLike() {
-		runtime, ok := c.debuggingPluginRuntime.Load(pluginUniqueIdentifier)
-		if !ok {
-			return nil, ErrPluginRuntimeNotFound
-		}
-		return runtime, nil
-	} else {
-		runtime, ok := c.localPluginRuntimes.Load(pluginUniqueIdentifier)
-		if !ok {
-			return nil, ErrPluginRuntimeNotFound
-		}
+	if runtime, ok := c.debuggingPluginRuntime.Load(pluginUniqueIdentifier); ok {
 		return runtime, nil
 	}
+
+	if runtime, ok := c.localPluginRuntimes.Load(pluginUniqueIdentifier); ok {
+		return runtime, nil
+	}
+
+	return nil, ErrPluginRuntimeNotFound
 }

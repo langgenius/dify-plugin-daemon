@@ -61,20 +61,19 @@ func (l *InstallListener) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 			return
 		}
 
-		_, err := runtime.Identity()
+		identity, err := runtime.Identity()
 		if err != nil {
 			log.Error("failed to get plugin identity", "error", err)
 			return
 		}
-		decl := runtime.Configuration()
-		pluginID := decl.Author + "/" + decl.Name
+		pluginID := identity.PluginID()
 		existingInstallation, fetchErr := fetchPluginInstallationByPluginID(runtime.TenantId(), pluginID)
 		if fetchErr != nil {
 			log.Error("failed to fetch existing installation", "error", fetchErr)
 			return
 		}
 		installation = existingInstallation
-		
+
 		key := helper.PluginInstallationCacheKey(pluginID, runtime.TenantId())
 		if _, delErr := cache.AutoDelete[models.PluginInstallation](key); delErr != nil {
 			log.Warn("failed to invalidate plugin installation cache", "key", key, "error", delErr)

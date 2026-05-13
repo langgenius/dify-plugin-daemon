@@ -50,7 +50,6 @@ func newFakeRemoteRuntime(t *testing.T, name, version string) *debugging_runtime
 		PluginRuntime: plugin_entities.PluginRuntime{
 			Config: plugin_entities.PluginDeclaration{
 				PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
-					// Author is overwritten with tenantId inside Identity()
 					Name:    name,
 					Version: manifest_entities.Version(version),
 				},

@@ -161,10 +161,6 @@ func (r *RemotePluginRuntime) Initialized() bool {
 }
 
 func (r *RemotePluginRuntime) Identity() (plugin_entities.PluginUniqueIdentifier, error) {
-	// FIXME: it's a little bit tricky that replace author with current tenant_id
-	// just as a flag to identify debugging plugin
-	config := r.Config
-	config.Author = r.tenantId
 	checksum, _ := r.Checksum()
-	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", config.Identity(), checksum))
+	return plugin_entities.NewPluginUniqueIdentifier(fmt.Sprintf("%s@%s", r.Config.Identity(), checksum))
 }

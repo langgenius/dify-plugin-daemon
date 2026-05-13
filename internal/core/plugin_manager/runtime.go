@@ -1,8 +1,6 @@
 package plugin_manager
 
 import (
-	"errors"
-
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -11,16 +9,11 @@ import (
 func (p *PluginManager) GetPluginRuntime(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginRuntimeSessionIOInterface, error) {
-	// local mode or remote mode, use control panel to get runtime
-	if pluginUniqueIdentifier.RemoteLike() || p.config.Platform == app.PLATFORM_LOCAL {
-		return p.controlPanel.GetPluginRuntime(pluginUniqueIdentifier)
-	}
-
 	if p.config.Platform == app.PLATFORM_SERVERLESS {
 		return p.getServerlessPluginRuntime(pluginUniqueIdentifier)
 	}
 
-	return nil, errors.New("invalid platform")
+	return p.controlPanel.GetPluginRuntime(pluginUniqueIdentifier)
 }
 
 func (p *PluginManager) RemoveLocalPlugin(

@@ -143,35 +143,44 @@ func CombinedGetPluginDeclaration(
 	declaration, err := cache.AutoGetWithGetter(
 		cacheKey,
 		func() (*plugin_entities.PluginDeclaration, error) {
-			if runtimeType != plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
-				declaration, err := db.GetOne[models.PluginDeclaration](
-					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-				)
-				if err == db.ErrDatabaseNotFound {
-					return nil, ErrPluginNotFound
-				}
-
-				if err != nil {
-					return nil, err
-				}
-
-				return &declaration.Declaration, nil
-			} else {
+			if runtimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
 				// try to fetch the declaration from plugin if it's remote
 				plugin, err := db.GetOne[models.Plugin](
 					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 					db.Equal("install_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE)),
 				)
-				if err == db.ErrDatabaseNotFound {
-					return nil, ErrPluginNotFound
+				if err == nil {
+					return &plugin.RemoteDeclaration, nil
 				}
+				if !errors.Is(err, db.ErrDatabaseNotFound) {
+					return nil, err
+				}
+			}
 
+			declaration, err := db.GetOne[models.PluginDeclaration](
+				db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+			)
+			if errors.Is(err, db.ErrDatabaseNotFound) {
+				// if local path also fails, try remote path as fallback
+				plugin, err := db.GetOne[models.Plugin](
+					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
+					db.Equal("install_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE)),
+				)
 				if err != nil {
+					if errors.Is(err, db.ErrDatabaseNotFound) {
+						return nil, ErrPluginNotFound
+					}
 					return nil, err
 				}
 
 				return &plugin.RemoteDeclaration, nil
 			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			return &declaration.Declaration, nil
 		},
 	)
 

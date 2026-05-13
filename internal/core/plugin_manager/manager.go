@@ -191,15 +191,6 @@ func (p *PluginManager) Config() *app.Config {
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (bool, error) {
-	// debugging runtime were stored in control panel
-	if identity.RemoteLike() {
-		_, err := c.controlPanel.GetPluginRuntime(identity)
-		if err != nil {
-			return true, err
-		}
-		return false, nil
-	}
-
 	if c.config.Platform == app.PLATFORM_SERVERLESS {
 		// under serverless mode, it's no need to do redirecting
 		return false, nil
@@ -242,6 +233,7 @@ func (p *PluginManager) ExtractPluginAsset(
 	if err != nil {
 		return nil, err
 	}
+	defer zipDecoder.Close()
 	assets, err := zipDecoder.Assets()
 	if err != nil {
 		return nil, err

@@ -30,14 +30,7 @@ func InstallPlugin(
 	var installationToBeReturns *models.PluginInstallation
 
 	err := db.WithTransaction(func(tx *gorm.DB) error {
-		// For remote plugins, use the original plugin_id from declaration
-		// instead of the modified one (with tenant_id as author)
 		pluginID := pluginUniqueIdentifier.PluginID()
-		log.Info("Installing plugin", "pluginID", pluginID)
-		if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE && declaration != nil {
-			// Use author/name without version
-			pluginID = declaration.Author + "/" + declaration.Name
-		}
 
 		// check if already installed
 		_, err := db.GetOne[models.PluginInstallation](
@@ -94,26 +87,12 @@ func InstallPlugin(
 		} else if err != nil {
 			return err
 		} else {
-			// Update plugin_id if it differs (e.g., for remote plugins)
-			oldPluginID := p.PluginID
-			if p.PluginID != pluginID {
-				log.Info("Updating plugin_id", "from", p.PluginID, "to", pluginID)
-				p.PluginID = pluginID
-			}
 			p.Refers++
 			err := db.Update(&p, tx)
 			if err != nil {
 				return err
 			}
 			pluginToBeReturns = &p
-
-			// Clear cache for old plugin_id if it changed
-			if oldPluginID != pluginID {
-				oldCacheKey := helper.PluginInstallationCacheKey(oldPluginID, tenantId)
-				if _, err = cache.AutoDelete[models.PluginInstallation](oldCacheKey); err != nil {
-					log.Warn("failed to clear old plugin installation cache", "key", oldCacheKey, "error", err)
-				}
-			}
 		}
 
 		// remove exists installation
