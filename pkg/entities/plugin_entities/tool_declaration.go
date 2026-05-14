@@ -121,23 +121,75 @@ type ParameterTemplate struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
 
+type ToolParameterShowOnObject struct {
+	Variable string `json:"variable" yaml:"variable" validate:"required,lt=256"`
+	Value    string `json:"value" yaml:"value" validate:"required,lt=256"`
+}
+
 type ToolParameter struct {
-	Name             string                 `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
-	Label            I18nObject             `json:"label" yaml:"label" validate:"required"`
-	HumanDescription I18nObject             `json:"human_description" yaml:"human_description" validate:"required"`
-	Type             ToolParameterType      `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
-	Scope            *string                `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
-	Form             ToolParameterForm      `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
-	LLMDescription   string                 `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
-	Required         bool                   `json:"required" yaml:"required"`
-	AutoGenerate     *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
-	Template         *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
-	Default          any                    `json:"default" yaml:"default" validate:"omitempty"`
-	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
-	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
-	Multiple         bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
-	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Name             string                      `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
+	Label            I18nObject                  `json:"label" yaml:"label" validate:"required"`
+	HumanDescription I18nObject                  `json:"human_description" yaml:"human_description" validate:"required"`
+	Type             ToolParameterType           `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
+	Scope            *string                     `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
+	Form             ToolParameterForm           `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
+	LLMDescription   string                      `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
+	Required         bool                        `json:"required" yaml:"required"`
+	AutoGenerate     *ParameterAutoGenerate      `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
+	Template         *ParameterTemplate          `json:"template" yaml:"template" validate:"omitempty"`
+	Default          any                         `json:"default" yaml:"default" validate:"omitempty"`
+	Min              *float64                    `json:"min" yaml:"min" validate:"omitempty"`
+	Max              *float64                    `json:"max" yaml:"max" validate:"omitempty"`
+	Multiple         bool                        `json:"multiple" yaml:"multiple" validate:"omitempty"`
+	Precision        *int                        `json:"precision" yaml:"precision" validate:"omitempty"`
+	Options          []ParameterOption           `json:"options" yaml:"options" validate:"omitempty,dive"`
+	ShowOn           []ToolParameterShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
+}
+
+func (t *ToolParameter) UnmarshalJSON(data []byte) error {
+	type Alias ToolParameter
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	if t.ShowOn == nil {
+		t.ShowOn = []ToolParameterShowOnObject{}
+	}
+
+	if t.Options == nil {
+		t.Options = []ParameterOption{}
+	}
+
+	return nil
+}
+
+func (t *ToolParameter) UnmarshalYAML(value *yaml.Node) error {
+	type Alias ToolParameter
+	aux := &struct {
+		*Alias `yaml:",inline"`
+	}{
+		Alias: (*Alias)(t),
+	}
+
+	if err := value.Decode(&aux); err != nil {
+		return err
+	}
+
+	if t.ShowOn == nil {
+		t.ShowOn = []ToolParameterShowOnObject{}
+	}
+
+	if t.Options == nil {
+		t.Options = []ParameterOption{}
+	}
+
+	return nil
 }
 
 type ToolDescription struct {
