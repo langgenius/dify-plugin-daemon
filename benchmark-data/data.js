@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778467769338,
+  "lastUpdate": 1778823169138,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13378,6 +13378,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.21,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4495e172a150a4040169ed1c8dd6a3a74b40c3c1",
+          "message": "feat: support bos as plugin storage (#735)",
+          "timestamp": "2026-05-15T13:30:28+08:00",
+          "tree_id": "30ae259282a1262e237b558f50d67cac2d0a9a07",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/4495e172a150a4040169ed1c8dd6a3a74b40c3c1"
+        },
+        "date": 1778823168841,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.29,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.29,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
