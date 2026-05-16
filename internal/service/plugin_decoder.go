@@ -33,6 +33,7 @@ func UploadPluginPkg(
 	if err != nil {
 		return exception.BadRequestError(err).ToResponse()
 	}
+	defer decoderInstance.Close()
 
 	pluginUniqueIdentifier, err := decoderInstance.UniqueIdentity()
 	if err != nil {
@@ -45,29 +46,29 @@ func UploadPluginPkg(
 	}
 
 	manager := plugin_manager.Manager()
-	declaration, err := manager.SavePackage(pluginUniqueIdentifier, pluginFile, &decoder.ThirdPartySignatureVerificationConfig{
+	preparedPackage, err := manager.PreparePackage(pluginFile, &decoder.ThirdPartySignatureVerificationConfig{
 		Enabled:        config.ThirdPartySignatureVerificationEnabled,
 		PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
 	})
 	if err != nil {
-		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
+		return exception.BadRequestError(errors.Join(err, errors.New("failed to decode package"))).ToResponse()
 	}
 
 	if config.ForceVerifyingSignature || verifySignature {
-		if !declaration.Verified {
+		if !preparedPackage.Declaration.Verified {
 			return exception.BadRequestError(errors.Join(err, errors.New(
 				"plugin verification has been enabled, and the plugin you want to install has a bad signature",
 			))).ToResponse()
 		}
 	}
 
-	verification, _ := decoderInstance.Verification()
-	if verification == nil && decoderInstance.Verified() {
-		verification = decoder.DefaultVerification()
+	declaration, err := manager.PersistPackage(preparedPackage)
+	if err != nil {
+		return exception.BadRequestError(errors.Join(err, errors.New("failed to save package"))).ToResponse()
 	}
 
 	// if config.EnforceLanggeniusSignatures {
-	// 	if isUnauthorizedLanggenius(declaration, verification) {
+	// 	if isUnauthorizedLanggenius(declaration, preparedPackage.Verification) {
 	// 		return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
 	// 	}
 	// }
@@ -75,7 +76,7 @@ func UploadPluginPkg(
 	return entities.NewSuccessResponse(map[string]any{
 		"unique_identifier": pluginUniqueIdentifier,
 		"manifest":          declaration,
-		"verification":      verification,
+		"verification":      preparedPackage.Verification,
 	})
 }
 
@@ -105,6 +106,10 @@ func UploadPluginBundle(
 	manager := plugin_manager.Manager()
 
 	result := []map[string]any{}
+	preparedPackageDependencies := []struct {
+		resultIndex int
+		prepared    *plugin_manager.PreparedPackage
+	}{}
 
 	for _, dependency := range bundle.Dependencies {
 		if dependency.Type == bundle_entities.DEPENDENCY_TYPE_GITHUB {
@@ -144,46 +149,67 @@ func UploadPluginBundle(
 					}
 
 					pluginUniqueIdentifier, err := decoderInstance.UniqueIdentity()
+					_ = decoderInstance.Close()
 					if err != nil {
 						return exception.BadRequestError(errors.Join(errors.New("failed to get package unique identifier"), err)).ToResponse()
 					}
 
-					declaration, err := manager.SavePackage(pluginUniqueIdentifier, asset, &decoder.ThirdPartySignatureVerificationConfig{
+					preparedPackage, err := manager.PreparePackage(asset, &decoder.ThirdPartySignatureVerificationConfig{
 						Enabled:        config.ThirdPartySignatureVerificationEnabled,
 						PublicKeyPaths: config.ThirdPartySignatureVerificationPublicKeys,
 					})
 					if err != nil {
-						return exception.InternalServerError(errors.Join(errors.New("failed to save package"), err)).ToResponse()
+						return exception.InternalServerError(errors.Join(errors.New("failed to decode package"), err)).ToResponse()
 					}
 
 					if config.ForceVerifyingSignature || verify_signature {
-						if !declaration.Verified {
+						if !preparedPackage.Declaration.Verified {
 							return exception.BadRequestError(errors.Join(errors.New(
 								"plugin verification has been enabled, and the plugin you want to install has a bad signature",
 							), err)).ToResponse()
 						}
 					}
 
-					verification, _ := decoderInstance.Verification()
-					if verification == nil && decoderInstance.Verified() {
-						verification = decoder.DefaultVerification()
-					}
-
 					if config.EnforceLanggeniusSignatures {
-						if isUnauthorizedLanggenius(declaration, verification) {
+						if isUnauthorizedLanggenius(&preparedPackage.Declaration, preparedPackage.Verification) {
 							return exception.BadRequestError(ErrUnauthorizedLanggenius).ToResponse()
 						}
 					}
 
+					resultIndex := len(result)
 					result = append(result, map[string]any{
 						"type": "package",
 						"value": map[string]any{
 							"unique_identifier": pluginUniqueIdentifier,
-							"manifest":          declaration,
+							"manifest":          &preparedPackage.Declaration,
 						},
 					})
+					preparedPackageDependencies = append(preparedPackageDependencies, struct {
+						resultIndex int
+						prepared    *plugin_manager.PreparedPackage
+					}{resultIndex: resultIndex, prepared: preparedPackage})
 				}
 			}
+		}
+	}
+
+	persistedPackages := []*plugin_manager.PreparedPackage{}
+	for _, dependency := range preparedPackageDependencies {
+		declaration, err := manager.PersistPackage(dependency.prepared)
+		if err != nil {
+			for i := len(persistedPackages) - 1; i >= 0; i-- {
+				manager.RollbackPackage(persistedPackages[i])
+			}
+			return exception.InternalServerError(errors.Join(errors.New("failed to save package"), err)).ToResponse()
+		}
+
+		persistedPackages = append(persistedPackages, dependency.prepared)
+		result[dependency.resultIndex] = map[string]any{
+			"type": "package",
+			"value": map[string]any{
+				"unique_identifier": dependency.prepared.UniqueIdentifier,
+				"manifest":          declaration,
+			},
 		}
 	}
 

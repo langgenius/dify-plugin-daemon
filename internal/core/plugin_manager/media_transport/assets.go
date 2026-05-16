@@ -64,7 +64,7 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 				if valPtr != nil && *valPtr != "" {
 					*valPtr, err = remap(*valPtr)
 					if err != nil {
-						return nil, errors.Join(err, fmt.Errorf("failed to remap %s %s", iconField.iconType, langField.suffix))
+						return assetsIds, errors.Join(err, fmt.Errorf("failed to remap %s %s", iconField.iconType, langField.suffix))
 					}
 				}
 			}
@@ -75,14 +75,14 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		if declaration.Tool.Identity.Icon != "" {
 			declaration.Tool.Identity.Icon, err = remap(declaration.Tool.Identity.Icon)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap tool icon"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap tool icon"))
 			}
 		}
 
 		if declaration.Tool.Identity.IconDark != "" {
 			declaration.Tool.Identity.IconDark, err = remap(declaration.Tool.Identity.IconDark)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap tool icon dark"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap tool icon dark"))
 			}
 		}
 	}
@@ -91,14 +91,14 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		if declaration.AgentStrategy.Identity.Icon != "" {
 			declaration.AgentStrategy.Identity.Icon, err = remap(declaration.AgentStrategy.Identity.Icon)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap agent icon"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap agent icon"))
 			}
 		}
 
 		if declaration.AgentStrategy.Identity.IconDark != "" {
 			declaration.AgentStrategy.Identity.IconDark, err = remap(declaration.AgentStrategy.Identity.IconDark)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap agent icon dark"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap agent icon dark"))
 			}
 		}
 	}
@@ -107,7 +107,7 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		if declaration.Datasource.Identity.Icon != "" {
 			declaration.Datasource.Identity.Icon, err = remap(declaration.Datasource.Identity.Icon)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap datasource icon"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap datasource icon"))
 			}
 		}
 
@@ -115,7 +115,7 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 			if datasource.Identity.Icon != "" {
 				remappedIcon, err := remap(datasource.Identity.Icon)
 				if err != nil {
-					return nil, errors.Join(err, fmt.Errorf("failed to remap datasource step icon"))
+					return assetsIds, errors.Join(err, fmt.Errorf("failed to remap datasource step icon"))
 				}
 
 				identityPointer := &declaration.Datasource.Datasources[i].Identity
@@ -128,14 +128,14 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 		if declaration.Trigger.Identity.Icon != "" {
 			declaration.Trigger.Identity.Icon, err = remap(declaration.Trigger.Identity.Icon)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap trigger icon"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap trigger icon"))
 			}
 		}
 
 		if declaration.Trigger.Identity.IconDark != "" {
 			declaration.Trigger.Identity.IconDark, err = remap(declaration.Trigger.Identity.IconDark)
 			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("failed to remap trigger icon dark"))
+				return assetsIds, errors.Join(err, fmt.Errorf("failed to remap trigger icon dark"))
 			}
 		}
 	}
@@ -143,14 +143,14 @@ func (m *MediaBucket) RemapAssets(declaration *plugin_entities.PluginDeclaration
 	if declaration.Icon != "" {
 		declaration.Icon, err = remap(declaration.Icon)
 		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("failed to remap plugin icon"))
+			return assetsIds, errors.Join(err, fmt.Errorf("failed to remap plugin icon"))
 		}
 	}
 
 	if declaration.IconDark != "" {
 		declaration.IconDark, err = remap(declaration.IconDark)
 		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("failed to remap plugin dark icon"))
+			return assetsIds, errors.Join(err, fmt.Errorf("failed to remap plugin dark icon"))
 		}
 	}
 

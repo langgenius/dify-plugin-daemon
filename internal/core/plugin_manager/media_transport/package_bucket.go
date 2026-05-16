@@ -26,6 +26,10 @@ func (m *PackageBucket) Get(name string) ([]byte, error) {
 	return m.oss.Load(path.Join(m.packagePath, name))
 }
 
+func (m *PackageBucket) Exists(name string) (bool, error) {
+	return m.oss.Exists(path.Join(m.packagePath, name))
+}
+
 func (m *PackageBucket) Delete(name string) error {
 	// delete from storage
 	return m.oss.Delete(path.Join(m.packagePath, name))
