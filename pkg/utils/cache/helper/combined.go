@@ -191,3 +191,27 @@ func CombinedGetPluginDeclaration(
 
 	return declaration, err
 }
+
+func DeletePluginDeclarationCache(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	runtimeType plugin_entities.PluginRuntimeType,
+) {
+	cacheKey := strings.Join(
+		[]string{
+			"declaration_cache",
+			string(runtimeType),
+			pluginUniqueIdentifier.String(),
+		},
+		":",
+	)
+
+	// Clear memory cache
+	pluginCache.Lock()
+	delete(pluginCache.items, cacheKey)
+	pluginCache.Unlock()
+
+	// Clear Redis cache
+	// Must use the same type parameter as AutoGetWithGetter in CombinedGetPluginDeclaration
+	// so that the generated Redis key matches.
+	cache.AutoDelete[plugin_entities.PluginDeclaration](cacheKey)
+}

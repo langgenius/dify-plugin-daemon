@@ -365,6 +365,13 @@ func UninstallPlugin(
 			if err != nil {
 				return err
 			}
+
+			// delete the plugin declaration as well since no one references it
+			if err := db.DeleteByCondition(&models.PluginDeclaration{
+				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+			}, tx); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -484,6 +491,13 @@ func UpgradePlugin(
 			}
 			response.IsOriginalPluginDeleted = true
 			response.DeletedPlugin = &originalPlugin
+
+			// delete the plugin declaration as well since no one references it
+			if err := db.DeleteByCondition(&models.PluginDeclaration{
+				PluginUniqueIdentifier: originalPluginUniqueIdentifier.String(),
+			}, tx); err != nil {
+				return err
+			}
 		} else if err != nil {
 			return err
 		}

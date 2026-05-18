@@ -164,6 +164,10 @@ func ProcessUpgradeJob(
 					return
 				}
 
+				if response.IsOriginalPluginDeleted {
+					helper.DeletePluginDeclarationCache(job.OriginalIdentifier, runtimeType)
+				}
+
 				if err := RemovePluginIfNeeded(manager, job.OriginalIdentifier, response); err != nil {
 					log.Error("failed to remove uninstalled plugin", "error", err)
 				}

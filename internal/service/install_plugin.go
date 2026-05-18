@@ -250,6 +250,10 @@ func UpgradePlugin(
 			return exception.InternalServerError(err).ToResponse()
 		}
 
+		if response.IsOriginalPluginDeleted {
+			helper.DeletePluginDeclarationCache(originalPluginUniqueIdentifier, runtimeType)
+		}
+
 		// call RemovePluginIfNeeded in a new goroutine
 		routine.Submit(routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "service",
@@ -357,6 +361,10 @@ func UninstallPlugin(
 
 	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenant_id)
 	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
+
+	if deleteResponse != nil && deleteResponse.IsPluginDeleted {
+		helper.DeletePluginDeclarationCache(pluginUniqueIdentifier, plugin_entities.PluginRuntimeType(installation.RuntimeType))
+	}
 
 	if deleteResponse != nil && deleteResponse.IsPluginDeleted && deleteResponse.Plugin != nil && deleteResponse.Plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
 		manager := plugin_manager.Manager()
