@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779066888200,
+  "lastUpdate": 1779089469536,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13522,6 +13522,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.82,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eb3c56e6fdd42c49ffb4e1bcf137af60fb8a2ca3",
+          "message": "fix: fix delete plugin also delete record in plugin_declarations (#738)\n\n* fix: fix delete plugin also delete record in plugin_declarations\n\n* chore: clean redis cache",
+          "timestamp": "2026-05-18T15:29:07+08:00",
+          "tree_id": "01adb3f7d97824ece463d735a4170ba0f584ff77",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/eb3c56e6fdd42c49ffb4e1bcf137af60fb8a2ca3"
+        },
+        "date": 1779089469182,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.44,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.44,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
