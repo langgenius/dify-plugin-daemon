@@ -1,6 +1,6 @@
 module github.com/langgenius/dify-plugin-daemon
 
-go 1.26.3
+go 1.26
 
 require (
 	github.com/charmbracelet/bubbles v0.19.0
