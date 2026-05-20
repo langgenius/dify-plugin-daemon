@@ -29,7 +29,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.2'
+          go-version: '1.26'
 
       - name: Build CLI
         run: |
@@ -99,13 +99,13 @@ jobs:
             --password "${{ secrets.AC_PASSWORD }}" \
             --team-id "${{ secrets.TEAM_ID }}" \
             --wait &
-          
+
           xcrun notarytool submit dify-plugin-darwin-amd64.zip \
             --apple-id "${{ secrets.AC_USERNAME }}" \
             --password "${{ secrets.AC_PASSWORD }}" \
             --team-id "${{ secrets.TEAM_ID }}" \
             --wait &
-          
+
           wait
 
       # Staple is not needed for CLI
