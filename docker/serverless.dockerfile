@@ -1,10 +1,10 @@
-FROM golang:1.26.2-alpine AS builder
+FROM golang:1.26.3-alpine AS builder
 
 ARG VERSION=unknown
 
 # Install ca-certificates and timezone data for final stage
 RUN apk add --no-cache ca-certificates tzdata && \
-    apk add --upgrade --force-refresh busybox 
+    apk add --upgrade --force-refresh busybox
 
 # Set working directory
 WORKDIR /app
