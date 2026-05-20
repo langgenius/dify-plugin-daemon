@@ -47,7 +47,7 @@ func invokeSingleResponse[Req any, Rsp any](
 	}
 
 	if !got {
-		return nil, errors.New("plugin returned empty polling response")
+		return nil, errors.New("no polling result received from plugin")
 	}
 
 	return &item, nil
