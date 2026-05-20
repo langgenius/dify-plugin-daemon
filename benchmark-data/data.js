@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779168466226,
+  "lastUpdate": 1779268618663,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13618,6 +13618,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.53,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4e09b973686e2c3a785a19aaa66f8f0c4f804814",
+          "message": "chore: bump deps (#742)\n\n* chore: bump deps\n\n* use golang minor version",
+          "timestamp": "2026-05-20T17:13:59+08:00",
+          "tree_id": "afbde95eb76a41356c3fec015668ad16750d224e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/4e09b973686e2c3a785a19aaa66f8f0c4f804814"
+        },
+        "date": 1779268618309,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.46,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.46,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
