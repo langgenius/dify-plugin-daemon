@@ -21,6 +21,7 @@ type InvokeLLMSchema struct {
 	PromptMessages  []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
 	Tools           []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
 	Stop            []string                           `json:"stop" validate:"omitempty"`
+	JSONSchema      map[string]any                     `json:"json_schema" validate:"omitempty"`
 	Stream          bool                               `json:"stream"`
 }
 
@@ -181,4 +182,21 @@ type RequestGetAIModelSchema struct {
 	Credentials
 
 	ModelType model_entities.ModelType `json:"model_type"  validate:"required,model_type"`
+}
+
+type RequestStartPolling struct {
+	RequestInvokeLLM
+
+	WorkflowRunID string `json:"workflow_run_id" validate:"required"`
+	NodeID        string `json:"node_id" validate:"required"`
+}
+
+type RequestCheckPolling struct {
+	BaseRequestInvokeModel
+	Credentials
+
+	ModelType     model_entities.ModelType `json:"model_type" validate:"required,model_type,eq=llm"`
+	WorkflowRunID string                   `json:"workflow_run_id" validate:"required"`
+	NodeID        string                   `json:"node_id" validate:"required"`
+	PluginState   map[string]any           `json:"plugin_state" validate:"required,min=1"`
 }

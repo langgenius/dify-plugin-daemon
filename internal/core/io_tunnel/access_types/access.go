@@ -45,6 +45,8 @@ const (
 	PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS                      PluginAccessAction = "get_text_embedding_num_tokens"
 	PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS                               PluginAccessAction = "get_ai_model_schemas"
 	PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS                                 PluginAccessAction = "get_llm_num_tokens"
+	PLUGIN_ACCESS_ACTION_START_POLLING                                      PluginAccessAction = "start_polling"
+	PLUGIN_ACCESS_ACTION_CHECK_POLLING                                      PluginAccessAction = "check_polling"
 	PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY                              PluginAccessAction = "invoke_agent_strategy"
 	PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL                              PluginAccessAction = "get_authorization_url"
 	PLUGIN_ACCESS_ACTION_GET_CREDENTIALS                                    PluginAccessAction = "get_credentials"
@@ -81,6 +83,8 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS ||
 		p == PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS ||
 		p == PLUGIN_ACCESS_ACTION_GET_LLM_NUM_TOKENS ||
+		p == PLUGIN_ACCESS_ACTION_START_POLLING ||
+		p == PLUGIN_ACCESS_ACTION_CHECK_POLLING ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_AGENT_STRATEGY ||
 		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
 		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS ||

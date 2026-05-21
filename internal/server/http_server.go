@@ -120,6 +120,8 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.Use(app.InitClusterID())
 
 	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
+	group.POST("/model/polling/start", controllers.StartPolling())
+	group.POST("/model/polling/check", controllers.CheckPolling())
 
 	app.setupGeneratedRoutes(group, config)
 }
