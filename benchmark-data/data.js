@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779268618663,
+  "lastUpdate": 1779378486295,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13666,6 +13666,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.46,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "827d1ce4a2f0b409b69569b19d26f009db8d3b35",
+          "message": "feat: support plugin poll feature (#744)\n\n* feat: support plugin poll\n\n* fix: validate polling payloads\n\n---------\n\nCo-authored-by: WH-2099 <wh2099@pm.me>",
+          "timestamp": "2026-05-21T23:45:57+08:00",
+          "tree_id": "0e3931c61cb09834c83ba45055b36aba56c35314",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/827d1ce4a2f0b409b69569b19d26f009db8d3b35"
+        },
+        "date": 1779378485844,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.73,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.73,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
