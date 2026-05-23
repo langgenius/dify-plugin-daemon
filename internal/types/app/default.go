@@ -1,11 +1,24 @@
 package app
 
 import (
+	"os"
+
 	"github.com/langgenius/dify-cloud-kit/oss"
 	"golang.org/x/exp/constraints"
 )
 
 func (config *Config) SetDefault() {
+	// Fallback to lowercase proxy env vars if uppercase are not set
+	if config.HttpProxy == "" {
+		config.HttpProxy = os.Getenv("http_proxy")
+	}
+	if config.HttpsProxy == "" {
+		config.HttpsProxy = os.Getenv("https_proxy")
+	}
+	if config.NoProxy == "" {
+		config.NoProxy = os.Getenv("no_proxy")
+	}
+
 	switch config.DBType {
 	case DB_TYPE_OCEANBASE, DB_TYPE_SEEKDB:
 		config.DBType = DB_TYPE_MYSQL
