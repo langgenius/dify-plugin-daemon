@@ -50,6 +50,8 @@ const (
 	TOOL_PARAMETER_ARRAY               ToolParameterType = ARRAY
 	TOOL_PARAMETER_OBJECT              ToolParameterType = OBJECT
 	TOOL_PARAMETER_TYPE_CHECKBOX       ToolParameterType = CHECKBOX
+	TOOL_PARAMETER_TYPE_DATE           ToolParameterType = DATE
+	TOOL_PARAMETER_TYPE_DATE_PICKER    ToolParameterType = DATE_PICKER
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -69,7 +71,9 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT),
 		string(TOOL_PARAMETER_ARRAY),
 		string(TOOL_PARAMETER_OBJECT),
-		string(TOOL_PARAMETER_TYPE_CHECKBOX):
+		string(TOOL_PARAMETER_TYPE_CHECKBOX),
+		string(TOOL_PARAMETER_TYPE_DATE),
+		string(TOOL_PARAMETER_TYPE_DATE_PICKER):
 		return true
 	}
 	return false
