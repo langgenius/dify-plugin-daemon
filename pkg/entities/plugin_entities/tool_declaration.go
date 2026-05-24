@@ -45,11 +45,12 @@ const (
 	TOOL_PARAMETER_TYPE_APP_SELECTOR   ToolParameterType = APP_SELECTOR
 	TOOL_PARAMETER_TYPE_MODEL_SELECTOR ToolParameterType = MODEL_SELECTOR
 	// TOOL_PARAMETER_TYPE_TOOL_SELECTOR  ToolParameterType = TOOL_SELECTOR
-	TOOL_PARAMETER_TYPE_ANY            ToolParameterType = ANY
-	TOOL_PARAMETER_TYPE_DYNAMIC_SELECT ToolParameterType = DYNAMIC_SELECT
-	TOOL_PARAMETER_ARRAY               ToolParameterType = ARRAY
-	TOOL_PARAMETER_OBJECT              ToolParameterType = OBJECT
-	TOOL_PARAMETER_TYPE_CHECKBOX       ToolParameterType = CHECKBOX
+	TOOL_PARAMETER_TYPE_ANY                 ToolParameterType = ANY
+	TOOL_PARAMETER_TYPE_DYNAMIC_SELECT      ToolParameterType = DYNAMIC_SELECT
+	TOOL_PARAMETER_TYPE_DYNAMIC_TREE_SELECT ToolParameterType = DYNAMIC_TREE_SELECT
+	TOOL_PARAMETER_ARRAY                    ToolParameterType = ARRAY
+	TOOL_PARAMETER_OBJECT                   ToolParameterType = OBJECT
+	TOOL_PARAMETER_TYPE_CHECKBOX            ToolParameterType = CHECKBOX
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -67,6 +68,7 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_TYPE_MODEL_SELECTOR),
 		string(TOOL_PARAMETER_TYPE_ANY),
 		string(TOOL_PARAMETER_TYPE_DYNAMIC_SELECT),
+		string(TOOL_PARAMETER_TYPE_DYNAMIC_TREE_SELECT),
 		string(TOOL_PARAMETER_ARRAY),
 		string(TOOL_PARAMETER_OBJECT),
 		string(TOOL_PARAMETER_TYPE_CHECKBOX):
@@ -122,22 +124,23 @@ type ParameterTemplate struct {
 }
 
 type ToolParameter struct {
-	Name             string                 `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
-	Label            I18nObject             `json:"label" yaml:"label" validate:"required"`
-	HumanDescription I18nObject             `json:"human_description" yaml:"human_description" validate:"required"`
-	Type             ToolParameterType      `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
-	Scope            *string                `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
-	Form             ToolParameterForm      `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
-	LLMDescription   string                 `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
-	Required         bool                   `json:"required" yaml:"required"`
-	AutoGenerate     *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
-	Template         *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
-	Default          any                    `json:"default" yaml:"default" validate:"omitempty"`
-	Min              *float64               `json:"min" yaml:"min" validate:"omitempty"`
-	Max              *float64               `json:"max" yaml:"max" validate:"omitempty"`
-	Multiple         bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
-	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
+	Name                  string                 `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
+	Label                 I18nObject             `json:"label" yaml:"label" validate:"required"`
+	HumanDescription      I18nObject             `json:"human_description" yaml:"human_description" validate:"required"`
+	Type                  ToolParameterType      `json:"type" yaml:"type" validate:"required,tool_parameter_type"`
+	Scope                 *string                `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
+	Form                  ToolParameterForm      `json:"form" yaml:"form" validate:"required,tool_parameter_form"`
+	LLMDescription        string                 `json:"llm_description" yaml:"llm_description" validate:"omitempty"`
+	Required              bool                   `json:"required" yaml:"required"`
+	AutoGenerate          *ParameterAutoGenerate `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
+	Template              *ParameterTemplate     `json:"template" yaml:"template" validate:"omitempty"`
+	Default               any                    `json:"default" yaml:"default" validate:"omitempty"`
+	Min                   *float64               `json:"min" yaml:"min" validate:"omitempty"`
+	Max                   *float64               `json:"max" yaml:"max" validate:"omitempty"`
+	Multiple              bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
+	Precision             *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
+	Options               []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
+	DynamicSelectLazyLoad bool                   `json:"dynamic_select_lazy_load,omitempty" yaml:"dynamic_select_lazy_load,omitempty" validate:"omitempty"`
 }
 
 type ToolDescription struct {
