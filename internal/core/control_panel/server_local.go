@@ -79,8 +79,12 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 			db.Equal("plugin_unique_identifier", uniquePluginIdentifier.String()),
 		)
 
-		if err == db.ErrDatabaseNotFound {
-			log.Info("Plugin table missing for existing PLUGIN_INSTALLED_PATH", "plugin_unique_identifier", uniquePluginIdentifier.String())
+		if err != nil {
+			if err == db.ErrDatabaseNotFound {
+				log.Info("Plugin table missing for existing PLUGIN_INSTALLED_PATH", "plugin_unique_identifier", uniquePluginIdentifier.String())
+			} else {
+				log.Error("failed to query plugin from database", "plugin_unique_identifier", uniquePluginIdentifier.String(), "error", err)
+			}
 			continue
 		}
 
