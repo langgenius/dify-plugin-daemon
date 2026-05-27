@@ -506,6 +506,14 @@ func UpgradePlugin(
 			}, tx); err != nil {
 				return err
 			}
+
+			if originalPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+				if err := db.DeleteByCondition(&models.ServerlessRuntime{
+					PluginUniqueIdentifier: originalPluginUniqueIdentifier.String(),
+				}, tx); err != nil {
+					return err
+				}
+			}
 		} else if err != nil {
 			return err
 		}

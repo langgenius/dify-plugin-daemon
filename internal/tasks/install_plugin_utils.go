@@ -174,5 +174,12 @@ func RemovePluginIfNeeded(
 			return errors.Join(err, errors.New("failed to shutdown plugin gracefully"))
 		}
 	}
+
+	if shouldCleanup && response.DeletedPlugin != nil && response.DeletedPlugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+		if err := manager.ClearServerlessRuntimeCache(originalPluginUniqueIdentifier); err != nil {
+			log.Error("failed to clear serverless runtime cache on upgrade", "error", err)
+		}
+	}
+
 	return nil
 }
