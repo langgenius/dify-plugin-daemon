@@ -50,7 +50,7 @@ func (p *PluginManager) SwitchServerlessEndpoint(
 	if err != nil {
 		return err
 	}
-	return p.clearServerlessRuntimeCache(pluginUniqueIdentifier)
+	return p.ClearServerlessRuntimeCache(pluginUniqueIdentifier)
 }
 
 // serverless runtime uses a strategy that firstly compile the plugin into a docker image
@@ -109,7 +109,7 @@ func (p *PluginManager) Reinstall(
 
 				// cleanup system cache for serverless runtime model
 				// cleanup must be done after updating the model, otherwise race condition may occur
-				if err := p.clearServerlessRuntimeCache(pluginUniqueIdentifier); err != nil {
+				if err := p.ClearServerlessRuntimeCache(pluginUniqueIdentifier); err != nil {
 					log.Error("failed to cleanup system cache for serverless runtime model", "error", err)
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,

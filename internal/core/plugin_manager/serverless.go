@@ -87,7 +87,7 @@ func (p *PluginManager) getServerlessPluginRuntimeModel(
 	return runtime, nil
 }
 
-func (p *PluginManager) clearServerlessRuntimeCache(
+func (p *PluginManager) ClearServerlessRuntimeCache(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) error {
 	_, err := cache.Del(p.getServerlessRuntimeCacheKey(identity))
