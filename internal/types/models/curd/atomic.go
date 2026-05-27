@@ -372,6 +372,14 @@ func UninstallPlugin(
 			}, tx); err != nil {
 				return err
 			}
+
+			if pluginToBeReturns.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+				if err := db.DeleteByCondition(&models.ServerlessRuntime{
+					PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+				}, tx); err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
