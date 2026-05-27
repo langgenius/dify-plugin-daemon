@@ -364,6 +364,14 @@ func UninstallPlugin(
 
 	if deleteResponse != nil && deleteResponse.IsPluginDeleted {
 		helper.DeletePluginDeclarationCache(pluginUniqueIdentifier, plugin_entities.PluginRuntimeType(installation.RuntimeType))
+
+		if plugin_entities.PluginRuntimeType(installation.RuntimeType) == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+			if manager := plugin_manager.Manager(); manager != nil {
+				if err := manager.ClearServerlessRuntimeCache(pluginUniqueIdentifier); err != nil {
+					log.Error("failed to clear serverless runtime cache on uninstall", "error", err)
+				}
+			}
+		}
 	}
 
 	if deleteResponse != nil && deleteResponse.IsPluginDeleted && deleteResponse.Plugin != nil && deleteResponse.Plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
