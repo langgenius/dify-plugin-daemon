@@ -79,7 +79,11 @@ func applyPipMirrorAutoDetect(config *app.Config) {
 	}
 
 	if applied {
-		log.Info("auto-detected pip mirror", "location", loc, "mirror_url", config.PipMirrorUrl)
+		log.Info(
+			"IMPORTANT: pip mirror auto-detect selected a mirror; set PIP_MIRROR_AUTO_DETECT=false to disable or PIP_MIRROR_URL=<mirror_url> to override",
+			"ip_region", loc,
+			"mirror_url", config.PipMirrorUrl,
+		)
 	}
 }
 
