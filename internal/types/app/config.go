@@ -205,6 +205,7 @@ type Config struct {
 	UvPath                    string `envconfig:"UV_PATH"  default:""`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
+	PipMirrorAutoDetect       bool   `envconfig:"PIP_MIRROR_AUTO_DETECT" default:"true"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
 	PipPreferBinary           bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
 	PipVerbose                bool   `envconfig:"PIP_VERBOSE" default:"true"`

@@ -128,10 +128,15 @@ Using PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv" prevents compileall from compili
 
 ```shell
 PLUGIN_IGNORE_UV_LOCK=true
-PIP_MIRROR_URL=https://mirrors.aliyun.com/pypi/simple/
+PIP_MIRROR_AUTO_DETECT=true
+PIP_MIRROR_URL=
 ```
 
-Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the configured PyPI mirror for dependency resolution.
+Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the selected PyPI mirror for dependency resolution.
+
+PIP_MIRROR_AUTO_DETECT is enabled by default. When enabled, the daemon tries to select a suitable local PyPI mirror at startup for regions with poor network connectivity; regions that do not need a mirror keep the default behavior.
+
+PIP_MIRROR_URL manually specifies the PyPI mirror. When it is set, it takes precedence over auto detection and disables the auto-selected mirror.
 
 ## Benchmark
 

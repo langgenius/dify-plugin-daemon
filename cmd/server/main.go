@@ -39,6 +39,8 @@ func main() {
 	}
 	defer log.RecoverAndExit()
 
+	applyPipMirrorAutoDetect(&config)
+
 	if err = config.Validate(); err != nil {
 		log.Panic("invalid configuration", "error", err)
 	}
