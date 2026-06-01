@@ -72,11 +72,21 @@ func (p *LocalPluginRuntime) prepareUV() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// pipMirrorURL resolves the pip index URL to use for dependency installation
+// through the configured MirrorProvider. An empty string means "use the default
+// PyPI index".
+func (p *LocalPluginRuntime) pipMirrorURL() string {
+	if p.mirrorProvider == nil {
+		return p.appConfig.PipMirrorUrl
+	}
+	return p.mirrorProvider.MirrorURL()
+}
+
 func (p *LocalPluginRuntime) preparePipArgs() []string {
 	args := []string{"install"}
 
-	if p.appConfig.PipMirrorUrl != "" {
-		args = append(args, "-i", p.appConfig.PipMirrorUrl)
+	if mirrorURL := p.pipMirrorURL(); mirrorURL != "" {
+		args = append(args, "-i", mirrorURL)
 	}
 
 	args = append(args, "-r", "requirements.txt")
@@ -99,8 +109,8 @@ func (p *LocalPluginRuntime) prepareSyncArgs(hasUvLock bool) []string {
 		args = append(args, "--frozen")
 	}
 
-	if p.appConfig.PipMirrorUrl != "" {
-		args = append(args, "-i", p.appConfig.PipMirrorUrl)
+	if mirrorURL := p.pipMirrorURL(); mirrorURL != "" {
+		args = append(args, "-i", mirrorURL)
 	}
 
 	if p.appConfig.PipVerbose {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/pip"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -25,6 +26,11 @@ type LocalPluginRuntime struct {
 	uvPath                       string
 
 	appConfig *app.Config
+
+	// mirrorProvider resolves the pip index (PyPI mirror) URL used during
+	// dependency installation. It is an interface so the resolution strategy can
+	// evolve (e.g. database-driven mirror selection) without touching the runtime.
+	mirrorProvider pip.PypiProvider
 
 	instanceNums int32 // equivalent to K8s replicas
 

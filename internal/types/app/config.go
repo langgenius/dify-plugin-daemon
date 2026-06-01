@@ -205,12 +205,22 @@ type Config struct {
 	UvPath                    string `envconfig:"UV_PATH"  default:""`
 	PythonEnvInitTimeout      int    `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
 	PythonCompileAllExtraArgs string `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
-	PipMirrorAutoDetect       bool   `envconfig:"PIP_MIRROR_AUTO_DETECT" default:"true"`
 	PipMirrorUrl              string `envconfig:"PIP_MIRROR_URL"`
-	PipPreferBinary           bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
-	PipVerbose                bool   `envconfig:"PIP_VERBOSE" default:"true"`
-	PipExtraArgs              string `envconfig:"PIP_EXTRA_ARGS"`
-	PluginIgnoreUvLock        bool   `envconfig:"PLUGIN_IGNORE_UV_LOCK" default:"false"`
+	// PipMirrorCandidates is a comma-separated list of "name=url" pairs that seed
+	// the selectable pip mirror candidates (in addition to the official PyPI index
+	// and any database-configured mirrors).
+	PipMirrorCandidates string `envconfig:"PIP_MIRROR_CANDIDATES" default:"aliyun=https://mirrors.aliyun.com/pypi/simple/,tsinghua=https://pypi.tuna.tsinghua.edu.cn/simple/"`
+
+	// PyPI connectivity probe. The probe periodically checks reachability of the
+	// candidate PyPI mirrors and surfaces the result on the health check endpoint.
+	// It is purely informational and never auto-selects a mirror.
+	PipPypiProbeEnabled  bool   `envconfig:"PIP_PYPI_PROBE_ENABLED" default:"true"`
+	PipPypiProbeTimeout  int    `envconfig:"PIP_PYPI_PROBE_TIMEOUT" default:"5"`
+	PipPypiProbeInterval int    `envconfig:"PIP_PYPI_PROBE_INTERVAL" default:"60"`
+	PipPreferBinary      bool   `envconfig:"PIP_PREFER_BINARY" default:"true"`
+	PipVerbose           bool   `envconfig:"PIP_VERBOSE" default:"true"`
+	PipExtraArgs         string `envconfig:"PIP_EXTRA_ARGS"`
+	PluginIgnoreUvLock   bool   `envconfig:"PLUGIN_IGNORE_UV_LOCK" default:"false"`
 
 	// Runtime buffer configuration (applies to both local and serverless runtimes)
 	// These are the new generic names that should be used going forward

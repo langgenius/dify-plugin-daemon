@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/pip"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -48,15 +49,16 @@ func ConstructPluginRuntime(
 		defaultPythonInterpreterPath: appConfig.PythonInterpreterPath,
 		uvPath:                       appConfig.UvPath,
 		appConfig:                    appConfig,
+		mirrorProvider:               pip.ProviderOrConfig(appConfig),
 
 		instances:      []*PluginInstance{},
 		instanceLocker: &sync.RWMutex{},
 
 		notifiers:    []PluginRuntimeNotifier{},
-			notifierLock: &sync.Mutex{},
-			traceCtx:     nil,
-		}
-		return runtime, nil
+		notifierLock: &sync.Mutex{},
+		traceCtx:     nil,
+	}
+	return runtime, nil
 }
 
 // generate plugin working path using author/name@checksum, but replace : with -

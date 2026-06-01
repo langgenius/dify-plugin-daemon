@@ -128,15 +128,39 @@ Using PYTHON_COMPILE_ALL_EXTRA_ARGS="-x \.venv" prevents compileall from compili
 
 ```shell
 PLUGIN_IGNORE_UV_LOCK=true
-PIP_MIRROR_AUTO_DETECT=true
 PIP_MIRROR_URL=
+PIP_MIRROR_CANDIDATES=aliyun=https://mirrors.aliyun.com/pypi/simple/,tsinghua=https://pypi.tuna.tsinghua.edu.cn/simple/
 ```
 
-Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the selected PyPI mirror for dependency resolution.
+Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the effective PyPI mirror for dependency resolution.
 
-PIP_MIRROR_AUTO_DETECT is enabled by default. When enabled, the daemon tries to select a suitable local PyPI mirror at startup for regions with poor network connectivity; regions that do not need a mirror keep the default behavior.
+The effective mirror is resolved by a provider with the following priority:
 
-PIP_MIRROR_URL manually specifies the PyPI mirror. When it is set, it takes precedence over auto detection and disables the auto-selected mirror.
+1. the mirror selected via the database (the admin API below);
+2. `PIP_MIRROR_URL` (statically configured);
+3. the official PyPI index (when neither of the above is set).
+
+The daemon never auto-selects a mirror. `PIP_MIRROR_CANDIDATES` is a comma-separated list of `name=url` pairs that seeds the selectable mirror candidates, in addition to the official PyPI index and any database-configured mirrors.
+
+### PyPI connectivity probe
+
+```shell
+PIP_PYPI_PROBE_ENABLED=true
+PIP_PYPI_PROBE_URL=https://pypi.org/simple/
+PIP_PYPI_PROBE_TIMEOUT=5
+PIP_PYPI_PROBE_INTERVAL=60
+```
+
+The daemon runs a background probe that periodically checks connectivity to **all** candidate mirrors and caches each one's latency/reachability. The selected mirror's status is surfaced on the `/health/check` endpoint as an informational `pypi` field. It is purely a reminder: it never auto-selects a mirror and never affects the health check status code. `PIP_PYPI_PROBE_INTERVAL` has a minimum of 10 seconds.
+
+This probe only runs for the **local runtime**, where the daemon installs plugin dependencies via pip/uv against PyPI. In **serverless** mode dependency installation is delegated to the serverless connector, so the daemon never talks to PyPI directly and the probe is skipped.
+
+### Mirror management API (admin)
+
+These endpoints require the admin API (`ADMIN_API_ENABLED=true` and a valid `ADMIN_API_KEY`):
+
+- `GET /admin/pypi/mirrors` — list candidate mirrors with their latest probe latency/reachability and the currently selected one.
+- `POST /admin/pypi/select` — select (and persist) the effective mirror, body: `{ "url": "https://...", "name": "optional" }`. An unknown URL is stored as a new custom mirror. The selection is global and takes effect for subsequent plugin installs.
 
 ## Benchmark
 

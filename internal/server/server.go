@@ -6,6 +6,7 @@ import (
 	"github.com/langgenius/dify-cloud-kit/oss/factory"
 	"github.com/langgenius/dify-plugin-daemon/internal/cluster"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/persistence"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/pip"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/storage/baidubos"
@@ -115,6 +116,10 @@ func (app *App) Run(config *app.Config) {
 
 	// init db
 	db.Init(config)
+
+	// init the pip mirror provider (database-backed) and, for the local runtime,
+	// start the background PyPI connectivity probe
+	pip.Bootstrap(config)
 
 	// init oss
 	oss := initOSS(config)

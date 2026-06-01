@@ -25,6 +25,7 @@ func AutoMigrate() error {
 		models.AgentStrategyInstallation{},
 		models.TriggerInstallation{},
 		models.PluginReadmeRecord{},
+		models.PypiMirror{},
 	)
 
 	if err != nil {

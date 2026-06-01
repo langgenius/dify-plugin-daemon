@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/pip"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/manifest"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
@@ -32,7 +33,7 @@ func CollectActiveDispatchRequests() gin.HandlerFunc {
 
 func HealthCheck(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, gin.H{
+		body := gin.H{
 			"status":                   "ok",
 			"pool_status":              routine.FetchRoutineStatus(),
 			"version":                  manifest.VersionX,
@@ -40,6 +41,19 @@ func HealthCheck(app *app.Config) gin.HandlerFunc {
 			"platform":                 app.Platform,
 			"active_requests":          activeRequests,
 			"active_dispatch_requests": activeDispatchRequests,
-		})
+		}
+
+		// Surface the selected PyPI mirror's connectivity as an informational
+		// field. This never affects the response status code; it only serves as a
+		// reminder when the effective mirror is unreachable.
+		if result, ok := pip.GetResult(); ok {
+			if status, found := result.SelectedStatus(); found {
+				body["pypi"] = status
+			} else {
+				body["pypi"] = gin.H{"selected": result.Selected}
+			}
+		}
+
+		c.JSON(200, body)
 	}
 }

@@ -86,28 +86,39 @@ func TestConfigRedisKeyPrefixField(t *testing.T) {
 	assert.Equal(t, "enterprise-a", cfg.RedisKeyPrefix)
 }
 
-func TestPipMirrorAutoDetectDefault(t *testing.T) {
-	originalValue, hadOriginalValue := os.LookupEnv("PIP_MIRROR_AUTO_DETECT")
-	require.NoError(t, os.Unsetenv("PIP_MIRROR_AUTO_DETECT"))
-	t.Cleanup(func() {
-		if hadOriginalValue {
-			require.NoError(t, os.Setenv("PIP_MIRROR_AUTO_DETECT", originalValue))
-			return
-		}
-		require.NoError(t, os.Unsetenv("PIP_MIRROR_AUTO_DETECT"))
-	})
+func TestPipPypiProbeDefaults(t *testing.T) {
+	for _, key := range []string{
+		"PIP_PYPI_PROBE_ENABLED",
+		"PIP_PYPI_PROBE_URL",
+		"PIP_PYPI_PROBE_TIMEOUT",
+		"PIP_PYPI_PROBE_INTERVAL",
+	} {
+		originalValue, hadOriginalValue := os.LookupEnv(key)
+		require.NoError(t, os.Unsetenv(key))
+		t.Cleanup(func() {
+			if hadOriginalValue {
+				require.NoError(t, os.Setenv(key, originalValue))
+				return
+			}
+			require.NoError(t, os.Unsetenv(key))
+		})
+	}
 
 	cfg := Config{}
 	require.NoError(t, envconfig.Process("", &cfg))
-	assert.True(t, cfg.PipMirrorAutoDetect)
+	assert.True(t, cfg.PipPypiProbeEnabled)
+	assert.Equal(t, 5, cfg.PipPypiProbeTimeout)
+	assert.Equal(t, 60, cfg.PipPypiProbeInterval)
 }
 
-func TestPipMirrorAutoDetectOverride(t *testing.T) {
-	t.Setenv("PIP_MIRROR_AUTO_DETECT", "false")
+func TestPipPypiProbeOverride(t *testing.T) {
+	t.Setenv("PIP_PYPI_PROBE_ENABLED", "false")
+	t.Setenv("PIP_PYPI_PROBE_TIMEOUT", "10")
 
 	cfg := Config{}
 	require.NoError(t, envconfig.Process("", &cfg))
-	assert.False(t, cfg.PipMirrorAutoDetect)
+	assert.False(t, cfg.PipPypiProbeEnabled)
+	assert.Equal(t, 10, cfg.PipPypiProbeTimeout)
 }
 
 func TestRedisTLSConfig(t *testing.T) {

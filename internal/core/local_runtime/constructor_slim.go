@@ -3,6 +3,7 @@ package local_runtime
 import (
 	"sync"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/pip"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager/basic_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -34,6 +35,7 @@ func NewLocalPluginRuntime(
 		defaultPythonInterpreterPath: appConfig.PythonInterpreterPath,
 		uvPath:                       appConfig.UvPath,
 		appConfig:                    appConfig,
+		mirrorProvider:               pip.ProviderOrConfig(appConfig),
 		instances:                    []*PluginInstance{},
 		instanceLocker:               &sync.RWMutex{},
 		notifiers:                    []PluginRuntimeNotifier{},
