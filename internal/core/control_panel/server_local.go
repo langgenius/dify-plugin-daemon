@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
+	"github.com/langgenius/dify-plugin-daemon/internal/db"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
@@ -69,6 +71,20 @@ func (c *ControlPanel) handleNewLocalPlugins() {
 		// check if the plugin is in the ignore list
 		if _, ok := c.localPluginWatchIgnoreList.Load(uniquePluginIdentifier); ok {
 			// skip the plugin
+			continue
+		}
+
+		// ckeck plugin db data exists
+		_, err = db.GetOne[models.Plugin](
+			db.Equal("plugin_unique_identifier", uniquePluginIdentifier.String()),
+		)
+
+		if err != nil {
+			if err == db.ErrDatabaseNotFound {
+				log.Info("Plugin table missing for existing PLUGIN_INSTALLED_PATH", "plugin_unique_identifier", uniquePluginIdentifier.String())
+			} else {
+				log.Error("failed to query plugin from database", "plugin_unique_identifier", uniquePluginIdentifier.String(), "error", err)
+			}
 			continue
 		}
 
