@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779378486295,
+  "lastUpdate": 1780295353854,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13714,6 +13714,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.73,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "3281328128@qq.com",
+            "name": "James Sun",
+            "username": "shootercheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "918ce6fe65d9bc5a335f221f72e3f1d04dc1a840",
+          "message": "fix :  Plugin table missing for existing PLUGIN_INSTALLED_PATH (#748)\n\n* fix :  Plugin table missing for existing PLUGIN_INSTALLED_PATH\n\n* fix : Fix code review issues",
+          "timestamp": "2026-06-01T14:26:49+08:00",
+          "tree_id": "6be1691445d3448c43894d6bd81b71b3c9667e49",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/918ce6fe65d9bc5a335f221f72e3f1d04dc1a840"
+        },
+        "date": 1780295353540,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.5,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.5,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
