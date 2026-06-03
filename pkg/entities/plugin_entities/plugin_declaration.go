@@ -191,6 +191,14 @@ type PluginDeclaration struct {
 	Trigger                                *TriggerProviderDeclaration       `json:"trigger,omitempty" yaml:"trigger,omitempty" validate:"omitempty"`
 }
 
+func (p *PluginDeclaration) NormalizeModelProperties() {
+	if p == nil || p.Model == nil {
+		return
+	}
+
+	p.Model.NormalizeModelProperties()
+}
+
 func (p *PluginDeclaration) Category() PluginCategory {
 	if p.Tool != nil || len(p.Plugins.Tools) != 0 {
 		return PLUGIN_CATEGORY_TOOL
@@ -239,6 +247,8 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 	p.AgentStrategy = extra.AgentStrategy
 	p.Datasource = extra.Datasource
 	p.Trigger = extra.Trigger
+
+	p.NormalizeModelProperties()
 
 	return nil
 }

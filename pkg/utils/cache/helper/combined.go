@@ -184,7 +184,8 @@ func CombinedGetPluginDeclaration(
 		},
 	)
 
-	if err == nil {
+	if err == nil && declaration != nil {
+		declaration.NormalizeModelProperties()
 		// Store successful result in memory cache
 		pluginCache.set(cacheKey, declaration)
 	}

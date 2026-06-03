@@ -8,7 +8,6 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/mapping"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
@@ -389,6 +388,26 @@ type ModelDeclaration struct {
 	PriceConfig     *ModelPriceConfig              `json:"pricing" yaml:"pricing" validate:"omitempty"`
 }
 
+func (m *ModelDeclaration) normalizeModelProperties() {
+	if m.ModelProperties == nil {
+		return
+	}
+
+	if result, ok := mapping.ConvertAnyMap(m.ModelProperties).(map[string]any); ok {
+		m.ModelProperties = result
+	}
+}
+
+func (m *ModelProviderDeclaration) NormalizeModelProperties() {
+	if m == nil {
+		return
+	}
+
+	for i := range m.Models {
+		m.Models[i].normalizeModelProperties()
+	}
+}
+
 func (m *ModelDeclaration) UnmarshalJSON(data []byte) error {
 	type alias ModelDeclaration
 
@@ -410,6 +429,8 @@ func (m *ModelDeclaration) UnmarshalJSON(data []byte) error {
 		m.ParameterRules = []ModelParameterRule{}
 	}
 
+	m.normalizeModelProperties()
+
 	return nil
 }
 
@@ -424,17 +445,6 @@ func (m ModelDeclaration) MarshalJSON() ([]byte, error) {
 
 	if temp.Label.EnUS == "" {
 		temp.Label.EnUS = temp.Model
-	}
-
-	// to avoid ModelProperties not serializable, we need to convert all the keys to string
-	// includes inner map and slice
-	if temp.ModelProperties != nil {
-		result, ok := mapping.ConvertAnyMap(temp.ModelProperties).(map[string]any)
-		if !ok {
-			log.Error("ModelProperties is not a map[string]any:", "model_properties", temp.ModelProperties)
-		} else {
-			temp.ModelProperties = result
-		}
 	}
 
 	return json.Marshal(temp)
@@ -460,6 +470,8 @@ func (m *ModelDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	if m.ParameterRules == nil {
 		m.ParameterRules = []ModelParameterRule{}
 	}
+
+	m.normalizeModelProperties()
 
 	return nil
 }
@@ -676,6 +688,7 @@ func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
 			return err
 		}
 
+		m.NormalizeModelProperties()
 		return nil
 	}
 
@@ -711,6 +724,8 @@ func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
 	if m.Models == nil {
 		m.Models = []ModelDeclaration{}
 	}
+
+	m.NormalizeModelProperties()
 
 	return nil
 }
@@ -798,6 +813,8 @@ func (m *ModelProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	if m.Models == nil {
 		m.Models = []ModelDeclaration{}
 	}
+
+	m.NormalizeModelProperties()
 
 	return nil
 }
