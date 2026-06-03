@@ -29,13 +29,21 @@ func (r *InstallTaskRegistry) IDs() []string {
 }
 
 func (r *InstallTaskRegistry) PrimaryID() string {
-	if len(r.Order) == 0 {
+	task := r.PrimaryTask()
+	if task == nil {
 		return ""
 	}
-	if task, ok := r.Tasks[r.Order[0]]; ok {
-		return task.ID
+	return task.ID
+}
+
+func (r *InstallTaskRegistry) PrimaryTask() *models.InstallTask {
+	if len(r.Order) == 0 {
+		return nil
 	}
-	return ""
+	if task, ok := r.Tasks[r.Order[0]]; ok {
+		return task
+	}
+	return nil
 }
 
 func truncateMessage(message string) string {
