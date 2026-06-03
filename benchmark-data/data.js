@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780295648643,
+  "lastUpdate": 1780465809044,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13810,6 +13810,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.66,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1ca1baeee67a51877d493cc414a910a60a867a6",
+          "message": "fix: bump golang.org/x/crypto to v0.52.0 and golang.org/x/net to v0.55.0 to fix CVEs (#752)\n\n- golang.org/x/crypto: v0.51.0 -> v0.52.0 (fixes 13 CVEs: CVE-2026-39830~39835, CVE-2026-42508, CVE-2026-46595, CVE-2026-46597, CVE-2026-46598, CVE-2026-39827~39829)\n- golang.org/x/net: v0.54.0 -> v0.55.0 (fixes 6 CVEs: CVE-2026-39821, CVE-2026-25680, CVE-2026-42506, CVE-2026-42502, CVE-2026-27136, CVE-2026-25681)",
+          "timestamp": "2026-06-03T13:47:44+08:00",
+          "tree_id": "43b2effb2c853b8e6daf18d9589e34c341e718a3",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a1ca1baeee67a51877d493cc414a910a60a867a6"
+        },
+        "date": 1780465808720,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.25,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.25,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
