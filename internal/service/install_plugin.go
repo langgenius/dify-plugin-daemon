@@ -27,9 +27,8 @@ import (
 )
 
 type InstallPluginResponse struct {
-	AllInstalled bool                `json:"all_installed"`
-	TaskID       string              `json:"task_id"`
-	Task         *models.InstallTask `json:"task,omitempty"`
+	AllInstalled bool   `json:"all_installed"`
+	TaskID       string `json:"task_id"`
 }
 
 // Dify supports install multiple plugins to a tenant at once
@@ -143,7 +142,6 @@ func InstallMultiplePluginsToTenant(
 		// EE edition reference task should not be the first one
 		// here we use `PrimaryID` to present the user-facing task id
 		TaskID: taskRegistry.PrimaryID(),
-		Task:   taskRegistry.PrimaryTask(),
 	})
 }
 
@@ -320,7 +318,6 @@ func UpgradePlugin(
 	return entities.NewSuccessResponse(&InstallPluginResponse{
 		AllInstalled: false,
 		TaskID:       taskRegistry.PrimaryID(),
-		Task:         taskRegistry.PrimaryTask(),
 	})
 }
 
