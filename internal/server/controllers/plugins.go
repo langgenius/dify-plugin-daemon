@@ -292,6 +292,17 @@ func ListPlugins(c *gin.Context) {
 	})
 }
 
+func ListPluginsByCategory(c *gin.Context) {
+	BindRequest(c, func(request struct {
+		TenantID string                         `uri:"tenant_id" validate:"required"`
+		Category plugin_entities.PluginCategory `uri:"category" validate:"required"`
+		Page     int                            `form:"page" validate:"required,min=1"`
+		PageSize int                            `form:"page_size" validate:"required,min=1,max=256"`
+	}) {
+		c.JSON(http.StatusOK, service.ListPluginsByCategory(request.TenantID, request.Category, request.Page, request.PageSize))
+	})
+}
+
 func BatchFetchPluginInstallationByIDs(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID  string   `uri:"tenant_id" validate:"required"`

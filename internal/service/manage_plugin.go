@@ -15,6 +15,46 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/strings"
 )
 
+const pluginCategoryListScanPageSize = 256
+
+type pluginInstallationResponse struct {
+	ID                     string                             `json:"id"`
+	Name                   string                             `json:"name"`
+	PluginID               string                             `json:"plugin_id"`
+	TenantID               string                             `json:"tenant_id"`
+	PluginUniqueIdentifier string                             `json:"plugin_unique_identifier"`
+	EndpointsActive        int                                `json:"endpoints_active"`
+	EndpointsSetups        int                                `json:"endpoints_setups"`
+	InstallationID         string                             `json:"installation_id"`
+	Declaration            *plugin_entities.PluginDeclaration `json:"declaration"`
+	RuntimeType            plugin_entities.PluginRuntimeType  `json:"runtime_type"`
+	Version                manifest_entities.Version          `json:"version"`
+	CreatedAt              time.Time                          `json:"created_at"`
+	UpdatedAt              time.Time                          `json:"updated_at"`
+	Source                 string                             `json:"source"`
+	Checksum               string                             `json:"checksum"`
+	Meta                   map[string]any                     `json:"meta"`
+}
+
+type pluginListResponse struct {
+	List    []pluginInstallationResponse `json:"list"`
+	HasMore bool                         `json:"has_more"`
+}
+
+func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
+	switch category {
+	case plugin_entities.PLUGIN_CATEGORY_TOOL,
+		plugin_entities.PLUGIN_CATEGORY_MODEL,
+		plugin_entities.PLUGIN_CATEGORY_EXTENSION,
+		plugin_entities.PLUGIN_CATEGORY_AGENT_STRATEGY,
+		plugin_entities.PLUGIN_CATEGORY_DATASOURCE,
+		plugin_entities.PLUGIN_CATEGORY_TRIGGER:
+		return true
+	default:
+		return false
+	}
+}
+
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	type installation struct {
 		ID                     string                             `json:"id"`
@@ -103,6 +143,95 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	return entities.NewSuccessResponse(finalData)
+}
+
+func ListPluginsByCategory(
+	tenant_id string,
+	category plugin_entities.PluginCategory,
+	page int,
+	page_size int,
+) *entities.Response {
+	if !isValidPluginCategory(category) {
+		return exception.BadRequestError(errors.New("invalid plugin category")).ToResponse()
+	}
+
+	skippedMatches := (page - 1) * page_size
+	targetMatches := page_size + 1
+	data := make([]pluginInstallationResponse, 0, targetMatches)
+
+	for scanPage := 1; len(data) < targetMatches; scanPage++ {
+		pluginInstallations, err := db.GetAll[models.PluginInstallation](
+			db.Equal("tenant_id", tenant_id),
+			db.OrderBy("created_at", true),
+			db.Page(scanPage, pluginCategoryListScanPageSize),
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+
+		if len(pluginInstallations) == 0 {
+			break
+		}
+
+		for _, plugin_installation := range pluginInstallations {
+			pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
+				plugin_installation.PluginUniqueIdentifier,
+			)
+			if err != nil {
+				return exception.UniqueIdentifierError(err).ToResponse()
+			}
+
+			pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+				pluginUniqueIdentifier,
+				plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
+			)
+			if err != nil {
+				return exception.InternalServerError(err).ToResponse()
+			}
+
+			if pluginDeclaration.Category() != category {
+				continue
+			}
+
+			if skippedMatches > 0 {
+				skippedMatches--
+				continue
+			}
+
+			data = append(data, pluginInstallationResponse{
+				ID:                     plugin_installation.ID,
+				Name:                   pluginDeclaration.Name,
+				TenantID:               plugin_installation.TenantID,
+				PluginID:               pluginUniqueIdentifier.PluginID(),
+				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+				InstallationID:         plugin_installation.ID,
+				Declaration:            pluginDeclaration,
+				EndpointsSetups:        plugin_installation.EndpointsSetups,
+				EndpointsActive:        plugin_installation.EndpointsActive,
+				RuntimeType:            plugin_entities.PluginRuntimeType(plugin_installation.RuntimeType),
+				Version:                pluginDeclaration.Version,
+				CreatedAt:              plugin_installation.CreatedAt,
+				UpdatedAt:              plugin_installation.UpdatedAt,
+				Source:                 plugin_installation.Source,
+				Meta:                   plugin_installation.Meta,
+				Checksum:               pluginUniqueIdentifier.Checksum(),
+			})
+			if len(data) == targetMatches {
+				break
+			}
+		}
+
+		if len(pluginInstallations) < pluginCategoryListScanPageSize {
+			break
+		}
+	}
+
+	hasMore := len(data) > page_size
+	if hasMore {
+		data = data[:page_size]
+	}
+
+	return entities.NewSuccessResponse(pluginListResponse{List: data, HasMore: hasMore})
 }
 
 // Using plugin_ids to fetch plugin installations
