@@ -38,6 +38,13 @@ func (r *InstallTaskRegistry) PrimaryID() string {
 	return ""
 }
 
+func (r *InstallTaskRegistry) PrimaryTask() *models.InstallTask {
+	if len(r.Order) == 0 {
+		return nil
+	}
+	return r.Tasks[r.Order[0]]
+}
+
 func truncateMessage(message string) string {
 	if len(message) > 1024 {
 		message = message[:512] + "..." + message[len(message)-512:]
