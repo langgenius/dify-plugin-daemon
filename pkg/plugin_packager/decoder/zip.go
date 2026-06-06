@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -334,7 +335,7 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 				return err
 			}
 
-			if _, err := io.Copy(writer, reader); err != nil {
+			if err := copyZipFile(writer, reader, file.UncompressedSize64); err != nil {
 				reader.Close()
 				writer.Close()
 				return err
@@ -361,6 +362,7 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 func safeExtractPath(dst, entryName string) (string, error) {
 	entryPath := path.Clean(entryName)
 	if entryPath == "." ||
+		entryPath == ".." ||
 		path.IsAbs(entryPath) ||
 		strings.HasPrefix(entryPath, "../") ||
 		strings.Contains(entryPath, "/../") ||
@@ -375,6 +377,22 @@ func safeExtractPath(dst, entryName string) (string, error) {
 	}
 
 	return targetPath, nil
+}
+
+func copyZipFile(writer io.Writer, reader io.Reader, uncompressedSize uint64) error {
+	if uncompressedSize > math.MaxInt64-1 {
+		return fmt.Errorf("zip entry is too large: %d bytes", uncompressedSize)
+	}
+
+	limit := int64(uncompressedSize) + 1
+	written, err := io.Copy(writer, io.LimitReader(reader, limit))
+	if err != nil {
+		return err
+	}
+	if written > int64(uncompressedSize) {
+		return fmt.Errorf("zip entry exceeds declared uncompressed size: %d bytes", uncompressedSize)
+	}
+	return nil
 }
 
 func pathIsInside(root, target string) bool {

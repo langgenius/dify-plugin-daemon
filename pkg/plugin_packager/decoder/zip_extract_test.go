@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -97,4 +98,30 @@ func TestZipPluginDecoderExtractToAllowsNestedPath(t *testing.T) {
 	extracted, err := os.ReadFile(filepath.Join(dst, "nested", "file.txt"))
 	require.NoError(t, err)
 	assert.Equal(t, []byte("ok"), extracted)
+}
+
+func TestSafeExtractPathRejectsParentDirectoryEntry(t *testing.T) {
+	_, err := safeExtractPath(t.TempDir(), "..")
+
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, errUnsafeZipPath))
+}
+
+func TestCopyZipFileRejectsContentBeyondDeclaredSize(t *testing.T) {
+	var out bytes.Buffer
+
+	err := copyZipFile(&out, strings.NewReader("toolarge"), 3)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds declared uncompressed size")
+	assert.Equal(t, "tool", out.String())
+}
+
+func TestCopyZipFileAllowsDeclaredSize(t *testing.T) {
+	var out bytes.Buffer
+
+	err := copyZipFile(&out, io.NopCloser(strings.NewReader("ok")), 2)
+
+	require.NoError(t, err)
+	assert.Equal(t, "ok", out.String())
 }
