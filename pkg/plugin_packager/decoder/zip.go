@@ -18,6 +18,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
+var errUnsafeZipPath = errors.New("unsafe path in plugin package")
+
 type ZipPluginDecoder struct {
 	PluginDecoder
 	PluginDecoderHelper
@@ -297,33 +299,98 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	// copy to working directory
-	if err := z.Walk(func(filename, dir string) error {
-		workingPath := path.Join(dst, dir)
-		// check if directory exists
-		if err := os.MkdirAll(workingPath, 0755); err != nil {
-			return err
-		}
+	if z.reader == nil {
+		return z.err
+	}
 
-		bytes, err := z.ReadFile(filepath.Join(dir, filename))
-		if err != nil {
-			return err
-		}
+	if err := func() error {
+		for _, file := range z.reader.File {
+			targetPath, err := safeExtractPath(dst, file.Name)
+			if err != nil {
+				return err
+			}
 
-		filename = filepath.Join(workingPath, filename)
+			if file.FileInfo().IsDir() {
+				if err := os.MkdirAll(targetPath, 0755); err != nil {
+					return err
+				}
+				continue
+			}
 
-		// copy file
-		if err := os.WriteFile(filename, bytes, 0644); err != nil {
-			return err
+			workingPath := filepath.Dir(targetPath)
+			// check if directory exists
+			if err := os.MkdirAll(workingPath, 0755); err != nil {
+				return err
+			}
+
+			reader, err := file.Open()
+			if err != nil {
+				return err
+			}
+
+			writer, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+			if err != nil {
+				reader.Close()
+				return err
+			}
+
+			if _, err := io.Copy(writer, reader); err != nil {
+				reader.Close()
+				writer.Close()
+				return err
+			}
+			if err := reader.Close(); err != nil {
+				writer.Close()
+				return err
+			}
+			if err := writer.Close(); err != nil {
+				return err
+			}
 		}
 
 		return nil
-	}); err != nil {
+	}(); err != nil {
 		// if error, delete the working directory
 		os.RemoveAll(dst)
 		return errors.Join(fmt.Errorf("copy plugin to working directory error: %v", err), err)
 	}
 
 	return nil
+}
+
+func safeExtractPath(dst, entryName string) (string, error) {
+	entryPath := path.Clean(entryName)
+	if entryPath == "." ||
+		path.IsAbs(entryPath) ||
+		strings.HasPrefix(entryPath, "../") ||
+		strings.Contains(entryPath, "/../") ||
+		strings.Contains(entryPath, `\`) ||
+		filepath.IsAbs(filepath.FromSlash(entryPath)) {
+		return "", fmt.Errorf("%w: %s", errUnsafeZipPath, entryName)
+	}
+
+	targetPath := filepath.Join(dst, filepath.FromSlash(entryPath))
+	if !pathIsInside(dst, targetPath) {
+		return "", fmt.Errorf("%w: %s", errUnsafeZipPath, entryName)
+	}
+
+	return targetPath, nil
+}
+
+func pathIsInside(root, target string) bool {
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return false
+	}
+	targetAbs, err := filepath.Abs(target)
+	if err != nil {
+		return false
+	}
+	rel, err := filepath.Rel(rootAbs, targetAbs)
+	if err != nil {
+		return false
+	}
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
 }
 
 func (z *ZipPluginDecoder) CheckAssetsValid() error {
