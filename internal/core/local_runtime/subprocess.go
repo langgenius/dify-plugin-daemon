@@ -33,15 +33,7 @@ func (r *LocalPluginRuntime) getInstanceCmd() (*exec.Cmd, error) {
 	}
 
 	cmd.Env = cmd.Environ()
-	if r.appConfig.HttpsProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.appConfig.HttpsProxy))
-	}
-	if r.appConfig.HttpProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.appConfig.HttpProxy))
-	}
-	if r.appConfig.NoProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", r.appConfig.NoProxy))
-	}
+	cmd.Env = append(cmd.Env, r.appConfig.ProxyEnv()...)
 	cmd.Env = append(cmd.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
 	cmd.Dir = r.State.WorkingPath
 	return cmd, nil

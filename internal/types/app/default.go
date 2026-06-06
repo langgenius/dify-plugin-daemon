@@ -6,6 +6,7 @@ import (
 )
 
 func (config *Config) SetDefault() {
+	config.SetProxyEnvFallbacks()
 	switch config.DBType {
 	case DB_TYPE_OCEANBASE, DB_TYPE_SEEKDB:
 		config.DBType = DB_TYPE_MYSQL
