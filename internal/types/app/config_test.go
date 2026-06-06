@@ -88,6 +88,9 @@ func TestConfigRedisKeyPrefixField(t *testing.T) {
 }
 
 func TestConfigProxyLowercaseFallbacks(t *testing.T) {
+	t.Setenv("HTTP_PROXY", "")
+	t.Setenv("HTTPS_PROXY", "")
+	t.Setenv("NO_PROXY", "")
 	t.Setenv("http_proxy", "http://lowercase-http:8080")
 	t.Setenv("https_proxy", "http://lowercase-https:8443")
 	t.Setenv("no_proxy", "localhost,127.0.0.1")

@@ -6,6 +6,10 @@ import (
 )
 
 func (config *Config) SetProxyEnvFallbacks() {
+	if config == nil {
+		return
+	}
+
 	if config.HttpProxy == "" {
 		config.HttpProxy = os.Getenv("http_proxy")
 	}
@@ -18,6 +22,10 @@ func (config *Config) SetProxyEnvFallbacks() {
 }
 
 func (config *Config) ProxyEnv() []string {
+	if config == nil {
+		return nil
+	}
+
 	env := []string{}
 	if config.HttpProxy != "" {
 		env = append(env,
