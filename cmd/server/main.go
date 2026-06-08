@@ -15,6 +15,9 @@ import (
 const (
 	officialPypiURL            = "https://pypi.org/simple/"
 	pipMirrorAutoDetectTimeout = 3 * time.Second
+	// a candidate must be at least this much faster than official PyPI (relative)
+	// to be selected; prevents choosing a mirror based on measurement noise.
+	pipMirrorMinImprovementFactor = 0.10
 )
 
 var defaultMirrorCandidates = []string{
@@ -150,7 +153,8 @@ func selectFastestMirror(ctx context.Context, client *http.Client, candidates []
 		}
 	}
 
-	if bestURL != "" && bestLatency < officialLatency {
+	threshold := time.Duration(float64(officialLatency) * (1 - pipMirrorMinImprovementFactor))
+	if bestURL != "" && bestLatency < threshold {
 		return bestURL
 	}
 	return ""
