@@ -1,13 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"errors"
-	"fmt"
-	"io"
+	"math"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
@@ -17,11 +13,14 @@ import (
 )
 
 const (
-	alibabaCloudPypiMirrorURL  = "https://mirrors.aliyun.com/pypi/simple/"
-	pipMirrorAutoDetectTimeout = 2 * time.Second
+	officialPypiURL            = "https://pypi.org/simple/"
+	pipMirrorAutoDetectTimeout = 3 * time.Second
 )
 
-var cloudflareTraceURL = "https://cloudflare.com/cdn-cgi/trace"
+var defaultMirrorCandidates = []string{
+	"https://mirrors.aliyun.com/pypi/simple/",
+	"https://pypi.tuna.tsinghua.edu.cn/simple/",
+}
 
 func main() {
 	var config app.Config
@@ -72,85 +71,87 @@ func main() {
 }
 
 func applyPipMirrorAutoDetect(config *app.Config) {
-	loc, applied, err := detectAndApplyPipMirror(config, &http.Client{Timeout: pipMirrorAutoDetectTimeout}, cloudflareTraceURL)
-	if err != nil {
-		log.Warn("failed to auto-detect pip mirror", "error", err)
-		return
+	candidates := config.PipMirrorCandidates
+	if len(candidates) == 0 {
+		candidates = defaultMirrorCandidates
 	}
 
-	if applied {
+	mirror := detectAndApplyPipMirror(config, &http.Client{Timeout: pipMirrorAutoDetectTimeout}, candidates, officialPypiURL)
+	if mirror != "" {
 		log.Info(
 			"IMPORTANT: pip mirror auto-detect selected a mirror; set PIP_MIRROR_AUTO_DETECT=false to disable or PIP_MIRROR_URL=<mirror_url> to override",
-			"ip_region", loc,
-			"mirror_url", config.PipMirrorUrl,
+			"mirror_url", mirror,
 		)
 	}
 }
 
-func detectAndApplyPipMirror(config *app.Config, client *http.Client, traceURL string) (string, bool, error) {
+func detectAndApplyPipMirror(config *app.Config, client *http.Client, candidates []string, officialURL string) string {
 	if !config.PipMirrorAutoDetect || config.PipMirrorUrl != "" {
-		return "", false, nil
+		return ""
 	}
 
-	loc, err := detectCloudflareLocation(client, traceURL)
-	if err != nil {
-		return "", false, err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), pipMirrorAutoDetectTimeout)
+	defer cancel()
 
-	if loc != "CN" {
-		return loc, false, nil
+	mirror := selectFastestMirror(ctx, client, candidates, officialURL)
+	if mirror != "" {
+		config.PipMirrorUrl = mirror
 	}
-
-	config.PipMirrorUrl = alibabaCloudPypiMirrorURL
-	return loc, true, nil
+	return mirror
 }
 
-func detectCloudflareLocation(client *http.Client, traceURL string) (string, error) {
-	req, err := http.NewRequest(http.MethodGet, traceURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("create cloudflare trace request: %w", err)
-	}
+type mirrorProbeResult struct {
+	url     string
+	latency time.Duration
+	ok      bool
+}
 
+func probeURL(ctx context.Context, client *http.Client, url string) mirrorProbeResult {
+	start := time.Now()
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+	if err != nil {
+		return mirrorProbeResult{url: url}
+	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("request cloudflare trace: %w", err)
+		return mirrorProbeResult{url: url}
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("cloudflare trace returned status %s", resp.Status)
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return mirrorProbeResult{url: url}
 	}
-
-	loc, err := parseCloudflareTraceLocation(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("parse cloudflare trace response: %w", err)
-	}
-
-	return loc, nil
+	return mirrorProbeResult{url: url, latency: time.Since(start), ok: true}
 }
 
-func parseCloudflareTraceLocation(body io.Reader) (string, error) {
-	scanner := bufio.NewScanner(body)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
+func selectFastestMirror(ctx context.Context, client *http.Client, candidates []string, officialURL string) string {
+	all := append([]string{officialURL}, candidates...)
+	ch := make(chan mirrorProbeResult, len(all))
+
+	for _, u := range all {
+		go func(u string) {
+			ch <- probeURL(ctx, client, u)
+		}(u)
+	}
+
+	officialLatency := time.Duration(math.MaxInt64)
+	bestURL := ""
+	bestLatency := time.Duration(math.MaxInt64)
+
+	for range all {
+		r := <-ch
+		if !r.ok {
 			continue
 		}
-
-		key, value, found := strings.Cut(line, "=")
-		if !found || !strings.EqualFold(strings.TrimSpace(key), "loc") {
-			continue
-		}
-
-		loc := strings.ToUpper(strings.TrimSpace(value))
-		if loc != "" {
-			return loc, nil
+		if r.url == officialURL {
+			officialLatency = r.latency
+		} else if r.latency < bestLatency {
+			bestLatency = r.latency
+			bestURL = r.url
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		return "", err
+	if bestURL != "" && bestLatency < officialLatency {
+		return bestURL
 	}
-
-	return "", errors.New("cloudflare trace response missing loc")
+	return ""
 }

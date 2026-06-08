@@ -1,143 +1,136 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestParseCloudflareTraceLocation(t *testing.T) {
-	loc, err := parseCloudflareTraceLocation(strings.NewReader("fl=29f\n h=cloudflare.com\nloc = cn\n malformed\n"))
-	require.NoError(t, err)
-	assert.Equal(t, "CN", loc)
-}
-
-func TestParseCloudflareTraceLocationMissingLoc(t *testing.T) {
-	_, err := parseCloudflareTraceLocation(strings.NewReader("fl=29f\ncolo=SJC\n"))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "missing loc")
-}
-
-func TestDetectAndApplyPipMirror(t *testing.T) {
-	tests := []struct {
-		name             string
-		config           app.Config
-		statusCode       int
-		body             string
-		expectedMirror   string
-		expectedLoc      string
-		expectedApplied  bool
-		expectedRequests int
-		expectErr        string
-	}{
-		{
-			name: "disabled skips detection",
-			config: app.Config{
-				PipMirrorAutoDetect: false,
-			},
-			expectedRequests: 0,
-		},
-		{
-			name: "configured mirror is preserved",
-			config: app.Config{
-				PipMirrorAutoDetect: true,
-				PipMirrorUrl:        "https://mirror.example/simple",
-			},
-			expectedMirror:   "https://mirror.example/simple",
-			expectedRequests: 0,
-		},
-		{
-			name: "cn applies alibaba mirror",
-			config: app.Config{
-				PipMirrorAutoDetect: true,
-			},
-			statusCode:       http.StatusOK,
-			body:             "ip=1.1.1.1\nloc=CN\n",
-			expectedMirror:   alibabaCloudPypiMirrorURL,
-			expectedLoc:      "CN",
-			expectedApplied:  true,
-			expectedRequests: 1,
-		},
-		{
-			name: "non-cn leaves mirror empty",
-			config: app.Config{
-				PipMirrorAutoDetect: true,
-			},
-			statusCode:       http.StatusOK,
-			body:             "ip=1.1.1.1\nloc=US\n",
-			expectedLoc:      "US",
-			expectedRequests: 1,
-		},
-		{
-			name: "invalid trace returns error",
-			config: app.Config{
-				PipMirrorAutoDetect: true,
-			},
-			statusCode:       http.StatusOK,
-			body:             "ip=1.1.1.1\ncolo=SJC\n",
-			expectedRequests: 1,
-			expectErr:        "missing loc",
-		},
-		{
-			name: "unexpected status returns error",
-			config: app.Config{
-				PipMirrorAutoDetect: true,
-			},
-			statusCode:       http.StatusBadGateway,
-			expectedRequests: 1,
-			expectErr:        "status 502 Bad Gateway",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			requests := 0
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				requests++
-				w.WriteHeader(tt.statusCode)
-				_, _ = w.Write([]byte(tt.body))
-			}))
-			defer server.Close()
-
-			loc, applied, err := detectAndApplyPipMirror(&tt.config, server.Client(), server.URL)
-
-			if tt.expectErr != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectErr)
-			} else {
-				require.NoError(t, err)
-			}
-
-			assert.Equal(t, tt.expectedLoc, loc)
-			assert.Equal(t, tt.expectedApplied, applied)
-			assert.Equal(t, tt.expectedMirror, tt.config.PipMirrorUrl)
-			assert.Equal(t, tt.expectedRequests, requests)
-		})
-	}
-}
-
-func TestApplyPipMirrorAutoDetectDoesNotBlockStartupOnDetectionFailure(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadGateway)
+func newInstantServer(statusCode int) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(statusCode)
 	}))
-	defer server.Close()
+}
 
-	originalTraceURL := cloudflareTraceURL
-	cloudflareTraceURL = server.URL
-	defer func() {
-		cloudflareTraceURL = originalTraceURL
-	}()
+func newSlowServer(delay time.Duration, statusCode int) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(delay)
+		w.WriteHeader(statusCode)
+	}))
+}
 
+func TestDetectAndApplyPipMirrorDisabled(t *testing.T) {
+	config := app.Config{PipMirrorAutoDetect: false}
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, nil, "http://unused")
+	assert.Empty(t, mirror)
+	assert.Empty(t, config.PipMirrorUrl)
+}
+
+func TestDetectAndApplyPipMirrorExplicitURLPreserved(t *testing.T) {
 	config := app.Config{
 		PipMirrorAutoDetect: true,
+		PipMirrorUrl:        "https://mirror.example/simple",
 	}
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, nil, "http://unused")
+	assert.Empty(t, mirror)
+	assert.Equal(t, "https://mirror.example/simple", config.PipMirrorUrl)
+}
 
+func TestDetectAndApplyPipMirrorCandidateFasterThanOfficial(t *testing.T) {
+	official := newSlowServer(80*time.Millisecond, http.StatusOK)
+	defer official.Close()
+	candidate := newInstantServer(http.StatusOK)
+	defer candidate.Close()
+
+	config := app.Config{PipMirrorAutoDetect: true}
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{candidate.URL}, official.URL)
+	assert.Equal(t, candidate.URL, mirror)
+	assert.Equal(t, candidate.URL, config.PipMirrorUrl)
+}
+
+func TestDetectAndApplyPipMirrorOfficialFasterNoCandidateSelected(t *testing.T) {
+	official := newInstantServer(http.StatusOK)
+	defer official.Close()
+	candidate := newSlowServer(80*time.Millisecond, http.StatusOK)
+	defer candidate.Close()
+
+	config := app.Config{PipMirrorAutoDetect: true}
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{candidate.URL}, official.URL)
+	assert.Empty(t, mirror)
+	assert.Empty(t, config.PipMirrorUrl)
+}
+
+func TestDetectAndApplyPipMirrorOfficialUnreachableCandidateSelected(t *testing.T) {
+	candidate := newInstantServer(http.StatusOK)
+	defer candidate.Close()
+
+	config := app.Config{PipMirrorAutoDetect: true}
+	mirror := detectAndApplyPipMirror(
+		&config,
+		&http.Client{Timeout: 200 * time.Millisecond},
+		[]string{candidate.URL},
+		"http://127.0.0.1:1",
+	)
+	assert.Equal(t, candidate.URL, mirror)
+	assert.Equal(t, candidate.URL, config.PipMirrorUrl)
+}
+
+func TestDetectAndApplyPipMirrorPicksFastestCandidate(t *testing.T) {
+	official := newSlowServer(120*time.Millisecond, http.StatusOK)
+	defer official.Close()
+	slow := newSlowServer(80*time.Millisecond, http.StatusOK)
+	defer slow.Close()
+	fast := newInstantServer(http.StatusOK)
+	defer fast.Close()
+
+	config := app.Config{PipMirrorAutoDetect: true}
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{slow.URL, fast.URL}, official.URL)
+	assert.Equal(t, fast.URL, mirror)
+}
+
+func TestDetectAndApplyPipMirrorAllUnreachableNoMirrorSet(t *testing.T) {
+	config := app.Config{PipMirrorAutoDetect: true}
+	mirror := detectAndApplyPipMirror(
+		&config,
+		&http.Client{Timeout: 200 * time.Millisecond},
+		[]string{"http://127.0.0.1:1"},
+		"http://127.0.0.1:2",
+	)
+	assert.Empty(t, mirror)
+	assert.Empty(t, config.PipMirrorUrl)
+}
+
+func TestDetectAndApplyPipMirrorCandidateErrorStatusIgnored(t *testing.T) {
+	official := newInstantServer(http.StatusOK)
+	defer official.Close()
+	candidate := newInstantServer(http.StatusServiceUnavailable)
+	defer candidate.Close()
+
+	config := app.Config{PipMirrorAutoDetect: true}
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, []string{candidate.URL}, official.URL)
+	assert.Empty(t, mirror)
+	assert.Empty(t, config.PipMirrorUrl)
+}
+
+func TestSelectFastestMirrorEmptyCandidates(t *testing.T) {
+	official := newInstantServer(http.StatusOK)
+	defer official.Close()
+
+	ctx := context.Background()
+	result := selectFastestMirror(ctx, &http.Client{Timeout: time.Second}, nil, official.URL)
+	assert.Empty(t, result)
+}
+
+func TestApplyPipMirrorAutoDetectDoesNotBlockStartupOnAllFailures(t *testing.T) {
+	config := app.Config{
+		PipMirrorAutoDetect: true,
+		PipMirrorCandidates: []string{"http://127.0.0.1:1"},
+	}
 	applyPipMirrorAutoDetect(&config)
-
 	assert.Empty(t, config.PipMirrorUrl)
 }

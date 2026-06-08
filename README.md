@@ -134,9 +134,11 @@ PIP_MIRROR_URL=
 
 Setting PLUGIN_IGNORE_UV_LOCK=true allows uv to ignore the uv.lock file and use the selected PyPI mirror for dependency resolution.
 
-PIP_MIRROR_AUTO_DETECT is enabled by default. When enabled, the daemon tries to select a suitable local PyPI mirror at startup for regions with poor network connectivity; regions that do not need a mirror keep the default behavior.
+PIP_MIRROR_AUTO_DETECT is enabled by default. When enabled, the daemon probes official PyPI and each candidate mirror in parallel at startup, then selects the fastest candidate. If official PyPI responds faster than all candidates, no mirror is used.
 
-PIP_MIRROR_URL manually specifies the PyPI mirror. When it is set, it takes precedence over auto detection and disables the auto-selected mirror.
+PIP_MIRROR_URL manually specifies the PyPI mirror. When it is set, it takes precedence over auto-detection.
+
+PIP_MIRROR_CANDIDATES is an optional comma-separated list of mirror URLs to probe. When unset, the built-in defaults (`https://mirrors.aliyun.com/pypi/simple/` and `https://pypi.tuna.tsinghua.edu.cn/simple/`) are used.
 
 ## Benchmark
 

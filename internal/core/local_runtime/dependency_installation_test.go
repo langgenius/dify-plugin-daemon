@@ -79,6 +79,24 @@ func TestDetectDependencyFileType(t *testing.T) {
 		require.Equal(t, pyprojectTomlFile, fileType)
 	})
 
+	t.Run("both files exist with mirror - requirements.txt takes priority", func(t *testing.T) {
+		runtime := createTestRuntime(t, "plugin-with-both")
+		runtime.appConfig.PipMirrorUrl = "https://mirrors.aliyun.com/pypi/simple/"
+
+		fileType, err := runtime.detectDependencyFileType()
+		require.NoError(t, err)
+		require.Equal(t, requirementsTxtFile, fileType)
+	})
+
+	t.Run("only pyproject.toml with mirror - falls back to pyproject.toml", func(t *testing.T) {
+		runtime := createTestRuntime(t, "plugin-with-pyproject")
+		runtime.appConfig.PipMirrorUrl = "https://mirrors.aliyun.com/pypi/simple/"
+
+		fileType, err := runtime.detectDependencyFileType()
+		require.NoError(t, err)
+		require.Equal(t, pyprojectTomlFile, fileType)
+	})
+
 	t.Run("neither file exists", func(t *testing.T) {
 		runtime := createTestRuntime(t, "plugin-without-dependencies")
 

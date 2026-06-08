@@ -138,6 +138,14 @@ func (p *LocalPluginRuntime) detectDependencyFileType() (PythonDependencyFileTyp
 	pyprojectPath := path.Join(p.State.WorkingPath, string(pyprojectTomlFile))
 	requirementsPath := path.Join(p.State.WorkingPath, string(requirementsTxtFile))
 
+	// When a mirror is configured, prefer requirements.txt to avoid uv lock url
+	// mismatches against a non-official index.
+	if p.appConfig.PipMirrorUrl != "" {
+		if _, err := os.Stat(requirementsPath); err == nil {
+			return requirementsTxtFile, nil
+		}
+	}
+
 	if _, err := os.Stat(pyprojectPath); err == nil {
 		return pyprojectTomlFile, nil
 	}
