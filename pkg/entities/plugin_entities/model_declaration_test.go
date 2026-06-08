@@ -2,6 +2,7 @@ package plugin_entities
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
@@ -21,6 +22,41 @@ func parse_yaml_to_json(data []byte) ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+func TestModelDeclarationNormalizeModelProperties(t *testing.T) {
+	model := ModelDeclaration{
+		ModelProperties: map[string]any{
+			"nested": map[any]any{
+				"int_key": map[any]any{
+					1: "one",
+				},
+				"slice": []any{
+					map[any]any{
+						2: "two",
+					},
+				},
+			},
+		},
+	}
+
+	model.normalizeModelProperties()
+
+	expected := map[string]any{
+		"nested": map[string]any{
+			"int_key": map[string]any{
+				"1": "one",
+			},
+			"slice": []any{
+				map[string]any{
+					"2": "two",
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(model.ModelProperties, expected) {
+		t.Fatalf("unexpected normalized model properties: %#v", model.ModelProperties)
+	}
 }
 
 func TestFullFunctionModelProvider_Validate(t *testing.T) {

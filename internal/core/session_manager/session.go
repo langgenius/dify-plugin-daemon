@@ -2,6 +2,7 @@ package session_manager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -13,7 +14,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 var (
@@ -230,17 +230,29 @@ const (
 	PLUGIN_IN_STREAM_EVENT_RESPONSE PLUGIN_IN_STREAM_EVENT = "backwards_response"
 )
 
+type pluginInStreamMessage struct {
+	SessionID      string                 `json:"session_id"`
+	ConversationID *string                `json:"conversation_id"`
+	MessageID      *string                `json:"message_id"`
+	AppID          *string                `json:"app_id"`
+	EndpointID     *string                `json:"endpoint_id"`
+	Context        map[string]interface{} `json:"context"`
+	Event          PLUGIN_IN_STREAM_EVENT `json:"event"`
+	Data           any                    `json:"data"`
+}
+
 func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
-	return parser.MarshalJsonBytes(map[string]any{
-		"session_id":      s.ID,
-		"conversation_id": s.ConversationID,
-		"message_id":      s.MessageID,
-		"app_id":          s.AppID,
-		"endpoint_id":     s.EndpointID,
-		"context":         s.Context,
-		"event":           event,
-		"data":            data,
+	b, _ := json.Marshal(pluginInStreamMessage{
+		SessionID:      s.ID,
+		ConversationID: s.ConversationID,
+		MessageID:      s.MessageID,
+		AppID:          s.AppID,
+		EndpointID:     s.EndpointID,
+		Context:        s.Context,
+		Event:          event,
+		Data:           data,
 	})
+	return b
 }
 
 func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, action access_types.PluginAccessAction, data any) error {
