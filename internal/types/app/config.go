@@ -201,17 +201,18 @@ type Config struct {
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
 
-	PythonInterpreterPath     string   `envconfig:"PYTHON_INTERPRETER_PATH"`
-	UvPath                    string   `envconfig:"UV_PATH"  default:""`
-	PythonEnvInitTimeout      int      `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
-	PythonCompileAllExtraArgs string   `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
-	PipMirrorAutoDetect       bool     `envconfig:"PIP_MIRROR_AUTO_DETECT" default:"true"`
-	PipMirrorUrl              string   `envconfig:"PIP_MIRROR_URL"`
-	PipMirrorCandidates       []string `envconfig:"PIP_MIRROR_CANDIDATES"`
-	PipPreferBinary           bool     `envconfig:"PIP_PREFER_BINARY" default:"true"`
-	PipVerbose                bool     `envconfig:"PIP_VERBOSE" default:"true"`
-	PipExtraArgs              string   `envconfig:"PIP_EXTRA_ARGS"`
-	PluginIgnoreUvLock        bool     `envconfig:"PLUGIN_IGNORE_UV_LOCK" default:"false"`
+	PythonInterpreterPath             string   `envconfig:"PYTHON_INTERPRETER_PATH"`
+	UvPath                            string   `envconfig:"UV_PATH"  default:""`
+	PythonEnvInitTimeout              int      `envconfig:"PYTHON_ENV_INIT_TIMEOUT" validate:"required"`
+	PythonCompileAllExtraArgs         string   `envconfig:"PYTHON_COMPILE_ALL_EXTRA_ARGS"`
+	PipMirrorAutoDetect               bool     `envconfig:"PIP_MIRROR_AUTO_DETECT" default:"true"`
+	PipMirrorUrl                      string   `envconfig:"PIP_MIRROR_URL"`
+	PipMirrorCandidates               []string `envconfig:"PIP_MIRROR_CANDIDATES"`
+	PipMirrorAutoDetectTimeoutSeconds int      `envconfig:"PIP_MIRROR_AUTO_DETECT_TIMEOUT" default:"5"`
+	PipPreferBinary                   bool     `envconfig:"PIP_PREFER_BINARY" default:"true"`
+	PipVerbose                        bool     `envconfig:"PIP_VERBOSE" default:"true"`
+	PipExtraArgs                      string   `envconfig:"PIP_EXTRA_ARGS"`
+	PluginIgnoreUvLock                bool     `envconfig:"PLUGIN_IGNORE_UV_LOCK" default:"false"`
 
 	// Runtime buffer configuration (applies to both local and serverless runtimes)
 	// These are the new generic names that should be used going forward

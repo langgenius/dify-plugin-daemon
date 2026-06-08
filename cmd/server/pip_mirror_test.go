@@ -26,7 +26,7 @@ func newSlowServer(delay time.Duration, statusCode int) *httptest.Server {
 
 func TestDetectAndApplyPipMirrorDisabled(t *testing.T) {
 	config := app.Config{PipMirrorAutoDetect: false}
-	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, nil, "http://unused")
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, nil, "http://unused", time.Second)
 	assert.Empty(t, mirror)
 	assert.Empty(t, config.PipMirrorUrl)
 }
@@ -36,7 +36,7 @@ func TestDetectAndApplyPipMirrorExplicitURLPreserved(t *testing.T) {
 		PipMirrorAutoDetect: true,
 		PipMirrorUrl:        "https://mirror.example/simple",
 	}
-	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, nil, "http://unused")
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, nil, "http://unused", time.Second)
 	assert.Empty(t, mirror)
 	assert.Equal(t, "https://mirror.example/simple", config.PipMirrorUrl)
 }
@@ -48,7 +48,7 @@ func TestDetectAndApplyPipMirrorCandidateFasterThanOfficial(t *testing.T) {
 	defer candidate.Close()
 
 	config := app.Config{PipMirrorAutoDetect: true}
-	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{candidate.URL}, official.URL)
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{candidate.URL}, official.URL, 2*time.Second)
 	assert.Equal(t, candidate.URL, mirror)
 	assert.Equal(t, candidate.URL, config.PipMirrorUrl)
 }
@@ -60,7 +60,7 @@ func TestDetectAndApplyPipMirrorOfficialFasterNoCandidateSelected(t *testing.T) 
 	defer candidate.Close()
 
 	config := app.Config{PipMirrorAutoDetect: true}
-	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{candidate.URL}, official.URL)
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{candidate.URL}, official.URL, 2*time.Second)
 	assert.Empty(t, mirror)
 	assert.Empty(t, config.PipMirrorUrl)
 }
@@ -75,6 +75,7 @@ func TestDetectAndApplyPipMirrorOfficialUnreachableCandidateSelected(t *testing.
 		&http.Client{Timeout: 200 * time.Millisecond},
 		[]string{candidate.URL},
 		"http://127.0.0.1:1",
+		200*time.Millisecond,
 	)
 	assert.Equal(t, candidate.URL, mirror)
 	assert.Equal(t, candidate.URL, config.PipMirrorUrl)
@@ -89,7 +90,7 @@ func TestDetectAndApplyPipMirrorPicksFastestCandidate(t *testing.T) {
 	defer fast.Close()
 
 	config := app.Config{PipMirrorAutoDetect: true}
-	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{slow.URL, fast.URL}, official.URL)
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: 2 * time.Second}, []string{slow.URL, fast.URL}, official.URL, 2*time.Second)
 	assert.Equal(t, fast.URL, mirror)
 }
 
@@ -100,6 +101,7 @@ func TestDetectAndApplyPipMirrorAllUnreachableNoMirrorSet(t *testing.T) {
 		&http.Client{Timeout: 200 * time.Millisecond},
 		[]string{"http://127.0.0.1:1"},
 		"http://127.0.0.1:2",
+		200*time.Millisecond,
 	)
 	assert.Empty(t, mirror)
 	assert.Empty(t, config.PipMirrorUrl)
@@ -112,7 +114,7 @@ func TestDetectAndApplyPipMirrorCandidateErrorStatusIgnored(t *testing.T) {
 	defer candidate.Close()
 
 	config := app.Config{PipMirrorAutoDetect: true}
-	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, []string{candidate.URL}, official.URL)
+	mirror := detectAndApplyPipMirror(&config, &http.Client{Timeout: time.Second}, []string{candidate.URL}, official.URL, time.Second)
 	assert.Empty(t, mirror)
 	assert.Empty(t, config.PipMirrorUrl)
 }

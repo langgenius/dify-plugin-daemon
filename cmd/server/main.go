@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	officialPypiURL            = "https://pypi.org/simple/"
-	pipMirrorAutoDetectTimeout = 3 * time.Second
+	officialPypiURL = "https://pypi.org/simple/"
 	// a candidate must be at least this much faster than official PyPI (relative)
 	// to be selected; prevents choosing a mirror based on measurement noise.
 	pipMirrorMinImprovementFactor = 0.10
@@ -79,7 +78,8 @@ func applyPipMirrorAutoDetect(config *app.Config) {
 		candidates = defaultMirrorCandidates
 	}
 
-	mirror := detectAndApplyPipMirror(config, &http.Client{Timeout: pipMirrorAutoDetectTimeout}, candidates, officialPypiURL)
+	timeout := time.Duration(config.PipMirrorAutoDetectTimeoutSeconds) * time.Second
+	mirror := detectAndApplyPipMirror(config, &http.Client{Timeout: timeout}, candidates, officialPypiURL, timeout)
 	if mirror != "" {
 		log.Info(
 			"IMPORTANT: pip mirror auto-detect selected a mirror; set PIP_MIRROR_AUTO_DETECT=false to disable or PIP_MIRROR_URL=<mirror_url> to override",
@@ -88,12 +88,12 @@ func applyPipMirrorAutoDetect(config *app.Config) {
 	}
 }
 
-func detectAndApplyPipMirror(config *app.Config, client *http.Client, candidates []string, officialURL string) string {
+func detectAndApplyPipMirror(config *app.Config, client *http.Client, candidates []string, officialURL string, timeout time.Duration) string {
 	if !config.PipMirrorAutoDetect || config.PipMirrorUrl != "" {
 		return ""
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), pipMirrorAutoDetectTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	mirror := selectFastestMirror(ctx, client, candidates, officialURL)
