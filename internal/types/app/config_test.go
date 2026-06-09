@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/kelseyhightower/envconfig"
@@ -84,6 +85,61 @@ func TestConfigRedisKeyPrefixField(t *testing.T) {
 	cfg := Config{}
 	require.NoError(t, envconfig.Process("", &cfg))
 	assert.Equal(t, "enterprise-a", cfg.RedisKeyPrefix)
+}
+
+func TestConfigProxyLowercaseFallbacks(t *testing.T) {
+	t.Setenv("HTTP_PROXY", "")
+	t.Setenv("HTTPS_PROXY", "")
+	t.Setenv("NO_PROXY", "")
+	t.Setenv("http_proxy", "http://lowercase-http:8080")
+	t.Setenv("https_proxy", "http://lowercase-https:8443")
+	t.Setenv("no_proxy", "localhost,127.0.0.1")
+
+	cfg := Config{}
+	require.NoError(t, envconfig.Process("", &cfg))
+	cfg.SetDefault()
+
+	assert.Equal(t, "http://lowercase-http:8080", cfg.HttpProxy)
+	assert.Equal(t, "http://lowercase-https:8443", cfg.HttpsProxy)
+	assert.Equal(t, "localhost,127.0.0.1", cfg.NoProxy)
+}
+
+func TestConfigProxyUppercaseTakesPrecedence(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows environment variables are case-insensitive")
+	}
+
+	t.Setenv("HTTP_PROXY", "http://uppercase-http:8080")
+	t.Setenv("http_proxy", "http://lowercase-http:8080")
+	t.Setenv("HTTPS_PROXY", "http://uppercase-https:8443")
+	t.Setenv("https_proxy", "http://lowercase-https:8443")
+	t.Setenv("NO_PROXY", "internal")
+	t.Setenv("no_proxy", "localhost")
+
+	cfg := Config{}
+	require.NoError(t, envconfig.Process("", &cfg))
+	cfg.SetDefault()
+
+	assert.Equal(t, "http://uppercase-http:8080", cfg.HttpProxy)
+	assert.Equal(t, "http://uppercase-https:8443", cfg.HttpsProxy)
+	assert.Equal(t, "internal", cfg.NoProxy)
+}
+
+func TestConfigProxyEnvIncludesUppercaseAndLowercase(t *testing.T) {
+	cfg := Config{
+		HttpProxy:  "http://proxy-http:8080",
+		HttpsProxy: "http://proxy-https:8443",
+		NoProxy:    "localhost",
+	}
+
+	assert.ElementsMatch(t, []string{
+		"HTTP_PROXY=http://proxy-http:8080",
+		"http_proxy=http://proxy-http:8080",
+		"HTTPS_PROXY=http://proxy-https:8443",
+		"https_proxy=http://proxy-https:8443",
+		"NO_PROXY=localhost",
+		"no_proxy=localhost",
+	}, cfg.ProxyEnv())
 }
 
 func TestRedisTLSConfig(t *testing.T) {

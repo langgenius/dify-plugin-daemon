@@ -197,15 +197,7 @@ func (p *LocalPluginRuntime) installDependencies(
 	parent.SetAttributes(attribute.String("uv.path", uvPath), attribute.StringSlice("uv.args", args))
 	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
 	cmd.Env = append(cmd.Env, "UV_CACHE_DIR="+uvCacheDir)
-	if p.appConfig.HttpProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
-	}
-	if p.appConfig.HttpsProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", p.appConfig.HttpsProxy))
-	}
-	if p.appConfig.NoProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", p.appConfig.NoProxy))
-	}
+	cmd.Env = append(cmd.Env, p.appConfig.ProxyEnv()...)
 	cmd.Dir = p.State.WorkingPath
 
 	// get stdout and stderr
