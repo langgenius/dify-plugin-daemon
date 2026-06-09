@@ -86,6 +86,30 @@ func TestConfigRedisKeyPrefixField(t *testing.T) {
 	assert.Equal(t, "enterprise-a", cfg.RedisKeyPrefix)
 }
 
+func TestPipMirrorAutoDetectDefault(t *testing.T) {
+	originalValue, hadOriginalValue := os.LookupEnv("PIP_MIRROR_AUTO_DETECT")
+	require.NoError(t, os.Unsetenv("PIP_MIRROR_AUTO_DETECT"))
+	t.Cleanup(func() {
+		if hadOriginalValue {
+			require.NoError(t, os.Setenv("PIP_MIRROR_AUTO_DETECT", originalValue))
+			return
+		}
+		require.NoError(t, os.Unsetenv("PIP_MIRROR_AUTO_DETECT"))
+	})
+
+	cfg := Config{}
+	require.NoError(t, envconfig.Process("", &cfg))
+	assert.True(t, cfg.PipMirrorAutoDetect)
+}
+
+func TestPipMirrorAutoDetectOverride(t *testing.T) {
+	t.Setenv("PIP_MIRROR_AUTO_DETECT", "false")
+
+	cfg := Config{}
+	require.NoError(t, envconfig.Process("", &cfg))
+	assert.False(t, cfg.PipMirrorAutoDetect)
+}
+
 func TestRedisTLSConfig(t *testing.T) {
 	tests := []struct {
 		name           string

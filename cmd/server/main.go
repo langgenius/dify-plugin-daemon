@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"math"
+	"net/http"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
@@ -9,6 +11,18 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
+
+const (
+	officialPypiURL = "https://pypi.org/simple/"
+	// a candidate must be at least this much faster than official PyPI (relative)
+	// to be selected; prevents choosing a mirror based on measurement noise.
+	pipMirrorMinImprovementFactor = 0.10
+)
+
+var defaultMirrorCandidates = []string{
+	"https://mirrors.aliyun.com/pypi/simple/",
+	"https://pypi.tuna.tsinghua.edu.cn/simple/",
+}
 
 func main() {
 	var config app.Config
@@ -39,6 +53,8 @@ func main() {
 	}
 	defer log.RecoverAndExit()
 
+	applyPipMirrorAutoDetect(&config)
+
 	if err = config.Validate(); err != nil {
 		log.Panic("invalid configuration", "error", err)
 	}
@@ -54,4 +70,92 @@ func main() {
 	}
 
 	(&server.App{}).Run(&config)
+}
+
+func applyPipMirrorAutoDetect(config *app.Config) {
+	candidates := config.PipMirrorCandidates
+	if len(candidates) == 0 {
+		candidates = defaultMirrorCandidates
+	}
+
+	timeout := time.Duration(config.PipMirrorAutoDetectTimeoutSeconds) * time.Second
+	mirror := detectAndApplyPipMirror(config, &http.Client{Timeout: timeout}, candidates, officialPypiURL, timeout)
+	if mirror != "" {
+		log.Info(
+			"IMPORTANT: pip mirror auto-detect selected a mirror; set PIP_MIRROR_AUTO_DETECT=false to disable or PIP_MIRROR_URL=<mirror_url> to override",
+			"mirror_url", mirror,
+		)
+	}
+}
+
+func detectAndApplyPipMirror(config *app.Config, client *http.Client, candidates []string, officialURL string, timeout time.Duration) string {
+	if !config.PipMirrorAutoDetect || config.PipMirrorUrl != "" {
+		return ""
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	mirror := selectFastestMirror(ctx, client, candidates, officialURL)
+	if mirror != "" {
+		config.PipMirrorUrl = mirror
+	}
+	return mirror
+}
+
+type mirrorProbeResult struct {
+	url     string
+	latency time.Duration
+	ok      bool
+}
+
+func probeURL(ctx context.Context, client *http.Client, url string) mirrorProbeResult {
+	start := time.Now()
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+	if err != nil {
+		return mirrorProbeResult{url: url}
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return mirrorProbeResult{url: url}
+	}
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return mirrorProbeResult{url: url}
+	}
+	return mirrorProbeResult{url: url, latency: time.Since(start), ok: true}
+}
+
+func selectFastestMirror(ctx context.Context, client *http.Client, candidates []string, officialURL string) string {
+	all := append([]string{officialURL}, candidates...)
+	ch := make(chan mirrorProbeResult, len(all))
+
+	for _, u := range all {
+		go func(u string) {
+			ch <- probeURL(ctx, client, u)
+		}(u)
+	}
+
+	officialLatency := time.Duration(math.MaxInt64)
+	bestURL := ""
+	bestLatency := time.Duration(math.MaxInt64)
+
+	for range all {
+		r := <-ch
+		if !r.ok {
+			continue
+		}
+		if r.url == officialURL {
+			officialLatency = r.latency
+		} else if r.latency < bestLatency {
+			bestLatency = r.latency
+			bestURL = r.url
+		}
+	}
+
+	threshold := time.Duration(float64(officialLatency) * (1 - pipMirrorMinImprovementFactor))
+	if bestURL != "" && bestLatency < threshold {
+		return bestURL
+	}
+	return ""
 }
