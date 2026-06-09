@@ -10,7 +10,6 @@ import (
 	"math"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -305,46 +304,35 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	}
 
 	if err := func() error {
+		if err := os.MkdirAll(dst, 0755); err != nil {
+			return err
+		}
+
+		root, err := os.OpenRoot(dst)
+		if err != nil {
+			return err
+		}
+		defer root.Close()
+
 		for _, file := range z.reader.File {
-			targetPath, err := safeExtractPath(dst, file.Name)
+			entryPath, err := safeEntryPath(file.Name)
 			if err != nil {
 				return err
 			}
 
 			if file.FileInfo().IsDir() {
-				if err := os.MkdirAll(targetPath, 0755); err != nil {
+				if err := root.MkdirAll(entryPath, 0755); err != nil {
 					return err
 				}
 				continue
 			}
 
-			workingPath := filepath.Dir(targetPath)
 			// check if directory exists
-			if err := os.MkdirAll(workingPath, 0755); err != nil {
+			if err := root.MkdirAll(path.Dir(entryPath), 0755); err != nil {
 				return err
 			}
 
-			reader, err := file.Open()
-			if err != nil {
-				return err
-			}
-
-			writer, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-			if err != nil {
-				reader.Close()
-				return err
-			}
-
-			if err := copyZipFile(writer, reader, file.UncompressedSize64); err != nil {
-				reader.Close()
-				writer.Close()
-				return err
-			}
-			if err := reader.Close(); err != nil {
-				writer.Close()
-				return err
-			}
-			if err := writer.Close(); err != nil {
+			if err := extractZipFile(root, entryPath, file); err != nil {
 				return err
 			}
 		}
@@ -359,24 +347,39 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	return nil
 }
 
-func safeExtractPath(dst, entryName string) (string, error) {
+func safeEntryPath(entryName string) (string, error) {
+	if entryName == "" || strings.Contains(entryName, `\`) {
+		return "", fmt.Errorf("%w: %q", errUnsafeZipPath, entryName)
+	}
+
+	for _, part := range strings.Split(entryName, "/") {
+		if part == ".." {
+			return "", fmt.Errorf("%w: %q", errUnsafeZipPath, entryName)
+		}
+	}
+
 	entryPath := path.Clean(entryName)
-	if entryPath == "." ||
-		entryPath == ".." ||
-		path.IsAbs(entryPath) ||
-		strings.HasPrefix(entryPath, "../") ||
-		strings.Contains(entryPath, "/../") ||
-		strings.Contains(entryPath, `\`) ||
-		filepath.IsAbs(filepath.FromSlash(entryPath)) {
-		return "", fmt.Errorf("%w: %s", errUnsafeZipPath, entryName)
+	if entryPath == "." || path.IsAbs(entryPath) {
+		return "", fmt.Errorf("%w: %q", errUnsafeZipPath, entryName)
 	}
 
-	targetPath := filepath.Join(dst, filepath.FromSlash(entryPath))
-	if !pathIsInside(dst, targetPath) {
-		return "", fmt.Errorf("%w: %s", errUnsafeZipPath, entryName)
-	}
+	return entryPath, nil
+}
 
-	return targetPath, nil
+func extractZipFile(root *os.Root, entryPath string, file *zip.File) error {
+	reader, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	writer, err := root.OpenFile(entryPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+
+	return copyZipFile(writer, reader, file.UncompressedSize64)
 }
 
 func copyZipFile(writer io.Writer, reader io.Reader, uncompressedSize uint64) error {
@@ -393,22 +396,6 @@ func copyZipFile(writer io.Writer, reader io.Reader, uncompressedSize uint64) er
 		return fmt.Errorf("zip entry exceeds declared uncompressed size: %d bytes", uncompressedSize)
 	}
 	return nil
-}
-
-func pathIsInside(root, target string) bool {
-	rootAbs, err := filepath.Abs(root)
-	if err != nil {
-		return false
-	}
-	targetAbs, err := filepath.Abs(target)
-	if err != nil {
-		return false
-	}
-	rel, err := filepath.Rel(rootAbs, targetAbs)
-	if err != nil {
-		return false
-	}
-	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
 }
 
 func (z *ZipPluginDecoder) CheckAssetsValid() error {

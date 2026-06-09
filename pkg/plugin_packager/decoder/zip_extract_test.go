@@ -100,8 +100,8 @@ func TestZipPluginDecoderExtractToAllowsNestedPath(t *testing.T) {
 	assert.Equal(t, []byte("ok"), extracted)
 }
 
-func TestSafeExtractPathRejectsParentDirectoryEntry(t *testing.T) {
-	_, err := safeExtractPath(t.TempDir(), "..")
+func TestSafeEntryPathRejectsParentDirectoryEntry(t *testing.T) {
+	_, err := safeEntryPath("..")
 
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, errUnsafeZipPath))
