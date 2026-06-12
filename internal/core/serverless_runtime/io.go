@@ -15,9 +15,64 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
+
+const serverlessErrorResponsePreviewLimit = 4 * 1024
+
+type limitedBuffer struct {
+	buf   bytes.Buffer
+	limit int
+}
+
+func (b *limitedBuffer) Write(p []byte) (int, error) {
+	originalLen := len(p)
+	if b.limit <= 0 || b.buf.Len() >= b.limit {
+		return originalLen, nil
+	}
+
+	remaining := b.limit - b.buf.Len()
+	if len(p) > remaining {
+		p = p[:remaining]
+	}
+
+	_, err := b.buf.Write(p)
+	return originalLen, err
+}
+
+func (b *limitedBuffer) String() string {
+	return b.buf.String()
+}
+
+func serverlessResponseHeaders(response *http.Response) map[string]string {
+	headers := map[string]string{}
+	for _, key := range []string{
+		"x-amzn-RequestId",
+		"x-amzn-ErrorType",
+		"x-amz-function-error",
+		"content-type",
+		"content-length",
+	} {
+		if value := response.Header.Get(key); value != "" {
+			headers[key] = value
+		}
+	}
+	return headers
+}
+
+func readServerlessErrorPreview(response *http.Response) (string, error) {
+	if response.Body == nil {
+		return "", nil
+	}
+
+	preview, err := io.ReadAll(io.LimitReader(response.Body, serverlessErrorResponsePreviewLimit))
+	if err != nil {
+		return "", err
+	}
+	return string(preview), nil
+}
 
 func (r *ServerlessPluginRuntime) Listen(sessionId string) (
 	*entities.Broadcast[plugin_entities.SessionMessage],
@@ -55,6 +110,8 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		maxRetries = 1
 	}
 
+	payloadSizeBytes := len(data)
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Apply exponential backoff for retry attempts (500ms, 1000ms, 2000ms, ...)
 		// Capped at 30 seconds to prevent unreasonable wait times
@@ -79,6 +136,14 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		)
 
 		if err != nil {
+			log.Warn("serverless request failed",
+				"session_id", sessionId,
+				"attempt", attempt+1,
+				"max_retries", maxRetries,
+				"url", url,
+				"payload_size_bytes", payloadSizeBytes,
+				"error", err,
+			)
 			lastErr = fmt.Errorf("attempt %d/%d failed: %w", attempt+1, maxRetries, err)
 			continue
 		}
@@ -91,6 +156,19 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 
 		// Check if status code should trigger a retry (502 Bad Gateway only)
 		if shouldRetryStatusCode(statusCode) {
+			responsePreview, readErr := readServerlessErrorPreview(response)
+			log.Warn("serverless request returned retryable status",
+				"session_id", sessionId,
+				"attempt", attempt+1,
+				"max_retries", maxRetries,
+				"url", url,
+				"payload_size_bytes", payloadSizeBytes,
+				"status", response.Status,
+				"status_code", statusCode,
+				"headers", serverlessResponseHeaders(response),
+				"response_preview", responsePreview,
+				"response_preview_read_error", readErr,
+			)
 			if response.Body != nil {
 				response.Body.Close()
 			}
@@ -151,7 +229,8 @@ func (r *ServerlessPluginRuntime) Write(
 			return
 		}
 
-		scanner := bufio.NewScanner(response.Body)
+		responsePreview := &limitedBuffer{limit: serverlessErrorResponsePreviewLimit}
+		scanner := bufio.NewScanner(io.TeeReader(response.Body, responsePreview))
 		defer response.Body.Close()
 
 		scanner.Buffer(make([]byte, r.RuntimeBufferSize), r.RuntimeMaxBufferSize)
@@ -203,6 +282,19 @@ func (r *ServerlessPluginRuntime) Write(
 					Message:   fmt.Sprintf("failed to read response body: %v", err),
 				}),
 			})
+		}
+
+		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			log.Warn("serverless request returned non-success status",
+				"session_id", sessionId,
+				"action", action,
+				"lambda_url", r.LambdaURL,
+				"payload_size_bytes", len(data),
+				"status", response.Status,
+				"status_code", response.StatusCode,
+				"headers", serverlessResponseHeaders(response),
+				"response_preview", responsePreview.String(),
+			)
 		}
 	})
 
