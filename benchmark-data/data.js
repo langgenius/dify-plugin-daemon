@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780905364616,
+  "lastUpdate": 1781514333079,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13906,6 +13906,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.74,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hjlarry@163.com",
+            "name": "非法操作",
+            "username": "hjlarry"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "064f67d7073c647a85532b0bcfb29c978c8ce634",
+          "message": "feat: support onboarding ui (#753)\n\n* feat: add ListPluginsByCategory\n\n* feat: install plugin api add optional current task response\n\n* Revert \"feat: install plugin api add optional current task response\"\n\nThis reverts commit bf16b5264e38ebaedbb8f14a610c63d20c853e28.",
+          "timestamp": "2026-06-15T17:03:30+08:00",
+          "tree_id": "8c7101c3417da4316e1c7481bb01f496e5d3b4e5",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/064f67d7073c647a85532b0bcfb29c978c8ce634"
+        },
+        "date": 1781514332486,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 20.07,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 20.07,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
