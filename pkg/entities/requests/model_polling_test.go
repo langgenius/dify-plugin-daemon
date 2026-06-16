@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
@@ -39,9 +40,24 @@ func TestRequestCheckPollingRequiresPluginState(t *testing.T) {
 		t.Fatalf("unmarshal request: %v", err)
 	}
 
-	if err := validators.GlobalEntitiesValidator.Struct(request); err == nil {
-		t.Fatal("expected missing plugin_state validation error")
+	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
+		validationErrors, ok := err.(validator.ValidationErrors)
+		if !ok {
+			t.Fatalf("unexpected validation error type: %T: %v", err, err)
+		}
+		if len(validationErrors) != 1 {
+			t.Fatalf("expected 1 validation error, got %d: %v", len(validationErrors), validationErrors)
+		}
+		validationError := validationErrors[0]
+		if validationError.Field() != "PluginState" {
+			t.Fatalf("unexpected field: %s", validationError.Field())
+		}
+		if validationError.Tag() != "required" {
+			t.Fatalf("unexpected tag: %s", validationError.Tag())
+		}
+		return
 	}
+	t.Fatal("expected missing plugin_state validation error")
 }
 
 func TestRequestCheckPollingRejectsEmptyPluginState(t *testing.T) {
@@ -58,9 +74,24 @@ func TestRequestCheckPollingRejectsEmptyPluginState(t *testing.T) {
 		t.Fatalf("unmarshal request: %v", err)
 	}
 
-	if err := validators.GlobalEntitiesValidator.Struct(request); err == nil {
-		t.Fatal("expected empty plugin_state validation error")
+	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
+		validationErrors, ok := err.(validator.ValidationErrors)
+		if !ok {
+			t.Fatalf("unexpected validation error type: %T: %v", err, err)
+		}
+		if len(validationErrors) != 1 {
+			t.Fatalf("expected 1 validation error, got %d: %v", len(validationErrors), validationErrors)
+		}
+		validationError := validationErrors[0]
+		if validationError.Field() != "PluginState" {
+			t.Fatalf("unexpected field: %s", validationError.Field())
+		}
+		if validationError.Tag() != "min" {
+			t.Fatalf("unexpected tag: %s", validationError.Tag())
+		}
+		return
 	}
+	t.Fatal("expected empty plugin_state validation error")
 }
 
 func TestRequestCheckPollingAcceptsPluginState(t *testing.T) {
