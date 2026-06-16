@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781514333079,
+  "lastUpdate": 1781652381611,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -13954,6 +13954,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 20.07,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "obelisk.reg+git@gmail.com",
+            "name": "QuantumGhost",
+            "username": "QuantumGhost"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9d31389e38505777e32cc7e9cc9d0d0a777c0410",
+          "message": "refactor!: Remove obsolete polling suspension fields from request protocol (#759)\n\n* Remove polling suspension fields\n\nAssisted-by: Codex:GPT-5.4\n\n* Tighten polling validation tests\n\nAssisted-by: Codex:GPT-5.4\n\n* Add polling payload shape regression test\n\nAssisted-by: Codex:GPT-5.4",
+          "timestamp": "2026-06-17T07:24:17+08:00",
+          "tree_id": "d57c509d328e2fb4d21f20faf14f37a2aea95867",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/9d31389e38505777e32cc7e9cc9d0d0a777c0410"
+        },
+        "date": 1781652381255,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.71,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.71,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
