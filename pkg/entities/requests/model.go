@@ -186,17 +186,12 @@ type RequestGetAIModelSchema struct {
 
 type RequestStartPolling struct {
 	RequestInvokeLLM
-
-	WorkflowRunID string `json:"workflow_run_id" validate:"required"`
-	NodeID        string `json:"node_id" validate:"required"`
 }
 
 type RequestCheckPolling struct {
 	BaseRequestInvokeModel
 	Credentials
 
-	ModelType     model_entities.ModelType `json:"model_type" validate:"required,model_type,eq=llm"`
-	WorkflowRunID string                   `json:"workflow_run_id" validate:"required"`
-	NodeID        string                   `json:"node_id" validate:"required"`
-	PluginState   map[string]any           `json:"plugin_state" validate:"required,min=1"`
+	ModelType   model_entities.ModelType `json:"model_type" validate:"required,model_type,eq=llm"`
+	PluginState map[string]any           `json:"plugin_state" validate:"required,min=1"`
 }
