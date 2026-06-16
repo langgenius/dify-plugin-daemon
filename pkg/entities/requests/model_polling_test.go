@@ -8,14 +8,30 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
+func TestRequestStartPollingDoesNotRequireSuspensionFields(t *testing.T) {
+	payload := []byte(`{
+		"provider": "volcengine",
+		"model": "doubao-seedance-2-0-260128",
+		"model_type": "llm",
+		"credentials": {"ark_api_key": "test"}
+	}`)
+
+	var request RequestStartPolling
+	if err := json.Unmarshal(payload, &request); err != nil {
+		t.Fatalf("unmarshal request: %v", err)
+	}
+
+	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
+		t.Fatalf("validate request: %v", err)
+	}
+}
+
 func TestRequestCheckPollingRequiresPluginState(t *testing.T) {
 	payload := []byte(`{
 		"provider": "volcengine",
 		"model": "doubao-seedance-2-0-260128",
 		"model_type": "llm",
-		"credentials": {"ark_api_key": "test"},
-		"workflow_run_id": "wr-1",
-		"node_id": "llm-1"
+		"credentials": {"ark_api_key": "test"}
 	}`)
 
 	var request RequestCheckPolling
@@ -34,8 +50,6 @@ func TestRequestCheckPollingRejectsEmptyPluginState(t *testing.T) {
 		"model": "doubao-seedance-2-0-260128",
 		"model_type": "llm",
 		"credentials": {"ark_api_key": "test"},
-		"workflow_run_id": "wr-1",
-		"node_id": "llm-1",
 		"plugin_state": {}
 	}`)
 
@@ -55,8 +69,6 @@ func TestRequestCheckPollingAcceptsPluginState(t *testing.T) {
 		"model": "doubao-seedance-2-0-260128",
 		"model_type": "llm",
 		"credentials": {"ark_api_key": "test"},
-		"workflow_run_id": "wr-1",
-		"node_id": "llm-1",
 		"plugin_state": {"task_id": "task-1"}
 	}`)
 
