@@ -9,7 +9,7 @@ import (
 func GetRemoteDebuggingKey(c *gin.Context) {
 	BindRequest(
 		c, func(request requests.RequestGetRemoteDebuggingKey) {
-			c.JSON(200, service.GetRemoteDebuggingKey(request.TenantID))
+			JSONResponse(c, service.GetRemoteDebuggingKey(request.TenantID))
 		},
 	)
 }
