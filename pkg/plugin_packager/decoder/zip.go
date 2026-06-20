@@ -126,6 +126,9 @@ func (z *ZipPluginDecoder) Walk(fn func(filename string, dir string) error) erro
 	}
 
 	for _, file := range z.reader.File {
+		if file.FileInfo().IsDir() {
+			continue
+		}
 		// split the path into directory and filename
 		dir, filename := path.Split(file.Name)
 		if err := fn(filename, dir); err != nil {
@@ -169,7 +172,7 @@ func (z *ZipPluginDecoder) ReadDir(dirname string) ([]string, error) {
 	dirNameWithSlash := strings.TrimSuffix(dirname, "/") + "/"
 
 	for _, file := range z.reader.File {
-		if strings.HasPrefix(file.Name, dirNameWithSlash) {
+		if strings.HasPrefix(file.Name, dirNameWithSlash) && !file.FileInfo().IsDir() {
 			files = append(files, file.Name)
 		}
 	}
@@ -394,6 +397,13 @@ func copyZipFile(writer io.Writer, reader io.Reader, uncompressedSize uint64) er
 	}
 	if written > int64(uncompressedSize) {
 		return fmt.Errorf("zip entry exceeds declared uncompressed size: %d bytes", uncompressedSize)
+	}
+	if written != int64(uncompressedSize) {
+		return fmt.Errorf(
+			"zip entry ended before declared uncompressed size: expected %d bytes, got %d",
+			uncompressedSize,
+			written,
+		)
 	}
 	return nil
 }

@@ -125,3 +125,33 @@ func TestCopyZipFileAllowsDeclaredSize(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "ok", out.String())
 }
+
+func TestZipPluginDecoderReadDirSkipsDirectoryEntries(t *testing.T) {
+	files := minimalPluginFiles(t)
+	files["nested/"] = nil
+	files["nested/file.txt"] = []byte("ok")
+
+	zipDecoder, err := NewZipPluginDecoder(buildZipPlugin(t, files))
+	require.NoError(t, err)
+
+	entries, err := zipDecoder.ReadDir("nested")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"nested/file.txt"}, entries)
+}
+
+func TestZipPluginDecoderWalkSkipsDirectoryEntries(t *testing.T) {
+	files := minimalPluginFiles(t)
+	files["nested/"] = nil
+	files["nested/file.txt"] = []byte("ok")
+
+	zipDecoder, err := NewZipPluginDecoder(buildZipPlugin(t, files))
+	require.NoError(t, err)
+
+	visited := make([]string, 0, 2)
+	err = zipDecoder.Walk(func(filename, dir string) error {
+		visited = append(visited, filepath.Join(dir, filename))
+		return nil
+	})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"manifest.yaml", "neko.yaml", filepath.Join("nested", "file.txt")}, visited)
+}
