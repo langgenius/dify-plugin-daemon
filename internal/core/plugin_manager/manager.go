@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"errors"
 	"fmt"
 
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -191,6 +192,17 @@ func (p *PluginManager) Config() *app.Config {
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
 ) (bool, error) {
+	if identity.RemoteLike() {
+		_, err := c.controlPanel.GetPluginRuntime(identity)
+		if err != nil {
+			if errors.Is(err, controlpanel.ErrPluginRuntimeNotFound) {
+				return true, nil
+			}
+			return true, err
+		}
+		return false, nil
+	}
+
 	if c.config.Platform == app.PLATFORM_SERVERLESS {
 		// under serverless mode, it's no need to do redirecting
 		return false, nil
