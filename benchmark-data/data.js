@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781652381611,
+  "lastUpdate": 1782185779765,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14002,6 +14002,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.71,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mail@yanli.one",
+            "name": "盐粒 Yanli",
+            "username": "BeautyyuYanli"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2c7aa9f2d0ddbd25b5f2d9a3ad377b708f071eb2",
+          "message": "feat: auto-detect pip mirror (#750)\n\n* feat: auto-detect pip mirror\n\n* fix: include pip mirror helper in server build\n\n* chore: clarify pip mirror auto-detect log\n\n* use latency based detection\n\n* improve documentation\n\n* make probe timeout configurable\n\n---------\n\nCo-authored-by: yunlu.wen <yunlu.wen@dify.ai>",
+          "timestamp": "2026-06-23T11:34:16+08:00",
+          "tree_id": "534c89e1553ec043fffb3602eb5c7e36a5c23c96",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/2c7aa9f2d0ddbd25b5f2d9a3ad377b708f071eb2"
+        },
+        "date": 1782185779411,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.59,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.59,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
