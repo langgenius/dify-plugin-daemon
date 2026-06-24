@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -17,6 +17,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/consts"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
+
+var errUnsafeZipPath = errors.New("unsafe path in plugin package")
 
 type ZipPluginDecoder struct {
 	PluginDecoder
@@ -124,6 +126,9 @@ func (z *ZipPluginDecoder) Walk(fn func(filename string, dir string) error) erro
 	}
 
 	for _, file := range z.reader.File {
+		if file.FileInfo().IsDir() {
+			continue
+		}
 		// split the path into directory and filename
 		dir, filename := path.Split(file.Name)
 		if err := fn(filename, dir); err != nil {
@@ -167,7 +172,7 @@ func (z *ZipPluginDecoder) ReadDir(dirname string) ([]string, error) {
 	dirNameWithSlash := strings.TrimSuffix(dirname, "/") + "/"
 
 	for _, file := range z.reader.File {
-		if strings.HasPrefix(file.Name, dirNameWithSlash) {
+		if strings.HasPrefix(file.Name, dirNameWithSlash) && !file.FileInfo().IsDir() {
 			files = append(files, file.Name)
 		}
 	}
@@ -297,32 +302,109 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	// copy to working directory
-	if err := z.Walk(func(filename, dir string) error {
-		workingPath := path.Join(dst, dir)
-		// check if directory exists
-		if err := os.MkdirAll(workingPath, 0755); err != nil {
+	if z.reader == nil {
+		return z.err
+	}
+
+	if err := func() error {
+		if err := os.MkdirAll(dst, 0755); err != nil {
 			return err
 		}
 
-		bytes, err := z.ReadFile(filepath.Join(dir, filename))
+		root, err := os.OpenRoot(dst)
 		if err != nil {
 			return err
 		}
+		defer root.Close()
 
-		filename = filepath.Join(workingPath, filename)
+		for _, file := range z.reader.File {
+			entryPath, err := safeEntryPath(file.Name)
+			if err != nil {
+				return err
+			}
 
-		// copy file
-		if err := os.WriteFile(filename, bytes, 0644); err != nil {
-			return err
+			if file.FileInfo().IsDir() {
+				if err := root.MkdirAll(entryPath, 0755); err != nil {
+					return err
+				}
+				continue
+			}
+
+			// check if directory exists
+			if err := root.MkdirAll(path.Dir(entryPath), 0755); err != nil {
+				return err
+			}
+
+			if err := extractZipFile(root, entryPath, file); err != nil {
+				return err
+			}
 		}
 
 		return nil
-	}); err != nil {
+	}(); err != nil {
 		// if error, delete the working directory
 		os.RemoveAll(dst)
 		return errors.Join(fmt.Errorf("copy plugin to working directory error: %v", err), err)
 	}
 
+	return nil
+}
+
+func safeEntryPath(entryName string) (string, error) {
+	if entryName == "" || strings.Contains(entryName, `\`) {
+		return "", fmt.Errorf("%w: %q", errUnsafeZipPath, entryName)
+	}
+
+	for _, part := range strings.Split(entryName, "/") {
+		if part == ".." {
+			return "", fmt.Errorf("%w: %q", errUnsafeZipPath, entryName)
+		}
+	}
+
+	entryPath := path.Clean(entryName)
+	if entryPath == "." || path.IsAbs(entryPath) {
+		return "", fmt.Errorf("%w: %q", errUnsafeZipPath, entryName)
+	}
+
+	return entryPath, nil
+}
+
+func extractZipFile(root *os.Root, entryPath string, file *zip.File) error {
+	reader, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	writer, err := root.OpenFile(entryPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+
+	return copyZipFile(writer, reader, file.UncompressedSize64)
+}
+
+func copyZipFile(writer io.Writer, reader io.Reader, uncompressedSize uint64) error {
+	if uncompressedSize > math.MaxInt64-1 {
+		return fmt.Errorf("zip entry is too large: %d bytes", uncompressedSize)
+	}
+
+	limit := int64(uncompressedSize) + 1
+	written, err := io.Copy(writer, io.LimitReader(reader, limit))
+	if err != nil {
+		return err
+	}
+	if written > int64(uncompressedSize) {
+		return fmt.Errorf("zip entry exceeds declared uncompressed size: %d bytes", uncompressedSize)
+	}
+	if written != int64(uncompressedSize) {
+		return fmt.Errorf(
+			"zip entry ended before declared uncompressed size: expected %d bytes, got %d",
+			uncompressedSize,
+			written,
+		)
+	}
 	return nil
 }
 
