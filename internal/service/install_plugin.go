@@ -212,7 +212,6 @@ func UpgradePlugin(
 	installation, err := db.GetOne[models.PluginInstallation](
 		db.Equal("tenant_id", tenantId),
 		db.Equal("plugin_unique_identifier", originalPluginUniqueIdentifier.String()),
-		db.Equal("source", source),
 	)
 	if err == db.ErrDatabaseNotFound {
 		return exception.NotFoundError(errors.New("plugin installation not found for this tenant")).ToResponse()
