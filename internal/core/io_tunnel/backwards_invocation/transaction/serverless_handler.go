@@ -91,7 +91,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 	bytes, err := io.ReadAll(io.LimitReader(body, 6*1024*1024))
 	if err != nil {
 		ctx.Writer.WriteHeader(http.StatusBadRequest)
-		ctx.Writer.Write([]byte(err.Error()))
+		_, _ = ctx.Writer.Write([]byte(err.Error()))
+		_ = writer.Close()
 		return
 	}
 
@@ -103,8 +104,8 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](data)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
-				ctx.Writer.Write([]byte(err.Error()))
-				writer.Close()
+				_, _ = ctx.Writer.Write([]byte(err.Error()))
+				_ = writer.Close()
 				return
 			}
 
@@ -117,11 +118,15 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 					backwardsRequestId, _ = invokePayload["backwards_request_id"].(string)
 				}
 
-				log.ErrorContext(
+				cacheErrorKind := session_manager.SessionCacheErrorKind(err)
+				log.WarnContext(
 					ctx.Request.Context(),
 					"failed to get session info from cache",
 					"session_id", sessionId,
 					"backwards_request_id", backwardsRequestId,
+					"cache_key", session_manager.SessionCacheKey(sessionId),
+					"cache_error_kind", cacheErrorKind,
+					"cache_error_hint", session_manager.SessionCacheErrorHint(cacheErrorKind),
 					"error", err,
 				)
 
@@ -172,9 +177,9 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			); err != nil {
 				if !ctx.Writer.Written() {
 					ctx.Writer.WriteHeader(http.StatusInternalServerError)
-					ctx.Writer.Write([]byte("failed to parse request"))
+					_, _ = ctx.Writer.Write([]byte("failed to parse request"))
 				}
-				writer.Close()
+				_ = writer.Close()
 			}
 		},
 		func() {},

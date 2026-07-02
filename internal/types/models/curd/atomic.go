@@ -456,6 +456,7 @@ func UpgradePlugin(
 				InstallType:            installType,
 				Refers:                 0,
 				ManifestType:           manifest_entities.PluginType,
+				Source:                 source,
 			}
 
 			err := db.Create(&plugin, tx)
@@ -468,6 +469,7 @@ func UpgradePlugin(
 
 		// update exists installation
 		installation.PluginUniqueIdentifier = newPluginUniqueIdentifier.String()
+		installation.Source = source
 		installation.Meta = meta
 		err = db.Update(installation, tx)
 		if err != nil {
