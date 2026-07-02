@@ -3,14 +3,26 @@ package io_tunnel
 import (
 	"errors"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
+	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
+
+const (
+	writeRetryBudget   = 6 * time.Second
+	writeRetryInterval = 300 * time.Millisecond
+)
+
+func isRecoverableWriteErr(err error) bool {
+	return errors.Is(err, local_runtime.ErrNoProperInstance) || local_runtime.IsInstanceDeadErr(err)
+}
 
 func GenericInvokePlugin[Req any, Rsp any](
 	session *session_manager.Session,
@@ -27,13 +39,11 @@ func GenericInvokePlugin[Req any, Rsp any](
 	}
 
 	response := stream.NewStream[Rsp](response_buffer_size)
-	listener, err := runtime.Listen(session.ID)
-	if err != nil {
-		recorder.record(pluginInvocationOutcomeError)
-		return nil, err
-	}
+	response.OnClose(func() {
+		recorder.record(outcome.outcome())
+	})
 
-	listener.Listen(func(chunk plugin_entities.SessionMessage) {
+	onChunk := func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
 			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
@@ -92,28 +102,43 @@ func GenericInvokePlugin[Req any, Rsp any](
 			})))
 			response.Close()
 		}
-	})
-
-	// close the listener if stream outside is closed due to close of connection
-	response.OnClose(func() {
-		listener.Close()
-	})
-	response.OnClose(func() {
-		recorder.record(outcome.outcome())
-	})
-
-	if err := session.Write(
-		session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
-		session.Action,
-		GetInvokePluginMap(
-			session,
-			request,
-		),
-	); err != nil {
-		listener.Close()
-		recorder.record(pluginInvocationOutcomeError)
-		return nil, errors.Join(err, errors.New("failed to write request"))
 	}
 
-	return response, nil
+	pluginMap := GetInvokePluginMap(
+		session,
+		request,
+	)
+
+	isLocal := runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
+	deadline := time.Now().Add(writeRetryBudget)
+	for {
+		listener, err := runtime.Listen(session.ID)
+		if err == nil {
+			var closeOnce sync.Once
+			closeListener := func() {
+				closeOnce.Do(listener.Close)
+			}
+
+			listener.Listen(onChunk)
+
+			err = session.Write(
+				session_manager.PLUGIN_IN_STREAM_EVENT_REQUEST,
+				session.Action,
+				pluginMap,
+			)
+			if err == nil {
+				response.OnClose(closeListener)
+				return response, nil
+			}
+
+			closeListener()
+		}
+
+		if !isLocal || !isRecoverableWriteErr(err) || time.Now().After(deadline) {
+			recorder.record(pluginInvocationOutcomeError)
+			return nil, errors.Join(err, errors.New("failed to write request"))
+		}
+
+		time.Sleep(writeRetryInterval)
+	}
 }

@@ -13,7 +13,14 @@ func (r *LocalPluginRuntime) pickLowestLoadInstance() (*PluginInstance, error) {
 		return nil, ErrNoProperInstance
 	}
 
-	// Just a round robin
-	idx := atomic.AddInt64(&r.roundRobinIndex, 1)
-	return r.instances[idx%int64(len(r.instances))], nil
+	// Just a round robin, skipping instances already known as stopped.
+	for i := 0; i < len(r.instances); i++ {
+		idx := atomic.AddInt64(&r.roundRobinIndex, 1)
+		instance := r.instances[uint64(idx)%uint64(len(r.instances))]
+		if !instance.IsStopped() {
+			return instance, nil
+		}
+	}
+
+	return nil, ErrNoProperInstance
 }

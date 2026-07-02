@@ -45,6 +45,7 @@ func ConstructPluginRuntime(
 			Decoder: pluginDecoder,
 		},
 		scheduleStatus:               ScheduleStatusStopped,
+		scheduleKick:                 make(chan struct{}, 1),
 		defaultPythonInterpreterPath: appConfig.PythonInterpreterPath,
 		uvPath:                       appConfig.UvPath,
 		appConfig:                    appConfig,
@@ -53,10 +54,10 @@ func ConstructPluginRuntime(
 		instanceLocker: &sync.RWMutex{},
 
 		notifiers:    []PluginRuntimeNotifier{},
-			notifierLock: &sync.Mutex{},
-			traceCtx:     nil,
-		}
-		return runtime, nil
+		notifierLock: &sync.Mutex{},
+		traceCtx:     nil,
+	}
+	return runtime, nil
 }
 
 // generate plugin working path using author/name@checksum, but replace : with -

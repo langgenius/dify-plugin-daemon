@@ -156,6 +156,9 @@ func (r *LocalPluginRuntime) startNewInstance() error {
 				return instance.instanceId == pi.instanceId
 			})
 			after := len(r.instances)
+			if after == 0 {
+				r.SetRestarting()
+			}
 			r.instanceLocker.Unlock()
 			log.Warn(
 				"local runtime instance shutdown",

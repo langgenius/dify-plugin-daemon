@@ -31,6 +31,7 @@ func NewLocalPluginRuntime(
 			Decoder: pluginDecoder,
 		},
 		scheduleStatus:               ScheduleStatusStopped,
+		scheduleKick:                 make(chan struct{}, 1),
 		defaultPythonInterpreterPath: appConfig.PythonInterpreterPath,
 		uvPath:                       appConfig.UvPath,
 		appConfig:                    appConfig,

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os/exec"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,6 +34,8 @@ type PluginInstance struct {
 
 	started  bool // mark the instance as started, it will be set to true when the first heartbeat is received
 	shutdown bool // mark the instance as shutdown, it will be set to true when stdout reader is closed
+	stopped  atomic.Bool
+	writeMu  sync.Mutex
 
 	// app config
 	appConfig *app.Config
@@ -105,6 +108,9 @@ func (s *PluginInstance) Error() error {
 
 // Stop stops the stdio, of course, it will shutdown the plugin asynchronously
 func (s *PluginInstance) Stop() {
+	if !s.stopped.CompareAndSwap(false, true) {
+		return
+	}
 	s.inWriter.Close()
 	s.outReader.Close()
 	s.errReader.Close()
@@ -125,6 +131,7 @@ func (s *PluginInstance) Stop() {
 // Once the subprocess exists itself, STDOUT always close, which results in `CLOSE STDOUT`
 func (s *PluginInstance) StartStdout() {
 	defer func() {
+		s.stopped.Store(true)
 		log.Info(
 			"plugin stdout reader exiting",
 			"plugin", s.pluginUniqueIdentifier,
@@ -368,9 +375,26 @@ func (s *PluginInstance) Monitor() error {
 }
 
 func (s *PluginInstance) Write(data []byte) error {
+	if s.IsStopped() {
+		return ErrInstanceStopped
+	}
+
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+
 	// write bytes into instance's stdin
-	_, err := s.inWriter.Write(data)
-	return err
+	n, err := s.inWriter.Write(data)
+	if err != nil {
+		return err
+	}
+	if n < len(data) {
+		return io.ErrShortWrite
+	}
+	return nil
+}
+
+func (s *PluginInstance) IsStopped() bool {
+	return s.stopped.Load()
 }
 
 // GracefulStop stops the instance gracefully

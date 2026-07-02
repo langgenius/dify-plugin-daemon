@@ -1,10 +1,12 @@
 package local_runtime
 
 import (
+	"slices"
 	"sync/atomic"
 	"time"
 
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
@@ -47,12 +49,24 @@ func (r *LocalPluginRuntime) ScaleDown() {
 func (r *LocalPluginRuntime) scheduleLoop() {
 	// once it's not match, scale it
 	ticker := time.NewTicker(ScheduleLoopInterval)
+	defer ticker.Stop()
 
 	for atomic.LoadInt32(&r.scheduleStatus) == ScheduleStatusRunning {
 		// check if the instance nums is match
-		r.instanceLocker.RLock()
+		r.instanceLocker.Lock()
+		removed := r.pruneStoppedInstancesLocked()
 		currentInstanceNums := len(r.instances)
-		r.instanceLocker.RUnlock()
+		r.instanceLocker.Unlock()
+
+		if removed > 0 {
+			log.Warn(
+				"pruned stopped local plugin instances",
+				"plugin", r.Config.Identity(),
+				"removed", removed,
+				"live_instances", currentInstanceNums,
+				"expected_instances", atomic.LoadInt32(&r.instanceNums),
+			)
+		}
 
 		// if the current instance nums is less than the expected instance nums, start a new instance
 		if currentInstanceNums < int(r.instanceNums) {
@@ -78,12 +92,12 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 			}
 		}
 
-		// wait for the next tick
-		// this waiting must be done after all the schedule logic
-		<-ticker.C
+		// wait for the next tick or an explicit kick after a dead instance is evicted.
+		select {
+		case <-ticker.C:
+		case <-r.scheduleKick:
+		}
 	}
-
-	ticker.Stop()
 
 	// notify callers that the runtime is not running anymore
 	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
@@ -97,6 +111,24 @@ func (r *LocalPluginRuntime) scheduleLoop() {
 	r.WalkNotifiers(func(notifier PluginRuntimeNotifier) {
 		notifier.OnRuntimeClose()
 	})
+}
+
+func (r *LocalPluginRuntime) nudgeSchedule() {
+	if r.scheduleKick == nil {
+		return
+	}
+	select {
+	case r.scheduleKick <- struct{}{}:
+	default:
+	}
+}
+
+func (r *LocalPluginRuntime) pruneStoppedInstancesLocked() int {
+	before := len(r.instances)
+	r.instances = slices.DeleteFunc(r.instances, func(instance *PluginInstance) bool {
+		return instance.IsStopped()
+	})
+	return before - len(r.instances)
 }
 
 func (r *LocalPluginRuntime) stopSchedule() {
@@ -153,9 +185,10 @@ func (r *LocalPluginRuntime) GracefulStop(async bool) {
 // forcefully shutdown all instances, it's a async method which will not block
 func (r *LocalPluginRuntime) forcefullyShutdownAllInstances() {
 	for {
-		r.instanceLocker.RLock()
+		r.instanceLocker.Lock()
+		r.pruneStoppedInstancesLocked()
 		instances := r.instances
-		r.instanceLocker.RUnlock()
+		r.instanceLocker.Unlock()
 		if len(instances) == 0 {
 			break
 		}
@@ -172,9 +205,10 @@ func (r *LocalPluginRuntime) forcefullyShutdownAllInstances() {
 // otherwise new instances are going to start
 func (r *LocalPluginRuntime) stopAndWaitForAllInstancesToBeShutdown() {
 	for {
-		r.instanceLocker.RLock()
+		r.instanceLocker.Lock()
+		r.pruneStoppedInstancesLocked()
 		instances := r.instances
-		r.instanceLocker.RUnlock()
+		r.instanceLocker.Unlock()
 		if len(instances) == 0 {
 			break
 		}
@@ -190,7 +224,14 @@ func (r *LocalPluginRuntime) waitForAllInstancesToBeShutdown() {
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 
-	for len(r.instances) > 0 {
+	for {
+		r.instanceLocker.Lock()
+		r.pruneStoppedInstancesLocked()
+		remaining := len(r.instances)
+		r.instanceLocker.Unlock()
+		if remaining == 0 {
+			return
+		}
 		<-ticker.C
 	}
 }
