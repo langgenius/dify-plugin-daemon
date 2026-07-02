@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782222566940,
+  "lastUpdate": 1782963269713,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14098,6 +14098,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.8,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "10d95d32ad9aba53decccad9289ca23b0b0fa5b5",
+          "message": "fix: fix update plugin query plugin not use source (#763)\n\n* chore: log more detail about failed to get session info from cache\n\n* fix: fix update plugin query plugin not use source",
+          "timestamp": "2026-07-02T11:32:33+08:00",
+          "tree_id": "ebb686359d8c9a47b0599397ff0c57dca671aa77",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/10d95d32ad9aba53decccad9289ca23b0b0fa5b5"
+        },
+        "date": 1782963269414,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.48,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.48,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
