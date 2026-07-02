@@ -42,6 +42,7 @@ type LocalPluginRuntime struct {
 
 	// schedule status
 	scheduleStatus int32
+	scheduleKick   chan struct{}
 
 	// notifier
 	notifiers    []PluginRuntimeNotifier

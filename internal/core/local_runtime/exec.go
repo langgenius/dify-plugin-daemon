@@ -18,4 +18,7 @@ var (
 
 	// Runtime is not active
 	ErrRuntimeNotActive = errors.New("runtime is not active")
+
+	// Instance is already stopped and cannot accept new requests
+	ErrInstanceStopped = errors.New("plugin instance stopped")
 )
