@@ -35,7 +35,6 @@ type PluginInstance struct {
 	started  bool // mark the instance as started, it will be set to true when the first heartbeat is received
 	shutdown bool // mark the instance as shutdown, it will be set to true when stdout reader is closed
 	stopped  atomic.Bool
-	writeMu  sync.Mutex
 
 	// app config
 	appConfig *app.Config
@@ -378,9 +377,6 @@ func (s *PluginInstance) Write(data []byte) error {
 	if s.IsStopped() {
 		return ErrInstanceStopped
 	}
-
-	s.writeMu.Lock()
-	defer s.writeMu.Unlock()
 
 	// write bytes into instance's stdin
 	n, err := s.inWriter.Write(data)
