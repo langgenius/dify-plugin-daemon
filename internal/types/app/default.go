@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/langgenius/dify-cloud-kit/oss"
 	"golang.org/x/exp/constraints"
 )
@@ -47,6 +49,18 @@ func (config *Config) SetDefault() {
 		setDefaultString(&config.DBDefaultDatabase, "postgres")
 	case DB_TYPE_MYSQL:
 		setDefaultString(&config.DBDefaultDatabase, "mysql")
+	}
+
+	// Fallback to lowercase proxy env vars if uppercase ones are not set.
+	// Many Linux environments use lowercase http_proxy/https_proxy/no_proxy.
+	if config.HttpProxy == "" {
+		config.HttpProxy = os.Getenv("http_proxy")
+	}
+	if config.HttpsProxy == "" {
+		config.HttpsProxy = os.Getenv("https_proxy")
+	}
+	if config.NoProxy == "" {
+		config.NoProxy = os.Getenv("no_proxy")
 	}
 }
 
