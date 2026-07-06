@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783308610478,
+  "lastUpdate": 1783319784523,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14194,6 +14194,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.26,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "547607118@qq.com",
+            "name": "Kevin9703",
+            "username": "Kevin9703"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3b51c4d79c1c93f4015f4641e8a814ba52543007",
+          "message": "fix(local-runtime): recover stopped plugin instances (#766)\n\n* fix(local-runtime): recover stopped plugin instances\n\n* fix(local-runtime): remove unnecessary stdin write lock\n\n---------\n\nCo-authored-by: Kevin9703 <Kevin9703@users.noreply.github.com>\nCo-authored-by: kevin.zhang <kevin.zhang@ximalaya.com>",
+          "timestamp": "2026-07-06T14:34:21+08:00",
+          "tree_id": "ef628b3f5287b78f1758eaaaecc8dd43415bf746",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/3b51c4d79c1c93f4015f4641e8a814ba52543007"
+        },
+        "date": 1783319784164,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.53,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.53,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
