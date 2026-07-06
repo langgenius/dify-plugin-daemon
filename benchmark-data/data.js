@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782963269713,
+  "lastUpdate": 1783308610478,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14146,6 +14146,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.48,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "15772650@qq.com",
+            "name": "i晟",
+            "username": "isheng-eqi"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b4c7606333f5fe42fe91c93bd81a79c62b367220",
+          "message": "fix: fallback to lowercase proxy env vars (http_proxy, https_proxy, no_proxy) (#767)\n\nCurrently plugin_daemon only reads HTTP_PROXY/HTTPS_PROXY/NO_PROXY in\nuppercase via envconfig. Many Linux environments set these in lowercase\n(http_proxy/https_proxy/no_proxy), causing plugin installation failures\nbehind proxies.\n\nThis adds a fallback in SetDefault() that reads lowercase variants when\nthe uppercase ones are empty.\n\nFixes #18752",
+          "timestamp": "2026-07-06T11:28:25+08:00",
+          "tree_id": "57fe273a978e98950173d53b698d5b9973a3ae36",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b4c7606333f5fe42fe91c93bd81a79c62b367220"
+        },
+        "date": 1783308610172,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.26,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.26,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
