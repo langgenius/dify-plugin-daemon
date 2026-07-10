@@ -1,5 +1,7 @@
 ## Privacy Policy
 
+!!! Please fill in the privacy policy of the plugin.
+
 > Replace this template with the actual privacy policy of your plugin before publishing.
 > An empty or placeholder PRIVACY.md will cause your Marketplace submission to be rejected.
 > See the [Plugin Privacy Protection Guidelines](https://docs.dify.ai/plugins/publish-plugins/plugin-privacy-protection-guidelines) for details.
