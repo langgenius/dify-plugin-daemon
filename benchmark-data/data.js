@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783319784523,
+  "lastUpdate": 1783664045118,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14242,6 +14242,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.53,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "100913391+crazywoola@users.noreply.github.com",
+            "name": "Crazywoola",
+            "username": "crazywoola"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d98785fcf31845202ff53326748c5023657fec4",
+          "message": "feat(cli): align plugin init templates with marketplace review requirements (#769)\n\n* feat(cli): align plugin templates with marketplace review requirements\n\n- bump dify_plugin requirement to >=0.9.0,<0.10.0\n- fix README template rendering empty description ({{ .Description }} -> {{ .PluginDescription }})\n- turn PRIVACY.md into a structured privacy policy skeleton\n- add setup/usage sections and English-only notice to README templates (en, zh_Hans, ja_JP, pt_BR)\n- add marketplace submission checklist to GUIDE.md\n- warn when author name contains 'langgenius' or 'dify'\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* feat(cli): scaffold plugins with uv pyproject.toml instead of requirements.txt\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* fix(cli): restore privacy policy placeholder line in PRIVACY.md template\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* fix(cli): scaffold both requirements.txt and pyproject.toml, revert author warning\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>",
+          "timestamp": "2026-07-10T14:12:00+08:00",
+          "tree_id": "d05b67f2cd537b841471d76b86cc60022c4d47d7",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/3d98785fcf31845202ff53326748c5023657fec4"
+        },
+        "date": 1783664044775,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.84,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.84,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
