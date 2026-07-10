@@ -21,8 +21,8 @@ You can create:
 
 ### Requirements
 - Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
-- Dependencies: `uv sync` (declared in `pyproject.toml`, add more with `uv add <package>`)
+- Dependencies: `uv sync` (from `pyproject.toml`, recommended) or `pip install -r requirements.txt`
+- When adding a dependency, declare it in both `pyproject.toml` and `requirements.txt` and keep them in sync
 
 ## Development Process
 
@@ -149,4 +149,4 @@ Plugin PRs to [langgenius/dify-plugins](https://github.com/langgenius/dify-plugi
 - [ ] The plugin version is not already published on the Marketplace
 - [ ] `README.md` contains no Chinese characters — put translations in localized files like `README_zh_Hans.md` ([multilingual README guide](https://docs.dify.ai/en/develop-plugin/features-and-specs/plugin-types/multilingual-readme))
 - [ ] `PRIVACY.md` is filled in, not the generated placeholder
-- [ ] Dependencies install successfully (`uv sync`) and `dify_plugin` is `>= 0.9.0`
+- [ ] `pip install -r requirements.txt` succeeds, `dify_plugin` is `>= 0.9.0`, and `pyproject.toml` stays in sync with it

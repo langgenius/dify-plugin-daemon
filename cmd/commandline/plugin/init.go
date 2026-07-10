@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	_ "embed"
@@ -601,10 +600,6 @@ func (m model) createPlugin() {
 	}
 
 	success = true
-
-	if strings.Contains(manifest.Author, "langgenius") || strings.Contains(manifest.Author, "dify") {
-		log.Warn("author name contains 'langgenius' or 'dify', such plugins will be rejected when submitted to the Dify Marketplace")
-	}
 
 	log.Info("plugin created successfully", "name", manifest.Name, "guide", fmt.Sprintf("%s/GUIDE.md", manifest.Name))
 }
