@@ -21,7 +21,8 @@ You can create:
 
 ### Requirements
 - Python 3.11+
-- Dependencies: `pip install -r requirements.txt`
+- [uv](https://docs.astral.sh/uv/) package manager
+- Dependencies: `uv sync` (declared in `pyproject.toml`, add more with `uv add <package>`)
 
 ## Development Process
 
@@ -103,7 +104,7 @@ Study these examples to understand plugin implementation:
 
 2. Run your plugin: 
    ```bash
-   python -m main
+   uv run python -m main
    ```
 
 3. Refresh your Dify instance to see the plugin (marked as "debugging")
@@ -148,4 +149,4 @@ Plugin PRs to [langgenius/dify-plugins](https://github.com/langgenius/dify-plugi
 - [ ] The plugin version is not already published on the Marketplace
 - [ ] `README.md` contains no Chinese characters — put translations in localized files like `README_zh_Hans.md` ([multilingual README guide](https://docs.dify.ai/en/develop-plugin/features-and-specs/plugin-types/multilingual-readme))
 - [ ] `PRIVACY.md` is filled in, not the generated placeholder
-- [ ] `pip install -r requirements.txt` succeeds and `dify_plugin` is `>= 0.9.0`
+- [ ] Dependencies install successfully (`uv sync`) and `dify_plugin` is `>= 0.9.0`

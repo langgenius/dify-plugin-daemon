@@ -16,8 +16,8 @@ import (
 //go:embed templates/python/main.py
 var PYTHON_ENTRYPOINT_TEMPLATE []byte
 
-//go:embed templates/python/requirements.txt
-var PYTHON_REQUIREMENTS_TEMPLATE []byte
+//go:embed templates/python/pyproject.toml
+var PYTHON_PYPROJECT_TEMPLATE []byte
 
 //go:embed templates/python/tool_provider.yaml
 var PYTHON_TOOL_PROVIDER_TEMPLATE []byte
@@ -174,8 +174,12 @@ func createPythonEnvironment(
 		return err
 	}
 
-	requirementsFilePath := filepath.Join(root, "requirements.txt")
-	if err := os.WriteFile(requirementsFilePath, PYTHON_REQUIREMENTS_TEMPLATE, 0o644); err != nil {
+	pyproject, err := renderTemplate(PYTHON_PYPROJECT_TEMPLATE, manifest, []string{})
+	if err != nil {
+		return err
+	}
+
+	if err := writeFile(filepath.Join(root, "pyproject.toml"), pyproject); err != nil {
 		return err
 	}
 
