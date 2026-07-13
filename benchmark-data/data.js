@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783664045118,
+  "lastUpdate": 1783911390250,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14290,6 +14290,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.84,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "42c2228fbf4fd8b4a0d7d0290edc34c76bdfcb7f",
+          "message": "fix: inject uv related environment variables (#770)",
+          "timestamp": "2026-07-13T10:54:16+08:00",
+          "tree_id": "2ba457367b57d82d436d163a80e6342865ed9b7e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/42c2228fbf4fd8b4a0d7d0290edc34c76bdfcb7f"
+        },
+        "date": 1783911389870,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.34,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.34,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
