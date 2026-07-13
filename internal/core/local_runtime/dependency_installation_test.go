@@ -4,12 +4,46 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/stretchr/testify/require"
 )
+
+func TestBuildUVCommandEnv(t *testing.T) {
+	const (
+		virtualEnvPath = "/tmp/plugin/.venv"
+		uvCacheDir     = "/tmp/plugin/.uv-cache"
+	)
+
+	t.Setenv("PATH", "/test/bin")
+	t.Setenv("UV_INDEX_NEXUS_USERNAME", "nexus-user")
+	t.Setenv("UV_INDEX_NEXUS_PASSWORD", "nexus-password")
+	t.Setenv("SSL_CERT_FILE", "/tmp/certs/ca.pem")
+	t.Setenv("REQUESTS_CA_BUNDLE", "/tmp/certs/requests-ca.pem")
+	t.Setenv("UNRELATED_SECRET", "must-not-be-inherited")
+
+	env := buildUVCommandEnv(virtualEnvPath, uvCacheDir)
+	envByKey := make(map[string]string, len(env))
+	for _, item := range env {
+		key, value, found := strings.Cut(item, "=")
+		require.True(t, found)
+		envByKey[key] = value
+	}
+
+	require.Equal(t, map[string]string{
+		"VIRTUAL_ENV":             virtualEnvPath,
+		"PATH":                    "/test/bin",
+		"UV_CACHE_DIR":            uvCacheDir,
+		"UV_INDEX_NEXUS_USERNAME": "nexus-user",
+		"UV_INDEX_NEXUS_PASSWORD": "nexus-password",
+		"SSL_CERT_FILE":           "/tmp/certs/ca.pem",
+		"REQUESTS_CA_BUNDLE":      "/tmp/certs/requests-ca.pem",
+	}, envByKey)
+	require.NotContains(t, envByKey, "UNRELATED_SECRET")
+}
 
 func copyTestData(t *testing.T, src, dst string) {
 	t.Helper()

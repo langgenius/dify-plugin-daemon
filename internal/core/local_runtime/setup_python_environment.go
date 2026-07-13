@@ -203,8 +203,8 @@ func (p *LocalPluginRuntime) installDependencies(
 	uvCacheDir := path.Join(p.appConfig.PluginWorkingPath, ".uv-cache")
 	cmd := exec.CommandContext(ctx, uvPath, args...)
 	parent.SetAttributes(attribute.String("uv.path", uvPath), attribute.StringSlice("uv.args", args))
-	cmd.Env = append(cmd.Env, "VIRTUAL_ENV="+virtualEnvPath, "PATH="+os.Getenv("PATH"))
-	cmd.Env = append(cmd.Env, "UV_CACHE_DIR="+uvCacheDir)
+
+	cmd.Env = buildUVCommandEnv(virtualEnvPath, uvCacheDir)
 	if p.appConfig.HttpProxy != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", p.appConfig.HttpProxy))
 	}
@@ -330,6 +330,27 @@ func (p *LocalPluginRuntime) installDependencies(
 	}
 
 	return nil
+}
+
+func buildUVCommandEnv(virtualEnvPath, uvCacheDir string) []string {
+	env := []string{
+		"VIRTUAL_ENV=" + virtualEnvPath,
+		"PATH=" + os.Getenv("PATH"),
+		"UV_CACHE_DIR=" + uvCacheDir,
+	}
+
+	for _, key := range []string{
+		"UV_INDEX_NEXUS_USERNAME",
+		"UV_INDEX_NEXUS_PASSWORD",
+		"SSL_CERT_FILE",
+		"REQUESTS_CA_BUNDLE",
+	} {
+		if value, ok := os.LookupEnv(key); ok {
+			env = append(env, key+"="+value)
+		}
+	}
+
+	return env
 }
 
 type PythonVirtualEnvironment struct {
