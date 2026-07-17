@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783911390250,
+  "lastUpdate": 1784270748247,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14338,6 +14338,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.34,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "53913724ab6c11ee21cacc4a21707244c519395e",
+          "message": "feat: api /transaction support gzip (#772)",
+          "timestamp": "2026-07-17T14:43:29+08:00",
+          "tree_id": "91cc8e095ea16f3f122dcb20495bd7371bf68074",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/53913724ab6c11ee21cacc4a21707244c519395e"
+        },
+        "date": 1784270747851,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.4,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.4,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
