@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation/transaction"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/controllers"
@@ -150,6 +151,7 @@ func (appRef *App) serverlessTransactionGroup(group *gin.RouterGroup, config *ap
 		)
 		group.POST(
 			"/transaction",
+			gzip.Gzip(gzip.DefaultCompression),
 			service.HandleServerlessPluginTransaction(appRef.serverlessTransactionHandler),
 		)
 	}
