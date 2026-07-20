@@ -557,6 +557,8 @@ type ModelProviderCredentialFormSchema struct {
 	Required    bool                            `json:"required" yaml:"required"`
 	Default     *string                         `json:"default" yaml:"default" validate:"omitempty,lt=256"`
 	Options     []ModelProviderFormOption       `json:"options" yaml:"options" validate:"omitempty,lte=128,dive"`
+	Help        *I18nObject                     `json:"help" yaml:"help" validate:"omitempty"`
+	URL         *string                         `json:"url" yaml:"url" validate:"omitempty"`
 	Placeholder *I18nObject                     `json:"placeholder" yaml:"placeholder" validate:"omitempty"`
 	MaxLength   int                             `json:"max_length" yaml:"max_length"`
 	ShowOn      []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
