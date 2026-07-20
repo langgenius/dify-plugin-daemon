@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784270748247,
+  "lastUpdate": 1784541599703,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14386,6 +14386,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.4,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hjlarry@163.com",
+            "name": "非法操作",
+            "username": "hjlarry"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "14877f8f8b6dd63d3cec760411a875cc8e077547",
+          "message": "fix: prefer debug runtime in serverless mode (#773)",
+          "timestamp": "2026-07-20T17:58:19+08:00",
+          "tree_id": "64739476e49e8c194cfd607958c6724bd8eb34f1",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/14877f8f8b6dd63d3cec760411a875cc8e077547"
+        },
+        "date": 1784541599311,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.5,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.5,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
