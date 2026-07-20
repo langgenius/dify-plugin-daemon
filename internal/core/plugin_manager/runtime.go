@@ -1,6 +1,9 @@
 package plugin_manager
 
 import (
+	"errors"
+
+	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -9,11 +12,19 @@ import (
 func (p *PluginManager) GetPluginRuntime(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (plugin_entities.PluginRuntimeSessionIOInterface, error) {
+	runtime, err := p.controlPanel.GetPluginRuntime(pluginUniqueIdentifier)
+	if err == nil {
+		return runtime, nil
+	}
+	if !errors.Is(err, controlpanel.ErrPluginRuntimeNotFound) {
+		return nil, err
+	}
+
 	if p.config.Platform == app.PLATFORM_SERVERLESS {
 		return p.getServerlessPluginRuntime(pluginUniqueIdentifier)
 	}
 
-	return p.controlPanel.GetPluginRuntime(pluginUniqueIdentifier)
+	return nil, err
 }
 
 func (p *PluginManager) RemoveLocalPlugin(
