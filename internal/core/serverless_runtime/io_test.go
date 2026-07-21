@@ -436,6 +436,137 @@ func TestWrite_NonSuccessResponseSendsRuntimeError(t *testing.T) {
 	}
 }
 
+func TestWrite_SuccessResponseWithLambdaErrorBodySendsRuntimeError(t *testing.T) {
+	received := collectServerlessWriteMessages(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("x-amzn-RequestId", "lambda-request-id")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"errorType":"Runtime.ExitError","errorMessage":"Runtime exited"}`))
+	})
+
+	runtimeError := requireRuntimeError(t, received)
+	if runtimeError.Message != "Plugin runtime request failed: Runtime.ExitError" {
+		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
+	}
+	if runtimeError.Args["request_id"] != "lambda-request-id" {
+		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
+	}
+	if runtimeError.Args["status_code"] != float64(http.StatusOK) {
+		t.Errorf("expected status code 200, got %#v", runtimeError.Args["status_code"])
+	}
+}
+
+func TestWrite_EmptySuccessResponseSendsRuntimeError(t *testing.T) {
+	received := collectServerlessWriteMessages(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("x-amzn-RequestId", "lambda-request-id")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	runtimeError := requireRuntimeError(t, received)
+	if runtimeError.Message != "Plugin runtime request failed: no valid session response" {
+		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
+	}
+	if runtimeError.Args["request_id"] != "lambda-request-id" {
+		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
+	}
+	if runtimeError.Args["status_code"] != float64(http.StatusOK) {
+		t.Errorf("expected status code 200, got %#v", runtimeError.Args["status_code"])
+	}
+}
+
+func TestWrite_SuccessResponseWithSessionEventStillEndsNormally(t *testing.T) {
+	received := collectServerlessWriteMessages(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(
+			`{"session_id":"test-session","event":"session","data":{"type":"stream","data":{"result":true}}}`,
+		))
+	})
+
+	if len(received) != 2 {
+		t.Fatalf("expected stream and end messages, got %d: %#v", len(received), received)
+	}
+	if received[0].Type != plugin_entities.SESSION_MESSAGE_TYPE_STREAM {
+		t.Fatalf("expected stream message, got %s", received[0].Type)
+	}
+	if received[1].Type != plugin_entities.SESSION_MESSAGE_TYPE_END {
+		t.Fatalf("expected end message, got %s", received[1].Type)
+	}
+}
+
+func collectServerlessWriteMessages(t *testing.T, handler http.HandlerFunc) []plugin_entities.SessionMessage {
+	t.Helper()
+	routine.InitPool(1)
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	runtime := &ServerlessPluginRuntime{
+		Client:                    server.Client(),
+		LambdaURL:                 server.URL,
+		MaxRetryTimes:             1,
+		PluginMaxExecutionTimeout: 10,
+		RuntimeBufferSize:         1024,
+		RuntimeMaxBufferSize:      1024,
+		listeners:                 mapping.Map[string, *entities.Broadcast[plugin_entities.SessionMessage]]{},
+	}
+
+	listener, err := runtime.Listen("test-session")
+	if err != nil {
+		t.Fatalf("listen failed: %v", err)
+	}
+
+	messages := make(chan plugin_entities.SessionMessage, 4)
+	done := make(chan struct{})
+	listener.Listen(func(message plugin_entities.SessionMessage) {
+		messages <- message
+	})
+	listener.OnClose(func() {
+		close(done)
+	})
+
+	if err := runtime.Write(
+		"test-session",
+		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
+		[]byte(`{"credentials":{"api_key":"secret"}}`),
+	); err != nil {
+		t.Fatalf("write failed: %v", err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for serverless response")
+	}
+	close(messages)
+
+	received := make([]plugin_entities.SessionMessage, 0, len(messages))
+	for message := range messages {
+		received = append(received, message)
+	}
+	return received
+}
+
+func requireRuntimeError(
+	t *testing.T,
+	received []plugin_entities.SessionMessage,
+) plugin_entities.ErrorResponse {
+	t.Helper()
+	if len(received) != 1 {
+		t.Fatalf("expected one terminal message, got %d: %#v", len(received), received)
+	}
+	if received[0].Type != plugin_entities.SESSION_MESSAGE_TYPE_ERROR {
+		t.Fatalf("expected runtime error, got %s", received[0].Type)
+	}
+
+	var runtimeError plugin_entities.ErrorResponse
+	if err := json.Unmarshal(received[0].Data, &runtimeError); err != nil {
+		t.Fatalf("unmarshal runtime error: %v", err)
+	}
+	if runtimeError.ErrorType != "PluginRuntimeError" {
+		t.Errorf("expected PluginRuntimeError, got %s", runtimeError.ErrorType)
+	}
+	return runtimeError
+}
+
 func TestInvokeServerlessWithRetry_BodyClosedOnRetry(t *testing.T) {
 	attemptCount := atomic.Int32{}
 	bodiesClosed := atomic.Int32{}
