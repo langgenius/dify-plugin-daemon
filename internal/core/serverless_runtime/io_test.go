@@ -1,6 +1,7 @@
 package serverless_runtime
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,9 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/mapping"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
 func TestShouldRetryStatusCode(t *testing.T) {
@@ -350,6 +353,86 @@ func TestListen(t *testing.T) {
 
 	if stored != broadcast {
 		t.Error("Stored listener should match returned broadcast")
+	}
+}
+
+func TestWrite_NonSuccessResponseSendsRuntimeError(t *testing.T) {
+	routine.InitPool(1)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("x-amzn-ErrorType", "Runtime.ExitError")
+		w.Header().Set("x-amzn-RequestId", "lambda-request-id")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"errorType":"Runtime.ExitError"}`))
+	}))
+	defer server.Close()
+
+	runtime := &ServerlessPluginRuntime{
+		Client:                    server.Client(),
+		LambdaURL:                 server.URL,
+		MaxRetryTimes:             1,
+		PluginMaxExecutionTimeout: 10,
+		RuntimeBufferSize:         1024,
+		RuntimeMaxBufferSize:      1024,
+		listeners:                 mapping.Map[string, *entities.Broadcast[plugin_entities.SessionMessage]]{},
+	}
+
+	listener, err := runtime.Listen("test-session")
+	if err != nil {
+		t.Fatalf("listen failed: %v", err)
+	}
+
+	messages := make(chan plugin_entities.SessionMessage, 2)
+	done := make(chan struct{})
+	listener.Listen(func(message plugin_entities.SessionMessage) {
+		messages <- message
+	})
+	listener.OnClose(func() {
+		close(done)
+	})
+
+	if err := runtime.Write(
+		"test-session",
+		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_TOOL_CREDENTIALS,
+		[]byte(`{"credentials":{"api_key":"secret"}}`),
+	); err != nil {
+		t.Fatalf("write failed: %v", err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for serverless response")
+	}
+	close(messages)
+
+	received := make([]plugin_entities.SessionMessage, 0, len(messages))
+	for message := range messages {
+		received = append(received, message)
+	}
+
+	if len(received) != 1 {
+		t.Fatalf("expected one terminal message, got %d: %#v", len(received), received)
+	}
+	if received[0].Type != plugin_entities.SESSION_MESSAGE_TYPE_ERROR {
+		t.Fatalf("expected runtime error, got %s", received[0].Type)
+	}
+
+	var runtimeError plugin_entities.ErrorResponse
+	if err := json.Unmarshal(received[0].Data, &runtimeError); err != nil {
+		t.Fatalf("unmarshal runtime error: %v", err)
+	}
+	if runtimeError.ErrorType != "PluginRuntimeError" {
+		t.Errorf("expected PluginRuntimeError, got %s", runtimeError.ErrorType)
+	}
+	if runtimeError.Message != "Plugin runtime request failed: Runtime.ExitError" {
+		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
+	}
+	if runtimeError.Args["request_id"] != "lambda-request-id" {
+		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
+	}
+	if runtimeError.Args["status_code"] != float64(http.StatusInternalServerError) {
+		t.Errorf("expected status code 500, got %#v", runtimeError.Args["status_code"])
 	}
 }
 

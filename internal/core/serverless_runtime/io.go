@@ -3,6 +3,7 @@ package serverless_runtime
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,6 +19,41 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
+
+const serverlessErrorResponseLimit = 4 * 1024
+
+type serverlessErrorResponse struct {
+	ErrorType string `json:"errorType"`
+}
+
+func buildServerlessRuntimeError(response *http.Response) plugin_entities.ErrorResponse {
+	errorType := response.Header.Get("x-amzn-ErrorType")
+	if errorType == "" && response.Body != nil {
+		body, err := io.ReadAll(io.LimitReader(response.Body, serverlessErrorResponseLimit))
+		if err == nil {
+			var errorResponse serverlessErrorResponse
+			if json.Unmarshal(body, &errorResponse) == nil {
+				errorType = errorResponse.ErrorType
+			}
+		}
+	}
+	if errorType == "" {
+		errorType = response.Status
+	}
+
+	args := map[string]any{
+		"status_code": response.StatusCode,
+	}
+	if requestID := response.Header.Get("x-amzn-RequestId"); requestID != "" {
+		args["request_id"] = requestID
+	}
+
+	return plugin_entities.ErrorResponse{
+		ErrorType: "PluginRuntimeError",
+		Message:   fmt.Sprintf("Plugin runtime request failed: %s", errorType),
+		Args:      args,
+	}
+}
 
 func (r *ServerlessPluginRuntime) Listen(sessionId string) (
 	*entities.Broadcast[plugin_entities.SessionMessage],
@@ -131,16 +167,22 @@ func (r *ServerlessPluginRuntime) Write(
 		routinepkg.RoutineLabelKeySessionID: sessionId,
 		routinepkg.RoutineLabelKeyLambdaURL: r.LambdaURL,
 	}, func() {
-		defer r.listeners.Delete(sessionId)
-		defer l.Close()
-		defer l.Send(plugin_entities.SessionMessage{
-			Type: plugin_entities.SESSION_MESSAGE_TYPE_END,
-			Data: []byte(""),
-		})
+		sendEnd := true
+		defer func() {
+			if sendEnd {
+				l.Send(plugin_entities.SessionMessage{
+					Type: plugin_entities.SESSION_MESSAGE_TYPE_END,
+					Data: []byte(""),
+				})
+			}
+			l.Close()
+			r.listeners.Delete(sessionId)
+		}()
 
 		url += "?action=" + string(action)
 		response, err := r.invokeServerlessWithRetry(url, sessionId, data)
 		if err != nil {
+			sendEnd = false
 			l.Send(plugin_entities.SessionMessage{
 				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
 				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
@@ -151,8 +193,17 @@ func (r *ServerlessPluginRuntime) Write(
 			return
 		}
 
-		scanner := bufio.NewScanner(response.Body)
 		defer response.Body.Close()
+		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			sendEnd = false
+			l.Send(plugin_entities.SessionMessage{
+				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+				Data: parser.MarshalJsonBytes(buildServerlessRuntimeError(response)),
+			})
+			return
+		}
+
+		scanner := bufio.NewScanner(response.Body)
 
 		scanner.Buffer(make([]byte, r.RuntimeBufferSize), r.RuntimeMaxBufferSize)
 
