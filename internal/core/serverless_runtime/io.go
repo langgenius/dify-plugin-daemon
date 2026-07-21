@@ -24,10 +24,12 @@ import (
 const serverlessResponsePreviewLimit = 4 * 1024
 
 type serverlessErrorResponse struct {
-	ErrorType          string `json:"errorType"`
-	ErrorTypeSnakeCase string `json:"error_type"`
-	RequestID          string `json:"requestId"`
-	RequestIDSnakeCase string `json:"request_id"`
+	ErrorType             string `json:"errorType"`
+	ErrorTypeSnakeCase    string `json:"error_type"`
+	ErrorMessage          string `json:"errorMessage"`
+	ErrorMessageSnakeCase string `json:"error_message"`
+	RequestID             string `json:"requestId"`
+	RequestIDSnakeCase    string `json:"request_id"`
 }
 
 func (e serverlessErrorResponse) errorType() string {
@@ -42,6 +44,13 @@ func (e serverlessErrorResponse) requestID() string {
 		return e.RequestID
 	}
 	return e.RequestIDSnakeCase
+}
+
+func (e serverlessErrorResponse) errorMessage() string {
+	if e.ErrorMessage != "" {
+		return e.ErrorMessage
+	}
+	return e.ErrorMessageSnakeCase
 }
 
 type serverlessResponsePreview struct {
@@ -108,6 +117,7 @@ func buildServerlessRuntimeError(
 	fallbackReason string,
 ) plugin_entities.ErrorResponse {
 	errorType, requestID := serverlessRuntimeErrorDetails(response, responsePreview)
+	errorMessage := parseServerlessErrorResponse(responsePreview).errorMessage()
 	if errorType == "" {
 		errorType = fallbackReason
 	}
@@ -121,10 +131,14 @@ func buildServerlessRuntimeError(
 	if requestID != "" {
 		args["request_id"] = requestID
 	}
+	message := fmt.Sprintf("Plugin runtime request failed: %s", errorType)
+	if errorMessage != "" {
+		message += ": " + errorMessage
+	}
 
 	return plugin_entities.ErrorResponse{
 		ErrorType: "PluginRuntimeError",
-		Message:   fmt.Sprintf("Plugin runtime request failed: %s", errorType),
+		Message:   message,
 		Args:      args,
 	}
 }

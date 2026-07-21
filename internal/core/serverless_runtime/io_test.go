@@ -444,7 +444,7 @@ func TestWrite_SuccessResponseWithLambdaErrorBodySendsRuntimeError(t *testing.T)
 	})
 
 	runtimeError := requireRuntimeError(t, received)
-	if runtimeError.Message != "Plugin runtime request failed: Runtime.ExitError" {
+	if runtimeError.Message != "Plugin runtime request failed: Runtime.ExitError: Runtime exited" {
 		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
 	}
 	if runtimeError.Args["request_id"] != "lambda-request-id" {
