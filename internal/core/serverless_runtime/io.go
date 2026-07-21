@@ -283,10 +283,9 @@ func (r *ServerlessPluginRuntime) Write(
 		}
 
 		defer response.Body.Close()
-		if response.StatusCode < 200 || response.StatusCode >= 300 {
-			responseBody, responseBodyErr := readServerlessResponseBody(response.Body)
+		logFailure := func(message string, responseBody []byte, responseBodyErr error) {
 			logServerlessResponseFailure(
-				"serverless runtime returned non-success HTTP response",
+				message,
 				sessionId,
 				action,
 				len(data),
@@ -294,22 +293,31 @@ func (r *ServerlessPluginRuntime) Write(
 				responseBody,
 				responseBodyErr,
 			)
-			sendError(buildServerlessRuntimeError(response, responseBody, response.Status))
+		}
+		sendRuntimeError := func(message string, responseBody []byte, responseBodyErr error, fallbackReason string) {
+			logFailure(message, responseBody, responseBodyErr)
+			sendError(buildServerlessRuntimeError(response, responseBody, fallbackReason))
+		}
+
+		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			responseBody, responseBodyErr := readServerlessResponseBody(response.Body)
+			sendRuntimeError(
+				"serverless runtime returned non-success HTTP response",
+				responseBody,
+				responseBodyErr,
+				response.Status,
+			)
 			return
 		}
 
 		if response.Header.Get("x-amzn-ErrorType") != "" {
 			responseBody, responseBodyErr := readServerlessResponseBody(response.Body)
-			logServerlessResponseFailure(
+			sendRuntimeError(
 				"serverless runtime returned Lambda error headers with successful HTTP status",
-				sessionId,
-				action,
-				len(data),
-				response,
 				responseBody,
 				responseBodyErr,
+				"Lambda runtime error",
 			)
-			sendError(buildServerlessRuntimeError(response, responseBody, "Lambda runtime error"))
 			return
 		}
 
@@ -317,9 +325,8 @@ func (r *ServerlessPluginRuntime) Write(
 
 		scanner.Buffer(make([]byte, r.RuntimeBufferSize), r.RuntimeMaxBufferSize)
 
-		sessionAlive := true
 		hasSessionEvent := false
-		for scanner.Scan() && sessionAlive {
+		for sendEnd && scanner.Scan() {
 			line := scanner.Bytes()
 
 			if len(line) == 0 {
@@ -328,16 +335,12 @@ func (r *ServerlessPluginRuntime) Write(
 
 			lambdaError := parseServerlessErrorResponse(line)
 			if lambdaError.ErrorType != "" {
-				logServerlessResponseFailure(
+				sendRuntimeError(
 					"serverless runtime returned Lambda error payload with successful HTTP status",
-					sessionId,
-					action,
-					len(data),
-					response,
 					line,
 					nil,
+					"Lambda runtime error",
 				)
-				sendError(buildServerlessRuntimeError(response, line, "Lambda runtime error"))
 				break
 			}
 
@@ -347,12 +350,8 @@ func (r *ServerlessPluginRuntime) Write(
 				func(session_id string, sessionData []byte) {
 					sessionMessage, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](sessionData)
 					if err != nil {
-						logServerlessResponseFailure(
+						logFailure(
 							"serverless runtime returned an invalid session message",
-							sessionId,
-							action,
-							len(data),
-							response,
 							line,
 							nil,
 						)
@@ -360,7 +359,6 @@ func (r *ServerlessPluginRuntime) Write(
 							ErrorType: "PluginDaemonInnerError",
 							Message:   fmt.Sprintf("failed to parse session message %s, err: %v", line, err),
 						})
-						sessionAlive = false
 						return
 					}
 					hasSessionEvent = true
@@ -368,12 +366,8 @@ func (r *ServerlessPluginRuntime) Write(
 				},
 				func() {},
 				func(err string) {
-					logServerlessResponseFailure(
+					logFailure(
 						"serverless runtime returned an invalid plugin event",
-						sessionId,
-						action,
-						len(data),
-						response,
 						line,
 						nil,
 					)
@@ -381,19 +375,14 @@ func (r *ServerlessPluginRuntime) Write(
 						ErrorType: "PluginDaemonInnerError",
 						Message:   fmt.Sprintf("encountered an error: %v", err),
 					})
-					sessionAlive = false
 				},
 				func(plugin_entities.PluginLogEvent) {},
 			)
 		}
 
 		if err := scanner.Err(); err != nil {
-			logServerlessResponseFailure(
+			logFailure(
 				"serverless runtime response body could not be read",
-				sessionId,
-				action,
-				len(data),
-				response,
 				nil,
 				err,
 			)
@@ -405,20 +394,12 @@ func (r *ServerlessPluginRuntime) Write(
 		}
 
 		if !hasSessionEvent && sendEnd {
-			logServerlessResponseFailure(
+			sendRuntimeError(
 				"serverless runtime returned no valid session response",
-				sessionId,
-				action,
-				len(data),
-				response,
 				nil,
-				nil,
-			)
-			sendError(buildServerlessRuntimeError(
-				response,
 				nil,
 				"no valid session response",
-			))
+			)
 		}
 	})
 

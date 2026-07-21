@@ -364,16 +364,12 @@ func TestWrite_NonSuccessResponseSendsRuntimeError(t *testing.T) {
 		_, _ = w.Write([]byte(`{"errorType":"Runtime.ExitError"}`))
 	})
 
-	runtimeError := requireRuntimeError(t, received)
-	if runtimeError.Message != "Plugin runtime request failed: Runtime.ExitError" {
-		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
-	}
-	if runtimeError.Args["request_id"] != "lambda-request-id" {
-		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
-	}
-	if runtimeError.Args["status_code"] != float64(http.StatusInternalServerError) {
-		t.Errorf("expected status code 500, got %#v", runtimeError.Args["status_code"])
-	}
+	requireRuntimeError(
+		t,
+		received,
+		"Plugin runtime request failed: Runtime.ExitError",
+		http.StatusInternalServerError,
+	)
 }
 
 func TestWrite_SuccessResponseWithLambdaErrorBodySendsRuntimeError(t *testing.T) {
@@ -383,16 +379,12 @@ func TestWrite_SuccessResponseWithLambdaErrorBodySendsRuntimeError(t *testing.T)
 		_, _ = w.Write([]byte(`{"errorType":"Runtime.ExitError","errorMessage":"Runtime exited"}`))
 	})
 
-	runtimeError := requireRuntimeError(t, received)
-	if runtimeError.Message != "Plugin runtime request failed: Runtime.ExitError: Runtime exited" {
-		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
-	}
-	if runtimeError.Args["request_id"] != "lambda-request-id" {
-		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
-	}
-	if runtimeError.Args["status_code"] != float64(http.StatusOK) {
-		t.Errorf("expected status code 200, got %#v", runtimeError.Args["status_code"])
-	}
+	requireRuntimeError(
+		t,
+		received,
+		"Plugin runtime request failed: Runtime.ExitError: Runtime exited",
+		http.StatusOK,
+	)
 }
 
 func TestWrite_EmptySuccessResponseSendsRuntimeError(t *testing.T) {
@@ -401,16 +393,12 @@ func TestWrite_EmptySuccessResponseSendsRuntimeError(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	runtimeError := requireRuntimeError(t, received)
-	if runtimeError.Message != "Plugin runtime request failed: no valid session response" {
-		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
-	}
-	if runtimeError.Args["request_id"] != "lambda-request-id" {
-		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
-	}
-	if runtimeError.Args["status_code"] != float64(http.StatusOK) {
-		t.Errorf("expected status code 200, got %#v", runtimeError.Args["status_code"])
-	}
+	requireRuntimeError(
+		t,
+		received,
+		"Plugin runtime request failed: no valid session response",
+		http.StatusOK,
+	)
 }
 
 func TestWrite_SuccessResponseWithSessionEventStillEndsNormally(t *testing.T) {
@@ -488,7 +476,9 @@ func collectServerlessWriteMessages(t *testing.T, handler http.HandlerFunc) []pl
 func requireRuntimeError(
 	t *testing.T,
 	received []plugin_entities.SessionMessage,
-) plugin_entities.ErrorResponse {
+	wantMessage string,
+	wantStatusCode int,
+) {
 	t.Helper()
 	if len(received) != 1 {
 		t.Fatalf("expected one terminal message, got %d: %#v", len(received), received)
@@ -504,7 +494,15 @@ func requireRuntimeError(
 	if runtimeError.ErrorType != "PluginRuntimeError" {
 		t.Errorf("expected PluginRuntimeError, got %s", runtimeError.ErrorType)
 	}
-	return runtimeError
+	if runtimeError.Message != wantMessage {
+		t.Errorf("unexpected runtime error message: %s", runtimeError.Message)
+	}
+	if runtimeError.Args["request_id"] != "lambda-request-id" {
+		t.Errorf("expected Lambda request ID, got %#v", runtimeError.Args["request_id"])
+	}
+	if runtimeError.Args["status_code"] != float64(wantStatusCode) {
+		t.Errorf("expected status code %d, got %#v", wantStatusCode, runtimeError.Args["status_code"])
+	}
 }
 
 func TestInvokeServerlessWithRetry_BodyClosedOnRetry(t *testing.T) {
