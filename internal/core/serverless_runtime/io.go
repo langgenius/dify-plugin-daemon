@@ -21,119 +21,60 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 )
 
-const serverlessResponsePreviewLimit = 4 * 1024
+const serverlessErrorResponseLimit = 4 * 1024
 
 type serverlessErrorResponse struct {
-	ErrorType             string `json:"errorType"`
-	ErrorTypeSnakeCase    string `json:"error_type"`
-	ErrorMessage          string `json:"errorMessage"`
-	ErrorMessageSnakeCase string `json:"error_message"`
-	RequestID             string `json:"requestId"`
-	RequestIDSnakeCase    string `json:"request_id"`
-}
-
-func (e serverlessErrorResponse) errorType() string {
-	if e.ErrorType != "" {
-		return e.ErrorType
-	}
-	return e.ErrorTypeSnakeCase
-}
-
-func (e serverlessErrorResponse) requestID() string {
-	if e.RequestID != "" {
-		return e.RequestID
-	}
-	return e.RequestIDSnakeCase
-}
-
-func (e serverlessErrorResponse) errorMessage() string {
-	if e.ErrorMessage != "" {
-		return e.ErrorMessage
-	}
-	return e.ErrorMessageSnakeCase
-}
-
-type serverlessResponsePreview struct {
-	data      []byte
-	bytesRead int
-}
-
-func (p *serverlessResponsePreview) Write(data []byte) (int, error) {
-	written := len(data)
-	p.bytesRead += written
-	remaining := serverlessResponsePreviewLimit - len(p.data)
-	if remaining > 0 {
-		if len(data) > remaining {
-			data = data[:remaining]
-		}
-		p.data = append(p.data, data...)
-	}
-	return written, nil
-}
-
-func (p *serverlessResponsePreview) bytes() []byte {
-	return p.data
-}
-
-func (p *serverlessResponsePreview) string() string {
-	return string(bytes.TrimSpace(p.data))
-}
-
-func (p *serverlessResponsePreview) truncated() bool {
-	return p.bytesRead > len(p.data)
-}
-
-func readServerlessResponsePreview(reader io.Reader) (serverlessResponsePreview, error) {
-	preview := serverlessResponsePreview{}
-	_, err := io.Copy(&preview, io.LimitReader(reader, serverlessResponsePreviewLimit+1))
-	return preview, err
+	ErrorType    string `json:"errorType"`
+	ErrorMessage string `json:"errorMessage"`
+	RequestID    string `json:"requestId"`
 }
 
 func parseServerlessErrorResponse(data []byte) serverlessErrorResponse {
 	var errorResponse serverlessErrorResponse
-	_ = json.Unmarshal(bytes.TrimSpace(data), &errorResponse)
+	_ = json.Unmarshal(data, &errorResponse)
 	return errorResponse
+}
+
+func readServerlessResponseBody(reader io.Reader) ([]byte, error) {
+	return io.ReadAll(io.LimitReader(reader, serverlessErrorResponseLimit))
 }
 
 func serverlessRuntimeErrorDetails(
 	response *http.Response,
-	responsePreview []byte,
-) (errorType string, requestID string) {
-	errorType = response.Header.Get("x-amzn-ErrorType")
-	requestID = response.Header.Get("x-amzn-RequestId")
-	errorResponse := parseServerlessErrorResponse(responsePreview)
-	if errorType == "" {
-		errorType = errorResponse.errorType()
+	responseBody []byte,
+) serverlessErrorResponse {
+	details := parseServerlessErrorResponse(responseBody)
+	if errorType := response.Header.Get("x-amzn-ErrorType"); errorType != "" {
+		details.ErrorType = errorType
 	}
-	if requestID == "" {
-		requestID = errorResponse.requestID()
+	if requestID := response.Header.Get("x-amzn-RequestId"); requestID != "" {
+		details.RequestID = requestID
 	}
-	return errorType, requestID
+	return details
 }
 
 func buildServerlessRuntimeError(
 	response *http.Response,
-	responsePreview []byte,
+	responseBody []byte,
 	fallbackReason string,
 ) plugin_entities.ErrorResponse {
-	errorType, requestID := serverlessRuntimeErrorDetails(response, responsePreview)
-	errorMessage := parseServerlessErrorResponse(responsePreview).errorMessage()
-	if errorType == "" {
-		errorType = fallbackReason
+	details := serverlessRuntimeErrorDetails(response, responseBody)
+	if details.ErrorType == "" {
+		details.ErrorType = fallbackReason
 	}
-	if errorType == "" {
-		errorType = fmt.Sprintf("HTTP %d", response.StatusCode)
+	if details.ErrorType == "" {
+		details.ErrorType = fmt.Sprintf("HTTP %d", response.StatusCode)
 	}
 
 	args := map[string]any{
 		"status_code": response.StatusCode,
 	}
-	if requestID != "" {
-		args["request_id"] = requestID
+	if details.RequestID != "" {
+		args["request_id"] = details.RequestID
 	}
-	message := fmt.Sprintf("Plugin runtime request failed: %s", errorType)
-	if errorMessage != "" {
-		message += ": " + errorMessage
+	message := fmt.Sprintf("Plugin runtime request failed: %s", details.ErrorType)
+	if details.ErrorMessage != "" {
+		message += ": " + details.ErrorMessage
 	}
 
 	return plugin_entities.ErrorResponse{
@@ -149,27 +90,23 @@ func logServerlessResponseFailure(
 	action access_types.PluginAccessAction,
 	payloadSize int,
 	response *http.Response,
-	preview *serverlessResponsePreview,
-	previewErr error,
+	responseBody []byte,
+	responseBodyErr error,
 ) {
-	errorType, requestID := serverlessRuntimeErrorDetails(response, preview.bytes())
+	details := serverlessRuntimeErrorDetails(response, responseBody)
 	args := []any{
 		"session_id", sessionID,
 		"action", action,
 		"payload_size_bytes", payloadSize,
 		"status_code", response.StatusCode,
-		"status", response.Status,
-		"http_success", response.StatusCode >= 200 && response.StatusCode < 300,
-		"lambda_request_id", requestID,
-		"lambda_error_type", errorType,
+		"lambda_request_id", details.RequestID,
+		"lambda_error_type", details.ErrorType,
 		"content_type", response.Header.Get("Content-Type"),
 		"content_length", response.ContentLength,
-		"response_bytes_read", preview.bytesRead,
-		"response_preview", preview.string(),
-		"response_preview_truncated", preview.truncated(),
+		"response_body_size_bytes", len(responseBody),
 	}
-	if previewErr != nil {
-		args = append(args, "response_preview_error", previewErr)
+	if responseBodyErr != nil {
+		args = append(args, "response_body_error", responseBodyErr)
 	}
 	log.Error(message, args...)
 }
@@ -254,13 +191,9 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 
 		// Check if status code should trigger a retry (502 Bad Gateway only)
 		if shouldRetryStatusCode(statusCode) {
-			preview := serverlessResponsePreview{}
-			var previewErr error
 			if response.Body != nil {
-				preview, previewErr = readServerlessResponsePreview(response.Body)
 				response.Body.Close()
 			}
-			errorType, requestID := serverlessRuntimeErrorDetails(response, preview.bytes())
 			log.Warn(
 				"serverless runtime HTTP response will be retried",
 				"session_id", sessionId,
@@ -268,15 +201,10 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 				"max_attempts", maxRetries,
 				"payload_size_bytes", len(data),
 				"status_code", response.StatusCode,
-				"status", response.Status,
-				"lambda_request_id", requestID,
-				"lambda_error_type", errorType,
+				"lambda_request_id", response.Header.Get("x-amzn-RequestId"),
+				"lambda_error_type", response.Header.Get("x-amzn-ErrorType"),
 				"content_type", response.Header.Get("Content-Type"),
 				"content_length", response.ContentLength,
-				"response_bytes_read", preview.bytesRead,
-				"response_preview", preview.string(),
-				"response_preview_truncated", preview.truncated(),
-				"response_preview_error", previewErr,
 			)
 			lastErr = fmt.Errorf("attempt %d/%d failed with status code: %d", attempt+1, maxRetries, statusCode)
 			continue
@@ -356,37 +284,36 @@ func (r *ServerlessPluginRuntime) Write(
 
 		defer response.Body.Close()
 		if response.StatusCode < 200 || response.StatusCode >= 300 {
-			preview, previewErr := readServerlessResponsePreview(response.Body)
+			responseBody, responseBodyErr := readServerlessResponseBody(response.Body)
 			logServerlessResponseFailure(
 				"serverless runtime returned non-success HTTP response",
 				sessionId,
 				action,
 				len(data),
 				response,
-				&preview,
-				previewErr,
+				responseBody,
+				responseBodyErr,
 			)
-			sendError(buildServerlessRuntimeError(response, preview.bytes(), response.Status))
+			sendError(buildServerlessRuntimeError(response, responseBody, response.Status))
 			return
 		}
 
 		if response.Header.Get("x-amzn-ErrorType") != "" {
-			preview, previewErr := readServerlessResponsePreview(response.Body)
+			responseBody, responseBodyErr := readServerlessResponseBody(response.Body)
 			logServerlessResponseFailure(
 				"serverless runtime returned Lambda error headers with successful HTTP status",
 				sessionId,
 				action,
 				len(data),
 				response,
-				&preview,
-				previewErr,
+				responseBody,
+				responseBodyErr,
 			)
-			sendError(buildServerlessRuntimeError(response, preview.bytes(), "Lambda runtime error"))
+			sendError(buildServerlessRuntimeError(response, responseBody, "Lambda runtime error"))
 			return
 		}
 
-		preview := serverlessResponsePreview{}
-		scanner := bufio.NewScanner(io.TeeReader(response.Body, &preview))
+		scanner := bufio.NewScanner(response.Body)
 
 		scanner.Buffer(make([]byte, r.RuntimeBufferSize), r.RuntimeMaxBufferSize)
 
@@ -400,14 +327,14 @@ func (r *ServerlessPluginRuntime) Write(
 			}
 
 			lambdaError := parseServerlessErrorResponse(line)
-			if lambdaError.errorType() != "" {
+			if lambdaError.ErrorType != "" {
 				logServerlessResponseFailure(
 					"serverless runtime returned Lambda error payload with successful HTTP status",
 					sessionId,
 					action,
 					len(data),
 					response,
-					&preview,
+					line,
 					nil,
 				)
 				sendError(buildServerlessRuntimeError(response, line, "Lambda runtime error"))
@@ -426,7 +353,7 @@ func (r *ServerlessPluginRuntime) Write(
 							action,
 							len(data),
 							response,
-							&preview,
+							line,
 							nil,
 						)
 						sendError(plugin_entities.ErrorResponse{
@@ -447,7 +374,7 @@ func (r *ServerlessPluginRuntime) Write(
 						action,
 						len(data),
 						response,
-						&preview,
+						line,
 						nil,
 					)
 					sendError(plugin_entities.ErrorResponse{
@@ -467,7 +394,7 @@ func (r *ServerlessPluginRuntime) Write(
 				action,
 				len(data),
 				response,
-				&preview,
+				nil,
 				err,
 			)
 			sendError(plugin_entities.ErrorResponse{
@@ -484,12 +411,12 @@ func (r *ServerlessPluginRuntime) Write(
 				action,
 				len(data),
 				response,
-				&preview,
+				nil,
 				nil,
 			)
 			sendError(buildServerlessRuntimeError(
 				response,
-				preview.bytes(),
+				nil,
 				"no valid session response",
 			))
 		}
