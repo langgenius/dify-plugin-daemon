@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784786840358,
+  "lastUpdate": 1784797981421,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14530,6 +14530,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.58,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "131922026+dosubot[bot]@users.noreply.github.com",
+            "name": "dosubot[bot]",
+            "username": "dosubot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a750cc9d896bc638a63f7d6f9efd2598bb541ed",
+          "message": "docs: document Redis credential provider and Azure Entra ID auth (#777)\n\nCo-authored-by: dosubot[bot] <131922026+dosubot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-23T17:11:06+08:00",
+          "tree_id": "855aa5a08fb1c4b78911ee82df7f4c6db66b6499",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/2a750cc9d896bc638a63f7d6f9efd2598bb541ed"
+        },
+        "date": 1784797981043,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.82,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.82,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
