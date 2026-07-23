@@ -293,6 +293,17 @@ func ListPlugins(c *gin.Context) {
 	})
 }
 
+type listInstalledPluginIDsRequest struct {
+	TenantID string                         `uri:"tenant_id" validate:"required"`
+	Category plugin_entities.PluginCategory `form:"category" validate:"required"`
+}
+
+func ListInstalledPluginIDs(c *gin.Context) {
+	BindRequest(c, func(request listInstalledPluginIDsRequest) {
+		c.JSON(http.StatusOK, service.ListInstalledPluginIDs(request.TenantID, request.Category))
+	})
+}
+
 type listPluginsByCategoryRequest struct {
 	TenantID string                         `uri:"tenant_id" validate:"required"`
 	Category plugin_entities.PluginCategory `uri:"category" validate:"required"`

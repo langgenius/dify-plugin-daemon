@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,161 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
+
+func TestListInstalledPluginIDsReturnsCompleteCategoryScopedList(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	baseTime := time.Date(2026, time.July, 23, 12, 0, 0, 0, time.UTC)
+	for index := 0; index < 300; index++ {
+		pluginID := fmt.Sprintf("author/tool-plugin-%03d", index)
+		require.NoError(t, db.Create(&models.ToolInstallation{
+			Model:                  models.Model{CreatedAt: baseTime.Add(time.Duration(index) * time.Second)},
+			TenantID:               "tenant-1",
+			Provider:               fmt.Sprintf("provider-%03d", index),
+			PluginID:               pluginID,
+			PluginUniqueIdentifier: pluginID + ":1.0.0@" + fmt.Sprintf("%032x", index+1),
+		}))
+	}
+	require.NoError(t, db.Create(&models.ToolInstallation{
+		Model:                  models.Model{CreatedAt: baseTime.Add(300 * time.Second)},
+		TenantID:               "tenant-1",
+		Provider:               "duplicate-provider",
+		PluginID:               "author/tool-plugin-299",
+		PluginUniqueIdentifier: "author/tool-plugin-299:1.0.0@" + fmt.Sprintf("%032x", 300),
+	}))
+	require.NoError(t, db.Create(&models.ToolInstallation{
+		Model:                  models.Model{CreatedAt: baseTime.Add(301 * time.Second)},
+		TenantID:               "tenant-2",
+		Provider:               "other-tenant-provider",
+		PluginID:               "author/other-tenant-plugin",
+		PluginUniqueIdentifier: "author/other-tenant-plugin:1.0.0@" + fmt.Sprintf("%032x", 301),
+	}))
+
+	response := ListInstalledPluginIDs("tenant-1", plugin_entities.PLUGIN_CATEGORY_TOOL)
+
+	require.Equal(t, 0, response.Code)
+	data := response.Data.(installedPluginIDsResponse)
+	require.Len(t, data.PluginIDs, 300)
+	require.Equal(t, "author/tool-plugin-299", data.PluginIDs[0])
+	require.Equal(t, "author/tool-plugin-000", data.PluginIDs[299])
+	require.NotContains(t, data.PluginIDs, "author/other-tenant-plugin")
+}
+
+func TestListInstalledPluginIDsUsesCategoryInstallationTables(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	installations := []any{
+		&models.AIModelInstallation{
+			TenantID: "tenant-1",
+			Provider: "model-provider",
+			PluginID: "author/model-plugin",
+		},
+		&models.DatasourceInstallation{
+			TenantID: "tenant-1",
+			Provider: "datasource-provider",
+			PluginID: "author/datasource-plugin",
+		},
+		&models.AgentStrategyInstallation{
+			TenantID: "tenant-1",
+			Provider: "agent-strategy-provider",
+			PluginID: "author/agent-strategy-plugin",
+		},
+		&models.TriggerInstallation{
+			TenantID: "tenant-1",
+			Provider: "trigger-provider",
+			PluginID: "author/trigger-plugin",
+		},
+	}
+	for _, installation := range installations {
+		require.NoError(t, db.Create(installation))
+	}
+
+	tests := []struct {
+		name     string
+		category plugin_entities.PluginCategory
+		pluginID string
+	}{
+		{name: "model", category: plugin_entities.PLUGIN_CATEGORY_MODEL, pluginID: "author/model-plugin"},
+		{
+			name:     "datasource",
+			category: plugin_entities.PLUGIN_CATEGORY_DATASOURCE,
+			pluginID: "author/datasource-plugin",
+		},
+		{
+			name:     "agent strategy",
+			category: plugin_entities.PLUGIN_CATEGORY_AGENT_STRATEGY,
+			pluginID: "author/agent-strategy-plugin",
+		},
+		{name: "trigger", category: plugin_entities.PLUGIN_CATEGORY_TRIGGER, pluginID: "author/trigger-plugin"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			response := ListInstalledPluginIDs("tenant-1", test.category)
+
+			require.Equal(t, 0, response.Code)
+			require.Equal(t, []string{test.pluginID}, response.Data.(installedPluginIDsResponse).PluginIDs)
+		})
+	}
+}
+
+func TestListInstalledPluginIDsUsesPluginInstallationsForExtensions(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	baseTime := time.Date(2026, time.July, 23, 12, 0, 0, 0, time.UTC)
+	createInstalledPlugin(t, "extension-plugin", "a", baseTime.Add(time.Minute), nil)
+	createInstalledPlugin(
+		t,
+		"tool-plugin",
+		"b",
+		baseTime,
+		[]string{"provider/tool.yaml"},
+	)
+
+	response := ListInstalledPluginIDs("tenant-1", plugin_entities.PLUGIN_CATEGORY_EXTENSION)
+
+	require.Equal(t, 0, response.Code)
+	require.Equal(
+		t,
+		[]string{"author/extension-plugin"},
+		response.Data.(installedPluginIDsResponse).PluginIDs,
+	)
+}
+
+func createInstalledPlugin(
+	t *testing.T,
+	name string,
+	checksumCharacter string,
+	createdAt time.Time,
+	tools []string,
+) {
+	t.Helper()
+
+	pluginID := "author/" + name
+	identifier := pluginID + ":1.0.0@" + strings.Repeat(checksumCharacter, 32)
+	require.NoError(t, db.Create(&models.PluginDeclaration{
+		PluginUniqueIdentifier: identifier,
+		PluginID:               pluginID,
+		Declaration: plugin_entities.PluginDeclaration{
+			PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+				Name:        name,
+				Label:       plugin_entities.I18nObject{EnUS: name},
+				Description: plugin_entities.I18nObject{EnUS: name + " description"},
+				Plugins:     plugin_entities.PluginExtensions{Tools: tools},
+			},
+		},
+	}))
+	require.NoError(t, db.Create(&models.PluginInstallation{
+		Model: models.Model{
+			CreatedAt: createdAt,
+			UpdatedAt: createdAt,
+		},
+		TenantID:               "tenant-1",
+		PluginID:               pluginID,
+		PluginUniqueIdentifier: identifier,
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+		Meta:                   map[string]any{},
+	}))
+}
 
 func TestListPluginsByCategoryFiltersBeforePagination(t *testing.T) {
 	setupPluginCategoryListTestDB(t)
@@ -99,7 +255,15 @@ func setupPluginCategoryListTestDB(t *testing.T) {
 
 	gormDB, err := gorm.Open(sqlite.Open("file:"+strings.ReplaceAll(t.Name(), "/", "_")+"?mode=memory&cache=shared"), &gorm.Config{})
 	require.NoError(t, err)
-	require.NoError(t, gormDB.AutoMigrate(&models.PluginDeclaration{}, &models.PluginInstallation{}))
+	require.NoError(t, gormDB.AutoMigrate(
+		&models.PluginDeclaration{},
+		&models.PluginInstallation{},
+		&models.ToolInstallation{},
+		&models.AIModelInstallation{},
+		&models.DatasourceInstallation{},
+		&models.AgentStrategyInstallation{},
+		&models.TriggerInstallation{},
+	))
 	db.DifyPluginDB = gormDB
 	t.Cleanup(func() {
 		sqlDB, err := gormDB.DB()

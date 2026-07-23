@@ -47,3 +47,28 @@ func TestListPluginsByCategoryRequestBindsFilters(t *testing.T) {
 	)
 	require.Equal(t, "zh_Hans", received.Language)
 }
+
+func TestListInstalledPluginIDsRequestBindsCategory(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	var received listInstalledPluginIDsRequest
+	router.GET("/plugin/:tenant_id/installation/ids", func(c *gin.Context) {
+		BindRequest(c, func(request listInstalledPluginIDsRequest) {
+			received = request
+			c.Status(http.StatusNoContent)
+		})
+	})
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/plugin/tenant-1/installation/ids?category=tool",
+		nil,
+	)
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	require.Equal(t, http.StatusNoContent, response.Code)
+	require.Equal(t, "tenant-1", received.TenantID)
+	require.Equal(t, plugin_entities.PLUGIN_CATEGORY_TOOL, received.Category)
+}

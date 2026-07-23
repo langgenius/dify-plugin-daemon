@@ -183,6 +183,7 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.GET("/fetch/readme", controllers.FetchPluginReadme)
 	group.POST("/uninstall", controllers.UninstallPlugin)
 	group.GET("/list", controllers.ListPlugins)
+	group.GET("/installation/ids", controllers.ListInstalledPluginIDs)
 	group.GET("/:category/list", controllers.ListPluginsByCategory)
 	group.POST("/installation/fetch/batch", controllers.BatchFetchPluginInstallationByIDs)
 	group.POST("/installation/missing", controllers.FetchMissingPluginInstallations)

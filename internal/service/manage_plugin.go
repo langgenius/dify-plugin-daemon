@@ -42,6 +42,14 @@ type pluginListResponse struct {
 	HasMore bool                         `json:"has_more"`
 }
 
+type installedPluginIDsResponse struct {
+	PluginIDs []string `json:"plugin_ids"`
+}
+
+type installedPluginIDRecord struct {
+	PluginID string `gorm:"column:plugin_id"`
+}
+
 func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
 	switch category {
 	case plugin_entities.PLUGIN_CATEGORY_TOOL,
@@ -206,6 +214,84 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	return entities.NewSuccessResponse(finalData)
+}
+
+func ListInstalledPluginIDs(tenant_id string, category plugin_entities.PluginCategory) *entities.Response {
+	var installationModel any
+	switch category {
+	case plugin_entities.PLUGIN_CATEGORY_TOOL:
+		installationModel = &models.ToolInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_MODEL:
+		installationModel = &models.AIModelInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_DATASOURCE:
+		installationModel = &models.DatasourceInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_AGENT_STRATEGY:
+		installationModel = &models.AgentStrategyInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_TRIGGER:
+		installationModel = &models.TriggerInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_EXTENSION:
+		// Extensions have no dedicated installation projection table, so derive their
+		// category from the canonical plugin installation and declaration instead.
+		return listInstalledExtensionPluginIDs(tenant_id)
+	default:
+		return exception.BadRequestError(errors.New("invalid plugin category")).ToResponse()
+	}
+
+	installations, err := db.GetAll[installedPluginIDRecord](
+		db.Model(installationModel),
+		db.Equal("tenant_id", tenant_id),
+		db.Fields("plugin_id"),
+		db.OrderBy("created_at", true),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	pluginIDs := make([]string, 0, len(installations))
+	seenPluginIDs := make(map[string]struct{}, len(installations))
+	for _, installation := range installations {
+		if _, exists := seenPluginIDs[installation.PluginID]; exists {
+			continue
+		}
+		seenPluginIDs[installation.PluginID] = struct{}{}
+		pluginIDs = append(pluginIDs, installation.PluginID)
+	}
+
+	return entities.NewSuccessResponse(installedPluginIDsResponse{PluginIDs: pluginIDs})
+}
+
+func listInstalledExtensionPluginIDs(tenant_id string) *entities.Response {
+	pluginInstallations, err := db.GetAll[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Fields("plugin_unique_identifier", "runtime_type"),
+		db.OrderBy("created_at", true),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	pluginIDs := make([]string, 0, len(pluginInstallations))
+	for _, pluginInstallation := range pluginInstallations {
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			pluginInstallation.PluginUniqueIdentifier,
+		)
+		if err != nil {
+			return exception.UniqueIdentifierError(err).ToResponse()
+		}
+
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			plugin_entities.PluginRuntimeType(pluginInstallation.RuntimeType),
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+		if pluginDeclaration.Category() == plugin_entities.PLUGIN_CATEGORY_EXTENSION {
+			pluginIDs = append(pluginIDs, pluginUniqueIdentifier.PluginID())
+		}
+	}
+
+	return entities.NewSuccessResponse(installedPluginIDsResponse{PluginIDs: pluginIDs})
 }
 
 func ListPluginsByCategory(
