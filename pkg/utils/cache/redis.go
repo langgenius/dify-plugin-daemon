@@ -28,8 +28,8 @@ var (
 )
 
 // RedisCredentials holds authentication options for Redis connections.
-// When StreamingProvider is non-nil, it takes precedence over static
-// Username/Password (e.g. Azure Entra ID token-based auth).
+// When CredentialProvider is non-nil, it is used to fetch per-connection
+// credentials (e.g. Azure Entra ID token-based auth).
 type RedisCredentials struct {
 	Username           string
 	Password           string
