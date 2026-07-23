@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784541599703,
+  "lastUpdate": 1784784845851,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14434,6 +14434,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.5,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "18da21827af33452f91b1ffeafd9fce5a3ccfaab",
+          "message": "feat: support azure entraid for managed redis (#776)\n\n* feat: support azure mi\n\n* Potential fix for pull request finding\n\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",
+          "timestamp": "2026-07-23T13:31:44+08:00",
+          "tree_id": "f7d13e33cbfffbbb7cd49d78b8e04aa0fe2c87f9",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/18da21827af33452f91b1ffeafd9fce5a3ccfaab"
+        },
+        "date": 1784784845484,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.64,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.64,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
