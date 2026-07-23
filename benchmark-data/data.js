@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784784845851,
+  "lastUpdate": 1784786840358,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14482,6 +14482,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.64,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hjlarry@163.com",
+            "name": "非法操作",
+            "username": "hjlarry"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "466d6f8fcaa2ab3e37890beec85f3b78c76952e2",
+          "message": "fix serverless runtime error propagation (#775)\n\n* fix: propagate serverless runtime errors\n\n* fix: detect invalid serverless responses\n\n* fix: include serverless runtime error message\n\n* refactor: simplify serverless error handling\n\n* refactor: reduce serverless error boilerplate",
+          "timestamp": "2026-07-23T14:05:26+08:00",
+          "tree_id": "3b94c3df6f877882a2a23d375d5db35e16ccc333",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/466d6f8fcaa2ab3e37890beec85f3b78c76952e2"
+        },
+        "date": 1784786839979,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.58,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.58,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
