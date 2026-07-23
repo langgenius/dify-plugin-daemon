@@ -91,6 +91,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/baidu/baiducloud-sdk-go v0.0.0-20191022083902-5b6f2726970b
 	github.com/gin-contrib/gzip v1.2.6
+	github.com/redis/go-redis-entraid v1.0.7
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/sqlite v1.5.0
 	gorm.io/gorm v1.30.0
@@ -108,7 +109,7 @@ require (
 	cloud.google.com/go/storage v1.54.0 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.9.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect

@@ -141,6 +141,9 @@ type Config struct {
 	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
 	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
 
+	// Azure Managed Identity (Entra ID) for Redis authentication
+	RedisUseAzureManagedIdentity bool `envconfig:"REDIS_USE_AZURE_MANAGED_IDENTITY"`
+
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
 	RedisSentinels             string  `envconfig:"REDIS_SENTINELS"`
@@ -327,6 +330,13 @@ func (c *Config) Validate() error {
 	if _, err := pkglog.ParseLevel(c.LogLevel); err != nil {
 		return err
 	}
+
+	if c.RedisUseAzureManagedIdentity && c.RedisDB != 0 {
+		return fmt.Errorf(
+			"Azure Managed Redis only supports db 0, but REDIS_DB is set to %d; "+
+				"please set REDIS_DB=0 when REDIS_USE_AZURE_MANAGED_IDENTITY is enabled", c.RedisDB)
+	}
+
 	return nil
 }
 

@@ -113,7 +113,7 @@ func (n *TestPluginRuntimeNotifier) OnServerShutdown(reason ServerShutdownReason
 
 // TestAcceptConnection tests the acceptance of the connection
 func TestAcceptConnection(t *testing.T) {
-	if cache.InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0, nil) != nil {
+	if cache.InitRedisClient("0.0.0.0:6379", cache.RedisCredentials{Password: "difyai123456"}, false, 0, nil) != nil {
 		t.Errorf("failed to init redis client")
 		return
 	}
@@ -338,7 +338,7 @@ func TestNoHandleShakeIn10Seconds(t *testing.T) {
 }
 
 func TestIncorrectHandshake(t *testing.T) {
-	if cache.InitRedisClient("0.0.0.0:6379", "", "difyai123456", false, 0, nil) != nil {
+	if cache.InitRedisClient("0.0.0.0:6379", cache.RedisCredentials{Password: "difyai123456"}, false, 0, nil) != nil {
 		t.Errorf("failed to init redis client")
 		return
 	}
@@ -406,7 +406,6 @@ func TestIncorrectHandshake(t *testing.T) {
 		return
 	}
 }
-
 
 // TestServerStopWithNilServer tests stopping a server with nil server field
 func TestServerStopWithNilServer(t *testing.T) {

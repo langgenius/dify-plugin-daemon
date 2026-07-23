@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, "skipping persistence tests: redis is unavailable at localhost:6379")
 		os.Exit(0)
 	}
-	if err := cache.InitRedisClient("localhost:6379", "", "difyai123456", false, 0, nil); err != nil {
+	if err := cache.InitRedisClient("localhost:6379", cache.RedisCredentials{Password: "difyai123456"}, false, 0, nil); err != nil {
 		fmt.Fprintf(os.Stderr, "skipping persistence tests: failed to init redis client: %v\n", err)
 		os.Exit(0)
 	}

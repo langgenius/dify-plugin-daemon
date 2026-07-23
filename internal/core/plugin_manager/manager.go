@@ -124,6 +124,20 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		log.Panic("invalid Redis TLS config: %s", err.Error())
 	}
 
+	// Build Redis credentials (static or Azure Entra ID streaming)
+	creds := cache.RedisCredentials{
+		Username: configuration.RedisUser,
+		Password: configuration.RedisPass,
+	}
+	if configuration.RedisUseAzureManagedIdentity {
+		provider, credErr := cache.NewAzureEntraIDCredentialsProvider()
+		if credErr != nil {
+			log.Panic("failed to create Azure Entra ID credentials provider for Redis: %s", credErr.Error())
+		}
+		creds.CredentialProvider = provider
+		log.Info("Redis: using Azure Managed Identity (Entra ID) authentication")
+	}
+
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
 
 	// init redis client
@@ -133,25 +147,23 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		if err := cache.InitRedisSentinelClient(
 			sentinels,
 			configuration.RedisSentinelServiceName,
-			configuration.RedisUser,
-			configuration.RedisPass,
+			creds,
 			configuration.RedisSentinelUsername,
 			configuration.RedisSentinelPassword,
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
 			configuration.RedisSentinelSocketTimeout,
-			tlsConf, // pass TLS to cache initializer
+			tlsConf,
 		); err != nil {
 			log.Panic("init redis sentinel client failed", "error", err)
 		}
 	} else {
 		if err := cache.InitRedisClient(
 			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
-			configuration.RedisUser,
-			configuration.RedisPass,
+			creds,
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
-			tlsConf, // pass TLS to cache initializer
+			tlsConf,
 		); err != nil {
 			log.Panic("init redis client failed", "error", err)
 		}
