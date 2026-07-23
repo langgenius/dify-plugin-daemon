@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	stdstrings "strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -53,6 +54,68 @@ func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
 	default:
 		return false
 	}
+}
+
+func localizedPluginListText(value plugin_entities.I18nObject, language string) string {
+	var localized string
+	switch language {
+	case "ja_JP":
+		localized = value.JaJp
+	case "zh_Hans":
+		localized = value.ZhHans
+	case "pt_BR":
+		localized = value.PtBr
+	default:
+		localized = value.EnUS
+	}
+
+	if localized != "" {
+		return localized
+	}
+	return value.EnUS
+}
+
+func pluginMatchesCategoryListFilters(
+	pluginID string,
+	declaration *plugin_entities.PluginDeclaration,
+	query string,
+	tags []manifest_entities.PluginTag,
+	language string,
+) bool {
+	if len(tags) > 0 {
+		matchesTag := false
+		for _, requestedTag := range tags {
+			for _, pluginTag := range declaration.Tags {
+				if requestedTag == pluginTag {
+					matchesTag = true
+					break
+				}
+			}
+			if matchesTag {
+				break
+			}
+		}
+		if !matchesTag {
+			return false
+		}
+	}
+
+	if query == "" {
+		return true
+	}
+
+	lowerQuery := stdstrings.ToLower(query)
+	for _, candidate := range []string{
+		pluginID,
+		declaration.Name,
+		localizedPluginListText(declaration.Label, language),
+		localizedPluginListText(declaration.Description, language),
+	} {
+		if stdstrings.Contains(stdstrings.ToLower(candidate), lowerQuery) {
+			return true
+		}
+	}
+	return false
 }
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
@@ -150,6 +213,9 @@ func ListPluginsByCategory(
 	category plugin_entities.PluginCategory,
 	page int,
 	page_size int,
+	query string,
+	tags []manifest_entities.PluginTag,
+	language string,
 ) *entities.Response {
 	if !isValidPluginCategory(category) {
 		return exception.BadRequestError(errors.New("invalid plugin category")).ToResponse()
@@ -189,7 +255,9 @@ func ListPluginsByCategory(
 				return exception.InternalServerError(err).ToResponse()
 			}
 
-			if pluginDeclaration.Category() != category {
+			pluginID := pluginUniqueIdentifier.PluginID()
+			if pluginDeclaration.Category() != category ||
+				!pluginMatchesCategoryListFilters(pluginID, pluginDeclaration, query, tags, language) {
 				continue
 			}
 
@@ -202,7 +270,7 @@ func ListPluginsByCategory(
 				ID:                     plugin_installation.ID,
 				Name:                   pluginDeclaration.Name,
 				TenantID:               plugin_installation.TenantID,
-				PluginID:               pluginUniqueIdentifier.PluginID(),
+				PluginID:               pluginID,
 				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
 				InstallationID:         plugin_installation.ID,
 				Declaration:            pluginDeclaration,
