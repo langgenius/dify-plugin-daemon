@@ -12,17 +12,18 @@ import (
 
 // PluginDispatcher defines a plugin dispatcher
 type PluginDispatcher struct {
-	Name               string
-	RequestType        interface{} // e.g. requests.RequestInvokeLLM
-	ResponseType       interface{} // e.g. requests.ResponseInvokeLLM
-	RequestTypeString  string
-	ResponseTypeString string
-	AccessType         access_types.PluginAccessType
-	AccessAction       access_types.PluginAccessAction
-	AccessTypeString   string
-	AccessActionString string
-	BufferSize         int
-	Path               string // e.g. "/tool/invoke"
+	Name                string
+	RequestType         interface{} // e.g. requests.RequestInvokeLLM
+	ResponseType        interface{} // e.g. requests.ResponseInvokeLLM
+	RequestTypeString   string
+	ResponseTypeString  string
+	AccessType          access_types.PluginAccessType
+	AccessAction        access_types.PluginAccessAction
+	AccessTypeString    string
+	AccessActionString  string
+	BufferSize          int
+	CustomTunnelHandler string
+	Path                string // e.g. "/tool/invoke"
 }
 
 // Define all plugin dispatchers
@@ -83,37 +84,39 @@ var PluginDispatchers = []PluginDispatcher{
 		Path:               "/llm/num_tokens",
 	},
 	{
-		Name:               "InvokeTextEmbedding",
-		RequestType:        requests.RequestInvokeTextEmbedding{},
-		ResponseType:       model_entities.TextEmbeddingResult{},
-		AccessType:         access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
-		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_MODEL",
-		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING",
-		BufferSize:         1,
-		Path:               "/text_embedding/invoke",
+		Name:                "InvokeTextEmbedding",
+		RequestType:         requests.RequestInvokeTextEmbedding{},
+		ResponseType:        model_entities.TextEmbeddingResult{},
+		AccessType:          access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		AccessAction:        access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		AccessTypeString:    "access_types.PLUGIN_ACCESS_TYPE_MODEL",
+		AccessActionString:  "access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING",
+		BufferSize:          1,
+		CustomTunnelHandler: "invokeTextEmbeddingServerlessAware",
+		Path:                "/text_embedding/invoke",
 	},
 	{
 		Name:               "InvokeMultimodalEmbedding",
 		RequestType:        requests.RequestInvokeMultimodalEmbedding{},
 		ResponseType:       model_entities.MultimodalEmbeddingResult{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_EMBEDDING,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_MODEL",
-		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_EMBEDDING",
 		BufferSize:         1,
 		Path:               "/multimodal_embedding/invoke",
 	},
 	{
-		Name:               "GetTextEmbeddingNumTokens",
-		RequestType:        requests.RequestGetTextEmbeddingNumTokens{},
-		ResponseType:       model_entities.GetTextEmbeddingNumTokensResponse{},
-		AccessType:         access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS,
-		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_MODEL",
-		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS",
-		BufferSize:         1,
-		Path:               "/text_embedding/num_tokens",
+		Name:                "GetTextEmbeddingNumTokens",
+		RequestType:         requests.RequestGetTextEmbeddingNumTokens{},
+		ResponseType:        model_entities.GetTextEmbeddingNumTokensResponse{},
+		AccessType:          access_types.PLUGIN_ACCESS_TYPE_MODEL,
+		AccessAction:        access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS,
+		AccessTypeString:    "access_types.PLUGIN_ACCESS_TYPE_MODEL",
+		AccessActionString:  "access_types.PLUGIN_ACCESS_ACTION_GET_TEXT_EMBEDDING_NUM_TOKENS",
+		BufferSize:          1,
+		CustomTunnelHandler: "getTextEmbeddingNumTokensServerlessAware",
+		Path:                "/text_embedding/num_tokens",
 	},
 	{
 		Name:               "InvokeRerank",
@@ -131,9 +134,9 @@ var PluginDispatchers = []PluginDispatcher{
 		RequestType:        requests.RequestInvokeMultimodalRerank{},
 		ResponseType:       model_entities.MultimodalRerankResult{},
 		AccessType:         access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_RERANK,
 		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_MODEL",
-		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_RERANK",
 		BufferSize:         1,
 		Path:               "/multimodal_rerank/invoke",
 	},

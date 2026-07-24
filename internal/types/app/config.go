@@ -200,6 +200,7 @@ type Config struct {
 	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
 	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
+	MaxServerlessRequestBytes       int   `envconfig:"MAX_SERVERLESS_REQUEST_BYTES" default:"5242880"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
@@ -295,6 +296,10 @@ func (c *Config) Validate() error {
 		if c.PluginRemoteInstallServerEventLoopNums == 0 {
 			return fmt.Errorf("plugin remote install server event loop nums is empty")
 		}
+	}
+
+	if c.MaxServerlessRequestBytes <= 0 {
+		return fmt.Errorf("max serverless request bytes must be greater than zero")
 	}
 
 	switch c.Platform {

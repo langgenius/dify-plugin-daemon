@@ -37,9 +37,9 @@ func Init(config *app.Config) {
 	}
 	SERVERLESS_CONNECTOR_API_KEY = *config.DifyPluginServerlessConnectorAPIKey
 
-	if err := PingWithContext(ctx); err != nil {
-		log.PanicContext(ctx, "Failed to ping serverless connector", "error", err)
-	}
+	// if err := PingWithContext(ctx); err != nil {
+	// 	log.PanicContext(ctx, "Failed to ping serverless connector", "error", err)
+	// }
 
 	log.InfoContext(ctx, "Serverless connector initialized")
 }

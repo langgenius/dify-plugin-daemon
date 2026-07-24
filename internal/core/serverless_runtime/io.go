@@ -3,6 +3,7 @@ package serverless_runtime
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,27 @@ import (
 )
 
 const serverlessErrorResponseLimit = 4 * 1024
+
+// ServerlessPayloadTooLargeError reports request size metadata without exposing payload contents.
+type ServerlessPayloadTooLargeError struct {
+	Action          access_types.PluginAccessAction
+	PayloadBytes    int
+	MaxRequestBytes int
+	ItemIndex       *int
+}
+
+func (e *ServerlessPayloadTooLargeError) Error() string {
+	message := fmt.Sprintf(
+		"ServerlessPayloadTooLarge: action=%s payload_bytes=%d max_request_bytes=%d",
+		e.Action,
+		e.PayloadBytes,
+		e.MaxRequestBytes,
+	)
+	if e.ItemIndex != nil {
+		message += fmt.Sprintf(" item_index=%d", *e.ItemIndex)
+	}
+	return message
+}
 
 type serverlessErrorResponse struct {
 	ErrorType    string `json:"errorType"`
@@ -116,8 +138,12 @@ func (r *ServerlessPluginRuntime) Listen(sessionId string) (
 	error,
 ) {
 	l := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
-	// store the listener
 	r.listeners.Store(sessionId, l)
+	l.OnClose(func() {
+		r.listeners.DeleteIf(sessionId, func(listener *entities.Broadcast[plugin_entities.SessionMessage]) bool {
+			return listener == l
+		})
+	})
 	return l, nil
 }
 
@@ -134,9 +160,11 @@ func shouldRetryStatusCode(statusCode int) bool {
 // It will retry up to MaxRetryTimes attempts on 502 errors with exponential backoff
 // Backoff duration is capped at 30 seconds to prevent unreasonable wait times
 func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
+	ctx context.Context,
 	url string,
 	sessionId string,
 	data []byte,
+	action access_types.PluginAccessAction,
 ) (*http.Response, error) {
 	const maxBackoffDuration = 30 * time.Second
 
@@ -155,7 +183,13 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 			if backoffDuration > maxBackoffDuration {
 				backoffDuration = maxBackoffDuration
 			}
-			time.Sleep(backoffDuration)
+			timer := time.NewTimer(backoffDuration)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return nil, ctx.Err()
+			case <-timer.C:
+			}
 		}
 
 		// Make HTTP request to serverless endpoint
@@ -167,10 +201,14 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 				"Dify-Plugin-Session-ID": sessionId,
 			}),
 			http_requests.HttpPayloadReader(io.NopCloser(bytes.NewReader(data))),
-			http_requests.HttpReadTimeout(int64(r.PluginMaxExecutionTimeout*1000)),
+			http_requests.HttpContext(ctx),
 		)
 
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			recordServerlessRuntimeFailure(action, 0, serverlessRuntimeFailureType(0))
 			log.Warn(
 				"serverless runtime HTTP request attempt failed",
 				"session_id", sessionId,
@@ -188,6 +226,7 @@ func (r *ServerlessPluginRuntime) invokeServerlessWithRetry(
 		if statusCode >= 200 && statusCode < 300 {
 			return response, nil
 		}
+		recordServerlessRuntimeFailure(action, statusCode, serverlessRuntimeFailureType(statusCode))
 
 		// Check if status code should trigger a retry (502 Bad Gateway only)
 		if shouldRetryStatusCode(statusCode) {
@@ -227,14 +266,38 @@ func (r *ServerlessPluginRuntime) Write(
 	action access_types.PluginAccessAction,
 	data []byte,
 ) error {
+	return r.WriteContext(context.Background(), sessionId, action, data)
+}
+
+func (r *ServerlessPluginRuntime) WriteContext(
+	ctx context.Context,
+	sessionId string,
+	action access_types.PluginAccessAction,
+	data []byte,
+) error {
 	l, ok := r.listeners.Load(sessionId)
 	if !ok {
 		return errors.New("session not found")
 	}
+	deleteListener := func() {
+		r.listeners.DeleteIf(sessionId, func(listener *entities.Broadcast[plugin_entities.SessionMessage]) bool {
+			return listener == l
+		})
+	}
 
 	url, err := url.JoinPath(r.LambdaURL, "invoke")
 	if err != nil {
+		deleteListener()
 		return errors.Join(err, errors.New("failed to join lambda url"))
+	}
+
+	if len(data) > r.MaxRequestBytes {
+		deleteListener()
+		return &ServerlessPayloadTooLargeError{
+			Action:          action,
+			PayloadBytes:    len(data),
+			MaxRequestBytes: r.MaxRequestBytes,
+		}
 	}
 
 	routine.Submit(routinepkg.Labels{
@@ -243,7 +306,15 @@ func (r *ServerlessPluginRuntime) Write(
 		routinepkg.RoutineLabelKeySessionID: sessionId,
 		routinepkg.RoutineLabelKeyLambdaURL: r.LambdaURL,
 	}, func() {
+		requestCtx := ctx
+		cancel := func() {}
+		if r.PluginMaxExecutionTimeout > 0 {
+			requestCtx, cancel = context.WithTimeout(ctx, time.Duration(r.PluginMaxExecutionTimeout)*time.Second)
+		}
+		defer cancel()
+
 		sendEnd := true
+		var endData json.RawMessage
 		sendError := func(errorResponse plugin_entities.ErrorResponse) {
 			if !sendEnd {
 				return
@@ -255,19 +326,23 @@ func (r *ServerlessPluginRuntime) Write(
 			})
 		}
 		defer func() {
+			deleteListener()
 			if sendEnd {
 				l.Send(plugin_entities.SessionMessage{
 					Type: plugin_entities.SESSION_MESSAGE_TYPE_END,
-					Data: []byte(""),
+					Data: endData,
 				})
 			}
 			l.Close()
-			r.listeners.Delete(sessionId)
 		}()
 
 		url += "?action=" + string(action)
-		response, err := r.invokeServerlessWithRetry(url, sessionId, data)
+		response, err := r.invokeServerlessWithRetry(requestCtx, url, sessionId, data, action)
 		if err != nil {
+			if ctx.Err() != nil {
+				sendEnd = false
+				return
+			}
 			log.Error(
 				"serverless runtime invocation failed before receiving a response",
 				"session_id", sessionId,
@@ -326,6 +401,7 @@ func (r *ServerlessPluginRuntime) Write(
 		scanner.Buffer(make([]byte, r.RuntimeBufferSize), r.RuntimeMaxBufferSize)
 
 		hasSessionEvent := false
+		receivedEnd := false
 		for sendEnd && scanner.Scan() {
 			line := scanner.Bytes()
 
@@ -362,6 +438,11 @@ func (r *ServerlessPluginRuntime) Write(
 						return
 					}
 					hasSessionEvent = true
+					if sessionMessage.Type == plugin_entities.SESSION_MESSAGE_TYPE_END {
+						receivedEnd = true
+						endData = sessionMessage.Data
+						return
+					}
 					l.Send(sessionMessage)
 				},
 				func() {},
@@ -378,9 +459,16 @@ func (r *ServerlessPluginRuntime) Write(
 				},
 				func(plugin_entities.PluginLogEvent) {},
 			)
+			if receivedEnd {
+				break
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
+			if ctx.Err() != nil {
+				sendEnd = false
+				return
+			}
 			logFailure(
 				"serverless runtime response body could not be read",
 				nil,

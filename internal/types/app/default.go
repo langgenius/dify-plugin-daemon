@@ -24,6 +24,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginRemoteInstallingMaxConn, 256)
 	setDefaultInt(&config.MaxPluginPackageSize, 52428800)
 	setDefaultInt(&config.MaxBundlePackageSize, 52428800*12)
+	setDefaultInt(&config.MaxServerlessRequestBytes, 5*1024*1024)
 	setDefaultInt(&config.MaxServerlessTransactionTimeout, 300)
 	setDefaultInt(&config.PluginMaxExecutionTimeout, 10*60)
 	setDefaultString(&config.PluginStorageType, oss.OSS_TYPE_LOCAL)
