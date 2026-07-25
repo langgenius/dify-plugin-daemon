@@ -136,6 +136,150 @@ func TestListInstalledPluginIDsUsesPluginInstallationsForExtensions(t *testing.T
 	)
 }
 
+func TestListModelPluginBindingsUsesCanonicalInstallationWithoutDeclarationHydration(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	baseTime := time.Date(2026, time.July, 24, 12, 0, 0, 0, time.UTC)
+	marketplaceIdentifier := "langgenius/openai:1.2.3@" + strings.Repeat("a", 32)
+	remoteIdentifier := "debugger/custom-model:0.9.0@" + strings.Repeat("b", 32)
+
+	marketplaceInstallation := &models.PluginInstallation{
+		Model:                  models.Model{CreatedAt: baseTime},
+		TenantID:               "tenant-1",
+		PluginID:               "langgenius/openai",
+		PluginUniqueIdentifier: marketplaceIdentifier,
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+		Source:                 "marketplace",
+		Meta:                   map[string]any{},
+	}
+	require.NoError(t, db.Create(marketplaceInstallation))
+	require.NoError(t, db.Create(&models.AIModelInstallation{
+		TenantID:               "tenant-1",
+		Provider:               "openai",
+		PluginID:               "langgenius/openai",
+		PluginUniqueIdentifier: marketplaceIdentifier,
+	}))
+	// Historical duplicate projections must not produce duplicate provider bindings.
+	require.NoError(t, db.Create(&models.AIModelInstallation{
+		TenantID:               "tenant-1",
+		Provider:               "openai",
+		PluginID:               "langgenius/openai",
+		PluginUniqueIdentifier: marketplaceIdentifier,
+	}))
+
+	remoteInstallation := &models.PluginInstallation{
+		Model:                  models.Model{CreatedAt: baseTime.Add(time.Minute)},
+		TenantID:               "tenant-1",
+		PluginID:               "debugger/custom-model",
+		PluginUniqueIdentifier: remoteIdentifier,
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE),
+		Source:                 "remote",
+		Meta:                   map[string]any{},
+	}
+	require.NoError(t, db.Create(remoteInstallation))
+	require.NoError(t, db.Create(&models.AIModelInstallation{
+		TenantID:               "tenant-1",
+		Provider:               "custom-model",
+		PluginID:               "debugger/custom-model",
+		PluginUniqueIdentifier: remoteIdentifier,
+	}))
+
+	// A stale projection from an older version must not bind to the current plugin installation.
+	require.NoError(t, db.Create(&models.AIModelInstallation{
+		TenantID:               "tenant-1",
+		Provider:               "stale-openai",
+		PluginID:               "langgenius/openai",
+		PluginUniqueIdentifier: "langgenius/openai:1.0.0@" + strings.Repeat("c", 32),
+	}))
+
+	// Installations without a model projection and model projections from another tenant are excluded.
+	require.NoError(t, db.Create(&models.PluginInstallation{
+		Model:                  models.Model{CreatedAt: baseTime.Add(2 * time.Minute)},
+		TenantID:               "tenant-1",
+		PluginID:               "langgenius/tool-only",
+		PluginUniqueIdentifier: "langgenius/tool-only:1.0.0@" + strings.Repeat("d", 32),
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+		Source:                 "marketplace",
+		Meta:                   map[string]any{},
+	}))
+	otherTenantIdentifier := "langgenius/other-model:1.0.0@" + strings.Repeat("e", 32)
+	require.NoError(t, db.Create(&models.PluginInstallation{
+		TenantID:               "tenant-2",
+		PluginID:               "langgenius/other-model",
+		PluginUniqueIdentifier: otherTenantIdentifier,
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+		Source:                 "marketplace",
+		Meta:                   map[string]any{},
+	}))
+	require.NoError(t, db.Create(&models.AIModelInstallation{
+		TenantID:               "tenant-2",
+		Provider:               "other-model",
+		PluginID:               "langgenius/other-model",
+		PluginUniqueIdentifier: otherTenantIdentifier,
+	}))
+
+	response := ListModelPluginBindings("tenant-1")
+
+	require.Equal(t, 0, response.Code)
+	bindings := response.Data.([]modelPluginBindingResponse)
+	require.Len(t, bindings, 2)
+	require.Equal(t, []modelPluginBindingResponse{
+		{
+			Provider:               "custom-model",
+			InstallationID:         remoteInstallation.ID,
+			PluginID:               "debugger/custom-model",
+			PluginUniqueIdentifier: remoteIdentifier,
+			RuntimeType:            plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
+			Source:                 "remote",
+			Version:                manifest_entities.Version("0.9.0"),
+		},
+		{
+			Provider:               "openai",
+			InstallationID:         marketplaceInstallation.ID,
+			PluginID:               "langgenius/openai",
+			PluginUniqueIdentifier: marketplaceIdentifier,
+			RuntimeType:            plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+			Source:                 "marketplace",
+			Version:                manifest_entities.Version("1.2.3"),
+		},
+	}, bindings)
+}
+
+func TestListModelPluginBindingsReturnsEmptyList(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	response := ListModelPluginBindings("tenant-1")
+
+	require.Equal(t, 0, response.Code)
+	bindings := response.Data.([]modelPluginBindingResponse)
+	require.NotNil(t, bindings)
+	require.Empty(t, bindings)
+}
+
+func TestListModelPluginBindingsRejectsMalformedCurrentIdentifier(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	const malformedIdentifier = "langgenius/openai:not-valid"
+	require.NoError(t, db.Create(&models.PluginInstallation{
+		TenantID:               "tenant-1",
+		PluginID:               "langgenius/openai",
+		PluginUniqueIdentifier: malformedIdentifier,
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+		Source:                 "marketplace",
+		Meta:                   map[string]any{},
+	}))
+	require.NoError(t, db.Create(&models.AIModelInstallation{
+		TenantID:               "tenant-1",
+		Provider:               "openai",
+		PluginID:               "langgenius/openai",
+		PluginUniqueIdentifier: malformedIdentifier,
+	}))
+
+	response := ListModelPluginBindings("tenant-1")
+
+	require.Equal(t, -400, response.Code)
+}
+
 func createInstalledPlugin(
 	t *testing.T,
 	name string,

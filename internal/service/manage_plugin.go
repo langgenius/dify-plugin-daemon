@@ -50,6 +50,16 @@ type installedPluginIDRecord struct {
 	PluginID string `gorm:"column:plugin_id"`
 }
 
+type modelPluginBindingResponse struct {
+	Provider               string                            `json:"provider" gorm:"column:provider"`
+	InstallationID         string                            `json:"installation_id" gorm:"column:installation_id"`
+	PluginID               string                            `json:"plugin_id" gorm:"column:plugin_id"`
+	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"column:plugin_unique_identifier"`
+	RuntimeType            plugin_entities.PluginRuntimeType `json:"runtime_type" gorm:"column:runtime_type"`
+	Source                 string                            `json:"source" gorm:"column:source"`
+	Version                manifest_entities.Version         `json:"version" gorm:"-"`
+}
+
 func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
 	switch category {
 	case plugin_entities.PLUGIN_CATEGORY_TOOL,
@@ -544,6 +554,54 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	return entities.NewSuccessResponse(data)
+}
+
+func ListModelPluginBindings(tenant_id string) *entities.Response {
+	bindings, err := db.GetAll[modelPluginBindingResponse](
+		db.Model(&models.AIModelInstallation{}),
+		db.Fields(
+			"ai_model_installations.provider AS provider",
+			"plugin_installations.id AS installation_id",
+			"plugin_installations.plugin_id AS plugin_id",
+			"plugin_installations.plugin_unique_identifier AS plugin_unique_identifier",
+			"plugin_installations.runtime_type AS runtime_type",
+			"plugin_installations.source AS source",
+		),
+		db.Join(
+			"JOIN plugin_installations ON "+
+				"plugin_installations.tenant_id = ai_model_installations.tenant_id AND "+
+				"plugin_installations.plugin_id = ai_model_installations.plugin_id AND "+
+				"plugin_installations.plugin_unique_identifier = ai_model_installations.plugin_unique_identifier",
+		),
+		db.Equal("ai_model_installations.tenant_id", tenant_id),
+		db.OrderBy("plugin_installations.created_at", true),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+	if bindings == nil {
+		bindings = make([]modelPluginBindingResponse, 0)
+	}
+
+	deduplicatedBindings := make([]modelPluginBindingResponse, 0, len(bindings))
+	seenBindings := make(map[string]struct{}, len(bindings))
+	for _, binding := range bindings {
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(binding.PluginUniqueIdentifier)
+		if err != nil {
+			return exception.UniqueIdentifierError(err).ToResponse()
+		}
+
+		bindingKey := binding.PluginID + "\x00" + binding.Provider
+		if _, exists := seenBindings[bindingKey]; exists {
+			continue
+		}
+
+		seenBindings[bindingKey] = struct{}{}
+		binding.Version = pluginUniqueIdentifier.Version()
+		deduplicatedBindings = append(deduplicatedBindings, binding)
+	}
+
+	return entities.NewSuccessResponse(deduplicatedBindings)
 }
 
 func ListModels(tenant_id string, page int, page_size int) *entities.Response {
