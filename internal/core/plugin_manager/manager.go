@@ -1,7 +1,6 @@
 package plugin_manager
 
 import (
-	"errors"
 	"fmt"
 
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -203,13 +202,19 @@ func (p *PluginManager) Config() *app.Config {
 // check if the plugin is already running on this node
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
+	runtimeType plugin_entities.PluginRuntimeType,
 ) (bool, error) {
-	if identity.RemoteLike() {
+	// Plugin installations provide the authoritative runtime type. Direct
+	// invocation does not have installation context, so keep the identifier
+	// heuristic as a compatibility fallback only for that path.
+	isRemoteRuntime := runtimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+	if runtimeType == "" {
+		isRemoteRuntime = identity.RemoteLike()
+	}
+
+	if isRemoteRuntime {
 		_, err := c.controlPanel.GetPluginRuntime(identity)
 		if err != nil {
-			if errors.Is(err, controlpanel.ErrPluginRuntimeNotFound) {
-				return true, nil
-			}
 			return true, err
 		}
 		return false, nil
