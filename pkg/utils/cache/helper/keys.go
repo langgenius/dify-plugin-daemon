@@ -14,6 +14,17 @@ func PluginInstallationCacheKey(pluginId, tenantId string) string {
 	)
 }
 
+func ModelInstallationsCacheKey(tenantId string) string {
+	return strings.Join(
+		[]string{
+			"model_installations",
+			"tenant_id",
+			tenantId,
+		},
+		":",
+	)
+}
+
 func EndpointCacheKey(hookId string) string {
 	return strings.Join(
 		[]string{

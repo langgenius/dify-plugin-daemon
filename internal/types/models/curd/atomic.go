@@ -29,6 +29,12 @@ func InstallPlugin(
 	var pluginToBeReturns *models.Plugin
 	var installationToBeReturns *models.PluginInstallation
 
+	// the cache is dropped even when the transaction fails, so a retry after a failed
+	// invalidation still clears it
+	if declaration.Model != nil {
+		defer helper.DeleteModelInstallationsCache(tenantId)
+	}
+
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		pluginID := pluginUniqueIdentifier.PluginID()
 
@@ -236,6 +242,10 @@ func UninstallPlugin(
 	var pluginToBeReturns *models.Plugin
 	var installationToBeReturns *models.PluginInstallation
 
+	if declaration.Model != nil {
+		defer helper.DeleteModelInstallationsCache(tenantId)
+	}
+
 	_, err := db.GetOne[models.PluginInstallation](
 		db.Equal("id", installationId),
 		db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
@@ -427,6 +437,10 @@ func UpgradePlugin(
 	meta map[string]any,
 ) (*UpgradePluginResponse, error) {
 	var response UpgradePluginResponse
+
+	if originalDeclaration.Model != nil || newDeclaration.Model != nil {
+		defer helper.DeleteModelInstallationsCache(tenantId)
+	}
 
 	err := db.WithTransaction(func(tx *gorm.DB) error {
 		installation, err := db.GetOne[models.PluginInstallation](
@@ -683,5 +697,6 @@ func UpgradePlugin(
 	if _, err = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); err != nil {
 		return nil, err
 	}
+
 	return &response, nil
 }

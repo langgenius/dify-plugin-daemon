@@ -2,6 +2,7 @@ package plugin_manager
 
 import (
 	"fmt"
+	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
@@ -16,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
@@ -138,6 +140,9 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
+	helper.SetModelInstallationsCacheTTL(
+		time.Duration(configuration.PluginModelInstallationsCacheTTL) * time.Minute,
+	)
 
 	// init redis client
 	if configuration.RedisUseSentinel {
