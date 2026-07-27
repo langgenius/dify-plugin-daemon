@@ -40,7 +40,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginLocalLaunchingConcurrent, 2)
 	setDefaultInt(&config.PersistenceStorageMaxSize, 100*1024*1024)
 	setDefaultString(&config.PluginPackageCachePath, "plugin_packages")
-	setDefaultInt(&config.PluginModelInstallationsCacheTTL, 60)
+	setDefaultInt(&config.PluginModelInstallationsCacheTTL, 1440)
 	setDefaultString(&config.PythonInterpreterPath, "/usr/bin/python3")
 	setDefaultInt(&config.PythonEnvInitTimeout, 120)
 	setDefaultInt(&config.DifyInvocationWriteTimeout, 5000)
