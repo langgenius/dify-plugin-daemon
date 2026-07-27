@@ -7,10 +7,10 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func InvokeLLM(
@@ -74,7 +74,7 @@ func InvokeMultimodalEmbedding(
 			return io_tunnel.InvokeMultimodalEmbedding(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_EMBEDDING,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
 		r,
 		ctx,
 		max_timeout_seconds,
@@ -125,7 +125,7 @@ func InvokeMultimodalRerank(
 			return io_tunnel.InvokeMultimodalRerank(session, &r.Data)
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_INVOKE_MULTIMODAL_RERANK,
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_RERANK,
 		r,
 		ctx,
 		max_timeout_seconds,
@@ -228,23 +228,6 @@ func ValidateModelCredentials(
 		},
 		access_types.PLUGIN_ACCESS_TYPE_MODEL,
 		access_types.PLUGIN_ACCESS_ACTION_VALIDATE_MODEL_CREDENTIALS,
-		r,
-		ctx,
-		max_timeout_seconds,
-	)
-}
-
-func GetAIModelSchema(
-	r *plugin_entities.InvokePluginRequest[requests.RequestGetAIModelSchema],
-	ctx *gin.Context,
-	max_timeout_seconds int,
-) {
-	baseSSEWithSession(
-		func(session *session_manager.Session) (*stream.Stream[model_entities.GetModelSchemasResponse], error) {
-			return io_tunnel.GetAIModelSchema(session, &r.Data)
-		},
-		access_types.PLUGIN_ACCESS_TYPE_MODEL,
-		access_types.PLUGIN_ACCESS_ACTION_GET_AI_MODEL_SCHEMAS,
 		r,
 		ctx,
 		max_timeout_seconds,

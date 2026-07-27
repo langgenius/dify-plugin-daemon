@@ -115,6 +115,9 @@ type Config struct {
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
 
+	// how long a cached model schema is kept, in minutes; the key pins the plugin version, so this only bounds memory
+	PluginModelSchemaCacheTTL int `envconfig:"PLUGIN_MODEL_SCHEMA_CACHE_TTL"`
+
 	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 

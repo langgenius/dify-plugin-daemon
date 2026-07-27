@@ -4,9 +4,9 @@ package io_tunnel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func InvokeLLM(
@@ -172,19 +172,6 @@ func ValidateModelCredentials(
 	*stream.Stream[model_entities.ValidateCredentialsResult], error,
 ) {
 	return GenericInvokePlugin[requests.RequestValidateModelCredentials, model_entities.ValidateCredentialsResult](
-		session,
-		request,
-		1,
-	)
-}
-
-func GetAIModelSchema(
-	session *session_manager.Session,
-	request *requests.RequestGetAIModelSchema,
-) (
-	*stream.Stream[model_entities.GetModelSchemasResponse], error,
-) {
-	return GenericInvokePlugin[requests.RequestGetAIModelSchema, model_entities.GetModelSchemasResponse](
 		session,
 		request,
 		1,

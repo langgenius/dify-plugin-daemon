@@ -178,16 +178,3 @@ func ValidateModelCredentials(config *app.Config) gin.HandlerFunc {
 		)
 	}
 }
-
-func GetAIModelSchema(config *app.Config) gin.HandlerFunc {
-	type request = plugin_entities.InvokePluginRequest[requests.RequestGetAIModelSchema]
-
-	return func(c *gin.Context) {
-		BindPluginDispatchRequest(
-			c,
-			func(itr request) {
-				service.GetAIModelSchema(&itr, c, config.PluginMaxExecutionTimeout)
-			},
-		)
-	}
-}

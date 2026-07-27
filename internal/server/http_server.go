@@ -121,6 +121,7 @@ func (app *App) pluginDispatchGroup(group *gin.RouterGroup, config *app.Config) 
 	group.Use(app.InitClusterID())
 
 	group.POST("/agent_strategy/invoke", controllers.InvokeAgentStrategy(config))
+	group.POST("/model/schema", controllers.GetAIModelSchema(config))
 	group.POST("/model/polling/start", controllers.StartPolling())
 	group.POST("/model/polling/check", controllers.CheckPolling())
 
@@ -245,6 +246,8 @@ func (app *App) invokeGroup(group *gin.RouterGroup, config *app.Config) {
 
 	dispatchGroup.POST("/agent_strategy/invoke",
 		controllers.InvokeAgentStrategy(config))
+	dispatchGroup.POST("/model/schema",
+		controllers.GetAIModelSchema(config))
 
 	app.setupGeneratedRoutes(dispatchGroup, config)
 }
