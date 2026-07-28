@@ -36,6 +36,21 @@ type serverlessTransactionWriteCloser struct {
 	flush  func()
 }
 
+func startHeartbeat(w *serverlessTransactionWriteCloser, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-w.done:
+			return
+		case <-ticker.C:
+			_, _ = w.Write([]byte("\n\n"))
+			w.Flush()
+		}
+	}
+}
+
 func (w *serverlessTransactionWriteCloser) Write(data []byte) (n int, err error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -165,6 +180,7 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			// bind the backwards invocation
 			pluginManager := plugin_manager.Manager()
 			session.BindBackwardsInvocation(pluginManager.BackwardsInvocation())
+			go startHeartbeat(writer, 25*time.Second)
 
 			serverlessResponseWriter := NewServerlessTransactionWriter(session, writer)
 
