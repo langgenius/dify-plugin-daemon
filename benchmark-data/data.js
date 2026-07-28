@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785227093091,
+  "lastUpdate": 1785229399047,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14722,6 +14722,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.45,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "52963600+GareArc@users.noreply.github.com",
+            "name": "Xiyuan Chen",
+            "username": "GareArc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b66639aba65c62f6e6d4a5dba2cfea1400d67d7",
+          "message": "feat(cache): cache the tenant model provider list in the daemon (#780)\n\n* fix(parser): let UnmarshalJson return slice payloads\n\nvalidator.Struct rejects any non-struct top-level value, so UnmarshalJson\nwith a slice T always failed before returning. Skip validation for slices\nalongside maps and strings.\n\nUnmarshalJsonBytes2Slice remains the variant that validates per element.\n\n* feat(cache): cache tenant model installations in the daemon\n\nDify caches the per-tenant model provider list, but enterprise installs\nplugins through the daemon directly, so Dify never learns its cache is\nstale and a newly assigned plugin stays invisible until the TTL expires.\n\nMove the cache to where the writes happen. ListModels now reads through a\nRedis hash keyed per tenant, with the page as the field so a single DEL\ndrops every cached page, and InstallPlugin/UninstallPlugin/UpgradePlugin\ninvalidate it.\n\nThe invalidation is deferred rather than run after the transaction: a\nretried install aborts on ErrPluginAlreadyInstalled before reaching any\npost-transaction code, so a DEL placed there is unreachable once it has\nfailed once.\n\nTTL defaults to 60 minutes, configurable via\nPLUGIN_MODEL_INSTALLATIONS_CACHE_TTL.\n\n* Update PLUGIN_MODEL_INSTALLATIONS_CACHE_TTL value\n\n* Increase PluginModelInstallationsCacheTTL to 1440\n\n* feat(cache): put the model installations cache behind a switch, off by default\n\nThe daemon cache holds the same tenant payload dify already caches, so leaving\nboth on doubles the redis footprint and forces a scale-up before a cloud\nproduction rollout. PLUGIN_MODEL_INSTALLATIONS_CACHE_ENABLED defaults to false;\nenable it only where dify runs with PLUGIN_MODEL_PROVIDERS_CACHE_ENABLED=false.",
+          "timestamp": "2026-07-28T02:01:23-07:00",
+          "tree_id": "46f1d3d1f62729d4f60c06e21c97d3cb76a5181d",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/0b66639aba65c62f6e6d4a5dba2cfea1400d67d7"
+        },
+        "date": 1785229398688,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.82,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.82,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
