@@ -24,57 +24,40 @@ type memCacheItem struct {
 
 type memCache struct {
 	sync.RWMutex
-	items    map[string]*memCacheItem
-	itemSize int64
+	items map[string]*memCacheItem
 }
 
 var (
-	// 500MB memory cache
-	maxMemCacheSize = int64(1024)
+	// max number of cached items
+	maxMemCacheSize = 1024
 	// 600s TTL
 	maxTTL = 600 * time.Second
 
 	pluginCache = &memCache{
-		items:    make(map[string]*memCacheItem),
-		itemSize: 0,
+		items: make(map[string]*memCacheItem),
 	}
 )
 
 func (c *memCache) get(key string) *plugin_entities.PluginDeclaration {
-	c.RLock()
-	item, exists := c.items[key]
-	c.RUnlock()
+	// accessCount and lastAccess are mutated on every hit, so a read lock is not
+	// enough to inspect them
+	c.Lock()
+	defer c.Unlock()
 
+	item, exists := c.items[key]
 	if !exists {
 		return nil
 	}
 
-	// Check TTL with a read lock first
 	if time.Since(item.lastAccess) > maxTTL {
-		c.Lock()
-		// Double check after acquiring write lock
-		if item, exists = c.items[key]; exists {
-			if time.Since(item.lastAccess) > maxTTL {
-				c.itemSize--
-				delete(c.items, key)
-			}
-		}
-		c.Unlock()
+		delete(c.items, key)
 		return nil
 	}
 
-	// Update access count and time atomically
-	c.Lock()
-	if item, exists = c.items[key]; exists {
-		item.accessCount++
-		item.lastAccess = time.Now()
-	}
-	c.Unlock()
+	item.accessCount++
+	item.lastAccess = time.Now()
 
-	if exists {
-		return item.declaration
-	}
-	return nil
+	return item.declaration
 }
 
 func (c *memCache) set(key string, declaration *plugin_entities.PluginDeclaration) {
@@ -85,13 +68,12 @@ func (c *memCache) set(key string, declaration *plugin_entities.PluginDeclaratio
 	now := time.Now()
 	for k, v := range c.items {
 		if now.Sub(v.lastAccess) > maxTTL {
-			c.itemSize--
 			delete(c.items, k)
 		}
 	}
 
 	// Remove least accessed items if cache is full
-	for c.itemSize >= maxMemCacheSize {
+	for len(c.items) >= maxMemCacheSize {
 		var leastKey string
 		var leastCount int64 = -1
 		var oldestAccess = time.Now()
@@ -106,10 +88,12 @@ func (c *memCache) set(key string, declaration *plugin_entities.PluginDeclaratio
 			}
 		}
 
-		if leastKey != "" {
-			c.itemSize--
-			delete(c.items, leastKey)
+		// nothing left to evict, never spin on a loop that cannot make progress
+		if leastKey == "" {
+			break
 		}
+
+		delete(c.items, leastKey)
 	}
 
 	// Add new item
@@ -118,7 +102,6 @@ func (c *memCache) set(key string, declaration *plugin_entities.PluginDeclaratio
 		accessCount: 1,
 		lastAccess:  now,
 	}
-	c.itemSize++
 }
 
 func CombinedGetPluginDeclaration(
