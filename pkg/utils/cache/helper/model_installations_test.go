@@ -27,6 +27,11 @@ const (
 func setupModelInstallationsTest(t *testing.T) {
 	t.Helper()
 
+	SetModelInstallationsCacheEnabled(true)
+	t.Cleanup(func() {
+		SetModelInstallationsCacheEnabled(false)
+	})
+
 	redisServer := miniredis.RunT(t)
 	require.NoError(t, cache.InitRedisClient(redisServer.Addr(), cache.RedisCredentials{}, false, 0, nil))
 	t.Cleanup(func() {
@@ -103,6 +108,25 @@ func TestCombinedListModelInstallationsServesCachedPageAfterRowsChange(t *testin
 	fresh, err := CombinedListModelInstallations(TEST_TENANT_ID, 1, 256)
 	require.NoError(t, err)
 	assert.Empty(t, fresh)
+}
+
+func TestCombinedListModelInstallationsBypassesCacheWhenDisabled(t *testing.T) {
+	setupModelInstallationsTest(t)
+	SetModelInstallationsCacheEnabled(false)
+
+	first, err := CombinedListModelInstallations(TEST_TENANT_ID, 1, 256)
+	require.NoError(t, err)
+	require.Len(t, first, 1)
+
+	exists, err := cache.Exist(ModelInstallationsCacheKey(TEST_TENANT_ID))
+	require.NoError(t, err)
+	assert.Zero(t, exists, "a disabled cache must not write the tenant key")
+
+	deleteInstallationRows(t)
+
+	fresh, err := CombinedListModelInstallations(TEST_TENANT_ID, 1, 256)
+	require.NoError(t, err)
+	assert.Empty(t, fresh, "a disabled cache must always reach the database")
 }
 
 func TestCombinedListModelInstallationsCachesEachPageSeparately(t *testing.T) {

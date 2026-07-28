@@ -16,7 +16,14 @@ import (
 
 const DEFAULT_MODEL_INSTALLATIONS_CACHE_TTL = 60 * time.Minute
 
-var modelInstallationsCacheTTL atomic.Int64
+var (
+	modelInstallationsCacheEnabled atomic.Bool
+	modelInstallationsCacheTTL     atomic.Int64
+)
+
+func SetModelInstallationsCacheEnabled(enabled bool) {
+	modelInstallationsCacheEnabled.Store(enabled)
+}
 
 func SetModelInstallationsCacheTTL(ttl time.Duration) {
 	if ttl <= 0 {
@@ -53,6 +60,10 @@ func CombinedListModelInstallations(
 	page int,
 	pageSize int,
 ) ([]AIModelInstallationWithDeclaration, error) {
+	if !modelInstallationsCacheEnabled.Load() {
+		return listModelInstallations(tenantId, page, pageSize)
+	}
+
 	cacheKey := ModelInstallationsCacheKey(tenantId)
 	cacheField := modelInstallationsCacheField(page, pageSize)
 
@@ -64,6 +75,25 @@ func CombinedListModelInstallations(
 		log.Warn("failed to read model installations cache", "key", cacheKey, "error", err)
 	}
 
+	data, err := listModelInstallations(tenantId, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cache.SetMapOneField(cacheKey, cacheField, data); err != nil {
+		log.Warn("failed to store model installations cache", "key", cacheKey, "error", err)
+	} else if _, err := cache.Expire(cacheKey, currentModelInstallationsCacheTTL()); err != nil {
+		log.Warn("failed to set model installations cache expiry", "key", cacheKey, "error", err)
+	}
+
+	return data, nil
+}
+
+func listModelInstallations(
+	tenantId string,
+	page int,
+	pageSize int,
+) ([]AIModelInstallationWithDeclaration, error) {
 	installations, err := db.GetAll[models.AIModelInstallation](
 		db.Equal("tenant_id", tenantId),
 		db.Page(page, pageSize),
@@ -90,12 +120,6 @@ func CombinedListModelInstallations(
 			AIModelInstallation: installation,
 			Declaration:         declaration.Model,
 		})
-	}
-
-	if err := cache.SetMapOneField(cacheKey, cacheField, data); err != nil {
-		log.Warn("failed to store model installations cache", "key", cacheKey, "error", err)
-	} else if _, err := cache.Expire(cacheKey, currentModelInstallationsCacheTTL()); err != nil {
-		log.Warn("failed to set model installations cache expiry", "key", cacheKey, "error", err)
 	}
 
 	return data, nil

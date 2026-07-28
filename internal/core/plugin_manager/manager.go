@@ -140,6 +140,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	}
 
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
+	helper.SetModelInstallationsCacheEnabled(configuration.PluginModelInstallationsCacheEnabled)
 	helper.SetModelInstallationsCacheTTL(
 		time.Duration(configuration.PluginModelInstallationsCacheTTL) * time.Minute,
 	)
