@@ -18,11 +18,9 @@ func UnmarshalJsonBytes[T any](data []byte) (T, error) {
 		return result, err
 	}
 
-	// skip validate if T is a map
-	typ := reflect.TypeOf(result)
-	if typ.Kind() == reflect.Map {
-		return result, nil
-	} else if typ.Kind() == reflect.String {
+	// the entity validator only accepts structs, so kinds it cannot handle skip validation
+	switch reflect.TypeOf(result).Kind() {
+	case reflect.Map, reflect.String, reflect.Slice:
 		return result, nil
 	}
 
