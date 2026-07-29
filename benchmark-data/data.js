@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785286770504,
+  "lastUpdate": 1785289559619,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14818,6 +14818,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.43,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dde811442fdd95e559bcf77ac6ec9ba02905d04e",
+          "message": "fix: upgrade deps to resolve CVEs (grpc, otel, quic-go) (#786)\n\n- google.golang.org/grpc v1.80.0 → v1.82.1 (GHSA-hrxh-6v49-42gf, CVSS 8.8)\n- go.opentelemetry.io/otel v1.43.0 → v1.44.0 (CVE-2026-41178)\n- github.com/quic-go/quic-go v0.59.0 → v0.59.1 (CVE-2026-40898, CVSS 5.3)",
+          "timestamp": "2026-07-29T09:43:40+08:00",
+          "tree_id": "5cfddfb64fd1c114f18e19eb27918ffbbd112379",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/dde811442fdd95e559bcf77ac6ec9ba02905d04e"
+        },
+        "date": 1785289559298,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.72,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.72,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
