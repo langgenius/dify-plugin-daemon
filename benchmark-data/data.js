@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785289559619,
+  "lastUpdate": 1785317171311,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14877,6 +14877,84 @@ window.BENCHMARK_DATA = {
           },
           {
             "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "byron@dify.ai",
+            "name": "Byron.wang",
+            "username": "41tair"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eff6e1eef304cbeb43de2df82ee575bde0a957e6",
+          "message": "feat: split oversized serverless requests to avoid lambda payload limit (#778)\n\n* feat: split oversized serverless requests to avoid lambda payload limit\n\n* clean up\n\n* docs: Dosu updates for PR #778\n\n---------\n\nCo-authored-by: dosubot[bot] <131922026+dosubot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-29T17:23:24+08:00",
+          "tree_id": "6e95904e5af540d666cb3204e4b2e0b8e2e717ef",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/eff6e1eef304cbeb43de2df82ee575bde0a957e6"
+        },
+        "date": 1785317170863,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 117797912,
+            "unit": "ns/op\t 890.15 MB/s\t212733005 B/op\t    1896 allocs/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 117797912,
+            "unit": "ns/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 890.15,
+            "unit": "MB/s",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 212733005,
+            "unit": "B/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1896,
+            "unit": "allocs/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.77,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.77,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
             "value": 0,
             "unit": "allocs/op",
             "extra": "1000000000 times\n2 procs"
