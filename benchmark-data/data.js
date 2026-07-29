@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785229399047,
+  "lastUpdate": 1785286770504,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -14770,6 +14770,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream - ns/op",
             "value": 19.82,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "52963600+GareArc@users.noreply.github.com",
+            "name": "Xiyuan Chen",
+            "username": "GareArc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a2645d521f03b47e08666477f5406d97a8f27518",
+          "message": "fix: prevent plugin declaration cache eviction loop from spinning forever (#784)\n\nmemCache tracked its size in a hand-maintained itemSize counter alongside\nc.items. DeletePluginDeclarationCache removed entries from the map without\ndecrementing the counter, so itemSize drifted permanently above\nlen(c.items). Once the drift reached maxMemCacheSize the eviction loop in\nset could no longer escape: it emptied the map, leastKey stayed \"\", nothing\nwas deleted, and itemSize never dropped below the threshold. The loop then\nspun under c.Lock(), pinning a core and blocking every reader of the\ndeclaration cache until the process was restarted.\n\nDrive eviction off len(c.items) instead of a parallel counter, which removes\nthe drift entirely, and break out of the loop when there is nothing left to\nevict so no future accounting error can reintroduce a non-terminating loop.\n\nAlso collapse get to a single write lock. It read item.lastAccess after\nreleasing RLock while other goroutines mutated that field under Lock, which\nthe race detector flags. The read lock bought nothing, since every cache hit\nalready took the write lock to update accessCount.\n\nCloses #783",
+          "timestamp": "2026-07-29T08:57:33+08:00",
+          "tree_id": "b640545266d832b6a69b4d02a2f1a4705b6edc28",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a2645d521f03b47e08666477f5406d97a8f27518"
+        },
+        "date": 1785286770039,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkStream",
+            "value": 19.43,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream - ns/op",
+            "value": 19.43,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
