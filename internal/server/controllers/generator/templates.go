@@ -82,11 +82,18 @@ func {{.Name}}(
 ) (
 	*stream.Stream[{{.ResponseTypeString}}], error,
 ) {
+	{{- if .CustomTunnelHandler}}
+	return {{.CustomTunnelHandler}}(
+		session,
+		request,
+	)
+	{{- else}}
 	return GenericInvokePlugin[{{.RequestTypeString}}, {{.ResponseTypeString}}](
 		session,
 		request,
 		{{.BufferSize}},
 	)
+	{{- end}}
 }
 {{end}}
 `

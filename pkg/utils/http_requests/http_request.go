@@ -23,6 +23,7 @@ func buildHttpRequest(method string, url string, options ...HttpOptions) (*http.
 		case HttpOptionTypeContext:
 			if ctx, ok := option.Value.(context.Context); ok {
 				ctx = log.EnsureTrace(ctx)
+				req = req.WithContext(ctx)
 				traceparent := log.GetTraceparentHeader(ctx)
 				if traceparent != "" {
 					req.Header.Set("traceparent", traceparent)

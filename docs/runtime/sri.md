@@ -16,6 +16,22 @@ The daemon is configured using the following environment variables:
 |----------|-------------|
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL` | Base URL of the remote runtime environment, e.g., `https://example.com` |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY` | Authentication token for accessing SRI, passed in the `Authorization` request header |
+| `MAX_SERVERLESS_REQUEST_BYTES` | Maximum serialized request payload size sent to a serverless plugin runtime (in bytes). Default is 5242880 (5 MB). This limit accounts for Lambda Function URL's 6 MB request size limit, with a safety margin for headers and metadata. |
+
+---
+
+## 📦 Request Size Limits and Batch Processing
+
+Serverless platforms like AWS Lambda Function URLs have strict payload size limits (6 MB for Lambda Function URLs). To handle large requests that would exceed these limits, the daemon automatically splits text embedding and token counting requests into multiple batches when they would exceed `MAX_SERVERLESS_REQUEST_BYTES`.
+
+**Key behaviors:**
+
+- **Transparent batching**: The daemon handles splitting and merging automatically — plugin developers don't need to implement any special logic
+- **Serial processing**: Each batch is processed serially to ensure consistent results
+- **Automatic merging**: Results from all batches are merged into a single response
+- **Error handling**: If a single text item exceeds the limit, the request will fail with a `ServerlessPayloadTooLargeError`
+
+This feature prevents opaque errors when large embedding requests fail due to payload size limits.
 
 ---
 

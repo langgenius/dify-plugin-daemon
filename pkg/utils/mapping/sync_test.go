@@ -48,6 +48,30 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+func TestDeleteIf(t *testing.T) {
+	t.Parallel()
+
+	m := Map[string, *int]{}
+	original := 1
+	replacement := 2
+	m.Store("session", &original)
+
+	if m.DeleteIf("session", func(value *int) bool { return value == &replacement }) {
+		t.Fatal("DeleteIf should not delete a value that no longer matches")
+	}
+	if value, ok := m.Load("session"); !ok || value != &original {
+		t.Fatal("DeleteIf changed the stored value after a failed comparison")
+	}
+
+	m.Store("session", &replacement)
+	if !m.DeleteIf("session", func(value *int) bool { return value == &replacement }) {
+		t.Fatal("DeleteIf should delete the matching value")
+	}
+	if m.Len() != 0 {
+		t.Fatalf("expected empty map after DeleteIf, got len %d", m.Len())
+	}
+}
+
 // TestConcurrentAccess verifies thread safety
 func TestConcurrentAccess(t *testing.T) {
 	t.Parallel()

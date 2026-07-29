@@ -4,9 +4,9 @@ package io_tunnel
 
 import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func InvokeLLM(
@@ -41,10 +41,9 @@ func InvokeTextEmbedding(
 ) (
 	*stream.Stream[model_entities.TextEmbeddingResult], error,
 ) {
-	return GenericInvokePlugin[requests.RequestInvokeTextEmbedding, model_entities.TextEmbeddingResult](
+	return invokeTextEmbeddingServerlessAware(
 		session,
 		request,
-		1,
 	)
 }
 
@@ -67,10 +66,9 @@ func GetTextEmbeddingNumTokens(
 ) (
 	*stream.Stream[model_entities.GetTextEmbeddingNumTokensResponse], error,
 ) {
-	return GenericInvokePlugin[requests.RequestGetTextEmbeddingNumTokens, model_entities.GetTextEmbeddingNumTokensResponse](
+	return getTextEmbeddingNumTokensServerlessAware(
 		session,
 		request,
-		1,
 	)
 }
 

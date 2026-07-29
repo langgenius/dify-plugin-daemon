@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	gootel "go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -18,6 +19,10 @@ const (
 
 	pluginInvocationsMetricName        = "plugin.invocations"
 	pluginInvocationDurationMetricName = "plugin.invocation.duration"
+	serverlessBatchCountMetricName     = "plugin.serverless.batch.count"
+	serverlessBatchPayloadMetricName   = "plugin.serverless.batch.payload_bytes"
+	serverlessOversizeItemMetricName   = "plugin.serverless.batch.oversize_items"
+	serverlessMismatchMetricName       = "plugin.serverless.batch.result_mismatches"
 
 	pluginInvocationOutcomeSuccess  = "success"
 	pluginInvocationOutcomeError    = "error"
@@ -32,8 +37,12 @@ const (
 )
 
 type pluginInvocationInstruments struct {
-	counter   metric.Int64Counter
-	durations metric.Float64Histogram
+	counter                    metric.Int64Counter
+	durations                  metric.Float64Histogram
+	serverlessBatchCounts      metric.Int64Histogram
+	serverlessBatchPayloads    metric.Int64Histogram
+	serverlessOversizeItems    metric.Int64Counter
+	serverlessResultMismatches metric.Int64Counter
 }
 
 type pluginInvocationRecorder struct {
@@ -96,6 +105,56 @@ func (t *pluginInvocationOutcomeTracker) outcome() string {
 	}
 }
 
+func recordServerlessBatchPlan(session *session_manager.Session, payloadBytes []int) {
+	instruments, err := getPluginInvocationInstruments()
+	if err != nil || instruments == nil {
+		return
+	}
+
+	ctx := session.RequestContext()
+	attrs := buildServerlessBatchAttributes(session)
+	instruments.serverlessBatchCounts.Record(
+		ctx,
+		int64(len(payloadBytes)),
+		metric.WithAttributeSet(attrs),
+	)
+	for _, payloadSize := range payloadBytes {
+		instruments.serverlessBatchPayloads.Record(
+			ctx,
+			int64(payloadSize),
+			metric.WithAttributeSet(attrs),
+		)
+	}
+}
+
+func recordServerlessOversizeItem(session *session_manager.Session) {
+	instruments, err := getPluginInvocationInstruments()
+	if err != nil || instruments == nil {
+		return
+	}
+	instruments.serverlessOversizeItems.Add(
+		session.RequestContext(),
+		1,
+		metric.WithAttributeSet(buildServerlessBatchAttributes(session)),
+	)
+}
+
+func recordServerlessBatchMismatch(session *session_manager.Session, reason string) {
+	instruments, err := getPluginInvocationInstruments()
+	if err != nil || instruments == nil {
+		return
+	}
+	attrs := buildServerlessBatchAttributes(session)
+	if reason != "" {
+		attrs = attribute.NewSet(append(attrs.ToSlice(), attribute.String("batch.mismatch_reason", reason))...)
+	}
+	instruments.serverlessResultMismatches.Add(
+		session.RequestContext(),
+		1,
+		metric.WithAttributeSet(attrs),
+	)
+}
+
 func getPluginInvocationInstruments() (*pluginInvocationInstruments, error) {
 	pluginInvocationMetricsOnce.Do(func() {
 		meter := gootel.Meter(pluginInvocationMetricScope)
@@ -127,13 +186,93 @@ func getPluginInvocationInstruments() (*pluginInvocationInstruments, error) {
 			return
 		}
 
+		serverlessBatchCounts, err := meter.Int64Histogram(
+			serverlessBatchCountMetricName,
+			metric.WithDescription("Number of serial Lambda requests planned for one logical plugin invocation."),
+			metric.WithUnit("{batch}"),
+		)
+		if err != nil {
+			pluginInvocationMetricsErr = err
+			log.Warn("failed to init serverless batch count histogram", "error", err)
+			return
+		}
+
+		serverlessBatchPayloads, err := meter.Int64Histogram(
+			serverlessBatchPayloadMetricName,
+			metric.WithDescription("Serialized request payload size for each planned serverless batch."),
+			metric.WithUnit("By"),
+		)
+		if err != nil {
+			pluginInvocationMetricsErr = err
+			log.Warn("failed to init serverless batch payload histogram", "error", err)
+			return
+		}
+
+		serverlessOversizeItems, err := meter.Int64Counter(
+			serverlessOversizeItemMetricName,
+			metric.WithDescription("Number of individual text items that exceed the serverless request limit."),
+			metric.WithUnit("{item}"),
+		)
+		if err != nil {
+			pluginInvocationMetricsErr = err
+			log.Warn("failed to init serverless oversize item counter", "error", err)
+			return
+		}
+
+		serverlessResultMismatches, err := meter.Int64Counter(
+			serverlessMismatchMetricName,
+			metric.WithDescription("Number of invalid or inconsistent serverless batch results."),
+			metric.WithUnit("{error}"),
+		)
+		if err != nil {
+			pluginInvocationMetricsErr = err
+			log.Warn("failed to init serverless batch mismatch counter", "error", err)
+			return
+		}
+
 		pluginInvocationMetrics = &pluginInvocationInstruments{
-			counter:   counter,
-			durations: durations,
+			counter:                    counter,
+			durations:                  durations,
+			serverlessBatchCounts:      serverlessBatchCounts,
+			serverlessBatchPayloads:    serverlessBatchPayloads,
+			serverlessOversizeItems:    serverlessOversizeItems,
+			serverlessResultMismatches: serverlessResultMismatches,
 		}
 	})
 
 	return pluginInvocationMetrics, pluginInvocationMetricsErr
+}
+
+func buildServerlessBatchAttributes(session *session_manager.Session) attribute.Set {
+	pluginID := pluginInvocationUnknownValue
+	pluginVersion := pluginInvocationUnknownValue
+	accessType := pluginInvocationUnknownValue
+	action := pluginInvocationUnknownValue
+
+	if session != nil {
+		if session.PluginUniqueIdentifier != "" {
+			if id := session.PluginUniqueIdentifier.PluginID(); id != "" {
+				pluginID = id
+			}
+			if version := string(session.PluginUniqueIdentifier.Version()); version != "" {
+				pluginVersion = version
+			}
+		}
+		if session.InvokeFrom != "" {
+			accessType = string(session.InvokeFrom)
+		}
+		if session.Action != "" {
+			action = string(session.Action)
+		}
+	}
+
+	return attribute.NewSet(
+		attribute.String("plugin.id", pluginID),
+		attribute.String("plugin.version", pluginVersion),
+		attribute.String("plugin.runtime_type", string(plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS)),
+		attribute.String("plugin.access_type", accessType),
+		attribute.String("plugin.action", action),
+	)
 }
 
 func buildPluginInvocationAttributes(session *session_manager.Session, outcome string) attribute.Set {

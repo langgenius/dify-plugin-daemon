@@ -16,6 +16,22 @@ daemon 通过如下环境变量进行配置：
 |--------|------|
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL` | 指定远程运行环境的 Base URL，例如 `https://example.com` |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY` | 用于访问 SRI 的鉴权 token，将被加入请求 Header 中的 `Authorization` 字段 |
+| `MAX_SERVERLESS_REQUEST_BYTES` | 发送到 serverless 插件运行时的最大序列化请求负载大小（以字节为单位）。默认值为 5242880（5 MB）。此限制考虑了 Lambda Function URL 的 6 MB 请求大小限制，并为 headers 和元数据留有安全余量。 |
+
+---
+
+## 📏 请求大小限制与批处理
+
+像 AWS Lambda Function URL 这样的 serverless 平台有严格的负载大小限制（Lambda Function URL 为 6 MB）。
+
+当文本嵌入和 token 计数请求超过 `MAX_SERVERLESS_REQUEST_BYTES` 时，daemon 会自动将其拆分为多个批次：
+
+- **透明处理**：批处理对插件开发者是透明的 - daemon 自动处理拆分和合并
+- **顺序处理**：每个批次按顺序处理以确保结果一致
+- **自动合并**：来自所有批次的结果会自动合并为单个响应
+- **错误处理**：如果单个文本项超过限制，请求将失败并返回 `ServerlessPayloadTooLargeError` 错误
+
+此功能可防止大型嵌入请求因负载大小限制而失败时出现不明确的错误。
 
 ---
 

@@ -300,6 +300,15 @@ type pluginInStreamMessage struct {
 	Data           any                    `json:"data"`
 }
 
+type runtimeContextWriter interface {
+	WriteContext(
+		ctx context.Context,
+		sessionID string,
+		action access_types.PluginAccessAction,
+		data []byte,
+	) error
+}
+
 func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 	b, _ := json.Marshal(pluginInStreamMessage{
 		SessionID:      s.ID,
@@ -315,8 +324,21 @@ func (s *Session) Message(event PLUGIN_IN_STREAM_EVENT, data any) []byte {
 }
 
 func (s *Session) Write(event PLUGIN_IN_STREAM_EVENT, action access_types.PluginAccessAction, data any) error {
+	return s.WriteContext(s.RequestContext(), event, action, data)
+}
+
+func (s *Session) WriteContext(
+	ctx context.Context,
+	event PLUGIN_IN_STREAM_EVENT,
+	action access_types.PluginAccessAction,
+	data any,
+) error {
 	if s.runtime == nil {
 		return errors.New("runtime not bound")
 	}
-	return s.runtime.Write(s.ID, action, s.Message(event, data))
+	message := s.Message(event, data)
+	if runtime, ok := s.runtime.(runtimeContextWriter); ok {
+		return runtime.WriteContext(ctx, s.ID, action, message)
+	}
+	return s.runtime.Write(s.ID, action, message)
 }
