@@ -21,6 +21,12 @@ func NewMockedDifyInvocation() dify_invocation.BackwardsInvocation {
 	return &MockedDifyInvocation{}
 }
 
+func (m *MockedDifyInvocation) WithContext(ctx context.Context) dify_invocation.BackwardsInvocation {
+	invocation := *m
+	invocation.ctx = ctx
+	return &invocation
+}
+
 func (m *MockedDifyInvocation) SetContext(ctx context.Context) {
 	m.ctx = ctx
 }

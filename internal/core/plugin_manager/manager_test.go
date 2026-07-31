@@ -1,15 +1,32 @@
 package plugin_manager
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	controlpanel "github.com/langgenius/dify-plugin-daemon/internal/core/control_panel"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
+	invocationmock "github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation/mock"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
+
+func TestBackwardsInvocationContextsAreIsolated(t *testing.T) {
+	manager := &PluginManager{
+		backwardsInvocation: invocationmock.NewMockedDifyInvocation(),
+	}
+
+	first := manager.BackwardsInvocation()
+	second := manager.BackwardsInvocation()
+	canceledContext, cancel := context.WithCancel(context.Background())
+	first.SetContext(canceledContext)
+	cancel()
+
+	require.ErrorIs(t, first.Context().Err(), context.Canceled)
+	require.NoError(t, second.Context().Err())
+}
 
 func TestNeedRedirectingUsesInstallationRuntimeType(t *testing.T) {
 	identifier := plugin_entities.PluginUniqueIdentifier(

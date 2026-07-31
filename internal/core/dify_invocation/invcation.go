@@ -9,6 +9,7 @@ import (
 )
 
 type BackwardsInvocation interface {
+	WithContext(ctx context.Context) BackwardsInvocation
 	SetContext(ctx context.Context)
 	Context() context.Context
 	// InvokeLLM

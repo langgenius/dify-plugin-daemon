@@ -4,16 +4,24 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+
+	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 )
 
 type RealBackwardsInvocation struct {
-	difyInnerApiKey        string
-	difyInnerApiBaseurl    *url.URL
-	client                 *http.Client
-	writeTimeout           int64
-	readTimeout            int64
-	responseMaxBufferSize  int64
-	traceCtx               context.Context
+	difyInnerApiKey       string
+	difyInnerApiBaseurl   *url.URL
+	client                *http.Client
+	writeTimeout          int64
+	readTimeout           int64
+	responseMaxBufferSize int64
+	traceCtx              context.Context
+}
+
+func (i *RealBackwardsInvocation) WithContext(ctx context.Context) dify_invocation.BackwardsInvocation {
+	invocation := *i
+	invocation.traceCtx = ctx
+	return &invocation
 }
 
 func (i *RealBackwardsInvocation) SetContext(ctx context.Context) {
