@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -21,8 +22,8 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 	// Arrange: craft a valid PluginUniversalEvent that will trigger the session handler path
 	// with a backwards_request_id extracted from SessionMessage.Data
 	const (
-		testSessionID       = "test-session-not-exist"
-		testBackwardsReqID  = "req-123"
+		testSessionID      = "test-session-not-exist"
+		testBackwardsReqID = "req-123"
 	)
 
 	invokePayload := map[string]any{
@@ -91,7 +92,7 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 		t.Fatalf("expected data.error_type=SessionNotFound, got %v", m["error_type"])
 	}
 	if v, _ := m["session_id"].(string); v != testSessionID {
-		t.Fatalf("expected data.session_id=%q, got %v", testSessionID, m["session_id"]) 
+		t.Fatalf("expected data.session_id=%q, got %v", testSessionID, m["session_id"])
 	}
 	if v, _ := m["detail"].(string); v == "" {
 		t.Fatalf("expected non-empty data.detail, got empty")
@@ -135,6 +136,71 @@ func TestServerlessTransactionWriteCloser_FlushRecoversFromPanic(t *testing.T) {
 
 	if atomic.LoadInt32(&w.closed) == 0 {
 		t.Fatal("expected writer to be closed after flush panic")
+	}
+}
+
+func TestServerlessTransactionWriteCloser_WriteAndFlushHoldsLock(t *testing.T) {
+	var mu sync.Mutex
+	var nestedStarted atomic.Bool
+	events := make([]string, 0, 3)
+	firstWriteEntered := make(chan struct{})
+	allowFirstWriteReturn := make(chan struct{})
+	nestedWriteDone := make(chan struct{})
+	writeAndFlushDone := make(chan error)
+
+	var w *serverlessTransactionWriteCloser
+	w = &serverlessTransactionWriteCloser{
+		done: make(chan bool),
+		writer: func(data []byte) (int, error) {
+			mu.Lock()
+			events = append(events, "write")
+			mu.Unlock()
+
+			if nestedStarted.CompareAndSwap(false, true) {
+				close(firstWriteEntered)
+				go func() {
+					_, _ = w.Write([]byte("nested"))
+					close(nestedWriteDone)
+				}()
+				<-allowFirstWriteReturn
+			}
+			return len(data), nil
+		},
+		flush: func() {
+			mu.Lock()
+			events = append(events, "flush")
+			mu.Unlock()
+		},
+	}
+
+	go func() {
+		writeAndFlushDone <- w.WriteAndFlush([]byte("payload"))
+	}()
+
+	<-firstWriteEntered
+	select {
+	case <-nestedWriteDone:
+		t.Fatal("nested write completed while WriteAndFlush still held the lock")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	close(allowFirstWriteReturn)
+	if err := <-writeAndFlushDone; err != nil {
+		t.Fatalf("write and flush failed: %v", err)
+	}
+	select {
+	case <-nestedWriteDone:
+	case <-time.After(time.Second):
+		t.Fatal("nested write did not complete")
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(events) != 3 {
+		t.Fatalf("expected exactly three events, got %v", events)
+	}
+	if events[0] != "write" || events[1] != "flush" || events[2] != "write" {
+		t.Fatalf("expected nested write after write and flush, got %v", events)
 	}
 }
 
