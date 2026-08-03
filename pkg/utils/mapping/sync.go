@@ -46,6 +46,26 @@ func (m *Map[K, V]) Delete(key K) {
 	m.store.Delete(key)
 }
 
+// DeleteIf atomically deletes key when matches returns true.
+// matches runs while the map is locked and must not call methods on m.
+func (m *Map[K, V]) DeleteIf(key K, matches func(V) bool) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	value, loaded := m.store.Load(key)
+	if !loaded {
+		return false
+	}
+	typedValue, ok := value.(V)
+	if !ok || !matches(typedValue) {
+		return false
+	}
+
+	m.store.Delete(key)
+	atomic.AddInt32(&m.len, -1)
+	return true
+}
+
 func (m *Map[K, V]) Range(f func(key K, value V) bool) {
 	m.store.Range(func(key, value interface{}) bool {
 		return f(key.(K), value.(V))

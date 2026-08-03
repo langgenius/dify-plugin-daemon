@@ -115,6 +115,11 @@ type Config struct {
 	PluginInstalledPath    string `envconfig:"PLUGIN_INSTALLED_PATH" validate:"required"` // where the plugin finally installed
 	PluginPackageCachePath string `envconfig:"PLUGIN_PACKAGE_CACHE_PATH"`                 // where plugin packages stored
 
+	// cache the tenant's model installation list in redis, off unless dify's own model providers cache is disabled
+	PluginModelInstallationsCacheEnabled bool `envconfig:"PLUGIN_MODEL_INSTALLATIONS_CACHE_ENABLED"`
+	// how long a tenant's cached model installation list survives without an explicit invalidation, in minutes
+	PluginModelInstallationsCacheTTL int `envconfig:"PLUGIN_MODEL_INSTALLATIONS_CACHE_TTL"`
+
 	// request timeout
 	PluginMaxExecutionTimeout int `envconfig:"PLUGIN_MAX_EXECUTION_TIMEOUT" validate:"required"`
 
@@ -140,6 +145,9 @@ type Config struct {
 	RedisUseSsl      bool   `envconfig:"REDIS_USE_SSL"`
 	RedisSSLCertReqs string `envconfig:"REDIS_SSL_CERT_REQS"`
 	RedisSSLCACerts  string `envconfig:"REDIS_SSL_CA_CERTS"`
+
+	// Azure Managed Identity (Entra ID) for Redis authentication
+	RedisUseAzureManagedIdentity bool `envconfig:"REDIS_USE_AZURE_MANAGED_IDENTITY"`
 
 	// redis sentinel
 	RedisUseSentinel           bool    `envconfig:"REDIS_USE_SENTINEL"`
@@ -197,6 +205,7 @@ type Config struct {
 	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
 	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
+	MaxServerlessRequestBytes       int   `envconfig:"MAX_SERVERLESS_REQUEST_BYTES" default:"5242880"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
@@ -294,6 +303,10 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	if c.MaxServerlessRequestBytes <= 0 {
+		return fmt.Errorf("max serverless request bytes must be greater than zero")
+	}
+
 	switch c.Platform {
 	case PLATFORM_SERVERLESS:
 		if c.DifyPluginServerlessConnectorURL == nil {
@@ -327,6 +340,13 @@ func (c *Config) Validate() error {
 	if _, err := pkglog.ParseLevel(c.LogLevel); err != nil {
 		return err
 	}
+
+	if c.RedisUseAzureManagedIdentity && c.RedisDB != 0 {
+		return fmt.Errorf(
+			"Azure Managed Redis only supports db 0, but REDIS_DB is set to %d; "+
+				"please set REDIS_DB=0 when REDIS_USE_AZURE_MANAGED_IDENTITY is enabled", c.RedisDB)
+	}
+
 	return nil
 }
 

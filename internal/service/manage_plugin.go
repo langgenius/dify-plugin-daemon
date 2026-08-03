@@ -617,45 +617,9 @@ func ListModelPluginBindings(tenant_id string) *entities.Response {
 }
 
 func ListModels(tenant_id string, page int, page_size int) *entities.Response {
-	type AIModel struct {
-		models.AIModelInstallation // pointer to avoid deep copy
-
-		Declaration *plugin_entities.ModelProviderDeclaration `json:"declaration"`
-	}
-
-	providers, err := db.GetAll[models.AIModelInstallation](
-		db.Equal("tenant_id", tenant_id),
-		db.Page(page, page_size),
-	)
-
+	data, err := helper.CombinedListModelInstallations(tenant_id, page, page_size)
 	if err != nil {
 		return exception.InternalServerError(err).ToResponse()
-	}
-
-	data := make([]AIModel, 0, len(providers))
-
-	for _, provider := range providers {
-		uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(provider.PluginUniqueIdentifier)
-		var runtimeType plugin_entities.PluginRuntimeType
-		if uniqueIdentifier.RemoteLike() {
-			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
-		} else {
-			runtimeType = plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
-		}
-
-		declaration, err := helper.CombinedGetPluginDeclaration(
-			uniqueIdentifier,
-			runtimeType,
-		)
-
-		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
-		}
-
-		data = append(data, AIModel{
-			AIModelInstallation: provider,
-			Declaration:         declaration.Model,
-		})
 	}
 
 	return entities.NewSuccessResponse(data)

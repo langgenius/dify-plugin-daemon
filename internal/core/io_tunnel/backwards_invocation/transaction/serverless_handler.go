@@ -36,6 +36,20 @@ type serverlessTransactionWriteCloser struct {
 	flush  func()
 }
 
+func startHeartbeat(w *serverlessTransactionWriteCloser, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-w.done:
+			return
+		case <-ticker.C:
+			_ = w.WriteAndFlush([]byte("\n\n"))
+		}
+	}
+}
+
 func (w *serverlessTransactionWriteCloser) Write(data []byte) (n int, err error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -53,6 +67,28 @@ func (w *serverlessTransactionWriteCloser) Write(data []byte) (n int, err error)
 	}()
 
 	return w.writer(data)
+}
+
+func (w *serverlessTransactionWriteCloser) WriteAndFlush(data []byte) (err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if atomic.LoadInt32(&w.closed) != 0 {
+		return io.ErrClosedPipe
+	}
+
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("serverless transaction write panic: %v", recovered)
+			_ = w.Close()
+		}
+	}()
+
+	if _, err := w.writer(data); err != nil {
+		return err
+	}
+	w.flush()
+	return nil
 }
 
 func (w *serverlessTransactionWriteCloser) Flush() {
@@ -165,6 +201,7 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			// bind the backwards invocation
 			pluginManager := plugin_manager.Manager()
 			session.BindBackwardsInvocation(pluginManager.BackwardsInvocation())
+			go startHeartbeat(writer, 25*time.Second)
 
 			serverlessResponseWriter := NewServerlessTransactionWriter(session, writer)
 
@@ -175,11 +212,15 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 				serverlessResponseWriter,
 				sessionMessage.Data,
 			); err != nil {
+				writer.mu.Lock()
+				if atomic.CompareAndSwapInt32(&writer.closed, 0, 1) {
+					close(writer.done)
+				}
 				if !ctx.Writer.Written() {
 					ctx.Writer.WriteHeader(http.StatusInternalServerError)
 					_, _ = ctx.Writer.Write([]byte("failed to parse request"))
 				}
-				_ = writer.Close()
+				writer.mu.Unlock()
 			}
 		},
 		func() {},

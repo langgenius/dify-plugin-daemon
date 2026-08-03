@@ -1,3 +1,3 @@
-//go:generate go run ../../cmd/codegen/main.go
+//go:generate go -C ../../.. run ./cmd/codegen/main.go
 
 package controllers

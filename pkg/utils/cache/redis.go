@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9/auth"
 	gootel "go.opentelemetry.io/otel"
 )
 
@@ -26,13 +27,24 @@ var (
 	keyPrefixLock sync.RWMutex
 )
 
-func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) *redis.Options {
+// RedisCredentials holds authentication options for Redis connections.
+// When CredentialProvider is non-nil, it is used to fetch per-connection
+// credentials (e.g. Azure Entra ID token-based auth).
+type RedisCredentials struct {
+	Username           string
+	Password           string
+	CredentialProvider auth.StreamingCredentialsProvider
+}
+
+func getRedisOptions(addr string, creds RedisCredentials, useSsl bool, db int, tlsConf *tls.Config) *redis.Options {
 	opts := &redis.Options{
-		Addr:     addr,
-		Username: username,
-		Password: password,
-		DB:       db,
+		Addr:                         addr,
+		Username:                     creds.Username,
+		Password:                     creds.Password,
+		DB:                           db,
+		StreamingCredentialsProvider: creds.CredentialProvider,
 	}
+
 	if useSsl {
 		if tlsConf != nil {
 			opts.TLSConfig = tlsConf
@@ -46,8 +58,8 @@ func getRedisOptions(addr, username, password string, useSsl bool, db int, tlsCo
 	return opts
 }
 
-func InitRedisClient(addr, username, password string, useSsl bool, db int, tlsConf *tls.Config) error {
-	opts := getRedisOptions(addr, username, password, useSsl, db, tlsConf)
+func InitRedisClient(addr string, creds RedisCredentials, useSsl bool, db int, tlsConf *tls.Config) error {
+	opts := getRedisOptions(addr, creds, useSsl, db, tlsConf)
 	client = redis.NewClient(opts)
 	// instrument tracing for redis client
 	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
@@ -61,20 +73,23 @@ func InitRedisClient(addr, username, password string, useSsl bool, db int, tlsCo
 
 func InitRedisSentinelClient(
 	sentinels []string,
-	masterName, username, password, sentinelUsername, sentinelPassword string,
+	masterName string,
+	creds RedisCredentials,
+	sentinelUsername, sentinelPassword string,
 	useSsl bool,
 	db int,
 	socketTimeout float64,
 	tlsConf *tls.Config,
 ) error {
 	opts := &redis.FailoverOptions{
-		MasterName:       masterName,
-		SentinelAddrs:    sentinels,
-		Username:         username,
-		Password:         password,
-		DB:               db,
-		SentinelUsername: sentinelUsername,
-		SentinelPassword: sentinelPassword,
+		MasterName:                   masterName,
+		SentinelAddrs:                sentinels,
+		Username:                     creds.Username,
+		Password:                     creds.Password,
+		DB:                           db,
+		SentinelUsername:             sentinelUsername,
+		SentinelPassword:             sentinelPassword,
+		StreamingCredentialsProvider: creds.CredentialProvider,
 	}
 
 	if useSsl {

@@ -104,8 +104,24 @@ func (app *App) RedirectPluginInvoke() gin.HandlerFunc {
 			return
 		}
 
+		runtimeType := plugin_entities.PluginRuntimeType("")
+		if installationAny, ok := ctx.Get(constants.CONTEXT_KEY_PLUGIN_INSTALLATION); ok {
+			installation, ok := installationAny.(models.PluginInstallation)
+			if !ok {
+				ctx.AbortWithStatusJSON(
+					500,
+					exception.InternalServerError(errors.New("failed to parse plugin installation")).ToResponse(),
+				)
+				return
+			}
+			runtimeType = plugin_entities.PluginRuntimeType(installation.RuntimeType)
+		}
+
 		// check if plugin in current node
-		if needRedirecting, originalError := app.pluginManager.NeedRedirecting(identity); needRedirecting {
+		if needRedirecting, originalError := app.pluginManager.NeedRedirecting(
+			identity,
+			runtimeType,
+		); needRedirecting {
 			app.redirectPluginInvokeByPluginIdentifier(ctx, identity, originalError)
 			ctx.Abort()
 		} else {

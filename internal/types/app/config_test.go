@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/kelseyhightower/envconfig"
@@ -84,6 +85,35 @@ func TestConfigRedisKeyPrefixField(t *testing.T) {
 	cfg := Config{}
 	require.NoError(t, envconfig.Process("", &cfg))
 	assert.Equal(t, "enterprise-a", cfg.RedisKeyPrefix)
+}
+
+func TestMaxServerlessRequestBytesDefault(t *testing.T) {
+	originalValue, hadOriginalValue := os.LookupEnv("MAX_SERVERLESS_REQUEST_BYTES")
+	require.NoError(t, os.Unsetenv("MAX_SERVERLESS_REQUEST_BYTES"))
+	t.Cleanup(func() {
+		if hadOriginalValue {
+			require.NoError(t, os.Setenv("MAX_SERVERLESS_REQUEST_BYTES", originalValue))
+			return
+		}
+		require.NoError(t, os.Unsetenv("MAX_SERVERLESS_REQUEST_BYTES"))
+	})
+
+	cfg := Config{}
+	require.NoError(t, envconfig.Process("", &cfg))
+	assert.Equal(t, 5*1024*1024, cfg.MaxServerlessRequestBytes)
+}
+
+func TestValidateRejectsNonPositiveMaxServerlessRequestBytes(t *testing.T) {
+	for _, maxRequestBytes := range []int{0, -1} {
+		t.Run("max_request_bytes_"+strconv.Itoa(maxRequestBytes), func(t *testing.T) {
+			config := newValidConfigForValidation()
+			config.MaxServerlessRequestBytes = maxRequestBytes
+
+			err := config.Validate()
+
+			require.EqualError(t, err, "max serverless request bytes must be greater than zero")
+		})
+	}
 }
 
 func TestPipMirrorAutoDetectDefault(t *testing.T) {

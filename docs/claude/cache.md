@@ -104,15 +104,45 @@ Initialize Redis client in main:
 
 ```go
 cache.InitRedisClient(
-    addr,      // "localhost:6379"
-    username,  // optional
-    password,  
-    useSsl,    // bool
-    db,        // database number
+    addr,  // "localhost:6379"
+    cache.RedisCredentials{
+        Username: username,  // optional
+        Password: password,
+        CredentialProvider: nil,  // optional StreamingCredentialsProvider
+    },
+    useSsl,  // bool
+    db,      // database number
+    nil,     // *tls.Config (optional)
 )
 ```
 
-Redis naming behavior:
+### Azure Managed Identity Authentication
+
+Azure Entra ID authentication is supported via the `REDIS_USE_AZURE_MANAGED_IDENTITY` environment variable. When enabled, it uses `DefaultAzureCredential` for token-based authentication instead of static username/password credentials.
+
+**Important:** Azure Managed Redis only supports database 0, so `REDIS_DB` must be set to 0 when using this feature.
+
+```go
+// Create Azure credentials provider
+provider, err := cache.NewAzureEntraIDCredentialsProvider()
+if err != nil {
+    log.Fatal("failed to create Azure credentials provider:", err)
+}
+
+cache.InitRedisClient(
+    addr,
+    cache.RedisCredentials{
+        CredentialProvider: provider,  // takes precedence over Username/Password
+    },
+    useSsl,
+    db,
+    nil,
+)
+```
+
+When `CredentialProvider` is set, it takes precedence over static `Username` and `Password` fields.
+
+### Redis Naming Behavior
 
 - `REDIS_KEY_PREFIX` defaults to `plugin_daemon`
 - applies to keys and pub/sub channels managed by this package

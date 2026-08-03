@@ -1,7 +1,9 @@
 package backwards_invocation
 
 import (
+	"context"
 	"fmt"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
@@ -57,24 +59,33 @@ func (bi *BackwardsInvocation) GetID() string {
 }
 
 func (bi *BackwardsInvocation) WriteError(err error) {
-	bi.writer.Write(
+	err1 := bi.writer.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewErrorEvent(bi.id, err.Error()),
 	)
+	if err1 != nil {
+		log.WarnContext(context.Background(), "backwards_invocation.write_error", err1)
+	}
 }
 
 func (bi *BackwardsInvocation) WriteResponse(message string, data any) {
-	bi.writer.Write(
+	err := bi.writer.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewResponseEvent(bi.id, message, data),
 	)
+	if err != nil {
+		log.WarnContext(context.Background(), "backwards_invocation.write_response error", err)
+	}
 }
 
 func (bi *BackwardsInvocation) EndResponse() {
-	bi.writer.Write(
+	err := bi.writer.Write(
 		session_manager.PLUGIN_IN_STREAM_EVENT_RESPONSE,
 		NewEndEvent(bi.id),
 	)
+	if err != nil {
+		log.WarnContext(context.Background(), "backwards_invocation.write_response error", err)
+	}
 	bi.writer.Done()
 }
 

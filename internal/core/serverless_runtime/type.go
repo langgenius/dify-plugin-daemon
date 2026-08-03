@@ -30,9 +30,14 @@ type ServerlessPluginRuntime struct {
 
 	PluginMaxExecutionTimeout int // in seconds
 	MaxRetryTimes             int // maximum retry times for serverless invocation
+	MaxRequestBytes           int // maximum serialized request payload size
 
 	RuntimeBufferSize    int
 	RuntimeMaxBufferSize int
+}
+
+func (r *ServerlessPluginRuntime) MaxServerlessRequestBytes() int {
+	return r.MaxRequestBytes
 }
 
 // build a serverless plugin runtime
@@ -59,6 +64,7 @@ func ConstructServerlessPluginRuntime(
 		LambdaName:                serverlessModel.FunctionName,
 		PluginMaxExecutionTimeout: config.PluginMaxExecutionTimeout,
 		MaxRetryTimes:             config.MaxServerlessRetryTimes,
+		MaxRequestBytes:           config.MaxServerlessRequestBytes,
 		RuntimeBufferSize:         config.PluginRuntimeBufferSize,
 		RuntimeMaxBufferSize:      config.PluginRuntimeMaxBufferSize,
 

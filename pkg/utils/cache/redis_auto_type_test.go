@@ -14,7 +14,7 @@ type TestAutoTypeStruct struct {
 }
 
 func TestAutoType(t *testing.T) {
-	if err := InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0, nil); err != nil {
+	if err := InitRedisClient("127.0.0.1:6379", RedisCredentials{Password: "difyai123456"}, false, 0, nil); err != nil {
 		t.Fatal(err)
 	}
 	defer Close()
@@ -39,7 +39,7 @@ func TestAutoType(t *testing.T) {
 }
 
 func TestAutoTypeWithGetter(t *testing.T) {
-	if err := InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0, nil); err != nil {
+	if err := InitRedisClient("127.0.0.1:6379", RedisCredentials{Password: "difyai123456"}, false, 0, nil); err != nil {
 		t.Fatal(err)
 	}
 	defer Close()
@@ -68,7 +68,7 @@ func TestAutoTypeWithGetter(t *testing.T) {
 }
 
 func TestAutoTypeUsesConfiguredPrefix(t *testing.T) {
-	if err := InitRedisClient("127.0.0.1:6379", "", "difyai123456", false, 0, nil); err != nil {
+	if err := InitRedisClient("127.0.0.1:6379", RedisCredentials{Password: "difyai123456"}, false, 0, nil); err != nil {
 		t.Fatal(err)
 	}
 	defer Close()

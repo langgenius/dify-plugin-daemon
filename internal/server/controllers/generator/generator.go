@@ -114,7 +114,7 @@ func GeneratePluginDaemon(accessType access_types.PluginAccessType, dispatchers 
 	tmpl := template.Must(template.New("pluginDaemon").Parse(pluginDaemonTemplate))
 
 	// Create output file
-	outputPath := filepath.Join("internal", "core", "plugin_daemon", strings.ToLower(string(accessType))+".gen.go")
+	outputPath := pluginDaemonOutputPath(accessType)
 
 	// Execute template
 	var buf strings.Builder
@@ -152,6 +152,10 @@ func GeneratePluginDaemon(accessType access_types.PluginAccessType, dispatchers 
 	}
 
 	return nil
+}
+
+func pluginDaemonOutputPath(accessType access_types.PluginAccessType) string {
+	return filepath.Join("internal", "core", "io_tunnel", strings.ToLower(string(accessType))+".gen.go")
 }
 
 // GenerateHTTPServer generates a http server file for the given access type

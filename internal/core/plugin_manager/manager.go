@@ -1,8 +1,8 @@
 package plugin_manager
 
 import (
-	"errors"
 	"fmt"
+	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/langgenius/dify-cloud-kit/oss"
@@ -17,6 +17,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
@@ -124,7 +125,25 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		log.Panic("invalid Redis TLS config: %s", err.Error())
 	}
 
+	// Build Redis credentials (static or Azure Entra ID streaming)
+	creds := cache.RedisCredentials{
+		Username: configuration.RedisUser,
+		Password: configuration.RedisPass,
+	}
+	if configuration.RedisUseAzureManagedIdentity {
+		provider, credErr := cache.NewAzureEntraIDCredentialsProvider()
+		if credErr != nil {
+			log.Panic("failed to create Azure Entra ID credentials provider for Redis: %s", credErr.Error())
+		}
+		creds.CredentialProvider = provider
+		log.Info("Redis: using Azure Managed Identity (Entra ID) authentication")
+	}
+
 	cache.SetKeyPrefix(configuration.RedisKeyPrefix)
+	helper.SetModelInstallationsCacheEnabled(configuration.PluginModelInstallationsCacheEnabled)
+	helper.SetModelInstallationsCacheTTL(
+		time.Duration(configuration.PluginModelInstallationsCacheTTL) * time.Minute,
+	)
 
 	// init redis client
 	if configuration.RedisUseSentinel {
@@ -133,25 +152,23 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 		if err := cache.InitRedisSentinelClient(
 			sentinels,
 			configuration.RedisSentinelServiceName,
-			configuration.RedisUser,
-			configuration.RedisPass,
+			creds,
 			configuration.RedisSentinelUsername,
 			configuration.RedisSentinelPassword,
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
 			configuration.RedisSentinelSocketTimeout,
-			tlsConf, // pass TLS to cache initializer
+			tlsConf,
 		); err != nil {
 			log.Panic("init redis sentinel client failed", "error", err)
 		}
 	} else {
 		if err := cache.InitRedisClient(
 			fmt.Sprintf("%s:%d", configuration.RedisHost, configuration.RedisPort),
-			configuration.RedisUser,
-			configuration.RedisPass,
+			creds,
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
-			tlsConf, // pass TLS to cache initializer
+			tlsConf,
 		); err != nil {
 			log.Panic("init redis client failed", "error", err)
 		}
@@ -191,13 +208,19 @@ func (p *PluginManager) Config() *app.Config {
 // check if the plugin is already running on this node
 func (c *PluginManager) NeedRedirecting(
 	identity plugin_entities.PluginUniqueIdentifier,
+	runtimeType plugin_entities.PluginRuntimeType,
 ) (bool, error) {
-	if identity.RemoteLike() {
+	// Plugin installations provide the authoritative runtime type. Direct
+	// invocation does not have installation context, so keep the identifier
+	// heuristic as a compatibility fallback only for that path.
+	isRemoteRuntime := runtimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE
+	if runtimeType == "" {
+		isRemoteRuntime = identity.RemoteLike()
+	}
+
+	if isRemoteRuntime {
 		_, err := c.controlPanel.GetPluginRuntime(identity)
 		if err != nil {
-			if errors.Is(err, controlpanel.ErrPluginRuntimeNotFound) {
-				return true, nil
-			}
 			return true, err
 		}
 		return false, nil
