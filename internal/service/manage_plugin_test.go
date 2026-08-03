@@ -136,7 +136,7 @@ func TestListInstalledPluginIDsUsesPluginInstallationsForExtensions(t *testing.T
 	)
 }
 
-func TestListModelPluginBindingsUsesCanonicalInstallationWithoutDeclarationHydration(t *testing.T) {
+func TestListModelPluginBindingsUsesCanonicalInstallationWithVerificationStatus(t *testing.T) {
 	setupPluginCategoryListTestDB(t)
 
 	baseTime := time.Date(2026, time.July, 24, 12, 0, 0, 0, time.UTC)
@@ -152,6 +152,11 @@ func TestListModelPluginBindingsUsesCanonicalInstallationWithoutDeclarationHydra
 		Source:                 "marketplace",
 		Meta:                   map[string]any{},
 	}
+	require.NoError(t, db.Create(&models.PluginDeclaration{
+		PluginUniqueIdentifier: marketplaceIdentifier,
+		PluginID:               "langgenius/openai",
+		Declaration:            plugin_entities.PluginDeclaration{Verified: true},
+	}))
 	require.NoError(t, db.Create(marketplaceInstallation))
 	require.NoError(t, db.Create(&models.AIModelInstallation{
 		TenantID:               "tenant-1",
@@ -176,6 +181,20 @@ func TestListModelPluginBindingsUsesCanonicalInstallationWithoutDeclarationHydra
 		Source:                 "remote",
 		Meta:                   map[string]any{},
 	}
+	require.NoError(t, db.Create(&models.Plugin{
+		PluginUniqueIdentifier: remoteIdentifier,
+		PluginID:               "debugger/custom-model",
+		Refers:                 1,
+		InstallType:            plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
+		RemoteDeclaration:      plugin_entities.PluginDeclaration{Verified: true},
+		Source:                 "remote",
+	}))
+	// The same UID in local storage must not shadow the remote runtime declaration.
+	require.NoError(t, db.Create(&models.PluginDeclaration{
+		PluginUniqueIdentifier: remoteIdentifier,
+		PluginID:               "debugger/custom-model",
+		Declaration:            plugin_entities.PluginDeclaration{Verified: false},
+	}))
 	require.NoError(t, db.Create(remoteInstallation))
 	require.NoError(t, db.Create(&models.AIModelInstallation{
 		TenantID:               "tenant-1",
@@ -232,6 +251,7 @@ func TestListModelPluginBindingsUsesCanonicalInstallationWithoutDeclarationHydra
 			RuntimeType:            plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
 			Source:                 "remote",
 			Version:                manifest_entities.Version("0.9.0"),
+			Verified:               true,
 		},
 		{
 			Provider:               "openai",
@@ -241,6 +261,7 @@ func TestListModelPluginBindingsUsesCanonicalInstallationWithoutDeclarationHydra
 			RuntimeType:            plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
 			Source:                 "marketplace",
 			Version:                manifest_entities.Version("1.2.3"),
+			Verified:               true,
 		},
 	}, bindings)
 }
@@ -400,6 +421,7 @@ func setupPluginCategoryListTestDB(t *testing.T) {
 	gormDB, err := gorm.Open(sqlite.Open("file:"+strings.ReplaceAll(t.Name(), "/", "_")+"?mode=memory&cache=shared"), &gorm.Config{})
 	require.NoError(t, err)
 	require.NoError(t, gormDB.AutoMigrate(
+		&models.Plugin{},
 		&models.PluginDeclaration{},
 		&models.PluginInstallation{},
 		&models.ToolInstallation{},

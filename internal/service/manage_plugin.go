@@ -58,6 +58,7 @@ type modelPluginBindingResponse struct {
 	RuntimeType            plugin_entities.PluginRuntimeType `json:"runtime_type" gorm:"column:runtime_type"`
 	Source                 string                            `json:"source" gorm:"column:source"`
 	Version                manifest_entities.Version         `json:"version" gorm:"-"`
+	Verified               bool                              `json:"verified" gorm:"-"`
 }
 
 func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
@@ -596,8 +597,19 @@ func ListModelPluginBindings(tenant_id string) *entities.Response {
 			continue
 		}
 
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			binding.RuntimeType,
+		)
+		if err != nil {
+			return exception.InternalServerError(
+				errors.Join(errors.New("failed to get plugin declaration"), err),
+			).ToResponse()
+		}
+
 		seenBindings[bindingKey] = struct{}{}
 		binding.Version = pluginUniqueIdentifier.Version()
+		binding.Verified = declaration.Verified
 		deduplicatedBindings = append(deduplicatedBindings, binding)
 	}
 
