@@ -413,7 +413,7 @@ func setupPluginCategoryListTestDB(t *testing.T) {
 	t.Helper()
 
 	redisServer := miniredis.RunT(t)
-	require.NoError(t, cache.InitRedisClient(redisServer.Addr(), "", "", false, 0, nil))
+	require.NoError(t, cache.InitRedisClient(redisServer.Addr(), cache.RedisCredentials{}, false, 0, nil))
 	t.Cleanup(func() {
 		_ = cache.Close()
 	})
