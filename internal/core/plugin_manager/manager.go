@@ -1,6 +1,7 @@
 package plugin_manager
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -198,7 +199,7 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 }
 
 func (p *PluginManager) BackwardsInvocation() dify_invocation.BackwardsInvocation {
-	return p.backwardsInvocation
+	return p.backwardsInvocation.WithContext(context.Background())
 }
 
 func (p *PluginManager) Config() *app.Config {
