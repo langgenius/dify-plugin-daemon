@@ -2,6 +2,7 @@ package io_tunnel
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -146,6 +147,42 @@ func TestGenericInvokePluginRecordsErrorMetrics(t *testing.T) {
 	}, time.Second, 10*time.Millisecond)
 }
 
+func TestGenericInvokePluginReturnsPluginErrorResponse(t *testing.T) {
+	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
+	runtime := &fakePluginRuntime{
+		listener:         listener,
+		uniqueIdentifier: testPluginUniqueIdentifier,
+		runtimeType:      plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS,
+	}
+	runtime.writeFn = func(string, access_types.PluginAccessAction, []byte) error {
+		go func() {
+			listener.Send(plugin_entities.SessionMessage{
+				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+				Data: mustMarshalPluginError(t, plugin_entities.ErrorResponse{
+					ErrorType: "InvokeError",
+					Message:   "[models] Error: peer closed connection without sending complete message body (incomplete chunked read)",
+					Args: map[string]any{
+						"description": "[models] Error: peer closed connection without sending complete message body (incomplete chunked read)",
+					},
+				}),
+			})
+		}()
+		return nil
+	}
+
+	session := newTestSession(t, runtime, access_types.PLUGIN_ACCESS_TYPE_MODEL, access_types.PLUGIN_ACCESS_ACTION_INVOKE_LLM)
+	request := map[string]any{"hello": "world"}
+
+	response, err := GenericInvokePlugin[map[string]any, map[string]any](session, &request, 2)
+	require.NoError(t, err)
+	require.True(t, response.Next())
+
+	_, err = response.Read()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `"error_type":"InvokeError"`)
+	require.Contains(t, err.Error(), "incomplete chunked read")
+}
+
 func TestGenericInvokePluginRecordsCanceledMetrics(t *testing.T) {
 	reader := setupPluginInvocationMetricTest(t)
 
@@ -180,6 +217,13 @@ func TestGenericInvokePluginRecordsCanceledMetrics(t *testing.T) {
 		histogramCount, ok := pluginInvocationHistogramCount(metrics, expectedAttrs)
 		return ok && histogramCount == 1
 	}, time.Second, 10*time.Millisecond)
+}
+
+func mustMarshalPluginError(t *testing.T, response plugin_entities.ErrorResponse) []byte {
+	t.Helper()
+	data, err := json.Marshal(response)
+	require.NoError(t, err)
+	return data
 }
 
 func setupPluginInvocationMetricTest(t *testing.T) *sdkmetric.ManualReader {
