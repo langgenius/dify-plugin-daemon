@@ -1,6 +1,7 @@
 package plugin_entities
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -216,5 +217,66 @@ func TestModelParameterRule_UseTemplateJSON(t *testing.T) {
 
 	if model.Min == nil || model.Max == nil || model.Precision == nil {
 		t.Errorf("Missing default value")
+	}
+}
+
+func TestModelProviderCredentialFormSchema_HelpSurvivesRoundTrip(t *testing.T) {
+	const model_provider_template = `
+    provider: openai
+    label:
+      en_US: OpenAI
+    provider_credential_schema:
+      credential_form_schemas:
+        - variable: openai_api_base
+          label:
+            en_US: API Base
+          type: text-input
+          required: false
+          help:
+            en_US: Custom API base URL, e.g. a proxy or gateway
+            zh_Hans: 自定义 API 基础地址，例如代理或网关
+          url: https://platform.openai.com/docs/api-reference
+          placeholder:
+            en_US: Enter your API Base
+        `
+
+	jsonData, err := parse_yaml_to_json([]byte(model_provider_template))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	declaration, err := parser.UnmarshalYamlBytes[ModelProviderDeclaration](jsonData)
+	if err != nil {
+		t.Fatalf("UnmarshalYamlBytes() error = %v", err)
+	}
+
+	if declaration.ProviderCredentialSchema == nil {
+		t.Fatal("provider_credential_schema was not parsed")
+	}
+	schemas := declaration.ProviderCredentialSchema.CredentialFormSchemas
+	if len(schemas) != 1 {
+		t.Fatalf("expected 1 credential form schema, got %d", len(schemas))
+	}
+	field := schemas[0]
+
+	if field.Help == nil {
+		t.Fatal("Help was dropped during unmarshal; expected the manifest help to be retained")
+	}
+	if field.Help.EnUS != "Custom API base URL, e.g. a proxy or gateway" {
+		t.Errorf("Help.EnUS = %q, want the manifest help text", field.Help.EnUS)
+	}
+	if field.URL == nil || *field.URL != "https://platform.openai.com/docs/api-reference" {
+		t.Errorf("URL = %v, want the manifest url", field.URL)
+	}
+
+	roundTripped, err := json.Marshal(declaration)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(roundTripped, []byte(`"help":`)) {
+		t.Error("marshaled JSON does not contain a help key")
+	}
+	if !bytes.Contains(roundTripped, []byte("Custom API base URL, e.g. a proxy or gateway")) {
+		t.Error("marshaled JSON does not retain the help text")
 	}
 }
