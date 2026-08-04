@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785824687655,
+  "lastUpdate": 1785825052117,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -15100,6 +15100,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.48,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "163079241+dparkmit24@users.noreply.github.com",
+            "name": "David Park",
+            "username": "dparkmit24"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bdebc14cbeeb7951dd0923c165836ae2149da08a",
+          "message": "feat(model-declaration): support per-field help on model provider credentials (#774)\n\nModel-provider credential form fields (ModelProviderCredentialFormSchema)\ndid not model a per-field help, so a plugin manifest's help on such a\nfield was silently dropped during unmarshal and never reached the\nmanagement-API declaration. Tool credential fields (ProviderConfig)\nalready carry Help and URL, so tool credential help renders while model\nprovider help does not.\n\nAdd Help and URL to ModelProviderCredentialFormSchema, matching the\nProviderConfig fields, to bring model-provider credentials to parity.\nAdditive and optional; no behavior change for existing plugins. Add a\nround-trip test asserting help survives unmarshal and marshal.",
+          "timestamp": "2026-08-04T14:28:09+08:00",
+          "tree_id": "96577ee5f94c628fbe379977c9fc03eeb767b88f",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/bdebc14cbeeb7951dd0923c165836ae2149da08a"
+        },
+        "date": 1785825051777,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 117111068,
+            "unit": "ns/op\t 895.37 MB/s\t213906349 B/op\t    1897 allocs/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 117111068,
+            "unit": "ns/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 895.37,
+            "unit": "MB/s",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213906349,
+            "unit": "B/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.77,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.77,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
