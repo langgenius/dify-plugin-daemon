@@ -1,7 +1,8 @@
 package model_entities
 
 type TTSResult struct {
-	Result string `json:"result"` // in hex
+	Result   string `json:"result"` // in hex
+	MimeType string `json:"mime_type,omitempty"`
 }
 
 type TTSModelVoice struct {
