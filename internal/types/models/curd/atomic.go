@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Create plugin for a tenant, create plugin if it has never been created before
@@ -35,83 +36,69 @@ func InstallPlugin(
 		defer helper.DeleteModelInstallationsCache(tenantId)
 	}
 
-	err := db.WithTransaction(func(tx *gorm.DB) error {
-		pluginID := pluginUniqueIdentifier.PluginID()
+	pluginID := pluginUniqueIdentifier.PluginID()
 
-		// check if already installed
-		_, err := db.GetOne[models.PluginInstallation](
-			db.Equal("plugin_id", pluginID),
-			db.Equal("tenant_id", tenantId),
-		)
+	// Avoid taking the shared plugin lock when the tenant is already installed.
+	_, err := db.GetOne[models.PluginInstallation](
+		db.Equal("plugin_id", pluginID),
+		db.Equal("tenant_id", tenantId),
+	)
+	if err == nil {
+		return nil, nil, ErrPluginAlreadyInstalled
+	}
+	if !errors.Is(err, db.ErrDatabaseNotFound) {
+		return nil, nil, err
+	}
 
-		if err == nil {
-			return ErrPluginAlreadyInstalled
+	err = db.WithTransaction(func(tx *gorm.DB) error {
+		plugin := &models.Plugin{
+			PluginID:               pluginID,
+			PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+			InstallType:            installType,
+			Source:                 source,
 		}
 
-		// Find existing plugin by unique_identifier only
-		// Don't use plugin_id in query since it may differ for remote plugins
+		if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+			plugin.RemoteDeclaration = *declaration
+		}
+
+		// A missing row cannot be protected by SELECT FOR UPDATE. Create it atomically,
+		// then lock the persisted row so installs for the same plugin are serialized.
+		if err := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "plugin_unique_identifier"}},
+			DoNothing: true,
+		}).Create(plugin).Error; err != nil {
+			return err
+		}
+
+		// Find the persisted plugin by unique_identifier only. Don't use plugin_id in
+		// the query since it may differ for remote plugins.
 		p, err := db.GetOne[models.Plugin](
 			db.WithTransactionContext(tx),
 			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
 			db.WLock(),
 		)
-
-		if errors.Is(err, db.ErrDatabaseNotFound) {
-			plugin := &models.Plugin{
-				PluginID:               pluginID,
-				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
-				InstallType:            installType,
-				Refers:                 1,
-				Source:                 source,
-			}
-
-			if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
-				plugin.RemoteDeclaration = *declaration
-			}
-
-			err := db.Create(plugin, tx)
-			if err != nil {
-				// Handle potential duplicate creation due to race: refetch and update refers
-				// to achieve idempotent behavior under concurrency.
-				p2, gerr := db.GetOne[models.Plugin](
-					db.WithTransactionContext(tx),
-					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-					db.Equal("install_type", string(installType)),
-					db.WLock(),
-				)
-				if gerr != nil {
-					return err
-				}
-				p2.Refers++
-				if uerr := db.Update(&p2, tx); uerr != nil {
-					return uerr
-				}
-				pluginToBeReturns = &p2
-			} else {
-				pluginToBeReturns = plugin
-			}
-		} else if err != nil {
-			return err
-		} else {
-			p.Refers++
-			err := db.Update(&p, tx)
-			if err != nil {
-				return err
-			}
-			pluginToBeReturns = &p
-		}
-
-		// remove exists installation
-		if err := db.DeleteByCondition(
-			models.PluginInstallation{
-				PluginID:    pluginToBeReturns.PluginID,
-				RuntimeType: string(installType),
-				TenantID:    tenantId,
-			},
-			tx,
-		); err != nil {
+		if err != nil {
 			return err
 		}
+
+		_, err = db.GetOne[models.PluginInstallation](
+			db.WithTransactionContext(tx),
+			db.Equal("plugin_id", p.PluginID),
+			db.Equal("tenant_id", tenantId),
+		)
+		if err == nil {
+			return ErrPluginAlreadyInstalled
+		}
+		if !errors.Is(err, db.ErrDatabaseNotFound) {
+			return err
+		}
+
+		p.Refers++
+		if err := db.Update(&p, tx); err != nil {
+			return err
+		}
+		pluginToBeReturns = &p
 
 		installation := &models.PluginInstallation{
 			PluginID:               pluginToBeReturns.PluginID,
@@ -212,8 +199,8 @@ func InstallPlugin(
 	}
 
 	// Invalidate plugin installation cache to avoid stale reads
-	pluginID := pluginToBeReturns.PluginID
-	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginID, tenantId)
+	installedPluginID := pluginToBeReturns.PluginID
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(installedPluginID, tenantId)
 	if _, delErr := cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); delErr != nil {
 		log.Warn("failed to clear plugin installation cache", "key", pluginInstallationCacheKey, "error", delErr)
 	}
