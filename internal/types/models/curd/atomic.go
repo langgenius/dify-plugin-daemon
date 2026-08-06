@@ -36,9 +36,21 @@ func InstallPlugin(
 		defer helper.DeleteModelInstallationsCache(tenantId)
 	}
 
-	err := db.WithTransaction(func(tx *gorm.DB) error {
-		pluginID := pluginUniqueIdentifier.PluginID()
+	pluginID := pluginUniqueIdentifier.PluginID()
 
+	// Avoid taking the shared plugin lock when the tenant is already installed.
+	_, err := db.GetOne[models.PluginInstallation](
+		db.Equal("plugin_id", pluginID),
+		db.Equal("tenant_id", tenantId),
+	)
+	if err == nil {
+		return nil, nil, ErrPluginAlreadyInstalled
+	}
+	if !errors.Is(err, db.ErrDatabaseNotFound) {
+		return nil, nil, err
+	}
+
+	err = db.WithTransaction(func(tx *gorm.DB) error {
 		plugin := &models.Plugin{
 			PluginID:               pluginID,
 			PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
@@ -187,8 +199,8 @@ func InstallPlugin(
 	}
 
 	// Invalidate plugin installation cache to avoid stale reads
-	pluginID := pluginToBeReturns.PluginID
-	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginID, tenantId)
+	installedPluginID := pluginToBeReturns.PluginID
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(installedPluginID, tenantId)
 	if _, delErr := cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); delErr != nil {
 		log.Warn("failed to clear plugin installation cache", "key", pluginInstallationCacheKey, "error", delErr)
 	}
