@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
@@ -131,6 +132,32 @@ func logServerlessResponseFailure(
 		args = append(args, "response_body_error", responseBodyErr)
 	}
 	log.Error(message, args...)
+}
+
+func logServerlessPluginEvent(
+	sessionID string,
+	action access_types.PluginAccessAction,
+	lambdaName string,
+	event plugin_entities.PluginLogEvent,
+) {
+	args := []any{
+		"session_id", sessionID,
+		"action", action,
+		"lambda_name", lambdaName,
+		"plugin_log_level", event.Level,
+		"plugin_log_timestamp", event.Timestamp,
+		"message", event.Message,
+	}
+	switch strings.ToLower(event.Level) {
+	case "debug":
+		log.Debug("serverless plugin log", args...)
+	case "warn", "warning":
+		log.Warn("serverless plugin log", args...)
+	case "error", "fatal", "critical":
+		log.Error("serverless plugin log", args...)
+	default:
+		log.Info("serverless plugin log", args...)
+	}
 }
 
 func (r *ServerlessPluginRuntime) Listen(sessionId string) (
@@ -457,7 +484,9 @@ func (r *ServerlessPluginRuntime) WriteContext(
 						Message:   fmt.Sprintf("encountered an error: %v", err),
 					})
 				},
-				func(plugin_entities.PluginLogEvent) {},
+				func(logEvent plugin_entities.PluginLogEvent) {
+					logServerlessPluginEvent(sessionId, action, r.LambdaName, logEvent)
+				},
 			)
 			if receivedEnd {
 				break

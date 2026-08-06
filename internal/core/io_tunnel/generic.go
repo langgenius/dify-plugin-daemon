@@ -12,6 +12,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
@@ -23,6 +24,20 @@ const (
 
 func isRecoverableWriteErr(err error) bool {
 	return errors.Is(err, local_runtime.ErrNoProperInstance) || local_runtime.IsInstanceDeadErr(err)
+}
+
+func pluginInvocationLogLabels(session *session_manager.Session) (pluginID string, runtimeType string) {
+	pluginID = "unknown"
+	runtimeType = "unknown"
+	if session == nil || session.Runtime() == nil {
+		return pluginID, runtimeType
+	}
+	runtime := session.Runtime()
+	if identity, err := runtime.Identity(); err == nil {
+		pluginID = identity.String()
+	}
+	runtimeType = string(runtime.Type())
+	return pluginID, runtimeType
 }
 
 func GenericInvokePlugin[Req any, Rsp any](
@@ -122,6 +137,18 @@ func invokePluginOnce[Req any, Rsp any](
 			if err != nil {
 				break
 			}
+			pluginID, runtimeType := pluginInvocationLogLabels(session)
+			log.ErrorContext(
+				session.RequestContext(),
+				"plugin returned error response",
+				"session_id", session.ID,
+				"action", session.Action,
+				"plugin", pluginID,
+				"runtime_type", runtimeType,
+				"error_type", e.ErrorType,
+				"message", e.Message,
+				"args", e.Args,
+			)
 			response.CloseWithError(errors.New(e.Error()))
 		default:
 			outcome.markError()

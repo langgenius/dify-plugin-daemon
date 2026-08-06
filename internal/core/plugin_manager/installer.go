@@ -255,7 +255,7 @@ func (p *PluginManager) installServerless(
 				log.Error("failed to install plugin to serverless", "message", r.Message)
 				responseStream.Write(installation_entities.PluginInstallResponse{
 					Event: installation_entities.PluginInstallEventError,
-					Data:  "internal server error",
+					Data:  r.Message,
 				})
 			} else if r.Event == serverless.FunctionUrl {
 				functionUrl = r.Message

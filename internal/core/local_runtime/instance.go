@@ -280,7 +280,7 @@ func (s *PluginInstance) handleStdout(data []byte, once *sync.Once) {
 // it will keep the last 1024 bytes of the error message
 func (s *PluginInstance) WriteError(msg string) {
 	if len(msg) > MAX_ERR_MSG_LEN {
-		msg = msg[:MAX_ERR_MSG_LEN]
+		msg = msg[len(msg)-MAX_ERR_MSG_LEN:]
 	}
 
 	reduce := len(msg) + len(s.errMessage) - MAX_ERR_MSG_LEN
@@ -299,19 +299,41 @@ func (s *PluginInstance) WriteError(msg string) {
 // StartStderr starts to read the stderr of the plugin
 // it will write the error message to the stdio holder
 func (s *PluginInstance) StartStderr() {
-	for {
-		buf := make([]byte, 1024)
-		n, err := s.errReader.Read(buf)
-		if err != nil && err != io.EOF {
-			break
-		} else if err != nil {
-			s.WriteError(fmt.Sprintf("%s\n", buf[:n]))
-			break
+	scanner := bufio.NewScanner(s.errReader)
+	bufferSize := 1024
+	maxBufferSize := 5 * 1024 * 1024
+	if s.appConfig != nil {
+		if configuredBufferSize := s.appConfig.GetLocalRuntimeBufferSize(); configuredBufferSize > 0 {
+			bufferSize = configuredBufferSize
 		}
+		if configuredMaxBufferSize := s.appConfig.GetLocalRuntimeMaxBufferSize(); configuredMaxBufferSize > 0 {
+			maxBufferSize = configuredMaxBufferSize
+		}
+	}
+	scanner.Buffer(make([]byte, bufferSize), maxBufferSize)
 
-		if n > 0 {
-			s.WriteError(fmt.Sprintf("%s\n", buf[:n]))
+	for scanner.Scan() {
+		data := append([]byte(nil), scanner.Bytes()...)
+		if len(data) == 0 {
+			continue
 		}
+		message := string(data)
+		s.WriteError(message + "\n")
+		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+			notifier.OnInstanceStderr(s, data)
+		})
+		log.Warn(
+			"plugin stderr",
+			"plugin", s.pluginUniqueIdentifier,
+			"instance", s.ID()[:8],
+			"message", message,
+		)
+	}
+
+	if err := scanner.Err(); err != nil && !errors.Is(err, io.EOF) {
+		s.WalkNotifiers(func(notifier PluginInstanceNotifier) {
+			notifier.OnInstanceErrorLog(s, fmt.Errorf("plugin %s has an error on stderr: %s", s.pluginUniqueIdentifier, err))
+		})
 	}
 }
 
