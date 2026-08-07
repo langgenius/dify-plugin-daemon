@@ -296,23 +296,51 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 }
 
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return err
+	}
+
+	// Root-scoped handle: writes through it cannot escape dst, even via
+	// symlink or path trickery the lexical check below might miss.
+	root, err := os.OpenRoot(dst)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
 	// copy to working directory
 	if err := z.Walk(func(filename, dir string) error {
-		workingPath := path.Join(dst, dir)
+		entryName := path.Join(dir, filename)
+		target := filepath.Join(dst, filepath.FromSlash(entryName))
+
+		// zip entry names are attacker-controlled; path.Join only cleans the
+		// result, so a "../" prefix escapes dst into an arbitrary write. Reject
+		// any entry whose resolved path is not contained in dst.
+		rel, err := filepath.Rel(dst, target)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path in plugin package: %q", entryName)
+		}
+
 		// check if directory exists
-		if err := os.MkdirAll(workingPath, 0755); err != nil {
+		if err := root.MkdirAll(filepath.Dir(rel), 0755); err != nil {
 			return err
 		}
 
-		bytes, err := z.ReadFile(filepath.Join(dir, filename))
+		bytes, err := z.ReadFile(entryName)
 		if err != nil {
 			return err
 		}
 
-		filename = filepath.Join(workingPath, filename)
-
 		// copy file
-		if err := os.WriteFile(filename, bytes, 0644); err != nil {
+		out, err := root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		if _, err := out.Write(bytes); err != nil {
+			out.Close()
+			return err
+		}
+		if err := out.Close(); err != nil {
 			return err
 		}
 
