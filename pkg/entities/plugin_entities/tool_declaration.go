@@ -51,7 +51,7 @@ const (
 	TOOL_PARAMETER_OBJECT              ToolParameterType = OBJECT
 	TOOL_PARAMETER_TYPE_CHECKBOX       ToolParameterType = CHECKBOX
 	TOOL_PARAMETER_TYPE_DATE           ToolParameterType = DATE
-	TOOL_PARAMETER_TYPE_DATE_PICKER    ToolParameterType = DATE_PICKER
+	TOOL_PARAMETER_TYPE_DATE_RANGE     ToolParameterType = DATE_RANGE
 )
 
 func isToolParameterType(fl validator.FieldLevel) bool {
@@ -73,7 +73,7 @@ func isToolParameterType(fl validator.FieldLevel) bool {
 		string(TOOL_PARAMETER_OBJECT),
 		string(TOOL_PARAMETER_TYPE_CHECKBOX),
 		string(TOOL_PARAMETER_TYPE_DATE),
-		string(TOOL_PARAMETER_TYPE_DATE_PICKER):
+		string(TOOL_PARAMETER_TYPE_DATE_RANGE):
 		return true
 	}
 	return false
