@@ -178,6 +178,14 @@ func (s *DifyServer) onMessage(runtime *RemotePluginRuntime, message []byte) {
 			return
 		}
 
+		// only the handshake itself is accepted before the handshake completes,
+		// any other registration message is rejected and fails closed
+		if !runtime.handshake && registerPayload.Type != plugin_entities.REGISTER_EVENT_TYPE_HAND_SHAKE {
+			runtime.handshakeFailed = true
+			closeConn([]byte("handshake failed, registration message before handshake\n"))
+			return
+		}
+
 		switch registerPayload.Type {
 		case plugin_entities.REGISTER_EVENT_TYPE_HAND_SHAKE:
 			if connectionInfo, err := s.handleHandleShake(runtime, registerPayload); err != nil {
