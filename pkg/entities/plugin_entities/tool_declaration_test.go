@@ -75,7 +75,7 @@ func TestFullFunctionToolProvider_Validate(t *testing.T) {
 			"parameters": [
 				{
 					"name": "parameter",
-					"type": "string",
+					"type": "date-range",
 					"label": {
 						"en_US": "label",
 						"zh_Hans": "标签",
@@ -155,7 +155,7 @@ tools:
       llm: description
     parameters:
       - name: parameter
-        type: string
+        type: date-range
         label:
           en_US: label
           zh_Hans: 标签
@@ -688,7 +688,7 @@ func TestWrongIdentityTagsToolProvider_Validate(t *testing.T) {
 	}
 }
 
-func TestWrongToolParameterTypeToolProvider_Validate(t *testing.T) {
+func TestLegacyDatePickerToolParameterTypeToolProvider_Validate(t *testing.T) {
 	const data = `
 {
 	"identity": {
@@ -730,7 +730,7 @@ func TestWrongToolParameterTypeToolProvider_Validate(t *testing.T) {
 			"parameters": [
 				{
 					"name": "parameter",
-					"type": "wrong",
+					"type": "date-picker",
 					"label": {
 						"en_US": "label",
 						"zh_Hans": "标签",

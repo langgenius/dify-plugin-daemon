@@ -20,7 +20,7 @@ const (
 	OBJECT         = "object"
 	CHECKBOX       = "checkbox"
 	DATE           = "date"
-	DATE_PICKER    = "date-picker"
+	DATE_RANGE     = "date-range"
 )
 
 type ParameterOption struct {
