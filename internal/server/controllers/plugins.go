@@ -11,6 +11,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/service"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -292,14 +293,38 @@ func ListPlugins(c *gin.Context) {
 	})
 }
 
+type listInstalledPluginIDsRequest struct {
+	TenantID string                         `uri:"tenant_id" validate:"required"`
+	Category plugin_entities.PluginCategory `form:"category" validate:"required"`
+}
+
+func ListInstalledPluginIDs(c *gin.Context) {
+	BindRequest(c, func(request listInstalledPluginIDsRequest) {
+		c.JSON(http.StatusOK, service.ListInstalledPluginIDs(request.TenantID, request.Category))
+	})
+}
+
+type listPluginsByCategoryRequest struct {
+	TenantID string                         `uri:"tenant_id" validate:"required"`
+	Category plugin_entities.PluginCategory `uri:"category" validate:"required"`
+	Page     int                            `form:"page" validate:"required,min=1"`
+	PageSize int                            `form:"page_size" validate:"required,min=1,max=256"`
+	Query    string                         `form:"query" validate:"omitempty,max=256"`
+	Tags     []manifest_entities.PluginTag  `form:"tags" validate:"omitempty,max=128,dive,plugin_tag"`
+	Language string                         `form:"language" validate:"omitempty,oneof=en_US zh_Hans ja_JP pt_BR"`
+}
+
 func ListPluginsByCategory(c *gin.Context) {
-	BindRequest(c, func(request struct {
-		TenantID string                         `uri:"tenant_id" validate:"required"`
-		Category plugin_entities.PluginCategory `uri:"category" validate:"required"`
-		Page     int                            `form:"page" validate:"required,min=1"`
-		PageSize int                            `form:"page_size" validate:"required,min=1,max=256"`
-	}) {
-		c.JSON(http.StatusOK, service.ListPluginsByCategory(request.TenantID, request.Category, request.Page, request.PageSize))
+	BindRequest(c, func(request listPluginsByCategoryRequest) {
+		c.JSON(http.StatusOK, service.ListPluginsByCategory(
+			request.TenantID,
+			request.Category,
+			request.Page,
+			request.PageSize,
+			request.Query,
+			request.Tags,
+			request.Language,
+		))
 	})
 }
 

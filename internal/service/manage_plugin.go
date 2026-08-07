@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	stdstrings "strings"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -41,6 +42,25 @@ type pluginListResponse struct {
 	HasMore bool                         `json:"has_more"`
 }
 
+type installedPluginIDsResponse struct {
+	PluginIDs []string `json:"plugin_ids"`
+}
+
+type installedPluginIDRecord struct {
+	PluginID string `gorm:"column:plugin_id"`
+}
+
+type modelPluginBindingResponse struct {
+	Provider               string                            `json:"provider" gorm:"column:provider"`
+	InstallationID         string                            `json:"installation_id" gorm:"column:installation_id"`
+	PluginID               string                            `json:"plugin_id" gorm:"column:plugin_id"`
+	PluginUniqueIdentifier string                            `json:"plugin_unique_identifier" gorm:"column:plugin_unique_identifier"`
+	RuntimeType            plugin_entities.PluginRuntimeType `json:"runtime_type" gorm:"column:runtime_type"`
+	Source                 string                            `json:"source" gorm:"column:source"`
+	Version                manifest_entities.Version         `json:"version" gorm:"-"`
+	Verified               bool                              `json:"verified" gorm:"-"`
+}
+
 func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
 	switch category {
 	case plugin_entities.PLUGIN_CATEGORY_TOOL,
@@ -53,6 +73,68 @@ func isValidPluginCategory(category plugin_entities.PluginCategory) bool {
 	default:
 		return false
 	}
+}
+
+func localizedPluginListText(value plugin_entities.I18nObject, language string) string {
+	var localized string
+	switch language {
+	case "ja_JP":
+		localized = value.JaJp
+	case "zh_Hans":
+		localized = value.ZhHans
+	case "pt_BR":
+		localized = value.PtBr
+	default:
+		localized = value.EnUS
+	}
+
+	if localized != "" {
+		return localized
+	}
+	return value.EnUS
+}
+
+func pluginMatchesCategoryListFilters(
+	pluginID string,
+	declaration *plugin_entities.PluginDeclaration,
+	query string,
+	tags []manifest_entities.PluginTag,
+	language string,
+) bool {
+	if len(tags) > 0 {
+		matchesTag := false
+		for _, requestedTag := range tags {
+			for _, pluginTag := range declaration.Tags {
+				if requestedTag == pluginTag {
+					matchesTag = true
+					break
+				}
+			}
+			if matchesTag {
+				break
+			}
+		}
+		if !matchesTag {
+			return false
+		}
+	}
+
+	if query == "" {
+		return true
+	}
+
+	lowerQuery := stdstrings.ToLower(query)
+	for _, candidate := range []string{
+		pluginID,
+		declaration.Name,
+		localizedPluginListText(declaration.Label, language),
+		localizedPluginListText(declaration.Description, language),
+	} {
+		if stdstrings.Contains(stdstrings.ToLower(candidate), lowerQuery) {
+			return true
+		}
+	}
+	return false
 }
 
 func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
@@ -145,11 +227,92 @@ func ListPlugins(tenant_id string, page int, page_size int) *entities.Response {
 	return entities.NewSuccessResponse(finalData)
 }
 
+func ListInstalledPluginIDs(tenant_id string, category plugin_entities.PluginCategory) *entities.Response {
+	var installationModel any
+	switch category {
+	case plugin_entities.PLUGIN_CATEGORY_TOOL:
+		installationModel = &models.ToolInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_MODEL:
+		installationModel = &models.AIModelInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_DATASOURCE:
+		installationModel = &models.DatasourceInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_AGENT_STRATEGY:
+		installationModel = &models.AgentStrategyInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_TRIGGER:
+		installationModel = &models.TriggerInstallation{}
+	case plugin_entities.PLUGIN_CATEGORY_EXTENSION:
+		// Extensions have no dedicated installation projection table, so derive their
+		// category from the canonical plugin installation and declaration instead.
+		return listInstalledExtensionPluginIDs(tenant_id)
+	default:
+		return exception.BadRequestError(errors.New("invalid plugin category")).ToResponse()
+	}
+
+	installations, err := db.GetAll[installedPluginIDRecord](
+		db.Model(installationModel),
+		db.Equal("tenant_id", tenant_id),
+		db.Fields("plugin_id"),
+		db.OrderBy("created_at", true),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	pluginIDs := make([]string, 0, len(installations))
+	seenPluginIDs := make(map[string]struct{}, len(installations))
+	for _, installation := range installations {
+		if _, exists := seenPluginIDs[installation.PluginID]; exists {
+			continue
+		}
+		seenPluginIDs[installation.PluginID] = struct{}{}
+		pluginIDs = append(pluginIDs, installation.PluginID)
+	}
+
+	return entities.NewSuccessResponse(installedPluginIDsResponse{PluginIDs: pluginIDs})
+}
+
+func listInstalledExtensionPluginIDs(tenant_id string) *entities.Response {
+	pluginInstallations, err := db.GetAll[models.PluginInstallation](
+		db.Equal("tenant_id", tenant_id),
+		db.Fields("plugin_unique_identifier", "runtime_type"),
+		db.OrderBy("created_at", true),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+
+	pluginIDs := make([]string, 0, len(pluginInstallations))
+	for _, pluginInstallation := range pluginInstallations {
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(
+			pluginInstallation.PluginUniqueIdentifier,
+		)
+		if err != nil {
+			return exception.UniqueIdentifierError(err).ToResponse()
+		}
+
+		pluginDeclaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			plugin_entities.PluginRuntimeType(pluginInstallation.RuntimeType),
+		)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+		if pluginDeclaration.Category() == plugin_entities.PLUGIN_CATEGORY_EXTENSION {
+			pluginIDs = append(pluginIDs, pluginUniqueIdentifier.PluginID())
+		}
+	}
+
+	return entities.NewSuccessResponse(installedPluginIDsResponse{PluginIDs: pluginIDs})
+}
+
 func ListPluginsByCategory(
 	tenant_id string,
 	category plugin_entities.PluginCategory,
 	page int,
 	page_size int,
+	query string,
+	tags []manifest_entities.PluginTag,
+	language string,
 ) *entities.Response {
 	if !isValidPluginCategory(category) {
 		return exception.BadRequestError(errors.New("invalid plugin category")).ToResponse()
@@ -189,7 +352,9 @@ func ListPluginsByCategory(
 				return exception.InternalServerError(err).ToResponse()
 			}
 
-			if pluginDeclaration.Category() != category {
+			pluginID := pluginUniqueIdentifier.PluginID()
+			if pluginDeclaration.Category() != category ||
+				!pluginMatchesCategoryListFilters(pluginID, pluginDeclaration, query, tags, language) {
 				continue
 			}
 
@@ -202,7 +367,7 @@ func ListPluginsByCategory(
 				ID:                     plugin_installation.ID,
 				Name:                   pluginDeclaration.Name,
 				TenantID:               plugin_installation.TenantID,
-				PluginID:               pluginUniqueIdentifier.PluginID(),
+				PluginID:               pluginID,
 				PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
 				InstallationID:         plugin_installation.ID,
 				Declaration:            pluginDeclaration,
@@ -390,6 +555,65 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 	}
 
 	return entities.NewSuccessResponse(data)
+}
+
+func ListModelPluginBindings(tenant_id string) *entities.Response {
+	bindings, err := db.GetAll[modelPluginBindingResponse](
+		db.Model(&models.AIModelInstallation{}),
+		db.Fields(
+			"ai_model_installations.provider AS provider",
+			"plugin_installations.id AS installation_id",
+			"plugin_installations.plugin_id AS plugin_id",
+			"plugin_installations.plugin_unique_identifier AS plugin_unique_identifier",
+			"plugin_installations.runtime_type AS runtime_type",
+			"plugin_installations.source AS source",
+		),
+		db.Join(
+			"JOIN plugin_installations ON "+
+				"plugin_installations.tenant_id = ai_model_installations.tenant_id AND "+
+				"plugin_installations.plugin_id = ai_model_installations.plugin_id AND "+
+				"plugin_installations.plugin_unique_identifier = ai_model_installations.plugin_unique_identifier",
+		),
+		db.Equal("ai_model_installations.tenant_id", tenant_id),
+		db.OrderBy("plugin_installations.created_at", true),
+	)
+	if err != nil {
+		return exception.InternalServerError(err).ToResponse()
+	}
+	if bindings == nil {
+		bindings = make([]modelPluginBindingResponse, 0)
+	}
+
+	deduplicatedBindings := make([]modelPluginBindingResponse, 0, len(bindings))
+	seenBindings := make(map[string]struct{}, len(bindings))
+	for _, binding := range bindings {
+		pluginUniqueIdentifier, err := plugin_entities.NewPluginUniqueIdentifier(binding.PluginUniqueIdentifier)
+		if err != nil {
+			return exception.UniqueIdentifierError(err).ToResponse()
+		}
+
+		bindingKey := binding.PluginID + "\x00" + binding.Provider
+		if _, exists := seenBindings[bindingKey]; exists {
+			continue
+		}
+
+		declaration, err := helper.CombinedGetPluginDeclaration(
+			pluginUniqueIdentifier,
+			binding.RuntimeType,
+		)
+		if err != nil {
+			return exception.InternalServerError(
+				errors.Join(errors.New("failed to get plugin declaration"), err),
+			).ToResponse()
+		}
+
+		seenBindings[bindingKey] = struct{}{}
+		binding.Version = pluginUniqueIdentifier.Version()
+		binding.Verified = declaration.Verified
+		deduplicatedBindings = append(deduplicatedBindings, binding)
+	}
+
+	return entities.NewSuccessResponse(deduplicatedBindings)
 }
 
 func ListModels(tenant_id string, page int, page_size int) *entities.Response {
