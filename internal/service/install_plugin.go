@@ -373,7 +373,7 @@ func UninstallPlugin(
 		}
 	}
 
-	if deleteResponse != nil && deleteResponse.IsPluginDeleted && deleteResponse.Plugin != nil && deleteResponse.Plugin.InstallType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL {
+	if shouldRemoveLocalPlugin(deleteResponse) {
 		manager := plugin_manager.Manager()
 		if manager == nil {
 			return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
@@ -385,7 +385,7 @@ func UninstallPlugin(
 
 		shutdownCh, err := manager.ShutdownLocalPluginGracefully(pluginUniqueIdentifier)
 		if errors.Is(err, controlpanel.ErrLocalPluginRuntimeNotFound) {
-			return entities.NewSuccessResponse(true)
+			shutdownCh = nil
 		} else if err != nil {
 			return exception.InternalServerError(err).ToResponse()
 		}
@@ -393,9 +393,28 @@ func UninstallPlugin(
 		if err := waitGracefulShutdown(shutdownCh); err != nil {
 			return exception.InternalServerError(err).ToResponse()
 		}
+
+		if err := manager.RemoveLocalPluginStorage(pluginUniqueIdentifier); err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
 	}
 
 	return entities.NewSuccessResponse(true)
+}
+
+func shouldRemoveLocalPlugin(deleteResponse *curd.DeletePluginResponse) bool {
+	if deleteResponse == nil || !deleteResponse.IsPluginDeleted {
+		return false
+	}
+
+	runtimeType := plugin_entities.PluginRuntimeType("")
+	if deleteResponse.Plugin != nil {
+		runtimeType = deleteResponse.Plugin.InstallType
+	} else if deleteResponse.Installation != nil {
+		runtimeType = plugin_entities.PluginRuntimeType(deleteResponse.Installation.RuntimeType)
+	}
+
+	return runtimeType == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 }
 
 func waitGracefulShutdown(ch <-chan error) error {
