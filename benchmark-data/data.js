@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786082010830,
+  "lastUpdate": 1786088187414,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -15646,6 +15646,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.59,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sash@ela.city",
+            "name": "Sash",
+            "username": "SashaMIT"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6fde0a7fbdf8a50e655db369fb4e84b1f194918c",
+          "message": "fix(packager): reject zip entries that escape the extraction directory (#796)\n\n* fix(packager): reject zip entries that escape the extraction directory\n\nZipPluginDecoder.ExtractTo joined each entry's dir/filename onto the\ndestination with path.Join, which cleans but does not contain: an entry\nnamed '../../x' resolves outside dst, giving an uploaded .difypkg\narbitrary file write (overwriting runtime files or planted code that\nthe daemon then executes) wherever signature verification is off or the\npackage source is otherwise trusted enough to extract.\n\nEach entry is now resolved against dst with filepath.Rel and rejected\nunless the result is strictly contained. Adds regression tests for the\ntraversal case and for normal nested entries.\n\nSigned-off-by: Sasha Mitchell <sash.t.mitchell@gmail.com>\n\n* fix(packager): extract through os.OpenRoot per review\n\nAdopt the review suggestion: writes now go through a root-scoped handle,\nso extraction cannot escape dst even if a path slips past the lexical\nRel() guard (symlink or platform edge). The explicit check stays for the\ndomain error message; OpenRoot is the enforcement layer.\n\n---------\n\nSigned-off-by: Sasha Mitchell <sash.t.mitchell@gmail.com>",
+          "timestamp": "2026-08-07T15:33:24+08:00",
+          "tree_id": "f0e878a702e13cb58b0b3144b0627434656acd4f",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/6fde0a7fbdf8a50e655db369fb4e84b1f194918c"
+        },
+        "date": 1786088187001,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 118595367,
+            "unit": "ns/op\t 884.16 MB/s\t212480227 B/op\t    1896 allocs/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 118595367,
+            "unit": "ns/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 884.16,
+            "unit": "MB/s",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 212480227,
+            "unit": "B/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1896,
+            "unit": "allocs/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.56,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.56,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
