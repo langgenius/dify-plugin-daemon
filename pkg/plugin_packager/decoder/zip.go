@@ -298,21 +298,29 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 	// copy to working directory
 	if err := z.Walk(func(filename, dir string) error {
-		workingPath := path.Join(dst, dir)
+		entryName := path.Join(dir, filename)
+		target := filepath.Join(dst, filepath.FromSlash(entryName))
+
+		// zip entry names are attacker-controlled; path.Join only cleans the
+		// result, so a "../" prefix escapes dst into an arbitrary write. Reject
+		// any entry whose resolved path is not contained in dst.
+		rel, err := filepath.Rel(dst, target)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path in plugin package: %q", entryName)
+		}
+
 		// check if directory exists
-		if err := os.MkdirAll(workingPath, 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
 			return err
 		}
 
-		bytes, err := z.ReadFile(filepath.Join(dir, filename))
+		bytes, err := z.ReadFile(entryName)
 		if err != nil {
 			return err
 		}
 
-		filename = filepath.Join(workingPath, filename)
-
 		// copy file
-		if err := os.WriteFile(filename, bytes, 0644); err != nil {
+		if err := os.WriteFile(target, bytes, 0644); err != nil {
 			return err
 		}
 
