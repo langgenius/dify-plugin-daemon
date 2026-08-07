@@ -296,6 +296,18 @@ func (z *ZipPluginDecoder) UniqueIdentity() (plugin_entities.PluginUniqueIdentif
 }
 
 func (z *ZipPluginDecoder) ExtractTo(dst string) error {
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return err
+	}
+
+	// Root-scoped handle: writes through it cannot escape dst, even via
+	// symlink or path trickery the lexical check below might miss.
+	root, err := os.OpenRoot(dst)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
 	// copy to working directory
 	if err := z.Walk(func(filename, dir string) error {
 		entryName := path.Join(dir, filename)
@@ -310,7 +322,7 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 		}
 
 		// check if directory exists
-		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+		if err := root.MkdirAll(filepath.Dir(rel), 0755); err != nil {
 			return err
 		}
 
@@ -320,7 +332,15 @@ func (z *ZipPluginDecoder) ExtractTo(dst string) error {
 		}
 
 		// copy file
-		if err := os.WriteFile(target, bytes, 0644); err != nil {
+		out, err := root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		if _, err := out.Write(bytes); err != nil {
+			out.Close()
+			return err
+		}
+		if err := out.Close(); err != nil {
 			return err
 		}
 
