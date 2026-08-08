@@ -1117,6 +1117,64 @@ func TestParameterScope_Validate(t *testing.T) {
 	}
 }
 
+func TestToolParameterResetOnChange(t *testing.T) {
+	parameter := ToolParameter{
+		Name: "child",
+		Label: I18nObject{
+			EnUS: "Child",
+		},
+		HumanDescription: I18nObject{
+			EnUS: "Child parameter",
+		},
+		Type:          TOOL_PARAMETER_TYPE_DYNAMIC_SELECT,
+		Form:          TOOL_PARAMETER_FORM_FORM,
+		ResetOnChange: []string{"parent"},
+	}
+
+	jsonBytes := parser.MarshalJsonBytes(parameter)
+	jsonParameter, err := parser.UnmarshalJsonBytes[ToolParameter](jsonBytes)
+	if err != nil {
+		t.Fatalf("failed to unmarshal JSON parameter: %v", err)
+	}
+	if len(jsonParameter.ResetOnChange) != 1 || jsonParameter.ResetOnChange[0] != "parent" {
+		t.Fatalf("unexpected JSON reset_on_change: %v", jsonParameter.ResetOnChange)
+	}
+
+	yamlBytes := parser.MarshalYamlBytes(parameter)
+	yamlParameter, err := parser.UnmarshalYamlBytes[ToolParameter](yamlBytes)
+	if err != nil {
+		t.Fatalf("failed to unmarshal YAML parameter: %v", err)
+	}
+	if len(yamlParameter.ResetOnChange) != 1 || yamlParameter.ResetOnChange[0] != "parent" {
+		t.Fatalf("unexpected YAML reset_on_change: %v", yamlParameter.ResetOnChange)
+	}
+
+	parameter.ResetOnChange = nil
+	jsonMap, err := parser.UnmarshalJsonBytes2Map(parser.MarshalJsonBytes(parameter))
+	if err != nil {
+		t.Fatalf("failed to inspect JSON parameter: %v", err)
+	}
+	if _, ok := jsonMap["reset_on_change"]; ok {
+		t.Fatalf("reset_on_change should be omitted from JSON when unset: %v", jsonMap)
+	}
+
+	yamlMap, err := parser.UnmarshalYaml2Map(parser.MarshalYamlBytes(parameter))
+	if err != nil {
+		t.Fatalf("failed to inspect YAML parameter: %v", err)
+	}
+	if _, ok := yamlMap["reset_on_change"]; ok {
+		t.Fatalf("reset_on_change should be omitted from YAML when unset: %v", yamlMap)
+	}
+
+	parameter.ResetOnChange = make([]string, 17)
+	for i := range parameter.ResetOnChange {
+		parameter.ResetOnChange[i] = "parent"
+	}
+	if _, err := parser.UnmarshalJsonBytes[ToolParameter](parser.MarshalJsonBytes(parameter)); err == nil {
+		t.Fatal("expected more than 16 reset_on_change entries to fail validation")
+	}
+}
+
 func TestToolName_Validate(t *testing.T) {
 	data := parser.MarshalJsonBytes(ToolProviderIdentity{
 		Author: "author",
