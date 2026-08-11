@@ -89,7 +89,7 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		}
 
 		renewCtx, stopRenew := context.WithCancel(context.Background())
-		renewResult := keepOwnedLockAlive(renewCtx, lock, expire)
+		renewResult := lock.KeepAlive(renewCtx, expire)
 		initErr := runtime.InitEnvironment(decoder)
 		stopRenew()
 		renewErr := <-renewResult
@@ -203,35 +203,6 @@ func (c *ControlPanel) LaunchLocalPlugin(
 	}
 
 	return runtime, ch, nil
-}
-
-func keepOwnedLockAlive(
-	ctx context.Context,
-	lock *cache.OwnedLock,
-	expire time.Duration,
-) <-chan error {
-	result := make(chan error, 1)
-	go func() {
-		defer close(result)
-
-		interval := expire / 3
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				result <- nil
-				return
-			case <-ticker.C:
-				if err := lock.Renew(expire); err != nil {
-					result <- err
-					return
-				}
-			}
-		}
-	}()
-	return result
 }
 
 // Trigger a signal to stop a local plugin runtime

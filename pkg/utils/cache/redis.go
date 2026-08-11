@@ -617,6 +617,36 @@ func (l *OwnedLock) Renew(expire time.Duration) error {
 	return nil
 }
 
+func (l *OwnedLock) KeepAlive(keepAliveCtx context.Context, expire time.Duration) <-chan error {
+	result := make(chan error, 1)
+	if expire <= 0 {
+		result <- ErrInvalidLockExpiration
+		close(result)
+		return result
+	}
+	go func() {
+		defer close(result)
+
+		interval := expire / 3
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-keepAliveCtx.Done():
+				result <- nil
+				return
+			case <-ticker.C:
+				if err := l.Renew(expire); err != nil {
+					result <- err
+					return
+				}
+			}
+		}
+	}()
+	return result
+}
+
 func (l *OwnedLock) Unlock() error {
 	released, err := unlockOwnedLockScript.Run(
 		ctx,

@@ -3,11 +3,14 @@ package serverless
 import (
 	"bytes"
 	"context"
+	"errors"
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/plugin_packager/decoder"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
@@ -31,16 +34,28 @@ func LaunchPlugin(
 	}
 
 	// check if the plugin has already been initialized
-	if err := cache.Lock(
+	lock, err := cache.AcquireOwnedLock(
 		SERVERLESS_LAUNCH_LOCK_PREFIX+checksum,
 		time.Duration(timeout)*time.Second,
 		time.Duration(timeout)*time.Second,
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
 
+	renewCtx, stopRenew := context.WithCancel(context.Background())
+	renewResult := lock.KeepAlive(renewCtx, time.Duration(timeout)*time.Second)
+	var releaseOnce sync.Once
 	unlock := func(e error) error {
-		cache.Unlock(SERVERLESS_LAUNCH_LOCK_PREFIX + checksum)
+		releaseOnce.Do(func() {
+			stopRenew()
+			if renewErr := <-renewResult; renewErr != nil {
+				log.Warn("lost serverless launch lock", "checksum", checksum, "error", renewErr.Error())
+			}
+			if unlockErr := lock.Unlock(); unlockErr != nil && !errors.Is(unlockErr, cache.ErrLockNotOwned) {
+				log.Warn("failed to release serverless launch lock", "checksum", checksum, "error", unlockErr.Error())
+			}
+		})
 		return e
 	}
 

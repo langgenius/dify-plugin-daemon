@@ -18,6 +18,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
+	"gorm.io/gorm/clause"
 )
 
 var (
@@ -177,6 +178,33 @@ func (p *PluginManager) updateServerlessRuntimeModel(
 	return db.Update(&serverlessModel)
 }
 
+func (p *PluginManager) persistServerlessRuntime(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	functionURL string,
+	functionName string,
+) error {
+	serverlessModel := &models.ServerlessRuntime{
+		Checksum:               pluginUniqueIdentifier.Checksum(),
+		Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
+		FunctionURL:            functionURL,
+		FunctionName:           functionName,
+		PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+	}
+	if err := db.DifyPluginDB.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "plugin_unique_identifier"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"checksum",
+			"type",
+			"function_url",
+			"function_name",
+		}),
+	}).Create(serverlessModel).Error; err != nil {
+		return err
+	}
+
+	return p.ClearServerlessRuntimeCache(pluginUniqueIdentifier)
+}
+
 // whenever a plugin was installed successfully, a record will be inserted into `models.ServerlessRuntime`
 func (p *PluginManager) installServerless(
 	ctx context.Context,
@@ -216,37 +244,11 @@ func (p *PluginManager) installServerless(
 					return
 				}
 
-				// check if the plugin is already installed
-				// NOTE: models.ServerlessRuntime is a tenant-isolated model
-				// it hands only engine-level persist data like which serverless runtime is installed
-				// that's why we placed it here, not in service layer.
-				//
-				// service layer takes care of tenant-level persist data like "which tenant installed which plugin"
-				_, err := db.GetOne[models.ServerlessRuntime](
-					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
-				)
-				if err == db.ErrDatabaseNotFound {
-					// create a new serverless runtime
-					serverlessModel := &models.ServerlessRuntime{
-						Checksum:               pluginUniqueIdentifier.Checksum(),
-						Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
-						FunctionURL:            functionUrl,
-						FunctionName:           functionName,
-						PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
-					}
-					err = db.Create(serverlessModel)
-					if err != nil {
-						responseStream.Write(installation_entities.PluginInstallResponse{
-							Event: installation_entities.PluginInstallEventError,
-							Data:  "failed to create serverless runtime",
-						})
-						return
-					}
-				} else if err != nil {
+				if err := p.persistServerlessRuntime(pluginUniqueIdentifier, functionUrl, functionName); err != nil {
+					log.Error("failed to persist serverless runtime", "error", err)
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
-						Data:  "failed to check if the plugin is already installed",
+						Data:  "failed to persist serverless runtime",
 					})
 					return
 				}

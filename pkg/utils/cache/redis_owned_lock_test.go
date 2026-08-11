@@ -66,5 +66,6 @@ func TestOwnedLockValidatesExpiration(t *testing.T) {
 	lock, err := AcquireOwnedLock("valid-lock", time.Second, time.Second)
 	require.NoError(t, err)
 	require.True(t, errors.Is(lock.Renew(0), ErrInvalidLockExpiration))
+	require.ErrorIs(t, <-lock.KeepAlive(t.Context(), 0), ErrInvalidLockExpiration)
 	require.NoError(t, lock.Unlock())
 }
