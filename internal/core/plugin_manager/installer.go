@@ -294,15 +294,18 @@ func (p *PluginManager) installLocal(
 		// First publish the plugin package, then launch it. A failed attempt must not
 		// delete the shared package because another caller may already depend on it.
 		var success bool = false
+		var stopRuntime bool = false
 		var runtime *local_runtime.LocalPluginRuntime
 		var ch <-chan error
 
 		defer responseStream.Close()
 		defer p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
 		defer func() {
-			if !success {
+			if !success && stopRuntime {
 				// Stop only the runtime constructed by this attempt. The canonical
-				// package remains available for concurrent callers and retries.
+				// package remains available for concurrent callers and retries. A
+				// timeout does not stop the runtime because it may become ready after
+				// the caller has left and be observed by another ensure attempt.
 				if runtime != nil {
 					runtime.Stop(false)
 				}
@@ -371,6 +374,7 @@ func (p *PluginManager) installLocal(
 				})
 			case err := <-ch:
 				if err != nil {
+					stopRuntime = true
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
 						Data:  fmt.Sprintf("failed to launch plugin: %s", err.Error()),
