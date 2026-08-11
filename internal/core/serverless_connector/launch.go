@@ -40,17 +40,34 @@ func LaunchPlugin(
 		time.Duration(timeout)*time.Second,
 	)
 	if err != nil {
-		return nil, err
+		log.Warn(
+			"failed to acquire serverless launch lock; continuing with idempotent launch",
+			"checksum", checksum,
+			"error", err.Error(),
+		)
 	}
 
-	renewCtx, stopRenew := context.WithCancel(context.Background())
-	renewResult := lock.KeepAlive(renewCtx, time.Duration(timeout)*time.Second)
+	var stopRenew context.CancelFunc
+	var renewResult <-chan error
+	if lock != nil {
+		var renewCtx context.Context
+		renewCtx, stopRenew = context.WithCancel(context.Background())
+		renewResult = lock.KeepAlive(renewCtx, time.Duration(timeout)*time.Second)
+	}
+
 	var releaseOnce sync.Once
 	unlock := func(e error) error {
 		releaseOnce.Do(func() {
+			if lock == nil {
+				return
+			}
 			stopRenew()
 			if renewErr := <-renewResult; renewErr != nil {
-				log.Warn("lost serverless launch lock", "checksum", checksum, "error", renewErr.Error())
+				log.Warn(
+					"lost serverless launch lock; runtime launch remains authoritative",
+					"checksum", checksum,
+					"error", renewErr.Error(),
+				)
 			}
 			if unlockErr := lock.Unlock(); unlockErr != nil && !errors.Is(unlockErr, cache.ErrLockNotOwned) {
 				log.Warn("failed to release serverless launch lock", "checksum", checksum, "error", unlockErr.Error())

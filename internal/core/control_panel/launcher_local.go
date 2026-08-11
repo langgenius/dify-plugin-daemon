@@ -78,36 +78,46 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		log.Info("acquiring distributed init lock", "plugin", pluginUniqueIdentifier.String(), "expire", expire.String())
 		lock, err := cache.AcquireOwnedLock(lockKey, expire, tryTimeout)
 		if err != nil {
-			// failed to acquire the lock within timeout
-			err = errors.Join(err, fmt.Errorf("failed to acquire distributed env-init lock"))
-			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
-				notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
-			})
-			// release semaphore and local lock
-			releaseLockAndSemaphore()
-			return nil, nil, err
+			log.Warn(
+				"failed to acquire distributed init lock; continuing with idempotent initialization",
+				"plugin", pluginUniqueIdentifier.String(),
+				"error", err.Error(),
+			)
 		}
 
-		renewCtx, stopRenew := context.WithCancel(context.Background())
-		renewResult := lock.KeepAlive(renewCtx, expire)
+		var stopRenew context.CancelFunc
+		var renewResult <-chan error
+		if lock != nil {
+			var renewCtx context.Context
+			renewCtx, stopRenew = context.WithCancel(context.Background())
+			renewResult = lock.KeepAlive(renewCtx, expire)
+		}
+
 		initErr := runtime.InitEnvironment(decoder)
-		stopRenew()
-		renewErr := <-renewResult
-		unlockErr := lock.Unlock()
-		if unlockErr != nil && !errors.Is(unlockErr, cache.ErrLockNotOwned) {
-			log.Warn("failed to release distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", unlockErr.Error())
-		} else if unlockErr == nil {
-			log.Info("released distributed init lock", "plugin", pluginUniqueIdentifier.String())
-		}
-		if renewErr == nil && errors.Is(unlockErr, cache.ErrLockNotOwned) {
-			renewErr = unlockErr
+		if lock != nil {
+			stopRenew()
+			if renewErr := <-renewResult; renewErr != nil {
+				log.Warn(
+					"lost distributed init lock; runtime initialization remains authoritative",
+					"plugin", pluginUniqueIdentifier.String(),
+					"error", renewErr.Error(),
+				)
+			}
+			if unlockErr := lock.Unlock(); unlockErr != nil {
+				if !errors.Is(unlockErr, cache.ErrLockNotOwned) {
+					log.Warn(
+						"failed to release distributed init lock",
+						"plugin", pluginUniqueIdentifier.String(),
+						"error", unlockErr.Error(),
+					)
+				}
+			} else {
+				log.Info("released distributed init lock", "plugin", pluginUniqueIdentifier.String())
+			}
 		}
 
-		if initErr != nil || renewErr != nil {
-			err = errors.Join(initErr, renewErr, fmt.Errorf("failed to init environment"))
-			if renewErr != nil {
-				log.Warn("lost distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", renewErr.Error())
-			}
+		if initErr != nil {
+			err = errors.Join(initErr, fmt.Errorf("failed to init environment"))
 			// notify new runtime launch failed
 			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 				notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)

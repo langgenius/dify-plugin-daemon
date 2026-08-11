@@ -18,6 +18,22 @@ import (
 )
 
 func TestEnsureLocalRuntimeFailureKeepsInstalledPackage(t *testing.T) {
+	eventData, installed := runFailingLocalRuntimeInstall(t, false)
+
+	require.NotEmpty(t, eventData)
+	require.True(t, installed)
+}
+
+func TestEnsureLocalRuntimeContinuesWhenRedisLockIsUnavailable(t *testing.T) {
+	eventData, installed := runFailingLocalRuntimeInstall(t, true)
+
+	require.Contains(t, eventData, "missing-uv")
+	require.NotContains(t, eventData, "failed to acquire distributed env-init lock")
+	require.True(t, installed)
+}
+
+func runFailingLocalRuntimeInstall(t *testing.T, closeRedisBeforeInstall bool) (string, bool) {
+	t.Helper()
 	routine.InitPool(4)
 
 	redisServer := miniredis.RunT(t)
@@ -52,18 +68,20 @@ func TestEnsureLocalRuntimeFailureKeepsInstalledPackage(t *testing.T) {
 	identifier, err := packageDecoder.UniqueIdentity()
 	require.NoError(t, err)
 	require.NoError(t, manager.packageBucket.Save(identifier.String(), packageBytes))
+	if closeRedisBeforeInstall {
+		require.NoError(t, cache.Close())
+	}
 
 	response, err := manager.EnsureRuntime(context.Background(), identifier)
 	require.NoError(t, err)
-	failed := false
+	eventData := ""
 	require.NoError(t, response.Process(func(event installation_entities.PluginInstallResponse) {
 		if event.Event == installation_entities.PluginInstallEventError {
-			failed = true
+			eventData = event.Data
 		}
 	}))
-	require.True(t, failed)
 
 	exists, err := manager.installedBucket.Exists(identifier)
 	require.NoError(t, err)
-	require.True(t, exists)
+	return eventData, exists
 }
