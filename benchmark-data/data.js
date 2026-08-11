@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786088187414,
+  "lastUpdate": 1786437271170,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -15724,6 +15724,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.56,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7689337784593a1e87b0dc391402f4779a278ba7",
+          "message": "chore(deps): bump go-git/go-git to v5.19.2 to fix CVE-2026-71556/71557 (#802)\n\nFixes CVE-2026-71556 (improper link resolution / link following) and\nCVE-2026-71557 (path traversal), both affecting github.com/go-git/go-git/v5\n<= 5.19.1 and resolved in 5.19.2.\n\nGenerated with [Devin](https://devin.ai)\n\nCo-authored-by: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>",
+          "timestamp": "2026-08-11T16:30:42+08:00",
+          "tree_id": "ac2e80d7c17f4619a67b78ec5136222426a958a4",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/7689337784593a1e87b0dc391402f4779a278ba7"
+        },
+        "date": 1786437270559,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 117341577,
+            "unit": "ns/op\t 893.61 MB/s\t213185441 B/op\t    1897 allocs/op",
+            "extra": "306 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 117341577,
+            "unit": "ns/op",
+            "extra": "306 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 893.61,
+            "unit": "MB/s",
+            "extra": "306 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213185441,
+            "unit": "B/op",
+            "extra": "306 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "306 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.83,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.83,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
