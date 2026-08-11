@@ -76,7 +76,8 @@ func (c *ControlPanel) LaunchLocalPlugin(
 		expire := 15 * time.Minute
 		tryTimeout := 2 * time.Minute
 		log.Info("acquiring distributed init lock", "plugin", pluginUniqueIdentifier.String(), "expire", expire.String())
-		if err := cache.Lock(lockKey, expire, tryTimeout); err != nil {
+		lock, err := cache.AcquireOwnedLock(lockKey, expire, tryTimeout)
+		if err != nil {
 			// failed to acquire the lock within timeout
 			err = errors.Join(err, fmt.Errorf("failed to acquire distributed env-init lock"))
 			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
@@ -86,16 +87,27 @@ func (c *ControlPanel) LaunchLocalPlugin(
 			releaseLockAndSemaphore()
 			return nil, nil, err
 		}
-		defer func() {
-			if unlockErr := cache.Unlock(lockKey); unlockErr != nil {
-				log.Warn("failed to release distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", unlockErr.Error())
-			} else {
-				log.Info("released distributed init lock", "plugin", pluginUniqueIdentifier.String())
-			}
-		}()
 
-		if err := runtime.InitEnvironment(decoder); err != nil {
-			err = errors.Join(err, fmt.Errorf("failed to init environment"))
+		renewCtx, stopRenew := context.WithCancel(context.Background())
+		renewResult := keepOwnedLockAlive(renewCtx, lock, expire)
+		initErr := runtime.InitEnvironment(decoder)
+		stopRenew()
+		renewErr := <-renewResult
+		unlockErr := lock.Unlock()
+		if unlockErr != nil && !errors.Is(unlockErr, cache.ErrLockNotOwned) {
+			log.Warn("failed to release distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", unlockErr.Error())
+		} else if unlockErr == nil {
+			log.Info("released distributed init lock", "plugin", pluginUniqueIdentifier.String())
+		}
+		if renewErr == nil && errors.Is(unlockErr, cache.ErrLockNotOwned) {
+			renewErr = unlockErr
+		}
+
+		if initErr != nil || renewErr != nil {
+			err = errors.Join(initErr, renewErr, fmt.Errorf("failed to init environment"))
+			if renewErr != nil {
+				log.Warn("lost distributed init lock", "plugin", pluginUniqueIdentifier.String(), "error", renewErr.Error())
+			}
 			// notify new runtime launch failed
 			c.WalkNotifiers(func(notifier ControlPanelNotifier) {
 				notifier.OnLocalRuntimeStartFailed(pluginUniqueIdentifier, err)
@@ -191,6 +203,35 @@ func (c *ControlPanel) LaunchLocalPlugin(
 	}
 
 	return runtime, ch, nil
+}
+
+func keepOwnedLockAlive(
+	ctx context.Context,
+	lock *cache.OwnedLock,
+	expire time.Duration,
+) <-chan error {
+	result := make(chan error, 1)
+	go func() {
+		defer close(result)
+
+		interval := expire / 3
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				result <- nil
+				return
+			case <-ticker.C:
+				if err := lock.Renew(expire); err != nil {
+					result <- err
+					return
+				}
+			}
+		}
+	}()
+	return result
 }
 
 // Trigger a signal to stop a local plugin runtime

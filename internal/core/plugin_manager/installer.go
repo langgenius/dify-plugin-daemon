@@ -28,6 +28,13 @@ func (p *PluginManager) Install(
 	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
+	return p.EnsureRuntime(ctx, pluginUniqueIdentifier)
+}
+
+func (p *PluginManager) EnsureRuntime(
+	ctx context.Context,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
 	if p.config.Platform == app.PLATFORM_LOCAL {
 		return p.installLocal(ctx, pluginUniqueIdentifier)
 	}
@@ -282,21 +289,18 @@ func (p *PluginManager) installLocal(
 		routinepkg.RoutineLabelKeyModule: "plugin_manager",
 		routinepkg.RoutineLabelKeyMethod: "installLocal",
 	}, func() {
-		// firstly, install the plugin, then launch it, delete it if process fails
+		// First publish the plugin package, then launch it. A failed attempt must not
+		// delete the shared package because another caller may already depend on it.
 		var success bool = false
 		var runtime *local_runtime.LocalPluginRuntime
 		var ch <-chan error
 
 		defer responseStream.Close()
+		defer p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
 		defer func() {
 			if !success {
-				p.controlPanel.RemoveLocalPlugin(pluginUniqueIdentifier)
-
-				// release the lock, avoid a potential race condition
-				// which causes plugins never to be scheduled automatically
-				p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
-
-				// forcefully stop runtime, prevent continuous scheduling
+				// Stop only the runtime constructed by this attempt. The canonical
+				// package remains available for concurrent callers and retries.
 				if runtime != nil {
 					runtime.Stop(false)
 				}
@@ -340,8 +344,10 @@ func (p *PluginManager) installLocal(
 		}
 
 		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
 		timeout := time.Duration(p.config.PythonEnvInitTimeout) * time.Second
 		timer := time.NewTimer(timeout)
+		defer timer.Stop()
 
 		for {
 			select {
