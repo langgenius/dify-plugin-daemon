@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786437271170,
+  "lastUpdate": 1786600055115,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -15802,6 +15802,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.83,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "52963600+GareArc@users.noreply.github.com",
+            "name": "Xiyuan Chen",
+            "username": "GareArc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "513bda1bb02648e96efe5a1f142020d9c0894965",
+          "message": "chore(deps): bump github.com/klauspost/compress from 1.18.0 to 1.18.7 (#803)\n\nClears GHSA-259r-337f-4rfw (out-of-bounds read in the S2 dictionary encoder\nwhen given a crafted dictionary). Indirect dependency, reached only through\nprometheus/client_golang's use of compress/zstd — the affected s2 package is\nnot imported, so the vulnerable path is not reachable in this binary.\n\nPatch-level bump, no ride-alongs.",
+          "timestamp": "2026-08-13T13:45:04+08:00",
+          "tree_id": "5c7c6d5efa2f423d2b06d88a9f6536c2e3b43e82",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/513bda1bb02648e96efe5a1f142020d9c0894965"
+        },
+        "date": 1786600054563,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 120041598,
+            "unit": "ns/op\t 873.51 MB/s\t212986395 B/op\t    1897 allocs/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 120041598,
+            "unit": "ns/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 873.51,
+            "unit": "MB/s",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 212986395,
+            "unit": "B/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.92,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.92,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
