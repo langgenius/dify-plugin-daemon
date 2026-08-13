@@ -70,6 +70,61 @@ if acquired {
 }
 ```
 
+## Owner-Aware Distributed Locks (OwnedLock)
+
+The `AcquireOwnedLock` function provides token-based lock ownership with advanced features:
+
+```go
+// Acquire lock with timeout
+lock, err := cache.AcquireOwnedLock(key, expire, tryLockTimeout)
+if err == cache.ErrLockTimeout {
+    // Lock acquisition timed out
+    return err
+}
+if err != nil {
+    return err
+}
+defer lock.Unlock()
+
+// Critical section
+```
+
+The OwnedLock type supports:
+
+**Renewal**: Extend lock expiration while holding it
+```go
+if err := lock.Renew(time.Minute); err == cache.ErrLockNotOwned {
+    // Lock was lost
+}
+```
+
+**Keep-Alive**: Automatic periodic renewal
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+errCh := lock.KeepAlive(ctx, time.Minute)
+// Lock is renewed every expire/3 interval
+// Cancel context to stop keep-alive
+if err := <-errCh; err != nil {
+    // Keep-alive failed (lock lost or error)
+}
+```
+
+**Safe Unlock**: Only the lock owner can unlock
+```go
+if err := lock.Unlock(); err == cache.ErrLockNotOwned {
+    // Lock expired or was never owned
+}
+```
+
+The OwnedLock mechanism uses unique tokens to ensure only the lock owner can renew or release the lock, preventing accidental releases by other processes.
+
+**Error Constants**:
+- `ErrLockTimeout`: Lock acquisition timed out
+- `ErrLockNotOwned`: Returned when attempting to renew or unlock a lock that is not owned
+- `ErrInvalidLockExpiration`: Returned when lock expiration duration is not positive
+
 ## Auto-type Operations
 
 Helper functions in `redis_auto_type.go`:
