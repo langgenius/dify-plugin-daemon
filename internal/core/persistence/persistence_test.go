@@ -212,4 +212,15 @@ func TestPersistencePathTraversal(t *testing.T) {
 			assert.Equal(t, err != nil, tc.wantErr)
 		})
 	}
+
+	victimKey := strings.RandomString(10)
+	assert.NoError(t, persistence.Save("victim_tenant", "victim_plugin", -1, victimKey, []byte("data")))
+
+	traversalKey := "../../victim_tenant/victim_plugin/" + victimKey
+	_, err = persistence.Exist("attacker_tenant", "attacker_plugin", traversalKey)
+	assert.EqualError(t, err, "invalid key: path traversal attempt detected")
+	_, err = persistence.Delete("attacker_tenant", "attacker_plugin", traversalKey)
+	assert.EqualError(t, err, "invalid key: path traversal attempt detected")
+	_, err = persistence.Load("victim_tenant", "victim_plugin", victimKey)
+	assert.NoError(t, err)
 }
