@@ -133,6 +133,10 @@ func (c *Persistence) Load(tenantId string, pluginId string, key string) ([]byte
 }
 
 func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int64, error) {
+	if err := c.checkPathTraversal(key); err != nil {
+		return 0, err
+	}
+
 	// delete from cache and storage
 	deletedNum, err := cache.Del(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil {
@@ -165,6 +169,10 @@ func (c *Persistence) Delete(tenantId string, pluginId string, key string) (int6
 }
 
 func (c *Persistence) Exist(tenantId string, pluginId string, key string) (int64, error) {
+	if err := c.checkPathTraversal(key); err != nil {
+		return 0, err
+	}
+
 	existNum, err := cache.Exist(c.getCacheKey(tenantId, pluginId, key))
 	if err != nil {
 		return 0, err
