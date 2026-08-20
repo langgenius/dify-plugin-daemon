@@ -42,6 +42,7 @@ type InvokeLLMSchema struct {
 	CompletionParams map[string]any                     `json:"completion_params"  validate:"omitempty"`
 	PromptMessages   []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
 	Tools            []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
+	ToolChoice       *model_entities.ToolChoice         `json:"tool_choice,omitempty" validate:"omitempty"`
 	Stop             []string                           `json:"stop" validate:"omitempty"`
 	Stream           bool                               `json:"stream"`
 }

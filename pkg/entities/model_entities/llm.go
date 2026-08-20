@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
@@ -127,6 +128,18 @@ func init() {
 	validators.GlobalEntitiesValidator.RegisterValidation("prompt_message_role", isPromptMessageRole)
 	validators.GlobalEntitiesValidator.RegisterValidation("prompt_message_content", isPromptMessageContent)
 	validators.GlobalEntitiesValidator.RegisterValidation("prompt_message_content_type", isPromptMessageContentType)
+	validators.GlobalEntitiesValidator.RegisterStructValidation(validateToolChoice, ToolChoice{})
+}
+
+func validateToolChoice(sl validator.StructLevel) {
+	choice, ok := sl.Current().Interface().(ToolChoice)
+	if !ok {
+		return
+	}
+
+	if choice.Mode == TOOL_CHOICE_MODE_TOOL && strings.TrimSpace(choice.Name) == "" {
+		sl.ReportError(choice.Name, "name", "Name", "required_for_tool", "")
+	}
 }
 
 func unmarshalPromptMessageContent(data json.RawMessage) (any, error) {
@@ -197,6 +210,20 @@ type PromptMessageTool struct {
 	Name        string         `json:"name" validate:"required"`
 	Description string         `json:"description"`
 	Parameters  map[string]any `json:"parameters"`
+}
+
+type ToolChoiceMode string
+
+const (
+	TOOL_CHOICE_MODE_AUTO     ToolChoiceMode = "auto"
+	TOOL_CHOICE_MODE_NONE     ToolChoiceMode = "none"
+	TOOL_CHOICE_MODE_REQUIRED ToolChoiceMode = "required"
+	TOOL_CHOICE_MODE_TOOL     ToolChoiceMode = "tool"
+)
+
+type ToolChoice struct {
+	Mode ToolChoiceMode `json:"mode" validate:"required,oneof=auto none required tool"`
+	Name string         `json:"name,omitempty" validate:"omitempty"`
 }
 
 type LLMResultChunk struct {
