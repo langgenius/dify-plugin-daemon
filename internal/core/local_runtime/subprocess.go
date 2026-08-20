@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/constants"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
@@ -32,19 +33,66 @@ func (r *LocalPluginRuntime) getInstanceCmd() (*exec.Cmd, error) {
 		return nil, fmt.Errorf("unsupported language: %s", r.Config.Meta.Runner.Language)
 	}
 
-	cmd.Env = cmd.Environ()
-	if r.appConfig.HttpsProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTPS_PROXY=%s", r.appConfig.HttpsProxy))
-	}
-	if r.appConfig.HttpProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HTTP_PROXY=%s", r.appConfig.HttpProxy))
-	}
-	if r.appConfig.NoProxy != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("NO_PROXY=%s", r.appConfig.NoProxy))
-	}
-	cmd.Env = append(cmd.Env, "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
+	cmd.Env = BuildPluginCommandEnv(r.appConfig)
 	cmd.Dir = r.State.WorkingPath
 	return cmd, nil
+}
+
+// pluginCommandEnvAllowlist lists the only process environment variables a
+// plugin subprocess may inherit. Daemon credentials such as DB_PASSWORD,
+// SERVER_KEY or DIFY_INNER_API_KEY must never reach plugin code.
+var pluginCommandEnvAllowlist = []string{
+	"PATH",
+	"HOME",
+	"LANG",
+	"LC_ALL",
+	"LC_CTYPE",
+	"TMPDIR",
+	"TEMP",
+	"TMP",
+	"TZ",
+	"SSL_CERT_FILE",
+	"REQUESTS_CA_BUNDLE",
+	"HTTP_PROXY",
+	"HTTPS_PROXY",
+	"NO_PROXY",
+	"http_proxy",
+	"https_proxy",
+	"no_proxy",
+}
+
+// BuildPluginCommandEnv builds the environment of a plugin subprocess from an
+// explicit allowlist instead of inheriting the daemon process environment,
+// mirroring buildUVCommandEnv for the dependency installer. Proxy settings
+// from the daemon config take precedence over inherited proxy variables.
+func BuildPluginCommandEnv(appConfig *app.Config) []string {
+	envByKey := make(map[string]string, len(pluginCommandEnvAllowlist)+4)
+	for _, key := range pluginCommandEnvAllowlist {
+		if value, ok := os.LookupEnv(key); ok {
+			envByKey[key] = value
+		}
+	}
+
+	if appConfig != nil {
+		if appConfig.HttpProxy != "" {
+			envByKey["HTTP_PROXY"] = appConfig.HttpProxy
+		}
+		if appConfig.HttpsProxy != "" {
+			envByKey["HTTPS_PROXY"] = appConfig.HttpsProxy
+		}
+		if appConfig.NoProxy != "" {
+			envByKey["NO_PROXY"] = appConfig.NoProxy
+		}
+	}
+
+	envByKey["INSTALL_METHOD"] = "local"
+
+	env := make([]string, 0, len(envByKey))
+	for key, value := range envByKey {
+		env = append(env, key+"="+value)
+	}
+	slices.Sort(env)
+	return env
 }
 
 // getInstanceStdio gets the stdin, stdout, and stderr pipes for the plugin instance
