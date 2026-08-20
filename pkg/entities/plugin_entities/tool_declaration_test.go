@@ -1117,6 +1117,288 @@ func TestParameterScope_Validate(t *testing.T) {
 	}
 }
 
+func TestToolParameterShowOn_Validate(t *testing.T) {
+	const jsonData = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label"
+		},
+		"tags": []
+	},
+	"credentials_schema": [],
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description"
+				},
+				"llm": "description"
+			},
+			"parameters": [
+				{
+					"name": "mode",
+					"type": "select",
+					"label": {
+						"en_US": "Mode"
+					},
+					"human_description": {
+						"en_US": "Select mode"
+					},
+					"form": "form",
+					"required": true,
+					"options": [
+						{
+							"value": "simple",
+							"label": {
+								"en_US": "Simple"
+							}
+						},
+						{
+							"value": "advanced",
+							"label": {
+								"en_US": "Advanced"
+							}
+						}
+					]
+				},
+				{
+					"name": "advanced_param",
+					"type": "string",
+					"label": {
+						"en_US": "Advanced Param"
+					},
+					"human_description": {
+						"en_US": "Advanced parameter"
+					},
+					"form": "form",
+					"required": false,
+					"show_on": [
+						{
+							"variable": "mode",
+							"value": "advanced"
+						}
+					]
+				}
+			]
+		}
+	]
+}
+`
+
+	const yamlData = `identity:
+  author: author
+  name: name
+  description:
+    en_US: description
+  icon: icon
+  label:
+    en_US: label
+  tags: []
+credentials_schema: []
+tools:
+  - identity:
+      author: author
+      name: tool
+      label:
+        en_US: label
+    description:
+      human:
+        en_US: description
+      llm: description
+    parameters:
+      - name: mode
+        type: select
+        label:
+          en_US: Mode
+        human_description:
+          en_US: Select mode
+        form: form
+        required: true
+        options:
+          - value: simple
+            label:
+              en_US: Simple
+          - value: advanced
+            label:
+              en_US: Advanced
+      - name: advanced_param
+        type: string
+        label:
+          en_US: Advanced Param
+        human_description:
+          en_US: Advanced parameter
+        form: form
+        required: false
+        show_on:
+          - variable: mode
+            value: advanced
+`
+
+	jsonDeclaration, jsonErr := UnmarshalToolProviderDeclaration([]byte(jsonData))
+	if jsonErr != nil {
+		t.Errorf("UnmarshalToolProviderDeclaration() error for JSON = %v", jsonErr)
+		return
+	}
+
+	if len(jsonDeclaration.Tools[0].Parameters) != 2 {
+		t.Errorf("Expected 2 parameters, got %d", len(jsonDeclaration.Tools[0].Parameters))
+		return
+	}
+
+	advancedParam := jsonDeclaration.Tools[0].Parameters[1]
+	if len(advancedParam.ShowOn) != 1 {
+		t.Errorf("Expected 1 show_on condition, got %d", len(advancedParam.ShowOn))
+		return
+	}
+
+	if advancedParam.ShowOn[0].Variable != "mode" || advancedParam.ShowOn[0].Value != "advanced" {
+		t.Errorf("Unexpected show_on values: variable=%s, value=%s", advancedParam.ShowOn[0].Variable, advancedParam.ShowOn[0].Value)
+		return
+	}
+
+	modeParam := jsonDeclaration.Tools[0].Parameters[0]
+	if modeParam.ShowOn == nil {
+		t.Errorf("Expected ShowOn to be initialized to empty slice, got nil")
+		return
+	}
+
+	yamlDeclaration, yamlErr := parser.UnmarshalYamlBytes[ToolProviderDeclaration]([]byte(yamlData))
+	if yamlErr != nil {
+		t.Errorf("UnmarshalToolProviderDeclaration() error for YAML = %v", yamlErr)
+		return
+	}
+
+	if len(yamlDeclaration.Tools[0].Parameters) != 2 {
+		t.Errorf("Expected 2 parameters, got %d", len(yamlDeclaration.Tools[0].Parameters))
+		return
+	}
+
+	yamlAdvancedParam := yamlDeclaration.Tools[0].Parameters[1]
+	if len(yamlAdvancedParam.ShowOn) != 1 {
+		t.Errorf("Expected 1 show_on condition, got %d", len(yamlAdvancedParam.ShowOn))
+		return
+	}
+
+	if yamlAdvancedParam.ShowOn[0].Variable != "mode" || yamlAdvancedParam.ShowOn[0].Value != "advanced" {
+		t.Errorf("Unexpected show_on values: variable=%s, value=%s", yamlAdvancedParam.ShowOn[0].Variable, yamlAdvancedParam.ShowOn[0].Value)
+		return
+	}
+}
+
+func TestParameterOptionShowOn_Validate(t *testing.T) {
+	const jsonData = `
+{
+	"identity": {
+		"author": "author",
+		"name": "name",
+		"description": {
+			"en_US": "description"
+		},
+		"icon": "icon",
+		"label": {
+			"en_US": "label"
+		},
+		"tags": []
+	},
+	"credentials_schema": [],
+	"tools": [
+		{
+			"identity": {
+				"author": "author",
+				"name": "tool",
+				"label": {
+					"en_US": "label"
+				}
+			},
+			"description": {
+				"human": {
+					"en_US": "description"
+				},
+				"llm": "description"
+			},
+			"parameters": [
+				{
+					"name": "mode",
+					"type": "select",
+					"label": {
+						"en_US": "Mode"
+					},
+					"human_description": {
+						"en_US": "Select mode"
+					},
+					"form": "form",
+					"required": true,
+					"options": [
+						{
+							"value": "simple",
+							"label": {
+								"en_US": "Simple"
+							}
+						},
+						{
+							"value": "advanced",
+							"label": {
+								"en_US": "Advanced"
+							},
+							"show_on": [
+								{
+									"variable": "feature_flag",
+									"value": "true"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
+`
+
+	declaration, err := UnmarshalToolProviderDeclaration([]byte(jsonData))
+	if err != nil {
+		t.Errorf("UnmarshalToolProviderDeclaration() error = %v", err)
+		return
+	}
+
+	modeParam := declaration.Tools[0].Parameters[0]
+	if len(modeParam.Options) != 2 {
+		t.Errorf("Expected 2 options, got %d", len(modeParam.Options))
+		return
+	}
+
+	advancedOption := modeParam.Options[1]
+	if len(advancedOption.ShowOn) != 1 {
+		t.Errorf("Expected 1 show_on condition on option, got %d", len(advancedOption.ShowOn))
+		return
+	}
+
+	if advancedOption.ShowOn[0].Variable != "feature_flag" || advancedOption.ShowOn[0].Value != "true" {
+		t.Errorf("Unexpected show_on values on option: variable=%s, value=%s", advancedOption.ShowOn[0].Variable, advancedOption.ShowOn[0].Value)
+		return
+	}
+
+	simpleOption := modeParam.Options[0]
+	if simpleOption.ShowOn == nil {
+		t.Errorf("Expected ShowOn to be initialized to empty slice on option, got nil")
+		return
+	}
+}
+
 func TestToolName_Validate(t *testing.T) {
 	data := parser.MarshalJsonBytes(ToolProviderIdentity{
 		Author: "author",
