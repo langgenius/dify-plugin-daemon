@@ -18,6 +18,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
+	"gorm.io/gorm/clause"
 )
 
 var (
@@ -25,6 +26,13 @@ var (
 )
 
 func (p *PluginManager) Install(
+	ctx context.Context,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
+	return p.EnsureRuntime(ctx, pluginUniqueIdentifier)
+}
+
+func (p *PluginManager) EnsureRuntime(
 	ctx context.Context,
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) (*stream.Stream[installation_entities.PluginInstallResponse], error) {
@@ -170,6 +178,33 @@ func (p *PluginManager) updateServerlessRuntimeModel(
 	return db.Update(&serverlessModel)
 }
 
+func (p *PluginManager) persistServerlessRuntime(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	functionURL string,
+	functionName string,
+) error {
+	serverlessModel := &models.ServerlessRuntime{
+		Checksum:               pluginUniqueIdentifier.Checksum(),
+		Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
+		FunctionURL:            functionURL,
+		FunctionName:           functionName,
+		PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+	}
+	if err := db.DifyPluginDB.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "plugin_unique_identifier"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"checksum",
+			"type",
+			"function_url",
+			"function_name",
+		}),
+	}).Create(serverlessModel).Error; err != nil {
+		return err
+	}
+
+	return p.ClearServerlessRuntimeCache(pluginUniqueIdentifier)
+}
+
 // whenever a plugin was installed successfully, a record will be inserted into `models.ServerlessRuntime`
 func (p *PluginManager) installServerless(
 	ctx context.Context,
@@ -209,37 +244,11 @@ func (p *PluginManager) installServerless(
 					return
 				}
 
-				// check if the plugin is already installed
-				// NOTE: models.ServerlessRuntime is a tenant-isolated model
-				// it hands only engine-level persist data like which serverless runtime is installed
-				// that's why we placed it here, not in service layer.
-				//
-				// service layer takes care of tenant-level persist data like "which tenant installed which plugin"
-				_, err := db.GetOne[models.ServerlessRuntime](
-					db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-					db.Equal("type", string(models.SERVERLESS_RUNTIME_TYPE_SERVERLESS)),
-				)
-				if err == db.ErrDatabaseNotFound {
-					// create a new serverless runtime
-					serverlessModel := &models.ServerlessRuntime{
-						Checksum:               pluginUniqueIdentifier.Checksum(),
-						Type:                   models.SERVERLESS_RUNTIME_TYPE_SERVERLESS,
-						FunctionURL:            functionUrl,
-						FunctionName:           functionName,
-						PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
-					}
-					err = db.Create(serverlessModel)
-					if err != nil {
-						responseStream.Write(installation_entities.PluginInstallResponse{
-							Event: installation_entities.PluginInstallEventError,
-							Data:  "failed to create serverless runtime",
-						})
-						return
-					}
-				} else if err != nil {
+				if err := p.persistServerlessRuntime(pluginUniqueIdentifier, functionUrl, functionName); err != nil {
+					log.Error("failed to persist serverless runtime", "error", err)
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
-						Data:  "failed to check if the plugin is already installed",
+						Data:  "failed to persist serverless runtime",
 					})
 					return
 				}
@@ -282,21 +291,21 @@ func (p *PluginManager) installLocal(
 		routinepkg.RoutineLabelKeyModule: "plugin_manager",
 		routinepkg.RoutineLabelKeyMethod: "installLocal",
 	}, func() {
-		// firstly, install the plugin, then launch it, delete it if process fails
+		// First publish the plugin package, then launch it. A failed attempt must not
+		// delete the shared package because another caller may already depend on it.
 		var success bool = false
+		var stopRuntime bool = false
 		var runtime *local_runtime.LocalPluginRuntime
 		var ch <-chan error
 
 		defer responseStream.Close()
+		defer p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
 		defer func() {
-			if !success {
-				p.controlPanel.RemoveLocalPlugin(pluginUniqueIdentifier)
-
-				// release the lock, avoid a potential race condition
-				// which causes plugins never to be scheduled automatically
-				p.controlPanel.EnableLocalPluginAutoLaunch(pluginUniqueIdentifier)
-
-				// forcefully stop runtime, prevent continuous scheduling
+			if !success && stopRuntime {
+				// Stop only the runtime constructed by this attempt. The canonical
+				// package remains available for concurrent callers and retries. A
+				// timeout does not stop the runtime because it may become ready after
+				// the caller has left and be observed by another ensure attempt.
 				if runtime != nil {
 					runtime.Stop(false)
 				}
@@ -340,8 +349,10 @@ func (p *PluginManager) installLocal(
 		}
 
 		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
 		timeout := time.Duration(p.config.PythonEnvInitTimeout) * time.Second
 		timer := time.NewTimer(timeout)
+		defer timer.Stop()
 
 		for {
 			select {
@@ -363,6 +374,7 @@ func (p *PluginManager) installLocal(
 				})
 			case err := <-ch:
 				if err != nil {
+					stopRuntime = true
 					responseStream.Write(installation_entities.PluginInstallResponse{
 						Event: installation_entities.PluginInstallEventError,
 						Data:  fmt.Sprintf("failed to launch plugin: %s", err.Error()),

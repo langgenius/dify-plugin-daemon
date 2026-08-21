@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -523,8 +524,144 @@ func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cm
 }
 
 var (
-	ErrLockTimeout = errors.New("lock timeout")
+	ErrLockTimeout           = errors.New("lock timeout")
+	ErrLockNotOwned          = errors.New("lock is not owned")
+	ErrInvalidLockExpiration = errors.New("lock expiration must be positive")
 )
+
+var unlockOwnedLockScript = redis.NewScript(`
+if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+end
+return 0
+`)
+
+var renewOwnedLockScript = redis.NewScript(`
+if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("pexpire", KEYS[1], ARGV[2])
+end
+return 0
+`)
+
+type OwnedLock struct {
+	key     string
+	token   string
+	cmdable redis.Cmdable
+}
+
+func AcquireOwnedLock(
+	key string,
+	expire time.Duration,
+	tryLockTimeout time.Duration,
+	commands ...redis.Cmdable,
+) (*OwnedLock, error) {
+	if client == nil {
+		return nil, ErrDBNotInit
+	}
+	if expire <= 0 {
+		return nil, ErrInvalidLockExpiration
+	}
+
+	cmdable := getCmdable(commands...)
+	token := uuid.NewString()
+	deadline := time.NewTimer(tryLockTimeout)
+	defer deadline.Stop()
+
+	const retryInterval = 20 * time.Millisecond
+	ticker := time.NewTicker(retryInterval)
+	defer ticker.Stop()
+
+	for {
+		acquired, err := cmdable.SetNX(ctx, serialKey(key), token, expire).Result()
+		if err != nil {
+			return nil, err
+		}
+		if acquired {
+			return &OwnedLock{
+				key:     key,
+				token:   token,
+				cmdable: cmdable,
+			}, nil
+		}
+
+		if tryLockTimeout <= 0 {
+			return nil, ErrLockTimeout
+		}
+
+		select {
+		case <-deadline.C:
+			return nil, ErrLockTimeout
+		case <-ticker.C:
+		}
+	}
+}
+
+func (l *OwnedLock) Renew(expire time.Duration) error {
+	if expire <= 0 {
+		return ErrInvalidLockExpiration
+	}
+
+	renewed, err := renewOwnedLockScript.Run(
+		ctx,
+		l.cmdable,
+		[]string{serialKey(l.key)},
+		l.token,
+		expire.Milliseconds(),
+	).Int64()
+	if err != nil {
+		return err
+	}
+	if renewed == 0 {
+		return ErrLockNotOwned
+	}
+	return nil
+}
+
+func (l *OwnedLock) KeepAlive(keepAliveCtx context.Context, expire time.Duration) <-chan error {
+	result := make(chan error, 1)
+	if expire <= 0 {
+		result <- ErrInvalidLockExpiration
+		close(result)
+		return result
+	}
+	go func() {
+		defer close(result)
+
+		interval := expire / 3
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-keepAliveCtx.Done():
+				result <- nil
+				return
+			case <-ticker.C:
+				if err := l.Renew(expire); err != nil {
+					result <- err
+					return
+				}
+			}
+		}
+	}()
+	return result
+}
+
+func (l *OwnedLock) Unlock() error {
+	released, err := unlockOwnedLockScript.Run(
+		ctx,
+		l.cmdable,
+		[]string{serialKey(l.key)},
+		l.token,
+	).Int64()
+	if err != nil {
+		return err
+	}
+	if released == 0 {
+		return ErrLockNotOwned
+	}
+	return nil
+}
 
 var (
 	distributedLocks = sync.Map{}

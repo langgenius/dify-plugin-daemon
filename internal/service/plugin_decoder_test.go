@@ -60,6 +60,7 @@ func setupUploadTestEnv(t *testing.T, forceVerify bool) uploadTestEnv {
 		&models.Plugin{},
 		&models.PluginDeclaration{},
 		&models.PluginInstallation{},
+		&models.InstallTask{},
 	))
 	db.DifyPluginDB = gormDB
 	t.Cleanup(func() {
@@ -158,6 +159,12 @@ func TestUploadPluginPkgPersistsValidPackageAndSupportsInstallLookup(t *testing.
 		PluginID:               identifier.PluginID(),
 		InstallType:            plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
 	}))
+	require.NoError(t, db.Create(&models.PluginInstallation{
+		TenantID:               "00000000-0000-0000-0000-000000000001",
+		PluginID:               identifier.PluginID(),
+		PluginUniqueIdentifier: identifier.String(),
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+	}))
 	installResp := InstallMultiplePluginsToTenant(
 		context.Background(),
 		env.config,
@@ -170,6 +177,39 @@ func TestUploadPluginPkgPersistsValidPackageAndSupportsInstallLookup(t *testing.
 	installData := installResp.Data.(*InstallPluginResponse)
 	require.True(t, installData.AllInstalled)
 	require.Empty(t, installData.TaskID)
+}
+
+func TestTenantInstallStateDoesNotReuseGlobalPluginState(t *testing.T) {
+	setupUploadTestEnv(t, false)
+	pkgBytes := unsignedPluginPackage(t, "tenantinstallstate")
+	identifier := packageIdentifier(t, pkgBytes)
+
+	require.NoError(t, db.Create(&models.Plugin{
+		PluginUniqueIdentifier: identifier.String(),
+		PluginID:               identifier.PluginID(),
+		InstallType:            plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+	}))
+
+	installed, err := isPluginInstalledForTenant(
+		"00000000-0000-0000-0000-000000000001",
+		identifier,
+	)
+	require.NoError(t, err)
+	require.False(t, installed)
+
+	require.NoError(t, db.Create(&models.PluginInstallation{
+		TenantID:               "00000000-0000-0000-0000-000000000001",
+		PluginID:               identifier.PluginID(),
+		PluginUniqueIdentifier: identifier.String(),
+		RuntimeType:            string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+	}))
+
+	installed, err = isPluginInstalledForTenant(
+		"00000000-0000-0000-0000-000000000001",
+		identifier,
+	)
+	require.NoError(t, err)
+	require.True(t, installed)
 }
 
 func TestUploadPluginPkgStillAllowsUnsignedPackageWhenVerificationNotRequired(t *testing.T) {

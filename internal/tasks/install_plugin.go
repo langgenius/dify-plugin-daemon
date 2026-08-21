@@ -67,7 +67,7 @@ func ProcessInstallJob(
 	SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusRunning, "starting")
 
 	// start installation process
-	installationStream, err := manager.Install(ctx, job.Identifier)
+	installationStream, err := manager.EnsureRuntime(ctx, job.Identifier)
 	if err != nil {
 		status = "failed"
 		SetTaskStatusForOnePlugin(taskIDs, job.Identifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
@@ -121,7 +121,7 @@ func ProcessUpgradeJob(
 	SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusRunning, "starting")
 
 	// start installation process
-	installationStream, err := manager.Install(ctx, job.NewIdentifier)
+	installationStream, err := manager.EnsureRuntime(ctx, job.NewIdentifier)
 	if err != nil {
 		SetTaskStatusForOnePlugin(taskIDs, job.NewIdentifier, models.InstallTaskStatusFailed, fmt.Sprintf("failed to start installation: %v", err))
 		return

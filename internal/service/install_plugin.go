@@ -42,6 +42,27 @@ func InstallMultiplePluginsToTenant(
 	metas []map[string]any,
 ) *entities.Response {
 	runtimeType := config.Platform.ToPluginRuntimeType()
+	needsRuntimeInstall := make([]bool, len(pluginUniqueIdentifiers))
+	allInstalled := true
+
+	for i, pluginUniqueIdentifier := range pluginUniqueIdentifiers {
+		installed, err := isPluginInstalledForTenant(tenantId, pluginUniqueIdentifier)
+		if err != nil {
+			return exception.InternalServerError(err).ToResponse()
+		}
+		needsRuntimeInstall[i] = !installed
+		if !installed {
+			allInstalled = false
+		}
+	}
+
+	if allInstalled {
+		return entities.NewSuccessResponse(&InstallPluginResponse{
+			AllInstalled: true,
+			TaskID:       "",
+		})
+	}
+
 	manager := plugin_manager.Manager()
 	if manager == nil {
 		return exception.InternalServerError(errors.New("plugin manager is not initialized")).ToResponse()
@@ -51,7 +72,6 @@ func InstallMultiplePluginsToTenant(
 	// and runs in a single goroutine after the task is created
 	jobs := make([]tasks.PluginInstallJob, 0, len(pluginUniqueIdentifiers))
 	declarations := make([]*plugin_entities.PluginDeclaration, 0, len(pluginUniqueIdentifiers))
-	allInstalled := true
 
 	for i, pluginUniqueIdentifier := range pluginUniqueIdentifiers {
 		declaration, err := helper.CombinedGetPluginDeclaration(
@@ -62,23 +82,11 @@ func InstallMultiplePluginsToTenant(
 			return exception.InternalServerError(errors.Join(err, errors.New("failed to get plugin declaration"))).ToResponse()
 		}
 
-		_, err = db.GetOne[models.Plugin](
-			db.Equal("plugin_unique_identifier", pluginUniqueIdentifier.String()),
-		)
-
-		needsRuntimeInstall := false
-		if err == db.ErrDatabaseNotFound {
-			needsRuntimeInstall = true
-			allInstalled = false
-		} else if err != nil {
-			return exception.InternalServerError(err).ToResponse()
-		}
-
 		job := tasks.PluginInstallJob{
 			Identifier:          pluginUniqueIdentifier,
 			Declaration:         declaration,
 			Meta:                metas[i],
-			NeedsRuntimeInstall: needsRuntimeInstall,
+			NeedsRuntimeInstall: needsRuntimeInstall[i],
 		}
 
 		jobs = append(jobs, job)
@@ -86,26 +94,6 @@ func InstallMultiplePluginsToTenant(
 	}
 
 	tenants := []string{tenantId}
-
-	// all plugins are installed, no need to create tasks
-	// just add DB record and return
-	if allInstalled {
-		for i := range jobs {
-			if err := tasks.SaveInstallationForTenantsToDB(
-				tenants,
-				jobs[i],
-				runtimeType,
-				source,
-			); err != nil {
-				return exception.InternalServerError(errors.Join(err, errors.New("failed on plugin installation"))).ToResponse()
-			}
-		}
-
-		return entities.NewSuccessResponse(&InstallPluginResponse{
-			AllInstalled: true,
-			TaskID:       "",
-		})
-	}
 
 	// create tasks for each plugin
 	statuses := buildTaskStatuses(pluginUniqueIdentifiers, declarations, source)
@@ -143,6 +131,23 @@ func InstallMultiplePluginsToTenant(
 		// here we use `PrimaryID` to present the user-facing task id
 		TaskID: taskRegistry.PrimaryID(),
 	})
+}
+
+func isPluginInstalledForTenant(
+	tenantID string,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) (bool, error) {
+	_, err := db.GetOne[models.PluginInstallation](
+		db.Equal("tenant_id", tenantID),
+		db.Equal("plugin_id", pluginUniqueIdentifier.PluginID()),
+	)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, db.ErrDatabaseNotFound) {
+		return false, nil
+	}
+	return false, err
 }
 
 /*
