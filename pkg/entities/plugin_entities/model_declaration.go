@@ -551,17 +551,18 @@ func (m *ModelProviderFormOption) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type ModelProviderCredentialFormSchema struct {
-	Variable    string                          `json:"variable" yaml:"variable" validate:"required,lt=256"`
-	Label       I18nObject                      `json:"label" yaml:"label" validate:"required"`
-	Type        ModelProviderFormType           `json:"type" yaml:"type" validate:"required,model_provider_form_type"`
-	Required    bool                            `json:"required" yaml:"required"`
-	Default     *string                         `json:"default" yaml:"default" validate:"omitempty,lt=256"`
-	Options     []ModelProviderFormOption       `json:"options" yaml:"options" validate:"omitempty,lte=128,dive"`
-	Help        *I18nObject                     `json:"help" yaml:"help" validate:"omitempty"`
-	URL         *string                         `json:"url" yaml:"url" validate:"omitempty"`
-	Placeholder *I18nObject                     `json:"placeholder" yaml:"placeholder" validate:"omitempty"`
-	MaxLength   int                             `json:"max_length" yaml:"max_length"`
-	ShowOn      []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
+	Variable      string                          `json:"variable" yaml:"variable" validate:"required,lt=256"`
+	Label         I18nObject                      `json:"label" yaml:"label" validate:"required"`
+	Type          ModelProviderFormType           `json:"type" yaml:"type" validate:"required,model_provider_form_type"`
+	Required      bool                            `json:"required" yaml:"required"`
+	Default       *string                         `json:"default" yaml:"default" validate:"omitempty,lt=256"`
+	Options       []ModelProviderFormOption       `json:"options" yaml:"options" validate:"omitempty,lte=128,dive"`
+	Help          *I18nObject                     `json:"help" yaml:"help" validate:"omitempty"`
+	URL           *string                         `json:"url" yaml:"url" validate:"omitempty"`
+	Placeholder   *I18nObject                     `json:"placeholder" yaml:"placeholder" validate:"omitempty"`
+	MaxLength     int                             `json:"max_length" yaml:"max_length"`
+	ShowOn        []ModelProviderFormShowOnObject `json:"show_on" yaml:"show_on" validate:"omitempty,lte=16,dive"`
+	ResetOnChange []string                        `json:"reset_on_change,omitempty" yaml:"reset_on_change,omitempty" validate:"omitempty,lte=16,dive,gt=0,lt=1024"`
 }
 
 func (m *ModelProviderCredentialFormSchema) UnmarshalJSON(data []byte) error {

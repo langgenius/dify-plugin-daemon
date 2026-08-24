@@ -67,19 +67,20 @@ func init() {
 }
 
 type DatasourceParameter struct {
-	Name         string                  `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
-	Label        I18nObject              `json:"label" yaml:"label" validate:"required"`
-	Type         DatasourceParameterType `json:"type" yaml:"type" validate:"required,datasource_parameter_type"`
-	Scope        *string                 `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
-	Required     bool                    `json:"required" yaml:"required"`
-	AutoGenerate *ParameterAutoGenerate  `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
-	Template     *ParameterTemplate      `json:"template" yaml:"template" validate:"omitempty"`
-	Default      any                     `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
-	Min          *float64                `json:"min" yaml:"min" validate:"omitempty"`
-	Max          *float64                `json:"max" yaml:"max" validate:"omitempty"`
-	Precision    *int                    `json:"precision" yaml:"precision" validate:"omitempty"`
-	Options      []ParameterOption       `json:"options" yaml:"options" validate:"omitempty,dive"`
-	Description  I18nObject              `json:"description" yaml:"description" validate:"required"`
+	Name          string                  `json:"name" yaml:"name" validate:"required,gt=0,lt=1024"`
+	Label         I18nObject              `json:"label" yaml:"label" validate:"required"`
+	Type          DatasourceParameterType `json:"type" yaml:"type" validate:"required,datasource_parameter_type"`
+	Scope         *string                 `json:"scope" yaml:"scope" validate:"omitempty,max=1024,is_scope"`
+	Required      bool                    `json:"required" yaml:"required"`
+	AutoGenerate  *ParameterAutoGenerate  `json:"auto_generate" yaml:"auto_generate" validate:"omitempty"`
+	Template      *ParameterTemplate      `json:"template" yaml:"template" validate:"omitempty"`
+	Default       any                     `json:"default" yaml:"default" validate:"omitempty,is_basic_type"`
+	Min           *float64                `json:"min" yaml:"min" validate:"omitempty"`
+	Max           *float64                `json:"max" yaml:"max" validate:"omitempty"`
+	Precision     *int                    `json:"precision" yaml:"precision" validate:"omitempty"`
+	Options       []ParameterOption       `json:"options" yaml:"options" validate:"omitempty,dive"`
+	ResetOnChange []string                `json:"reset_on_change,omitempty" yaml:"reset_on_change,omitempty" validate:"omitempty,lte=16,dive,gt=0,lt=1024"`
+	Description   I18nObject              `json:"description" yaml:"description" validate:"required"`
 }
 
 type DatasourceOutputSchema map[string]any

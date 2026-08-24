@@ -142,6 +142,7 @@ type ToolParameter struct {
 	Multiple         bool                   `json:"multiple" yaml:"multiple" validate:"omitempty"`
 	Precision        *int                   `json:"precision" yaml:"precision" validate:"omitempty"`
 	Options          []ParameterOption      `json:"options" yaml:"options" validate:"omitempty,dive"`
+	ResetOnChange    []string               `json:"reset_on_change,omitempty" yaml:"reset_on_change,omitempty" validate:"omitempty,lte=16,dive,gt=0,lt=1024"`
 }
 
 type ToolDescription struct {

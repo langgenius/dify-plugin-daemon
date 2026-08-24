@@ -281,17 +281,18 @@ func init() {
 }
 
 type ProviderConfig struct {
-	Name        string         `json:"name" validate:"omitempty,gt=0,lt=1024"`
-	Type        ConfigType     `json:"type" validate:"required,credential_type"`
-	Scope       *string        `json:"scope" validate:"omitempty,is_scope"`
-	Required    bool           `json:"required"`
-	Default     any            `json:"default" validate:"omitempty,is_basic_type"`
-	Options     []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
-	Multiple    bool           `json:"multiple" validate:"omitempty"`
-	Label       I18nObject     `json:"label" validate:"required"`
-	Help        *I18nObject    `json:"help" validate:"omitempty"`
-	URL         *string        `json:"url" validate:"omitempty"`
-	Placeholder *I18nObject    `json:"placeholder" validate:"omitempty"`
+	Name          string         `json:"name" validate:"omitempty,gt=0,lt=1024"`
+	Type          ConfigType     `json:"type" validate:"required,credential_type"`
+	Scope         *string        `json:"scope" validate:"omitempty,is_scope"`
+	Required      bool           `json:"required"`
+	Default       any            `json:"default" validate:"omitempty,is_basic_type"`
+	Options       []ConfigOption `json:"options" validate:"omitempty,lt=128,dive"`
+	Multiple      bool           `json:"multiple" validate:"omitempty"`
+	Label         I18nObject     `json:"label" validate:"required"`
+	Help          *I18nObject    `json:"help" validate:"omitempty"`
+	URL           *string        `json:"url" validate:"omitempty"`
+	Placeholder   *I18nObject    `json:"placeholder" validate:"omitempty"`
+	ResetOnChange []string       `json:"reset_on_change,omitempty" yaml:"reset_on_change,omitempty" validate:"omitempty,lte=16,dive,gt=0,lt=1024"`
 }
 
 func init() {
