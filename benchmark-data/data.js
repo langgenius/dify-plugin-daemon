@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787562520294,
+  "lastUpdate": 1787562612367,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16192,6 +16192,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 20.98,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sash.t.mitchell@gmail.com",
+            "name": "Sash",
+            "username": "SashaMIT"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a00091320c08878fa20cd5805ead5314f63bbef0",
+          "message": "fix(local-runtime): stop inheriting daemon environment in plugin subprocesses (#799)\n\ngetInstanceCmd built plugin processes with cmd.Environ(), copying the\ndaemon's full environment (DB_PASSWORD, SERVER_KEY, DIFY_INNER_API_KEY,\nRedis and cloud storage credentials) into every plugin subprocess, where\nany installed plugin could read and exfiltrate it over the network.\n\nReplace inheritance with an explicit allowlist builder,\nBuildPluginCommandEnv, mirroring the existing buildUVCommandEnv pattern\nused for the uv installer child process. The allowlist passes through\nwhat plugins legitimately need (PATH, HOME, locale variables, temp\ndirectories, TZ, CA bundle and proxy variables), daemon config proxy\nsettings take precedence over inherited ones, and INSTALL_METHOD=local\nis set as before. The slim CLI local mode used the same os.Environ()\npattern for marketplace-downloaded plugins and now shares the builder.",
+          "timestamp": "2026-08-24T17:07:33+08:00",
+          "tree_id": "0e91fc65bdd92e00d06765e270b9eccdebbfba1f",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a00091320c08878fa20cd5805ead5314f63bbef0"
+        },
+        "date": 1787562611808,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 119647978,
+            "unit": "ns/op\t 876.38 MB/s\t213703151 B/op\t    1897 allocs/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 119647978,
+            "unit": "ns/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 876.38,
+            "unit": "MB/s",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213703151,
+            "unit": "B/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.47,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.47,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
