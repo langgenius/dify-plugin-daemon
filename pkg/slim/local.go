@@ -169,7 +169,7 @@ func execPlugin(
 
 	cmd := exec.Command(pythonPath, "-m", rt.Config.Meta.Runner.Entrypoint)
 	cmd.Dir = rt.State.WorkingPath
-	cmd.Env = append(os.Environ(), "INSTALL_METHOD=local", "PATH="+os.Getenv("PATH"))
+	cmd.Env = local_runtime.BuildPluginCommandEnv(appConfig)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
