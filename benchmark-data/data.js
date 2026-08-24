@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787562612367,
+  "lastUpdate": 1787562907949,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16270,6 +16270,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.47,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sash.t.mitchell@gmail.com",
+            "name": "Sash",
+            "username": "SashaMIT"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5571d5722f3d776213d481c2dd5fa143d30ebaf1",
+          "message": "fix(remote-debug): gate registration messages on completed handshake (#800)\n\nThe remote-debugging TCP server authenticates clients with a handshake\nmessage carrying a per-tenant key, but onMessage never enforced it:\nASSET_CHUNK, the declaration messages and END were all processed while\nruntime.handshake was still false. The only enforcement was a 10 second\ntimer closing connections that never handshake, and a full registration\ncompletes well inside that window, so an unauthenticated client could\nwrite assets to media storage, consume connection slots and register\narbitrary plugin identities in the node registry.\n\nReject every registration message other than HAND_SHAKE until the\nhandshake completes, close the connection with a handshake failure and\nlatch handshakeFailed so later messages are ignored. The 10 second\ntimer stays as-is.",
+          "timestamp": "2026-08-24T17:12:30+08:00",
+          "tree_id": "83141d649a58aa05eae3239d1ea97fd604208cf2",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/5571d5722f3d776213d481c2dd5fa143d30ebaf1"
+        },
+        "date": 1787562907332,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 117300859,
+            "unit": "ns/op\t 893.92 MB/s\t213346935 B/op\t    1897 allocs/op",
+            "extra": "304 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 117300859,
+            "unit": "ns/op",
+            "extra": "304 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 893.92,
+            "unit": "MB/s",
+            "extra": "304 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213346935,
+            "unit": "B/op",
+            "extra": "304 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "304 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 20.44,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 20.44,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
