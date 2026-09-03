@@ -31,6 +31,7 @@ func (config *Config) SetDefault() {
 	setDefaultInt(&config.PluginMediaCacheSize, 1024)
 	setDefaultInt(&config.PluginAssetCacheSize, 256)
 	setDefaultInt(&config.DifyPluginServerlessConnectorLaunchTimeout, 240)
+	setDefaultInt(&config.DifyPluginServerlessConnectorActivationTimeout, 60)
 	setDefaultInt(&config.PluginRemoteInstallingMaxSingleTenantConn, 5)
 	setDefaultString(&config.DBSslMode, "disable")
 	setDefaultString(&config.PluginStorageLocalRoot, "storage")

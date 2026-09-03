@@ -204,6 +204,17 @@ type Config struct {
 	DifyPluginServerlessConnectorAPIKey        *string `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY"`
 	DifyPluginServerlessConnectorLaunchTimeout int     `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_LAUNCH_TIMEOUT"`
 
+	// Activation preflight: before dispatching an invocation to a serverless plugin,
+	// call the connector's activate endpoint to wake a scaled-to-zero plugin and
+	// block until it is ready. Disabled by default so it has no effect until
+	// explicitly enabled.
+	DifyPluginServerlessConnectorActivationEnabled bool `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED" default:"false"`
+	// DifyPluginServerlessConnectorActivationTimeout bounds, in seconds, how long
+	// the daemon waits for the plugin to become ready during the activation
+	// preflight. If the plugin is not woken up within this window the invocation
+	// is treated as failed.
+	DifyPluginServerlessConnectorActivationTimeout int `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT"`
+
 	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxServerlessRequestBytes       int   `envconfig:"MAX_SERVERLESS_REQUEST_BYTES" default:"5242880"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
@@ -319,6 +330,10 @@ func (c *Config) Validate() error {
 
 		if c.MaxServerlessTransactionTimeout == 0 {
 			return fmt.Errorf("max serverless transaction timeout is empty")
+		}
+
+		if c.DifyPluginServerlessConnectorActivationEnabled && c.DifyPluginServerlessConnectorActivationTimeout <= 0 {
+			return fmt.Errorf("dify plugin serverless connector activation timeout must be greater than zero when activation is enabled")
 		}
 	case PLATFORM_LOCAL:
 		if c.PluginWorkingPath == "" {

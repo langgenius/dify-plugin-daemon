@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
+	serverless "github.com/langgenius/dify-plugin-daemon/internal/core/serverless_connector"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
@@ -362,6 +363,31 @@ func (r *ServerlessPluginRuntime) WriteContext(
 			}
 			l.Close()
 		}()
+
+		if r.ActivationEnabled {
+			if err := serverless.Activate(
+				requestCtx,
+				r.LambdaName,
+				time.Duration(r.ActivationTimeout)*time.Second,
+			); err != nil {
+				if ctx.Err() != nil {
+					sendEnd = false
+					return
+				}
+				log.Error(
+					"serverless runtime activation preflight failed",
+					"session_id", sessionId,
+					"action", action,
+					"lambda_name", r.LambdaName,
+					"error", err,
+				)
+				sendError(plugin_entities.ErrorResponse{
+					ErrorType: "PluginDaemonInnerError",
+					Message:   fmt.Sprintf("Failed to activate plugin before invocation: %v", err),
+				})
+				return
+			}
+		}
 
 		url += "?action=" + string(action)
 		response, err := r.invokeServerlessWithRetry(requestCtx, url, sessionId, data, action)
