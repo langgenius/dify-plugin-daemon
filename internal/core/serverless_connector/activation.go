@@ -63,7 +63,10 @@ func Activate(ctx context.Context, instanceID string, timeout time.Duration) err
 	}
 	defer response.Body.Close()
 
-	body, _ := io.ReadAll(io.LimitReader(response.Body, 4*1024))
+	body, readErr := io.ReadAll(io.LimitReader(response.Body, 4*1024))
+	if readErr != nil {
+		return fmt.Errorf("failed to read activation response body: %w", readErr)
+	}
 
 	switch response.StatusCode {
 	case http.StatusOK:
