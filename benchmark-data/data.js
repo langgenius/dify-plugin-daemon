@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788416585696,
+  "lastUpdate": 1788940010817,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16504,6 +16504,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.66,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fe0c3d923b43985ae6a666db0f97a9f4f46548b5",
+          "message": "build(deps): bump golang.org/x/crypto to v0.56.0 and google.golang.org/grpc to v1.83.2 (#813)\n\nImage scans of the plugin daemon flag high-severity vulnerabilities in two\ntransitive dependencies:\n\n- golang.org/x/crypto: CVE-2026-78662, CVE-2026-56855 (fixed in v0.56.0)\n- google.golang.org/grpc: CVE-2026-84304, CVE-2026-84303 (fixed in v1.83.1),\n  CVE-2026-84445 (fixed in v1.82.2)\n\nx/crypto v0.57.0 was skipped because it was published less than a week ago.\nThe grpc minor bump pulls forward the google.golang.org/api and\ncloud.google.com/go module set plus the matching otel contrib\ninstrumentation, as required by minimal version selection.\n\nGenerated with [Devin](https://devin.ai)\n\nCo-authored-by: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>",
+          "timestamp": "2026-09-09T15:44:06+08:00",
+          "tree_id": "5fc1fe281b789778209edbcb9c1424e4b9aa1fff",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/fe0c3d923b43985ae6a666db0f97a9f4f46548b5"
+        },
+        "date": 1788940010254,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 126386604,
+            "unit": "ns/op\t 829.66 MB/s\t212724003 B/op\t    1896 allocs/op",
+            "extra": "279 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 126386604,
+            "unit": "ns/op",
+            "extra": "279 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 829.66,
+            "unit": "MB/s",
+            "extra": "279 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 212724003,
+            "unit": "B/op",
+            "extra": "279 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1896,
+            "unit": "allocs/op",
+            "extra": "279 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.64,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.64,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
