@@ -32,6 +32,13 @@ type ServerlessPluginRuntime struct {
 	MaxRetryTimes             int // maximum retry times for serverless invocation
 	MaxRequestBytes           int // maximum serialized request payload size
 
+	// ActivationEnabled turns on the activation preflight: before each invocation
+	// the runtime asks the connector to wake the plugin and waits until ready.
+	ActivationEnabled bool
+	// ActivationTimeout bounds, in seconds, how long the preflight waits for the
+	// plugin to become ready before treating the invocation as failed.
+	ActivationTimeout int
+
 	RuntimeBufferSize    int
 	RuntimeMaxBufferSize int
 }
@@ -65,6 +72,8 @@ func ConstructServerlessPluginRuntime(
 		PluginMaxExecutionTimeout: config.PluginMaxExecutionTimeout,
 		MaxRetryTimes:             config.MaxServerlessRetryTimes,
 		MaxRequestBytes:           config.MaxServerlessRequestBytes,
+		ActivationEnabled:         config.DifyPluginServerlessConnectorActivationEnabled,
+		ActivationTimeout:         config.DifyPluginServerlessConnectorActivationTimeout,
 		RuntimeBufferSize:         config.PluginRuntimeBufferSize,
 		RuntimeMaxBufferSize:      config.PluginRuntimeMaxBufferSize,
 

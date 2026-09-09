@@ -17,6 +17,8 @@ daemon 通过如下环境变量进行配置：
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL` | 指定远程运行环境的 Base URL，例如 `https://example.com` |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY` | 用于访问 SRI 的鉴权 token，将被加入请求 Header 中的 `Authorization` 字段 |
 | `MAX_SERVERLESS_REQUEST_BYTES` | 发送到 serverless 插件运行时的最大序列化请求负载大小（以字节为单位）。默认值为 5242880（5 MB）。此限制考虑了 Lambda Function URL 的 6 MB 请求大小限制，并为 headers 和元数据留有安全余量。 |
+| `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED` | 是否在下发调用前执行激活（activation）预检。启用后，daemon 会调用 `POST /v1/activation/activate` 唤醒被缩容至零的插件，并等待其就绪。默认值为 `false`。 |
+| `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT` | 激活预检中，daemon 等待插件就绪的超时时间（秒）。若插件未在超时时间内被唤醒，则本次调用按失败处理。默认值为 `60`。 |
 
 ---
 
@@ -127,6 +129,42 @@ endpoint=http://...,name=...,id=...
 
 - 任意阶段返回 `State = failed` 即视为启动失败
 - daemon 应中断流程并抛出异常，输出 `Message` 内容作为错误信息
+
+---
+
+### `POST /v1/activation/activate`
+
+可选的激活预检。当 `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED` 为 `true` 时，daemon 会在下发调用前请求该接口，用于唤醒可能已被缩容至零的插件，并阻塞等待插件就绪。该接口可在每次调用前安全调用；运行时应对底层的活跃度/租约写入做节流。
+
+**请求**
+
+```http
+POST /v1/activation/activate
+Authorization: <API_KEY>
+Content-Type: application/json
+
+{
+  "instance_id": "string"
+}
+```
+
+- `instance_id`（必填）：目标插件在 connector 侧的 function name（即 `/v1/runner/instances` 与 `/v1/launch` 返回的 `Name`）。
+
+**响应**
+
+```json
+{
+  "ready": true,
+  "endpoint": "string"
+}
+```
+
+- `200 OK` 且 `ready = true`：插件已就绪，daemon 继续下发调用。
+- `504 Gateway Timeout`（或 `ready = false`）：插件未能在规定时间内就绪。
+
+**错误处理**
+
+- daemon 使用 `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT` 限制等待时长。一旦超时或收到非 `200` 响应，本次调用将被中断并按失败处理。
 
 ---
 
