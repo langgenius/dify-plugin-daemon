@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -18,6 +20,49 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
+const (
+	FirstTokenTimeoutErrorType = "FirstTokenTimeoutError"
+
+	firstTokenGraceFloor = 250 * time.Millisecond
+	firstTokenGraceRatio = 0.05
+)
+
+type firstTokenBudgeter interface {
+	FirstTokenBudget() time.Duration
+}
+
+type firstTokenCarrier interface {
+	CarriesFirstToken() bool
+}
+
+type sseOptions struct {
+	firstTokenBudget time.Duration
+	onFirstToken     func(elapsed time.Duration)
+}
+
+func firstTokenGrace(budget time.Duration) time.Duration {
+	if grace := time.Duration(float64(budget) * firstTokenGraceRatio); grace > firstTokenGraceFloor {
+		return grace
+	}
+	return firstTokenGraceFloor
+}
+
+func firstTokenTimeoutResponse(budget time.Duration) *entities.Response {
+	return exception.ErrorWithTypeAndArgs(
+		fmt.Sprintf("no token was received within %s", budget),
+		FirstTokenTimeoutErrorType,
+		map[string]any{
+			"first_token_timeout": budget.Seconds(),
+			"enforced_by":         "plugin_daemon",
+		},
+	).ToResponse()
+}
+
+func carriesFirstToken(chunk any) bool {
+	carrier, ok := chunk.(firstTokenCarrier)
+	return !ok || carrier.CarriesFirstToken()
+}
+
 // baseSSEService is a helper function to handle SSE service
 // it accepts a generator function that returns a stream response to gin context
 func baseSSEService[R any](
@@ -25,6 +70,7 @@ func baseSSEService[R any](
 	ctx *gin.Context,
 	max_timeout_seconds int,
 	onCompletion func(status string, duration float64),
+	options sseOptions,
 ) {
 	startTime := time.Now()
 	writer := ctx.Writer
@@ -34,8 +80,22 @@ func baseSSEService[R any](
 	done := make(chan bool)
 	doneClosed := new(int32)
 	closed := new(int32)
+	completed := new(int32)
 
+	complete := func(status string) {
+		if !atomic.CompareAndSwapInt32(completed, 0, 1) {
+			return
+		}
+		if onCompletion != nil {
+			onCompletion(status, time.Since(startTime).Seconds())
+		}
+	}
+
+	writeLock := sync.Mutex{}
 	writeData := func(data interface{}) {
+		writeLock.Lock()
+		defer writeLock.Unlock()
+
 		if atomic.LoadInt32(closed) == 1 {
 			return
 		}
@@ -49,12 +109,21 @@ func baseSSEService[R any](
 
 	if err != nil {
 		writeData(exception.InternalServerError(err).ToResponse())
-		duration := time.Since(startTime).Seconds()
-		if onCompletion != nil {
-			onCompletion("error", duration)
-		}
+		complete("error")
 		close(done)
 		return
+	}
+
+	firstToken := make(chan struct{})
+	firstTokenSeen := new(int32)
+	markFirstToken := func() {
+		if !atomic.CompareAndSwapInt32(firstTokenSeen, 0, 1) {
+			return
+		}
+		if options.onFirstToken != nil {
+			options.onFirstToken(time.Since(startTime))
+		}
+		close(firstToken)
 	}
 
 	routine.Submit(routinepkg.Labels{
@@ -70,45 +139,101 @@ func baseSSEService[R any](
 				break
 			}
 			writeData(entities.NewSuccessResponse(chunk))
+			if carriesFirstToken(chunk) {
+				markFirstToken()
+			}
 		}
 
-		duration := time.Since(startTime).Seconds()
-		if onCompletion != nil {
-			onCompletion(status, duration)
-		}
+		complete(status)
 
 		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
 			close(done)
 		}
 	})
 
-	timer := time.NewTimer(time.Duration(max_timeout_seconds) * time.Second)
+	maxTimeout := time.Duration(max_timeout_seconds) * time.Second
+	firstTokenTimeout := time.Duration(0)
+	if options.firstTokenBudget > 0 {
+		firstTokenTimeout = options.firstTokenBudget + firstTokenGrace(options.firstTokenBudget)
+	}
+
+	gating := firstTokenTimeout > 0 && firstTokenTimeout < maxTimeout
+	timeout := maxTimeout
+	if gating {
+		timeout = firstTokenTimeout
+	}
+
+	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
 	defer func() {
+		writeLock.Lock()
+		defer writeLock.Unlock()
 		atomic.StoreInt32(closed, 1)
 	}()
 
-	select {
-	case <-writer.CloseNotify():
-		pluginDaemonResponse.Close()
-		duration := time.Since(startTime).Seconds()
-		if onCompletion != nil {
-			onCompletion("client_disconnect", duration)
+	isDone := func() bool {
+		select {
+		case <-done:
+			return true
+		default:
+			return false
 		}
-		return
-	case <-done:
-		return
-	case <-timer.C:
-		writeData(exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
-		duration := time.Since(startTime).Seconds()
-		if onCompletion != nil {
-			onCompletion("timeout", duration)
+	}
+
+	stopGating := func() {
+		gating = false
+		if !timer.Stop() {
+			select {
+			case <-timer.C:
+			default:
+			}
 		}
-		if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
-			close(done)
+		timer.Reset(max(maxTimeout-time.Since(startTime), time.Nanosecond))
+	}
+
+	disconnected := writer.CloseNotify()
+	firstTokenGate := firstToken
+	if !gating {
+		firstTokenGate = nil
+	}
+
+	for {
+		select {
+		case <-disconnected:
+			pluginDaemonResponse.Close()
+			complete("client_disconnect")
+			return
+		case <-done:
+			return
+		case <-firstTokenGate:
+			firstTokenGate = nil
+			stopGating()
+		case <-timer.C:
+			if isDone() {
+				return
+			}
+			if gating && atomic.LoadInt32(firstTokenSeen) == 1 {
+				firstTokenGate = nil
+				stopGating()
+				continue
+			}
+
+			if gating {
+				writeData(firstTokenTimeoutResponse(options.firstTokenBudget))
+				pluginDaemonResponse.Close()
+				complete("first_token_timeout")
+			} else {
+				writeData(exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
+				pluginDaemonResponse.Close()
+				complete("timeout")
+			}
+
+			if atomic.CompareAndSwapInt32(doneClosed, 0, 1) {
+				close(done)
+			}
+			return
 		}
-		return
 	}
 }
 
@@ -138,6 +263,21 @@ func baseSSEWithSession[T any, R any](
 	defer session.Close(session_manager.CloseSessionPayload{
 		IgnoreCache: false,
 	})
+
+	options := sseOptions{}
+	if budgeter, ok := any(&request.Data).(firstTokenBudgeter); ok {
+		options.firstTokenBudget = budgeter.FirstTokenBudget()
+		options.onFirstToken = func(elapsed time.Duration) {
+			pluginID, runtimeType := getPluginMetricLabels(session)
+
+			metrics.PluginTimeToFirstToken.WithLabelValues(
+				pluginID,
+				string(access_type),
+				runtimeType,
+				string(access_action),
+			).Observe(elapsed.Seconds())
+		}
+	}
 
 	baseSSEService(
 		func() (*stream.Stream[R], error) {
@@ -176,6 +316,7 @@ func baseSSEWithSession[T any, R any](
 				runtimeType,
 			).Dec()
 		},
+		options,
 	)
 }
 
