@@ -11,6 +11,7 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 	"github.com/stretchr/testify/require"
@@ -63,13 +64,13 @@ func TestBackwardsLLMLongStream(t *testing.T) {
 				ticker := time.NewTicker(time.Second)
 				defer ticker.Stop()
 				for range seconds {
+					_, _ = w.Write(frame)
+					w.(http.Flusher).Flush()
 					select {
 					case <-r.Context().Done():
 						return
 					case <-ticker.C:
 					}
-					_, _ = w.Write(frame)
-					w.(http.Flusher).Flush()
 				}
 			}))
 			defer server.Close()
@@ -94,9 +95,18 @@ func TestBackwardsLLMLongStream(t *testing.T) {
 				}
 				count++
 			}
-			t.Logf("frames=%d elapsed=%s error=%v", count, time.Since(started), err)
+			elapsed := time.Since(started)
+			t.Logf("frames=%d elapsed=%s error=%v", count, elapsed, err)
 			if legacy {
-				require.ErrorContains(t, err, "failed to read system header")
+				// The timer may interrupt the frame prefix, header, or payload.
+				// Assert the fixed cutoff rather than one platform-specific read error.
+				require.Error(t, err)
+				var timeout *http_requests.StreamTimeoutError
+				require.NotErrorAs(t, err, &timeout)
+				require.Greater(t, count, 0)
+				require.Less(t, count, seconds)
+				require.GreaterOrEqual(t, elapsed, time.Duration(config.ReadTimeout)*time.Millisecond)
+				require.Less(t, elapsed, time.Duration(config.ReadTimeout)*time.Millisecond+5*time.Second)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, seconds, count)
