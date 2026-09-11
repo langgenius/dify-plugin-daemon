@@ -277,6 +277,11 @@ type Config struct {
 	DifyInvocationWriteTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_WRITE_TIMEOUT" default:"5000"`
 	// dify invocation read timeout in milliseconds
 	DifyInvocationReadTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_READ_TIMEOUT" default:"240000"`
+	// LLM-only budgets in milliseconds. Zero inherits the existing read budget,
+	// except the first-response budget, which inherits the effective LLM total.
+	DifyInvocationLLMFirstResponseTimeout int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_LLM_FIRST_RESPONSE_TIMEOUT" default:"0" validate:"gte=0"`
+	DifyInvocationLLMIdleTimeout          int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_LLM_IDLE_TIMEOUT" default:"0" validate:"gte=0"`
+	DifyInvocationLLMTotalTimeout         int64 `envconfig:"DIFY_BACKWARDS_INVOCATION_LLM_TOTAL_TIMEOUT" default:"0" validate:"gte=0"`
 
 	ResponseMaxBufferSize int64 `envconfig:"RESPONSE_MAX_BUFFER_SIZE" default:"31457280"`
 }

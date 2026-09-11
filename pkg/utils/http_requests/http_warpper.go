@@ -2,6 +2,7 @@ package http_requests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -76,13 +77,42 @@ func PatchAndParse[T any](client *http.Client, url string, options ...HttpOption
 }
 
 func RequestAndParseStream[T any](client *http.Client, url string, method string, options ...HttpOptions) (*stream.Stream[T], error) {
+	var watchdog *streamWatchdog
+	var limits *StreamTimeouts
+	ctx := context.Background()
+	for _, option := range options {
+		if option.Type == HttpOptionTypeContext {
+			if value, ok := option.Value.(context.Context); ok {
+				ctx = value
+			}
+		} else if option.Type == HttpOptionTypeStreamTimeouts {
+			value := option.Value.(StreamTimeouts)
+			limits = &value
+		}
+	}
+	if limits != nil {
+		var err error
+		watchdog, err = newStreamWatchdog(ctx, *limits)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, HttpContext(watchdog.ctx))
+	}
 	resp, err := Request(client, url, method, options...)
 	if err != nil {
+		if watchdog != nil {
+			if cause := watchdog.stop(); cause != nil {
+				err = cause
+			}
+		}
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
+		if watchdog != nil {
+			defer watchdog.stop()
+		}
 		errorText, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("request failed with status code: %d and respond with: %s", resp.StatusCode, errorText)
 	}
@@ -105,8 +135,19 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			maxChunkSize = option.Value.(int64)
 		}
 	}
-	time.AfterFunc(time.Millisecond*time.Duration(readTimeout), func() {
-		// close the response body if timeout
+	var legacyTimer *time.Timer
+	if watchdog == nil {
+		legacyTimer = time.AfterFunc(time.Millisecond*time.Duration(readTimeout), func() {
+			resp.Body.Close()
+		})
+	}
+	ch.OnClose(func() {
+		if watchdog != nil {
+			watchdog.stop()
+		}
+		if legacyTimer != nil {
+			legacyTimer.Stop()
+		}
 		resp.Body.Close()
 	})
 
@@ -123,6 +164,11 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			}
 		}
 
+		if watchdog != nil {
+			if err := watchdog.progress(true); err != nil {
+				return err
+			}
+		}
 		ch.Write(t)
 		return nil
 	}
@@ -131,13 +177,17 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 		routinepkg.RoutineLabelKeyModule: "http_requests",
 		routinepkg.RoutineLabelKeyMethod: "RequestAndParseStream",
 	}, func() {
-		defer resp.Body.Close()
+		defer ch.Close()
+		var reader io.Reader = resp.Body
+		if watchdog != nil {
+			reader = &streamActivityReader{Reader: reader, watchdog: watchdog}
+		}
 
 		var err error
 		if usingLengthPrefixed {
-			err = parser.LengthPrefixedChunking(resp.Body, 0x0f, uint32(maxChunkSize), processData)
+			err = parser.LengthPrefixedChunking(reader, 0x0f, uint32(maxChunkSize), processData)
 		} else {
-			err = parser.LineBasedChunking(resp.Body, int(maxChunkSize), func(data []byte) error {
+			err = parser.LineBasedChunking(reader, int(maxChunkSize), func(data []byte) error {
 				if len(data) == 0 {
 					return nil
 				}
@@ -159,11 +209,14 @@ func RequestAndParseStream[T any](client *http.Client, url string, method string
 			})
 		}
 
+		if watchdog != nil {
+			if cause := watchdog.stop(); cause != nil {
+				err = cause
+			}
+		}
 		if err != nil {
 			ch.WriteError(err)
 		}
-
-		ch.Close()
 	})
 
 	return ch, nil

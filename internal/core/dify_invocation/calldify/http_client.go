@@ -7,15 +7,19 @@ import (
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 	otelhttp "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type NewDifyInvocationDaemonPayload struct {
-	BaseUrl              string
-	CallingKey           string
-	WriteTimeout         int64
-	ReadTimeout          int64
-	ResponseMaxBufferSize int64
+	BaseUrl                 string
+	CallingKey              string
+	WriteTimeout            int64
+	ReadTimeout             int64
+	LLMFirstResponseTimeout int64
+	LLMIdleTimeout          int64
+	LLMTotalTimeout         int64
+	ResponseMaxBufferSize   int64
 }
 
 func NewDifyInvocationDaemon(payload NewDifyInvocationDaemonPayload) (dify_invocation.BackwardsInvocation, error) {
@@ -40,6 +44,23 @@ func NewDifyInvocationDaemon(payload NewDifyInvocationDaemonPayload) (dify_invoc
 	invocation.difyInnerApiKey = payload.CallingKey
 	invocation.writeTimeout = payload.WriteTimeout
 	invocation.readTimeout = payload.ReadTimeout
+	total := payload.LLMTotalTimeout
+	if total == 0 {
+		total = payload.ReadTimeout
+	}
+	firstResponse := payload.LLMFirstResponseTimeout
+	if firstResponse == 0 {
+		firstResponse = total
+	}
+	idle := payload.LLMIdleTimeout
+	if idle == 0 {
+		idle = payload.ReadTimeout
+	}
+	invocation.llmStreamTimeouts = http_requests.StreamTimeouts{
+		FirstResponse: time.Duration(firstResponse) * time.Millisecond,
+		ReadIdle:      time.Duration(idle) * time.Millisecond,
+		Total:         time.Duration(total) * time.Millisecond,
+	}
 	invocation.responseMaxBufferSize = payload.ResponseMaxBufferSize
 
 	return invocation, nil

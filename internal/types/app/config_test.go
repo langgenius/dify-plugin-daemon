@@ -31,6 +31,33 @@ func newValidConfigForValidation() *Config {
 	return config
 }
 
+func TestBackwardsLLMTimeoutConfig(t *testing.T) {
+	t.Setenv("DIFY_BACKWARDS_INVOCATION_LLM_FIRST_RESPONSE_TIMEOUT", "300000")
+	t.Setenv("DIFY_BACKWARDS_INVOCATION_LLM_IDLE_TIMEOUT", "120000")
+	t.Setenv("DIFY_BACKWARDS_INVOCATION_LLM_TOTAL_TIMEOUT", "600000")
+	var parsed Config
+	require.NoError(t, envconfig.Process("", &parsed))
+	require.EqualValues(t, 300000, parsed.DifyInvocationLLMFirstResponseTimeout)
+	require.EqualValues(t, 120000, parsed.DifyInvocationLLMIdleTimeout)
+	require.EqualValues(t, 600000, parsed.DifyInvocationLLMTotalTimeout)
+
+	for _, field := range []string{"first_response", "idle", "total"} {
+		t.Run(field, func(t *testing.T) {
+			config := newValidConfigForValidation()
+			require.NoError(t, config.Validate())
+			switch field {
+			case "first_response":
+				config.DifyInvocationLLMFirstResponseTimeout = -1
+			case "idle":
+				config.DifyInvocationLLMIdleTimeout = -1
+			case "total":
+				config.DifyInvocationLLMTotalTimeout = -1
+			}
+			require.Error(t, config.Validate())
+		})
+	}
+}
+
 func TestValidateLogLevel(t *testing.T) {
 	tests := []struct {
 		name        string
