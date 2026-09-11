@@ -177,11 +177,14 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 
 	invocation, err := calldify.NewDifyInvocationDaemon(
 		calldify.NewDifyInvocationDaemonPayload{
-			BaseUrl:               configuration.DifyInnerApiURL,
-			CallingKey:            configuration.DifyInnerApiKey,
-			WriteTimeout:          configuration.DifyInvocationWriteTimeout,
-			ReadTimeout:           configuration.DifyInvocationReadTimeout,
-			ResponseMaxBufferSize: configuration.ResponseMaxBufferSize,
+			BaseUrl:                 configuration.DifyInnerApiURL,
+			CallingKey:              configuration.DifyInnerApiKey,
+			WriteTimeout:            configuration.DifyInvocationWriteTimeout,
+			ReadTimeout:             configuration.DifyInvocationReadTimeout,
+			LLMFirstResponseTimeout: configuration.DifyInvocationLLMFirstResponseTimeout,
+			LLMIdleTimeout:          configuration.DifyInvocationLLMIdleTimeout,
+			LLMTotalTimeout:         configuration.DifyInvocationLLMTotalTimeout,
+			ResponseMaxBufferSize:   configuration.ResponseMaxBufferSize,
 		},
 	)
 	if err != nil {

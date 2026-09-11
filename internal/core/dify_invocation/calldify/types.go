@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/http_requests"
 )
 
 type RealBackwardsInvocation struct {
@@ -14,6 +15,7 @@ type RealBackwardsInvocation struct {
 	client                *http.Client
 	writeTimeout          int64
 	readTimeout           int64
+	llmStreamTimeouts     http_requests.StreamTimeouts
 	responseMaxBufferSize int64
 	traceCtx              context.Context
 }

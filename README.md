@@ -102,6 +102,8 @@ daemon supports a global Redis prefix via `REDIS_KEY_PREFIX`.
 
 ## Documentation
 
+- [Backwards LLM invocation timeouts](docs/backwards-llm-timeouts.md)
+
 ### Development Guide
 
 For developers working on this codebase, see our comprehensive development documentation:

@@ -25,6 +25,7 @@ const (
 	HttpOptionTypeUsingLengthPrefixed              = "usingLengthPrefixed"
 	HttpOptionTypeContext                          = "context"
 	HttpOptionTypeMaxChunkSize                     = "maxChunkSize"
+	HttpOptionTypeStreamTimeouts                   = "streamTimeouts"
 )
 
 // milliseconds
@@ -35,6 +36,11 @@ func HttpWriteTimeout(timeout int64) HttpOptions {
 // milliseconds
 func HttpReadTimeout(timeout int64) HttpOptions {
 	return HttpOptions{HttpOptionTypeReadTimeout, timeout}
+}
+
+// HttpStreamTimeouts replaces the legacy fixed body-read timer for this request only.
+func HttpStreamTimeouts(timeouts StreamTimeouts) HttpOptions {
+	return HttpOptions{HttpOptionTypeStreamTimeouts, timeouts}
 }
 
 func HttpHeader(header map[string]string) HttpOptions {
