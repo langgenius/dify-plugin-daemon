@@ -174,7 +174,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(false)
-		require.Equal(t, []string{"sync", "--no-dev"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow"}, args)
 	})
 
 	t.Run("sync args with mirror URL", func(t *testing.T) {
@@ -185,7 +185,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(false)
-		require.Equal(t, []string{"sync", "--no-dev", "-i", "https://pypi.tuna.tsinghua.edu.cn/simple"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "-i", "https://pypi.tuna.tsinghua.edu.cn/simple"}, args)
 	})
 
 	t.Run("sync args with verbose flag", func(t *testing.T) {
@@ -196,7 +196,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(false)
-		require.Equal(t, []string{"sync", "--no-dev", "-v"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "-v"}, args)
 	})
 
 	t.Run("sync args with extra args", func(t *testing.T) {
@@ -207,7 +207,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(false)
-		require.Equal(t, []string{"sync", "--no-dev", "--no-cache", "--retries", "3"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "--no-cache", "--retries", "3"}, args)
 	})
 
 	t.Run("sync args with all config options", func(t *testing.T) {
@@ -223,6 +223,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		require.Equal(t, []string{
 			"sync",
 			"--no-dev",
+			"--prerelease=allow",
 			"-i", "https://pypi.tuna.tsinghua.edu.cn/simple",
 			"-v",
 			"--no-cache",
@@ -235,7 +236,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(true)
-		require.Equal(t, []string{"sync", "--no-dev", "--frozen"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "--frozen"}, args)
 	})
 
 	t.Run("sync args with uv.lock deduplicates --frozen from extra args", func(t *testing.T) {
@@ -246,7 +247,7 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(true)
-		require.Equal(t, []string{"sync", "--no-dev", "--frozen", "--no-cache"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "--frozen", "--no-cache"}, args)
 	})
 
 	t.Run("sync args without uv.lock keeps --frozen from extra args", func(t *testing.T) {
@@ -257,7 +258,18 @@ func TestPrepareSyncArgs(t *testing.T) {
 		}
 
 		args := runtime.prepareSyncArgs(false)
-		require.Equal(t, []string{"sync", "--no-dev", "--frozen", "--no-cache"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "--frozen", "--no-cache"}, args)
+	})
+
+	t.Run("sync args deduplicate prerelease flag from extra args", func(t *testing.T) {
+		runtime := &LocalPluginRuntime{
+			appConfig: &app.Config{
+				PipExtraArgs: "--prerelease=allow --no-cache",
+			},
+		}
+
+		args := runtime.prepareSyncArgs(false)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "--no-cache"}, args)
 	})
 }
 
@@ -287,7 +299,7 @@ func TestInstallDependenciesIgnoreUvLock(t *testing.T) {
 		// hasUvLock should remain false, so --frozen is NOT added
 		require.False(t, hasUvLock)
 		args := runtime.prepareSyncArgs(hasUvLock)
-		require.Equal(t, []string{"sync", "--no-dev"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow"}, args)
 	})
 
 	t.Run("--frozen is added when PluginIgnoreUvLock is false", func(t *testing.T) {
@@ -313,7 +325,7 @@ func TestInstallDependenciesIgnoreUvLock(t *testing.T) {
 		// hasUvLock should be true, so --frozen IS added
 		require.True(t, hasUvLock)
 		args := runtime.prepareSyncArgs(hasUvLock)
-		require.Equal(t, []string{"sync", "--no-dev", "--frozen"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "--frozen"}, args)
 	})
 
 	t.Run("ignore flag with mirror URL produces correct args", func(t *testing.T) {
@@ -326,7 +338,7 @@ func TestInstallDependenciesIgnoreUvLock(t *testing.T) {
 
 		// When uv.lock is ignored, hasUvLock=false, so no --frozen
 		args := runtime.prepareSyncArgs(false)
-		require.Equal(t, []string{"sync", "--no-dev", "-i", "https://mirrors.example.com/simple"}, args)
+		require.Equal(t, []string{"sync", "--no-dev", "--prerelease=allow", "-i", "https://mirrors.example.com/simple"}, args)
 	})
 }
 
@@ -337,7 +349,7 @@ func TestPreparePipArgs(t *testing.T) {
 		}
 
 		args := runtime.preparePipArgs()
-		require.Equal(t, []string{"pip", "install", "-r", "requirements.txt"}, args)
+		require.Equal(t, []string{"pip", "install", "--prerelease=allow", "-r", "requirements.txt"}, args)
 	})
 
 	t.Run("pip args with mirror URL", func(t *testing.T) {
@@ -351,6 +363,7 @@ func TestPreparePipArgs(t *testing.T) {
 		require.Equal(t, []string{
 			"pip",
 			"install",
+			"--prerelease=allow",
 			"-i", "https://pypi.tuna.tsinghua.edu.cn/simple",
 			"-r", "requirements.txt",
 		}, args)
@@ -364,7 +377,7 @@ func TestPreparePipArgs(t *testing.T) {
 		}
 
 		args := runtime.preparePipArgs()
-		require.Equal(t, []string{"pip", "install", "-r", "requirements.txt", "-vvv"}, args)
+		require.Equal(t, []string{"pip", "install", "--prerelease=allow", "-r", "requirements.txt", "-vvv"}, args)
 	})
 
 	t.Run("pip args with all config options", func(t *testing.T) {
@@ -380,11 +393,23 @@ func TestPreparePipArgs(t *testing.T) {
 		require.Equal(t, []string{
 			"pip",
 			"install",
+			"--prerelease=allow",
 			"-i", "https://pypi.tuna.tsinghua.edu.cn/simple",
 			"-r", "requirements.txt",
 			"-vvv",
 			"--no-cache",
 		}, args)
+	})
+
+	t.Run("pip args deduplicate prerelease flag from extra args", func(t *testing.T) {
+		runtime := &LocalPluginRuntime{
+			appConfig: &app.Config{
+				PipExtraArgs: "--prerelease=allow --no-cache",
+			},
+		}
+
+		args := runtime.preparePipArgs()
+		require.Equal(t, []string{"pip", "install", "--prerelease=allow", "-r", "requirements.txt", "--no-cache"}, args)
 	})
 }
 
