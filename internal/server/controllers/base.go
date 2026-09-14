@@ -2,13 +2,36 @@ package controllers
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
+	"github.com/langgenius/dify-plugin-daemon/pkg/entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
+
+func statusCodeFromResponse(resp *entities.Response) int {
+	if resp == nil {
+		return http.StatusInternalServerError
+	}
+
+	if resp.Code >= 0 {
+		return http.StatusOK
+	}
+
+	status := -resp.Code
+	if status < 100 || status > 599 {
+		return http.StatusInternalServerError
+	}
+
+	return status
+}
+
+func JSONResponse(r *gin.Context, resp *entities.Response) {
+	r.JSON(statusCodeFromResponse(resp), resp)
+}
 
 func BindRequest[T any](r *gin.Context, success func(T)) {
 	var request T
