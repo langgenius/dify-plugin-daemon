@@ -1,10 +1,11 @@
 package datasource_entities
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
 func TestOnlineDriveFileRemoteMetadataIsOptional(t *testing.T) {
@@ -15,8 +16,7 @@ func TestOnlineDriveFileRemoteMetadataIsOptional(t *testing.T) {
 		Type: "file",
 	}
 
-	encoded, err := json.Marshal(file)
-	require.NoError(t, err)
+	encoded := parser.MarshalJsonBytes(file)
 	require.JSONEq(t, `{"id":"file-1","name":"report.pdf","size":42,"type":"file"}`, string(encoded))
 }
 
@@ -46,8 +46,8 @@ func TestOnlineDriveBrowseResponsePreservesRemoteMetadata(t *testing.T) {
   ]
 }`)
 
-	var response GetOnlineDriveBrowseFilesResponse
-	require.NoError(t, json.Unmarshal(payload, &response))
+	response, err := parser.UnmarshalJsonBytes[GetOnlineDriveBrowseFilesResponse](payload)
+	require.NoError(t, err)
 	require.Len(t, response.Result, 1)
 	require.Len(t, response.Result[0].Files, 1)
 
@@ -63,8 +63,7 @@ func TestOnlineDriveBrowseResponsePreservesRemoteMetadata(t *testing.T) {
 	require.Equal(t, "checksum-1", metadata.Checksum.Value)
 	require.Equal(t, "2026-09-17T10:20:30Z", *metadata.ModifiedTime)
 
-	encoded, err := json.Marshal(response)
-	require.NoError(t, err)
+	encoded := parser.MarshalJsonBytes(response)
 	require.JSONEq(t, string(payload), string(encoded))
 }
 
@@ -81,10 +80,9 @@ func TestDataSourceResponseChunkPreservesRemoteMetadata(t *testing.T) {
   }
 }`)
 
-	var chunk DataSourceResponseChunk
-	require.NoError(t, json.Unmarshal(payload, &chunk))
-
-	encoded, err := json.Marshal(chunk)
+	chunk, err := parser.UnmarshalJsonBytes[DataSourceResponseChunk](payload)
 	require.NoError(t, err)
+
+	encoded := parser.MarshalJsonBytes(chunk)
 	require.JSONEq(t, string(payload), string(encoded))
 }
