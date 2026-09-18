@@ -32,14 +32,17 @@ func newValidConfigForValidation() *Config {
 }
 
 func TestGetUvCacheDir(t *testing.T) {
-	t.Run("default", func(t *testing.T) {
-		config := &Config{}
-		assert.Equal(t, "/tmp/.uv-cache", config.GetUvCacheDir())
+	t.Run("default under plugin working path", func(t *testing.T) {
+		config := &Config{PluginWorkingPath: "/app/storage/cwd"}
+		assert.Equal(t, filepath.Join("/app/storage/cwd", ".uv-cache"), config.GetUvCacheDir())
 	})
 
-	t.Run("custom", func(t *testing.T) {
-		config := &Config{UvCacheDir: "/var/cache/uv"}
-		assert.Equal(t, "/var/cache/uv", config.GetUvCacheDir())
+	t.Run("explicit override", func(t *testing.T) {
+		config := &Config{
+			PluginWorkingPath: "/app/storage/cwd",
+			UvCacheDir:        "/tmp/.uv-cache",
+		}
+		assert.Equal(t, "/tmp/.uv-cache", config.GetUvCacheDir())
 	})
 
 	t.Run("from env", func(t *testing.T) {

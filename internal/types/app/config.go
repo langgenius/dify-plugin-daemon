@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 
 	"time"
@@ -108,10 +109,10 @@ type Config struct {
 	// plugin endpoint
 	PluginEndpointEnabled bool `envconfig:"PLUGIN_ENDPOINT_ENABLED" default:"true"`
 
-	PluginWorkingPath      string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
-	// UvCacheDir is the uv package cache directory. Defaults to /tmp/.uv-cache so dependency
-	// installs do not write to PLUGIN_WORKING_PATH bind mounts (Docker/WSL permission issues).
-	UvCacheDir string `envconfig:"UV_CACHE_DIR" default:"/tmp/.uv-cache"`
+	PluginWorkingPath string `envconfig:"PLUGIN_WORKING_PATH"` // where the plugin finally running
+	// UvCacheDir overrides the uv package cache directory. When empty, cache lives under
+	// PLUGIN_WORKING_PATH/.uv-cache. Set explicitly (e.g. /tmp/.uv-cache) for Docker/WSL bind mounts.
+	UvCacheDir             string `envconfig:"UV_CACHE_DIR"`
 	PluginMediaCacheSize   uint16 `envconfig:"PLUGIN_MEDIA_CACHE_SIZE"`
 	PluginAssetCacheSize   uint16 `envconfig:"PLUGIN_ASSET_CACHE_SIZE"`
 	PluginMediaCachePath   string `envconfig:"PLUGIN_MEDIA_CACHE_PATH"`
@@ -362,7 +363,7 @@ func (c *Config) GetUvCacheDir() string {
 	if strings.TrimSpace(c.UvCacheDir) != "" {
 		return c.UvCacheDir
 	}
-	return "/tmp/.uv-cache"
+	return path.Join(c.PluginWorkingPath, ".uv-cache")
 }
 
 // Prefers Stdio (legacy) config if user has customized it, falls back to Runtime (new) config.
