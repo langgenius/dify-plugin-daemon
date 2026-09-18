@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789108744896,
+  "lastUpdate": 1789722717050,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16660,6 +16660,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 20.35,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "144546710+Souravrajvi0@users.noreply.github.com",
+            "name": "Sourav Rajvi",
+            "username": "Souravrajvi0"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9dba2fd124ff7b07561b0635b1f0858d0026930c",
+          "message": "fix: use container-local UV cache dir for plugin dependencies (Fixes langgenius/dify#42433) (#819)\n\n* fix: use container-local UV cache dir for plugin dependencies\n\nDefault UV_CACHE_DIR to /tmp/.uv-cache instead of PLUGIN_WORKING_PATH/.uv-cache\nso uv does not write to Docker bind mounts where WSL and mixed UIDs cause\npermission denied errors during local plugin installs.\n\nFixes langgenius/dify#42433\n\n* fix: keep PLUGIN_WORKING_PATH/.uv-cache as default UV cache\n\nHonor UV_CACHE_DIR only when explicitly set so persisted volume caches\nkeep working across container recreation. Document optional override for\nDocker/WSL bind-mount permission issues.",
+          "timestamp": "2026-09-18T17:09:36+08:00",
+          "tree_id": "e07d60f21b70eaa69ddbb5f891734ff85172f850",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/9dba2fd124ff7b07561b0635b1f0858d0026930c"
+        },
+        "date": 1789722716509,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 120632368,
+            "unit": "ns/op\t 869.23 MB/s\t214295857 B/op\t    1898 allocs/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 120632368,
+            "unit": "ns/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 869.23,
+            "unit": "MB/s",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 214295857,
+            "unit": "B/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1898,
+            "unit": "allocs/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.56,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.56,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
