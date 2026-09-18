@@ -31,6 +31,25 @@ func newValidConfigForValidation() *Config {
 	return config
 }
 
+func TestGetUvCacheDir(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		config := &Config{}
+		assert.Equal(t, "/tmp/.uv-cache", config.GetUvCacheDir())
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		config := &Config{UvCacheDir: "/var/cache/uv"}
+		assert.Equal(t, "/var/cache/uv", config.GetUvCacheDir())
+	})
+
+	t.Run("from env", func(t *testing.T) {
+		t.Setenv("UV_CACHE_DIR", "/tmp/uv_cache")
+		var parsed Config
+		require.NoError(t, envconfig.Process("", &parsed))
+		assert.Equal(t, "/tmp/uv_cache", parsed.GetUvCacheDir())
+	})
+}
+
 func TestBackwardsLLMTimeoutConfig(t *testing.T) {
 	t.Setenv("DIFY_BACKWARDS_INVOCATION_LLM_FIRST_RESPONSE_TIMEOUT", "300000")
 	t.Setenv("DIFY_BACKWARDS_INVOCATION_LLM_IDLE_TIMEOUT", "120000")
