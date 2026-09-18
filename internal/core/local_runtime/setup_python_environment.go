@@ -200,7 +200,10 @@ func (p *LocalPluginRuntime) installDependencies(
 	log.Info("uv command", "cmd", uvPath, "args", args)
 
 	virtualEnvPath := path.Join(p.State.WorkingPath, ".venv")
-	uvCacheDir := path.Join(p.appConfig.PluginWorkingPath, ".uv-cache")
+	uvCacheDir := p.appConfig.GetUvCacheDir()
+	if err := os.MkdirAll(uvCacheDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create uv cache directory: %w", err)
+	}
 	cmd := exec.CommandContext(ctx, uvPath, args...)
 	parent.SetAttributes(attribute.String("uv.path", uvPath), attribute.StringSlice("uv.args", args))
 
