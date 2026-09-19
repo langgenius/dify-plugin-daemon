@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"io"
 	"net/http"
@@ -9,6 +10,18 @@ import (
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 )
+
+func TestEndpointSessionRequestContextSurvivesHTTPCancel(t *testing.T) {
+	httpCtx, cancel := context.WithCancel(context.Background())
+	sessionCtx := endpointSessionRequestContext(httpCtx)
+	cancel()
+	if err := httpCtx.Err(); err == nil {
+		t.Fatal("expected HTTP context to be cancelled")
+	}
+	if err := sessionCtx.Err(); err != nil {
+		t.Fatalf("session context should outlive HTTP disconnect: %v", err)
+	}
+}
 
 func TestCopyRequest(t *testing.T) {
 	req, err := http.NewRequest("GET", "http://localhost:8080/test?test=123", nil)
