@@ -50,8 +50,10 @@ func (app *App) server(config *app.Config) func() {
 	invokeGroup := engine.Group("/v2/invoke")
 
 	if config.PrometheusEnabled {
+		handler := gin.WrapH(promhttp.Handler())
+		engine.GET("/metrics", handler)
 		metricsGroup := engine.Group("/metrics")
-		metricsGroup.GET("/", gin.WrapH(promhttp.Handler()))
+		metricsGroup.GET("/", handler)
 	}
 
 	if config.AdminApiEnabled {

@@ -1,6 +1,8 @@
 package controlpanel
 
 import (
+	"reflect"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/debugging_runtime"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/local_runtime"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
@@ -54,6 +56,7 @@ func (m *MetricsNotifier) OnLocalRuntimeStopped(runtime *local_runtime.LocalPlug
 		"local",
 	).Set(0)
 	metrics.ActivePluginsTotal.WithLabelValues("local").Dec()
+	metrics.SetPluginDaemonPluginProcesses(pluginID, 0)
 }
 
 func (m *MetricsNotifier) OnLocalRuntimeStop(runtime *local_runtime.LocalPluginRuntime) {
@@ -65,9 +68,13 @@ func (m *MetricsNotifier) OnLocalRuntimeStop(runtime *local_runtime.LocalPluginR
 }
 
 func (m *MetricsNotifier) OnLocalRuntimeScaleUp(runtime *local_runtime.LocalPluginRuntime, i int32) {
+	pluginID := pluginIDFromRuntime(runtime)
+	metrics.SetPluginDaemonPluginProcesses(pluginID, float64(i))
 }
 
 func (m *MetricsNotifier) OnLocalRuntimeScaleDown(runtime *local_runtime.LocalPluginRuntime, i int32) {
+	pluginID := pluginIDFromRuntime(runtime)
+	metrics.SetPluginDaemonPluginProcesses(pluginID, float64(i))
 }
 
 func (m *MetricsNotifier) OnLocalRuntimeInstanceLog(
@@ -84,6 +91,7 @@ func (m *MetricsNotifier) OnDebuggingRuntimeConnected(runtime *debugging_runtime
 		"remote",
 	).Set(1)
 	metrics.ActivePluginsTotal.WithLabelValues("remote").Inc()
+	metrics.SetPluginDaemonPluginProcesses(pluginID, 1)
 }
 
 func (m *MetricsNotifier) OnDebuggingRuntimeDisconnected(runtime *debugging_runtime.RemotePluginRuntime) {
@@ -93,15 +101,29 @@ func (m *MetricsNotifier) OnDebuggingRuntimeDisconnected(runtime *debugging_runt
 		"remote",
 	).Set(0)
 	metrics.ActivePluginsTotal.WithLabelValues("remote").Dec()
+	metrics.SetPluginDaemonPluginProcesses(pluginID, 0)
 }
 
 // pluginIDFromRuntime extracts the plugin ID from any runtime that implements identifiableRuntime
 func pluginIDFromRuntime(runtime identifiableRuntime) string {
-	if runtime == nil {
+	if isNilIdentifiableRuntime(runtime) {
 		return "unknown"
 	}
 	if identity, err := runtime.Identity(); err == nil {
 		return identity.PluginID()
 	}
 	return "unknown"
+}
+
+func isNilIdentifiableRuntime(runtime identifiableRuntime) bool {
+	if runtime == nil {
+		return true
+	}
+	value := reflect.ValueOf(runtime)
+	switch value.Kind() {
+	case reflect.Pointer, reflect.Interface, reflect.Map, reflect.Slice, reflect.Func, reflect.Chan:
+		return value.IsNil()
+	default:
+		return false
+	}
 }

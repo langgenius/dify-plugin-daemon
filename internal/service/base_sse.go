@@ -131,7 +131,14 @@ func baseSSEWithSession[T any, R any](
 	)
 	if err != nil {
 		duration := time.Since(startTime).Seconds()
-		recordPluginInvocationMetrics(request, session, access_type, access_action, "error", duration)
+		recordPluginInvocationMetrics(
+			request,
+			session,
+			access_type,
+			access_action,
+			metrics.InvokeOutcomeSessionError,
+			duration,
+		)
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
@@ -148,6 +155,7 @@ func baseSSEWithSession[T any, R any](
 				string(access_type),
 				runtimeType,
 			).Inc()
+			metrics.RecordPluginDaemonInvokeStart(pluginID)
 
 			return generator(session)
 		},
@@ -175,6 +183,7 @@ func baseSSEWithSession[T any, R any](
 				string(access_type),
 				runtimeType,
 			).Dec()
+			metrics.RecordPluginDaemonInvokeComplete(pluginID, status, duration)
 		},
 	)
 }
@@ -218,4 +227,6 @@ func recordPluginInvocationMetrics[T any](
 		runtimeType,
 		string(access_action),
 	).Observe(duration)
+
+	metrics.RecordPluginDaemonInvokeFailed(pluginID, status, duration)
 }
