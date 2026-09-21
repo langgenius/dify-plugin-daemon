@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789969880526,
+  "lastUpdate": 1789980243732,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16816,6 +16816,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 20.13,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "144546710+Souravrajvi0@users.noreply.github.com",
+            "name": "Sourav Rajvi",
+            "username": "Souravrajvi0"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c0d9298781d90c9f090442a33d2f4e48af606cb9",
+          "message": "fix(endpoint): keep session alive after webhook client disconnect (#820)\n\n* fix(endpoint): keep session alive after webhook client disconnect\n\nEndpoint plugins use backwards invocations that can outlive short HTTP\ncallback timeouts. Decouple the session context from request cancellation\nand wait for the handler to finish after the client disconnects so\nsessionToInstanceMap is not torn down early (fixes #808).\n\n* fix(endpoint): bound detached session context to max execution time\n\nApply review feedback: wrap WithoutCancel with WithTimeout so endpoint\nplugin sessions still expire at maxExecutionTime while ignoring HTTP\ndisconnect cancellation (fixes #808).",
+          "timestamp": "2026-09-21T16:42:01+08:00",
+          "tree_id": "f746971142d4f3916a87166eec6c3956c9b9921e",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/c0d9298781d90c9f090442a33d2f4e48af606cb9"
+        },
+        "date": 1789980243146,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 122029768,
+            "unit": "ns/op\t 859.28 MB/s\t213052275 B/op\t    1897 allocs/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 122029768,
+            "unit": "ns/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 859.28,
+            "unit": "MB/s",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213052275,
+            "unit": "B/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.62,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.62,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
