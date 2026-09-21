@@ -152,6 +152,9 @@ func Endpoint(
 		return
 	}
 
+	sessionCtx, cancelSessionCtx := endpointSessionRequestContext(ctx.Request.Context(), maxExecutionTime)
+	defer cancelSessionCtx()
+
 	session := session_manager.NewSession(
 		session_manager.NewSessionPayload{
 			TenantID:               endpoint.TenantID,
@@ -164,7 +167,7 @@ func Endpoint(
 			BackwardsInvocation:    manager.BackwardsInvocation(),
 			IgnoreCache:            false,
 			EndpointID:             &endpoint.ID,
-			RequestContext:         ctx.Request.Context(),
+			RequestContext:         sessionCtx,
 		},
 	)
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -219,12 +222,31 @@ func Endpoint(
 		}
 	})
 
+	timer := time.NewTimer(maxExecutionTime)
+	defer timer.Stop()
+
 	select {
-	case <-ctx.Writer.CloseNotify():
 	case <-done:
-	case <-time.After(maxExecutionTime):
+	case <-ctx.Writer.CloseNotify():
+		// Webhook clients (e.g. WeChat Work) often close the connection before the
+		// plugin finishes. Keep the invocation session alive until the handler
+		// completes so backwards invocations can write back to the plugin.
+		select {
+		case <-done:
+		case <-timer.C:
+		}
+	case <-timer.C:
 		ctx.JSON(500, exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
 	}
+}
+
+// endpointSessionRequestContext preserves request trace metadata while decoupling
+// plugin session lifetime from HTTP request cancellation (see issue #808).
+func endpointSessionRequestContext(
+	httpCtx context.Context,
+	maxExecutionTime time.Duration,
+) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(httpCtx), maxExecutionTime)
 }
 
 func EnableEndpoint(endpointID string, tenantID string) *entities.Response {
