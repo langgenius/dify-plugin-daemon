@@ -7,19 +7,41 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 )
 
 func TestEndpointSessionRequestContextSurvivesHTTPCancel(t *testing.T) {
-	httpCtx, cancel := context.WithCancel(context.Background())
-	sessionCtx := endpointSessionRequestContext(httpCtx)
-	cancel()
+	httpCtx, cancelHTTP := context.WithCancel(context.Background())
+	sessionCtx, cancelSession := endpointSessionRequestContext(httpCtx, time.Minute)
+	defer cancelSession()
+
+	cancelHTTP()
 	if err := httpCtx.Err(); err == nil {
 		t.Fatal("expected HTTP context to be cancelled")
 	}
 	if err := sessionCtx.Err(); err != nil {
 		t.Fatalf("session context should outlive HTTP disconnect: %v", err)
+	}
+}
+
+func TestEndpointSessionRequestContextRespectsMaxExecutionTime(t *testing.T) {
+	httpCtx := context.Background()
+	sessionCtx, cancelSession := endpointSessionRequestContext(httpCtx, 20*time.Millisecond)
+	defer cancelSession()
+
+	deadline, ok := sessionCtx.Deadline()
+	if !ok {
+		t.Fatal("expected session context to have a deadline")
+	}
+	if time.Until(deadline) <= 0 {
+		t.Fatal("expected session deadline to be in the future")
+	}
+
+	<-sessionCtx.Done()
+	if err := sessionCtx.Err(); err != context.DeadlineExceeded {
+		t.Fatalf("expected session context to time out: %v", err)
 	}
 }
 

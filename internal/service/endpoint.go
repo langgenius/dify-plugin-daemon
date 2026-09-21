@@ -152,6 +152,9 @@ func Endpoint(
 		return
 	}
 
+	sessionCtx, cancelSessionCtx := endpointSessionRequestContext(ctx.Request.Context(), maxExecutionTime)
+	defer cancelSessionCtx()
+
 	session := session_manager.NewSession(
 		session_manager.NewSessionPayload{
 			TenantID:               endpoint.TenantID,
@@ -164,7 +167,7 @@ func Endpoint(
 			BackwardsInvocation:    manager.BackwardsInvocation(),
 			IgnoreCache:            false,
 			EndpointID:             &endpoint.ID,
-			RequestContext:         endpointSessionRequestContext(ctx.Request.Context()),
+			RequestContext:         sessionCtx,
 		},
 	)
 	defer session.Close(session_manager.CloseSessionPayload{
@@ -239,8 +242,11 @@ func Endpoint(
 
 // endpointSessionRequestContext preserves request trace metadata while decoupling
 // plugin session lifetime from HTTP request cancellation (see issue #808).
-func endpointSessionRequestContext(httpCtx context.Context) context.Context {
-	return context.WithoutCancel(httpCtx)
+func endpointSessionRequestContext(
+	httpCtx context.Context,
+	maxExecutionTime time.Duration,
+) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(httpCtx), maxExecutionTime)
 }
 
 func EnableEndpoint(endpointID string, tenantID string) *entities.Response {
