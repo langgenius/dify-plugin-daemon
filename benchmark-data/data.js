@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789983310297,
+  "lastUpdate": 1790004701363,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16972,6 +16972,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.81,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "31929997+FFXN@users.noreply.github.com",
+            "name": "FFXN",
+            "username": "FFXN"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "712d6d542997857b680c51b6ed76395b0ddd2417",
+          "message": "feat: add remote metadata and checksum support for OnlineDriveFile (#818)\n\n* feat: add remote metadata and checksum support for OnlineDriveFile\n\n* test(datasource): exercise daemon JSON parser\n\nVerify online-drive remote metadata survives the same parser used by plugin invocations, including provider-specific checksum algorithms and download metadata.",
+          "timestamp": "2026-09-21T23:29:26+08:00",
+          "tree_id": "6d8d8fdcdae83afee642289ba00f485cbbef04e5",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/712d6d542997857b680c51b6ed76395b0ddd2417"
+        },
+        "date": 1790004700796,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 124193979,
+            "unit": "ns/op\t 844.31 MB/s\t213911833 B/op\t    1897 allocs/op",
+            "extra": "286 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 124193979,
+            "unit": "ns/op",
+            "extra": "286 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 844.31,
+            "unit": "MB/s",
+            "extra": "286 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213911833,
+            "unit": "B/op",
+            "extra": "286 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "286 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 20.64,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 20.64,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
