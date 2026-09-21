@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789980243732,
+  "lastUpdate": 1789983310297,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16894,6 +16894,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.62,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "zhangxin@dify.ai",
+            "name": "Xin Zhang",
+            "username": "zhangx1n"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "90b585ee8a0ffea017be3788f772728ea1e8c04c",
+          "message": "fix: ensure plugin declaration exists when install commits (#823)\n\nUninstalling or upgrading away the last reference of a plugin deletes its\nplugin_declarations row. An install job reads the declaration when it is\nrequested and commits only after the runtime is ready, so a last uninstall\nin between left an installation whose declaration could no longer be found.\n\nInstallPlugin and UpgradePlugin now insert the declaration row with\nON CONFLICT DO NOTHING inside their transaction, after the plugin row is\nlocked, which serializes it with the delete in UninstallPlugin/UpgradePlugin.",
+          "timestamp": "2026-09-21T17:32:43+08:00",
+          "tree_id": "9f1609cf0223ce24f93df790a674aa9725d1a829",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/90b585ee8a0ffea017be3788f772728ea1e8c04c"
+        },
+        "date": 1789983309617,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 123536584,
+            "unit": "ns/op\t 848.80 MB/s\t213413358 B/op\t    1897 allocs/op",
+            "extra": "288 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 123536584,
+            "unit": "ns/op",
+            "extra": "288 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 848.8,
+            "unit": "MB/s",
+            "extra": "288 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213413358,
+            "unit": "B/op",
+            "extra": "288 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "288 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.81,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.81,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
