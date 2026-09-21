@@ -94,6 +94,10 @@ func InstallPlugin(
 			return err
 		}
 
+		if err := ensurePluginDeclaration(tx, pluginUniqueIdentifier, installType, declaration); err != nil {
+			return err
+		}
+
 		p.Refers++
 		if err := db.Update(&p, tx); err != nil {
 			return err
@@ -533,6 +537,10 @@ func UpgradePlugin(
 			return err
 		}
 
+		if err := ensurePluginDeclaration(tx, newPluginUniqueIdentifier, installType, newDeclaration); err != nil {
+			return err
+		}
+
 		// update ai model installation
 		if originalDeclaration.Model != nil {
 			// delete the original ai model installation
@@ -686,4 +694,27 @@ func UpgradePlugin(
 	}
 
 	return &response, nil
+}
+
+// ensurePluginDeclaration re-creates the declaration row that the last uninstall may have deleted;
+// callers must already hold the plugin row lock so the two are serialized.
+func ensurePluginDeclaration(
+	tx *gorm.DB,
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+	installType plugin_entities.PluginRuntimeType,
+	declaration *plugin_entities.PluginDeclaration,
+) error {
+	// remote plugins keep their declaration on the plugin row
+	if installType == plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE {
+		return nil
+	}
+
+	return tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "plugin_unique_identifier"}},
+		DoNothing: true,
+	}).Create(&models.PluginDeclaration{
+		PluginUniqueIdentifier: pluginUniqueIdentifier.String(),
+		PluginID:               pluginUniqueIdentifier.PluginID(),
+		Declaration:            *declaration,
+	}).Error
 }
