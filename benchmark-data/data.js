@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789722717050,
+  "lastUpdate": 1789969880526,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -16738,6 +16738,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.56,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "144546710+Souravrajvi0@users.noreply.github.com",
+            "name": "Sourav Rajvi",
+            "username": "Souravrajvi0"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3b18b6beb26670deb8e965fc09f3f010455eb7c9",
+          "message": "feat(metrics): add plugin_daemon invoke and process Prometheus metrics (#821)\n\nExpose issue #812 metrics on the existing /metrics endpoint: in-flight\ninvokes, invoke duration by outcome, invoke errors by class, and per-plugin\nprocess counts from runtime scale events. Wire invoke metrics through the SSE\ninvoke path and register GET /metrics alongside /metrics/.",
+          "timestamp": "2026-09-21T13:48:09+08:00",
+          "tree_id": "e630d9c5cb0dba23dd17e62a672475afc84fa2b4",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/3b18b6beb26670deb8e965fc09f3f010455eb7c9"
+        },
+        "date": 1789969880001,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 129284932,
+            "unit": "ns/op\t 811.06 MB/s\t213240062 B/op\t    1897 allocs/op",
+            "extra": "271 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 129284932,
+            "unit": "ns/op",
+            "extra": "271 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 811.06,
+            "unit": "MB/s",
+            "extra": "271 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213240062,
+            "unit": "B/op",
+            "extra": "271 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "271 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 20.13,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 20.13,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
