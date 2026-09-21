@@ -71,11 +71,24 @@ type DatasourceGetPagesResponse struct {
 	Result []map[string]any `json:"result"`
 }
 
+type OnlineDriveChecksum struct {
+	Algorithm string `json:"algorithm" validate:"required"`
+	Value     string `json:"value" validate:"required"`
+}
+
+type OnlineDriveRemoteMetadata struct {
+	VersionID    *string              `json:"version_id,omitempty"`
+	ETag         *string              `json:"etag,omitempty"`
+	Checksum     *OnlineDriveChecksum `json:"checksum,omitempty"`
+	ModifiedTime *string              `json:"modified_time,omitempty"`
+}
+
 type OnlineDriveFile struct {
-	ID   string `json:"id" validate:"required"`   // The file ID
-	Name string `json:"name" validate:"required"` // The file name
-	Size int    `json:"size" validate:"required"` // The file size
-	Type string `json:"type" validate:"required"` // The file type: folder or file
+	ID             string                     `json:"id" validate:"required"`   // The file ID
+	Name           string                     `json:"name" validate:"required"` // The file name
+	Size           int                        `json:"size" validate:"required"` // The file size
+	Type           string                     `json:"type" validate:"required"` // The file type: folder or file
+	RemoteMetadata *OnlineDriveRemoteMetadata `json:"remote_metadata,omitempty"`
 }
 
 type OnlineDriveFileBucket struct {
