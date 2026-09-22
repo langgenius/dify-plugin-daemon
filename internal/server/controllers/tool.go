@@ -3,8 +3,10 @@ package controllers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/gin-gonic/gin"
 	ginmiddleware "github.com/oapi-codegen/gin-middleware"
@@ -44,12 +46,16 @@ func registerToolManagementRoutes(router gin.IRouter, handlers contracts.StrictS
 		Options: openapi3filter.Options{
 			// CheckingKey authenticates this router group before contract validation.
 			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
+			// Validate bound query values below: kin-openapi parses integer strings with base 0.
+			ExcludeRequestQueryParams: true,
 		},
 		ErrorHandler: func(c *gin.Context, message string, _ int) {
 			badRequest(c, errors.New(message))
 		},
 	})
-	strict := contracts.NewStrictHandlerWithOptions(handlers, nil, contracts.StrictGinServerOptions{
+	strict := contracts.NewStrictHandlerWithOptions(handlers, []contracts.StrictMiddlewareFunc{
+		toolManagementQueryValidator(spec, badRequest),
+	}, contracts.StrictGinServerOptions{
 		RequestErrorHandlerFunc:  badRequest,
 		HandlerErrorFunc:         internalError,
 		ResponseErrorHandlerFunc: internalError,
@@ -61,6 +67,42 @@ func registerToolManagementRoutes(router gin.IRouter, handlers contracts.StrictS
 		},
 	})
 	return nil
+}
+
+func toolManagementQueryValidator(spec *openapi3.T, badRequest func(*gin.Context, error)) contracts.StrictMiddlewareFunc {
+	parameters := make(map[string]openapi3.Parameters)
+	for _, path := range spec.Paths.Map() {
+		for _, operation := range path.Operations() {
+			parameters[operation.OperationID] = operation.Parameters
+		}
+	}
+	return func(next contracts.StrictHandlerFunc, operationID string) contracts.StrictHandlerFunc {
+		return func(c *gin.Context, request any) (any, error) {
+			var values map[string]any
+			switch request := request.(type) {
+			case contracts.ListToolsRequestObject:
+				values = map[string]any{"page": request.Params.Page, "page_size": request.Params.PageSize}
+			case contracts.GetToolRequestObject:
+				values = map[string]any{"plugin_id": request.Params.PluginID, "provider": request.Params.Provider}
+			default:
+				return nil, fmt.Errorf("unsupported tool management request: %T", request)
+			}
+			for _, parameter := range parameters[operationID] {
+				if parameter.Value.In != openapi3.ParameterInQuery {
+					continue
+				}
+				value, ok := values[parameter.Value.Name]
+				if !ok {
+					return nil, fmt.Errorf("missing bound query parameter: %s", parameter.Value.Name)
+				}
+				if err := parameter.Value.Schema.Value.VisitJSON(value, openapi3.EnableJSONSchema2020()); err != nil {
+					badRequest(c, fmt.Errorf("invalid query parameter %s: %w", parameter.Value.Name, err))
+					return nil, nil
+				}
+			}
+			return next(c, request)
+		}
+	}
 }
 
 func toolManagementError(err exception.PluginDaemonError) contracts.DaemonErrorResponse {

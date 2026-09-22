@@ -30,6 +30,12 @@ of the specification. The tool management routes use Gin request validation
 against that specification before calling their strict handlers. The existing
 daemon API key middleware remains responsible for authentication.
 
+Query constraints are checked against the values parsed by the generated
+binding code. This keeps decimal integer binding and validation consistent:
+`page=08` means 8, while `page_size=0400` exceeds the maximum of 256. The
+validator reads the constraints from the OpenAPI parameters, without copying
+pagination limits into Go code.
+
 Strict handler interfaces require generated request and response types. They do
 not by themselves prove that serialized responses satisfy every schema
 constraint. The `TestToolManagement` tests exercise the registered Gin handlers
@@ -104,18 +110,22 @@ For a contract change:
    together.
 
 [The contract workflow](../.github/workflows/contracts.yml) regenerates the code,
-checks that the committed specification and generated files are unchanged, then
-runs the focused controller, authentication, and server startup tests. It does
-not start PostgreSQL, Redis, or a plugin runtime. The response tests supply
-service results at the handler boundary while exercising the real HTTP
-registration, validation, mapping, and serialization.
+checks for modified, deleted, and untracked files in the specification and
+generated contract paths, then runs the focused controller, authentication, and
+server startup tests. It does not start PostgreSQL, Redis, or a plugin runtime.
+The response tests supply service results at the handler boundary while
+exercising the real HTTP registration, validation, mapping, and serialization.
 
 The generation check can also be run locally after committing the expected
 changes:
 
 ```sh
 go generate ./internal/server/contracts
-git diff --exit-code -- api/openapi.yaml internal/server/contracts
+if [ -n "$(git status --porcelain --untracked-files=all -- api/openapi.yaml internal/server/contracts)" ]; then
+  git status --short --untracked-files=all -- api/openapi.yaml internal/server/contracts
+  git diff -- api/openapi.yaml internal/server/contracts
+  exit 1
+fi
 ```
 
 [go-tools]: https://go.dev/doc/modules/managing-dependencies#tools

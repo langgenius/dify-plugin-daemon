@@ -31,7 +31,12 @@ jobs:
         run: go generate ./internal/server/contracts
 
       - name: Check generated contracts
-        run: git diff --exit-code -- api/openapi.yaml internal/server/contracts
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=all -- api/openapi.yaml internal/server/contracts)" ]; then
+            git status --short --untracked-files=all -- api/openapi.yaml internal/server/contracts
+            git diff -- api/openapi.yaml internal/server/contracts
+            exit 1
+          fi
 
       - name: Test tool management contracts
         run: go test ./internal/server ./internal/server/controllers -run '^Test(ToolManagement|ServerHostBinding)'

@@ -330,6 +330,9 @@ func TestToolManagementInvalidRequestsDoNotCallService(t *testing.T) {
 		"/tools?page=-1&page_size=1",
 		"/tools?page=1&page_size=0",
 		"/tools?page=1&page_size=257",
+		"/tools?page=1&page_size=0257",
+		"/tools?page=1&page_size=0400",
+		"/tools?page=1&page_size=%2B0400",
 		"/tools?page=invalid&page_size=1",
 		"/tools?page=1&page_size=invalid",
 		"/tools?page=1&page=2&page_size=1",
@@ -364,6 +367,32 @@ func TestToolManagementInvalidRequestsDoNotCallService(t *testing.T) {
 			var detail map[string]any
 			require.NoError(t, json.Unmarshal([]byte(envelope.Message), &detail))
 			require.Equal(t, exception.PluginDaemonBadRequestError, detail["error_type"])
+		})
+	}
+}
+
+func TestToolManagementPaginationUsesDecimalValues(t *testing.T) {
+	for _, test := range []struct {
+		query string
+		page  int
+		size  int
+	}{
+		{query: "page=08&page_size=09", page: 8, size: 9},
+		{query: "page=010&page_size=0256", page: 10, size: 256},
+		{query: "page=%2B08&page_size=%2B09", page: 8, size: 9},
+	} {
+		t.Run(test.query, func(t *testing.T) {
+			called := false
+			response := toolManagementRequest(t, toolManagementHandlers{
+				listTools: func(_ string, page, pageSize int) ([]service.InstalledTool, exception.PluginDaemonError) {
+					called = true
+					require.Equal(t, test.page, page)
+					require.Equal(t, test.size, pageSize)
+					return []service.InstalledTool{}, nil
+				},
+			}, toolManagementTestPath+"/tools?"+test.query)
+			require.True(t, called)
+			require.Equal(t, http.StatusOK, response.Code)
 		})
 	}
 }
