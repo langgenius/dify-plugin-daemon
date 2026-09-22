@@ -17,6 +17,8 @@ The daemon is configured using the following environment variables:
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL` | Base URL of the remote runtime environment, e.g., `https://example.com` |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY` | Authentication token for accessing SRI, passed in the `Authorization` request header |
 | `MAX_SERVERLESS_REQUEST_BYTES` | Maximum serialized request payload size sent to a serverless plugin runtime (in bytes). Default is 5242880 (5 MB). This limit accounts for Lambda Function URL's 6 MB request size limit, with a safety margin for headers and metadata. |
+| `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED` | Whether to run the activation preflight before dispatching an invocation. When enabled, the daemon calls `POST /v1/activation/activate` to wake a scaled-to-zero plugin and waits until it is ready. Default is `false`. |
+| `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT` | Seconds the daemon waits for the plugin to become ready during the activation preflight. If the plugin is not woken up in time, the invocation is treated as failed. Default is `60`. |
 
 ---
 
@@ -127,6 +129,42 @@ endpoint=http://...,name=...,id=...
 
 - If any stage returns `State = failed`, it is considered a launch failure
 - The daemon should abort the process and output the `Message` field as the error
+
+---
+
+### `POST /v1/activation/activate`
+
+Optional activation preflight. When `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED` is `true`, the daemon calls this endpoint before dispatching an invocation to wake a plugin that may have been scaled to zero, and blocks until the plugin is ready. It is safe to call on every invocation; the runtime is expected to throttle any underlying activity/lease writes.
+
+**Request**
+
+```http
+POST /v1/activation/activate
+Authorization: <API_KEY>
+Content-Type: application/json
+
+{
+  "instance_id": "string"
+}
+```
+
+- `instance_id` (required): the connector function name of the target plugin (the `Name` returned by `/v1/runner/instances` and `/v1/launch`).
+
+**Response**
+
+```json
+{
+  "ready": true,
+  "endpoint": "string"
+}
+```
+
+- `200 OK` with `ready = true`: the plugin is ready and the daemon proceeds with the invocation.
+- `504 Gateway Timeout` (or `ready = false`): the plugin did not become ready in time.
+
+**Error Handling**
+
+- The daemon bounds the wait with `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT`. On timeout or any non-`200` response, the invocation is aborted and reported as a failure.
 
 ---
 
