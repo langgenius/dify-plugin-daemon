@@ -510,23 +510,41 @@ func FetchMissingPluginInstallations(tenant_id string, plugin_unique_identifiers
 	return entities.NewSuccessResponse(result)
 }
 
-func ListTools(tenant_id string, page int, page_size int) *entities.Response {
-	type Tool struct {
-		models.ToolInstallation // pointer to avoid deep copy
+type InstalledTool struct {
+	ID                     string
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+	TenantID               string
+	Provider               string
+	PluginUniqueIdentifier string
+	PluginID               string
+	Declaration            *plugin_entities.ToolProviderDeclaration
+}
 
-		Declaration *plugin_entities.ToolProviderDeclaration `json:"declaration"`
+func installedTool(installation models.ToolInstallation, declaration *plugin_entities.ToolProviderDeclaration) InstalledTool {
+	return InstalledTool{
+		ID:                     installation.ID,
+		CreatedAt:              installation.CreatedAt,
+		UpdatedAt:              installation.UpdatedAt,
+		TenantID:               installation.TenantID,
+		Provider:               installation.Provider,
+		PluginUniqueIdentifier: installation.PluginUniqueIdentifier,
+		PluginID:               installation.PluginID,
+		Declaration:            declaration,
 	}
+}
 
+func ListTools(tenant_id string, page int, page_size int) ([]InstalledTool, exception.PluginDaemonError) {
 	providers, err := db.GetAll[models.ToolInstallation](
 		db.Equal("tenant_id", tenant_id),
 		db.Page(page, page_size),
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return nil, exception.InternalServerError(err)
 	}
 
-	data := make([]Tool, 0, len(providers))
+	data := make([]InstalledTool, 0, len(providers))
 
 	for _, provider := range providers {
 		// check if plugin id starts with uuid
@@ -545,16 +563,13 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 		)
 
 		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
+			return nil, exception.InternalServerError(err)
 		}
 
-		data = append(data, Tool{
-			ToolInstallation: provider,
-			Declaration:      declaration.Tool,
-		})
+		data = append(data, installedTool(provider, declaration.Tool))
 	}
 
-	return entities.NewSuccessResponse(data)
+	return data, nil
 }
 
 func ListModelPluginBindings(tenant_id string) *entities.Response {
@@ -625,13 +640,7 @@ func ListModels(tenant_id string, page int, page_size int) *entities.Response {
 	return entities.NewSuccessResponse(data)
 }
 
-func GetTool(tenant_id string, plugin_id string, provider string) *entities.Response {
-	type Tool struct {
-		models.ToolInstallation // pointer to avoid deep copy
-
-		Declaration *plugin_entities.ToolProviderDeclaration `json:"declaration"`
-	}
-
+func GetTool(tenant_id string, plugin_id string, provider string) (InstalledTool, exception.PluginDaemonError) {
 	// try get tool
 	tool, err := db.GetOne[models.ToolInstallation](
 		db.Equal("tenant_id", tenant_id),
@@ -640,14 +649,14 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 
 	if err != nil {
 		if err == db.ErrDatabaseNotFound {
-			return exception.ErrPluginNotFound().ToResponse()
+			return InstalledTool{}, exception.ErrPluginNotFound()
 		}
 
-		return exception.InternalServerError(err).ToResponse()
+		return InstalledTool{}, exception.InternalServerError(err)
 	}
 
 	if tool.Provider != provider {
-		return exception.ErrPluginNotFound().ToResponse()
+		return InstalledTool{}, exception.ErrPluginNotFound()
 	}
 
 	uniqueIdentifier := plugin_entities.PluginUniqueIdentifier(tool.PluginUniqueIdentifier)
@@ -664,13 +673,10 @@ func GetTool(tenant_id string, plugin_id string, provider string) *entities.Resp
 	)
 
 	if err != nil {
-		return exception.InternalServerError(err).ToResponse()
+		return InstalledTool{}, exception.InternalServerError(err)
 	}
 
-	return entities.NewSuccessResponse(Tool{
-		ToolInstallation: tool,
-		Declaration:      declaration.Tool,
-	})
+	return installedTool(tool, declaration.Tool), nil
 }
 
 type RequestCheckToolExistence struct {
