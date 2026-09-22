@@ -79,8 +79,36 @@ HttpPayloadReader(io.ReadCloser)   // Custom reader
 ### Timeouts
 ```go
 HttpWriteTimeout(seconds)          // Write timeout
-HttpReadTimeout(seconds)           // Read timeout
+HttpReadTimeout(seconds)           // Read timeout (legacy fixed budget)
+HttpStreamTimeouts(timeouts)       // Streaming timeout policy (opt-in)
 ```
+
+For streaming APIs, `HttpStreamTimeouts` provides fine-grained timeout control as an opt-in alternative to the legacy `HttpReadTimeout` behavior:
+
+```go
+// Separate budgets for different phases of streaming
+http_requests.HttpStreamTimeouts(http_requests.StreamTimeouts{
+    FirstResponse: 600 * time.Second,  // Time to first decoded frame
+    ReadIdle:      240 * time.Second,  // Max inactivity between reads
+    Total:         600 * time.Second,  // Overall request budget
+})
+```
+
+**When to use HttpStreamTimeouts:**
+- Long-running LLM streaming calls where you need to distinguish network issues (idle timeout) from legitimately slow responses
+- Scenarios where the legacy fixed read deadline prematurely closes slow but active streams
+
+**When to use HttpReadTimeout:**
+- Non-streaming requests
+- Backward compatibility (when `HttpStreamTimeouts` is not set, `HttpReadTimeout` behavior is preserved)
+- Simple timeout requirements that don't need separate phase budgets
+
+The `StreamTimeouts` policy separates three independent budgets:
+- **FirstResponse**: Time to wait for the first response byte/frame (ends at first decoded frame, not first LLM token)
+- **IdleTimeout**: Maximum time between successive read operations (resets on incoming bytes or frames)
+- **TotalTimeout**: Overall time budget for the entire stream (includes connection, headers, and body)
+
+Caller cancellation and earlier parent deadlines remain effective. See [`stream_timeouts.go`](https://github.com/langgenius/dify-plugin-daemon/blob/main/pkg/utils/http_requests/stream_timeouts.go) for implementation details.
 
 ### Special Options
 ```go
