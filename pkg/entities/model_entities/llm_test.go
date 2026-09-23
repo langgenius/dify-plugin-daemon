@@ -496,3 +496,24 @@ func TestPromptMessageContentWithoutFilename(t *testing.T) {
 		t.Errorf("expected empty filename, got '%s'", content[0].Filename)
 	}
 }
+
+func TestOptionalPromptMessageContent(t *testing.T) {
+	for _, content := range []string{"", `,"content":null`, `,"content":""`, `,"content":[]`} {
+		t.Run(content, func(t *testing.T) {
+			wire := `{"role":"assistant","opaque_body":{"signature":"original"},"tool_calls":[{"id":"call","type":"function","function":{"name":"f","arguments":"{}"}}]` + content + `}`
+			message, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(wire))
+			assert.NoError(t, err)
+			assert.Equal(t, `{"signature":"original"}`, string(message.OpaqueBody))
+			assert.Len(t, message.ToolCalls, 1)
+			chunk := `{"model":"m","delta":{"index":0,"message":` + wire + `}}`
+			_, err = parser.UnmarshalJsonBytes[LLMResultChunk]([]byte(chunk))
+			assert.NoError(t, err)
+		})
+	}
+	for _, content := range []string{`123`, `false`, `{}`, `[123]`, `[{"type":"invalid","data":"text"}]`} {
+		t.Run(content, func(t *testing.T) {
+			_, err := parser.UnmarshalJsonBytes[PromptMessage]([]byte(`{"role":"assistant","content":` + content + `}`))
+			assert.Error(t, err)
+		})
+	}
+}

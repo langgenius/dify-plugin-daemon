@@ -2,6 +2,7 @@ package backwards_invocation
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 
@@ -26,7 +27,7 @@ type BackwardsInvocationWriter interface {
 type BackwardsInvocation struct {
 	typ             BackwardsInvocationType
 	id              string
-	detailedRequest map[string]any
+	detailedRequest map[string]json.RawMessage
 	session         *session_manager.Session
 
 	// writer is the writer that writes the data to the session
@@ -42,7 +43,7 @@ func NewBackwardsInvocation(
 	id string,
 	session *session_manager.Session,
 	writer BackwardsInvocationWriter,
-	detailedRequest map[string]any,
+	detailedRequest map[string]json.RawMessage,
 ) *BackwardsInvocation {
 	return &BackwardsInvocation{
 		typ:                 typ,
@@ -93,7 +94,7 @@ func (bi *BackwardsInvocation) Type() BackwardsInvocationType {
 	return bi.typ
 }
 
-func (bi *BackwardsInvocation) RequestData() map[string]any {
+func (bi *BackwardsInvocation) RequestData() map[string]json.RawMessage {
 	return bi.detailedRequest
 }
 
