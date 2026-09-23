@@ -46,6 +46,7 @@ func (app *App) server(config *app.Config) func() {
 	endpointGroup := engine.Group("/e")
 	serverlessTransactionGroup := engine.Group("/backwards-invocation")
 	pluginGroup := engine.Group("/plugin/:tenant_id")
+	toolManagementGroup := engine.Group("")
 	pprofGroup := engine.Group("/debug/pprof")
 	invokeGroup := engine.Group("/v2/invoke")
 
@@ -73,6 +74,7 @@ func (app *App) server(config *app.Config) func() {
 			endpointGroup,
 			serverlessTransactionGroup,
 			pluginGroup,
+			toolManagementGroup,
 		}
 		for _, group := range sentryGroup {
 			group.Use(sentrygin.New(sentrygin.Options{
@@ -84,6 +86,10 @@ func (app *App) server(config *app.Config) func() {
 	app.endpointGroup(endpointGroup, config)
 	app.serverlessTransactionGroup(serverlessTransactionGroup, config)
 	app.pluginGroup(pluginGroup, config)
+	toolManagementGroup.Use(CheckingKey(config.ServerKey))
+	if err := controllers.RegisterToolManagementRoutes(toolManagementGroup); err != nil {
+		log.Panic("failed to register tool management contract", "error", err)
+	}
 	app.pprofGroup(pprofGroup, config)
 	app.invokeGroup(invokeGroup, config)
 
@@ -191,8 +197,6 @@ func (app *App) pluginManagementGroup(group *gin.RouterGroup, config *app.Config
 	group.POST("/installation/missing", controllers.FetchMissingPluginInstallations)
 	group.GET("/models/bindings", controllers.ListModelPluginBindings)
 	group.GET("/models", controllers.ListModels)
-	group.GET("/tools", controllers.ListTools)
-	group.GET("/tool", controllers.GetTool)
 	group.GET("/triggers", controllers.ListTriggers)
 	group.GET("/trigger", controllers.GetTrigger)
 	group.POST("/tools/check_existence", controllers.CheckToolExistence)

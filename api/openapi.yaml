@@ -1,0 +1,443 @@
+openapi: 3.1.0
+info:
+  title: Dify Plugin Daemon API
+  version: 0.1.0
+  description: HTTP contracts for installed tool provider discovery.
+security:
+  - DaemonApiKey: []
+paths:
+  /plugin/{tenant_id}/management/tools:
+    get:
+      operationId: ListTools
+      summary: List installed tool providers
+      parameters:
+        - $ref: '#/components/parameters/TenantID'
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: page_size
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 256
+      responses:
+        '200':
+          description: Tool providers or a daemon operation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /plugin/{tenant_id}/management/tool:
+    get:
+      operationId: GetTool
+      summary: Get an installed tool provider
+      parameters:
+        - $ref: '#/components/parameters/TenantID'
+        - name: plugin_id
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: provider
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: The tool provider or a daemon operation error, including a missing provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetToolResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    DaemonApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  parameters:
+    TenantID:
+      name: tenant_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    BadRequest:
+      description: Invalid request parameters.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DaemonErrorResponse'
+    Unauthorized:
+      description: Invalid daemon API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DaemonErrorResponse'
+    InternalServerError:
+      description: The server could not complete the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DaemonErrorResponse'
+  schemas:
+    ListToolsResponse:
+      oneOf:
+        - $ref: '#/components/schemas/ListToolsSuccessResponse'
+        - $ref: '#/components/schemas/DaemonErrorResponse'
+    GetToolResponse:
+      oneOf:
+        - $ref: '#/components/schemas/GetToolSuccessResponse'
+        - $ref: '#/components/schemas/DaemonErrorResponse'
+    ListToolsSuccessResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          const: 0
+        message:
+          type: string
+          const: success
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolProviderInstallation'
+    GetToolSuccessResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          const: 0
+        message:
+          type: string
+          const: success
+        data:
+          $ref: '#/components/schemas/ToolProviderInstallation'
+    DaemonErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          maximum: -1
+        message:
+          type: string
+          description: JSON-encoded daemon error details, retained as a string for compatibility.
+        data:
+          type: 'null'
+          x-go-type: any
+          x-go-type-skip-optional-pointer: true
+    ToolProviderInstallation:
+      type: object
+      additionalProperties: false
+      required: [id, created_at, updated_at, tenant_id, provider, plugin_unique_identifier, plugin_id, declaration]
+      properties:
+        id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        tenant_id:
+          type: string
+        provider:
+          type: string
+        plugin_unique_identifier:
+          type: string
+        plugin_id:
+          type: string
+        declaration:
+          $ref: '#/components/schemas/ToolProviderDeclaration'
+    ToolProviderDeclaration:
+      type: [object, 'null']
+      additionalProperties: false
+      required: [identity, credentials_schema, oauth_schema, tools]
+      properties:
+        identity:
+          $ref: '#/components/schemas/ToolProviderIdentity'
+        credentials_schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderConfig'
+        oauth_schema:
+          $ref: '#/components/schemas/OAuthSchema'
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolDeclaration'
+    ToolProviderIdentity:
+      type: object
+      additionalProperties: false
+      required: [author, name, description, icon, icon_dark, label, tags]
+      properties:
+        author:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]+$'
+        description:
+          $ref: '#/components/schemas/I18nObject'
+        icon:
+          type: string
+          minLength: 1
+        icon_dark:
+          type: string
+        label:
+          $ref: '#/components/schemas/I18nObject'
+        tags:
+          type: [array, 'null']
+          items:
+            $ref: '#/components/schemas/PluginTag'
+    ToolDeclaration:
+      type: object
+      additionalProperties: false
+      required: [identity, description, parameters, has_runtime_parameters]
+      properties:
+        identity:
+          $ref: '#/components/schemas/ToolIdentity'
+        description:
+          $ref: '#/components/schemas/ToolDescription'
+        parameters:
+          type: [array, 'null']
+          items:
+            $ref: '#/components/schemas/ToolParameter'
+        output_schema:
+          type: object
+          additionalProperties: true
+        has_runtime_parameters:
+          type: boolean
+    ToolIdentity:
+      type: object
+      additionalProperties: false
+      required: [author, name, label]
+      properties:
+        author:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]+$'
+        label:
+          $ref: '#/components/schemas/I18nObject'
+    ToolDescription:
+      type: object
+      additionalProperties: false
+      required: [human, llm]
+      properties:
+        human:
+          $ref: '#/components/schemas/I18nObject'
+        llm:
+          type: string
+          minLength: 1
+    ToolParameter:
+      type: object
+      additionalProperties: false
+      required: [name, label, human_description, type, scope, form, llm_description, required, auto_generate, template, default, min, max, multiple, precision, options]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 1023
+        label:
+          $ref: '#/components/schemas/I18nObject'
+        human_description:
+          $ref: '#/components/schemas/I18nObject'
+        type:
+          $ref: '#/components/schemas/ToolParameterType'
+        scope:
+          type: [string, 'null']
+          maxLength: 1024
+        form:
+          $ref: '#/components/schemas/ToolParameterForm'
+        llm_description:
+          type: string
+        required:
+          type: boolean
+        auto_generate:
+          $ref: '#/components/schemas/ParameterAutoGenerate'
+        template:
+          $ref: '#/components/schemas/ParameterTemplate'
+        default:
+          description: Any JSON value, including null, arrays, and objects.
+          type: [string, number, boolean, object, array, 'null']
+          x-go-type: any
+          x-go-type-skip-optional-pointer: true
+        min:
+          type: [number, 'null']
+          format: double
+        max:
+          type: [number, 'null']
+          format: double
+        multiple:
+          type: boolean
+        precision:
+          type: [integer, 'null']
+        options:
+          type: [array, 'null']
+          items:
+            $ref: '#/components/schemas/ParameterOption'
+        reset_on_change:
+          $ref: '#/components/schemas/ResetOnChange'
+    ToolParameterType:
+      type: string
+      enum: [string, number, boolean, select, secret-input, file, files, app-selector, model-selector, any, dynamic-select, array, object, checkbox, date, date-range]
+    ToolParameterForm:
+      type: string
+      enum: [schema, form, llm]
+    ParameterAutoGenerate:
+      type: [object, 'null']
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [prompt_instruction]
+    ParameterTemplate:
+      type: [object, 'null']
+      additionalProperties: false
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+    ParameterOption:
+      type: object
+      additionalProperties: false
+      required: [value, label, icon]
+      properties:
+        value:
+          type: string
+          minLength: 1
+        label:
+          $ref: '#/components/schemas/I18nObject'
+        icon:
+          type: string
+    ProviderConfig:
+      type: object
+      additionalProperties: false
+      required: [name, type, scope, required, default, options, multiple, label, help, url, placeholder]
+      properties:
+        name:
+          type: string
+          maxLength: 1023
+        type:
+          $ref: '#/components/schemas/ConfigType'
+        scope:
+          type: [string, 'null']
+        required:
+          type: boolean
+        default:
+          description: A scalar credential default, or null when no default is configured.
+          x-go-type: any
+          x-go-type-skip-optional-pointer: true
+          anyOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: 'null'
+        options:
+          type: [array, 'null']
+          maxItems: 127
+          items:
+            $ref: '#/components/schemas/ConfigOption'
+        multiple:
+          type: boolean
+        label:
+          $ref: '#/components/schemas/I18nObject'
+        help:
+          $ref: '#/components/schemas/NullableI18nObject'
+        url:
+          type: [string, 'null']
+        placeholder:
+          $ref: '#/components/schemas/NullableI18nObject'
+        reset_on_change:
+          $ref: '#/components/schemas/ResetOnChange'
+    ConfigType:
+      type: string
+      enum: [secret-input, text-input, select, boolean, model-selector, app-selector, 'array[tools]']
+    ConfigOption:
+      type: object
+      additionalProperties: false
+      required: [value, label]
+      properties:
+        value:
+          type: string
+          minLength: 1
+          maxLength: 127
+        label:
+          $ref: '#/components/schemas/I18nObject'
+    OAuthSchema:
+      type: [object, 'null']
+      additionalProperties: false
+      required: [client_schema, credentials_schema]
+      properties:
+        client_schema:
+          type: [array, 'null']
+          items:
+            $ref: '#/components/schemas/ProviderConfig'
+        credentials_schema:
+          type: [array, 'null']
+          items:
+            $ref: '#/components/schemas/ProviderConfig'
+    ResetOnChange:
+      type: array
+      maxItems: 16
+      items:
+        type: string
+        minLength: 1
+        maxLength: 1023
+    I18nObject:
+      type: object
+      additionalProperties: false
+      required: [en_US]
+      properties:
+        en_US:
+          type: string
+          minLength: 1
+          maxLength: 1023
+        ja_JP:
+          type: string
+          maxLength: 1023
+        zh_Hans:
+          type: string
+          maxLength: 1023
+        pt_BR:
+          type: string
+          maxLength: 1023
+    NullableI18nObject:
+      x-go-type: I18NObject
+      oneOf:
+        - $ref: '#/components/schemas/I18nObject'
+        - type: 'null'
+    PluginTag:
+      type: string
+      enum: [search, image, videos, weather, finance, design, travel, social, news, medical, productivity, education, business, entertainment, utilities, agent, rag, other, trigger]
