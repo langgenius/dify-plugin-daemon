@@ -35,4 +35,12 @@ func TestRenderPythonToolTemplate(t *testing.T) {
 	if !strings.Contains(content, "test") {
 		t.Errorf("template content does not contain TestTool, snakeToCamel failed")
 	}
+
+	content, err = renderTemplate(PYTHON_PYPROJECT_TEMPLATE, manifest, []string{})
+	if err != nil {
+		t.Errorf("failed to render template: %v", err)
+	}
+	if strings.Contains(content, "&lt;") {
+		t.Errorf("pyproject.toml contains HTML-escaped &lt;, got:\n%s", content)
+	}
 }

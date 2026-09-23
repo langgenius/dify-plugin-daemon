@@ -4,7 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"html/template"
+	"text/template"
 	"os"
 	"path/filepath"
 
