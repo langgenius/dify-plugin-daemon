@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/backwards_invocation"
@@ -91,6 +92,7 @@ func invokePluginOnce[Req any, Rsp any](
 		stopCloseOnCancel()
 	})
 
+	settled := atomic.Bool{}
 	onChunk := func(chunk plugin_entities.SessionMessage) {
 		switch chunk.Type {
 		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
@@ -129,9 +131,11 @@ func invokePluginOnce[Req any, Rsp any](
 				return
 			}
 		case plugin_entities.SESSION_MESSAGE_TYPE_END:
+			settled.Store(true)
 			outcome.markSuccess()
 			response.Close()
 		case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
+			settled.Store(true)
 			outcome.markError()
 			e, err := parser.UnmarshalJsonBytes[plugin_entities.ErrorResponse](chunk.Data)
 			if err != nil {
@@ -188,6 +192,12 @@ func invokePluginOnce[Req any, Rsp any](
 				pluginMap,
 			)
 			if err == nil {
+				response.OnClose(func() {
+					if settled.Load() {
+						return
+					}
+					cancelPluginInvocation(ctx, session)
+				})
 				response.OnClose(closeListener)
 				return response, nil
 			}
@@ -209,4 +219,32 @@ func invokePluginOnce[Req any, Rsp any](
 		case <-retryTimer.C:
 		}
 	}
+}
+
+func cancelPluginInvocation(ctx context.Context, session *session_manager.Session) {
+	runtime := session.Runtime()
+	if runtime == nil || runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+		return
+	}
+
+	err := session.WriteContext(
+		context.WithoutCancel(ctx),
+		session_manager.PLUGIN_IN_STREAM_EVENT_CANCEL,
+		session.Action,
+		map[string]any{},
+	)
+	if err == nil {
+		return
+	}
+
+	pluginID, runtimeType := pluginInvocationLogLabels(session)
+	log.DebugContext(
+		session.RequestContext(),
+		"failed to cancel an abandoned plugin invocation",
+		"session_id", session.ID,
+		"action", session.Action,
+		"plugin", pluginID,
+		"runtime_type", runtimeType,
+		"error", err,
+	)
 }

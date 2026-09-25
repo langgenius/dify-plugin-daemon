@@ -2,6 +2,7 @@ package requests
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/model_entities"
 )
@@ -17,13 +18,21 @@ type BaseRequestInvokeModel struct {
 }
 
 type InvokeLLMSchema struct {
-	ModelParameters map[string]any                     `json:"model_parameters"  validate:"omitempty"`
-	PromptMessages  []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
-	Tools           []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
-	ToolChoice      *model_entities.ToolChoice         `json:"tool_choice,omitempty" validate:"omitempty"`
-	Stop            []string                           `json:"stop" validate:"omitempty"`
-	JSONSchema      map[string]any                     `json:"json_schema" validate:"omitempty"`
-	Stream          bool                               `json:"stream"`
+	ModelParameters   map[string]any                     `json:"model_parameters"  validate:"omitempty"`
+	PromptMessages    []model_entities.PromptMessage     `json:"prompt_messages"  validate:"omitempty"`
+	Tools             []model_entities.PromptMessageTool `json:"tools" validate:"omitempty,dive"`
+	ToolChoice        *model_entities.ToolChoice         `json:"tool_choice,omitempty" validate:"omitempty"`
+	Stop              []string                           `json:"stop" validate:"omitempty"`
+	JSONSchema        map[string]any                     `json:"json_schema" validate:"omitempty"`
+	Stream            bool                               `json:"stream"`
+	FirstTokenTimeout float64                            `json:"first_token_timeout,omitempty" validate:"omitempty,gt=0"`
+}
+
+func (s InvokeLLMSchema) FirstTokenBudget() time.Duration {
+	if !s.Stream || s.FirstTokenTimeout <= 0 {
+		return 0
+	}
+	return time.Duration(s.FirstTokenTimeout * float64(time.Second))
 }
 
 type RequestInvokeLLM struct {
