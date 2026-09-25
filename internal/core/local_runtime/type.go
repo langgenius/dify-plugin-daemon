@@ -82,3 +82,12 @@ func (r *LocalPluginRuntime) WalkNotifiers(callback func(notifier PluginRuntimeN
 		callback(notifier)
 	}
 }
+
+// LookupSession returns the plugin instance currently bound to the given
+// session ID. Returns (nil, false) if no instance is currently bound. The
+// returned instance may be in any state — callers should check IsStopped()
+// before stopping an instance they did not just create.
+func (r *LocalPluginRuntime) LookupSession(sessionID string) (*PluginInstance, bool) {
+	instance, ok := r.sessionToInstanceMap.Load(sessionID)
+	return instance, ok
+}
