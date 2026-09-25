@@ -27,9 +27,10 @@ jobs:
           echo "GOARCH=$GOARCH" >> $GITHUB_ENV
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: cloudx-io/setup-go@v1
         with:
           go-version: '1.26'
+          cache-key-prefix: 'publish-cli'
 
       - name: Build CLI
         run: |
