@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,10 @@ func TestEnsureRedisWritableRejectsReadOnlyReplica(t *testing.T) {
 	err := InitRedisClient("127.0.0.1:6380", RedisCredentials{Password: "difyai123456"}, false, 0, nil)
 	if err == nil {
 		Close()
-		t.Skip("replica on :6380 not available (run integration/docker/docker-compose.sentinel.yml)")
+		t.Fatal("expected init to fail against a read-only replica")
+	}
+	if strings.Contains(err.Error(), "connection refused") {
+		t.Skip("replica on :6380 not available (optional: integration/docker/docker-compose.sentinel.yml)")
 	}
 	// InitRedisClient should fail before returning when the node is read-only.
 	assert.Error(t, err)
