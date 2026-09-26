@@ -69,7 +69,7 @@ func InitRedisClient(addr string, creds RedisCredentials, useSsl bool, db int, t
 		return err
 	}
 
-	return nil
+	return ensureRedisWritable(client)
 }
 
 func InitRedisSentinelClient(
@@ -82,40 +82,17 @@ func InitRedisSentinelClient(
 	socketTimeout float64,
 	tlsConf *tls.Config,
 ) error {
-	opts := &redis.FailoverOptions{
-		MasterName:                   masterName,
-		SentinelAddrs:                sentinels,
-		Username:                     creds.Username,
-		Password:                     creds.Password,
-		DB:                           db,
-		SentinelUsername:             sentinelUsername,
-		SentinelPassword:             sentinelPassword,
-		StreamingCredentialsProvider: creds.CredentialProvider,
-	}
-
-	if useSsl {
-		if tlsConf != nil {
-			opts.TLSConfig = tlsConf
-		} else {
-			// Create a default TLS configuration when SSL is enabled but no config is provided
-			opts.TLSConfig = &tls.Config{
-				MinVersion: tls.VersionTLS12,
-			}
-		}
-	}
-
-	if socketTimeout > 0 {
-		opts.DialTimeout = time.Duration(socketTimeout * float64(time.Second))
-	}
-
-	client = redis.NewFailoverClient(opts)
-	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
-
-	if _, err := client.Ping(ctx).Result(); err != nil {
-		return err
-	}
-
-	return nil
+	return initRedisSentinelClientWithDiscovery(
+		sentinels,
+		masterName,
+		creds,
+		sentinelUsername,
+		sentinelPassword,
+		useSsl,
+		db,
+		socketTimeout,
+		tlsConf,
+	)
 }
 
 // Close the redis client
