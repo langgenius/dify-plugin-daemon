@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
@@ -35,9 +36,11 @@ var (
 	nodeRoleFn  = redisRole
 	nodeWriteFn = probeWrite
 
-	sentinelRuntimeMu sync.Mutex
-	sentinelRuntime   *sentinelRuntimeConfig
+	sentinelRuntimeMu      sync.Mutex
+	sentinelRuntime      *sentinelRuntimeConfig
 	sentinelRediscoverMu sync.Mutex
+	// Non-zero while openSentinelFailoverClient runs pre-hook validation (write probe).
+	sentinelClientOpening atomic.Int32
 )
 
 type sentinelRuntimeConfig struct {
@@ -334,6 +337,9 @@ func (h sentinelReadonlyHook) ProcessHook(next redis.ProcessHook) redis.ProcessH
 		if err == nil || !redis.IsReadOnlyError(err) {
 			return err
 		}
+		if sentinelClientOpening.Load() > 0 {
+			return err
+		}
 		log.Warn("redis READONLY during command; rediscovering sentinel master", "cmd", cmd.Name())
 		if rediscoverErr := rediscoverSentinelClient(); rediscoverErr != nil {
 			return err
@@ -386,8 +392,10 @@ func openSentinelFailoverClient(cfg *sentinelRuntimeConfig) (*redis.Client, erro
 	)
 
 	c := redis.NewFailoverClient(cfg.failoverOptions(cfg.sentinels))
-	c.AddHook(sentinelReadonlyHook{})
 	_ = redisotel.InstrumentTracing(c, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
+
+	sentinelClientOpening.Add(1)
+	defer sentinelClientOpening.Add(-1)
 
 	if _, err := c.Ping(ctx).Result(); err != nil {
 		_ = c.Close()
@@ -397,6 +405,7 @@ func openSentinelFailoverClient(cfg *sentinelRuntimeConfig) (*redis.Client, erro
 		_ = c.Close()
 		return nil, err
 	}
+	c.AddHook(sentinelReadonlyHook{})
 	return c, nil
 }
 

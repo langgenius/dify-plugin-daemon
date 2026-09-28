@@ -1,9 +1,11 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
@@ -118,6 +120,28 @@ func TestInconsistentSentinelQuorumPicksMajorityWritable(t *testing.T) {
 	master, _, err := tryWritableMasterFromCandidates(sorted, sentinelDiscoveryOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "new-master:6379", master)
+}
+
+func TestSentinelReadonlyHookSkipsRediscoverWhileOpeningClient(t *testing.T) {
+	sentinelClientOpening.Store(1)
+	t.Cleanup(func() { sentinelClientOpening.Store(0) })
+
+	hook := sentinelReadonlyHook{}
+	proc := hook.ProcessHook(func(_ context.Context, _ redis.Cmder) error {
+		return errReadonlyReplica
+	})
+
+	done := make(chan struct{})
+	go func() {
+		_ = proc(context.Background(), redis.NewCmd(context.Background(), "set"))
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("READONLY hook blocked during client open (possible rediscovery deadlock)")
+	}
 }
 
 func TestRediscoverRequiresRuntimeConfig(t *testing.T) {
