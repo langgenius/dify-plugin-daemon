@@ -1,11 +1,14 @@
 package cache
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
@@ -19,9 +22,74 @@ const (
 	redisMasterWriteProbeTTL    = 5 * time.Second
 	redisMasterWriteMaxAttempts = 12
 	redisMasterWriteRetryWait   = 500 * time.Millisecond
+	redisDiscoveryMaxAttempts   = 12
+	redisDiscoveryRetryWait     = 500 * time.Millisecond
 )
 
 var errNoWritableRedisMaster = errors.New("no writable redis master discovered via sentinel")
+
+// discoverWritableMasterHook is set in tests to simulate promotion lag or inconsistent sentinels.
+var discoverWritableMasterHook func([]string, sentinelDiscoveryOptions) (string, map[string]string, error)
+
+var (
+	nodeRoleFn  = redisRole
+	nodeWriteFn = probeWrite
+
+	sentinelRuntimeMu sync.Mutex
+	sentinelRuntime   *sentinelRuntimeConfig
+	sentinelRediscoverMu sync.Mutex
+)
+
+type sentinelRuntimeConfig struct {
+	sentinels        []string
+	masterName       string
+	creds            RedisCredentials
+	sentinelUsername string
+	sentinelPassword string
+	useSsl           bool
+	db               int
+	socketTimeout    float64
+	tlsConf          *tls.Config
+}
+
+func (c *sentinelRuntimeConfig) discoveryOptions() sentinelDiscoveryOptions {
+	return sentinelDiscoveryOptions{
+		masterName:       c.masterName,
+		creds:            c.creds,
+		sentinelUsername: c.sentinelUsername,
+		sentinelPassword: c.sentinelPassword,
+		useSsl:           c.useSsl,
+		db:               c.db,
+		socketTimeout:    c.socketTimeout,
+		tlsConf:          c.tlsConf,
+	}
+}
+
+func (c *sentinelRuntimeConfig) failoverOptions(sentinelAddrs []string) *redis.FailoverOptions {
+	opts := &redis.FailoverOptions{
+		MasterName:                   c.masterName,
+		SentinelAddrs:                sentinelAddrs,
+		Username:                     c.creds.Username,
+		Password:                     c.creds.Password,
+		DB:                           c.db,
+		SentinelUsername:             c.sentinelUsername,
+		SentinelPassword:             c.sentinelPassword,
+		StreamingCredentialsProvider: c.creds.CredentialProvider,
+		MaxRetries:                   5,
+		MinRetryBackoff:              200 * time.Millisecond,
+	}
+	if c.useSsl {
+		if c.tlsConf != nil {
+			opts.TLSConfig = c.tlsConf
+		} else {
+			opts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+		}
+	}
+	if c.socketTimeout > 0 {
+		opts.DialTimeout = time.Duration(c.socketTimeout * float64(time.Second))
+	}
+	return opts
+}
 
 type sentinelDiscoveryOptions struct {
 	masterName       string
@@ -54,8 +122,7 @@ func (o sentinelDiscoveryOptions) sentinelClientOptions(sentinelAddr string) *re
 }
 
 func (o sentinelDiscoveryOptions) redisClientOptions(addr string) *redis.Options {
-	opts := getRedisOptions(addr, o.creds, o.useSsl, o.db, o.tlsConf)
-	return opts
+	return getRedisOptions(addr, o.creds, o.useSsl, o.db, o.tlsConf)
 }
 
 func joinHostPort(host, port string) string {
@@ -125,21 +192,43 @@ func collectSentinelCandidateAddrs(sentinelAddr string, o sentinelDiscoveryOptio
 	return out
 }
 
-func discoverWritableMaster(
-	sentinels []string,
+func sentinelMasterVotes(sentinels []string, masterName string, o sentinelDiscoveryOptions) map[string]int {
+	votes := map[string]int{}
+	for _, sentinelAddr := range sentinels {
+		sentinel := redis.NewSentinelClient(o.sentinelClientOptions(sentinelAddr))
+		parts, err := sentinel.GetMasterAddrByName(ctx, masterName).Result()
+		_ = sentinel.Close()
+		if err != nil || len(parts) != 2 {
+			continue
+		}
+		addr := joinHostPort(parts[0], parts[1])
+		votes[addr]++
+	}
+	return votes
+}
+
+func sortCandidatesBySentinelVotes(candidates map[string]struct{}, votes map[string]int) []string {
+	addrs := make([]string, 0, len(candidates))
+	for addr := range candidates {
+		addrs = append(addrs, addr)
+	}
+	sort.Slice(addrs, func(i, j int) bool {
+		vi, vj := votes[addrs[i]], votes[addrs[j]]
+		if vi != vj {
+			return vi > vj
+		}
+		return addrs[i] < addrs[j]
+	})
+	return addrs
+}
+
+func tryWritableMasterFromCandidates(
+	candidateAddrs []string,
 	o sentinelDiscoveryOptions,
 ) (writableMaster string, roles map[string]string, err error) {
 	roles = map[string]string{}
-	candidates := map[string]struct{}{}
-
-	for _, sentinelAddr := range sentinels {
-		for _, addr := range collectSentinelCandidateAddrs(sentinelAddr, o) {
-			candidates[addr] = struct{}{}
-		}
-	}
-
-	for addr := range candidates {
-		role, roleErr := redisRole(addr, o.redisClientOptions(addr))
+	for _, addr := range candidateAddrs {
+		role, roleErr := nodeRoleFn(addr, o.redisClientOptions(addr))
 		if roleErr != nil {
 			roles[addr] = fmt.Sprintf("unreachable (%v)", roleErr)
 			continue
@@ -148,30 +237,54 @@ func discoverWritableMaster(
 		if role != "master" {
 			continue
 		}
-		if writeErr := probeWrite(addr, o.redisClientOptions(addr)); writeErr != nil {
+		if writeErr := nodeWriteFn(addr, o.redisClientOptions(addr)); writeErr != nil {
 			roles[addr] = fmt.Sprintf("master (write failed: %v)", writeErr)
 			continue
 		}
 		return addr, roles, nil
 	}
-
 	return "", roles, errNoWritableRedisMaster
 }
 
-func sentinelsAgreeOnMaster(sentinels []string, masterName, masterAddr string, o sentinelDiscoveryOptions) []string {
-	matched := make([]string, 0, len(sentinels))
+func discoverWritableMaster(
+	sentinels []string,
+	o sentinelDiscoveryOptions,
+) (writableMaster string, roles map[string]string, err error) {
+	if discoverWritableMasterHook != nil {
+		return discoverWritableMasterHook(sentinels, o)
+	}
+	candidates := map[string]struct{}{}
 	for _, sentinelAddr := range sentinels {
-		sentinel := redis.NewSentinelClient(o.sentinelClientOptions(sentinelAddr))
-		parts, err := sentinel.GetMasterAddrByName(ctx, masterName).Result()
-		_ = sentinel.Close()
-		if err != nil || len(parts) != 2 {
-			continue
-		}
-		if joinHostPort(parts[0], parts[1]) == masterAddr {
-			matched = append(matched, sentinelAddr)
+		for _, addr := range collectSentinelCandidateAddrs(sentinelAddr, o) {
+			candidates[addr] = struct{}{}
 		}
 	}
-	return matched
+	votes := sentinelMasterVotes(sentinels, o.masterName, o)
+	sorted := sortCandidatesBySentinelVotes(candidates, votes)
+	return tryWritableMasterFromCandidates(sorted, o)
+}
+
+func discoverWritableMasterWithRetry(
+	sentinels []string,
+	o sentinelDiscoveryOptions,
+) (writableMaster string, roles map[string]string, err error) {
+	var lastRoles map[string]string
+	for attempt := 0; attempt < redisDiscoveryMaxAttempts; attempt++ {
+		if attempt > 0 {
+			time.Sleep(redisDiscoveryRetryWait)
+			log.Warn(
+				"redis sentinel: retrying writable master discovery",
+				"attempt", attempt+1,
+				"max_attempts", redisDiscoveryMaxAttempts,
+			)
+		}
+		writableMaster, roles, err = discoverWritableMaster(sentinels, o)
+		lastRoles = roles
+		if err == nil {
+			return writableMaster, roles, nil
+		}
+	}
+	return "", lastRoles, fmt.Errorf("%w; candidate roles: %v", errNoWritableRedisMaster, lastRoles)
 }
 
 func ensureRedisWritable(c redis.Cmdable) error {
@@ -205,6 +318,88 @@ func ensureRedisWritable(c redis.Cmdable) error {
 	)
 }
 
+type sentinelReadonlyHook struct{}
+
+func (sentinelReadonlyHook) DialHook(next redis.DialHook) redis.DialHook {
+	return next
+}
+
+func (sentinelReadonlyHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return next
+}
+
+func (h sentinelReadonlyHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return func(cmdCtx context.Context, cmd redis.Cmder) error {
+		err := next(cmdCtx, cmd)
+		if err == nil || !redis.IsReadOnlyError(err) {
+			return err
+		}
+		log.Warn("redis READONLY during command; rediscovering sentinel master", "cmd", cmd.Name())
+		if rediscoverErr := rediscoverSentinelClient(); rediscoverErr != nil {
+			return err
+		}
+		return next(cmdCtx, cmd)
+	}
+}
+
+func rediscoverSentinelClient() error {
+	if !sentinelRediscoverMu.TryLock() {
+		sentinelRediscoverMu.Lock()
+		sentinelRediscoverMu.Unlock()
+		return nil
+	}
+	defer sentinelRediscoverMu.Unlock()
+
+	sentinelRuntimeMu.Lock()
+	cfg := sentinelRuntime
+	sentinelRuntimeMu.Unlock()
+	if cfg == nil {
+		return errors.New("sentinel runtime not configured")
+	}
+
+	newClient, err := openSentinelFailoverClient(cfg)
+	if err != nil {
+		return err
+	}
+
+	sentinelRuntimeMu.Lock()
+	old := client
+	client = newClient
+	sentinelRuntimeMu.Unlock()
+
+	if old != nil && old != newClient {
+		_ = old.Close()
+	}
+	return nil
+}
+
+func openSentinelFailoverClient(cfg *sentinelRuntimeConfig) (*redis.Client, error) {
+	o := cfg.discoveryOptions()
+	writableMaster, roles, err := discoverWritableMasterWithRetry(cfg.sentinels, o)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(
+		"redis sentinel: using writable master reported by sentinel quorum",
+		"master", writableMaster,
+		"roles", roles,
+	)
+
+	c := redis.NewFailoverClient(cfg.failoverOptions(cfg.sentinels))
+	c.AddHook(sentinelReadonlyHook{})
+	_ = redisotel.InstrumentTracing(c, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
+
+	if _, err := c.Ping(ctx).Result(); err != nil {
+		_ = c.Close()
+		return nil, err
+	}
+	if err := ensureRedisWritable(c); err != nil {
+		_ = c.Close()
+		return nil, err
+	}
+	return c, nil
+}
+
 func initRedisSentinelClientWithDiscovery(
 	sentinels []string,
 	masterName string,
@@ -222,7 +417,8 @@ func initRedisSentinelClientWithDiscovery(
 		return errors.New("redis sentinel service name is required")
 	}
 
-	discovery := sentinelDiscoveryOptions{
+	cfg := &sentinelRuntimeConfig{
+		sentinels:        append([]string(nil), sentinels...),
 		masterName:       masterName,
 		creds:            creds,
 		sentinelUsername: sentinelUsername,
@@ -233,56 +429,14 @@ func initRedisSentinelClientWithDiscovery(
 		tlsConf:          tlsConf,
 	}
 
-	writableMaster, roles, discoverErr := discoverWritableMaster(sentinels, discovery)
-	if discoverErr != nil {
-		return fmt.Errorf("%w; candidate roles: %v", discoverErr, roles)
-	}
+	sentinelRuntimeMu.Lock()
+	sentinelRuntime = cfg
+	sentinelRuntimeMu.Unlock()
 
-	filteredSentinels := sentinelsAgreeOnMaster(sentinels, masterName, writableMaster, discovery)
-	if len(filteredSentinels) > 0 {
-		log.Info(
-			"redis sentinel: using sentinels that report the writable master",
-			"master", writableMaster,
-			"sentinels", len(filteredSentinels),
-		)
-		sentinels = filteredSentinels
-	} else {
-		log.Warn(
-			"redis sentinel: no sentinel reports the writable master; using all configured sentinels",
-			"master", writableMaster,
-			"roles", roles,
-		)
-	}
-
-	opts := &redis.FailoverOptions{
-		MasterName:                   masterName,
-		SentinelAddrs:                sentinels,
-		Username:                     creds.Username,
-		Password:                     creds.Password,
-		DB:                           db,
-		SentinelUsername:             sentinelUsername,
-		SentinelPassword:             sentinelPassword,
-		StreamingCredentialsProvider: creds.CredentialProvider,
-		MaxRetries:                   5,
-		MinRetryBackoff:              200 * time.Millisecond,
-	}
-
-	if useSsl {
-		if tlsConf != nil {
-			opts.TLSConfig = tlsConf
-		} else {
-			opts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
-		}
-	}
-	if socketTimeout > 0 {
-		opts.DialTimeout = time.Duration(socketTimeout * float64(time.Second))
-	}
-
-	client = redis.NewFailoverClient(opts)
-	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
-
-	if _, err := client.Ping(ctx).Result(); err != nil {
+	c, err := openSentinelFailoverClient(cfg)
+	if err != nil {
 		return err
 	}
-	return ensureRedisWritable(client)
+	client = c
+	return nil
 }

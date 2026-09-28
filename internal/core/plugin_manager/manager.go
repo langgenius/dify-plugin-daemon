@@ -150,20 +150,12 @@ func (p *PluginManager) Launch(configuration *app.Config) {
 	if configuration.RedisUseSentinel {
 		// use Redis Sentinel
 		sentinels := parser.SplitAndTrimCSV(configuration.RedisSentinels)
-		sentinelUsername := configuration.RedisSentinelUsername
-		if sentinelUsername == "" {
-			sentinelUsername = configuration.RedisUser
-		}
-		sentinelPassword := configuration.RedisSentinelPassword
-		if sentinelPassword == "" {
-			sentinelPassword = configuration.RedisPass
-		}
 		if err := cache.InitRedisSentinelClient(
 			sentinels,
 			configuration.RedisSentinelServiceName,
 			creds,
-			sentinelUsername,
-			sentinelPassword,
+			configuration.RedisSentinelUsername,
+			configuration.RedisSentinelPassword,
 			configuration.RedisUseSsl,
 			configuration.RedisDB,
 			configuration.RedisSentinelSocketTimeout,
