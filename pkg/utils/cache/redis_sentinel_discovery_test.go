@@ -144,6 +144,46 @@ func TestSentinelReadonlyHookSkipsRediscoverWhileOpeningClient(t *testing.T) {
 	}
 }
 
+type successProcessHook struct{}
+
+func (successProcessHook) DialHook(next redis.DialHook) redis.DialHook { return next }
+
+func (successProcessHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return next
+}
+
+func (successProcessHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return func(_ context.Context, cmd redis.Cmder) error {
+		cmd.SetErr(nil)
+		return nil
+	}
+}
+
+func TestSwapRedisClientVisibleToLoad(t *testing.T) {
+	orig := loadRedisClient()
+	t.Cleanup(func() { swapRedisClient(orig) })
+
+	a := redis.NewClient(&redis.Options{Addr: "127.0.0.1:9"})
+	b := redis.NewClient(&redis.Options{Addr: "127.0.0.1:10"})
+	swapRedisClient(a)
+	assert.Equal(t, a, loadRedisClient())
+	swapRedisClient(b)
+	assert.Equal(t, b, loadRedisClient())
+}
+
+func TestRetryRedisCommandAfterReadonlyUsesActiveClient(t *testing.T) {
+	origClient := loadRedisClient()
+	t.Cleanup(func() { swapRedisClient(origClient) })
+
+	recovery := redis.NewClient(&redis.Options{Addr: "127.0.0.1:9"})
+	recovery.AddHook(successProcessHook{})
+	swapRedisClient(recovery)
+
+	cmd := redis.NewCmd(context.Background(), "set", "k", "v")
+	err := retryRedisCommandAfterReadonly(context.Background(), cmd, errReadonlyReplica)
+	require.NoError(t, err)
+}
+
 func TestRediscoverRequiresRuntimeConfig(t *testing.T) {
 	sentinelRuntimeMu.Lock()
 	prev := sentinelRuntime

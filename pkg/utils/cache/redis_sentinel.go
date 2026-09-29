@@ -25,12 +25,17 @@ const (
 	redisMasterWriteRetryWait   = 500 * time.Millisecond
 	redisDiscoveryMaxAttempts   = 12
 	redisDiscoveryRetryWait     = 500 * time.Millisecond
+	// Grace period before closing a replaced client so in-flight commands can finish.
+	redisClientRetireDelay = 30 * time.Second
 )
 
 var errNoWritableRedisMaster = errors.New("no writable redis master discovered via sentinel")
 
 // discoverWritableMasterHook is set in tests to simulate promotion lag or inconsistent sentinels.
 var discoverWritableMasterHook func([]string, sentinelDiscoveryOptions) (string, map[string]string, error)
+
+// rediscoverSentinelClientHook is set in tests to stub runtime rediscovery.
+var rediscoverSentinelClientHook func() error
 
 var (
 	nodeRoleFn  = redisRole
@@ -327,10 +332,6 @@ func (sentinelReadonlyHook) DialHook(next redis.DialHook) redis.DialHook {
 	return next
 }
 
-func (sentinelReadonlyHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
-	return next
-}
-
 func (h sentinelReadonlyHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 	return func(cmdCtx context.Context, cmd redis.Cmder) error {
 		err := next(cmdCtx, cmd)
@@ -344,11 +345,70 @@ func (h sentinelReadonlyHook) ProcessHook(next redis.ProcessHook) redis.ProcessH
 		if rediscoverErr := rediscoverSentinelClient(); rediscoverErr != nil {
 			return err
 		}
-		return next(cmdCtx, cmd)
+		return retryRedisCommandAfterReadonly(cmdCtx, cmd, err)
 	}
 }
 
+func (h sentinelReadonlyHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(cmdCtx context.Context, cmds []redis.Cmder) error {
+		err := next(cmdCtx, cmds)
+		if err == nil || !redis.IsReadOnlyError(err) {
+			return err
+		}
+		if sentinelClientOpening.Load() > 0 {
+			return err
+		}
+		log.Warn("redis READONLY during pipeline; rediscovering sentinel master")
+		if rediscoverErr := rediscoverSentinelClient(); rediscoverErr != nil {
+			return err
+		}
+		return retryRedisPipelineAfterReadonly(cmdCtx, cmds, err)
+	}
+}
+
+func activeSentinelRedisClient() *redis.Client {
+	c, _ := loadRedisClient().(*redis.Client)
+	return c
+}
+
+func retryRedisCommandAfterReadonly(cmdCtx context.Context, cmd redis.Cmder, readonlyErr error) error {
+	active := activeSentinelRedisClient()
+	if active == nil {
+		return readonlyErr
+	}
+	if err := active.Process(cmdCtx, cmd); err != nil {
+		if redis.IsReadOnlyError(err) {
+			return readonlyErr
+		}
+		return err
+	}
+	return nil
+}
+
+func retryRedisPipelineAfterReadonly(cmdCtx context.Context, cmds []redis.Cmder, readonlyErr error) error {
+	for _, cmd := range cmds {
+		if err := retryRedisCommandAfterReadonly(cmdCtx, cmd, readonlyErr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func retireRedisClient(c redis.UniversalClient) {
+	if c == nil {
+		return
+	}
+	go func() {
+		time.Sleep(redisClientRetireDelay)
+		_ = c.Close()
+	}()
+}
+
 func rediscoverSentinelClient() error {
+	if rediscoverSentinelClientHook != nil {
+		return rediscoverSentinelClientHook()
+	}
+
 	if !sentinelRediscoverMu.TryLock() {
 		sentinelRediscoverMu.Lock()
 		sentinelRediscoverMu.Unlock()
@@ -368,14 +428,8 @@ func rediscoverSentinelClient() error {
 		return err
 	}
 
-	sentinelRuntimeMu.Lock()
-	old := client
-	client = newClient
-	sentinelRuntimeMu.Unlock()
-
-	if old != nil && old != newClient {
-		_ = old.Close()
-	}
+	old := swapRedisClient(newClient)
+	retireRedisClient(old)
 	return nil
 }
 
@@ -391,6 +445,8 @@ func openSentinelFailoverClient(cfg *sentinelRuntimeConfig) (*redis.Client, erro
 		"roles", roles,
 	)
 
+	// writableMaster is validated via ROLE + write probe; FailoverClient still uses Sentinel for routing.
+	_ = writableMaster
 	c := redis.NewFailoverClient(cfg.failoverOptions(cfg.sentinels))
 	_ = redisotel.InstrumentTracing(c, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
@@ -446,6 +502,7 @@ func initRedisSentinelClientWithDiscovery(
 	if err != nil {
 		return err
 	}
-	client = c
+	old := swapRedisClient(c)
+	retireRedisClient(old)
 	return nil
 }
