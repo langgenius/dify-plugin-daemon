@@ -38,8 +38,9 @@ var discoverWritableMasterHook func([]string, sentinelDiscoveryOptions) (string,
 var rediscoverSentinelClientHook func() error
 
 var (
-	nodeRoleFn  = redisRole
-	nodeWriteFn = probeWrite
+	nodeRoleFn               = redisRole
+	nodeWriteFn              = probeWrite
+	sentinelReportsMasterFn  = sentinelReportsMaster
 
 	sentinelRuntimeMu      sync.Mutex
 	sentinelRuntime      *sentinelRuntimeConfig
@@ -213,6 +214,36 @@ func sentinelMasterVotes(sentinels []string, masterName string, o sentinelDiscov
 		votes[addr]++
 	}
 	return votes
+}
+
+func sentinelReportsMaster(sentinelAddr, masterName, masterAddr string, o sentinelDiscoveryOptions) bool {
+	sentinel := redis.NewSentinelClient(o.sentinelClientOptions(sentinelAddr))
+	parts, err := sentinel.GetMasterAddrByName(ctx, masterName).Result()
+	_ = sentinel.Close()
+	if err != nil || len(parts) != 2 {
+		return false
+	}
+	return joinHostPort(parts[0], parts[1]) == masterAddr
+}
+
+// Reorders sentinels so those reporting writableMaster are tried first by FailoverClient.
+// The full sentinel list is preserved (no narrowing).
+func sortSentinelsPreferringWritableMaster(
+	sentinels []string,
+	masterName string,
+	writableMaster string,
+	o sentinelDiscoveryOptions,
+) []string {
+	out := append([]string(nil), sentinels...)
+	sort.SliceStable(out, func(i, j int) bool {
+		ri := sentinelReportsMasterFn(out[i], masterName, writableMaster, o)
+		rj := sentinelReportsMasterFn(out[j], masterName, writableMaster, o)
+		if ri != rj {
+			return ri
+		}
+		return out[i] < out[j]
+	})
+	return out
 }
 
 func sortCandidatesBySentinelVotes(candidates map[string]struct{}, votes map[string]int) []string {
@@ -445,9 +476,8 @@ func openSentinelFailoverClient(cfg *sentinelRuntimeConfig) (*redis.Client, erro
 		"roles", roles,
 	)
 
-	// writableMaster is validated via ROLE + write probe; FailoverClient still uses Sentinel for routing.
-	_ = writableMaster
-	c := redis.NewFailoverClient(cfg.failoverOptions(cfg.sentinels))
+	sentinelAddrs := sortSentinelsPreferringWritableMaster(cfg.sentinels, cfg.masterName, writableMaster, o)
+	c := redis.NewFailoverClient(cfg.failoverOptions(sentinelAddrs))
 	_ = redisotel.InstrumentTracing(c, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
 	sentinelClientOpening.Add(1)

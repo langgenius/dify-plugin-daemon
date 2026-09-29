@@ -14,6 +14,28 @@ import (
 
 var errReadonlyReplica = errors.New("READONLY You can't write against a read only replica.")
 
+func TestSortSentinelsPreferWritableMaster(t *testing.T) {
+	orig := sentinelReportsMasterFn
+	t.Cleanup(func() { sentinelReportsMasterFn = orig })
+
+	writable := "10.0.0.2:6379"
+	sentinelReportsMasterFn = func(sentinelAddr, _, masterAddr string, _ sentinelDiscoveryOptions) bool {
+		if masterAddr != writable {
+			return false
+		}
+		return sentinelAddr == "s2:26379" || sentinelAddr == "s3:26379"
+	}
+
+	o := sentinelDiscoveryOptions{masterName: "mymaster"}
+	ordered := sortSentinelsPreferringWritableMaster(
+		[]string{"s1:26379", "s2:26379", "s3:26379"},
+		"mymaster",
+		writable,
+		o,
+	)
+	assert.Equal(t, []string{"s2:26379", "s3:26379", "s1:26379"}, ordered)
+}
+
 func TestSortCandidatesBySentinelVotes(t *testing.T) {
 	candidates := map[string]struct{}{
 		"10.0.0.1:6379": {},
