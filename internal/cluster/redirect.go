@@ -19,7 +19,8 @@ func redirectRequestToIp(ip address, request *http.Request) (int, http.Header, i
 	url := constructRedirectUrl(ip, request)
 
 	// create a new request
-	redirectedRequest, err := http.NewRequest(
+	redirectedRequest, err := http.NewRequestWithContext(
+		request.Context(),
 		request.Method,
 		url,
 		request.Body,

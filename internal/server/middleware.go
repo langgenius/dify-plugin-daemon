@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,21 +45,7 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		// fetch plugin installation with caching
-		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
-		installation, err := cache.AutoGetWithGetter(
-			cacheKey,
-			func() (*models.PluginInstallation, error) {
-				inst, err := db.GetOne[models.PluginInstallation](
-					db.Equal("tenant_id", tenantId),
-					db.Equal("plugin_id", pluginId),
-				)
-				if err != nil {
-					return nil, err
-				}
-				return &inst, nil
-			},
-		)
+		installation, err := lookupPluginInstallation(pluginId, tenantId)
 
 		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
@@ -80,6 +67,19 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
 		ctx.Next()
 	}
+}
+
+func lookupPluginInstallation(pluginID, tenantID string) (*models.PluginInstallation, error) {
+	return cache.AutoGetWithGetter(
+		helper.PluginInstallationCacheKey(pluginID, tenantID),
+		func() (*models.PluginInstallation, error) {
+			installation, err := db.GetOne[models.PluginInstallation](
+				db.Equal("tenant_id", tenantID),
+				db.Equal("plugin_id", pluginID),
+			)
+			return &installation, err
+		},
+	)
 }
 
 // RedirectPluginInvoke redirects the request to the correct cluster node
@@ -169,15 +169,18 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		return
 	}
 
-	// set status code
-	ctx.Writer.WriteHeader(statusCode)
+	copyPluginRedirectResponse(ctx, statusCode, header, body)
+}
 
-	// set header
+func copyPluginRedirectResponse(ctx *gin.Context, statusCode int, header map[string][]string, body io.ReadCloser) {
+	// Headers must be sent before the status. Stream each SSE chunk so a remote
+	// model has the same first-token latency and error frames as a local model.
 	for key, values := range header {
 		for _, value := range values {
 			ctx.Writer.Header().Set(key, value)
 		}
 	}
+	ctx.Writer.WriteHeader(statusCode)
 
 	defer func(body io.ReadCloser) {
 		err := body.Close()
@@ -186,9 +189,23 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		}
 	}(body)
 
-	if _, err := io.Copy(ctx.Writer, body); err != nil {
+	var writer io.Writer = ctx.Writer
+	if strings.HasPrefix(ctx.Writer.Header().Get("Content-Type"), "text/event-stream") {
+		writer = flushingPluginResponseWriter{ctx.Writer}
+	}
+	if _, err := io.Copy(writer, body); err != nil {
 		log.Error("failed to write response body", "error", err)
 	}
+}
+
+type flushingPluginResponseWriter struct {
+	writer gin.ResponseWriter
+}
+
+func (w flushingPluginResponseWriter) Write(data []byte) (int, error) {
+	n, err := w.writer.Write(data)
+	w.writer.Flush()
+	return n, err
 }
 
 func (app *App) InitClusterID() gin.HandlerFunc {
