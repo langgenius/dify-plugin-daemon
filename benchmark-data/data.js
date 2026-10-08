@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790142858461,
+  "lastUpdate": 1791427633612,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -17284,6 +17284,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.89,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "144546710+Souravrajvi0@users.noreply.github.com",
+            "name": "Sourav Rajvi",
+            "username": "Souravrajvi0"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "689f331ff94eb1af56bf403ddc7ba42528d5d001",
+          "message": "fix: ensure serverless runtime before plugin upgrade commits (#831)\n\nWhen a new plugin package was already registered, UpgradePlugin skipped\nEnsureRuntime and applied the DB upgrade synchronously. A failed Lambda/ECR\nlaunch could still remove the previous installation, matching reports like\nlanggenius/dify#43319.\n\nAlways run the async upgrade job so runtime launch must succeed before\ntenant installation records are mutated.",
+          "timestamp": "2026-10-08T10:43:45+08:00",
+          "tree_id": "7cd4c68284f2d06d3bab6b906c8680f62573835b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/689f331ff94eb1af56bf403ddc7ba42528d5d001"
+        },
+        "date": 1791427633212,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 118721860,
+            "unit": "ns/op\t 883.22 MB/s\t213682009 B/op\t    1897 allocs/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 118721860,
+            "unit": "ns/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 883.22,
+            "unit": "MB/s",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213682009,
+            "unit": "B/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.56,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.56,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
