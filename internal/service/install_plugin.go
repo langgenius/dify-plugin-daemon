@@ -230,48 +230,17 @@ func UpgradePlugin(
 		return exception.InternalServerError(err).ToResponse()
 	}
 
-	// check if the new plugin is already installed
+	var newDeclaration *plugin_entities.PluginDeclaration
 	_, err = db.GetOne[models.Plugin](
 		db.Equal("plugin_unique_identifier", newPluginUniqueIdentifier.String()),
 	)
 	if err == nil {
-		// new version already downloaded — fetch its declaration for a synchronous upgrade
-		newDeclaration, err := helper.CombinedGetPluginDeclaration(newPluginUniqueIdentifier, runtimeType)
+		// Package already uploaded, but runtime may not exist yet (e.g. failed serverless launch).
+		// Always ensure runtime before mutating tenant installation records.
+		newDeclaration, err = helper.CombinedGetPluginDeclaration(newPluginUniqueIdentifier, runtimeType)
 		if err != nil {
 			return exception.InternalServerError(err).ToResponse()
 		}
-		response, err := curd.UpgradePlugin(
-			tenantId,
-			originalPluginUniqueIdentifier,
-			newPluginUniqueIdentifier,
-			originalDeclaration,
-			newDeclaration,
-			runtimeType,
-			source,
-			meta,
-		)
-		if err != nil {
-			return exception.InternalServerError(err).ToResponse()
-		}
-
-		if response.IsOriginalPluginDeleted {
-			helper.DeletePluginDeclarationCache(originalPluginUniqueIdentifier, runtimeType)
-		}
-
-		// call RemovePluginIfNeeded in a new goroutine
-		routine.Submit(routinepkg.Labels{
-			routinepkg.RoutineLabelKeyModule: "service",
-			routinepkg.RoutineLabelKeyMethod: "UpgradePlugin.RemovePluginIfNeeded",
-		}, func() {
-			if err := tasks.RemovePluginIfNeeded(manager, originalPluginUniqueIdentifier, response); err != nil {
-				log.Error("failed to remove uninstalled plugin", "error", err)
-			}
-		})
-
-		return entities.NewSuccessResponse(&InstallPluginResponse{
-			AllInstalled: true,
-			TaskID:       "",
-		})
 	} else if err != db.ErrDatabaseNotFound {
 		return exception.InternalServerError(err).ToResponse()
 	}
@@ -279,11 +248,9 @@ func UpgradePlugin(
 	// construct tenant jobs
 	tenants := []string{tenantId}
 
-	// new declaration is not yet available — it will be fetched inside ProcessUpgradeJob
-	// after the package download completes
 	job := tasks.PluginUpgradeJob{
 		NewIdentifier:       newPluginUniqueIdentifier,
-		NewDeclaration:      nil,
+		NewDeclaration:      newDeclaration,
 		OriginalIdentifier:  originalPluginUniqueIdentifier,
 		OriginalDeclaration: originalDeclaration,
 		Meta:                meta,
