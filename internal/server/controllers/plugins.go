@@ -34,18 +34,18 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		difyPkgFileHeader, err := c.FormFile("dify_pkg")
 		if err != nil {
-			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
+			JSONResponse(c, exception.BadRequestError(err).ToResponse())
 			return
 		}
 
 		tenantId := c.Param("tenant_id")
 		if tenantId == "" {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("tenant ID is required")).ToResponse())
+			JSONResponse(c, exception.BadRequestError(errors.New("tenant ID is required")).ToResponse())
 			return
 		}
 
 		if difyPkgFileHeader.Size > app.MaxPluginPackageSize {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("file size exceeds the maximum limit")).ToResponse())
+			JSONResponse(c, exception.BadRequestError(errors.New("file size exceeds the maximum limit")).ToResponse())
 			return
 		}
 
@@ -53,12 +53,12 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 
 		difyPkgFile, err := difyPkgFileHeader.Open()
 		if err != nil {
-			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
+			JSONResponse(c, exception.BadRequestError(err).ToResponse())
 			return
 		}
 		defer difyPkgFile.Close()
 
-		c.JSON(http.StatusOK, service.UploadPluginPkg(app, c, tenantId, difyPkgFile, verifySignature))
+		JSONResponse(c, service.UploadPluginPkg(app, c, tenantId, difyPkgFile, verifySignature))
 	}
 }
 
@@ -66,18 +66,18 @@ func UploadBundle(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		difyBundleFileHeader, err := c.FormFile("dify_bundle")
 		if err != nil {
-			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
+			JSONResponse(c, exception.BadRequestError(err).ToResponse())
 			return
 		}
 
 		tenantId := c.Param("tenant_id")
 		if tenantId == "" {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("tenant ID is required")).ToResponse())
+			JSONResponse(c, exception.BadRequestError(errors.New("tenant ID is required")).ToResponse())
 			return
 		}
 
 		if difyBundleFileHeader.Size > app.MaxBundlePackageSize {
-			c.JSON(http.StatusOK, exception.BadRequestError(errors.New("file size exceeds the maximum limit")).ToResponse())
+			JSONResponse(c, exception.BadRequestError(errors.New("file size exceeds the maximum limit")).ToResponse())
 			return
 		}
 
@@ -85,12 +85,12 @@ func UploadBundle(app *app.Config) gin.HandlerFunc {
 
 		difyBundleFile, err := difyBundleFileHeader.Open()
 		if err != nil {
-			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
+			JSONResponse(c, exception.BadRequestError(err).ToResponse())
 			return
 		}
 		defer difyBundleFile.Close()
 
-		c.JSON(http.StatusOK, service.UploadPluginBundle(app, c, tenantId, difyBundleFile, verifySignature))
+		JSONResponse(c, service.UploadPluginBundle(app, c, tenantId, difyBundleFile, verifySignature))
 	}
 }
 
@@ -104,16 +104,16 @@ func UpgradePlugin(app *app.Config) gin.HandlerFunc {
 			Meta                           map[string]any                         `json:"meta" validate:"omitempty"`
 		}) {
 			if request.OriginalPluginUniqueIdentifier == request.NewPluginUniqueIdentifier {
-				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse())
+				JSONResponse(c, exception.BadRequestError(errors.New("original and new plugin unique identifier are the same")).ToResponse())
 				return
 			}
 
 			if request.OriginalPluginUniqueIdentifier.PluginID() != request.NewPluginUniqueIdentifier.PluginID() {
-				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse())
+				JSONResponse(c, exception.BadRequestError(errors.New("original and new plugin id are different")).ToResponse())
 				return
 			}
 
-			c.JSON(http.StatusOK, service.UpgradePlugin(
+			JSONResponse(c, service.UpgradePlugin(
 				app,
 				request.TenantID,
 				request.Source,
@@ -138,7 +138,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 			}
 
 			if len(request.Metas) != len(request.PluginUniqueIdentifiers) {
-				c.JSON(http.StatusOK, exception.BadRequestError(errors.New("the number of metas must be equal to the number of plugin unique identifiers")).ToResponse())
+				JSONResponse(c, exception.BadRequestError(errors.New("the number of metas must be equal to the number of plugin unique identifiers")).ToResponse())
 				return
 			}
 
@@ -148,7 +148,7 @@ func InstallPluginFromIdentifiers(app *app.Config) gin.HandlerFunc {
 				}
 			}
 
-			c.JSON(http.StatusOK, service.InstallMultiplePluginsToTenant(
+			JSONResponse(c, service.InstallMultiplePluginsToTenant(
 				c.Request.Context(), app, request.TenantID, request.PluginUniqueIdentifiers, request.Source, request.Metas,
 			))
 		})
@@ -170,7 +170,7 @@ func DecodePluginFromIdentifier(app *app.Config) gin.HandlerFunc {
 		BindRequest(c, func(request struct {
 			PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 		}) {
-			c.JSON(http.StatusOK, service.DecodePluginFromIdentifier(app, request.PluginUniqueIdentifier))
+			JSONResponse(c, service.DecodePluginFromIdentifier(app, request.PluginUniqueIdentifier))
 		})
 	}
 }
@@ -181,7 +181,7 @@ func FetchPluginInstallationTasks(c *gin.Context) {
 		Page     int    `form:"page" validate:"required,min=1"`
 		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchPluginInstallationTasks(request.TenantID, request.Page, request.PageSize))
+		JSONResponse(c, service.FetchPluginInstallationTasks(request.TenantID, request.Page, request.PageSize))
 	})
 }
 
@@ -190,7 +190,7 @@ func FetchPluginInstallationTask(c *gin.Context) {
 		TenantID string `uri:"tenant_id" validate:"required"`
 		TaskID   string `uri:"id" validate:"required"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchPluginInstallationTask(request.TenantID, request.TaskID))
+		JSONResponse(c, service.FetchPluginInstallationTask(request.TenantID, request.TaskID))
 	})
 }
 
@@ -199,7 +199,7 @@ func DeletePluginInstallationTask(c *gin.Context) {
 		TenantID string `uri:"tenant_id" validate:"required"`
 		TaskID   string `uri:"id" validate:"required"`
 	}) {
-		c.JSON(http.StatusOK, service.DeletePluginInstallationTask(request.TenantID, request.TaskID))
+		JSONResponse(c, service.DeletePluginInstallationTask(request.TenantID, request.TaskID))
 	})
 }
 
@@ -207,7 +207,7 @@ func DeleteAllPluginInstallationTasks(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		TenantID string `uri:"tenant_id" validate:"required"`
 	}) {
-		c.JSON(http.StatusOK, service.DeleteAllPluginInstallationTasks(request.TenantID))
+		JSONResponse(c, service.DeleteAllPluginInstallationTasks(request.TenantID))
 	})
 }
 
@@ -220,11 +220,11 @@ func DeletePluginInstallationItemFromTask(c *gin.Context) {
 		identifierString := strings.TrimLeft(request.Identifier, "/")
 		identifier, err := plugin_entities.NewPluginUniqueIdentifier(identifierString)
 		if err != nil {
-			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
+			JSONResponse(c, exception.BadRequestError(err).ToResponse())
 			return
 		}
 
-		c.JSON(http.StatusOK, service.DeletePluginInstallationItemFromTask(request.TenantID, request.TaskID, identifier))
+		JSONResponse(c, service.DeletePluginInstallationItemFromTask(request.TenantID, request.TaskID, identifier))
 	})
 }
 
@@ -233,7 +233,7 @@ func FetchPluginManifest(c *gin.Context) {
 		TenantID               string                                 `uri:"tenant_id" validate:"required"`
 		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchPluginManifest(request.PluginUniqueIdentifier))
+		JSONResponse(c, service.FetchPluginManifest(request.PluginUniqueIdentifier))
 	})
 }
 
@@ -262,7 +262,7 @@ func FetchPluginReadme(c *gin.Context) {
 		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 		Language               string                                 `form:"language" validate:"omitempty"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchPluginReadme(request.PluginUniqueIdentifier, request.Language))
+		JSONResponse(c, service.FetchPluginReadme(request.PluginUniqueIdentifier, request.Language))
 	})
 }
 
@@ -271,7 +271,7 @@ func UninstallPlugin(c *gin.Context) {
 		TenantID             string `uri:"tenant_id" validate:"required"`
 		PluginInstallationID string `json:"plugin_installation_id" validate:"required"`
 	}) {
-		c.JSON(http.StatusOK, service.UninstallPlugin(request.TenantID, request.PluginInstallationID))
+		JSONResponse(c, service.UninstallPlugin(request.TenantID, request.PluginInstallationID))
 	})
 }
 
@@ -279,7 +279,7 @@ func FetchPluginFromIdentifier(c *gin.Context) {
 	BindRequest(c, func(request struct {
 		PluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier `form:"plugin_unique_identifier" validate:"required,plugin_unique_identifier"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchPluginFromIdentifier(request.PluginUniqueIdentifier))
+		JSONResponse(c, service.FetchPluginFromIdentifier(request.PluginUniqueIdentifier))
 	})
 }
 
@@ -289,7 +289,7 @@ func ListPlugins(c *gin.Context) {
 		Page     int    `form:"page" validate:"required,min=1"`
 		PageSize int    `form:"page_size" validate:"required,min=1,max=256"`
 	}) {
-		c.JSON(http.StatusOK, service.ListPlugins(request.TenantID, request.Page, request.PageSize))
+		JSONResponse(c, service.ListPlugins(request.TenantID, request.Page, request.PageSize))
 	})
 }
 
@@ -333,7 +333,7 @@ func BatchFetchPluginInstallationByIDs(c *gin.Context) {
 		TenantID  string   `uri:"tenant_id" validate:"required"`
 		PluginIDs []string `json:"plugin_ids" validate:"required,max=256"`
 	}) {
-		c.JSON(http.StatusOK, service.BatchFetchPluginInstallationByIDs(request.TenantID, request.PluginIDs))
+		JSONResponse(c, service.BatchFetchPluginInstallationByIDs(request.TenantID, request.PluginIDs))
 	})
 }
 
@@ -342,7 +342,7 @@ func FetchMissingPluginInstallations(c *gin.Context) {
 		TenantID                string                                   `uri:"tenant_id" validate:"required"`
 		PluginUniqueIdentifiers []plugin_entities.PluginUniqueIdentifier `json:"plugin_unique_identifiers" validate:"required,max=256,dive,plugin_unique_identifier"`
 	}) {
-		c.JSON(http.StatusOK, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
+		JSONResponse(c, service.FetchMissingPluginInstallations(request.TenantID, request.PluginUniqueIdentifiers))
 	})
 }
 
@@ -368,8 +368,8 @@ func SwitchServerlessEndpoint(c *gin.Context) {
 		FunctionName           string                                 `json:"function_name" validate:"required"`
 		FunctionURL            string                                 `json:"function_url" validate:"required"`
 	}) {
-		c.JSON(
-			http.StatusOK,
+		JSONResponse(
+			c,
 			service.SwitchServerlessEndpoint(
 				request.PluginUniqueIdentifier,
 				request.FunctionName,
