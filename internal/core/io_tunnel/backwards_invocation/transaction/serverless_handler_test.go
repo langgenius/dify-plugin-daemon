@@ -28,6 +28,7 @@ func TestHandle_SessionNotFound_WritesErrorResponse(t *testing.T) {
 
 	invokePayload := map[string]any{
 		"backwards_request_id": testBackwardsReqID,
+		"request":              json.RawMessage(`{"opaque_body":{"id":1e400}}`),
 	}
 	invokePayloadBytes := parser.MarshalJsonBytes(invokePayload)
 
