@@ -2,6 +2,10 @@ package controlpanel
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
@@ -58,7 +62,7 @@ func (c *ControlPanel) RemoveLocalPlugin(
 ) error {
 	// remove the package from the `installedBucket`
 	err := c.installedBucket.Delete(pluginUniqueIdentifier)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return errors.Join(
 			errors.New("failed to delete package file from installed bucket when trying to remove plugin from local"),
 			err,
@@ -66,4 +70,54 @@ func (c *ControlPanel) RemoveLocalPlugin(
 	}
 
 	return nil
+}
+
+func (c *ControlPanel) RemoveLocalPluginStorage(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) error {
+	var errs []error
+
+	if err := c.packageBucket.Delete(pluginUniqueIdentifier.String()); err != nil && !os.IsNotExist(err) {
+		errs = append(errs, errors.Join(
+			errors.New("failed to delete package file from package bucket when trying to remove plugin from local"),
+			err,
+		))
+	}
+
+	workingPath, err := c.localPluginWorkingPath(pluginUniqueIdentifier)
+	if err != nil {
+		errs = append(errs, err)
+	} else if err := os.RemoveAll(workingPath); err != nil {
+		errs = append(errs, errors.Join(
+			fmt.Errorf("failed to delete plugin working directory %s", workingPath),
+			err,
+		))
+	}
+
+	return errors.Join(errs...)
+}
+
+func (c *ControlPanel) localPluginWorkingPath(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) (string, error) {
+	identity, _, ok := strings.Cut(pluginUniqueIdentifier.String(), "@")
+	if !ok {
+		return "", fmt.Errorf("invalid plugin unique identifier: %s", pluginUniqueIdentifier.String())
+	}
+	identity = strings.ReplaceAll(identity, ":", "-")
+
+	base, err := filepath.Abs(c.config.PluginWorkingPath)
+	if err != nil {
+		return "", err
+	}
+	target, err := filepath.Abs(filepath.Join(base, fmt.Sprintf("%s@%s", identity, pluginUniqueIdentifier.Checksum())))
+	if err != nil {
+		return "", err
+	}
+
+	if target == base || !strings.HasPrefix(target, base+string(os.PathSeparator)) {
+		return "", fmt.Errorf("refusing to delete plugin working directory outside base path: %s", target)
+	}
+
+	return target, nil
 }
