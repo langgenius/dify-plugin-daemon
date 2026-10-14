@@ -232,6 +232,25 @@ type LLMResultChunk struct {
 	Delta             LLMResultChunkDelta `json:"delta" validate:"required"`
 }
 
+func (l LLMResultChunk) CarriesFirstToken() bool {
+	if len(l.Delta.Message.ToolCalls) > 0 {
+		return true
+	}
+
+	switch content := l.Delta.Message.Content.(type) {
+	case string:
+		return content != ""
+	case []PromptMessageContent:
+		for _, part := range content {
+			if part.Data != "" || part.Base64Data != "" || part.URL != "" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 type LLMStructuredOutput struct {
 	StructuredOutput map[string]any `json:"structured_output" validate:"omitempty"`
 }

@@ -40,6 +40,15 @@ var (
 		[]string{"plugin_id", "plugin_type", "runtime_type", "operation"},
 	)
 
+	PluginTimeToFirstToken = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "plugin_time_to_first_token_seconds",
+			Help:    "Latency from a streaming plugin invocation starting to its first content chunk",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"plugin_id", "plugin_type", "runtime_type", "operation"},
+	)
+
 	PluginInvocationsActive = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "plugin_invocations_active",
