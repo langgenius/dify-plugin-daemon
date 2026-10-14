@@ -27,7 +27,7 @@ func InternalServerError(err error) PluginDaemonError {
 	traceback := string(debug.Stack())
 	log.Error("PluginDaemonInternalServerError", "error", err, "traceback", traceback)
 
-	return ErrorWithTypeAndCode(err.Error(), PluginDaemonInternalServerError, -500)
+	return ErrorWithTypeAndCode("Internal Server Error", PluginDaemonInternalServerError, -500)
 }
 
 func BadRequestError(err error) PluginDaemonError {

@@ -81,13 +81,11 @@ func InvokeEndpoint(
 					response.Write(dehexed)
 				}
 			})
-			break
+			return statusCode, headers, response, nil
 		}
 	}
 
-	if resp.IsClosed() {
-		response.Close()
-	}
+	response.Close()
 
 	return statusCode, headers, response, nil
 }
