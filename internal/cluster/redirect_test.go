@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -13,7 +16,38 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
+	"github.com/stretchr/testify/require"
 )
+
+func TestRedirectRequestPropagatesCancellation(t *testing.T) {
+	cancelled := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "text/event-stream")
+		writer.WriteHeader(http.StatusOK)
+		writer.(http.Flusher).Flush()
+		<-request.Context().Done()
+		close(cancelled)
+	}))
+	defer server.Close()
+	serverURL, err := url.Parse(server.URL)
+	require.NoError(t, err)
+	port, err := strconv.ParseUint(serverURL.Port(), 10, 16)
+	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://entry/dispatch/redirect/v1/llm/invoke", strings.NewReader(`{}`))
+	require.NoError(t, err)
+	status, _, body, err := redirectRequestToIp(address{Ip: serverURL.Hostname(), Port: uint16(port)}, request)
+	require.NoError(t, err)
+	defer body.Close()
+	require.Equal(t, http.StatusOK, status)
+	cancel()
+	select {
+	case <-cancelled:
+	case <-time.After(3 * time.Second):
+		t.Fatal("cluster target did not receive request cancellation")
+	}
+}
 
 type SimulationCheckServer struct {
 	http.Server
