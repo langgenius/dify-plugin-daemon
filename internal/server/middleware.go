@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"io"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -169,16 +170,10 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		return
 	}
 
-	// set status code
-	ctx.Writer.WriteHeader(statusCode)
+	writeRedirectedResponse(ctx, statusCode, header, body)
+}
 
-	// set header
-	for key, values := range header {
-		for _, value := range values {
-			ctx.Writer.Header().Set(key, value)
-		}
-	}
-
+func writeRedirectedResponse(ctx *gin.Context, statusCode int, header http.Header, body io.ReadCloser) {
 	defer func(body io.ReadCloser) {
 		err := body.Close()
 		if err != nil {
@@ -186,8 +181,37 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		}
 	}(body)
 
-	if _, err := io.Copy(ctx.Writer, body); err != nil {
-		log.Error("failed to write response body", "error", err)
+	setHeaders := func() {
+		if !ctx.Writer.Written() {
+			ctx.Status(statusCode)
+			for key, values := range header {
+				ctx.Writer.Header()[key] = values
+			}
+		}
+	}
+	buffer := make([]byte, 32*1024)
+	for {
+		n, err := body.Read(buffer)
+		if n > 0 {
+			setHeaders()
+			if _, writeErr := ctx.Writer.Write(buffer[:n]); writeErr != nil {
+				log.Error("failed to write redirected response body", "error", writeErr)
+				panic(http.ErrAbortHandler)
+			}
+			ctx.Writer.Flush()
+		}
+		if err == io.EOF {
+			setHeaders()
+			return
+		}
+		if err != nil {
+			failure := exception.InternalServerError(err).ToResponse()
+			if ctx.Writer.Written() {
+				panic(http.ErrAbortHandler)
+			}
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, failure)
+			return
+		}
 	}
 }
 

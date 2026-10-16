@@ -100,6 +100,21 @@ daemon supports a global Redis prefix via `REDIS_KEY_PREFIX`.
 - Changing the prefix changes the active namespace; existing cache and coordination
   data under the old prefix is not migrated automatically
 
+## HTTP Error Responses (unreleased)
+
+Responses produced by `InternalServerError` now use the fixed message `Internal Server Error` across invocation, management, and cluster forwarding APIs.
+The HTTP status, response code, error type, and JSON structure are preserved; original errors and stack traces remain in server logs.
+Clients must use status and error codes instead of matching internal exception text.
+
+Endpoint stream failures return a generic HTTP 500 before response headers are sent.
+After headers are sent, the daemon interrupts the response without appending an error message, including through other daemon nodes.
+Clients must handle response-body read errors and discard incomplete results.
+Explicit HTTP responses returned by plugins retain their status, headers, and body.
+Webhook plugins can still finish backwards invocations after the HTTP client disconnects, within the existing execution deadline.
+
+Deploy this fix to every daemon node, then rebuild and deploy plugins with the [SDK HTTP error fix](https://github.com/langgenius/dify-plugin-sdks/issues/398) in SDK 0.11.0 (unreleased).
+Both updates are required: older SDKs can include exception details in otherwise ordinary plugin responses.
+
 ## Documentation
 
 - [Backwards LLM invocation timeouts](docs/backwards-llm-timeouts.md)

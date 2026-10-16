@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,12 +25,11 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/requests"
-	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/encryption"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
 func copyRequest(req *http.Request, hookId string, path string) (*bytes.Buffer, error) {
@@ -186,57 +184,107 @@ func Endpoint(
 		ctx.JSON(500, exception.InternalServerError(err).ToResponse())
 		return
 	}
+	writeEndpointResponse(ctx, sessionCtx, statusCode, *headers, response)
+}
+
+func writeEndpointResponse(
+	ctx *gin.Context,
+	sessionCtx context.Context,
+	statusCode int,
+	headers http.Header,
+	response *stream.Stream[[]byte],
+) {
 	defer response.Close()
-
-	done := make(chan bool)
-	closed := new(int32)
-
-	ctx.Status(statusCode)
-	for k, v := range *headers {
-		if len(v) > 0 {
-			ctx.Writer.Header().Set(k, v[0])
-		}
+	type chunk struct {
+		data []byte
+		err  error
 	}
-
-	close := func() {
-		if atomic.CompareAndSwapInt32(closed, 0, 1) {
-			close(done)
-		}
-	}
-	defer close()
-
-	routine.Submit(routinepkg.Labels{
-		routinepkg.RoutineLabelKeyModule: "service",
-		routinepkg.RoutineLabelKeyMethod: "Endpoint",
-	}, func() {
-		defer close()
+	chunks := make(chan chunk)
+	stop := make(chan struct{})
+	defer close(stop)
+	go func() {
+		defer close(chunks)
 		for response.Next() {
-			chunk, err := response.Read()
-			if err != nil {
-				ctx.Writer.Write([]byte(err.Error()))
-				ctx.Writer.Flush()
+			data, err := response.Read()
+			select {
+			case chunks <- chunk{data, err}:
+			case <-stop:
 				return
 			}
-			ctx.Writer.Write(chunk)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	connected := true
+	clientDone := ctx.Request.Context().Done()
+	fail := func(err error) {
+		failure := exception.InternalServerError(err).ToResponse()
+		if !connected {
+			return
+		}
+		if ctx.Writer.Written() {
+			panic(http.ErrAbortHandler)
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, failure)
+	}
+	setHeaders := func() {
+		if !ctx.Writer.Written() {
+			ctx.Status(statusCode)
+			for k, v := range headers {
+				ctx.Writer.Header()[k] = v
+			}
+		}
+	}
+
+	for {
+		select {
+		case <-sessionCtx.Done():
+			fail(sessionCtx.Err())
+			return
+		case <-clientDone:
+			// Keep the plugin session alive for backwards invocations after disconnect (#808).
+			connected = false
+			clientDone = nil
+		case chunk, ok := <-chunks:
+			if err := sessionCtx.Err(); err != nil {
+				fail(err)
+				return
+			}
+			if chunk.err != nil {
+				fail(chunk.err)
+				return
+			}
+			if !ok {
+				if connected {
+					setHeaders()
+				}
+				return
+			}
+			if !connected || ctx.Request.Context().Err() != nil {
+				connected = false
+				clientDone = nil
+				continue
+			}
+			if !ctx.Writer.Written() {
+				if deadline, ok := sessionCtx.Deadline(); ok {
+					err := http.NewResponseController(ctx.Writer).SetWriteDeadline(deadline)
+					if err != nil && !errors.Is(err, http.ErrNotSupported) {
+						fail(err)
+						return
+					}
+				}
+				setHeaders()
+			}
+			if _, err := ctx.Writer.Write(chunk.data); err != nil {
+				log.Error("failed to write endpoint response", "error", err)
+				connected = false
+				clientDone = nil
+				continue
+			}
 			ctx.Writer.Flush()
 		}
-	})
-
-	timer := time.NewTimer(maxExecutionTime)
-	defer timer.Stop()
-
-	select {
-	case <-done:
-	case <-ctx.Writer.CloseNotify():
-		// Webhook clients (e.g. WeChat Work) often close the connection before the
-		// plugin finishes. Keep the invocation session alive until the handler
-		// completes so backwards invocations can write back to the plugin.
-		select {
-		case <-done:
-		case <-timer.C:
-		}
-	case <-timer.C:
-		ctx.JSON(500, exception.InternalServerError(errors.New("killed by timeout")).ToResponse())
 	}
 }
 
