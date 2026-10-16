@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792047680948,
+  "lastUpdate": 1792138021592,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -17518,6 +17518,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.84,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wh2099@pm.me",
+            "name": "WH-2099",
+            "username": "WH-2099"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a5b76b65c4ebb1ef65cecfbd5652f8ffbc02c96a",
+          "message": "fix(http)!: redact errors and abort failed endpoint streams (#835)\n\nKeep internal diagnostics in logs and use a fixed public error message.\nAbort incomplete Endpoint responses and propagate failures across nodes.\nKeep HTTP writes in the handler while preserving webhook session lifetime,\nexecution deadlines, and buffered plugin errors.\n\nBREAKING CHANGE: InternalServerError responses use a fixed message, and\nfailed Endpoint streams are interrupted instead of completing with error\ntext appended to the body.\n\nCloses #834\nRefs langgenius/dify-plugin-sdks#398",
+          "timestamp": "2026-10-16T16:04:43+08:00",
+          "tree_id": "4c73d55be8955cb637b408570fbfe9e486f795bd",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/a5b76b65c4ebb1ef65cecfbd5652f8ffbc02c96a"
+        },
+        "date": 1792138021147,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 118242799,
+            "unit": "ns/op\t 886.80 MB/s\t213638791 B/op\t    1897 allocs/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 118242799,
+            "unit": "ns/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 886.8,
+            "unit": "MB/s",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213638791,
+            "unit": "B/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.63,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.63,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
