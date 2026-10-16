@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
 
@@ -38,8 +40,13 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 	// try to load plugins
 	plugins := dec.Plugins
 	for _, tool := range plugins.Tools {
-		// read yaml
-		pluginYaml, err := decoder.ReadFile(tool)
+		// read YAML
+		nTool, err := normalizeLogicalPath(tool)
+		if err != nil || nTool == "" {
+			log.Warn("skip invalid tool provider path", "path", tool, "reason", err)
+			continue
+		}
+		pluginYaml, err := decoder.ReadFile(nTool)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool))
 		}
@@ -50,15 +57,20 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		}
 
 		// read tools
-		for _, tool_file := range pluginDec.ToolFiles {
-			toolFileContent, err := decoder.ReadFile(tool_file)
+		for _, toolFile := range pluginDec.ToolFiles {
+			nToolFile, err := normalizeLogicalPath(toolFile)
+			if err != nil || nToolFile == "" {
+				log.Warn("skip invalid tool file", "path", toolFile, "reason", err)
+				continue
+			}
+			toolFileContent, err := decoder.ReadFile(nToolFile)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", tool_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tool file: %s", toolFile))
 			}
 
 			toolFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.ToolDeclaration](toolFileContent)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file: %s", tool_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tool file: %s", toolFile))
 			}
 
 			pluginDec.Tools = append(pluginDec.Tools, toolFileDec)
@@ -69,7 +81,12 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 
 	for _, endpoint := range plugins.Endpoints {
 		// read yaml
-		pluginYaml, err := decoder.ReadFile(endpoint)
+		nEndpoint, err := normalizeLogicalPath(endpoint)
+		if err != nil || nEndpoint == "" {
+			log.Warn("skip invalid endpoint provider path", "path", endpoint, "reason", err)
+			continue
+		}
+		pluginYaml, err := decoder.ReadFile(nEndpoint)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read endpoint file: %s", endpoint))
 		}
@@ -82,15 +99,20 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		// read detailed endpoints
 		endpointsFiles := pluginDec.EndpointFiles
 
-		for _, endpoint_file := range endpointsFiles {
-			endpointFileContent, err := decoder.ReadFile(endpoint_file)
+		for _, endpointFile := range endpointsFiles {
+			nEndpointFile, err := normalizeLogicalPath(endpointFile)
+			if err != nil || nEndpointFile == "" {
+				log.Warn("skip invalid endpoint file", "path", endpointFile, "reason", err)
+				continue
+			}
+			endpointFileContent, err := decoder.ReadFile(nEndpointFile)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read endpoint file: %s", endpoint_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read endpoint file: %s", endpointFile))
 			}
 
 			endpointFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.EndpointDeclaration](endpointFileContent)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal endpoint file: %s", endpoint_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal endpoint file: %s", endpointFile))
 			}
 
 			pluginDec.Endpoints = append(pluginDec.Endpoints, endpointFileDec)
@@ -101,7 +123,12 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 
 	for _, model := range plugins.Models {
 		// read yaml
-		pluginYaml, err := decoder.ReadFile(model)
+		nModel, err := normalizeLogicalPath(model)
+		if err != nil || nModel == "" {
+			log.Warn("skip invalid model provider path", "path", model, "reason", err)
+			continue
+		}
+		pluginYaml, err := decoder.ReadFile(nModel)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read model file: %s", model))
 		}
@@ -115,114 +142,125 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		if pluginDec.PositionFiles != nil {
 			pluginDec.Position = &plugin_entities.ModelPosition{}
 
-			llmFileName, ok := pluginDec.PositionFiles["llm"]
-			if ok {
-				llmFile, err := decoder.ReadFile(llmFileName)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read llm position file: %s", llmFileName))
+			if v, ok := pluginDec.PositionFiles["llm"]; ok {
+				if pth, err := normalizeLogicalPath(v); err != nil || pth == "" {
+					log.Warn("skip invalid llm position file", "path", v, "reason", err)
+				} else {
+					data, err := decoder.ReadFile(pth)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read llm position file: %s", v))
+					}
+					pos, err := parser.UnmarshalYamlBytes[[]string](data)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal llm position file: %s", v))
+					}
+					pluginDec.Position.LLM = &pos
 				}
-
-				position, err := parser.UnmarshalYamlBytes[[]string](llmFile)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal llm position file: %s", llmFileName))
-				}
-
-				pluginDec.Position.LLM = &position
 			}
 
-			textEmbeddingFileName, ok := pluginDec.PositionFiles["text_embedding"]
-			if ok {
-				textEmbeddingFile, err := decoder.ReadFile(textEmbeddingFileName)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read text embedding position file: %s", textEmbeddingFileName))
+			if v, ok := pluginDec.PositionFiles["text_embedding"]; ok {
+				if pth, err := normalizeLogicalPath(v); err != nil || pth == "" {
+					log.Warn("skip invalid text_embedding position file", "path", v, "reason", err)
+				} else {
+					data, err := decoder.ReadFile(pth)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read text embedding position file: %s", v))
+					}
+					pos, err := parser.UnmarshalYamlBytes[[]string](data)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal text embedding position file: %s", v))
+					}
+					pluginDec.Position.TextEmbedding = &pos
 				}
-
-				position, err := parser.UnmarshalYamlBytes[[]string](textEmbeddingFile)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal text embedding position file: %s", textEmbeddingFileName))
-				}
-
-				pluginDec.Position.TextEmbedding = &position
 			}
 
-			rerankFileName, ok := pluginDec.PositionFiles["rerank"]
-			if ok {
-				rerankFile, err := decoder.ReadFile(rerankFileName)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read rerank position file: %s", rerankFileName))
+			if v, ok := pluginDec.PositionFiles["rerank"]; ok {
+				if pth, err := normalizeLogicalPath(v); err != nil || pth == "" {
+					log.Warn("skip invalid rerank position file", "path", v, "reason", err)
+				} else {
+					data, err := decoder.ReadFile(pth)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read rerank position file: %s", v))
+					}
+					pos, err := parser.UnmarshalYamlBytes[[]string](data)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal rerank position file: %s", v))
+					}
+					pluginDec.Position.Rerank = &pos
 				}
-
-				position, err := parser.UnmarshalYamlBytes[[]string](rerankFile)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal rerank position file: %s", rerankFileName))
-				}
-
-				pluginDec.Position.Rerank = &position
 			}
 
-			ttsFileName, ok := pluginDec.PositionFiles["tts"]
-			if ok {
-				ttsFile, err := decoder.ReadFile(ttsFileName)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tts position file: %s", ttsFileName))
+			if v, ok := pluginDec.PositionFiles["tts"]; ok {
+				if pth, err := normalizeLogicalPath(v); err != nil || pth == "" {
+					log.Warn("skip invalid tts position file", "path", v, "reason", err)
+				} else {
+					data, err := decoder.ReadFile(pth)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read tts position file: %s", v))
+					}
+					pos, err := parser.UnmarshalYamlBytes[[]string](data)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tts position file: %s", v))
+					}
+					pluginDec.Position.TTS = &pos
 				}
-
-				position, err := parser.UnmarshalYamlBytes[[]string](ttsFile)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal tts position file: %s", ttsFileName))
-				}
-
-				pluginDec.Position.TTS = &position
 			}
 
-			speech2textFileName, ok := pluginDec.PositionFiles["speech2text"]
-			if ok {
-				speech2textFile, err := decoder.ReadFile(speech2textFileName)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read speech2text position file: %s", speech2textFileName))
+			if v, ok := pluginDec.PositionFiles["speech2text"]; ok {
+				if pth, err := normalizeLogicalPath(v); err != nil || pth == "" {
+					log.Warn("skip invalid speech2text position file", "path", v, "reason", err)
+				} else {
+					data, err := decoder.ReadFile(pth)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read speech2text position file: %s", v))
+					}
+					pos, err := parser.UnmarshalYamlBytes[[]string](data)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal speech2text position file: %s", v))
+					}
+					pluginDec.Position.Speech2text = &pos
 				}
-
-				position, err := parser.UnmarshalYamlBytes[[]string](speech2textFile)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal speech2text position file: %s", speech2textFileName))
-				}
-
-				pluginDec.Position.Speech2text = &position
 			}
 
-			moderationFileName, ok := pluginDec.PositionFiles["moderation"]
-			if ok {
-				moderationFile, err := decoder.ReadFile(moderationFileName)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read moderation position file: %s", moderationFileName))
+			if v, ok := pluginDec.PositionFiles["moderation"]; ok {
+				if pth, err := normalizeLogicalPath(v); err != nil || pth == "" {
+					log.Warn("skip invalid moderation position file", "path", v, "reason", err)
+				} else {
+					data, err := decoder.ReadFile(pth)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read moderation position file: %s", v))
+					}
+					pos, err := parser.UnmarshalYamlBytes[[]string](data)
+					if err != nil {
+						return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal moderation position file: %s", v))
+					}
+					pluginDec.Position.Moderation = &pos
 				}
-
-				position, err := parser.UnmarshalYamlBytes[[]string](moderationFile)
-				if err != nil {
-					return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal moderation position file: %s", moderationFileName))
-				}
-
-				pluginDec.Position.Moderation = &position
 			}
 		}
 
 		// read models
 		if err := decoder.Walk(func(filename, dir string) error {
-			modelPatterns := pluginDec.ModelFiles
-			// using glob to match if dir/filename is in models
-			modelFileName := filepath.Join(dir, filename)
-			if strings.HasSuffix(modelFileName, "_position.yaml") {
+			// Normalize walked relative path to forward slashes so matching is OS-independent
+			rel, _ := normalizeLogicalPath(filepath.ToSlash(filepath.Join(dir, filename)))
+			if strings.HasSuffix(rel, "_position.yaml") {
 				return nil
 			}
 
-			for _, model_pattern := range modelPatterns {
-				matched, err := filepath.Match(model_pattern, modelFileName)
+			// Normalize patterns to forward slashes and use POSIX-style matching
+			for _, modelPattern := range pluginDec.ModelFiles {
+				pat, err := normalizeLogicalPath(modelPattern)
+				if err != nil || pat == "" {
+					log.Warn("skip invalid model pattern", "pattern", modelPattern, "reason", err)
+					continue
+				}
+				matched, err := path.Match(pat, rel)
 				if err != nil {
 					return err
 				}
 				if matched {
-					// read model file
-					modelFile, err := decoder.ReadFile(modelFileName)
+					// Read using forward-slash path so both zip and fs decoders work
+					modelFile, err := decoder.ReadFile(rel)
 					if err != nil {
 						return err
 					}
@@ -233,6 +271,7 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 					}
 
 					pluginDec.Models = append(pluginDec.Models, modelDec)
+					break
 				}
 			}
 
@@ -245,8 +284,13 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 	}
 
 	for _, agentStrategy := range plugins.AgentStrategies {
-		// read yaml
-		pluginYaml, err := decoder.ReadFile(agentStrategy)
+		// read yaml (manifest logical path)
+		nAgent, err := normalizeLogicalPath(agentStrategy)
+		if err != nil || nAgent == "" {
+			log.Warn("skip invalid agent strategy provider path", "path", agentStrategy, "reason", err)
+			continue
+		}
+		pluginYaml, err := decoder.ReadFile(nAgent)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read agent strategy file: %s", agentStrategy))
 		}
@@ -257,7 +301,12 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		}
 
 		for _, strategyFile := range pluginDec.StrategyFiles {
-			strategyFileContent, err := decoder.ReadFile(strategyFile)
+			nStrategy, err := normalizeLogicalPath(strategyFile)
+			if err != nil || nStrategy == "" {
+				log.Warn("skip invalid agent strategy file", "path", strategyFile, "reason", err)
+				continue
+			}
+			strategyFileContent, err := decoder.ReadFile(nStrategy)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read agent strategy file: %s", strategyFile))
 			}
@@ -274,8 +323,13 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 	}
 
 	for _, datasource := range plugins.Datasources {
-		// read yaml
-		pluginYaml, err := decoder.ReadFile(datasource)
+		// read yaml (manifest logical path)
+		nDS, err := normalizeLogicalPath(datasource)
+		if err != nil || nDS == "" {
+			log.Warn("skip invalid datasource provider path", "path", datasource, "reason", err)
+			continue
+		}
+		pluginYaml, err := decoder.ReadFile(nDS)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read datasource file: %s", datasource))
 		}
@@ -286,7 +340,12 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		}
 
 		for _, datasourceFile := range pluginDec.DatasourceFiles {
-			datasourceFileContent, err := decoder.ReadFile(datasourceFile)
+			nDSFile, err := normalizeLogicalPath(datasourceFile)
+			if err != nil || nDSFile == "" {
+				log.Warn("skip invalid datasource file", "path", datasourceFile, "reason", err)
+				continue
+			}
+			datasourceFileContent, err := decoder.ReadFile(nDSFile)
 			if err != nil {
 				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read datasource file: %s", datasourceFile))
 			}
@@ -303,8 +362,13 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 	}
 
 	for _, trigger := range plugins.Triggers {
-		// read yaml
-		pluginYaml, err := decoder.ReadFile(trigger)
+		// read yaml (manifest logical path)
+		nTrig, err := normalizeLogicalPath(trigger)
+		if err != nil || nTrig == "" {
+			log.Warn("skip invalid trigger provider path", "path", trigger, "reason", err)
+			continue
+		}
+		pluginYaml, err := decoder.ReadFile(nTrig)
 		if err != nil {
 			return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read trigger file: %s", trigger))
 		}
@@ -315,15 +379,20 @@ func (p *PluginDecoderHelper) Manifest(decoder PluginDecoder) (plugin_entities.P
 		}
 
 		// read events
-		for _, event_file := range pluginDec.EventFiles {
-			eventFileContent, err := decoder.ReadFile(event_file)
+		for _, eventFile := range pluginDec.EventFiles {
+			nEvent, err := normalizeLogicalPath(eventFile)
+			if err != nil || nEvent == "" {
+				log.Warn("skip invalid event file", "path", eventFile, "reason", err)
+				continue
+			}
+			eventFileContent, err := decoder.ReadFile(nEvent)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read event file: %s", event_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to read event file: %s", eventFile))
 			}
 
 			eventFileDec, err := parser.UnmarshalYamlBytes[plugin_entities.EventDeclaration](eventFileContent)
 			if err != nil {
-				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal event file: %s", event_file))
+				return plugin_entities.PluginDeclaration{}, errors.Join(err, fmt.Errorf("failed to unmarshal event file: %s", eventFile))
 			}
 
 			pluginDec.Events = append(pluginDec.Events, eventFileDec)
