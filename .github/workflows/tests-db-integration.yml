@@ -31,9 +31,10 @@ jobs:
             pgbouncer
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: cloudx-io/setup-go@v1
         with:
           go-version: '1.26'
+          cache-key-prefix: 'db-migration'
 
       - name: Install uv
         run: |
