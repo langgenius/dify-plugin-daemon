@@ -262,6 +262,17 @@ var PluginDispatchers = []PluginDispatcher{
 		Path:               "/oauth/refresh_credentials",
 	},
 	{
+		Name:               "RevokeCredentials",
+		RequestType:        requests.RequestOAuthRevokeCredentials{},
+		ResponseType:       oauth_entities.OAuthRevokeCredentialsResult{},
+		AccessType:         access_types.PLUGIN_ACCESS_TYPE_OAUTH,
+		AccessAction:       access_types.PLUGIN_ACCESS_ACTION_REVOKE_CREDENTIALS,
+		AccessTypeString:   "access_types.PLUGIN_ACCESS_TYPE_OAUTH",
+		AccessActionString: "access_types.PLUGIN_ACCESS_ACTION_REVOKE_CREDENTIALS",
+		BufferSize:         1,
+		Path:               "/oauth/revoke_credentials",
+	},
+	{
 		Name:               "FetchDynamicParameterOptions",
 		RequestType:        requests.RequestDynamicParameterSelect{},
 		ResponseType:       dynamic_select_entities.DynamicSelectResult{},

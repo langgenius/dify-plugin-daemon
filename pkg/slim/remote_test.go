@@ -21,6 +21,7 @@ func TestLookupRoute_KnownActions(t *testing.T) {
 		{"invoke_agent_strategy", "agent_strategy", "/agent_strategy/invoke"},
 		{"invoke_endpoint", "endpoint", "/endpoint/invoke"},
 		{"get_authorization_url", "oauth", "/oauth/get_authorization_url"},
+		{"revoke_credentials", "oauth", "/oauth/revoke_credentials"},
 		{"validate_datasource_credentials", "datasource", "/datasource/validate_credentials"},
 		{"fetch_parameter_options", "dynamic_parameter", "/dynamic_select/fetch_parameter_options"},
 		{"invoke_trigger_event", "trigger", "/trigger/invoke_event"},

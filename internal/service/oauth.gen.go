@@ -63,3 +63,20 @@ func RefreshCredentials(
 		max_timeout_seconds,
 	)
 }
+
+func RevokeCredentials(
+	r *plugin_entities.InvokePluginRequest[requests.RequestOAuthRevokeCredentials],
+	ctx *gin.Context,
+	max_timeout_seconds int,
+) {
+	baseSSEWithSession(
+		func(session *session_manager.Session) (*stream.Stream[oauth_entities.OAuthRevokeCredentialsResult], error) {
+			return io_tunnel.RevokeCredentials(session, &r.Data)
+		},
+		access_types.PLUGIN_ACCESS_TYPE_OAUTH,
+		access_types.PLUGIN_ACCESS_ACTION_REVOKE_CREDENTIALS,
+		r,
+		ctx,
+		max_timeout_seconds,
+	)
+}
