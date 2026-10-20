@@ -64,9 +64,6 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			db.Equal("tenant_id", tenantId),
 			db.Equal("plugin_id", pluginId),
 		}
-		if identifier != "" {
-			installationQuery = append(installationQuery, db.Equal("plugin_unique_identifier", identifier))
-		}
 		fetchInstallation := func() (*models.PluginInstallation, error) {
 			inst, err := db.GetOne[models.PluginInstallation](installationQuery...)
 			if err != nil {
@@ -78,8 +75,8 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 		var installation *models.PluginInstallation
 		var err error
 		if identifier != "" {
-			// The legacy cache follows the current version and cannot authorize a
-			// specific package after an upgrade or uninstall.
+			// Authorize the plugin independently of its installed version so an
+			// upgrade does not reject a prepared request. Bypass stale uninstall caches.
 			installation, err = fetchInstallation()
 		} else {
 			cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)

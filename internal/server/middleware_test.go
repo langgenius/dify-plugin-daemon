@@ -50,6 +50,7 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 		RuntimeType: string(plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE),
 	}
 	require.NoError(t, installationDB.Create(&otherInstallation).Error)
+	require.NoError(t, cache.AutoSet(helper.PluginInstallationCacheKey(pluginID, "tenant-b"), otherInstallation))
 
 	for _, tt := range []struct {
 		name       string
@@ -59,9 +60,11 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 		status     int
 	}{
 		{"installed version", pluginID, currentIdentifier, "tenant-a", http.StatusOK},
-		{"version installed in another tenant", pluginID, oldIdentifier, "tenant-a", http.StatusNotFound},
+		{"prepared version differs from installed version", pluginID, oldIdentifier, "tenant-a", http.StatusOK},
 		{"different installed version", pluginID, oldIdentifier, "tenant-b", http.StatusOK},
-		{"different checksum", pluginID, pluginID + ":2.0.0@cccccccccccccccccccccccccccccccc", "tenant-a", http.StatusNotFound},
+		{"requested checksum is preserved", pluginID, pluginID + ":2.0.0@cccccccccccccccccccccccccccccccc", "tenant-a", http.StatusOK},
+		{"plugin installed only in another tenant", pluginID, oldIdentifier, "tenant-c", http.StatusNotFound},
+		{"plugin not installed", "langgenius/other", "langgenius/other:1.0.0@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tenant-a", http.StatusNotFound},
 		{"legacy client without identifier", pluginID, "", "tenant-a", http.StatusOK},
 		{"malformed identifier", pluginID, "invalid", "tenant-a", http.StatusBadRequest},
 		{"different plugin", "langgenius/other", oldIdentifier, "tenant-a", http.StatusBadRequest},
@@ -101,6 +104,32 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 			assert.Equal(t, tt.status == http.StatusOK, dispatched)
 		})
 	}
+
+	t.Run("upgrade preserves the prepared identifier despite a stale installation cache", func(t *testing.T) {
+		require.NoError(t, installationDB.Model(&installation).Update("plugin_unique_identifier", oldIdentifier).Error)
+		cachedInstallation := installation
+		cachedInstallation.PluginUniqueIdentifier = oldIdentifier
+		require.NoError(t, cache.AutoSet(helper.PluginInstallationCacheKey(pluginID, "tenant-a"), cachedInstallation))
+		require.NoError(t, installationDB.Model(&installation).Update("plugin_unique_identifier", currentIdentifier).Error)
+
+		app := &App{}
+		router := gin.New()
+		dispatched := false
+		router.POST("/plugin/:tenant_id/dispatch/tool/invoke", app.FetchPluginInstallation(), func(ctx *gin.Context) {
+			dispatched = true
+			assert.Equal(t, plugin_entities.PluginUniqueIdentifier(oldIdentifier), ctx.MustGet(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER))
+			actualInstallation := ctx.MustGet(constants.CONTEXT_KEY_PLUGIN_INSTALLATION).(models.PluginInstallation)
+			assert.Equal(t, currentIdentifier, actualInstallation.PluginUniqueIdentifier)
+			ctx.Status(http.StatusOK)
+		})
+		req := httptest.NewRequest(http.MethodPost, "/plugin/tenant-a/dispatch/tool/invoke", nil)
+		req.Header.Set(constants.X_PLUGIN_ID, pluginID)
+		req.Header.Set(constants.PluginUniqueIdentifier, oldIdentifier)
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, req)
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.True(t, dispatched)
+	})
 
 	t.Run("uninstalled version is not authorized by a previous lookup", func(t *testing.T) {
 		require.NoError(t, installationDB.Delete(&otherInstallation).Error)
