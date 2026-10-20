@@ -38,27 +38,52 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
+		identifier := ctx.GetHeader(constants.PluginUniqueIdentifier)
+		var identity plugin_entities.PluginUniqueIdentifier
+		if identifier != "" {
+			var err error
+			identity, err = plugin_entities.NewPluginUniqueIdentifier(identifier)
+			if err != nil {
+				ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
+				return
+			}
+			if identity.PluginID() != pluginId {
+				ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("plugin unique identifier does not match X-Plugin-ID")).ToResponse())
+				return
+			}
+		}
+
 		tenantId := ctx.Param("tenant_id")
 		if tenantId == "" {
 			ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("tenant_id is required")).ToResponse())
 			return
 		}
 
-		// fetch plugin installation with caching
-		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
-		installation, err := cache.AutoGetWithGetter(
-			cacheKey,
-			func() (*models.PluginInstallation, error) {
-				inst, err := db.GetOne[models.PluginInstallation](
-					db.Equal("tenant_id", tenantId),
-					db.Equal("plugin_id", pluginId),
-				)
-				if err != nil {
-					return nil, err
-				}
-				return &inst, nil
-			},
-		)
+		installationQuery := []db.GenericQuery{
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
+		}
+		if identifier != "" {
+			installationQuery = append(installationQuery, db.Equal("plugin_unique_identifier", identifier))
+		}
+		fetchInstallation := func() (*models.PluginInstallation, error) {
+			inst, err := db.GetOne[models.PluginInstallation](installationQuery...)
+			if err != nil {
+				return nil, err
+			}
+			return &inst, nil
+		}
+
+		var installation *models.PluginInstallation
+		var err error
+		if identifier != "" {
+			// The legacy cache follows the current version and cannot authorize a
+			// specific package after an upgrade or uninstall.
+			installation, err = fetchInstallation()
+		} else {
+			cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
+			installation, err = cache.AutoGetWithGetter(cacheKey, fetchInstallation)
+		}
 
 		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
@@ -70,12 +95,14 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
-		if err != nil {
-			ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
-			return
+		// Only legacy clients resolve the installed version through the plugin ID.
+		if identifier == "" {
+			identity, err = plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+			if err != nil {
+				ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
+				return
+			}
 		}
-
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
 		ctx.Next()
