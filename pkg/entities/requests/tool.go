@@ -36,8 +36,10 @@ type RequestInvokeTool struct {
 }
 
 type RequestValidateToolCredentials struct {
-	Provider    string         `json:"provider" validate:"required"`
-	Credentials map[string]any `json:"credentials" validate:"omitempty"`
+	Provider       string         `json:"provider" validate:"required"`
+	Credentials    map[string]any `json:"credentials" validate:"omitempty"`
+	CredentialType string         `json:"credential_type,omitempty" validate:"required_if=ResultFormat detailed,omitempty,oneof=api_key oauth2"`
+	ResultFormat   string         `json:"result_format,omitempty" validate:"omitempty,oneof=detailed"`
 }
 
 type RequestGetToolRuntimeParameters struct {

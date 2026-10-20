@@ -19,3 +19,9 @@ type RequestOAuthRefreshCredentials struct {
 	SystemCredentials map[string]any `json:"system_credentials" validate:"omitempty"`
 	Credentials       map[string]any `json:"credentials" validate:"required"`
 }
+
+type RequestOAuthRevokeCredentials struct {
+	Provider          string         `json:"provider" validate:"required"`
+	SystemCredentials map[string]any `json:"system_credentials" validate:"omitempty"`
+	Credentials       map[string]any `json:"credentials" validate:"required"`
+}
