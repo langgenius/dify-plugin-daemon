@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792551639006,
+  "lastUpdate": 1792566798819,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -17752,6 +17752,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 19.76,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "linw1995@icloud.com",
+            "name": "林玮 (Jade Lin)",
+            "username": "linw1995"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c94dd223a24363e2618364e2ef0ecaf5b7196382",
+          "message": "fix: reuse installation cache for pinned dispatches (#840)\n\n(cherry picked from commit 0e08f002ffe554f95e743e993745593a54a53121)",
+          "timestamp": "2026-10-21T15:11:27+08:00",
+          "tree_id": "e0591d6213d4a04d925425cc851fb930ccae28f0",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/c94dd223a24363e2618364e2ef0ecaf5b7196382"
+        },
+        "date": 1792566798370,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 118322284,
+            "unit": "ns/op\t 886.20 MB/s\t213236682 B/op\t    1897 allocs/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 118322284,
+            "unit": "ns/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 886.2,
+            "unit": "MB/s",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213236682,
+            "unit": "B/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.61,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.61,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
