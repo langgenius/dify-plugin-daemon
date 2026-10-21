@@ -386,6 +386,11 @@ func UninstallPlugin(
 		return nil, err
 	}
 
+	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenantId)
+	if _, delErr := cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey); delErr != nil {
+		log.Warn("failed to clear plugin installation cache", "key", pluginInstallationCacheKey, "error", delErr)
+	}
+
 	if pluginToBeReturns == nil {
 		return &DeletePluginResponse{
 			Plugin:          nil,

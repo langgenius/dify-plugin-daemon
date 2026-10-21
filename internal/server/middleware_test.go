@@ -10,6 +10,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/db"
 	"github.com/langgenius/dify-plugin-daemon/internal/server/constants"
 	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
@@ -26,7 +27,7 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, cache.Close()) })
 	installationDB, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
 	require.NoError(t, err)
-	require.NoError(t, installationDB.AutoMigrate(&models.PluginInstallation{}))
+	require.NoError(t, installationDB.AutoMigrate(&models.PluginInstallation{}, &models.Plugin{}, &models.PluginDeclaration{}))
 	originalDB := db.DifyPluginDB
 	db.DifyPluginDB = installationDB
 	t.Cleanup(func() {
@@ -51,6 +52,14 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 	}
 	require.NoError(t, installationDB.Create(&otherInstallation).Error)
 	require.NoError(t, cache.AutoSet(helper.PluginInstallationCacheKey(pluginID, "tenant-b"), otherInstallation))
+	require.NoError(t, installationDB.Create(&models.Plugin{
+		PluginID: pluginID, PluginUniqueIdentifier: oldIdentifier, Refers: 1,
+		InstallType: plugin_entities.PLUGIN_RUNTIME_TYPE_REMOTE,
+	}).Error)
+	databaseQueries := 0
+	require.NoError(t, installationDB.Callback().Query().Before("gorm:query").Register("count_installation_queries", func(_ *gorm.DB) {
+		databaseQueries++
+	}))
 
 	for _, tt := range []struct {
 		name       string
@@ -99,11 +108,51 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 				req.Header.Set(constants.PluginUniqueIdentifier, tt.identifier)
 			}
 			response := httptest.NewRecorder()
+			queriesBefore := databaseQueries
 			router.ServeHTTP(response, req)
 			assert.Equal(t, tt.status, response.Code)
 			assert.Equal(t, tt.status == http.StatusOK, dispatched)
+			expectedQueries := 0
+			if tt.status == http.StatusNotFound {
+				expectedQueries = 1
+			}
+			assert.Equal(t, expectedQueries, databaseQueries-queriesBefore)
 		})
 	}
+
+	t.Run("pinned requests populate the cache shared with legacy calls", func(t *testing.T) {
+		cacheKey := helper.PluginInstallationCacheKey(pluginID, "tenant-a")
+		_, err := cache.AutoDelete[models.PluginInstallation](cacheKey)
+		require.NoError(t, err)
+		app := &App{}
+		router := gin.New()
+		var expectedIdentifier string
+		router.POST("/plugin/:tenant_id/dispatch/tool/invoke", app.FetchPluginInstallation(), func(ctx *gin.Context) {
+			assert.Equal(t, plugin_entities.PluginUniqueIdentifier(expectedIdentifier), ctx.MustGet(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER))
+			ctx.Status(http.StatusOK)
+		})
+		for index, identifier := range []string{oldIdentifier, "", pluginID + ":2.0.0@cccccccccccccccccccccccccccccccc"} {
+			expectedIdentifier = identifier
+			if identifier == "" {
+				expectedIdentifier = currentIdentifier
+			}
+			req := httptest.NewRequest(http.MethodPost, "/plugin/tenant-a/dispatch/tool/invoke", nil)
+			req.Header.Set(constants.X_PLUGIN_ID, pluginID)
+			req.Header.Set(constants.PluginUniqueIdentifier, identifier)
+			response := httptest.NewRecorder()
+			queriesBefore := databaseQueries
+			router.ServeHTTP(response, req)
+			assert.Equal(t, http.StatusOK, response.Code)
+			expectedQueries := 0
+			if index == 0 {
+				expectedQueries = 1
+			}
+			assert.Equal(t, expectedQueries, databaseQueries-queriesBefore)
+		}
+		cached, err := cache.AutoGet[models.PluginInstallation](cacheKey)
+		require.NoError(t, err)
+		assert.Equal(t, currentIdentifier, cached.PluginUniqueIdentifier)
+	})
 
 	t.Run("upgrade preserves the prepared identifier despite a stale installation cache", func(t *testing.T) {
 		require.NoError(t, installationDB.Model(&installation).Update("plugin_unique_identifier", oldIdentifier).Error)
@@ -115,24 +164,40 @@ func TestFetchPluginInstallationBindsRequestedIdentifier(t *testing.T) {
 		app := &App{}
 		router := gin.New()
 		dispatched := false
+		expectedInstallationIdentifier := oldIdentifier
 		router.POST("/plugin/:tenant_id/dispatch/tool/invoke", app.FetchPluginInstallation(), func(ctx *gin.Context) {
 			dispatched = true
 			assert.Equal(t, plugin_entities.PluginUniqueIdentifier(oldIdentifier), ctx.MustGet(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER))
 			actualInstallation := ctx.MustGet(constants.CONTEXT_KEY_PLUGIN_INSTALLATION).(models.PluginInstallation)
-			assert.Equal(t, currentIdentifier, actualInstallation.PluginUniqueIdentifier)
+			assert.Equal(t, expectedInstallationIdentifier, actualInstallation.PluginUniqueIdentifier)
 			ctx.Status(http.StatusOK)
 		})
 		req := httptest.NewRequest(http.MethodPost, "/plugin/tenant-a/dispatch/tool/invoke", nil)
 		req.Header.Set(constants.X_PLUGIN_ID, pluginID)
 		req.Header.Set(constants.PluginUniqueIdentifier, oldIdentifier)
 		response := httptest.NewRecorder()
+		queriesBefore := databaseQueries
 		router.ServeHTTP(response, req)
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.True(t, dispatched)
+		assert.Equal(t, 0, databaseQueries-queriesBefore)
+
+		_, err := cache.AutoDelete[models.PluginInstallation](helper.PluginInstallationCacheKey(pluginID, "tenant-a"))
+		require.NoError(t, err)
+		expectedInstallationIdentifier = currentIdentifier
+		dispatched = false
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, req)
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.True(t, dispatched)
+		assert.Equal(t, 1, databaseQueries-queriesBefore)
 	})
 
 	t.Run("uninstalled version is not authorized by a previous lookup", func(t *testing.T) {
-		require.NoError(t, installationDB.Delete(&otherInstallation).Error)
+		_, err := curd.UninstallPlugin("tenant-b", plugin_entities.PluginUniqueIdentifier(oldIdentifier), otherInstallation.ID, &plugin_entities.PluginDeclaration{})
+		require.NoError(t, err)
+		_, err = cache.AutoGet[models.PluginInstallation](helper.PluginInstallationCacheKey(pluginID, "tenant-b"))
+		require.Error(t, err)
 		app := &App{}
 		router := gin.New()
 		router.POST("/plugin/:tenant_id/dispatch/tool/invoke", app.FetchPluginInstallation(), func(ctx *gin.Context) {

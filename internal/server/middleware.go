@@ -71,16 +71,8 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return &inst, nil
 		}
 
-		var installation *models.PluginInstallation
-		var err error
-		if identifier != "" {
-			// Authorize the plugin independently of its installed version so an
-			// upgrade does not reject a prepared request. Bypass stale uninstall caches.
-			installation, err = fetchInstallation()
-		} else {
-			cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
-			installation, err = cache.AutoGetWithGetter(cacheKey, fetchInstallation)
-		}
+		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
+		installation, err := cache.AutoGetWithGetter(cacheKey, fetchInstallation)
 
 		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())

@@ -19,7 +19,6 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/installation_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache/helper"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
@@ -362,9 +361,6 @@ func UninstallPlugin(
 	if err != nil {
 		return exception.InternalServerError(fmt.Errorf("failed to uninstall plugin: %s", err.Error())).ToResponse()
 	}
-
-	pluginInstallationCacheKey := helper.PluginInstallationCacheKey(pluginUniqueIdentifier.PluginID(), tenant_id)
-	_, _ = cache.AutoDelete[models.PluginInstallation](pluginInstallationCacheKey)
 
 	if deleteResponse != nil && deleteResponse.IsPluginDeleted {
 		helper.DeletePluginDeclarationCache(pluginUniqueIdentifier, plugin_entities.PluginRuntimeType(installation.RuntimeType))
