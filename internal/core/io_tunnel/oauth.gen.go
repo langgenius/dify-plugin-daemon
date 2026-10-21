@@ -47,3 +47,16 @@ func RefreshCredentials(
 		1,
 	)
 }
+
+func RevokeCredentials(
+	session *session_manager.Session,
+	request *requests.RequestOAuthRevokeCredentials,
+) (
+	*stream.Stream[oauth_entities.OAuthRevokeCredentialsResult], error,
+) {
+	return GenericInvokePlugin[requests.RequestOAuthRevokeCredentials, oauth_entities.OAuthRevokeCredentialsResult](
+		session,
+		request,
+		1,
+	)
+}

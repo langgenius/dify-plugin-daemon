@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"io"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -38,27 +39,41 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
+		identifier := ctx.GetHeader(constants.PluginUniqueIdentifier)
+		var identity plugin_entities.PluginUniqueIdentifier
+		if identifier != "" {
+			var err error
+			identity, err = plugin_entities.NewPluginUniqueIdentifier(identifier)
+			if err != nil {
+				ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
+				return
+			}
+			if identity.PluginID() != pluginId {
+				ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("plugin unique identifier does not match X-Plugin-ID")).ToResponse())
+				return
+			}
+		}
+
 		tenantId := ctx.Param("tenant_id")
 		if tenantId == "" {
 			ctx.AbortWithStatusJSON(400, exception.BadRequestError(errors.New("tenant_id is required")).ToResponse())
 			return
 		}
 
-		// fetch plugin installation with caching
+		installationQuery := []db.GenericQuery{
+			db.Equal("tenant_id", tenantId),
+			db.Equal("plugin_id", pluginId),
+		}
+		fetchInstallation := func() (*models.PluginInstallation, error) {
+			inst, err := db.GetOne[models.PluginInstallation](installationQuery...)
+			if err != nil {
+				return nil, err
+			}
+			return &inst, nil
+		}
+
 		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
-		installation, err := cache.AutoGetWithGetter(
-			cacheKey,
-			func() (*models.PluginInstallation, error) {
-				inst, err := db.GetOne[models.PluginInstallation](
-					db.Equal("tenant_id", tenantId),
-					db.Equal("plugin_id", pluginId),
-				)
-				if err != nil {
-					return nil, err
-				}
-				return &inst, nil
-			},
-		)
+		installation, err := cache.AutoGetWithGetter(cacheKey, fetchInstallation)
 
 		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
@@ -70,12 +85,14 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		identity, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
-		if err != nil {
-			ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
-			return
+		// Only legacy clients resolve the installed version through the plugin ID.
+		if identifier == "" {
+			identity, err = plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+			if err != nil {
+				ctx.AbortWithStatusJSON(400, exception.UniqueIdentifierError(err).ToResponse())
+				return
+			}
 		}
-
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
 		ctx.Next()
@@ -169,16 +186,10 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		return
 	}
 
-	// set status code
-	ctx.Writer.WriteHeader(statusCode)
+	writeRedirectedResponse(ctx, statusCode, header, body)
+}
 
-	// set header
-	for key, values := range header {
-		for _, value := range values {
-			ctx.Writer.Header().Set(key, value)
-		}
-	}
-
+func writeRedirectedResponse(ctx *gin.Context, statusCode int, header http.Header, body io.ReadCloser) {
 	defer func(body io.ReadCloser) {
 		err := body.Close()
 		if err != nil {
@@ -186,8 +197,37 @@ func (app *App) redirectPluginInvokeByPluginIdentifier(
 		}
 	}(body)
 
-	if _, err := io.Copy(ctx.Writer, body); err != nil {
-		log.Error("failed to write response body", "error", err)
+	setHeaders := func() {
+		if !ctx.Writer.Written() {
+			ctx.Status(statusCode)
+			for key, values := range header {
+				ctx.Writer.Header()[key] = values
+			}
+		}
+	}
+	buffer := make([]byte, 32*1024)
+	for {
+		n, err := body.Read(buffer)
+		if n > 0 {
+			setHeaders()
+			if _, writeErr := ctx.Writer.Write(buffer[:n]); writeErr != nil {
+				log.Error("failed to write redirected response body", "error", writeErr)
+				panic(http.ErrAbortHandler)
+			}
+			ctx.Writer.Flush()
+		}
+		if err == io.EOF {
+			setHeaders()
+			return
+		}
+		if err != nil {
+			failure := exception.InternalServerError(err).ToResponse()
+			if ctx.Writer.Written() {
+				panic(http.ErrAbortHandler)
+			}
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, failure)
+			return
+		}
 	}
 }
 

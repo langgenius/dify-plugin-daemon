@@ -75,6 +75,17 @@ ENV GIN_MODE=release
 
 COPY --from=builder /app/main /app/commandline /app/
 
+# Create the dedicated runtime user and prepare writable directories.
+RUN <<'EOF' bash
+set -euo pipefail
+useradd --user-group --create-home --shell /bin/bash dify
+chown -R dify:dify /app /home/dify
+EOF
+
+ENV HOME=/home/dify
+
+USER dify
+
 # Use tini as PID 1 so that /app/main is NOT PID 1 inside the container.
 # The Python plugin SDK self-destructs (os._exit(-1), exit 255) when its
 # parent process is PID 1, because it treats that as an "orphaned" state.

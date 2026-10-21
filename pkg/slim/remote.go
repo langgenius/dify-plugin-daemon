@@ -64,6 +64,7 @@ var ActionRoutes = map[string]ActionRoute{
 	"get_authorization_url": {Type: "oauth", Path: "/oauth/get_authorization_url"},
 	"get_credentials":       {Type: "oauth", Path: "/oauth/get_credentials"},
 	"refresh_credentials":   {Type: "oauth", Path: "/oauth/refresh_credentials"},
+	"revoke_credentials":    {Type: "oauth", Path: "/oauth/revoke_credentials"},
 
 	// datasource
 	"validate_datasource_credentials":                    {Type: "datasource", Path: "/datasource/validate_credentials"},

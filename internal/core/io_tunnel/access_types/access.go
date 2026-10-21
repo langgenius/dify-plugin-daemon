@@ -51,6 +51,7 @@ const (
 	PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL                              PluginAccessAction = "get_authorization_url"
 	PLUGIN_ACCESS_ACTION_GET_CREDENTIALS                                    PluginAccessAction = "get_credentials"
 	PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS                                PluginAccessAction = "refresh_credentials"
+	PLUGIN_ACCESS_ACTION_REVOKE_CREDENTIALS                                 PluginAccessAction = "revoke_credentials"
 	PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS                               PluginAccessAction = "validate_datasource_credentials"
 	PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL                PluginAccessAction = "invoke_website_datasource_get_crawl"
 	PLUGIN_ACCESS_ACTION_INVOKE_ONLINE_DOCUMENT_DATASOURCE_GET_PAGES        PluginAccessAction = "invoke_online_document_datasource_get_pages"
@@ -89,6 +90,7 @@ func (p PluginAccessAction) IsValid() bool {
 		p == PLUGIN_ACCESS_ACTION_GET_AUTHORIZATION_URL ||
 		p == PLUGIN_ACCESS_ACTION_GET_CREDENTIALS ||
 		p == PLUGIN_ACCESS_ACTION_REFRESH_CREDENTIALS ||
+		p == PLUGIN_ACCESS_ACTION_REVOKE_CREDENTIALS ||
 		p == PLUGIN_ACCESS_ACTION_DYNAMIC_PARAMETER_FETCH_OPTIONS ||
 		p == PLUGIN_ACCESS_ACTION_VALIDATE_CREDENTIALS ||
 		p == PLUGIN_ACCESS_ACTION_INVOKE_WEBSITE_DATASOURCE_GET_CRAWL ||
