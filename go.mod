@@ -2,6 +2,8 @@ module github.com/langgenius/dify-plugin-daemon
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/charmbracelet/bubbles v0.19.0
 	github.com/charmbracelet/bubbletea v1.1.0
