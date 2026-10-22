@@ -350,13 +350,10 @@ func UninstallPlugin(
 		if err := manager.RemoveLocalPlugin(pluginUniqueIdentifier); err != nil {
 			return exception.InternalServerError(err).ToResponse()
 		}
-
-		// Remove the cached .difypkg package file now that the plugin's last
-		// local installation is gone, otherwise it lingers in storage/plugin_packages.
-		// Failure here must not abort the uninstall, so only log it.
 		if err := manager.RemoveLocalPluginPackage(pluginUniqueIdentifier); err != nil {
 			log.Error("failed to remove plugin package file on uninstall", "error", err)
 		}
+
 
 		shutdownCh, err := manager.ShutdownLocalPluginGracefully(pluginUniqueIdentifier)
 		if errors.Is(err, controlpanel.ErrLocalPluginRuntimeNotFound) {
