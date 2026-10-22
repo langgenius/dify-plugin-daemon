@@ -33,11 +33,6 @@ func (p *PluginManager) RemoveLocalPlugin(
 	return p.controlPanel.RemoveLocalPlugin(pluginUniqueIdentifier)
 }
 
-// RemoveLocalPluginPackage removes the original .difypkg package file from the
-// package bucket. It is meant to be called when a plugin's last installation is
-// uninstalled, so the cached package no longer lingers in storage/plugin_packages.
-// Deleting a non-existent package is treated as a no-op error and should be
-// logged rather than abort the uninstall.
 func (p *PluginManager) RemoveLocalPluginPackage(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
 ) error {
