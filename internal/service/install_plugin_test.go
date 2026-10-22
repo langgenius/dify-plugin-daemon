@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/types/app"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models"
+	"github.com/langgenius/dify-plugin-daemon/internal/types/models/curd"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 )
 
@@ -24,23 +26,23 @@ func TestUpgradePlugin(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                             string
-		tenantId                         string
-		source                           string
-		meta                             map[string]any
-		originalPluginUniqueIdentifier   plugin_entities.PluginUniqueIdentifier
-		newPluginUniqueIdentifier        plugin_entities.PluginUniqueIdentifier
-		wantSuccess                      bool
-		wantAllInstalled                 bool
-		wantTaskIDEmpty                  bool
+		name                           string
+		tenantId                       string
+		source                         string
+		meta                           map[string]any
+		originalPluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier
+		newPluginUniqueIdentifier      plugin_entities.PluginUniqueIdentifier
+		wantSuccess                    bool
+		wantAllInstalled               bool
+		wantTaskIDEmpty                bool
 	}{
 		{
 			name:                           "same plugin identifiers",
 			tenantId:                       "tenant-123",
 			source:                         "test",
 			meta:                           map[string]any{},
-			originalPluginUniqueIdentifier:  originalIdentifier,
-			newPluginUniqueIdentifier:       originalIdentifier,
+			originalPluginUniqueIdentifier: originalIdentifier,
+			newPluginUniqueIdentifier:      originalIdentifier,
 			wantSuccess:                    false,
 		},
 		{
@@ -48,8 +50,8 @@ func TestUpgradePlugin(t *testing.T) {
 			tenantId:                       "tenant-123",
 			source:                         "test",
 			meta:                           map[string]any{},
-			originalPluginUniqueIdentifier:  originalIdentifier,
-			newPluginUniqueIdentifier:       newIdentifier,
+			originalPluginUniqueIdentifier: originalIdentifier,
+			newPluginUniqueIdentifier:      newIdentifier,
 			wantSuccess:                    false,
 		},
 	}
@@ -82,6 +84,72 @@ func TestUpgradePlugin(t *testing.T) {
 						t.Errorf("UpgradePlugin() TaskID = %v, want empty", result.TaskID)
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestShouldRemoveLocalPlugin(t *testing.T) {
+	tests := []struct {
+		name           string
+		deleteResponse *curd.DeletePluginResponse
+		want           bool
+	}{
+		{
+			name: "local plugin deleted with plugin row",
+			deleteResponse: &curd.DeletePluginResponse{
+				Plugin: &models.Plugin{
+					InstallType: plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+				},
+				IsPluginDeleted: true,
+			},
+			want: true,
+		},
+		{
+			name: "local plugin deleted with missing plugin row",
+			deleteResponse: &curd.DeletePluginResponse{
+				Installation: &models.PluginInstallation{
+					RuntimeType: string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+				},
+				IsPluginDeleted: true,
+			},
+			want: true,
+		},
+		{
+			name: "serverless plugin deleted",
+			deleteResponse: &curd.DeletePluginResponse{
+				Installation: &models.PluginInstallation{
+					RuntimeType: string(plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS),
+				},
+				IsPluginDeleted: true,
+			},
+			want: false,
+		},
+		{
+			name: "plugin still referenced",
+			deleteResponse: &curd.DeletePluginResponse{
+				Plugin: &models.Plugin{
+					InstallType: plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL,
+				},
+				Installation: &models.PluginInstallation{
+					RuntimeType: string(plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL),
+				},
+				IsPluginDeleted: false,
+			},
+			want: false,
+		},
+		{
+			name:           "nil response",
+			deleteResponse: nil,
+			want:           false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := shouldRemoveLocalPlugin(tt.deleteResponse)
+			if got != tt.want {
+				t.Fatalf("shouldRemoveLocalPlugin() = %v, want %v", got, tt.want)
 			}
 		})
 	}

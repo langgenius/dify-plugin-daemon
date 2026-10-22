@@ -33,6 +33,12 @@ func (p *PluginManager) RemoveLocalPlugin(
 	return p.controlPanel.RemoveLocalPlugin(pluginUniqueIdentifier)
 }
 
+func (p *PluginManager) RemoveLocalPluginStorage(
+	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
+) error {
+	return p.controlPanel.RemoveLocalPluginStorage(pluginUniqueIdentifier)
+}
+
 // get local plugin runtime
 func (p *PluginManager) GetLocalPluginRuntime(
 	pluginUniqueIdentifier plugin_entities.PluginUniqueIdentifier,
