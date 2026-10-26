@@ -19,7 +19,8 @@ import (
 
 var (
 	client redis.UniversalClient
-	ctx    = context.Background()
+	clientMu sync.RWMutex
+	ctx      = context.Background()
 
 	ErrDBNotInit = errors.New("redis client not init")
 	ErrNotFound  = errors.New("key not found")
@@ -27,6 +28,23 @@ var (
 	keyPrefix     = "plugin_daemon"
 	keyPrefixLock sync.RWMutex
 )
+
+// loadRedisClient returns the current global Redis client (may be nil).
+func loadRedisClient() redis.UniversalClient {
+	clientMu.RLock()
+	c := client
+	clientMu.RUnlock()
+	return c
+}
+
+// swapRedisClient replaces the global client and returns the previous one.
+func swapRedisClient(newClient redis.UniversalClient) redis.UniversalClient {
+	clientMu.Lock()
+	old := client
+	client = newClient
+	clientMu.Unlock()
+	return old
+}
 
 // RedisCredentials holds authentication options for Redis connections.
 // When CredentialProvider is non-nil, it is used to fetch per-connection
@@ -61,14 +79,22 @@ func getRedisOptions(addr string, creds RedisCredentials, useSsl bool, db int, t
 
 func InitRedisClient(addr string, creds RedisCredentials, useSsl bool, db int, tlsConf *tls.Config) error {
 	opts := getRedisOptions(addr, creds, useSsl, db, tlsConf)
-	client = redis.NewClient(opts)
+	c := redis.NewClient(opts)
 	// instrument tracing for redis client
-	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
+	_ = redisotel.InstrumentTracing(c, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
 
-	if _, err := client.Ping(ctx).Result(); err != nil {
+	if _, err := c.Ping(ctx).Result(); err != nil {
+		_ = c.Close()
 		return err
 	}
 
+	if err := ensureRedisWritable(c); err != nil {
+		_ = c.Close()
+		return err
+	}
+
+	old := swapRedisClient(c)
+	retireRedisClient(old)
 	return nil
 }
 
@@ -82,49 +108,27 @@ func InitRedisSentinelClient(
 	socketTimeout float64,
 	tlsConf *tls.Config,
 ) error {
-	opts := &redis.FailoverOptions{
-		MasterName:                   masterName,
-		SentinelAddrs:                sentinels,
-		Username:                     creds.Username,
-		Password:                     creds.Password,
-		DB:                           db,
-		SentinelUsername:             sentinelUsername,
-		SentinelPassword:             sentinelPassword,
-		StreamingCredentialsProvider: creds.CredentialProvider,
-	}
-
-	if useSsl {
-		if tlsConf != nil {
-			opts.TLSConfig = tlsConf
-		} else {
-			// Create a default TLS configuration when SSL is enabled but no config is provided
-			opts.TLSConfig = &tls.Config{
-				MinVersion: tls.VersionTLS12,
-			}
-		}
-	}
-
-	if socketTimeout > 0 {
-		opts.DialTimeout = time.Duration(socketTimeout * float64(time.Second))
-	}
-
-	client = redis.NewFailoverClient(opts)
-	_ = redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(gootel.GetTracerProvider()))
-
-	if _, err := client.Ping(ctx).Result(); err != nil {
-		return err
-	}
-
-	return nil
+	return initRedisSentinelClientWithDiscovery(
+		sentinels,
+		masterName,
+		creds,
+		sentinelUsername,
+		sentinelPassword,
+		useSsl,
+		db,
+		socketTimeout,
+		tlsConf,
+	)
 }
 
 // Close the redis client
 func Close() error {
-	if client == nil {
+	c := swapRedisClient(nil)
+	if c == nil {
 		return ErrDBNotInit
 	}
 
-	return client.Close()
+	return c.Close()
 }
 
 func getCmdable(context ...redis.Cmdable) redis.Cmdable {
@@ -132,7 +136,7 @@ func getCmdable(context ...redis.Cmdable) redis.Cmdable {
 		return context[0]
 	}
 
-	return client
+	return loadRedisClient()
 }
 
 func SetKeyPrefix(prefix string) {
@@ -190,7 +194,7 @@ func Store(key string, value any, time time.Duration, context ...redis.Cmdable) 
 
 // store the key-value pair, without serialKey
 func store(key string, value any, time time.Duration, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -211,7 +215,7 @@ func Get[T any](key string, context ...redis.Cmdable) (*T, error) {
 }
 
 func get[T any](key string, context ...redis.Cmdable) (*T, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -233,7 +237,7 @@ func get[T any](key string, context ...redis.Cmdable) (*T, error) {
 
 // GetString get the string with key
 func GetString(key string, context ...redis.Cmdable) (string, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return "", ErrDBNotInit
 	}
 
@@ -253,7 +257,7 @@ func Del(key string, context ...redis.Cmdable) (int64, error) {
 }
 
 func del(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return 0, ErrDBNotInit
 	}
 
@@ -263,7 +267,7 @@ func del(key string, context ...redis.Cmdable) (int64, error) {
 
 // Exist check the key exist or not
 func Exist(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return 0, ErrDBNotInit
 	}
 
@@ -272,7 +276,7 @@ func Exist(key string, context ...redis.Cmdable) (int64, error) {
 
 // Increase the key
 func Increase(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return 0, ErrDBNotInit
 	}
 
@@ -289,7 +293,7 @@ func Increase(key string, context ...redis.Cmdable) (int64, error) {
 
 // Decrease the key
 func Decrease(key string, context ...redis.Cmdable) (int64, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return 0, ErrDBNotInit
 	}
 
@@ -298,7 +302,7 @@ func Decrease(key string, context ...redis.Cmdable) (int64, error) {
 
 // SetExpire set the expire time for the key
 func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -307,7 +311,7 @@ func SetExpire(key string, time time.Duration, context ...redis.Cmdable) error {
 
 // SetMapField set the map field with key
 func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -316,7 +320,7 @@ func SetMapField(key string, v map[string]any, context ...redis.Cmdable) error {
 
 // SetMapOneField set the map field with key
 func SetMapOneField(key string, field string, value any, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -329,7 +333,7 @@ func SetMapOneField(key string, field string, value any, context ...redis.Cmdabl
 
 // GetMapField get the map field with key
 func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -347,7 +351,7 @@ func GetMapField[T any](key string, field string, context ...redis.Cmdable) (*T,
 
 // GetMapFieldString get the string
 func GetMapFieldString(key string, field string, context ...redis.Cmdable) (string, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return "", ErrDBNotInit
 	}
 
@@ -364,7 +368,7 @@ func GetMapFieldString(key string, field string, context ...redis.Cmdable) (stri
 
 // DelMapField delete the map field with key
 func DelMapField(key string, field string, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -373,7 +377,7 @@ func DelMapField(key string, field string, context ...redis.Cmdable) error {
 
 // GetMap get the map with key
 func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -400,7 +404,7 @@ func GetMap[V any](key string, context ...redis.Cmdable) (map[string]V, error) {
 
 // ScanKeys scan the keys with match pattern
 func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -418,7 +422,7 @@ func ScanKeys(match string, context ...redis.Cmdable) ([]string, error) {
 
 // ScanKeysAsync scan the keys with match pattern, format like "key*"
 func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -448,7 +452,7 @@ func ScanKeysAsync(match string, fn func([]string) error, context ...redis.Cmdab
 
 // ScanMap scan the map with match pattern, format like "key*"
 func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[string]V, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return nil, ErrDBNotInit
 	}
 
@@ -469,7 +473,7 @@ func ScanMap[V any](key string, match string, context ...redis.Cmdable) (map[str
 
 // ScanMapAsync scan the map with match pattern, format like "key*"
 func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -510,7 +514,7 @@ func ScanMapAsync[V any](key string, match string, fn func(map[string]V) error, 
 
 // SetNX set the key-value pair with expire time
 func SetNX[T any](key string, value T, expire time.Duration, context ...redis.Cmdable) (bool, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return false, ErrDBNotInit
 	}
 
@@ -555,7 +559,7 @@ func AcquireOwnedLock(
 	tryLockTimeout time.Duration,
 	commands ...redis.Cmdable,
 ) (*OwnedLock, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return nil, ErrDBNotInit
 	}
 	if expire <= 0 {
@@ -670,7 +674,7 @@ var (
 // Lock key, expire time takes responsibility for expiration time
 // try_lock_timeout takes responsibility for the timeout of trying to lock
 func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -697,7 +701,7 @@ func Lock(key string, expire time.Duration, tryLockTimeout time.Duration, contex
 }
 
 func Unlock(key string, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -711,7 +715,7 @@ func Unlock(key string, context ...redis.Cmdable) error {
 
 // ReleaseAllLocks release all locks
 func ReleaseAllLocks() error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		// redis client not initialized, skip, no need to release any locks
 		return nil
 	}
@@ -727,7 +731,7 @@ func ReleaseAllLocks() error {
 }
 
 func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, error) {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return false, ErrDBNotInit
 	}
 
@@ -735,7 +739,7 @@ func Expire(key string, time time.Duration, context ...redis.Cmdable) (bool, err
 }
 
 func Transaction(fn func(redis.Pipeliner) error, watchKeys ...string) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -744,7 +748,7 @@ func Transaction(fn func(redis.Pipeliner) error, watchKeys ...string) error {
 		serialized[i] = serialKey(k)
 	}
 
-	return client.Watch(ctx, func(tx *redis.Tx) error {
+	return loadRedisClient().Watch(ctx, func(tx *redis.Tx) error {
 		_, err := tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
 			return fn(p)
 		})
@@ -756,7 +760,7 @@ func Transaction(fn func(redis.Pipeliner) error, watchKeys ...string) error {
 }
 
 func Publish(channel string, message any, context ...redis.Cmdable) error {
-	if client == nil {
+	if loadRedisClient() == nil {
 		return ErrDBNotInit
 	}
 
@@ -768,7 +772,7 @@ func Publish(channel string, message any, context ...redis.Cmdable) error {
 }
 
 func Subscribe[T any](channel string) (<-chan T, func()) {
-	pubsub := client.Subscribe(ctx, serialChannel(channel))
+	pubsub := loadRedisClient().Subscribe(ctx, serialChannel(channel))
 	ch := make(chan T)
 	connectionEstablished := make(chan bool)
 
