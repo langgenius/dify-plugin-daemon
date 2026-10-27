@@ -188,7 +188,26 @@ func invokePluginOnce[Req any, Rsp any](
 				pluginMap,
 			)
 			if err == nil {
-				response.OnClose(closeListener)
+				// On stream close, kill the local plugin subprocess too — the
+				// upstream listener (closeListener) only removes the listener
+				// from a map and does not stop the subprocess, so its open
+				// connection to the upstream LLM provider stays alive and the
+				// provider keeps generating tokens until natural completion.
+				// Closing the subprocess's stdin/stdout/stderr pipes via
+				// instance.Stop() (PluginInstance.Stop closes the pipes — see
+				// internal/core/local_runtime/instance.go:117-125) forces the
+				// subprocess to exit, which closes its requests.post(stream=True)
+				// connection and cancels the upstream generation. Idempotent —
+				// safe to call multiple times or after the subprocess has
+				// already exited.
+				response.OnClose(func() {
+					if localRuntime, ok := runtime.(*local_runtime.LocalPluginRuntime); ok {
+						if instance, ok := localRuntime.LookupSession(session.ID); ok && instance != nil && !instance.IsStopped() {
+							instance.Stop()
+						}
+					}
+					closeListener()
+				})
 				return response, nil
 			}
 
