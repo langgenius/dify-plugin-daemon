@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792634705446,
+  "lastUpdate": 1793173939200,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -17908,6 +17908,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 20.99,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e37945074f4ba603aa088b9a0a80d14b025cdd0d",
+          "message": "feat: add instance done event, allow listener subscribe (#843)",
+          "timestamp": "2026-10-28T15:50:10+08:00",
+          "tree_id": "8d1faec64c2471ec6cc1fd6fe7d0bbcbd141b15c",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/e37945074f4ba603aa088b9a0a80d14b025cdd0d"
+        },
+        "date": 1793173938754,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 119574736,
+            "unit": "ns/op\t 876.92 MB/s\t214106901 B/op\t    1898 allocs/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 119574736,
+            "unit": "ns/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 876.92,
+            "unit": "MB/s",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 214106901,
+            "unit": "B/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1898,
+            "unit": "allocs/op",
+            "extra": "298 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 21,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 21,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
