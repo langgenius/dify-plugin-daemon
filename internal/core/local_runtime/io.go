@@ -46,10 +46,27 @@ func (r *LocalPluginRuntime) Listen(sessionId string) (
 
 	// setup listener to handle session message from plugin
 	listener := entities.NewCallbackHandler[plugin_entities.SessionMessage]()
+	listenerDone := make(chan struct{})
 	listener.OnClose(func() {
+		close(listenerDone)
 		instance.removeStdioHandlerListener(sessionId)
 		r.sessionToInstanceMap.Delete(sessionId)
 	})
+
+	go func() {
+		select {
+		case <-instance.Done():
+			listener.Send(plugin_entities.SessionMessage{
+				Type: plugin_entities.SESSION_MESSAGE_TYPE_ERROR,
+				Data: parser.MarshalJsonBytes(plugin_entities.ErrorResponse{
+					ErrorType: "plugin_instance_stopped",
+					Message:   ErrInstanceStopped.Error(),
+				}),
+			})
+		case <-listenerDone:
+			return
+		}
+	}()
 
 	instance.setupStdioEventListener(sessionId, func(b []byte) {
 		data, err := parser.UnmarshalJsonBytes[plugin_entities.SessionMessage](b)

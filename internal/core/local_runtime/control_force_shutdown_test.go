@@ -58,7 +58,7 @@ func TestForcefullyShutdownAllInstances(t *testing.T) {
 			mu.Lock()
 			closedInWriters++
 			mu.Unlock()
-		}} 
+		}}
 		// When stdout is closed, simulate runtime removing the first instance
 		rc := &fakeRC{onClose: func() {
 			r.instanceLocker.Lock()
@@ -67,7 +67,7 @@ func TestForcefullyShutdownAllInstances(t *testing.T) {
 				r.instances = r.instances[1:]
 			}
 			r.instanceLocker.Unlock()
-		}} 
+		}}
 		ec := &fakeRC{}
 		return &PluginInstance{
 			inWriter:  wc,
@@ -75,6 +75,7 @@ func TestForcefullyShutdownAllInstances(t *testing.T) {
 			errReader: ec,
 			l:         &sync.Mutex{},
 			appConfig: &app.Config{PluginRuntimeBufferSize: 1024, PluginRuntimeMaxBufferSize: 1024},
+			done:      make(chan struct{}),
 		}
 	}
 

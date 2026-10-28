@@ -49,6 +49,8 @@ type PluginInstance struct {
 	// notifier
 	notifiers    []PluginInstanceNotifier
 	notifierLock *sync.Mutex
+
+	done chan struct{}
 }
 
 type PluginInstanceConfig struct {
@@ -77,6 +79,7 @@ func newPluginInstance(
 		listener:               make(map[string]func([]byte)),
 		notifiers:              []PluginInstanceNotifier{},
 		notifierLock:           &sync.Mutex{},
+		done:                   make(chan struct{}),
 	}
 
 	return instance
@@ -105,11 +108,18 @@ func (s *PluginInstance) Error() error {
 	return nil
 }
 
+func (s *PluginInstance) Done() <-chan struct{} {
+	return s.done
+}
+
 // Stop stops the stdio, of course, it will shutdown the plugin asynchronously
 func (s *PluginInstance) Stop() {
 	if !s.stopped.CompareAndSwap(false, true) {
 		return
 	}
+
+	close(s.done)
+
 	s.inWriter.Close()
 	s.outReader.Close()
 	s.errReader.Close()
@@ -130,7 +140,7 @@ func (s *PluginInstance) Stop() {
 // Once the subprocess exists itself, STDOUT always close, which results in `CLOSE STDOUT`
 func (s *PluginInstance) StartStdout() {
 	defer func() {
-		s.stopped.Store(true)
+		s.Stop()
 		log.Info(
 			"plugin stdout reader exiting",
 			"plugin", s.pluginUniqueIdentifier,
