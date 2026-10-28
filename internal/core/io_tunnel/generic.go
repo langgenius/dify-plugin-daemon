@@ -82,83 +82,6 @@ func invokePluginOnce[Req any, Rsp any](
 		return nil, errors.New("plugin runtime not found")
 	}
 
-	response := stream.NewStream[Rsp](responseBufferSize)
-	if onClose != nil {
-		response.OnClose(onClose)
-	}
-	stopCloseOnCancel := context.AfterFunc(ctx, response.Close)
-	response.OnClose(func() {
-		stopCloseOnCancel()
-	})
-
-	onChunk := func(chunk plugin_entities.SessionMessage) {
-		switch chunk.Type {
-		case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
-			chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
-			if err != nil {
-				outcome.markError()
-				response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "unmarshal_error",
-					"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
-				})))
-				return
-			} else {
-				response.WriteBlocking(chunk)
-			}
-		case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
-			if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
-				outcome.markError()
-				response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "serverless_event_not_supported",
-					"message":    "serverless event is not supported by full duplex",
-				})))
-				return
-			}
-			if err := backwards_invocation.InvokeDify(
-				runtime.Configuration(),
-				session.InvokeFrom,
-				session,
-				transaction.NewFullDuplexEventWriter(session),
-				chunk.Data,
-			); err != nil {
-				outcome.markError()
-				response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
-					"error_type": "invoke_dify_error",
-					"message":    fmt.Sprintf("invoke dify failed: %s", err.Error()),
-				})))
-				return
-			}
-		case plugin_entities.SESSION_MESSAGE_TYPE_END:
-			outcome.markSuccess()
-			response.Close()
-		case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
-			outcome.markError()
-			e, err := parser.UnmarshalJsonBytes[plugin_entities.ErrorResponse](chunk.Data)
-			if err != nil {
-				break
-			}
-			pluginID, runtimeType := pluginInvocationLogLabels(session)
-			log.ErrorContext(
-				session.RequestContext(),
-				"plugin returned error response",
-				"session_id", session.ID,
-				"action", session.Action,
-				"plugin", pluginID,
-				"runtime_type", runtimeType,
-				"error_type", e.ErrorType,
-				"message", e.Message,
-				"args", e.Args,
-			)
-			response.CloseWithError(errors.New(e.Error()))
-		default:
-			outcome.markError()
-			response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
-				"error_type": "unknown_stream_message_type",
-				"message":    "unknown stream message type: " + string(chunk.Type),
-			})))
-		}
-	}
-
 	pluginMap := GetInvokePluginMap(
 		session,
 		request,
@@ -167,6 +90,81 @@ func invokePluginOnce[Req any, Rsp any](
 	isLocal := runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL
 	deadline := time.Now().Add(writeRetryBudget)
 	for {
+		attemptOutcome := &pluginInvocationOutcomeTracker{}
+		response := stream.NewStream[Rsp](responseBufferSize)
+		stopCloseOnCancel := context.AfterFunc(ctx, response.Close)
+		response.OnClose(func() {
+			stopCloseOnCancel()
+		})
+
+		onChunk := func(chunk plugin_entities.SessionMessage) {
+			switch chunk.Type {
+			case plugin_entities.SESSION_MESSAGE_TYPE_STREAM:
+				chunk, err := parser.UnmarshalJsonBytes[Rsp](chunk.Data)
+				if err != nil {
+					attemptOutcome.markError()
+					response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
+						"error_type": "unmarshal_error",
+						"message":    fmt.Sprintf("unmarshal json failed: %s", err.Error()),
+					})))
+					return
+				} else {
+					response.WriteBlocking(chunk)
+				}
+			case plugin_entities.SESSION_MESSAGE_TYPE_INVOKE:
+				if runtime.Type() == plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS {
+					attemptOutcome.markError()
+					response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
+						"error_type": "serverless_event_not_supported",
+						"message":    "serverless event is not supported by full duplex",
+					})))
+					return
+				}
+				if err := backwards_invocation.InvokeDify(
+					runtime.Configuration(),
+					session.InvokeFrom,
+					session,
+					transaction.NewFullDuplexEventWriter(session),
+					chunk.Data,
+				); err != nil {
+					attemptOutcome.markError()
+					response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
+						"error_type": "invoke_dify_error",
+						"message":    fmt.Sprintf("invoke dify failed: %s", err.Error()),
+					})))
+					return
+				}
+			case plugin_entities.SESSION_MESSAGE_TYPE_END:
+				attemptOutcome.markSuccess()
+				response.Close()
+			case plugin_entities.SESSION_MESSAGE_TYPE_ERROR:
+				attemptOutcome.markError()
+				e, err := parser.UnmarshalJsonBytes[plugin_entities.ErrorResponse](chunk.Data)
+				if err != nil {
+					break
+				}
+				pluginID, runtimeType := pluginInvocationLogLabels(session)
+				log.ErrorContext(
+					session.RequestContext(),
+					"plugin returned error response",
+					"session_id", session.ID,
+					"action", session.Action,
+					"plugin", pluginID,
+					"runtime_type", runtimeType,
+					"error_type", e.ErrorType,
+					"message", e.Message,
+					"args", e.Args,
+				)
+				response.CloseWithError(errors.New(e.Error()))
+			default:
+				attemptOutcome.markError()
+				response.CloseWithError(errors.New(parser.MarshalJson(map[string]string{
+					"error_type": "unknown_stream_message_type",
+					"message":    "unknown stream message type: " + string(chunk.Type),
+				})))
+			}
+		}
+
 		listener, err := runtime.Listen(session.ID)
 		if err == nil {
 			var closeOnce sync.Once
@@ -177,7 +175,7 @@ func invokePluginOnce[Req any, Rsp any](
 			listener.Listen(onChunk)
 			if err := ctx.Err(); err != nil {
 				closeListener()
-				stopCloseOnCancel()
+				response.Close()
 				return nil, err
 			}
 
@@ -189,14 +187,29 @@ func invokePluginOnce[Req any, Rsp any](
 			)
 			if err == nil {
 				response.OnClose(closeListener)
+				// Only the accepted attempt contributes to the invocation outcome.
+				// OnClose also runs when the response closed during WriteContext.
+				response.OnClose(func() {
+					switch attemptOutcome.outcome() {
+					case pluginInvocationOutcomeSuccess:
+						outcome.markSuccess()
+					case pluginInvocationOutcomeError:
+						outcome.markError()
+					}
+					if onClose != nil {
+						onClose()
+					}
+				})
 				return response, nil
 			}
 
 			closeListener()
 		}
 
+		// Discard this attempt before retrying, including its context callback.
+		response.Close()
+
 		if !isLocal || !isRecoverableWriteErr(err) || time.Now().After(deadline) {
-			stopCloseOnCancel()
 			return nil, errors.Join(err, errors.New("failed to write request"))
 		}
 
@@ -204,7 +217,6 @@ func invokePluginOnce[Req any, Rsp any](
 		select {
 		case <-ctx.Done():
 			retryTimer.Stop()
-			stopCloseOnCancel()
 			return nil, ctx.Err()
 		case <-retryTimer.C:
 		}
