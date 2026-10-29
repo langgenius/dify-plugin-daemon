@@ -54,7 +54,7 @@ func isPromptMessageRole(fl validator.FieldLevel) bool {
 
 type PromptMessage struct {
 	Role       PromptMessageRole       `json:"role" validate:"required,prompt_message_role"`
-	Content    any                     `json:"content" validate:"required,prompt_message_content"`
+	Content    any                     `json:"content" validate:"omitempty,prompt_message_content"`
 	Name       string                  `json:"name"`
 	ToolCalls  []PromptMessageToolCall `json:"tool_calls" validate:"dive"`
 	ToolCallId string                  `json:"tool_call_id"`
@@ -145,7 +145,7 @@ func validateToolChoice(sl validator.StructLevel) {
 func unmarshalPromptMessageContent(data json.RawMessage) (any, error) {
 	trimmed := bytes.TrimSpace(data)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, errors.New("content field is required")
+		return nil, nil
 	}
 
 	switch trimmed[0] {
@@ -184,10 +184,6 @@ func (p *PromptMessage) UnmarshalJSON(data []byte) error {
 	if raw.Role == "" {
 		return errors.New("role field is required")
 	}
-	if len(raw.Content) == 0 {
-		return errors.New("content field is required")
-	}
-
 	content, err := unmarshalPromptMessageContent(raw.Content)
 	if err != nil {
 		return err

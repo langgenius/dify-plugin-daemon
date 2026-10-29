@@ -1,6 +1,9 @@
 package tool_entities
 
 import (
+	"bytes"
+	"encoding/json"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
@@ -55,6 +58,13 @@ type ToolResponseChunk struct {
 	Type    ToolResponseChunkType `json:"type" validate:"required,is_valid_tool_response_chunk_type"`
 	Message map[string]any        `json:"message"`
 	Meta    map[string]any        `json:"meta"`
+}
+
+func (r *ToolResponseChunk) UnmarshalJSON(data []byte) error {
+	type response ToolResponseChunk
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	return decoder.Decode((*response)(r))
 }
 
 type GetToolRuntimeParametersResponse struct {
