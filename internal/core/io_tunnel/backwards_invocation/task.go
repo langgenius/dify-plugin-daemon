@@ -1,9 +1,12 @@
 package backwards_invocation
 
 import (
+	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/dify_invocation"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
@@ -11,8 +14,8 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
 	routinepkg "github.com/langgenius/dify-plugin-daemon/pkg/routine"
-	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/routine"
+	"github.com/langgenius/dify-plugin-daemon/pkg/validators"
 )
 
 // returns error only if payload is not correct
@@ -23,25 +26,34 @@ func InvokeDify(
 	writer BackwardsInvocationWriter,
 	data []byte,
 ) error {
-	// unmarshal invoke data
-	request, err := parser.UnmarshalJsonBytes2Map(data)
-	if err != nil {
+	// Keep payload values as JSON until typed dispatch, including opaque data and integers.
+	var request struct {
+		Type               *BackwardsInvocationType   `json:"type"`
+		BackwardsRequestID *string                    `json:"backwards_request_id"`
+		Request            map[string]json.RawMessage `json:"request"`
+	}
+	if err := json.Unmarshal(data, &request); err != nil {
 		return fmt.Errorf("unmarshal invoke request failed: %s", err.Error())
 	}
 
-	if request == nil {
-		return fmt.Errorf("invoke request is empty")
+	if request.Type == nil {
+		return errors.New("invoke request missing type")
+	}
+	if request.BackwardsRequestID == nil {
+		return errors.New("invoke request missing request_id")
+	}
+	if request.Request == nil {
+		return errors.New("invoke request missing request")
 	}
 
 	// prepare invocation arguments
-	requestHandle, err := prepareDifyInvocationArguments(
+	requestHandle := NewBackwardsInvocation(
+		*request.Type,
+		*request.BackwardsRequestID,
 		session,
 		writer,
-		request,
+		request.Request,
 	)
-	if err != nil {
-		return err
-	}
 
 	if invoke_from == access_types.PLUGIN_ACCESS_TYPE_MODEL {
 		requestHandle.WriteError(fmt.Errorf("you can not invoke dify from %s", invoke_from))
@@ -61,8 +73,8 @@ func InvokeDify(
 		routinepkg.RoutineLabelKeyModule: "plugin_daemon",
 		routinepkg.RoutineLabelKeyMethod: "InvokeDify",
 	}, func() {
-		dispatchDifyInvocationTask(requestHandle)
 		defer requestHandle.EndResponse()
+		dispatchDifyInvocationTask(requestHandle)
 	})
 
 	return nil
@@ -195,37 +207,6 @@ func checkPermission(runtime *plugin_entities.PluginDeclaration, requestHandle *
 	return nil
 }
 
-func prepareDifyInvocationArguments(
-	session *session_manager.Session,
-	writer BackwardsInvocationWriter,
-	request map[string]any,
-) (*BackwardsInvocation, error) {
-	typ, ok := request["type"].(string)
-	if !ok {
-		return nil, fmt.Errorf("invoke request missing type: %s", request)
-	}
-
-	// get request id
-	backwardsRequestId, ok := request["backwards_request_id"].(string)
-	if !ok {
-		return nil, fmt.Errorf("invoke request missing request_id: %s", request)
-	}
-
-	// get request
-	detailedRequest, ok := request["request"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("invoke request missing request: %s", request)
-	}
-
-	return NewBackwardsInvocation(
-		BackwardsInvocationType(typ),
-		backwardsRequestId,
-		session,
-		writer,
-		detailedRequest,
-	), nil
-}
-
 var (
 	dispatchMapping = map[dify_invocation.InvokeType]func(handle *BackwardsInvocation){
 		dify_invocation.INVOKE_TYPE_TOOL: func(handle *BackwardsInvocation) {
@@ -289,12 +270,23 @@ func genericDispatchTask[T any](
 		request *T,
 	),
 ) {
-	r, err := parser.MapToStruct[T](handle.RequestData())
+	data, err := json.Marshal(handle.RequestData())
 	if err != nil {
+		handle.WriteError(fmt.Errorf("marshal backwards invoke request failed: %s", err.Error()))
+		return
+	}
+	var request T
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := decoder.Decode(&request); err != nil {
 		handle.WriteError(fmt.Errorf("unmarshal backwards invoke request failed: %s", err.Error()))
 		return
 	}
-	dispatch(handle, r)
+	if err := validators.GlobalEntitiesValidator.Struct(request); err != nil {
+		handle.WriteError(fmt.Errorf("unmarshal backwards invoke request failed: error validating struct: %s", err.Error()))
+		return
+	}
+	dispatch(handle, &request)
 }
 
 func dispatchDifyInvocationTask(handle *BackwardsInvocation) {
@@ -304,15 +296,21 @@ func dispatchDifyInvocationTask(handle *BackwardsInvocation) {
 		handle.WriteError(fmt.Errorf("get tenant id failed: %s", err.Error()))
 		return
 	}
-	requestData["tenant_id"] = tenantId
 	userId, err := handle.UserID()
 	if err != nil {
 		handle.WriteError(fmt.Errorf("get user id failed: %s", err.Error()))
 		return
 	}
-	requestData["user_id"] = userId
+	// JSON also matches case-folded field names; remove aliases before injecting trusted identity.
+	for key := range requestData {
+		if strings.EqualFold(key, "tenant_id") || strings.EqualFold(key, "user_id") || strings.EqualFold(key, "type") {
+			delete(requestData, key)
+		}
+	}
+	requestData["tenant_id"], _ = json.Marshal(tenantId)
+	requestData["user_id"], _ = json.Marshal(userId)
 	typ := handle.Type()
-	requestData["type"] = typ
+	requestData["type"], _ = json.Marshal(typ)
 
 	for t, v := range dispatchMapping {
 		if t == handle.Type() {

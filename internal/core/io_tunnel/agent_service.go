@@ -3,6 +3,7 @@ package io_tunnel
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
@@ -57,13 +58,16 @@ func InvokeAgentStrategy(
 					continue
 				}
 
-				totalLength, ok := item.Message["total_length"].(float64)
+				totalLength, ok := item.Message["total_length"].(json.Number)
 				if !ok {
 					continue
 				}
 
-				// convert total_length to int
-				totalLengthInt := int(totalLength)
+				totalLengthInt, err := totalLength.Int64()
+				if err != nil || totalLengthInt < 0 || totalLengthInt > 15*1024*1024 {
+					newResponse.WriteError(errors.New("invalid file length"))
+					return
+				}
 
 				blob, ok := item.Message["blob"].(string)
 				if !ok {

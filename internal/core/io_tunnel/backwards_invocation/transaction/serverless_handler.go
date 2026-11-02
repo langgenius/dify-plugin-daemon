@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -148,10 +149,13 @@ func (h *ServerlessTransactionHandler) Handle(ctx *gin.Context, sessionId string
 			session, err := session_manager.GetSession(sessionId)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusBadRequest)
-				invokePayload, marshalErr := parser.UnmarshalJsonBytes2Map(sessionMessage.Data)
+				var invokePayload struct {
+					BackwardsRequestID string `json:"backwards_request_id"`
+				}
+				marshalErr := json.Unmarshal(sessionMessage.Data, &invokePayload)
 				var backwardsRequestId string
 				if marshalErr == nil {
-					backwardsRequestId, _ = invokePayload["backwards_request_id"].(string)
+					backwardsRequestId = invokePayload.BackwardsRequestID
 				}
 
 				cacheErrorKind := session_manager.SessionCacheErrorKind(err)
