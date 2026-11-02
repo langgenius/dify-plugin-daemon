@@ -1062,3 +1062,204 @@ func (t *trackingReadCloser) Close() error {
 	t.bodiesClosed.Add(1)
 	return t.ReadCloser.Close()
 }
+
+func startWriteWithActivation(
+	t *testing.T,
+	handler http.HandlerFunc,
+	activationEnabled bool,
+	keepaliveInterval time.Duration,
+	activate func(ctx context.Context, instanceID string, timeout time.Duration) error,
+) (chan plugin_entities.SessionMessage, chan struct{}) {
+	t.Helper()
+	routine.InitPool(1)
+
+	originalActivate := activatePlugin
+	activatePlugin = activate
+	t.Cleanup(func() { activatePlugin = originalActivate })
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	runtime := &ServerlessPluginRuntime{
+		Client:                      server.Client(),
+		LambdaURL:                   server.URL,
+		LambdaName:                  "test-lambda",
+		MaxRequestBytes:             1024,
+		MaxRetryTimes:               1,
+		PluginMaxExecutionTimeout:   10,
+		RuntimeBufferSize:           1024,
+		RuntimeMaxBufferSize:        1024,
+		ActivationEnabled:           activationEnabled,
+		ActivationTimeout:           5,
+		ActivationKeepaliveInterval: keepaliveInterval,
+		listeners:                   mapping.Map[string, *entities.Broadcast[plugin_entities.SessionMessage]]{},
+	}
+
+	listener, err := runtime.Listen("test-session")
+	if err != nil {
+		t.Fatalf("listen failed: %v", err)
+	}
+
+	messages := make(chan plugin_entities.SessionMessage, 8)
+	closed := make(chan struct{})
+	listener.Listen(func(message plugin_entities.SessionMessage) {
+		messages <- message
+	})
+	listener.OnClose(func() {
+		close(closed)
+	})
+
+	if err := runtime.Write(
+		"test-session",
+		access_types.PLUGIN_ACCESS_ACTION_INVOKE_TEXT_EMBEDDING,
+		[]byte("{}"),
+	); err != nil {
+		t.Fatalf("write failed: %v", err)
+	}
+
+	return messages, closed
+}
+
+func collectMessagesAfterClose(t *testing.T, messages chan plugin_entities.SessionMessage, closed chan struct{}) []plugin_entities.SessionMessage {
+	t.Helper()
+	select {
+	case <-closed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for listener close")
+	}
+	close(messages)
+	received := make([]plugin_entities.SessionMessage, 0, len(messages))
+	for message := range messages {
+		received = append(received, message)
+	}
+	return received
+}
+
+func slowEndSessionHandler(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(150 * time.Millisecond)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(
+		"{\"session_id\":\"test-session\",\"event\":\"session\",\"data\":{\"type\":\"end\",\"data\":{\"reason\":\"done\"}}}\n",
+	))
+	w.(http.Flusher).Flush()
+}
+
+func TestWrite_ActivationKeepaliveRenewsDuringLongInvocation(t *testing.T) {
+	var activateCalls atomic.Int32
+	messages, closed := startWriteWithActivation(
+		t,
+		slowEndSessionHandler,
+		true,
+		20*time.Millisecond,
+		func(ctx context.Context, instanceID string, timeout time.Duration) error {
+			activateCalls.Add(1)
+			return nil
+		},
+	)
+
+	received := collectMessagesAfterClose(t, messages, closed)
+
+	if calls := activateCalls.Load(); calls < 4 {
+		t.Fatalf("expected at least 4 activate calls (1 preflight + keepalives), got %d", calls)
+	}
+	hasEnd := false
+	for _, message := range received {
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_ERROR {
+			t.Fatalf("unexpected error message: %s", message.Data)
+		}
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_END {
+			hasEnd = true
+		}
+	}
+	if !hasEnd {
+		t.Fatal("expected END message")
+	}
+}
+
+func TestWrite_ActivationKeepaliveStopsAfterInvocation(t *testing.T) {
+	var activateCalls atomic.Int32
+	messages, closed := startWriteWithActivation(
+		t,
+		slowEndSessionHandler,
+		true,
+		20*time.Millisecond,
+		func(ctx context.Context, instanceID string, timeout time.Duration) error {
+			activateCalls.Add(1)
+			return nil
+		},
+	)
+
+	collectMessagesAfterClose(t, messages, closed)
+
+	snapshot := activateCalls.Load()
+	time.Sleep(100 * time.Millisecond)
+	if calls := activateCalls.Load(); calls != snapshot {
+		t.Fatalf("expected no activate calls after invocation ended, got %d -> %d", snapshot, calls)
+	}
+}
+
+func TestWrite_ActivationKeepaliveFailureDoesNotAbortInvocation(t *testing.T) {
+	var activateCalls atomic.Int32
+	messages, closed := startWriteWithActivation(
+		t,
+		slowEndSessionHandler,
+		true,
+		20*time.Millisecond,
+		func(ctx context.Context, instanceID string, timeout time.Duration) error {
+			if activateCalls.Add(1) == 1 {
+				return nil
+			}
+			return errors.New("activation keepalive failed")
+		},
+	)
+
+	received := collectMessagesAfterClose(t, messages, closed)
+
+	if calls := activateCalls.Load(); calls < 2 {
+		t.Fatalf("expected keepalive to be attempted, got %d activate calls", calls)
+	}
+	hasEnd := false
+	for _, message := range received {
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_ERROR {
+			t.Fatalf("keepalive failure must not produce an error message: %s", message.Data)
+		}
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_END {
+			hasEnd = true
+		}
+	}
+	if !hasEnd {
+		t.Fatal("expected END message")
+	}
+}
+
+func TestWrite_ActivationDisabledSkipsKeepalive(t *testing.T) {
+	var activateCalls atomic.Int32
+	messages, closed := startWriteWithActivation(
+		t,
+		slowEndSessionHandler,
+		false,
+		20*time.Millisecond,
+		func(ctx context.Context, instanceID string, timeout time.Duration) error {
+			activateCalls.Add(1)
+			return nil
+		},
+	)
+
+	received := collectMessagesAfterClose(t, messages, closed)
+
+	if calls := activateCalls.Load(); calls != 0 {
+		t.Fatalf("expected no activate calls when activation is disabled, got %d", calls)
+	}
+	hasEnd := false
+	for _, message := range received {
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_ERROR {
+			t.Fatalf("unexpected error message: %s", message.Data)
+		}
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_END {
+			hasEnd = true
+		}
+	}
+	if !hasEnd {
+		t.Fatal("expected END message")
+	}
+}

@@ -19,6 +19,7 @@ daemon 通过如下环境变量进行配置：
 | `MAX_SERVERLESS_REQUEST_BYTES` | 发送到 serverless 插件运行时的最大序列化请求负载大小（以字节为单位）。默认值为 5242880（5 MB）。此限制考虑了 Lambda Function URL 的 6 MB 请求大小限制，并为 headers 和元数据留有安全余量。 |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED` | 是否在下发调用前执行激活（activation）预检。启用后，daemon 会调用 `POST /v1/activation/activate` 唤醒被缩容至零的插件，并等待其就绪。默认值为 `false`。 |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT` | 激活预检中，daemon 等待插件就绪的超时时间（秒）。若插件未在超时时间内被唤醒，则本次调用按失败处理。默认值为 `60`。 |
+| `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL` | 调用执行期间，daemon 周期性调用 `POST /v1/activation/activate` 保持插件活跃的间隔（秒），防止长时间运行的调用被缩容中断。仅在启用激活时生效。connector 的空闲时间应至少为该间隔的 2 倍。keepalive 失败仅记录日志，不会导致调用失败。默认值为 `60`。 |
 
 ---
 
@@ -165,6 +166,7 @@ Content-Type: application/json
 **错误处理**
 
 - daemon 使用 `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT` 限制等待时长。一旦超时或收到非 `200` 响应，本次调用将被中断并按失败处理。
+- 预检成功后，daemon 会在调用存续期间每隔 `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL` 秒再次调用该接口以续期活跃租约。keepalive 失败仅记录日志，不会中断调用。
 
 ---
 

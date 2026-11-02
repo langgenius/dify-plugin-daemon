@@ -218,6 +218,11 @@ type Config struct {
 	// preflight. If the plugin is not woken up within this window the invocation
 	// is treated as failed.
 	DifyPluginServerlessConnectorActivationTimeout int `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT"`
+	// DifyPluginServerlessConnectorActivationKeepaliveInterval is the interval, in
+	// seconds, at which the daemon re-calls the connector's activate endpoint while
+	// an invocation is in flight, so a long-running invocation is not scaled down.
+	// The connector idle time should be at least twice this interval.
+	DifyPluginServerlessConnectorActivationKeepaliveInterval int `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL"`
 
 	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxServerlessRequestBytes       int   `envconfig:"MAX_SERVERLESS_REQUEST_BYTES" default:"5242880"`
@@ -343,6 +348,10 @@ func (c *Config) Validate() error {
 
 		if c.DifyPluginServerlessConnectorActivationEnabled && c.DifyPluginServerlessConnectorActivationTimeout <= 0 {
 			return fmt.Errorf("dify plugin serverless connector activation timeout must be greater than zero when activation is enabled")
+		}
+
+		if c.DifyPluginServerlessConnectorActivationEnabled && c.DifyPluginServerlessConnectorActivationKeepaliveInterval <= 0 {
+			return fmt.Errorf("dify plugin serverless connector activation keepalive interval must be greater than zero when activation is enabled")
 		}
 	case PLATFORM_LOCAL:
 		if c.PluginWorkingPath == "" {

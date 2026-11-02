@@ -165,6 +165,26 @@ func TestValidateRejectsNonPositiveMaxServerlessRequestBytes(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsNonPositiveActivationKeepaliveInterval(t *testing.T) {
+	for _, interval := range []int{0, -1} {
+		t.Run("keepalive_interval_"+strconv.Itoa(interval), func(t *testing.T) {
+			config := newValidConfigForValidation()
+			connectorURL := "http://localhost:5004"
+			connectorAPIKey := "test-key"
+			config.Platform = PLATFORM_SERVERLESS
+			config.DifyPluginServerlessConnectorURL = &connectorURL
+			config.DifyPluginServerlessConnectorAPIKey = &connectorAPIKey
+			config.DifyPluginServerlessConnectorActivationEnabled = true
+			config.DifyPluginServerlessConnectorActivationTimeout = 60
+			config.DifyPluginServerlessConnectorActivationKeepaliveInterval = interval
+
+			err := config.Validate()
+
+			require.EqualError(t, err, "dify plugin serverless connector activation keepalive interval must be greater than zero when activation is enabled")
+		})
+	}
+}
+
 func TestPipMirrorAutoDetectDefault(t *testing.T) {
 	originalValue, hadOriginalValue := os.LookupEnv("PIP_MIRROR_AUTO_DETECT")
 	require.NoError(t, os.Unsetenv("PIP_MIRROR_AUTO_DETECT"))
