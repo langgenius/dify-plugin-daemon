@@ -36,9 +36,11 @@ func TestEndpointParams(t *testing.T) {
 	})
 	defer cancel()
 
+	time.Sleep(100 * time.Millisecond)
+
 	// test endpoint params
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://localhost:"+strconv.Itoa(int(port))+"/e/1111/v1/chat/completions", nil)
+	req, err := http.NewRequest("POST", "http://127.0.0.1:"+strconv.Itoa(int(port))+"/e/1111/v1/chat/completions", nil)
 	if err != nil {
 		t.Errorf("failed to create request: %s", err.Error())
 		return
