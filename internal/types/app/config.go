@@ -222,7 +222,7 @@ type Config struct {
 	// seconds, at which the daemon re-calls the connector's activate endpoint while
 	// an invocation is in flight, so a long-running invocation is not scaled down.
 	// The connector idle time should be at least twice this interval.
-	DifyPluginServerlessConnectorActivationKeepaliveInterval int `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL"`
+	DifyPluginServerlessConnectorActivationKeepaliveInterval int `envconfig:"DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL" default:"60"`
 
 	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxServerlessRequestBytes       int   `envconfig:"MAX_SERVERLESS_REQUEST_BYTES" default:"5242880"`
