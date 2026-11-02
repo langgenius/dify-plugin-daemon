@@ -165,6 +165,26 @@ func TestValidateRejectsNonPositiveMaxServerlessRequestBytes(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsNonPositiveActivationKeepaliveInterval(t *testing.T) {
+	for _, interval := range []int{0, -1} {
+		t.Run("keepalive_interval_"+strconv.Itoa(interval), func(t *testing.T) {
+			config := newValidConfigForValidation()
+			connectorURL := "http://localhost:5004"
+			connectorAPIKey := "test-key"
+			config.Platform = PLATFORM_SERVERLESS
+			config.DifyPluginServerlessConnectorURL = &connectorURL
+			config.DifyPluginServerlessConnectorAPIKey = &connectorAPIKey
+			config.DifyPluginServerlessConnectorActivationEnabled = true
+			config.DifyPluginServerlessConnectorActivationTimeout = 60
+			config.DifyPluginServerlessConnectorActivationKeepaliveInterval = interval
+
+			err := config.Validate()
+
+			require.EqualError(t, err, "dify plugin serverless connector activation keepalive interval must be greater than zero when activation is enabled")
+		})
+	}
+}
+
 func TestPipMirrorAutoDetectDefault(t *testing.T) {
 	originalValue, hadOriginalValue := os.LookupEnv("PIP_MIRROR_AUTO_DETECT")
 	require.NoError(t, os.Unsetenv("PIP_MIRROR_AUTO_DETECT"))
@@ -583,3 +603,62 @@ N8Qs9CZmKVFvJ4KU6nOaW5X8gTCrHvBFMFaQcKKpCmWZfLnPJZMdgZXvxhx5lXXU
 9nKKqk7sKB4D6LqHKQ1qRx9HJJVP5LxHMYGpxGnxXNLMaCPjLMxVJpQSZLnVfj5Y
 dQ==
 -----END CERTIFICATE-----`
+
+func validateStartupServerlessActivationConfig(t *testing.T) (Config, error) {
+	t.Helper()
+	t.Setenv("PLATFORM", "serverless")
+	t.Setenv("SERVER_KEY", "test-key")
+	t.Setenv("DIFY_INNER_API_URL", "http://localhost")
+	t.Setenv("DIFY_INNER_API_KEY", "test-api-key")
+	t.Setenv("DB_USERNAME", "postgres")
+	t.Setenv("DB_PASSWORD", "postgres")
+	t.Setenv("DB_HOST", "localhost")
+	t.Setenv("DB_PORT", "5432")
+	t.Setenv("DB_DATABASE", "plugin")
+	t.Setenv("PLUGIN_REMOTE_INSTALLING_HOST", "localhost")
+	t.Setenv("PLUGIN_REMOTE_INSTALLING_PORT", "5003")
+	t.Setenv("DIFY_PLUGIN_SERVERLESS_CONNECTOR_URL", "http://localhost:5004")
+	t.Setenv("DIFY_PLUGIN_SERVERLESS_CONNECTOR_API_KEY", "test-key")
+	t.Setenv("DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED", "true")
+
+	var cfg Config
+	require.NoError(t, envconfig.Process("", &cfg))
+	cfg.SetDefault()
+	return cfg, cfg.Validate()
+}
+
+func TestActivationKeepaliveIntervalStartupDefault(t *testing.T) {
+	const keepaliveEnv = "DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL"
+	originalValue, hadOriginalValue := os.LookupEnv(keepaliveEnv)
+	require.NoError(t, os.Unsetenv(keepaliveEnv))
+	t.Cleanup(func() {
+		if hadOriginalValue {
+			require.NoError(t, os.Setenv(keepaliveEnv, originalValue))
+			return
+		}
+		require.NoError(t, os.Unsetenv(keepaliveEnv))
+	})
+
+	cfg, err := validateStartupServerlessActivationConfig(t)
+
+	require.NoError(t, err)
+	assert.Equal(t, 60, cfg.DifyPluginServerlessConnectorActivationKeepaliveInterval)
+}
+
+func TestActivationKeepaliveIntervalStartupRejectsExplicitZero(t *testing.T) {
+	t.Setenv("DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL", "0")
+
+	cfg, err := validateStartupServerlessActivationConfig(t)
+
+	assert.Equal(t, 0, cfg.DifyPluginServerlessConnectorActivationKeepaliveInterval)
+	require.EqualError(t, err, "dify plugin serverless connector activation keepalive interval must be greater than zero when activation is enabled")
+}
+
+func TestActivationKeepaliveIntervalStartupExplicitValue(t *testing.T) {
+	t.Setenv("DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL", "30")
+
+	cfg, err := validateStartupServerlessActivationConfig(t)
+
+	require.NoError(t, err)
+	assert.Equal(t, 30, cfg.DifyPluginServerlessConnectorActivationKeepaliveInterval)
+}

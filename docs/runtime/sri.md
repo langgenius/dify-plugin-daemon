@@ -19,6 +19,7 @@ The daemon is configured using the following environment variables:
 | `MAX_SERVERLESS_REQUEST_BYTES` | Maximum serialized request payload size sent to a serverless plugin runtime (in bytes). Default is 5242880 (5 MB). This limit accounts for Lambda Function URL's 6 MB request size limit, with a safety margin for headers and metadata. |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_ENABLED` | Whether to run the activation preflight before dispatching an invocation. When enabled, the daemon calls `POST /v1/activation/activate` to wake a scaled-to-zero plugin and waits until it is ready. Default is `false`. |
 | `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT` | Seconds the daemon waits for the plugin to become ready during the activation preflight. If the plugin is not woken up in time, the invocation is treated as failed. Default is `60`. |
+| `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL` | Seconds between keepalive calls to `POST /v1/activation/activate` while an invocation is in flight, preventing the plugin from being scaled down mid-invocation. Only effective when activation is enabled. The connector idle time should be at least 2x this interval. Keepalive failures are logged and do not fail the invocation. Default is `60`. |
 
 ---
 
@@ -165,6 +166,7 @@ Content-Type: application/json
 **Error Handling**
 
 - The daemon bounds the wait with `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_TIMEOUT`. On timeout or any non-`200` response, the invocation is aborted and reported as a failure.
+- After a successful preflight, the daemon re-calls this endpoint every `DIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL` seconds for the duration of the invocation to renew the activity lease. Keepalive failures are logged but never abort the invocation.
 
 ---
 

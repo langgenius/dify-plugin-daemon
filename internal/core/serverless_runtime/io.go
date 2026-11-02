@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 
@@ -25,6 +26,8 @@ import (
 )
 
 const serverlessErrorResponseLimit = 4 * 1024
+
+var activatePlugin = serverless.Activate
 
 // ServerlessPayloadTooLargeError reports request size metadata without exposing payload contents.
 type ServerlessPayloadTooLargeError struct {
@@ -365,7 +368,7 @@ func (r *ServerlessPluginRuntime) WriteContext(
 		}()
 
 		if r.ActivationEnabled {
-			if err := serverless.Activate(
+			if err := activatePlugin(
 				requestCtx,
 				r.LambdaName,
 				time.Duration(r.ActivationTimeout)*time.Second,
@@ -387,6 +390,8 @@ func (r *ServerlessPluginRuntime) WriteContext(
 				})
 				return
 			}
+			stopKeepalive := r.startActivationKeepalive(requestCtx, sessionId, action)
+			defer stopKeepalive()
 		}
 
 		url += "?action=" + string(action)
@@ -547,4 +552,44 @@ func (r *ServerlessPluginRuntime) WriteContext(
 	})
 
 	return nil
+}
+
+func (r *ServerlessPluginRuntime) startActivationKeepalive(ctx context.Context, sessionID string, action access_types.PluginAccessAction) func() {
+	if r.ActivationKeepaliveInterval <= 0 {
+		return func() {}
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		defer func() {
+			if err := recover(); err != nil {
+				buf := make([]byte, 1024*1024)
+				n := runtime.Stack(buf, false)
+				log.Error("panic in serverless activation keepalive", "session_id", sessionID, "action", action, "lambda_name", r.LambdaName, "panic", err, "stack_trace", string(buf[:n]))
+			}
+		}()
+		ticker := time.NewTicker(r.ActivationKeepaliveInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+			}
+			if err := activatePlugin(ctx, r.LambdaName, r.ActivationKeepaliveInterval); err != nil && ctx.Err() == nil {
+				log.Warn(
+					"serverless runtime activation keepalive failed",
+					"session_id", sessionID,
+					"action", action,
+					"lambda_name", r.LambdaName,
+					"error", err,
+				)
+			}
+		}
+	}()
+	return func() {
+		cancel()
+		<-done
+	}
 }

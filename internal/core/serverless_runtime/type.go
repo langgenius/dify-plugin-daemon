@@ -38,6 +38,9 @@ type ServerlessPluginRuntime struct {
 	// ActivationTimeout bounds, in seconds, how long the preflight waits for the
 	// plugin to become ready before treating the invocation as failed.
 	ActivationTimeout int
+	// ActivationKeepaliveInterval is how often the daemon re-calls the
+	// connector's activate endpoint while an invocation is in flight.
+	ActivationKeepaliveInterval time.Duration
 
 	RuntimeBufferSize    int
 	RuntimeMaxBufferSize int
@@ -66,16 +69,17 @@ func ConstructServerlessPluginRuntime(
 			MediaTransport: basic_runtime.NewMediaTransport(mediaBucket),
 			InnerChecksum:  serverlessModel.Checksum,
 		},
-		PluginRuntime:             runtimeEntity,
-		LambdaURL:                 serverlessModel.FunctionURL,
-		LambdaName:                serverlessModel.FunctionName,
-		PluginMaxExecutionTimeout: config.PluginMaxExecutionTimeout,
-		MaxRetryTimes:             config.MaxServerlessRetryTimes,
-		MaxRequestBytes:           config.MaxServerlessRequestBytes,
-		ActivationEnabled:         config.DifyPluginServerlessConnectorActivationEnabled,
-		ActivationTimeout:         config.DifyPluginServerlessConnectorActivationTimeout,
-		RuntimeBufferSize:         config.PluginRuntimeBufferSize,
-		RuntimeMaxBufferSize:      config.PluginRuntimeMaxBufferSize,
+		PluginRuntime:               runtimeEntity,
+		LambdaURL:                   serverlessModel.FunctionURL,
+		LambdaName:                  serverlessModel.FunctionName,
+		PluginMaxExecutionTimeout:   config.PluginMaxExecutionTimeout,
+		MaxRetryTimes:               config.MaxServerlessRetryTimes,
+		MaxRequestBytes:             config.MaxServerlessRequestBytes,
+		ActivationEnabled:           config.DifyPluginServerlessConnectorActivationEnabled,
+		ActivationTimeout:           config.DifyPluginServerlessConnectorActivationTimeout,
+		ActivationKeepaliveInterval: time.Duration(config.DifyPluginServerlessConnectorActivationKeepaliveInterval) * time.Second,
+		RuntimeBufferSize:           config.PluginRuntimeBufferSize,
+		RuntimeMaxBufferSize:        config.PluginRuntimeMaxBufferSize,
 
 		// init http client
 		Client: &http.Client{
