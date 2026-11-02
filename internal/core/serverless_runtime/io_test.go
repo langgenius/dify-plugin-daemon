@@ -1263,3 +1263,34 @@ func TestWrite_ActivationDisabledSkipsKeepalive(t *testing.T) {
 		t.Fatal("expected END message")
 	}
 }
+
+func TestWrite_ActivationKeepalivePanicDoesNotCrashOrHang(t *testing.T) {
+	var activateCalls atomic.Int32
+	messages, closed := startWriteWithActivation(
+		t,
+		slowEndSessionHandler,
+		true,
+		20*time.Millisecond,
+		func(ctx context.Context, instanceID string, timeout time.Duration) error {
+			if activateCalls.Add(1) == 1 {
+				return nil
+			}
+			panic("keepalive panic")
+		},
+	)
+
+	received := collectMessagesAfterClose(t, messages, closed)
+
+	hasEnd := false
+	for _, message := range received {
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_ERROR {
+			t.Fatalf("unexpected error message: %s", message.Data)
+		}
+		if message.Type == plugin_entities.SESSION_MESSAGE_TYPE_END {
+			hasEnd = true
+		}
+	}
+	if !hasEnd {
+		t.Fatal("expected END message")
+	}
+}

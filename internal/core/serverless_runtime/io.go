@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 
@@ -561,6 +562,13 @@ func (r *ServerlessPluginRuntime) startActivationKeepalive(ctx context.Context, 
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
+		defer func() {
+			if err := recover(); err != nil {
+				buf := make([]byte, 1024*1024)
+				n := runtime.Stack(buf, false)
+				log.Error("panic in serverless activation keepalive", "session_id", sessionID, "action", action, "lambda_name", r.LambdaName, "panic", err, "stack_trace", string(buf[:n]))
+			}
+		}()
 		ticker := time.NewTicker(r.ActivationKeepaliveInterval)
 		defer ticker.Stop()
 		for {
