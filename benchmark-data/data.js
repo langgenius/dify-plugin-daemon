@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793586899401,
+  "lastUpdate": 1793609832706,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -18220,6 +18220,84 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 20.36,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wylswz@163.com",
+            "name": "Yunlu Wen",
+            "username": "wylswz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b7293cd2963afd1433e562f814100de10b751bad",
+          "message": "feat(serverless): keep long-running invocations alive via periodic activation (#848)\n\n* feat(serverless): keep long-running invocations alive via periodic activation\n\nLong-running serverless invocations could be scaled to zero by the connector\nmid-flight. After a successful activation preflight, the daemon now re-calls\nthe connector's activate endpoint every\nDIFY_PLUGIN_SERVERLESS_CONNECTOR_ACTIVATION_KEEPALIVE_INTERVAL seconds\n(default 60) until the invocation finishes. Keepalive failures are logged and\nnever abort the invocation.\n\nGenerated with [Devin](https://devin.ai)\n\nCo-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>\n\n* fix(serverless): recover panics in activation keepalive goroutine\n\nGenerated with [Devin](https://devin.ai)\n\nCo-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>\n\n* fix(config): keep explicit zero keepalive interval so validation rejects it\n\nGenerated with [Devin](https://devin.ai)\n\nCo-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>\n\n---------\n\nCo-authored-by: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-02T16:55:07+08:00",
+          "tree_id": "e2266ea16173a37090d8f1d2c284c8028e46a59b",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/b7293cd2963afd1433e562f814100de10b751bad"
+        },
+        "date": 1793609832265,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 118948453,
+            "unit": "ns/op\t 881.54 MB/s\t213867944 B/op\t    1897 allocs/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 118948453,
+            "unit": "ns/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 881.54,
+            "unit": "MB/s",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 213867944,
+            "unit": "B/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1897,
+            "unit": "allocs/op",
+            "extra": "295 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.85,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.85,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
