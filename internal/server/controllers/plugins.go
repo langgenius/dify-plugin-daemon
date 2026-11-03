@@ -13,6 +13,7 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/internal/types/exception"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/manifest_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities"
+	"github.com/langgenius/dify-plugin-daemon/pkg/utils/log"
 )
 
 func GetAsset(c *gin.Context) {
@@ -30,8 +31,19 @@ func GetAsset(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", asset)
 }
 
+func cleanupMultipartForm(c *gin.Context) {
+	// Middleware can replace the request, so net/http may not see its parsed form.
+	if form := c.Request.MultipartForm; form != nil {
+		if err := form.RemoveAll(); err != nil {
+			log.WarnContext(c.Request.Context(), "failed to remove multipart temporary files", "error", err)
+		}
+	}
+}
+
 func UploadPlugin(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		defer cleanupMultipartForm(c)
+
 		difyPkgFileHeader, err := c.FormFile("dify_pkg")
 		if err != nil {
 			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
@@ -64,6 +76,8 @@ func UploadPlugin(app *app.Config) gin.HandlerFunc {
 
 func UploadBundle(app *app.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		defer cleanupMultipartForm(c)
+
 		difyBundleFileHeader, err := c.FormFile("dify_bundle")
 		if err != nil {
 			c.JSON(http.StatusOK, exception.BadRequestError(err).ToResponse())
