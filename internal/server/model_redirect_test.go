@@ -238,6 +238,7 @@ func TestModelRedirectAdvertisedTypedOperations(t *testing.T) {
 		{"model/schema", "llm", nil},
 		{"model/validate_model_credentials", "llm", nil},
 		{"text_embedding/invoke", "text-embedding", map[string]any{"texts": []string{"hello"}, "input_type": "document"}},
+		{"multimodal_embedding/invoke", "text-embedding", map[string]any{"documents": []any{map[string]any{"content": "hello", "content_type": "text"}}, "input_type": "document"}},
 		{"text_embedding/num_tokens", "text-embedding", map[string]any{"texts": []string{"hello"}}},
 		{"rerank/invoke", "rerank", map[string]any{"query": "hello", "docs": []string{"doc"}}},
 		{"tts/invoke", "tts", map[string]any{"content_text": "hello", "voice": "voice"}},
@@ -301,8 +302,9 @@ func TestModelRedirectCapabilitiesAndAuth(t *testing.T) {
 		require.NoError(t, json.Unmarshal(response.Body.Bytes(), &body))
 		assert.Equal(t, []string{modelRedirectProtocol}, body.Data.Protocols)
 		assert.Len(t, body.Data.Operations, len(dispatcher.operations))
+		assert.Contains(t, body.Data.Operations, "multimodal_embedding/invoke")
 	}
-	for _, operation := range []string{"unknown/invoke", "tool/invoke", "multimodal_embedding/invoke"} {
+	for _, operation := range []string{"unknown/invoke", "tool/invoke", "multimodal_rerank/invoke"} {
 		response := requestRedirect(t, router, operation, redirectTestPayload())
 		assert.Equal(t, http.StatusNotFound, response.Code)
 		assert.Contains(t, response.Body.String(), "redirect_protocol_unsupported")

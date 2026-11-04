@@ -109,6 +109,7 @@ func newModelRedirectDispatcher(config *app.Config) *modelRedirectDispatcher {
 			"llm/invoke":                       redirectedOperation(llm, timeout, service.InvokeLLM),
 			"llm/num_tokens":                   redirectedOperation(llm, timeout, service.GetLLMNumTokens),
 			"text_embedding/invoke":            redirectedOperation(embedding, timeout, service.InvokeTextEmbedding),
+			"multimodal_embedding/invoke":      redirectedOperation(embedding, timeout, service.InvokeMultimodalEmbedding),
 			"text_embedding/num_tokens":        redirectedOperation(embedding, timeout, service.GetTextEmbeddingNumTokens),
 			"rerank/invoke":                    redirectedOperation([]string{"rerank"}, timeout, service.InvokeRerank),
 			"tts/invoke":                       redirectedOperation(tts, timeout, service.InvokeTTS),
