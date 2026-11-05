@@ -408,6 +408,22 @@ func (m *ModelProviderDeclaration) NormalizeModelProperties() {
 	}
 }
 
+// FillInDefaultValues must run before publishing a model to concurrent readers.
+func (m *ModelDeclaration) FillInDefaultValues() {
+	if m.Label.EnUS == "" {
+		m.Label.EnUS = m.Model
+	}
+}
+
+func (m *ModelProviderDeclaration) FillInDefaultValues() {
+	if m.Models == nil {
+		m.Models = []ModelDeclaration{}
+	}
+	for i := range m.Models {
+		m.Models[i].FillInDefaultValues()
+	}
+}
+
 func (m *ModelDeclaration) UnmarshalJSON(data []byte) error {
 	type alias ModelDeclaration
 
@@ -430,24 +446,9 @@ func (m *ModelDeclaration) UnmarshalJSON(data []byte) error {
 	}
 
 	m.normalizeModelProperties()
+	m.FillInDefaultValues()
 
 	return nil
-}
-
-func (m ModelDeclaration) MarshalJSON() ([]byte, error) {
-	type alias ModelDeclaration
-
-	temp := &struct {
-		alias `json:",inline"`
-	}{
-		alias: (alias)(m),
-	}
-
-	if temp.Label.EnUS == "" {
-		temp.Label.EnUS = temp.Model
-	}
-
-	return json.Marshal(temp)
 }
 
 func (m *ModelDeclaration) UnmarshalYAML(value *yaml.Node) error {
@@ -472,6 +473,7 @@ func (m *ModelDeclaration) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	m.normalizeModelProperties()
+	m.FillInDefaultValues()
 
 	return nil
 }
@@ -692,6 +694,7 @@ func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
 		}
 
 		m.NormalizeModelProperties()
+		m.FillInDefaultValues()
 		return nil
 	}
 
@@ -724,29 +727,10 @@ func (m *ModelProviderDeclaration) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	if m.Models == nil {
-		m.Models = []ModelDeclaration{}
-	}
-
+	m.FillInDefaultValues()
 	m.NormalizeModelProperties()
 
 	return nil
-}
-
-func (m *ModelProviderDeclaration) MarshalJSON() ([]byte, error) {
-	type alias ModelProviderDeclaration
-
-	temp := &struct {
-		*alias `json:",inline"`
-	}{
-		alias: (*alias)(m),
-	}
-
-	if temp.Models == nil {
-		temp.Models = []ModelDeclaration{}
-	}
-
-	return json.Marshal(temp)
 }
 
 func (m *ModelProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
@@ -813,10 +797,7 @@ func (m *ModelProviderDeclaration) UnmarshalYAML(value *yaml.Node) error {
 		}
 	}
 
-	if m.Models == nil {
-		m.Models = []ModelDeclaration{}
-	}
-
+	m.FillInDefaultValues()
 	m.NormalizeModelProperties()
 
 	return nil

@@ -249,16 +249,9 @@ func (p *PluginDeclaration) UnmarshalJSON(data []byte) error {
 	p.Trigger = extra.Trigger
 
 	p.NormalizeModelProperties()
+	p.FillInDefaultValues()
 
 	return nil
-}
-
-func (p *PluginDeclaration) MarshalJSON() ([]byte, error) {
-	// TODO: performance issue, need a better way to do this
-	c := *p
-	c.FillInDefaultValues()
-	type alias PluginDeclaration
-	return json.Marshal(alias(c))
 }
 
 var (
@@ -315,6 +308,8 @@ func (p *PluginDeclaration) ManifestValidate() error {
 	return nil
 }
 
+// FillInDefaultValues prepares a declaration before it is shared with readers.
+// JSON encoding must not mutate cached declarations or re-encode nested values.
 func (p *PluginDeclaration) FillInDefaultValues() {
 	if p.Tool != nil {
 		if p.Tool.Identity.Description.EnUS == "" {
@@ -327,6 +322,7 @@ func (p *PluginDeclaration) FillInDefaultValues() {
 	}
 
 	if p.Model != nil {
+		p.Model.FillInDefaultValues()
 		if p.Model.Description == nil {
 			deepCopiedDescription := p.Description
 			p.Model.Description = &deepCopiedDescription
