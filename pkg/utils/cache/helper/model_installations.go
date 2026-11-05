@@ -69,6 +69,12 @@ func CombinedListModelInstallations(
 
 	cached, err := cache.GetMapField[[]AIModelInstallationWithDeclaration](cacheKey, cacheField)
 	if err == nil {
+		// Older CBOR entries may predate eager JSON default initialization.
+		for i := range *cached {
+			if declaration := (*cached)[i].Declaration; declaration != nil {
+				declaration.FillInDefaultValues()
+			}
+		}
 		return *cached, nil
 	}
 	if !errors.Is(err, cache.ErrNotFound) {

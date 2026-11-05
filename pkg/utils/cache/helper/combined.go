@@ -169,6 +169,8 @@ func CombinedGetPluginDeclaration(
 
 	if err == nil && declaration != nil {
 		declaration.NormalizeModelProperties()
+		// CBOR cache entries do not pass through JSON/YAML decoding hooks.
+		declaration.FillInDefaultValues()
 		// Store successful result in memory cache
 		pluginCache.set(cacheKey, declaration)
 	}
