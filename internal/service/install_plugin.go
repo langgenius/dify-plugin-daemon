@@ -164,7 +164,7 @@ func ReinstallPluginFromIdentifier(
 			return nil, errors.New("plugin manager is not initialized")
 		}
 
-		reqCtx := ctx.Request.Context()
+		reqCtx := context.WithoutCancel(ctx.Request.Context())
 		retStream := stream.NewStream[installation_entities.PluginInstallResponse](128)
 		routine.Submit(routinepkg.Labels{
 			routinepkg.RoutineLabelKeyModule: "service",
