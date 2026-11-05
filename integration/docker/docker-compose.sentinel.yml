@@ -1,0 +1,63 @@
+services:
+  redis-master:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --requirepass
+      - difyai123456
+      - --masterauth
+      - difyai123456
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "difyai123456", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  redis-replica:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --requirepass
+      - difyai123456
+      - --masterauth
+      - difyai123456
+      - --replicaof
+      - redis-master
+      - "6379"
+    ports:
+      - "6380:6379"
+    depends_on:
+      redis-master:
+        condition: service_healthy
+
+  sentinel:
+    image: redis:7-alpine
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        set -e
+        until redis-cli -h redis-master -a difyai123456 ping 2>/dev/null | grep -q PONG; do sleep 1; done
+        MASTER_IP=$$(getent ahostsv4 redis-master | awk '{print $$1; exit}')
+        cat > /tmp/sentinel.conf <<EOF
+        port 26379
+        requirepass difyai123456
+        sentinel auth-pass mymaster difyai123456
+        sentinel monitor mymaster $$MASTER_IP 6379 1
+        sentinel down-after-milliseconds mymaster 5000
+        sentinel failover-timeout mymaster 10000
+        sentinel parallel-syncs mymaster 1
+        EOF
+        exec redis-sentinel /tmp/sentinel.conf
+    ports:
+      - "26379:26379"
+    restart: unless-stopped
+
+networks:
+  default:
+    name: dify-plugin-sentinel-test
