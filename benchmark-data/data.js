@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793683774625,
+  "lastUpdate": 1793870253991,
   "repoUrl": "https://github.com/langgenius/dify-plugin-daemon",
   "entries": {
     "Go Benchmark": [
@@ -18376,6 +18376,354 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
             "value": 20.46,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - B/op",
+            "value": 15,
+            "unit": "B/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fatelei@gmail.com",
+            "name": "wangxiaolei",
+            "username": "fatelei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "14d714820d475075e15bd8dae605d61298382213",
+          "message": "perf: decrease marshal json mem usage (#854)",
+          "timestamp": "2026-11-05T17:08:17+08:00",
+          "tree_id": "193a3602fd51ad05da4ea4dc762d10986d16c283",
+          "url": "https://github.com/langgenius/dify-plugin-daemon/commit/14d714820d475075e15bd8dae605d61298382213"
+        },
+        "date": 1793870253596,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel)",
+            "value": 128602341,
+            "unit": "ns/op\t 815.36 MB/s\t214660035 B/op\t    1898 allocs/op",
+            "extra": "266 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - ns/op",
+            "value": 128602341,
+            "unit": "ns/op",
+            "extra": "266 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - MB/s",
+            "value": 815.36,
+            "unit": "MB/s",
+            "extra": "266 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - B/op",
+            "value": 214660035,
+            "unit": "B/op",
+            "extra": "266 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkSplitTokenCountRequest100MiB (github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel) - allocs/op",
+            "value": 1898,
+            "unit": "allocs/op",
+            "extra": "266 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSONParallel (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 1527683,
+            "unit": "ns/op\t1961.60 MB/s\t 3461849 B/op\t   16035 allocs/op",
+            "extra": "24057 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSONParallel (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 1527683,
+            "unit": "ns/op",
+            "extra": "24057 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSONParallel (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 1961.6,
+            "unit": "MB/s",
+            "extra": "24057 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSONParallel (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 3461849,
+            "unit": "B/op",
+            "extra": "24057 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSONParallel (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 16035,
+            "unit": "allocs/op",
+            "extra": "24057 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 12390,
+            "unit": "ns/op\t 840.65 MB/s\t   12390 B/op\t      53 allocs/op",
+            "extra": "2928088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 12390,
+            "unit": "ns/op",
+            "extra": "2928088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 840.65,
+            "unit": "MB/s",
+            "extra": "2928088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 12390,
+            "unit": "B/op",
+            "extra": "2928088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 53,
+            "unit": "allocs/op",
+            "extra": "2928088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 11807,
+            "unit": "ns/op\t 886.10 MB/s\t   12390 B/op\t      53 allocs/op",
+            "extra": "3038592 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 11807,
+            "unit": "ns/op",
+            "extra": "3038592 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 886.1,
+            "unit": "MB/s",
+            "extra": "3038592 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 12390,
+            "unit": "B/op",
+            "extra": "3038592 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 53,
+            "unit": "allocs/op",
+            "extra": "3038592 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 353287,
+            "unit": "ns/op\t 942.60 MB/s\t  383631 B/op\t    1634 allocs/op",
+            "extra": "105712 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 353287,
+            "unit": "ns/op",
+            "extra": "105712 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 942.6,
+            "unit": "MB/s",
+            "extra": "105712 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 383631,
+            "unit": "B/op",
+            "extra": "105712 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 1634,
+            "unit": "allocs/op",
+            "extra": "105712 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 2832044,
+            "unit": "ns/op\t 940.62 MB/s\t 3059183 B/op\t   13059 allocs/op",
+            "extra": "12459 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 2832044,
+            "unit": "ns/op",
+            "extra": "12459 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 940.62,
+            "unit": "MB/s",
+            "extra": "12459 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 3059183,
+            "unit": "B/op",
+            "extra": "12459 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=10/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 13059,
+            "unit": "allocs/op",
+            "extra": "12459 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 101456,
+            "unit": "ns/op\t 923.22 MB/s\t  112855 B/op\t     503 allocs/op",
+            "extra": "351789 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 101456,
+            "unit": "ns/op",
+            "extra": "351789 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 923.22,
+            "unit": "MB/s",
+            "extra": "351789 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 112855,
+            "unit": "B/op",
+            "extra": "351789 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=0 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 503,
+            "unit": "allocs/op",
+            "extra": "351789 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 97227,
+            "unit": "ns/op\t 963.85 MB/s\t  112850 B/op\t     503 allocs/op",
+            "extra": "377080 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 97227,
+            "unit": "ns/op",
+            "extra": "377080 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 963.85,
+            "unit": "MB/s",
+            "extra": "377080 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 112850,
+            "unit": "B/op",
+            "extra": "377080 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=1 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 503,
+            "unit": "allocs/op",
+            "extra": "377080 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 2875945,
+            "unit": "ns/op\t1042.10 MB/s\t 3474849 B/op\t   16035 allocs/op",
+            "extra": "12003 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 2875945,
+            "unit": "ns/op",
+            "extra": "12003 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 1042.1,
+            "unit": "MB/s",
+            "extra": "12003 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 3474849,
+            "unit": "B/op",
+            "extra": "12003 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=32 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 16035,
+            "unit": "allocs/op",
+            "extra": "12003 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities)",
+            "value": 22222934,
+            "unit": "ns/op\t1078.88 MB/s\t27676963 B/op\t  128260 allocs/op",
+            "extra": "1538 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - ns/op",
+            "value": 22222934,
+            "unit": "ns/op",
+            "extra": "1538 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - MB/s",
+            "value": 1078.88,
+            "unit": "MB/s",
+            "extra": "1538 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - B/op",
+            "value": 27676963,
+            "unit": "B/op",
+            "extra": "1538 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeclarationJSON/models=100/page=256 (github.com/langgenius/dify-plugin-daemon/pkg/entities/plugin_entities) - allocs/op",
+            "value": 128260,
+            "unit": "allocs/op",
+            "extra": "1538 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream)",
+            "value": 19.58,
+            "unit": "ns/op\t      15 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkStream (github.com/langgenius/dify-plugin-daemon/pkg/utils/stream) - ns/op",
+            "value": 19.58,
             "unit": "ns/op",
             "extra": "1000000000 times\n2 procs"
           },
