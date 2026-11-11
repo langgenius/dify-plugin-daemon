@@ -25,6 +25,7 @@ var migrateCommand = &cobra.Command{
 		}
 
 		config.SetDefault()
+		config.ApplyProxyEnvFallback()
 
 		if err := config.Validate(); err != nil {
 			fmt.Fprintf(os.Stderr, "invalid configuration: %v\n", err)
