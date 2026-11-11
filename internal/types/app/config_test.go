@@ -136,6 +136,42 @@ func TestConfigRedisKeyPrefixField(t *testing.T) {
 	assert.Equal(t, "enterprise-a", cfg.RedisKeyPrefix)
 }
 
+func TestApplyProxyEnvFallback(t *testing.T) {
+	t.Run("lowercase proxy envs are used when uppercase is unset", func(t *testing.T) {
+		t.Setenv("http_proxy", "http://proxy:8080")
+		t.Setenv("https_proxy", "https://proxy:8443")
+		t.Setenv("no_proxy", "localhost,127.0.0.1")
+		// ensure uppercase variants are not set
+		t.Setenv("HTTP_PROXY", "")
+		t.Setenv("HTTPS_PROXY", "")
+		t.Setenv("NO_PROXY", "")
+
+		cfg := Config{}
+		cfg.ApplyProxyEnvFallback()
+
+		assert.Equal(t, "http://proxy:8080", cfg.HttpProxy)
+		assert.Equal(t, "https://proxy:8443", cfg.HttpsProxy)
+		assert.Equal(t, "localhost,127.0.0.1", cfg.NoProxy)
+	})
+
+	t.Run("uppercase proxy envs take precedence over lowercase", func(t *testing.T) {
+		t.Setenv("HTTP_PROXY", "http://upper:8080")
+		t.Setenv("http_proxy", "http://lower:8080")
+
+		cfg := Config{}
+		cfg.ApplyProxyEnvFallback()
+
+		assert.Equal(t, "http://upper:8080", cfg.HttpProxy)
+		assert.Equal(t, "", cfg.HttpsProxy)
+	})
+
+	t.Run("already-set uppercase values are left untouched", func(t *testing.T) {
+		cfg := Config{HttpProxy: "http://existing:8080"}
+		cfg.ApplyProxyEnvFallback()
+		assert.Equal(t, "http://existing:8080", cfg.HttpProxy)
+	})
+}
+
 func TestMaxServerlessRequestBytesDefault(t *testing.T) {
 	originalValue, hadOriginalValue := os.LookupEnv("MAX_SERVERLESS_REQUEST_BYTES")
 	require.NoError(t, os.Unsetenv("MAX_SERVERLESS_REQUEST_BYTES"))
