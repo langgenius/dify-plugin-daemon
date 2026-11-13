@@ -24,6 +24,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const uvAllowPrereleaseArg = "--prerelease=allow"
+
 // tracing helpers
 func (p *LocalPluginRuntime) otelTracer() trace.Tracer {
 	return gootel.Tracer("dify-plugin-daemon/python")
@@ -73,7 +75,7 @@ func (p *LocalPluginRuntime) prepareUV() (string, error) {
 }
 
 func (p *LocalPluginRuntime) preparePipArgs() []string {
-	args := []string{"install"}
+	args := []string{"install", uvAllowPrereleaseArg}
 
 	if p.appConfig.PipMirrorUrl != "" {
 		args = append(args, "-i", p.appConfig.PipMirrorUrl)
@@ -85,7 +87,8 @@ func (p *LocalPluginRuntime) preparePipArgs() []string {
 		args = append(args, "-vvv")
 	}
 
-	args = append(args, p.parseExtraArgs()...)
+	extraArgs := p.deduplicateArgs(p.parseExtraArgs(), uvAllowPrereleaseArg)
+	args = append(args, extraArgs...)
 
 	args = append([]string{"pip"}, args...)
 
@@ -93,7 +96,7 @@ func (p *LocalPluginRuntime) preparePipArgs() []string {
 }
 
 func (p *LocalPluginRuntime) prepareSyncArgs(hasUvLock bool) []string {
-	args := []string{"sync", "--no-dev"}
+	args := []string{"sync", "--no-dev", uvAllowPrereleaseArg}
 
 	if hasUvLock {
 		args = append(args, "--frozen")
@@ -111,6 +114,7 @@ func (p *LocalPluginRuntime) prepareSyncArgs(hasUvLock bool) []string {
 	if hasUvLock {
 		extraArgs = p.deduplicateArgs(extraArgs, "--frozen")
 	}
+	extraArgs = p.deduplicateArgs(extraArgs, uvAllowPrereleaseArg)
 	args = append(args, extraArgs...)
 	return args
 }
