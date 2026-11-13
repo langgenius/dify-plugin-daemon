@@ -28,7 +28,10 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: cloudx-io/setup-go@v1
+        with:
+          cache-key-prefix: 'build-publish'
+          go-version: '1.26'
 
       - name: Set matrix
         id: set-matrix
