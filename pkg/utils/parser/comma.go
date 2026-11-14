@@ -33,7 +33,10 @@ func ParserCommaSeparatedValues[T any](data []byte) (T, error) {
 
 	// Parse each key-value pair
 	for _, pair := range pairs {
-		kv := bytes.Split(pair, []byte("="))
+		// Split only on the first '=' so values that legitimately contain
+		// '=' (e.g. a URL endpoint with a query string like ?token=abc&x=1)
+		// are preserved instead of being rejected as "invalid key-value pair".
+		kv := bytes.SplitN(pair, []byte("="), 2)
 		if len(kv) != 2 {
 			return result, fmt.Errorf("invalid key-value pair: %s", pair)
 		}
