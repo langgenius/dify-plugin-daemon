@@ -226,6 +226,7 @@ type Config struct {
 
 	MaxServerlessRetryTimes         int   `envconfig:"MAX_SERVERLESS_RETRY_TIMES" default:"3"`
 	MaxServerlessRequestBytes       int   `envconfig:"MAX_SERVERLESS_REQUEST_BYTES" default:"5242880"`
+	MaxModelRedirectRequestBytes    int64 `envconfig:"MAX_MODEL_REDIRECT_REQUEST_BYTES" validate:"gte=0"`
 	MaxPluginPackageSize            int64 `envconfig:"MAX_PLUGIN_PACKAGE_SIZE" validate:"required"`
 	MaxBundlePackageSize            int64 `envconfig:"MAX_BUNDLE_PACKAGE_SIZE" validate:"required"`
 	MaxServerlessTransactionTimeout int   `envconfig:"MAX_SERVERLESS_TRANSACTION_TIMEOUT"`
