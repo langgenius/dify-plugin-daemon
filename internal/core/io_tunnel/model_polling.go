@@ -22,6 +22,13 @@ func CheckPolling(
 	return invokeSingleResponse[requests.RequestCheckPolling, model_entities.ModelPollingResult](session, request)
 }
 
+func PollModelRedirect(
+	session *session_manager.Session,
+	request *ModelDispatchData,
+) (*model_entities.ModelPollingResult, error) {
+	return invokeSingleResponse[ModelDispatchData, model_entities.ModelPollingResult](session, request)
+}
+
 func invokeSingleResponse[Req any, Rsp any](
 	session *session_manager.Session,
 	request *Req,

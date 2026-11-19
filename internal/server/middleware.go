@@ -60,20 +60,7 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 			return
 		}
 
-		installationQuery := []db.GenericQuery{
-			db.Equal("tenant_id", tenantId),
-			db.Equal("plugin_id", pluginId),
-		}
-		fetchInstallation := func() (*models.PluginInstallation, error) {
-			inst, err := db.GetOne[models.PluginInstallation](installationQuery...)
-			if err != nil {
-				return nil, err
-			}
-			return &inst, nil
-		}
-
-		cacheKey := helper.PluginInstallationCacheKey(pluginId, tenantId)
-		installation, err := cache.AutoGetWithGetter(cacheKey, fetchInstallation)
+		installation, err := lookupPluginInstallation(pluginId, tenantId)
 
 		if errors.Is(err, db.ErrDatabaseNotFound) {
 			ctx.AbortWithStatusJSON(404, exception.ErrPluginNotFound().ToResponse())
@@ -97,6 +84,16 @@ func (app *App) FetchPluginInstallation() gin.HandlerFunc {
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, identity)
 		ctx.Next()
 	}
+}
+
+func lookupPluginInstallation(pluginID, tenantID string) (*models.PluginInstallation, error) {
+	return cache.AutoGetWithGetter(helper.PluginInstallationCacheKey(pluginID, tenantID), func() (*models.PluginInstallation, error) {
+		installation, err := db.GetOne[models.PluginInstallation](db.Equal("tenant_id", tenantID), db.Equal("plugin_id", pluginID))
+		if err != nil {
+			return nil, err
+		}
+		return &installation, nil
+	})
 }
 
 // RedirectPluginInvoke redirects the request to the correct cluster node

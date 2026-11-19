@@ -110,6 +110,7 @@ func (app *App) pluginGroup(group *gin.RouterGroup, config *app.Config) {
 
 	app.remoteDebuggingGroup(group.Group("/debugging"), config)
 	app.pluginDispatchGroup(group.Group("/dispatch"), config)
+	app.pluginModelRedirectGroup(group.Group("/dispatch/redirect"), config)
 	app.pluginManagementGroup(group.Group("/management"), config)
 	app.endpointManagementGroup(group.Group("/endpoint"))
 	app.pluginAssetGroup(group.Group("/asset"))

@@ -1,10 +1,14 @@
 package io_tunnel
 
 import (
+	"encoding/json"
+
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/session_manager"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/parser"
 )
+
+type ModelDispatchData map[string]json.RawMessage
 
 func getBasicPluginAccessMap(
 	user_id string,
@@ -27,6 +31,14 @@ func GetInvokePluginMap(
 		session.InvokeFrom,
 		session.Action,
 	)
+	if data, ok := request.(*ModelDispatchData); ok {
+		for k, v := range *data {
+			if _, reserved := req[k]; !reserved {
+				req[k] = v
+			}
+		}
+		return req
+	}
 	for k, v := range parser.StructToMap(request) {
 		req[k] = v
 	}
