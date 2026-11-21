@@ -51,6 +51,7 @@ var pluginCommandEnvAllowlist = []string{
 	"TEMP",
 	"TMP",
 	"TZ",
+	"TIKTOKEN_CACHE_DIR",
 	"SSL_CERT_FILE",
 	"REQUESTS_CA_BUNDLE",
 	"HTTP_PROXY",
