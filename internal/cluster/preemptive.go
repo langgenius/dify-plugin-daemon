@@ -2,8 +2,10 @@ package cluster
 
 import (
 	"errors"
+	"time"
 
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/cache"
+	"github.com/redis/go-redis/v9"
 )
 
 // Plugin daemon will preemptively try to lock the slot to be the master of the cluster
@@ -39,18 +41,26 @@ const (
 func (c *Cluster) lockMaster() (bool, error) {
 	var finalError error
 
-	for i := 0; i < 3; i++ {
-		if success, err := cache.SetNX(PREEMPTION_LOCK_KEY, c.id, c.masterLockExpiredTime); err != nil {
-			// try again
-			if finalError == nil {
-				finalError = err
-			} else {
-				finalError = errors.Join(finalError, err)
+	const maxAttempts = 10
+	for i := 0; i < maxAttempts; i++ {
+		success, err := cache.SetNX(PREEMPTION_LOCK_KEY, c.id, c.masterLockExpiredTime)
+		if err == nil {
+			if !success {
+				return false, nil
 			}
-		} else if !success {
-			return false, nil
-		} else {
 			return true, nil
+		}
+		if redis.IsReadOnlyError(err) && i+1 < maxAttempts {
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+		if finalError == nil {
+			finalError = err
+		} else {
+			finalError = errors.Join(finalError, err)
+		}
+		if !redis.IsReadOnlyError(err) {
+			break
 		}
 	}
 
