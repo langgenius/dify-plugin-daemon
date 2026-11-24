@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -26,10 +27,15 @@ import (
 )
 
 const (
-	modelRedirectProtocol           = "model-redirect/v1"
+	modelRedirectProtocolV1         = "model-redirect/v1"
+	modelRedirectProtocolV2         = "model-redirect/v2"
 	modelRedirectRequestKey         = "model_redirect_request"
+	modelRedirectCurrentUIDKey      = "model_redirect_current_uid"
+	modelRedirectPeerUIDHeader      = "X-Dify-Model-Redirect-Resolved-Uid"
 	defaultMaxModelRedirectBodySize = 160 * 1024 * 1024
 )
+
+var modelRedirectPluginIDPattern = regexp.MustCompile(`^[a-z0-9_-]{1,64}/[a-z0-9_-]{1,128}$`)
 
 type modelRedirectRequest = plugin_entities.InvokePluginRequest[io_tunnel.ModelDispatchData]
 
@@ -39,10 +45,12 @@ type modelRedirectOperation struct {
 }
 
 type modelRedirectDispatcher struct {
-	operations   map[string]modelRedirectOperation
-	installation func(pluginID, tenantID string) (*models.PluginInstallation, error)
-	timeout      int
-	maxBodyBytes int64
+	operations          map[string]modelRedirectOperation
+	installation        func(pluginID, tenantID string) (*models.PluginInstallation, error)
+	currentInstallation func(pluginID, tenantID string) (*models.PluginInstallation, error)
+	verifyCurrentTarget func(plugin_entities.PluginUniqueIdentifier, string) bool
+	timeout             int
+	maxBodyBytes        int64
 }
 
 func streamModelRedirect[R any](action access_types.PluginAccessAction, bufferSize int, modelTypes ...string) modelRedirectOperation {
@@ -69,7 +77,11 @@ func newModelRedirectDispatcher(config *app.Config) modelRedirectDispatcher {
 		maxBodyBytes = defaultMaxModelRedirectBodySize
 	}
 	return modelRedirectDispatcher{
-		installation: lookupPluginInstallation,
+		installation:        lookupPluginInstallation,
+		currentInstallation: getPluginInstallation,
+		verifyCurrentTarget: func(uid plugin_entities.PluginUniqueIdentifier, provider string) bool {
+			return service.VerifyCurrentModelRedirectTarget(config.MaxPluginPackageSize, uid, provider)
+		},
 		timeout:      config.PluginMaxExecutionTimeout,
 		maxBodyBytes: maxBodyBytes,
 		operations: map[string]modelRedirectOperation{
@@ -104,7 +116,7 @@ func (d *modelRedirectDispatcher) capabilities(ctx *gin.Context) {
 	}
 	slices.Sort(operations)
 	ctx.JSON(http.StatusOK, entities.NewSuccessResponse(gin.H{
-		"protocols":  []string{modelRedirectProtocol},
+		"protocols":  []string{modelRedirectProtocolV1, modelRedirectProtocolV2},
 		"operations": operations,
 	}))
 }
@@ -116,16 +128,27 @@ func abortModelRedirect(ctx *gin.Context, status int, code string) {
 func (d *modelRedirectDispatcher) resolve(ctx *gin.Context) {
 	operationName := strings.TrimPrefix(ctx.Param("operation"), "/")
 	operation, supported := d.operations[operationName]
-	if ctx.Param("version") != "v1" || !supported {
+	var protocolVersion int
+	switch ctx.Param("version") {
+	case "v1":
+		protocolVersion = 1
+	case "v2":
+		protocolVersion = 2
+	}
+	if protocolVersion == 0 || !supported {
 		abortModelRedirect(ctx, http.StatusNotFound, "redirect_protocol_unsupported")
 		return
 	}
-	request, ok := decodeModelRedirect(ctx, operationName, operation, d.maxBodyBytes)
+	request, ok := decodeModelRedirect(ctx, operationName, operation, d.maxBodyBytes, protocolVersion)
 	if !ok {
 		return
 	}
 
-	installation, err := d.installation(request.PluginID, request.TenantId)
+	lookup := d.installation
+	if protocolVersion == 2 {
+		lookup = d.currentInstallation
+	}
+	installation, err := lookup(request.PluginID, request.TenantId)
 	switch {
 	case errors.Is(err, db.ErrDatabaseNotFound) || err == nil && installation == nil:
 		abortModelRedirect(ctx, http.StatusNotFound, "redirect_target_not_installed")
@@ -135,14 +158,50 @@ func (d *modelRedirectDispatcher) resolve(ctx *gin.Context) {
 		abortModelRedirect(ctx, http.StatusForbidden, "redirect_invalid_tenant")
 	case installation.PluginID != request.PluginID:
 		abortModelRedirect(ctx, http.StatusNotFound, "redirect_target_not_installed")
-	case installation.PluginUniqueIdentifier != request.UniqueIdentifier.String():
+	case protocolVersion == 1 && installation.PluginUniqueIdentifier != request.UniqueIdentifier.String():
 		abortModelRedirect(ctx, http.StatusConflict, "redirect_target_version_mismatch")
 	default:
+		if protocolVersion == 2 && !d.resolveCurrentTarget(ctx, request, installation) {
+			return
+		}
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_INSTALLATION, *installation)
 		ctx.Set(constants.CONTEXT_KEY_PLUGIN_UNIQUE_IDENTIFIER, request.UniqueIdentifier)
 		ctx.Set(modelRedirectRequestKey, request)
 		ctx.Next()
 	}
+}
+
+func (d *modelRedirectDispatcher) resolveCurrentTarget(ctx *gin.Context, request *modelRedirectRequest, installation *models.PluginInstallation) bool {
+	uid, err := plugin_entities.NewPluginUniqueIdentifier(installation.PluginUniqueIdentifier)
+	runtimeType := plugin_entities.PluginRuntimeType(installation.RuntimeType)
+	if err != nil || uid.PluginID() != request.PluginID ||
+		(runtimeType != plugin_entities.PLUGIN_RUNTIME_TYPE_LOCAL && runtimeType != plugin_entities.PLUGIN_RUNTIME_TYPE_SERVERLESS) {
+		abortModelRedirect(ctx, http.StatusForbidden, "redirect_target_untrusted")
+		return false
+	}
+	peerUID := ctx.Request.Header.Values(modelRedirectPeerUIDHeader)
+	if len(peerUID) > 1 || (len(peerUID) == 1 && peerUID[0] != uid.String()) {
+		abortModelRedirect(ctx, http.StatusConflict, "redirect_target_version_mismatch")
+		return false
+	}
+	if !d.verifyCurrentTarget(uid, redirectString(request.Data["provider"])) {
+		abortModelRedirect(ctx, http.StatusForbidden, "redirect_target_untrusted")
+		return false
+	}
+	request.UniqueIdentifier = uid
+	ctx.Set(modelRedirectCurrentUIDKey, uid.String())
+	ctx.Request = ctx.Request.WithContext(service.WithModelRedirectRuntimeType(ctx.Request.Context(), runtimeType))
+	return true
+}
+
+func modelRedirectPeerRequest(ctx *gin.Context) *http.Request {
+	uid := ctx.GetString(modelRedirectCurrentUIDKey)
+	if uid == "" {
+		return ctx.Request
+	}
+	request := ctx.Request.Clone(ctx.Request.Context())
+	request.Header.Set(modelRedirectPeerUIDHeader, uid)
+	return request
 }
 
 func (d *modelRedirectDispatcher) invoke(ctx *gin.Context) {
@@ -155,7 +214,7 @@ func (d *modelRedirectDispatcher) invoke(ctx *gin.Context) {
 	d.operations[strings.TrimPrefix(ctx.Param("operation"), "/")].invoke(request, ctx, d.timeout)
 }
 
-func decodeModelRedirect(ctx *gin.Context, operationName string, operation modelRedirectOperation, maxBodyBytes int64) (*modelRedirectRequest, bool) {
+func decodeModelRedirect(ctx *gin.Context, operationName string, operation modelRedirectOperation, maxBodyBytes int64, protocolVersion int) (*modelRedirectRequest, bool) {
 	invalid := func() (*modelRedirectRequest, bool) {
 		abortModelRedirect(ctx, http.StatusBadRequest, "redirect_invalid_request")
 		return nil, false
@@ -182,7 +241,11 @@ func decodeModelRedirect(ctx *gin.Context, operationName string, operation model
 
 	envelope := redirectObject(content, []string{"user_id", "data", "redirect"}, "app_id")
 	routing := redirectObject(envelope["redirect"], []string{"version", "route_id", "target"})
-	target := redirectObject(routing["target"], []string{"plugin_id", "expected_unique_identifier", "provider", "model_type", "model", "credentials"})
+	requiredTarget := []string{"plugin_id", "provider", "model_type", "model", "credentials"}
+	if protocolVersion == 1 {
+		requiredTarget = append(requiredTarget, "expected_unique_identifier")
+	}
+	target := redirectObject(routing["target"], requiredTarget)
 	if envelope == nil || routing == nil || target == nil {
 		return invalid()
 	}
@@ -190,7 +253,7 @@ func decodeModelRedirect(ctx *gin.Context, operationName string, operation model
 	if json.Unmarshal(routing["version"], &version) != nil {
 		return invalid()
 	}
-	if version != 1 {
+	if version != protocolVersion {
 		abortModelRedirect(ctx, http.StatusNotFound, "redirect_protocol_unsupported")
 		return nil, false
 	}
@@ -213,8 +276,16 @@ func decodeModelRedirect(ctx *gin.Context, operationName string, operation model
 	}
 
 	pluginID := redirectString(target["plugin_id"])
-	identity, err := plugin_entities.NewPluginUniqueIdentifier(redirectString(target["expected_unique_identifier"]))
-	if err != nil || identity.PluginID() != pluginID || redirectString(target["provider"]) == "" || redirectString(target["model"]) == "" {
+	if redirectString(target["provider"]) == "" || redirectString(target["model"]) == "" {
+		return invalid()
+	}
+	var identity plugin_entities.PluginUniqueIdentifier
+	if protocolVersion == 1 {
+		identity, err = plugin_entities.NewPluginUniqueIdentifier(redirectString(target["expected_unique_identifier"]))
+		if err != nil || identity.PluginID() != pluginID {
+			return invalid()
+		}
+	} else if !modelRedirectPluginIDPattern.MatchString(pluginID) {
 		return invalid()
 	}
 	if len(uniqueRedirectObject(target["credentials"])) == 0 {

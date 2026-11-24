@@ -27,6 +27,13 @@ func createSession[T any](
 	if err != nil {
 		return nil, errors.New("failed to get plugin runtime")
 	}
+	if runtimeType, requiresVerifiedRuntime := requestContext.Value(modelRedirectRuntimeTypeKey{}).(plugin_entities.PluginRuntimeType); requiresVerifiedRuntime {
+		identity, err := runtime.Identity()
+		declaration := runtime.Configuration()
+		if err != nil || identity != r.UniqueIdentifier || runtime.Type() != runtimeType || declaration == nil || !declaration.Verified {
+			return nil, errors.New("model redirect target runtime does not match the verified installation")
+		}
+	}
 
 	session := session_manager.NewSession(
 		session_manager.NewSessionPayload{
