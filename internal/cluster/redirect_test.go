@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -14,6 +17,42 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/entities/endpoint_entities"
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/network"
 )
+
+func TestRedirectRequestCancelsPeerWhenCallerDisconnects(t *testing.T) {
+	peerCancelled := make(chan struct{})
+	peer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.(http.Flusher).Flush()
+		<-r.Context().Done()
+		close(peerCancelled)
+	}))
+	t.Cleanup(peer.Close)
+	host, rawPort, err := net.SplitHostPort(peer.Listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	port, err := strconv.ParseUint(rawPort, 10, 16)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	req := httptest.NewRequest(http.MethodPost, "/plugin/test/dispatch/redirect/v1/llm/invoke", nil).WithContext(ctx)
+	status, _, body, err := redirectRequestToIp(address{Ip: host, Port: uint16(port)}, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = body.Close() })
+	if status != http.StatusOK {
+		t.Fatalf("unexpected peer status: %d", status)
+	}
+	cancel()
+	select {
+	case <-peerCancelled:
+	case <-time.After(2 * time.Second):
+		t.Fatal("peer request was not cancelled")
+	}
+}
 
 type SimulationCheckServer struct {
 	http.Server
