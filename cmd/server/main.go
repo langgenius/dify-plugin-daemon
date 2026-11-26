@@ -33,6 +33,7 @@ func main() {
 	}
 
 	config.SetDefault()
+	config.ApplyProxyEnvFallback()
 
 	loc, err := time.LoadLocation(config.ServerTimeZone)
 	if err != nil {

@@ -306,6 +306,23 @@ type Config struct {
 	ResponseMaxBufferSize int64 `envconfig:"RESPONSE_MAX_BUFFER_SIZE" default:"31457280"`
 }
 
+// ApplyProxyEnvFallback fills HTTP(S)_PROXY / NO_PROXY from their lowercase
+// counterparts when the uppercase variants are unset. Many systems and
+// docker-compose setups only export lowercase http_proxy/https_proxy/no_proxy,
+// and plugin_daemon needs these to reach the marketplace behind an HTTP(S) proxy.
+// Uppercase values always take precedence over lowercase.
+func (c *Config) ApplyProxyEnvFallback() {
+	if c.HttpProxy == "" {
+		c.HttpProxy = os.Getenv("http_proxy")
+	}
+	if c.HttpsProxy == "" {
+		c.HttpsProxy = os.Getenv("https_proxy")
+	}
+	if c.NoProxy == "" {
+		c.NoProxy = os.Getenv("no_proxy")
+	}
+}
+
 func (c *Config) Validate() error {
 	validator := validator.New()
 	err := validator.Struct(c)

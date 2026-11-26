@@ -305,6 +305,7 @@ func cleanupDatabase(uniqueIDs []string) {
 		return
 	}
 	cfg.SetDefault()
+	cfg.ApplyProxyEnvFallback()
 	if err := cfg.Validate(); err != nil {
 		log.Error("db config invalid, skip db cleanup", "error", err)
 		return
