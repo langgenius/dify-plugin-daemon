@@ -100,3 +100,31 @@ func TestAvailableI18nReadme(t *testing.T) {
 	assert.Equal(t, readmes["en_US"], "test")
 	assert.Equal(t, readmes["zh_Hans"], "test")
 }
+
+func TestManifestKeepsEachModelTypePosition(t *testing.T) {
+	binary := buildTestZip(t, map[string]string{
+		"manifest.yaml": "plugins:\n  models:\n    - provider/test.yaml\n",
+		"provider/test.yaml": "provider: test\nmodels:\n" +
+			"  tts:\n    position: models/tts/_position.yaml\n" +
+			"  speech2text:\n    position: models/speech2text/_position.yaml\n",
+		"models/tts/_position.yaml":         "- tts-1\n- tts-1-hd\n",
+		"models/speech2text/_position.yaml": "- whisper-1\n",
+	})
+
+	decoder, err := NewZipPluginDecoder(binary)
+	assert.NoError(t, err)
+
+	manifest, err := decoder.Manifest()
+	assert.NoError(t, err)
+	if !assert.NotNil(t, manifest.Model) || !assert.NotNil(t, manifest.Model.Position) {
+		return
+	}
+
+	position := manifest.Model.Position
+	if assert.NotNil(t, position.TTS) {
+		assert.Equal(t, []string{"tts-1", "tts-1-hd"}, *position.TTS)
+	}
+	if assert.NotNil(t, position.Speech2text) {
+		assert.Equal(t, []string{"whisper-1"}, *position.Speech2text)
+	}
+}
