@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/langgenius/dify-plugin-daemon/internal/core/io_tunnel/access_types"
 	"github.com/langgenius/dify-plugin-daemon/internal/core/plugin_manager"
@@ -25,7 +26,7 @@ func createSession[T any](
 	// try fetch plugin identifier from plugin id
 	runtime, err := manager.GetPluginRuntime(r.UniqueIdentifier)
 	if err != nil {
-		return nil, errors.New("failed to get plugin runtime")
+		return nil, fmt.Errorf("failed to get plugin runtime: %w", err)
 	}
 
 	session := session_manager.NewSession(
