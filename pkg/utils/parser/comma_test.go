@@ -111,6 +111,16 @@ func TestCommaSeparatedValues(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "value containing equals sign (URL endpoint with query string)",
+			input: []byte("endpoint=https://example.com/invoke?token=abc&x=1,name=foo,id=bar"),
+			want: testStruct{
+				Endpoint: "https://example.com/invoke?token=abc&x=1",
+				Name:     "foo",
+				ID:       "bar",
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
