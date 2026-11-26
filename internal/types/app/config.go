@@ -78,10 +78,13 @@ type Config struct {
 	GoogleCloudStorageCredentialsB64 string `envconfig:"GCS_CREDENTIALS"`
 
 	// huawei obs
-	HuaweiOBSAccessKey string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
-	HuaweiOBSSecretKey string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
-	HuaweiOBSServer    string `envconfig:"HUAWEI_OBS_SERVER"`
-	HuaweiOBSPathStyle bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
+	HuaweiOBSAccessKey     string `envconfig:"HUAWEI_OBS_ACCESS_KEY"`
+	HuaweiOBSSecretKey     string `envconfig:"HUAWEI_OBS_SECRET_KEY"`
+	HuaweiOBSServer        string `envconfig:"HUAWEI_OBS_SERVER"`
+	HuaweiOBSPathStyle     bool   `envconfig:"HUAWEI_OBS_PATH_STYLE"  default:"false"`
+	HuaweiOBSUseOIDC       bool   `envconfig:"HUAWEI_OBS_USE_OIDC" default:"false"`
+	HuaweiCloudIdpID       string `envconfig:"HUAWEI_CLOUD_IDP_ID"`
+	HuaweiOBSOIDCTokenFile string `envconfig:"OIDC_TOKEN_FILE"`
 
 	// volcengine tos
 	VolcengineTOSEndpoint  string `envconfig:"VOLCENGINE_TOS_ENDPOINT"`
