@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"net/http"
 	"sync/atomic"
 	"time"
 
@@ -18,6 +19,23 @@ import (
 	"github.com/langgenius/dify-plugin-daemon/pkg/utils/stream"
 )
 
+func statusCodeFromResponse(resp *entities.Response) int {
+	if resp == nil {
+		return http.StatusInternalServerError
+	}
+
+	if resp.Code >= 0 {
+		return http.StatusOK
+	}
+
+	status := -resp.Code
+	if status < 100 || status > 599 {
+		return http.StatusInternalServerError
+	}
+
+	return status
+}
+
 // baseSSEService is a helper function to handle SSE service
 // it accepts a generator function that returns a stream response to gin context
 func baseSSEService[R any](
@@ -28,8 +46,6 @@ func baseSSEService[R any](
 ) {
 	startTime := time.Now()
 	writer := ctx.Writer
-	writer.WriteHeader(200)
-	writer.Header().Set("Content-Type", "text/event-stream")
 
 	done := make(chan bool)
 	doneClosed := new(int32)
@@ -48,7 +64,8 @@ func baseSSEService[R any](
 	pluginDaemonResponse, err := generator()
 
 	if err != nil {
-		writeData(exception.InternalServerError(err).ToResponse())
+		resp := exception.InternalServerError(err).ToResponse()
+		ctx.JSON(statusCodeFromResponse(resp), resp)
 		duration := time.Since(startTime).Seconds()
 		if onCompletion != nil {
 			onCompletion("error", duration)
@@ -56,6 +73,9 @@ func baseSSEService[R any](
 		close(done)
 		return
 	}
+
+	writer.Header().Set("Content-Type", "text/event-stream")
+	writer.WriteHeader(http.StatusOK)
 
 	routine.Submit(routinepkg.Labels{
 		routinepkg.RoutineLabelKeyModule: "service",

@@ -22,7 +22,7 @@ func SetupEndpoint(ctx *gin.Context) {
 		pluginUniqueIdentifier := request.PluginUniqueIdentifier
 		name := request.Name
 
-		ctx.JSON(200, service.SetupEndpoint(
+		JSONResponse(ctx, service.SetupEndpoint(
 			tenantId, userId, pluginUniqueIdentifier, name, settings,
 		))
 	})
@@ -38,7 +38,7 @@ func ListEndpoints(ctx *gin.Context) {
 		page := request.Page
 		pageSize := request.PageSize
 
-		ctx.JSON(200, service.ListEndpoints(tenantId, page, pageSize))
+		JSONResponse(ctx, service.ListEndpoints(tenantId, page, pageSize))
 	})
 }
 
@@ -54,7 +54,7 @@ func ListPluginEndpoints(ctx *gin.Context) {
 		page := request.Page
 		pageSize := request.PageSize
 
-		ctx.JSON(200, service.ListPluginEndpoints(tenantId, pluginId, page, pageSize))
+		JSONResponse(ctx, service.ListPluginEndpoints(tenantId, pluginId, page, pageSize))
 	})
 }
 
@@ -66,7 +66,7 @@ func RemoveEndpoint(ctx *gin.Context) {
 		endpointId := request.EndpointID
 		tenantId := request.TenantID
 
-		ctx.JSON(200, service.RemoveEndpoint(endpointId, tenantId))
+		JSONResponse(ctx, service.RemoveEndpoint(endpointId, tenantId))
 	})
 }
 
@@ -84,7 +84,7 @@ func UpdateEndpoint(ctx *gin.Context) {
 		settings := request.Settings
 		name := request.Name
 
-		ctx.JSON(200, service.UpdateEndpoint(endpointId, tenantId, userId, name, settings))
+		JSONResponse(ctx, service.UpdateEndpoint(endpointId, tenantId, userId, name, settings))
 	})
 }
 
@@ -96,7 +96,7 @@ func EnableEndpoint(ctx *gin.Context) {
 		tenantId := request.TenantID
 		endpointId := request.EndpointID
 
-		ctx.JSON(200, service.EnableEndpoint(endpointId, tenantId))
+		JSONResponse(ctx, service.EnableEndpoint(endpointId, tenantId))
 	})
 }
 
@@ -108,6 +108,6 @@ func DisableEndpoint(ctx *gin.Context) {
 		tenantId := request.TenantID
 		endpointId := request.EndpointID
 
-		ctx.JSON(200, service.DisableEndpoint(endpointId, tenantId))
+		JSONResponse(ctx, service.DisableEndpoint(endpointId, tenantId))
 	})
 }
