@@ -519,6 +519,8 @@ func ListTools(tenant_id string, page int, page_size int) *entities.Response {
 
 	providers, err := db.GetAll[models.ToolInstallation](
 		db.Equal("tenant_id", tenant_id),
+		db.OrderBy("created_at", true),
+		db.OrderBy("id", true),
 		db.Page(page, page_size),
 	)
 

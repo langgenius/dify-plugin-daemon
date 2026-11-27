@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -407,6 +408,90 @@ func TestListPluginsByCategoryFiltersBeforePagination(t *testing.T) {
 	require.False(t, secondPage.HasMore)
 	require.Len(t, secondPage.List, 1)
 	require.Equal(t, "author/second_match", secondPage.List[0].PluginID)
+}
+
+func TestListToolsDeterministicPaginationOrder(t *testing.T) {
+	setupPluginCategoryListTestDB(t)
+
+	baseTime := time.Date(2026, time.July, 23, 12, 0, 0, 0, time.UTC)
+	entries := []struct {
+		id        string
+		createdAt time.Time
+		pluginID  string
+		provider  string
+		checksum  string
+	}{
+		{
+			id:        "00000000-0000-0000-0000-000000000001",
+			createdAt: baseTime,
+			pluginID:  "author/tool-1",
+			provider:  "tool-1",
+			checksum:  strings.Repeat("1", 32),
+		},
+		{
+			id:        "00000000-0000-0000-0000-000000000002",
+			createdAt: baseTime,
+			pluginID:  "author/tool-2",
+			provider:  "tool-2",
+			checksum:  strings.Repeat("2", 32),
+		},
+		{
+			id:        "00000000-0000-0000-0000-000000000003",
+			createdAt: baseTime.Add(time.Second),
+			pluginID:  "author/tool-3",
+			provider:  "tool-3",
+			checksum:  strings.Repeat("3", 32),
+		},
+	}
+
+	for _, entry := range entries {
+		identifier := entry.pluginID + ":1.0.0@" + entry.checksum
+		require.NoError(t, db.Create(&models.PluginDeclaration{
+			PluginUniqueIdentifier: identifier,
+			PluginID:               entry.pluginID,
+			Declaration: plugin_entities.PluginDeclaration{
+				PluginDeclarationWithoutAdvancedFields: plugin_entities.PluginDeclarationWithoutAdvancedFields{
+					Name: entry.provider,
+				},
+				Tool: &plugin_entities.ToolProviderDeclaration{
+					Identity: plugin_entities.ToolProviderIdentity{
+						Author: "author",
+						Name:   entry.provider,
+					},
+				},
+			},
+		}))
+		require.NoError(t, db.Create(&models.ToolInstallation{
+			Model: models.Model{
+				ID:        entry.id,
+				CreatedAt: entry.createdAt,
+				UpdatedAt: entry.createdAt,
+			},
+			TenantID:               "tenant-1",
+			Provider:               entry.provider,
+			PluginID:               entry.pluginID,
+			PluginUniqueIdentifier: identifier,
+		}))
+	}
+
+	decodePage := func(page int, pageSize int) []string {
+		resp := ListTools("tenant-1", page, pageSize)
+		require.Equal(t, 0, resp.Code)
+		raw, err := json.Marshal(resp.Data)
+		require.NoError(t, err)
+		var rows []struct {
+			PluginID string `json:"plugin_id"`
+		}
+		require.NoError(t, json.Unmarshal(raw, &rows))
+		ids := make([]string, 0, len(rows))
+		for _, row := range rows {
+			ids = append(ids, row.PluginID)
+		}
+		return ids
+	}
+
+	require.Equal(t, []string{"author/tool-3", "author/tool-2"}, decodePage(1, 2))
+	require.Equal(t, []string{"author/tool-1"}, decodePage(2, 2))
 }
 
 func setupPluginCategoryListTestDB(t *testing.T) {
